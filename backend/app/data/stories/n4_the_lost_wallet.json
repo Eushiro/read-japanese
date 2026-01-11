@@ -1,0 +1,2224 @@
+{
+  "id": "n4_lost_wallet_001",
+  "metadata": {
+    "title": "The Lost Wallet",
+    "titleJapanese": "落とした財布",
+    "titleTokens": [
+      {
+        "surface": "落とし",
+        "parts": [
+          {
+            "text": "落",
+            "reading": "お"
+          },
+          {
+            "text": "とし"
+          }
+        ],
+        "baseForm": "落とす",
+        "partOfSpeech": "verb"
+      },
+      {
+        "surface": "た",
+        "parts": [
+          {
+            "text": "た"
+          }
+        ],
+        "baseForm": "た",
+        "partOfSpeech": "auxiliary"
+      },
+      {
+        "surface": "財布",
+        "parts": [
+          {
+            "text": "財布",
+            "reading": "さいふ"
+          }
+        ],
+        "baseForm": "財布",
+        "partOfSpeech": "noun"
+      }
+    ],
+    "author": "Claude",
+    "jlptLevel": "N4",
+    "wordCount": 280,
+    "characterCount": 1650,
+    "genre": "Daily Life",
+    "tags": [
+      "wallet",
+      "kindness",
+      "police",
+      "lost item"
+    ],
+    "summary": "A person loses their wallet and experiences the kindness of strangers in Japan.",
+    "summaryJapanese": "財布をなくして、日本の人々の親切さを経験する話です。",
+    "coverImageURL": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&q=80",
+    "audioURL": null,
+    "createdDate": "2026-01-11T00:00:00Z",
+    "tokenizerSource": "fugashi-ipadic"
+  },
+  "chapters": [
+    {
+      "id": "ch_1",
+      "title": "Noticing the Loss",
+      "titleJapanese": "気づいた時",
+      "titleTokens": [
+        {
+          "surface": "気づい",
+          "parts": [
+            {
+              "text": "気",
+              "reading": "き"
+            },
+            {
+              "text": "づい"
+            }
+          ],
+          "baseForm": "気づく",
+          "partOfSpeech": "verb"
+        },
+        {
+          "surface": "た",
+          "parts": [
+            {
+              "text": "た"
+            }
+          ],
+          "baseForm": "た",
+          "partOfSpeech": "auxiliary"
+        },
+        {
+          "surface": "時",
+          "parts": [
+            {
+              "text": "時",
+              "reading": "とき"
+            }
+          ],
+          "baseForm": "時",
+          "partOfSpeech": "noun"
+        }
+      ],
+      "imageURL": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80",
+      "content": [
+        {
+          "id": "ch1_seg_1",
+          "segmentType": "paragraph",
+          "tokens": [
+            {
+              "surface": "買い物",
+              "parts": [
+                {
+                  "text": "買",
+                  "reading": "か"
+                },
+                {
+                  "text": "い"
+                },
+                {
+                  "text": "物",
+                  "reading": "もの"
+                }
+              ],
+              "baseForm": "買い物",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "を",
+              "parts": [
+                {
+                  "text": "を"
+                }
+              ],
+              "baseForm": "を",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "し",
+              "parts": [
+                {
+                  "text": "し"
+                }
+              ],
+              "baseForm": "する",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "て",
+              "parts": [
+                {
+                  "text": "て"
+                }
+              ],
+              "baseForm": "て",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "い",
+              "parts": [
+                {
+                  "text": "い"
+                }
+              ],
+              "baseForm": "いる",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "時",
+              "parts": [
+                {
+                  "text": "時",
+                  "reading": "とき"
+                }
+              ],
+              "baseForm": "時",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "、",
+              "parts": [
+                {
+                  "text": "、"
+                }
+              ],
+              "baseForm": "、",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "財布",
+              "parts": [
+                {
+                  "text": "財布",
+                  "reading": "さいふ"
+                }
+              ],
+              "baseForm": "財布",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "が",
+              "parts": [
+                {
+                  "text": "が"
+                }
+              ],
+              "baseForm": "が",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "ない",
+              "parts": [
+                {
+                  "text": "ない"
+                }
+              ],
+              "baseForm": "ない",
+              "partOfSpeech": "adjective"
+            },
+            {
+              "surface": "こと",
+              "parts": [
+                {
+                  "text": "こと"
+                }
+              ],
+              "baseForm": "こと",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "に",
+              "parts": [
+                {
+                  "text": "に"
+                }
+              ],
+              "baseForm": "に",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "気づき",
+              "parts": [
+                {
+                  "text": "気",
+                  "reading": "き"
+                },
+                {
+                  "text": "づき"
+                }
+              ],
+              "baseForm": "気づく",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        },
+        {
+          "id": "ch1_seg_2",
+          "segmentType": "paragraph",
+          "tokens": [
+            {
+              "surface": "かばん",
+              "parts": [
+                {
+                  "text": "かばん"
+                }
+              ],
+              "baseForm": "かばん",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "の",
+              "parts": [
+                {
+                  "text": "の"
+                }
+              ],
+              "baseForm": "の",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "中",
+              "parts": [
+                {
+                  "text": "中",
+                  "reading": "なか"
+                }
+              ],
+              "baseForm": "中",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "を",
+              "parts": [
+                {
+                  "text": "を"
+                }
+              ],
+              "baseForm": "を",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "何",
+              "parts": [
+                {
+                  "text": "何",
+                  "reading": "なん"
+                }
+              ],
+              "baseForm": "何",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "度",
+              "parts": [
+                {
+                  "text": "度",
+                  "reading": "ど"
+                }
+              ],
+              "baseForm": "度",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "も",
+              "parts": [
+                {
+                  "text": "も"
+                }
+              ],
+              "baseForm": "も",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "探し",
+              "parts": [
+                {
+                  "text": "探",
+                  "reading": "さが"
+                },
+                {
+                  "text": "し"
+                }
+              ],
+              "baseForm": "探す",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "が",
+              "parts": [
+                {
+                  "text": "が"
+                }
+              ],
+              "baseForm": "が",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "、",
+              "parts": [
+                {
+                  "text": "、"
+                }
+              ],
+              "baseForm": "、",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "見つかり",
+              "parts": [
+                {
+                  "text": "見",
+                  "reading": "み"
+                },
+                {
+                  "text": "つかり"
+                }
+              ],
+              "baseForm": "見つかる",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "ませ",
+              "parts": [
+                {
+                  "text": "ませ"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "ん",
+              "parts": [
+                {
+                  "text": "ん"
+                }
+              ],
+              "baseForm": "ん",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "でし",
+              "parts": [
+                {
+                  "text": "でし"
+                }
+              ],
+              "baseForm": "です",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        },
+        {
+          "id": "ch1_seg_3",
+          "segmentType": "dialogue",
+          "tokens": [
+            {
+              "surface": "「",
+              "parts": [
+                {
+                  "text": "「"
+                }
+              ],
+              "baseForm": "「",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "どこ",
+              "parts": [
+                {
+                  "text": "どこ"
+                }
+              ],
+              "baseForm": "どこ",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "で",
+              "parts": [
+                {
+                  "text": "で"
+                }
+              ],
+              "baseForm": "で",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "落とし",
+              "parts": [
+                {
+                  "text": "落",
+                  "reading": "お"
+                },
+                {
+                  "text": "とし"
+                }
+              ],
+              "baseForm": "落とす",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "ん",
+              "parts": [
+                {
+                  "text": "ん"
+                }
+              ],
+              "baseForm": "ん",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "だろ",
+              "parts": [
+                {
+                  "text": "だろ"
+                }
+              ],
+              "baseForm": "だ",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "う",
+              "parts": [
+                {
+                  "text": "う"
+                }
+              ],
+              "baseForm": "う",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "…",
+              "parts": [
+                {
+                  "text": "…"
+                }
+              ],
+              "baseForm": "…",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "」",
+              "parts": [
+                {
+                  "text": "」"
+                }
+              ],
+              "baseForm": "」",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        },
+        {
+          "id": "ch1_seg_4",
+          "segmentType": "paragraph",
+          "tokens": [
+            {
+              "surface": "とても",
+              "parts": [
+                {
+                  "text": "とても"
+                }
+              ],
+              "baseForm": "とても",
+              "partOfSpeech": "adverb"
+            },
+            {
+              "surface": "心配",
+              "parts": [
+                {
+                  "text": "心配",
+                  "reading": "しんぱい"
+                }
+              ],
+              "baseForm": "心配",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "に",
+              "parts": [
+                {
+                  "text": "に"
+                }
+              ],
+              "baseForm": "に",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "なり",
+              "parts": [
+                {
+                  "text": "なり"
+                }
+              ],
+              "baseForm": "なる",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "財布",
+              "parts": [
+                {
+                  "text": "財布",
+                  "reading": "さいふ"
+                }
+              ],
+              "baseForm": "財布",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "に",
+              "parts": [
+                {
+                  "text": "に"
+                }
+              ],
+              "baseForm": "に",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "は",
+              "parts": [
+                {
+                  "text": "は"
+                }
+              ],
+              "baseForm": "は",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "お金",
+              "parts": [
+                {
+                  "text": "お"
+                },
+                {
+                  "text": "金",
+                  "reading": "かね"
+                }
+              ],
+              "baseForm": "お金",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "だけ",
+              "parts": [
+                {
+                  "text": "だけ"
+                }
+              ],
+              "baseForm": "だけ",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "で",
+              "parts": [
+                {
+                  "text": "で"
+                }
+              ],
+              "baseForm": "だ",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "なく",
+              "parts": [
+                {
+                  "text": "なく"
+                }
+              ],
+              "baseForm": "ない",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "、",
+              "parts": [
+                {
+                  "text": "、"
+                }
+              ],
+              "baseForm": "、",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "大切",
+              "parts": [
+                {
+                  "text": "大切",
+                  "reading": "たいせつ"
+                }
+              ],
+              "baseForm": "大切",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "な",
+              "parts": [
+                {
+                  "text": "な"
+                }
+              ],
+              "baseForm": "だ",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "カード",
+              "parts": [
+                {
+                  "text": "カード"
+                }
+              ],
+              "baseForm": "カード",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "も",
+              "parts": [
+                {
+                  "text": "も"
+                }
+              ],
+              "baseForm": "も",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "入っ",
+              "parts": [
+                {
+                  "text": "入",
+                  "reading": "はい"
+                },
+                {
+                  "text": "っ"
+                }
+              ],
+              "baseForm": "入る",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "て",
+              "parts": [
+                {
+                  "text": "て"
+                }
+              ],
+              "baseForm": "て",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "い",
+              "parts": [
+                {
+                  "text": "い"
+                }
+              ],
+              "baseForm": "いる",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ch_2",
+      "title": "Going to the Police",
+      "titleJapanese": "交番へ",
+      "titleTokens": [
+        {
+          "surface": "交番",
+          "parts": [
+            {
+              "text": "交番",
+              "reading": "こうばん"
+            }
+          ],
+          "baseForm": "交番",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "へ",
+          "parts": [
+            {
+              "text": "へ"
+            }
+          ],
+          "baseForm": "へ",
+          "partOfSpeech": "particle"
+        }
+      ],
+      "imageURL": "https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&q=80",
+      "content": [
+        {
+          "id": "ch2_seg_1",
+          "segmentType": "paragraph",
+          "tokens": [
+            {
+              "surface": "近く",
+              "parts": [
+                {
+                  "text": "近",
+                  "reading": "ちか"
+                },
+                {
+                  "text": "く"
+                }
+              ],
+              "baseForm": "近く",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "の",
+              "parts": [
+                {
+                  "text": "の"
+                }
+              ],
+              "baseForm": "の",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "交番",
+              "parts": [
+                {
+                  "text": "交番",
+                  "reading": "こうばん"
+                }
+              ],
+              "baseForm": "交番",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "へ",
+              "parts": [
+                {
+                  "text": "へ"
+                }
+              ],
+              "baseForm": "へ",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "行き",
+              "parts": [
+                {
+                  "text": "行",
+                  "reading": "い"
+                },
+                {
+                  "text": "き"
+                }
+              ],
+              "baseForm": "行く",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "警察官",
+              "parts": [
+                {
+                  "text": "警察官",
+                  "reading": "けいさつかん"
+                }
+              ],
+              "baseForm": "警察官",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "に",
+              "parts": [
+                {
+                  "text": "に"
+                }
+              ],
+              "baseForm": "に",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "状況",
+              "parts": [
+                {
+                  "text": "状況",
+                  "reading": "じょうきょう"
+                }
+              ],
+              "baseForm": "状況",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "を",
+              "parts": [
+                {
+                  "text": "を"
+                }
+              ],
+              "baseForm": "を",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "説明",
+              "parts": [
+                {
+                  "text": "説明",
+                  "reading": "せつめい"
+                }
+              ],
+              "baseForm": "説明",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "し",
+              "parts": [
+                {
+                  "text": "し"
+                }
+              ],
+              "baseForm": "する",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        },
+        {
+          "id": "ch2_seg_2",
+          "segmentType": "dialogue",
+          "tokens": [
+            {
+              "surface": "「",
+              "parts": [
+                {
+                  "text": "「"
+                }
+              ],
+              "baseForm": "「",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "財布",
+              "parts": [
+                {
+                  "text": "財布",
+                  "reading": "さいふ"
+                }
+              ],
+              "baseForm": "財布",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "を",
+              "parts": [
+                {
+                  "text": "を"
+                }
+              ],
+              "baseForm": "を",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "落とし",
+              "parts": [
+                {
+                  "text": "落",
+                  "reading": "お"
+                },
+                {
+                  "text": "とし"
+                }
+              ],
+              "baseForm": "落とす",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "て",
+              "parts": [
+                {
+                  "text": "て"
+                }
+              ],
+              "baseForm": "て",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "しまい",
+              "parts": [
+                {
+                  "text": "しまい"
+                }
+              ],
+              "baseForm": "しまう",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "」",
+              "parts": [
+                {
+                  "text": "」"
+                }
+              ],
+              "baseForm": "」",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        },
+        {
+          "id": "ch2_seg_3",
+          "segmentType": "paragraph",
+          "tokens": [
+            {
+              "surface": "警察官",
+              "parts": [
+                {
+                  "text": "警察官",
+                  "reading": "けいさつかん"
+                }
+              ],
+              "baseForm": "警察官",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "は",
+              "parts": [
+                {
+                  "text": "は"
+                }
+              ],
+              "baseForm": "は",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "親切",
+              "parts": [
+                {
+                  "text": "親切",
+                  "reading": "しんせつ"
+                }
+              ],
+              "baseForm": "親切",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "に",
+              "parts": [
+                {
+                  "text": "に"
+                }
+              ],
+              "baseForm": "に",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "書類",
+              "parts": [
+                {
+                  "text": "書類",
+                  "reading": "しょるい"
+                }
+              ],
+              "baseForm": "書類",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "を",
+              "parts": [
+                {
+                  "text": "を"
+                }
+              ],
+              "baseForm": "を",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "書い",
+              "parts": [
+                {
+                  "text": "書",
+                  "reading": "か"
+                },
+                {
+                  "text": "い"
+                }
+              ],
+              "baseForm": "書く",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "て",
+              "parts": [
+                {
+                  "text": "て"
+                }
+              ],
+              "baseForm": "て",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "くれ",
+              "parts": [
+                {
+                  "text": "くれ"
+                }
+              ],
+              "baseForm": "くれる",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        },
+        {
+          "id": "ch2_seg_4",
+          "segmentType": "dialogue",
+          "tokens": [
+            {
+              "surface": "「",
+              "parts": [
+                {
+                  "text": "「"
+                }
+              ],
+              "baseForm": "「",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "見つかっ",
+              "parts": [
+                {
+                  "text": "見",
+                  "reading": "み"
+                },
+                {
+                  "text": "つかっ"
+                }
+              ],
+              "baseForm": "見つかる",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "たら",
+              "parts": [
+                {
+                  "text": "たら"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "、",
+              "parts": [
+                {
+                  "text": "、"
+                }
+              ],
+              "baseForm": "、",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "連絡",
+              "parts": [
+                {
+                  "text": "連絡",
+                  "reading": "れんらく"
+                }
+              ],
+              "baseForm": "連絡",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "し",
+              "parts": [
+                {
+                  "text": "し"
+                }
+              ],
+              "baseForm": "する",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "ます",
+              "parts": [
+                {
+                  "text": "ます"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "」",
+              "parts": [
+                {
+                  "text": "」"
+                }
+              ],
+              "baseForm": "」",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ch_3",
+      "title": "Good News",
+      "titleJapanese": "いい知らせ",
+      "titleTokens": [
+        {
+          "surface": "いい",
+          "parts": [
+            {
+              "text": "いい"
+            }
+          ],
+          "baseForm": "いい",
+          "partOfSpeech": "adjective"
+        },
+        {
+          "surface": "知らせ",
+          "parts": [
+            {
+              "text": "知",
+              "reading": "し"
+            },
+            {
+              "text": "らせ"
+            }
+          ],
+          "baseForm": "知らせ",
+          "partOfSpeech": "noun"
+        }
+      ],
+      "imageURL": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=800&q=80",
+      "content": [
+        {
+          "id": "ch3_seg_1",
+          "segmentType": "paragraph",
+          "tokens": [
+            {
+              "surface": "次",
+              "parts": [
+                {
+                  "text": "次",
+                  "reading": "つぎ"
+                }
+              ],
+              "baseForm": "次",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "の",
+              "parts": [
+                {
+                  "text": "の"
+                }
+              ],
+              "baseForm": "の",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "日",
+              "parts": [
+                {
+                  "text": "日",
+                  "reading": "ひ"
+                }
+              ],
+              "baseForm": "日",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "、",
+              "parts": [
+                {
+                  "text": "、"
+                }
+              ],
+              "baseForm": "、",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "電話",
+              "parts": [
+                {
+                  "text": "電話",
+                  "reading": "でんわ"
+                }
+              ],
+              "baseForm": "電話",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "が",
+              "parts": [
+                {
+                  "text": "が"
+                }
+              ],
+              "baseForm": "が",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "来",
+              "parts": [
+                {
+                  "text": "来",
+                  "reading": "き"
+                }
+              ],
+              "baseForm": "来る",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "財布",
+              "parts": [
+                {
+                  "text": "財布",
+                  "reading": "さいふ"
+                }
+              ],
+              "baseForm": "財布",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "が",
+              "parts": [
+                {
+                  "text": "が"
+                }
+              ],
+              "baseForm": "が",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "見つかっ",
+              "parts": [
+                {
+                  "text": "見",
+                  "reading": "み"
+                },
+                {
+                  "text": "つかっ"
+                }
+              ],
+              "baseForm": "見つかる",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "そう",
+              "parts": [
+                {
+                  "text": "そう"
+                }
+              ],
+              "baseForm": "そう",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "です",
+              "parts": [
+                {
+                  "text": "です"
+                }
+              ],
+              "baseForm": "です",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        },
+        {
+          "id": "ch3_seg_2",
+          "segmentType": "paragraph",
+          "tokens": [
+            {
+              "surface": "親切",
+              "parts": [
+                {
+                  "text": "親切",
+                  "reading": "しんせつ"
+                }
+              ],
+              "baseForm": "親切",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "な",
+              "parts": [
+                {
+                  "text": "な"
+                }
+              ],
+              "baseForm": "だ",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "人",
+              "parts": [
+                {
+                  "text": "人",
+                  "reading": "ひと"
+                }
+              ],
+              "baseForm": "人",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "が",
+              "parts": [
+                {
+                  "text": "が"
+                }
+              ],
+              "baseForm": "が",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "道",
+              "parts": [
+                {
+                  "text": "道",
+                  "reading": "みち"
+                }
+              ],
+              "baseForm": "道",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "で",
+              "parts": [
+                {
+                  "text": "で"
+                }
+              ],
+              "baseForm": "で",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "拾っ",
+              "parts": [
+                {
+                  "text": "拾",
+                  "reading": "ひろ"
+                },
+                {
+                  "text": "っ"
+                }
+              ],
+              "baseForm": "拾う",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "て",
+              "parts": [
+                {
+                  "text": "て"
+                }
+              ],
+              "baseForm": "て",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "、",
+              "parts": [
+                {
+                  "text": "、"
+                }
+              ],
+              "baseForm": "、",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "届け",
+              "parts": [
+                {
+                  "text": "届",
+                  "reading": "とど"
+                },
+                {
+                  "text": "け"
+                }
+              ],
+              "baseForm": "届ける",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "て",
+              "parts": [
+                {
+                  "text": "て"
+                }
+              ],
+              "baseForm": "て",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "くれ",
+              "parts": [
+                {
+                  "text": "くれ"
+                }
+              ],
+              "baseForm": "くれる",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "そう",
+              "parts": [
+                {
+                  "text": "そう"
+                }
+              ],
+              "baseForm": "そう",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "です",
+              "parts": [
+                {
+                  "text": "です"
+                }
+              ],
+              "baseForm": "です",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        },
+        {
+          "id": "ch3_seg_3",
+          "segmentType": "paragraph",
+          "tokens": [
+            {
+              "surface": "交番",
+              "parts": [
+                {
+                  "text": "交番",
+                  "reading": "こうばん"
+                }
+              ],
+              "baseForm": "交番",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "で",
+              "parts": [
+                {
+                  "text": "で"
+                }
+              ],
+              "baseForm": "で",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "財布",
+              "parts": [
+                {
+                  "text": "財布",
+                  "reading": "さいふ"
+                }
+              ],
+              "baseForm": "財布",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "を",
+              "parts": [
+                {
+                  "text": "を"
+                }
+              ],
+              "baseForm": "を",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "受け取り",
+              "parts": [
+                {
+                  "text": "受",
+                  "reading": "う"
+                },
+                {
+                  "text": "け"
+                },
+                {
+                  "text": "取",
+                  "reading": "と"
+                },
+                {
+                  "text": "り"
+                }
+              ],
+              "baseForm": "受け取る",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "中",
+              "parts": [
+                {
+                  "text": "中",
+                  "reading": "なか"
+                }
+              ],
+              "baseForm": "中",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "の",
+              "parts": [
+                {
+                  "text": "の"
+                }
+              ],
+              "baseForm": "の",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "物",
+              "parts": [
+                {
+                  "text": "物",
+                  "reading": "もの"
+                }
+              ],
+              "baseForm": "物",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "は",
+              "parts": [
+                {
+                  "text": "は"
+                }
+              ],
+              "baseForm": "は",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "全部",
+              "parts": [
+                {
+                  "text": "全部",
+                  "reading": "ぜんぶ"
+                }
+              ],
+              "baseForm": "全部",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "あり",
+              "parts": [
+                {
+                  "text": "あり"
+                }
+              ],
+              "baseForm": "ある",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        },
+        {
+          "id": "ch3_seg_4",
+          "segmentType": "paragraph",
+          "tokens": [
+            {
+              "surface": "日本",
+              "parts": [
+                {
+                  "text": "日本",
+                  "reading": "にっぽん"
+                }
+              ],
+              "baseForm": "日本",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "の",
+              "parts": [
+                {
+                  "text": "の"
+                }
+              ],
+              "baseForm": "の",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "人",
+              "parts": [
+                {
+                  "text": "人",
+                  "reading": "ひと"
+                }
+              ],
+              "baseForm": "人",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "の",
+              "parts": [
+                {
+                  "text": "の"
+                }
+              ],
+              "baseForm": "の",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "親切",
+              "parts": [
+                {
+                  "text": "親切",
+                  "reading": "しんせつ"
+                }
+              ],
+              "baseForm": "親切",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "さ",
+              "parts": [
+                {
+                  "text": "さ"
+                }
+              ],
+              "baseForm": "さ",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "に",
+              "parts": [
+                {
+                  "text": "に"
+                }
+              ],
+              "baseForm": "に",
+              "partOfSpeech": "particle"
+            },
+            {
+              "surface": "感動",
+              "parts": [
+                {
+                  "text": "感動",
+                  "reading": "かんどう"
+                }
+              ],
+              "baseForm": "感動",
+              "partOfSpeech": "noun"
+            },
+            {
+              "surface": "し",
+              "parts": [
+                {
+                  "text": "し"
+                }
+              ],
+              "baseForm": "する",
+              "partOfSpeech": "verb"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            },
+            {
+              "surface": "本当に",
+              "parts": [
+                {
+                  "text": "本当",
+                  "reading": "ほんとう"
+                },
+                {
+                  "text": "に"
+                }
+              ],
+              "baseForm": "本当に",
+              "partOfSpeech": "adverb"
+            },
+            {
+              "surface": "ありがとう",
+              "parts": [
+                {
+                  "text": "ありがとう"
+                }
+              ],
+              "baseForm": "ありがとう",
+              "partOfSpeech": "interjection"
+            },
+            {
+              "surface": "ござい",
+              "parts": [
+                {
+                  "text": "ござい"
+                }
+              ],
+              "baseForm": "ござる",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "まし",
+              "parts": [
+                {
+                  "text": "まし"
+                }
+              ],
+              "baseForm": "ます",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "た",
+              "parts": [
+                {
+                  "text": "た"
+                }
+              ],
+              "baseForm": "た",
+              "partOfSpeech": "auxiliary"
+            },
+            {
+              "surface": "。",
+              "parts": [
+                {
+                  "text": "。"
+                }
+              ],
+              "baseForm": "。",
+              "partOfSpeech": "punctuation"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "vocabulary": [
+    "財布",
+    "落とす",
+    "気づく",
+    "探す",
+    "見つかる",
+    "心配",
+    "交番",
+    "警察官",
+    "説明",
+    "書類",
+    "連絡",
+    "親切",
+    "拾う",
+    "届ける",
+    "受け取る",
+    "全部",
+    "感動"
+  ],
+  "grammarPoints": [
+    "～てしまう (regret)",
+    "～てくれる (do for me)",
+    "～そうです (hearsay)",
+    "～たら (if/when)",
+    "～だけでなく (not only)"
+  ]
+}

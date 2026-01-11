@@ -8,14 +8,21 @@
 import SwiftUI
 
 struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+    @StateObject private var appState = AppState()
+    @AppStorage("colorScheme") private var colorSchemePreference: String = "system"
+
+    var preferredColorScheme: ColorScheme? {
+        switch colorSchemePreference {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil // System default
         }
-        .padding()
+    }
+
+    var body: some View {
+        MainTabView()
+            .environmentObject(appState)
+            .preferredColorScheme(preferredColorScheme)
     }
 }
 
