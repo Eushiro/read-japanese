@@ -61,10 +61,12 @@
     ],
     "summary": "A student describes their typical day at school, from morning classes to going home.",
     "summaryJapanese": "学生が朝の授業から帰るまでの学校の一日を話します。",
-    "coverImageURL": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400&q=80",
+    "coverImageURL": "/cdn/images/cover_my_day_at_school_6090c5cb.webp",
     "audioURL": null,
     "createdDate": "2026-01-10T00:00:00Z",
-    "tokenizerSource": "fugashi-ipadic"
+    "tokenizerSource": "fugashi-ipadic",
+    "coverImageModel": "gemini-2.5-flash-image",
+    "coverImageModelName": "Nano Banana"
   },
   "chapters": [
     {
@@ -84,7 +86,7 @@
           "partOfSpeech": "noun"
         }
       ],
-      "imageURL": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80",
+      "imageURL": "/cdn/images/chapter_my_day_at_school_morning_朝_b00d924f.webp",
       "content": [
         {
           "id": "ch1_seg_1",
@@ -451,7 +453,9 @@
             }
           ]
         }
-      ]
+      ],
+      "imageModel": "gemini-2.5-flash-image",
+      "imageModelName": "Nano Banana"
     },
     {
       "id": "ch_2",
@@ -470,7 +474,7 @@
           "partOfSpeech": "noun"
         }
       ],
-      "imageURL": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80",
+      "imageURL": "/cdn/images/chapter_my_day_at_school_classes_授業_7e8aa4e6.webp",
       "content": [
         {
           "id": "ch2_seg_1",
@@ -835,7 +839,9 @@
             }
           ]
         }
-      ]
+      ],
+      "imageModel": "gemini-2.5-flash-image",
+      "imageModelName": "Nano Banana"
     },
     {
       "id": "ch_3",
@@ -875,7 +881,7 @@
           "partOfSpeech": "noun"
         }
       ],
-      "imageURL": "https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=800&q=80",
+      "imageURL": "/cdn/images/chapter_my_day_at_school_lunch_and_afternoon_昼と午後_b12285b7.webp",
       "content": [
         {
           "id": "ch3_seg_1",
@@ -1456,7 +1462,9 @@
             }
           ]
         }
-      ]
+      ],
+      "imageModel": "gemini-2.5-flash-image",
+      "imageModelName": "Nano Banana"
     }
   ],
   "vocabulary": [

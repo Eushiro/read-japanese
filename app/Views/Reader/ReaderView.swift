@@ -883,31 +883,34 @@ struct ReaderView: View {
         }
     }
 
-    // Chapter image view with async loading
+    // Chapter image view with async loading - adapts to image's natural aspect ratio
     private func chapterImageView(url: URL) -> some View {
-        AsyncImage(url: url) { phase in
-            switch phase {
-            case .empty:
-                // Loading placeholder
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.secondarySystemBackground))
-                    .frame(height: 200)
-                    .overlay {
-                        ProgressView()
-                    }
-            case .success(let image):
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 200)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            case .failure:
-                // Error state - show nothing or placeholder
-                EmptyView()
-            @unknown default:
-                EmptyView()
+        HStack {
+            Spacer()
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty:
+                    // Loading placeholder with 1:1 default aspect ratio
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.secondarySystemBackground))
+                        .aspectRatio(1, contentMode: .fit)
+                        .overlay {
+                            ProgressView()
+                        }
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                case .failure:
+                    // Error state - show nothing or placeholder
+                    EmptyView()
+                @unknown default:
+                    EmptyView()
+                }
             }
+            .frame(maxWidth: 200)
+            Spacer()
         }
     }
 

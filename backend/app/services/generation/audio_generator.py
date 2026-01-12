@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 # Directory for storing generated audio
 AUDIO_DIR = Path(__file__).parent.parent.parent / "static" / "audio"
 
+# Audio output format (Eleven Labs)
+# Options: mp3_44100_128, mp3_44100_64, mp3_22050_32, pcm_16000, pcm_22050, pcm_24000, pcm_44100, ulaw_8000
+AUDIO_FORMAT = "mp3_44100_64"  # 64kbps - good quality for speech, half the size of 128kbps
+
 # Available Japanese voices on Eleven Labs
 JAPANESE_VOICES = {
     "makoto": {
@@ -169,7 +173,7 @@ class AudioGenerator:
         Returns:
             CDN path to the saved audio file
         """
-        url = f"{self.base_url}/text-to-speech/{voice_id}"
+        url = f"{self.base_url}/text-to-speech/{voice_id}?output_format={AUDIO_FORMAT}"
 
         headers = {
             "Accept": "audio/mpeg",
@@ -196,14 +200,28 @@ class AudioGenerator:
                     logger.error(f"Eleven Labs API error: {response.status_code} - {response.text}")
                     return None
 
-                # Save audio file
+                # Save and compress audio file
                 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
                 filepath = AUDIO_DIR / filename
 
-                with open(filepath, "wb") as f:
-                    f.write(response.content)
+                original_size = len(response.content)
 
-                logger.info(f"Audio saved to: {filepath}")
+                # Compress using pydub if available
+                try:
+                    import io
+                    from pydub import AudioSegment
+
+                    audio = AudioSegment.from_mp3(io.BytesIO(response.content))
+                    # Export with lower bitrate for smaller file size
+                    audio.export(filepath, format="mp3", bitrate="48k")
+                    final_size = filepath.stat().st_size
+                    logger.info(f"Audio compressed: {original_size/1024:.1f}KB -> {final_size/1024:.1f}KB")
+                except ImportError:
+                    # pydub not available, save as-is
+                    with open(filepath, "wb") as f:
+                        f.write(response.content)
+                    logger.info(f"Audio saved: {original_size/1024:.1f}KB (no compression)")
+
                 return f"/cdn/audio/{filename}"
 
         except Exception as e:
