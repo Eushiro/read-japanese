@@ -125,32 +125,59 @@ class AppState: ObservableObject {
     }
 
     /// Get recommended stories based on the current story
-    /// Returns up to 3 stories with same JLPT level, preferring similar genres
+    /// Returns 2 stories of the same level + 1 story of the next level up (if available)
     func recommendedStories(for story: Story) -> [Story] {
-        let candidates = stories.filter { candidate in
-            // Exclude the current story
+        // Helper to sort candidates by genre match, then word count similarity
+        func sortCandidates(_ candidates: [Story]) -> [Story] {
+            candidates.sorted { a, b in
+                let aGenreMatch = a.metadata.genre == story.metadata.genre
+                let bGenreMatch = b.metadata.genre == story.metadata.genre
+                if aGenreMatch != bGenreMatch {
+                    return aGenreMatch
+                }
+                let aDiff = abs(a.metadata.wordCount - story.metadata.wordCount)
+                let bDiff = abs(b.metadata.wordCount - story.metadata.wordCount)
+                return aDiff < bDiff
+            }
+        }
+
+        // Get candidates at the same level
+        let sameLevelCandidates = stories.filter { candidate in
             guard candidate.id != story.id else { return false }
-            // Same JLPT level
             guard candidate.metadata.jlptLevel == story.metadata.jlptLevel else { return false }
-            // Exclude already completed stories
             guard !hasCompleted(storyId: candidate.id) else { return false }
             return true
         }
 
-        // Sort by genre match (same genre first), then by word count similarity
-        let sorted = candidates.sorted { a, b in
-            let aGenreMatch = a.metadata.genre == story.metadata.genre
-            let bGenreMatch = b.metadata.genre == story.metadata.genre
-            if aGenreMatch != bGenreMatch {
-                return aGenreMatch
+        // Get the next level up (N5 -> N4 -> N3 -> N2 -> N1)
+        let nextLevel = story.metadata.jlptLevel.nextLevelUp
+
+        // Get candidates at the next level up
+        let nextLevelCandidates: [Story]
+        if let nextLevel = nextLevel {
+            nextLevelCandidates = stories.filter { candidate in
+                guard candidate.id != story.id else { return false }
+                guard candidate.metadata.jlptLevel == nextLevel else { return false }
+                guard !hasCompleted(storyId: candidate.id) else { return false }
+                return true
             }
-            // Prefer stories with similar length
-            let aDiff = abs(a.metadata.wordCount - story.metadata.wordCount)
-            let bDiff = abs(b.metadata.wordCount - story.metadata.wordCount)
-            return aDiff < bDiff
+        } else {
+            nextLevelCandidates = []
         }
 
-        return Array(sorted.prefix(3))
+        // Take up to 2 from same level, then 1 from next level
+        var recommendations: [Story] = []
+        recommendations.append(contentsOf: sortCandidates(sameLevelCandidates).prefix(2))
+
+        if let nextLevelStory = sortCandidates(nextLevelCandidates).first {
+            recommendations.append(nextLevelStory)
+        } else if recommendations.count < 3 {
+            // If no next level story, fill with more same level stories
+            let remaining = sortCandidates(sameLevelCandidates).dropFirst(2).prefix(3 - recommendations.count)
+            recommendations.append(contentsOf: remaining)
+        }
+
+        return recommendations
     }
 
     // MARK: - Vocabulary Management
@@ -170,9 +197,19 @@ class AppState: ObservableObject {
         saveVocabularyToStorage()
     }
 
-    /// Check if a word is in vocabulary
-    func isInVocabulary(word: String) -> Bool {
-        vocabularyItems.contains { $0.word == word }
+    /// Remove a vocabulary item by word (checks both surface and base form)
+    func removeVocabularyItemByWord(_ word: String, baseForm: String? = nil) {
+        vocabularyItems.removeAll { item in
+            item.word == word || (baseForm != nil && item.word == baseForm)
+        }
+        saveVocabularyToStorage()
+    }
+
+    /// Check if a word is in vocabulary (checks both surface and base form)
+    func isInVocabulary(word: String, baseForm: String? = nil) -> Bool {
+        vocabularyItems.contains { item in
+            item.word == word || (baseForm != nil && item.word == baseForm)
+        }
     }
 
     /// Load vocabulary from UserDefaults

@@ -20,29 +20,22 @@ struct ReaderView: View {
     @State private var selectedWordFrame: CGRect = .zero
     @State private var showTooltip = false
     @State private var showDefinition = false
+    @State private var showSaveToast = false  // Toast for save confirmation
     @State private var scrollOffset: CGFloat = 0
     @State private var containerWidth: CGFloat = 0
     @State private var showAudioPlayer = false
-    @State private var dismissDragOffset: CGFloat = 0
+    @State private var scrollToChapterIndex: Int? = nil  // For continuous mode scrolling
+    @State private var continuousScrollProxy: ScrollViewProxy? = nil
 
     // Audio player
     @StateObject private var audioPlayer = AudioPlayerService()
-
-    // Header collapse calculation
-    private var headerCollapseProgress: CGFloat {
-        // Collapse over 80 points of scrolling
-        min(1.0, scrollOffset / 80.0)
-    }
-
-    private var isHeaderCollapsed: Bool {
-        headerCollapseProgress > 0.5
-    }
 
     // Settings (persisted)
     @AppStorage("autoScrollSpeed") private var autoScrollSpeed: Double = 300.0
     @AppStorage("fontSize") private var fontSize: Double = 20.0
     @AppStorage("showFurigana") private var showFurigana: Bool = true
     @AppStorage("showEnglishTitles") private var showEnglishTitles: Bool = false
+    @AppStorage("chapterViewMode") private var chapterViewMode: String = "paged"
 
     // Environment
     @Environment(\.dismiss) private var dismiss
@@ -80,68 +73,97 @@ struct ReaderView: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            let screenWidth = geometry.size.width
+        VStack(spacing: 0) {
+            // Sticky header
+            stickyHeader
 
-            VStack(spacing: 0) {
-                // Collapsible story header
-                collapsibleHeader
-                    .background(Color(.systemBackground))
+            // Main content
+            GeometryReader { geometry in
+                let screenWidth = geometry.size.width
 
-                // Main content area - native paging TabView for chapters
-                TabView(selection: $currentChapterIndex) {
-                    ForEach(0..<max(story.chapterCount, 1), id: \.self) { index in
-                        chapterScrollView(forChapterIndex: index, width: screenWidth)
-                            .tag(index)
+                if chapterViewMode == "continuous" {
+                    // Continuous mode - all chapters in one scrolling view
+                    continuousScrollView(width: screenWidth)
+                        .overlay(alignment: .bottom) {
+                            if isAutoScrolling {
+                                autoScrollIndicator
+                                    .padding(.bottom, 100)
+                            }
+                        }
+                        .onAppear {
+                            containerWidth = screenWidth
+                        }
+                        .onChange(of: geometry.size.width) { _, newWidth in
+                            containerWidth = newWidth
+                        }
+                } else {
+                    // Paged mode - native paging TabView for chapters
+                    TabView(selection: $currentChapterIndex.animation(.easeInOut(duration: 0.3))) {
+                        // Dismiss page (transparent, triggers dismiss when swiped to)
+                        Color.clear
+                            .tag(-1)
+
+                        ForEach(0..<max(story.chapterCount, 1), id: \.self) { index in
+                            chapterScrollView(forChapterIndex: index, width: screenWidth)
+                                .tag(index)
+                        }
+                    }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .overlay(alignment: .bottom) {
+                        if isAutoScrolling {
+                            autoScrollIndicator
+                                .padding(.bottom, 100)
+                        }
+                    }
+                    .onAppear {
+                        containerWidth = screenWidth
+                    }
+                    .onChange(of: geometry.size.width) { _, newWidth in
+                        containerWidth = newWidth
                     }
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .overlay(alignment: .bottom) {
-                    if isAutoScrolling {
-                        autoScrollIndicator
-                            .padding(.bottom, 40)
-                    }
-                }
-                .onAppear {
-                    containerWidth = screenWidth
-                }
-                .onChange(of: geometry.size.width) { _, newWidth in
-                    containerWidth = newWidth
-                }
-
-                // Audio player bar (shown when toggled)
-                if showAudioPlayer && hasAudio {
-                    AudioPlayerBar(audioPlayer: audioPlayer)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-
-                // Bottom toolbar - has its own background
-                bottomToolbar
             }
-            .animation(.easeInOut(duration: 0.2), value: showAudioPlayer)
+
+            // Audio player bar (shown when toggled)
+            if showAudioPlayer && hasAudio {
+                AudioPlayerBar(audioPlayer: audioPlayer)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            // Bottom toolbar
+            nativeBottomToolbar
         }
         .background(Color(.systemBackground))
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            // Empty toolbar to keep navigation gesture enabled
-        }
+        .animation(.easeInOut(duration: 0.2), value: showAudioPlayer)
+        .navigationBarHidden(true)
         .sheet(isPresented: $showSettings) {
-            ReaderSettingsSheet(
-                autoScrollSpeed: $autoScrollSpeed,
-                fontSize: $fontSize,
-                showFurigana: $showFurigana
-            )
+            SettingsView()
         }
         .onDisappear {
             isAutoScrolling = false
             saveProgress()
             audioPlayer.cleanup()
         }
+        .onChange(of: story.id) { _, _ in
+            // Reset to first chapter when a new story is selected
+            currentChapterIndex = 0
+            scrollOffset = 0
+        }
         .task {
             await loadAudioIfAvailable()
         }
-        .onChange(of: currentChapterIndex) { _, _ in
+        .onChange(of: currentChapterIndex) { _, newIndex in
+            // Dismiss when swiping to the dismiss page (index -1)
+            if newIndex == -1 {
+                onDismiss?()
+                return
+            }
+            // Reset scroll offset when changing chapters (for swipe gestures)
+            scrollOffset = 0
+            // Auto-mark as read when reaching the last chapter
+            if newIndex >= story.chapterCount - 1 && newIndex >= 0 {
+                appState.markCompleted(storyId: story.id)
+            }
             Task {
                 await loadAudioIfAvailable()
             }
@@ -152,9 +174,7 @@ struct ReaderView: View {
                 Color.clear
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        showTooltip = false
-                        selectedWordInfo = nil
-                        selectedTokenId = nil
+                        dismissTooltip()
                     }
             }
         }
@@ -180,37 +200,50 @@ struct ReaderView: View {
                         geo.size.width - tooltipSize.width / 2 - 16
                     )
 
-                    // Position so the tooltip's arrow points to the top of the word
-                    // The arrow is at the bottom of the tooltip, so we position the center
-                    // such that bottom of tooltip is just above the word
+                    // Position so tooltip is above the word
                     let tooltipY = max(
-                        localWordFrame.minY - tooltipSize.height / 2 - 4,
+                        localWordFrame.minY - tooltipSize.height / 2 - 8,
                         tooltipSize.height / 2 + 16
                     )
 
                     WordActionTooltip(
                         wordInfo: wordInfo,
                         position: CGPoint(x: tooltipX, y: tooltipY),
+                        isAlreadySaved: appState.isInVocabulary(word: wordInfo.lookupWord),
                         onAddToVocabulary: {
                             Task {
                                 await quickSaveWord(wordInfo)
                             }
                         },
+                        onRemoveFromVocabulary: {
+                            appState.removeVocabularyItemByWord(wordInfo.lookupWord)
+                        },
                         onViewDefinition: {
+                            // Don't clear selectedWordInfo - we need it for definition
                             showTooltip = false
+                            selectedTokenId = nil
                             showDefinition = true
                         },
                         onDismiss: {
-                            showTooltip = false
-                            selectedWordInfo = nil
-                            selectedTokenId = nil
+                            dismissTooltip()
                         }
                     )
                     .position(x: tooltipX, y: tooltipY)
                 }
-                .transition(.scale.combined(with: .opacity))
+                .transition(.asymmetric(insertion: .identity, removal: .opacity))
             }
         }
+        .animation(.easeOut(duration: 0.15), value: showTooltip)
+        .overlay(alignment: .bottomTrailing) {
+            // Save toast notification
+            if showSaveToast {
+                SaveToast()
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 100)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showSaveToast)
         .overlay {
             // Compact definition view
             if showDefinition, let wordInfo = selectedWordInfo {
@@ -218,30 +251,95 @@ struct ReaderView: View {
                     .ignoresSafeArea()
                     .onTapGesture {
                         showDefinition = false
-                        selectedWordInfo = nil
-                        selectedTokenId = nil
+                        dismissTooltip()
                     }
 
                 CompactDefinitionView(
                     wordInfo: wordInfo,
                     onDismiss: {
                         showDefinition = false
-                        selectedWordInfo = nil
-                        selectedTokenId = nil
+                        dismissTooltip()
                     }
                 )
-                .transition(.scale.combined(with: .opacity))
+                .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.15), value: showTooltip)
-        .animation(.easeInOut(duration: 0.2), value: showDefinition)
+        .animation(.easeOut(duration: 0.15), value: showDefinition)
+    }
+
+    // MARK: - Sticky Header
+
+    private var stickyHeader: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                // Back button with larger tap area
+                Button {
+                    onDismiss?()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 36, height: 36)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+
+                // Title and info
+                VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(story.metadata.titleJapanese ?? story.metadata.title)
+                            .font(.headline)
+                            .lineLimit(1)
+
+                        if showEnglishTitles, story.metadata.titleJapanese != nil {
+                            Text(story.metadata.title)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+
+                    HStack(spacing: 6) {
+                        Text(story.metadata.jlptLevel.displayName)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(story.metadata.jlptLevel.color)
+
+                        if story.hasChapters {
+                            Text("•")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            if chapterViewMode == "continuous" {
+                                Text("\(story.chapterCount) chapters")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text("Chapter \(currentChapterIndex + 1) of \(story.chapterCount)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+                .allowsHitTesting(false)
+
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+
+            Divider()
+        }
+        .background(Color(.systemBackground))
     }
 
     // MARK: - Bottom Toolbar
 
-    private var bottomToolbar: some View {
-        HStack(spacing: 24) {
-            // Furigana toggle
+    private var nativeBottomToolbar: some View {
+        HStack(spacing: 16) {
+            // Furigana toggle (old style with checkmark)
             Button {
                 showFurigana.toggle()
             } label: {
@@ -257,33 +355,6 @@ struct ReaderView: View {
 
             Spacer()
 
-            // Font size controls (right side, near settings)
-            HStack(spacing: 16) {
-                Button {
-                    fontSize = max(fontSize - 2, 14)
-                } label: {
-                    Image(systemName: "minus.circle")
-                        .font(.title2)
-                }
-                .disabled(fontSize <= 14)
-                .foregroundStyle(fontSize <= 14 ? .tertiary : .primary)
-
-                Text("\(Int(fontSize))")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 28)
-
-                Button {
-                    fontSize = min(fontSize + 2, 32)
-                } label: {
-                    Image(systemName: "plus.circle")
-                        .font(.title2)
-                }
-                .disabled(fontSize >= 32)
-                .foregroundStyle(fontSize >= 32 ? .tertiary : .primary)
-            }
-
             // Audio button (if audio available)
             if hasAudio {
                 Button {
@@ -295,14 +366,75 @@ struct ReaderView: View {
                 .foregroundStyle(audioPlayer.isPlaying ? .blue : .primary)
             }
 
-            // Settings
+            // Chapter menu (only show for multi-chapter stories)
+            if story.hasChapters, let chapters = story.chapters {
+                Menu {
+                    ForEach(Array(chapters.enumerated()), id: \.element.id) { index, chapter in
+                        Button {
+                            goToChapter(index)
+                        } label: {
+                            HStack {
+                                Text("\(index + 1). \(chapter.titleJapanese ?? chapter.title)")
+                                if index == currentChapterIndex {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(width: 36, height: 36)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Circle())
+                }
+                .menuOrder(.fixed)
+                .foregroundStyle(.primary)
+            }
+
+            // Settings button
             Button {
                 showSettings = true
             } label: {
                 Image(systemName: "gearshape")
-                    .font(.title2)
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(width: 36, height: 36)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
             }
+            .buttonStyle(.plain)
             .foregroundStyle(.primary)
+
+            // Previous/Next chapter buttons (only show for multi-chapter stories in paged mode)
+            if story.hasChapters && chapterViewMode == "paged" {
+                HStack(spacing: 12) {
+                    Button {
+                        goToPreviousChapter()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .frame(width: 36, height: 36)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(currentChapterIndex <= 0)
+                    .opacity(currentChapterIndex <= 0 ? 0.3 : 1)
+
+                    Button {
+                        goToNextChapter()
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 17, weight: .semibold))
+                            .frame(width: 36, height: 36)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(currentChapterIndex >= story.chapterCount - 1)
+                    .opacity(currentChapterIndex >= story.chapterCount - 1 ? 0.3 : 1)
+                }
+            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
@@ -314,6 +446,72 @@ struct ReaderView: View {
 
     // MARK: - Story Content
 
+    /// Helper to create a continuous scroll view with all chapters
+    private func continuousScrollView(width: CGFloat) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(alignment: .leading, spacing: 48) {
+                    ForEach(0..<max(story.chapterCount, 1), id: \.self) { chapterIndex in
+                        VStack(alignment: .leading, spacing: 24) {
+                            // Chapter number indicator for continuous mode
+                            if story.hasChapters {
+                                HStack(spacing: 8) {
+                                    Text("Chapter \(chapterIndex + 1)/\(story.chapterCount)")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.secondary)
+
+                                    Rectangle()
+                                        .fill(Color.secondary.opacity(0.3))
+                                        .frame(height: 1)
+                                }
+                                .padding(.bottom, 4)
+                            }
+
+                            chapterBodyContent(forChapterIndex: chapterIndex)
+                        }
+                        .id("chapter_\(chapterIndex)")
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear
+                                    .preference(
+                                        key: VisibleChapterPreferenceKey.self,
+                                        value: geo.frame(in: .named("continuousScroll")).minY < 100 ? chapterIndex : -1
+                                    )
+                            }
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .padding(.bottom, 32)
+            }
+            .coordinateSpace(name: "continuousScroll")
+            .onPreferenceChange(VisibleChapterPreferenceKey.self) { visibleIndex in
+                if visibleIndex >= 0 && visibleIndex != currentChapterIndex {
+                    currentChapterIndex = visibleIndex
+                }
+            }
+            .onAppear {
+                continuousScrollProxy = proxy
+            }
+            .onChange(of: scrollToChapterIndex) { _, newIndex in
+                if let index = newIndex {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        proxy.scrollTo("chapter_\(index)", anchor: .top)
+                    }
+                    // Update current chapter immediately when navigating
+                    currentChapterIndex = index
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        scrollToChapterIndex = nil
+                    }
+                }
+            }
+        }
+        .frame(width: width)
+    }
+
     /// Helper to create a scroll view for a specific chapter
     private func chapterScrollView(forChapterIndex index: Int, width: CGFloat) -> some View {
         AutoScrollView(
@@ -324,7 +522,7 @@ struct ReaderView: View {
             chapterBodyContent(forChapterIndex: index)
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 24)
-                .padding(.top, 24)
+                .padding(.top, 16)
                 .padding(.bottom, 32)
         }
         .frame(width: width)
@@ -347,230 +545,33 @@ struct ReaderView: View {
         currentChapterIndex >= story.chapterCount - 1
     }
 
-    /// Navigate to next chapter (TabView handles animation)
+    /// Navigate to next chapter (binding animation handles transition)
     private func goToNextChapter() {
-        guard story.hasChapters && !isLastChapter else { return }
-        withAnimation {
-            currentChapterIndex += 1
-        }
+        let nextIndex = currentChapterIndex + 1
+        guard nextIndex < story.chapterCount else { return }
+        scrollOffset = 0
+        currentChapterIndex = nextIndex
     }
 
-    /// Navigate to previous chapter (TabView handles animation)
+    /// Navigate to previous chapter (binding animation handles transition)
     private func goToPreviousChapter() {
         guard currentChapterIndex > 0 else { return }
-        withAnimation {
-            currentChapterIndex -= 1
-        }
+        scrollOffset = 0
+        currentChapterIndex -= 1
     }
 
-    /// Navigate to specific chapter (TabView handles animation)
+    /// Navigate to specific chapter (binding animation handles transition)
     private func goToChapter(_ index: Int) {
-        guard index != currentChapterIndex else { return }
-        withAnimation {
+        guard index >= 0 && index < story.chapterCount else { return }
+
+        if chapterViewMode == "continuous" {
+            // In continuous mode, scroll to the chapter
+            scrollToChapterIndex = index
+        } else {
+            // In paged mode, change chapter index
+            guard index != currentChapterIndex else { return }
+            scrollOffset = 0
             currentChapterIndex = index
-        }
-    }
-
-    // MARK: - Collapsible Header
-
-    private var collapsibleHeader: some View {
-        VStack(spacing: 0) {
-            // Top bar with glassy back button - aligned with tab bar level
-            HStack {
-                Button {
-                    onDismiss?()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 36, height: 36)
-                        .background {
-                            Circle()
-                                .fill(.ultraThinMaterial)
-                                .overlay {
-                                    Circle()
-                                        .strokeBorder(.white.opacity(0.3), lineWidth: 0.5)
-                                }
-                                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
-                        }
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 4)
-            .padding(.bottom, isHeaderCollapsed ? 8 : 4)
-
-            // Title section
-            if !isHeaderCollapsed {
-                VStack(alignment: .leading, spacing: 6) {
-                    // Japanese title with furigana
-                    if let titleTokens = story.metadata.titleTokens, !titleTokens.isEmpty {
-                        titleWithFurigana(tokens: titleTokens)
-                    } else {
-                        Text(story.metadata.titleJapanese ?? story.metadata.title)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .lineLimit(2)
-                    }
-
-                    // English title (if setting enabled)
-                    if showEnglishTitles {
-                        Text(story.metadata.title)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    // Metadata row
-                    HStack(spacing: 6) {
-                        JLPTBadge(level: story.metadata.jlptLevel)
-                        Text(story.metadata.genre)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        if story.hasChapters {
-                            Text("•")
-                                .foregroundStyle(.secondary)
-                            Text("Chapter \(currentChapterIndex + 1) of \(story.chapterCount)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 12)
-            } else {
-                // Collapsed: title and metadata on left
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(story.metadata.titleJapanese ?? story.metadata.title)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .lineLimit(1)
-
-                    HStack(spacing: 6) {
-                        JLPTBadge(level: story.metadata.jlptLevel)
-
-                        if story.hasChapters {
-                            Text("Chapter \(currentChapterIndex + 1) of \(story.chapterCount)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 10)
-            }
-
-            Divider()
-                .padding(.horizontal, 16)
-        }
-        .animation(.easeInOut(duration: 0.25), value: isHeaderCollapsed)
-    }
-
-    // Full header content (shown when not scrolled)
-    private var storyHeader: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Japanese title with furigana and tap support
-            if let titleTokens = story.metadata.titleTokens, !titleTokens.isEmpty {
-                // Tokenized title with furigana
-                titleWithFurigana(tokens: titleTokens)
-            } else if let japaneseTitle = story.metadata.titleJapanese {
-                // Fallback: plain text title
-                Text(japaneseTitle)
-                    .font(.title2)
-                    .fontWeight(.bold)
-            }
-
-            if showEnglishTitles {
-                Text(story.metadata.title)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack {
-                JLPTBadge(level: story.metadata.jlptLevel)
-                Text(story.metadata.genre)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                if story.hasChapters {
-                    Text("•")
-                        .foregroundStyle(.secondary)
-                    Text("Chapter \(currentChapterIndex + 1) of \(story.chapterCount)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    // Title with furigana and tap support
-    private func titleWithFurigana(tokens: [Token]) -> some View {
-        WrappingHStack(alignment: .bottom, spacing: 0) {
-            ForEach(Array(tokens.enumerated()), id: \.offset) { _, token in
-                if token.isPunctuation {
-                    // Non-tappable punctuation
-                    VStack(spacing: 0) {
-                        Text(" ")
-                            .font(.system(size: 14))
-                            .opacity(0)
-                        Text(token.surface)
-                            .font(.title)
-                            .fontWeight(.bold)
-                    }
-                    .fixedSize(horizontal: true, vertical: false)
-                } else {
-                    // Tappable word with parts-based furigana
-                    let wordInfo = WordInfo.from(token)
-
-                    HStack(spacing: 0) {
-                        if let parts = token.parts, !parts.isEmpty {
-                            ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
-                                VStack(spacing: 0) {
-                                    if showFurigana, let reading = part.reading {
-                                        Text(reading)
-                                            .font(.system(size: 14))
-                                            .foregroundStyle(furiganaColor)
-                                    } else {
-                                        Text(" ")
-                                            .font(.system(size: 14))
-                                            .opacity(0)
-                                    }
-                                    Text(part.text)
-                                        .font(.title)
-                                        .fontWeight(.bold)
-                                }
-                                .fixedSize(horizontal: true, vertical: false)
-                            }
-                        } else {
-                            // Fallback: surface without furigana
-                            VStack(spacing: 0) {
-                                Text(" ")
-                                    .font(.system(size: 14))
-                                    .opacity(0)
-                                Text(token.surface)
-                                    .font(.title)
-                                    .fontWeight(.bold)
-                            }
-                            .fixedSize(horizontal: true, vertical: false)
-                        }
-                    }
-                    .overlay(
-                        GeometryReader { geo in
-                            Color.clear
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    selectedWordInfo = wordInfo
-                                    selectedWordFrame = geo.frame(in: .global)
-                                    showTooltip = true
-                                }
-                        }
-                    )
-                }
-            }
         }
     }
 
@@ -579,38 +580,41 @@ struct ReaderView: View {
         let segments = story.segments(forChapter: chapterIndex)
         let chapter: Chapter? = story.hasChapters ? story.chapters?[safe: chapterIndex] : nil
         let isLast = chapterIndex >= story.chapterCount - 1
+        let hasChapterImage = chapter?.imageURL != nil
 
         return VStack(alignment: .leading, spacing: 24) {
-            // Chapter title (if applicable)
+            // Chapter header (title + optional image)
             if let chapter = chapter {
-                VStack(alignment: .leading, spacing: 4) {
-                    // Chapter title with furigana if available
-                    if let titleTokens = chapter.titleTokens, !titleTokens.isEmpty {
-                        chapterTitleWithFurigana(tokens: titleTokens)
-                    } else if let titleJapanese = chapter.titleJapanese {
-                        Text(titleJapanese)
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                    } else {
-                        Text(chapter.title)
-                            .font(.title3)
-                            .fontWeight(.semibold)
+                VStack(alignment: .leading, spacing: hasChapterImage ? 16 : 8) {
+                    // Chapter title
+                    VStack(alignment: .leading, spacing: 4) {
+                        // Chapter title with furigana if available
+                        if let titleTokens = chapter.titleTokens, !titleTokens.isEmpty {
+                            chapterTitleWithFurigana(tokens: titleTokens)
+                        } else if let titleJapanese = chapter.titleJapanese {
+                            Text(titleJapanese)
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                        } else {
+                            Text(chapter.title)
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                        }
+
+                        // English chapter title (if setting enabled)
+                        if showEnglishTitles, chapter.titleJapanese != nil {
+                            Text(chapter.title)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
-                    // English chapter title (if setting enabled)
-                    if showEnglishTitles, chapter.titleJapanese != nil {
-                        Text(chapter.title)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                    // Chapter image
+                    if let imageURL = chapter.imageURL, let url = URL(string: imageURL) {
+                        chapterImageView(url: url)
                     }
                 }
-                .padding(.bottom, 8)
-
-                // Chapter image
-                if let imageURL = chapter.imageURL, let url = URL(string: imageURL) {
-                    chapterImageView(url: url)
-                        .padding(.bottom, 8)
-                }
+                .padding(.bottom, hasChapterImage ? 0 : -8)
             }
 
             // Story segments for this chapter
@@ -619,13 +623,9 @@ struct ReaderView: View {
                     .id(segment.id)
             }
 
-            // Chapter navigation or completion section (only for current chapter)
-            if chapterIndex == currentChapterIndex {
-                if story.hasChapters && !isLast {
-                    chapterNavigationSection
-                } else {
-                    completionSection
-                }
+            // Completion section (only on last chapter or single-chapter stories)
+            if isLast {
+                completionSection
             }
         }
     }
@@ -709,106 +709,20 @@ struct ReaderView: View {
         }
     }
 
-    // MARK: - Chapter Navigation
-
-    private var chapterNavigationSection: some View {
-        VStack(spacing: 16) {
-            Divider()
-
-            Text("End of Chapter \(currentChapterIndex + 1)")
-                .font(.headline)
-                .foregroundStyle(.secondary)
-
-            HStack(spacing: 16) {
-                if currentChapterIndex > 0 {
-                    Button {
-                        goToPreviousChapter()
-                    } label: {
-                        Label("Previous", systemImage: "chevron.left")
-                    }
-                    .buttonStyle(.bordered)
-                }
-
-                Button {
-                    goToNextChapter()
-                } label: {
-                    HStack(spacing: 6) {
-                        Text("Next Chapter")
-                        Image(systemName: "chevron.right")
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-            }
-
-            // Chapter list
-            if let chapters = story.chapters {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("All Chapters")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 8)
-
-                    ForEach(Array(chapters.enumerated()), id: \.element.id) { index, chapter in
-                        Button {
-                            goToChapter(index)
-                        } label: {
-                            HStack {
-                                Text("\(index + 1).")
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 24, alignment: .leading)
-
-                                Text(chapter.titleJapanese ?? chapter.title)
-                                    .lineLimit(1)
-
-                                Spacer()
-
-                                if index == currentChapterIndex {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.green)
-                                }
-                            }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(index == currentChapterIndex ? Color.accentColor.opacity(0.1) : Color.clear)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-        .padding(.top, 32)
-    }
 
     // MARK: - Completion Section
 
     private var completionSection: some View {
         VStack(spacing: 20) {
-            Divider()
-
-            Text("Story Complete!")
-                .font(.title2)
-                .fontWeight(.bold)
-
-            HStack(spacing: 16) {
-                if appState.hasCompleted(storyId: story.id) {
-                    Button {
-                        appState.markUnread(storyId: story.id)
-                    } label: {
-                        Label("Mark as Unread", systemImage: "arrow.uturn.backward")
-                    }
-                    .buttonStyle(.bordered)
-                } else {
-                    Button {
-                        appState.markCompleted(storyId: story.id)
-                    } label: {
-                        Label("Mark as Read", systemImage: "checkmark")
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                Text("Story Complete!")
+                    .font(.title2)
+                    .fontWeight(.bold)
             }
 
-            // Recommended stories (shown first)
+            // Recommended stories
             let recommendations = appState.recommendedStories(for: story)
             if !recommendations.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
@@ -821,6 +735,7 @@ struct ReaderView: View {
                             onStorySelected?(recommended)
                         } label: {
                             RecommendedStoryCard(story: recommended)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }
@@ -828,42 +743,6 @@ struct ReaderView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            // Chapter list (for multi-chapter stories)
-            if let chapters = story.chapters, chapters.count > 1 {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("All Chapters")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 8)
-
-                    ForEach(Array(chapters.enumerated()), id: \.element.id) { index, chapter in
-                        Button {
-                            goToChapter(index)
-                        } label: {
-                            HStack {
-                                Text("\(index + 1).")
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 24, alignment: .leading)
-
-                                Text(chapter.titleJapanese ?? chapter.title)
-                                    .lineLimit(1)
-
-                                Spacer()
-
-                                if index == currentChapterIndex {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.green)
-                                }
-                            }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(index == currentChapterIndex ? Color.accentColor.opacity(0.1) : Color.clear)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
         }
         .padding(.top, 32)
     }
@@ -882,6 +761,19 @@ struct ReaderView: View {
                     selectedTokenId = tokenId
                     selectedWordFrame = frame
                     showTooltip = true
+                },
+                onWordLongPress: { wordInfo in
+                    // Long press saves directly with toast
+                    Task {
+                        await quickSaveWord(wordInfo)
+                        await MainActor.run {
+                            showSaveToast = true
+                            // Auto-hide after delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                showSaveToast = false
+                            }
+                        }
+                    }
                 }
             )
         }
@@ -924,20 +816,34 @@ struct ReaderView: View {
 
     // MARK: - Word Actions
 
+    /// Dismiss the word action tooltip
+    private func dismissTooltip() {
+        showTooltip = false
+        selectedWordInfo = nil
+        selectedTokenId = nil
+    }
+
     /// Quickly save a word to vocabulary by looking it up first
     private func quickSaveWord(_ wordInfo: WordInfo) async {
-        let lookupWord = wordInfo.lookupWord
+        let wordToSave = wordInfo.lookupWord  // Always use base form for consistency
         do {
-            if let definition = try await DictionaryService.shared.lookup(lookupWord) {
-                let vocabItem = VocabularyItem.from(definition, sourceStoryId: story.id)
+            if let definition = try await DictionaryService.shared.lookup(wordToSave) {
+                // Use lookupWord as the saved word for consistent matching
+                let vocabItem = VocabularyItem(
+                    word: wordToSave,
+                    reading: definition.reading,
+                    meaning: definition.definitions.joined(separator: "; "),
+                    jlptLevel: definition.jlptLevel,
+                    sourceStoryId: story.id
+                )
                 await MainActor.run {
                     appState.saveVocabularyItem(vocabItem)
                 }
             } else {
                 // Save without definition if lookup fails
                 let vocabItem = VocabularyItem(
-                    word: wordInfo.surface,
-                    reading: wordInfo.reading ?? wordInfo.surface,
+                    word: wordToSave,
+                    reading: wordInfo.reading ?? wordToSave,
                     meaning: "(No definition found)",
                     sourceStoryId: story.id
                 )
@@ -948,8 +854,8 @@ struct ReaderView: View {
         } catch {
             // Save without definition on error
             let vocabItem = VocabularyItem(
-                word: wordInfo.surface,
-                reading: wordInfo.reading ?? wordInfo.surface,
+                word: wordToSave,
+                reading: wordInfo.reading ?? wordToSave,
                 meaning: "(Lookup failed)",
                 sourceStoryId: story.id
             )
@@ -1030,11 +936,9 @@ struct RecommendedStoryCard: View {
                 }
 
                 HStack(spacing: 8) {
-                    Text(story.metadata.genre)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                    JLPTBadge(level: story.metadata.jlptLevel)
 
-                    Text("\(story.metadata.wordCount) words")
+                    Text(story.metadata.genre)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -1060,6 +964,88 @@ struct RecommendedStoryCard: View {
                     .fontWeight(.bold)
                     .foregroundStyle(story.metadata.jlptLevel.color)
             }
+    }
+}
+
+/// Small toast notification for save confirmation
+struct SaveToast: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+            Text("Saved")
+                .font(.subheadline)
+                .fontWeight(.medium)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+        .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.1), radius: 8, x: 0, y: 4)
+    }
+}
+
+/// Native-style chapter row with tap feedback
+struct ChapterRow: View {
+    let index: Int
+    let title: String
+    let isCurrentChapter: Bool
+    let action: () -> Void
+
+    @State private var isPressed = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text("\(index + 1).")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, alignment: .leading)
+
+                Text(title)
+                    .lineLimit(1)
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                if isCurrentChapter {
+                    Image(systemName: "checkmark")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .contentShape(Rectangle())
+            .background(isPressed ? Color.primary.opacity(0.1) : Color.clear)
+        }
+        .buttonStyle(ChapterRowButtonStyle(isPressed: $isPressed))
+    }
+}
+
+/// Button style that tracks press state for highlight effect
+struct ChapterRowButtonStyle: ButtonStyle {
+    @Binding var isPressed: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .onChange(of: configuration.isPressed) { _, newValue in
+                isPressed = newValue
+            }
+    }
+}
+
+/// Preference key for tracking which chapter is currently visible in continuous scroll mode
+struct VisibleChapterPreferenceKey: PreferenceKey {
+    static var defaultValue: Int = -1
+
+    static func reduce(value: inout Int, nextValue: () -> Int) {
+        let next = nextValue()
+        // Keep the highest valid chapter index (the one closest to top)
+        if next >= 0 {
+            value = max(value, next)
+        }
     }
 }
 

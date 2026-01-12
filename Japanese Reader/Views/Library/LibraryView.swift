@@ -1,11 +1,23 @@
 import SwiftUI
 
+/// Sort order for library stories by difficulty
+enum SortOrder {
+    case easyToHard
+    case hardToEasy
+
+    mutating func toggle() {
+        self = self == .easyToHard ? .hardToEasy : .easyToHard
+    }
+}
+
 /// Main library view showing stories grouped by JLPT level
 struct LibraryView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.colorScheme) private var colorScheme
     @State private var selectedLevel: JLPTLevel? = nil
     @State private var searchText = ""
+    @State private var sortOrder: SortOrder = .easyToHard
+    @State private var showSettings = false
 
     /// Callback when a story is selected
     var onStorySelected: ((Story) -> Void)? = nil
@@ -28,20 +40,68 @@ struct LibraryView: View {
             result = result.filter { story in
                 story.metadata.title.localizedCaseInsensitiveContains(searchText) ||
                 (story.metadata.titleJapanese?.contains(searchText) ?? false) ||
-                story.metadata.summary.localizedCaseInsensitiveContains(searchText)
+                story.metadata.summary.localizedCaseInsensitiveContains(searchText) ||
+                titleReading(for: story).contains(searchText)
             }
         }
 
         return result
     }
 
+    /// Extract hiragana reading from title tokens for search
+    private func titleReading(for story: Story) -> String {
+        guard let tokens = story.metadata.titleTokens else { return "" }
+        return tokens.map { token in
+            if let parts = token.parts {
+                return parts.map { $0.reading ?? $0.text }.joined()
+            }
+            return token.surface
+        }.joined()
+    }
+
     /// Stories grouped by level for section display
     var storiesByLevel: [(level: JLPTLevel, stories: [Story])] {
         let grouped = Dictionary(grouping: filteredStories) { $0.metadata.jlptLevel }
-        return JLPTLevel.allCases.compactMap { level in
+        let levels = sortOrder == .easyToHard ? JLPTLevel.allCases : JLPTLevel.allCases.reversed()
+        return levels.compactMap { level in
             guard let stories = grouped[level], !stories.isEmpty else { return nil }
             return (level: level, stories: stories)
         }
+    }
+
+    /// Search suggestions based on story titles and genres
+    var searchSuggestions: [String] {
+        guard !searchText.isEmpty else { return [] }
+        let lowercasedSearch = searchText.lowercased()
+
+        var suggestions: Set<String> = []
+
+        for story in appState.stories {
+            // Match Japanese titles
+            if let japaneseTitle = story.metadata.titleJapanese,
+               japaneseTitle.contains(searchText) {
+                suggestions.insert(japaneseTitle)
+            }
+
+            // Match hiragana reading of title
+            let reading = titleReading(for: story)
+            if !reading.isEmpty && reading.contains(searchText),
+               let japaneseTitle = story.metadata.titleJapanese {
+                suggestions.insert(japaneseTitle)
+            }
+
+            // Match English titles
+            if story.metadata.title.lowercased().contains(lowercasedSearch) {
+                suggestions.insert(story.metadata.title)
+            }
+
+            // Match genres
+            if story.metadata.genre.lowercased().contains(lowercasedSearch) {
+                suggestions.insert(story.metadata.genre)
+            }
+        }
+
+        return Array(suggestions).sorted().prefix(5).map { $0 }
     }
 
     var body: some View {
@@ -56,10 +116,31 @@ struct LibraryView: View {
         }
         .navigationTitle("Library")
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search stories")
+        .searchSuggestions {
+            if !searchText.isEmpty {
+                ForEach(searchSuggestions, id: \.self) { suggestion in
+                    Label(suggestion, systemImage: "magnifyingglass")
+                        .searchCompletion(suggestion)
+                }
+            }
+        }
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                sortButton
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 levelFilterMenu
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+            }
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
         }
         .task {
             if appState.stories.isEmpty {
@@ -71,9 +152,12 @@ struct LibraryView: View {
     // MARK: - Subviews
 
     private var loadingView: some View {
-        VStack(spacing: 24) {
-            BookFlipAnimation()
-                .frame(width: 80, height: 80)
+        VStack(spacing: 20) {
+            Image(systemName: "book")
+                .font(.system(size: 60))
+                .foregroundStyle(secondaryTextColor)
+
+            ProgressView()
 
             Text("Loading stories...")
                 .font(.subheadline)
@@ -83,7 +167,7 @@ struct LibraryView: View {
 
     private var emptyView: some View {
         VStack(spacing: 20) {
-            Image(systemName: "book.closed")
+            Image(systemName: "book")
                 .font(.system(size: 60))
                 .foregroundStyle(secondaryTextColor)
 
@@ -113,9 +197,11 @@ struct LibraryView: View {
                             onStorySelected?(story)
                         } label: {
                             StoryCard(story: story)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .buttonStyle(.plain)
-                        .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
+                        .buttonStyle(PlainButtonStyle())
+                        .contentShape(Rectangle())
+                        .listRowSeparator(.hidden)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             let isCompleted = appState.progress(for: story.id)?.isCompleted ?? false
                             if isCompleted {
@@ -136,17 +222,18 @@ struct LibraryView: View {
                         }
                     }
                 } header: {
-                    levelHeader(levelGroup.level, count: levelGroup.stories.count)
+                    levelHeader(levelGroup.level)
                 }
             }
         }
-        .listStyle(.plain)
+        .listStyle(.insetGrouped)
     }
 
-    private func levelHeader(_ level: JLPTLevel, count: Int) -> some View {
+    private func levelHeader(_ level: JLPTLevel) -> some View {
         HStack {
             Text(level.displayName)
-                .font(.headline)
+                .font(.subheadline)
+                .fontWeight(.semibold)
                 .foregroundStyle(level.color)
 
             Text("- \(level.description)")
@@ -154,14 +241,17 @@ struct LibraryView: View {
                 .foregroundStyle(secondaryTextColor)
 
             Spacer()
-
-            Text("\(count) stories")
-                .font(.caption)
-                .foregroundStyle(secondaryTextColor)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 4)
-        .background(.background)
+    }
+
+    private var sortButton: some View {
+        Button {
+            sortOrder.toggle()
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(.body)
+                .imageScale(.medium)
+        }
     }
 
     private var levelFilterMenu: some View {

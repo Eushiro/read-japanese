@@ -48,21 +48,21 @@ struct MainTabView: View {
                     )
                     .offset(x: readerDragOffset)
                     .overlay(alignment: .leading) {
-                        // Edge swipe zone for dismiss (left 20pt of screen)
+                        // Edge swipe zone for dismiss (left 40pt of screen)
                         Color.clear
-                            .frame(width: 20)
+                            .frame(width: 40)
                             .contentShape(Rectangle())
-                            .gesture(
-                                DragGesture()
+                            .highPriorityGesture(
+                                DragGesture(minimumDistance: 10)
                                     .onChanged { value in
                                         if value.translation.width > 0 {
                                             readerDragOffset = value.translation.width
                                         }
                                     }
                                     .onEnded { value in
-                                        let threshold = geometry.size.width * 0.3
+                                        let threshold = geometry.size.width * 0.2
                                         let velocity = value.predictedEndTranslation.width - value.translation.width
-                                        if value.translation.width > threshold || velocity > 300 {
+                                        if value.translation.width > threshold || velocity > 200 {
                                             dismissReader()
                                         } else {
                                             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {

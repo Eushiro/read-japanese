@@ -10,6 +10,13 @@ struct FuriganaTextView: View {
     let showFurigana: Bool
     var selectedTokenId: String? = nil  // Unique token ID for highlighting (segment.id + index)
     var onWordTap: ((WordInfo, String, CGRect) -> Void)? = nil  // (wordInfo, tokenId, frame)
+    var onWordLongPress: ((WordInfo) -> Void)? = nil  // Long press to save
+
+    @AppStorage("fontName") private var fontName: String = "System"
+
+    private var selectedFont: JapaneseFont {
+        JapaneseFont(rawValue: fontName) ?? .system
+    }
 
     var body: some View {
         WrappingHStack(alignment: .bottom, spacing: 0) {
@@ -43,18 +50,18 @@ struct FuriganaTextView: View {
                 VStack(spacing: 0) {
                     // Always reserve furigana space for consistent layout
                     Text(" ")
-                        .font(.system(size: fontSize * 0.5))
+                        .font(selectedFont.font(size: fontSize * 0.5))
                         .opacity(0)
 
                     Text(token.surface)
-                        .font(.system(size: fontSize))
+                        .font(selectedFont.font(size: fontSize))
                 }
                 .fixedSize(horizontal: true, vertical: false)
 
                 // Add space after sentence-ending punctuation
                 if needsSpace {
                     Text(" ")
-                        .font(.system(size: fontSize * 0.3))
+                        .font(selectedFont.font(size: fontSize * 0.3))
                 }
             }
         } else {
@@ -64,9 +71,11 @@ struct FuriganaTextView: View {
             TokenPartsView(
                 token: token,
                 fontSize: fontSize,
+                fontName: fontName,
                 showFurigana: showFurigana,
                 isSelected: isSelected,
-                onTap: { onWordTap?(wordInfo, tokenId, $0) }
+                onTap: { onWordTap?(wordInfo, tokenId, $0) },
+                onLongPress: { onWordLongPress?(wordInfo) }
             )
         }
     }
@@ -83,8 +92,10 @@ struct FuriganaTextView: View {
                 wordInfo: wordInfo,
                 displayReading: showFurigana ? part.reading : nil,
                 fontSize: fontSize,
+                fontName: fontName,
                 isSelected: isSelected,
-                onTap: { info, frame in onWordTap?(info, partId, frame) }
+                onTap: { info, frame in onWordTap?(info, partId, frame) },
+                onLongPress: { info in onWordLongPress?(info) }
             )
         } else {
             // Non-tappable text (punctuation) with optional trailing space
@@ -93,18 +104,18 @@ struct FuriganaTextView: View {
                 VStack(spacing: 0) {
                     // Always reserve furigana space for consistent layout
                     Text(" ")
-                        .font(.system(size: fontSize * 0.5))
+                        .font(selectedFont.font(size: fontSize * 0.5))
                         .opacity(0)
 
                     Text(part.text)
-                        .font(.system(size: fontSize))
+                        .font(selectedFont.font(size: fontSize))
                 }
                 .fixedSize(horizontal: true, vertical: false)
 
                 // Add space after sentence-ending punctuation
                 if needsSpace {
                     Text(" ")
-                        .font(.system(size: fontSize * 0.3))
+                        .font(selectedFont.font(size: fontSize * 0.3))
                 }
             }
         }
@@ -217,16 +228,21 @@ struct FuriganaTextView: View {
 struct TokenPartsView: View {
     let token: Token
     let fontSize: CGFloat
+    let fontName: String
     let showFurigana: Bool
     var isSelected: Bool = false
     var onTap: ((CGRect) -> Void)?
+    var onLongPress: (() -> Void)?
 
     @State private var isPressed = false
     @Environment(\.colorScheme) private var colorScheme
 
+    private var selectedFont: JapaneseFont {
+        JapaneseFont(rawValue: fontName) ?? .system
+    }
+
     private var highlightColor: Color {
         guard isPressed || isSelected else { return Color.clear }
-        // Lighter in dark mode, darker in light mode for better visibility
         return colorScheme == .dark ? Color.blue.opacity(0.4) : Color.blue.opacity(0.25)
     }
 
@@ -237,33 +253,31 @@ struct TokenPartsView: View {
     var body: some View {
         HStack(spacing: 0) {
             if let parts = token.parts, !parts.isEmpty {
-                // Render each part with its own furigana
                 ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
                     VStack(spacing: 0) {
                         if showFurigana, let reading = part.reading {
                             Text(reading)
-                                .font(.system(size: fontSize * 0.5))
+                                .font(selectedFont.font(size: fontSize * 0.5))
                                 .foregroundStyle(furiganaColor)
                         } else {
                             Text(" ")
-                                .font(.system(size: fontSize * 0.5))
+                                .font(selectedFont.font(size: fontSize * 0.5))
                                 .opacity(0)
                         }
                         Text(part.text)
-                            .font(.system(size: fontSize))
+                            .font(selectedFont.font(size: fontSize))
                             .foregroundStyle(.primary)
                             .background(highlightColor)
                     }
                     .fixedSize(horizontal: true, vertical: false)
                 }
             } else {
-                // Fallback: render surface without furigana
                 VStack(spacing: 0) {
                     Text(" ")
-                        .font(.system(size: fontSize * 0.5))
+                        .font(selectedFont.font(size: fontSize * 0.5))
                         .opacity(0)
                     Text(token.surface)
-                        .font(.system(size: fontSize))
+                        .font(selectedFont.font(size: fontSize))
                         .foregroundStyle(.primary)
                         .background(highlightColor)
                 }
@@ -278,10 +292,11 @@ struct TokenPartsView: View {
                     .onTapGesture {
                         onTap?(geo.frame(in: .global))
                     }
-                    .onLongPressGesture(minimumDuration: 0.5, pressing: { pressing in
+                    .onLongPressGesture(minimumDuration: 0.3, pressing: { pressing in
                         isPressed = pressing
                     }, perform: {
-                        onTap?(geo.frame(in: .global))
+                        onLongPress?()
+                        isPressed = false
                     })
             }
         )
@@ -295,15 +310,20 @@ struct WordTapView: View {
     let wordInfo: WordInfo
     let displayReading: String?
     let fontSize: CGFloat
+    let fontName: String
     var isSelected: Bool = false
     var onTap: ((WordInfo, CGRect) -> Void)?
+    var onLongPress: ((WordInfo) -> Void)?
 
     @State private var isPressed = false
     @Environment(\.colorScheme) private var colorScheme
 
+    private var selectedFont: JapaneseFont {
+        JapaneseFont(rawValue: fontName) ?? .system
+    }
+
     private var highlightColor: Color {
         guard isPressed || isSelected else { return Color.clear }
-        // Lighter in dark mode, darker in light mode for better visibility
         return colorScheme == .dark ? Color.blue.opacity(0.4) : Color.blue.opacity(0.25)
     }
 
@@ -313,20 +333,18 @@ struct WordTapView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Furigana (or placeholder)
             if let reading = displayReading {
                 Text(reading)
-                    .font(.system(size: fontSize * 0.5))
+                    .font(selectedFont.font(size: fontSize * 0.5))
                     .foregroundStyle(furiganaColor)
             } else {
                 Text(" ")
-                    .font(.system(size: fontSize * 0.5))
+                    .font(selectedFont.font(size: fontSize * 0.5))
                     .opacity(0)
             }
 
-            // Main word (highlight only on text)
             Text(wordInfo.surface)
-                .font(.system(size: fontSize))
+                .font(selectedFont.font(size: fontSize))
                 .foregroundStyle(.primary)
                 .background(highlightColor)
         }
@@ -339,10 +357,11 @@ struct WordTapView: View {
                     .onTapGesture {
                         onTap?(wordInfo, geo.frame(in: .global))
                     }
-                    .onLongPressGesture(minimumDuration: 0.5, pressing: { pressing in
+                    .onLongPressGesture(minimumDuration: 0.3, pressing: { pressing in
                         isPressed = pressing
                     }, perform: {
-                        onTap?(wordInfo, geo.frame(in: .global))
+                        onLongPress?(wordInfo)
+                        isPressed = false
                     })
             }
         )

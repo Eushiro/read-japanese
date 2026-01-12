@@ -70,4 +70,15 @@ enum JLPTLevel: String, Codable, CaseIterable, Identifiable {
         case .n1: return 800...850
         }
     }
+
+    /// The next JLPT level up (harder level), nil if already at N1
+    var nextLevelUp: JLPTLevel? {
+        switch self {
+        case .n5: return .n4
+        case .n4: return .n3
+        case .n3: return .n2
+        case .n2: return .n1
+        case .n1: return nil
+        }
+    }
 }

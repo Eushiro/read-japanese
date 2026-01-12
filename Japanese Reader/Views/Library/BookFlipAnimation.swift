@@ -1,57 +1,61 @@
 import SwiftUI
 
-/// Animated book with flipping pages for loading states
+/// Animated open book with flipping pages for loading states
 struct BookFlipAnimation: View {
     @State private var currentPage = 0
+    @State private var isAnimating = false
     @Environment(\.colorScheme) private var colorScheme
 
-    private let pageCount = 3
-    private let flipDuration: Double = 0.6
-    private let delayBetweenFlips: Double = 0.15
-
-    private var bookColor: Color {
-        colorScheme == .dark ? Color(white: 0.25) : Color(white: 0.85)
-    }
+    private let pageCount = 4
+    private let flipDuration: Double = 0.5
 
     private var pageColor: Color {
-        colorScheme == .dark ? Color(white: 0.35) : Color.white
+        colorScheme == .dark ? Color(white: 0.9) : Color.white
+    }
+
+    private var pageShadowColor: Color {
+        colorScheme == .dark ? Color.black.opacity(0.3) : Color.black.opacity(0.1)
     }
 
     private var spineColor: Color {
-        colorScheme == .dark ? Color(white: 0.2) : Color(white: 0.7)
+        colorScheme == .dark ? Color(white: 0.3) : Color(white: 0.85)
     }
 
-    private var accentColor: Color {
-        .green.opacity(0.8)
+    private var lineColor: Color {
+        colorScheme == .dark ? Color(white: 0.6) : Color(white: 0.75)
     }
 
     var body: some View {
         GeometryReader { geometry in
             let size = min(geometry.size.width, geometry.size.height)
-            let bookWidth = size * 0.8
-            let bookHeight = size
-            let pageWidth = bookWidth * 0.45
+            let pageWidth = size * 0.42
+            let pageHeight = size * 0.7
 
             ZStack {
-                // Book spine/base
-                bookBase(width: bookWidth, height: bookHeight)
+                // Book spine (center)
+                Rectangle()
+                    .fill(spineColor)
+                    .frame(width: 6, height: pageHeight + 8)
+                    .shadow(color: pageShadowColor, radius: 2, x: 0, y: 2)
 
-                // Left side (closed pages)
-                leftPages(width: pageWidth, height: bookHeight * 0.9)
-                    .offset(x: -pageWidth * 0.5)
+                // Left page stack (already read pages)
+                leftPageStack(width: pageWidth, height: pageHeight)
+                    .offset(x: -pageWidth / 2 - 3)
 
-                // Right side (closed pages)
-                rightPages(width: pageWidth, height: bookHeight * 0.9)
-                    .offset(x: pageWidth * 0.5)
+                // Right page stack (pages to read)
+                rightPageStack(width: pageWidth, height: pageHeight)
+                    .offset(x: pageWidth / 2 + 3)
 
                 // Flipping pages
                 ForEach(0..<pageCount, id: \.self) { index in
-                    FlippingPage(
+                    OpenBookFlippingPage(
                         width: pageWidth,
-                        height: bookHeight * 0.9,
+                        height: pageHeight,
                         pageColor: pageColor,
+                        lineColor: lineColor,
+                        shadowColor: pageShadowColor,
                         isFlipping: currentPage > index,
-                        delay: Double(index) * delayBetweenFlips
+                        pageIndex: index
                     )
                 }
             }
@@ -63,55 +67,57 @@ struct BookFlipAnimation: View {
         }
     }
 
-    private func bookBase(width: CGFloat, height: CGFloat) -> some View {
+    private func leftPageStack(width: CGFloat, height: CGFloat) -> some View {
         ZStack {
-            // Book cover background
-            RoundedRectangle(cornerRadius: 4)
-                .fill(bookColor)
-                .frame(width: width, height: height)
+            // Stack of pages on the left (already flipped)
+            ForEach(0..<3, id: \.self) { i in
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(pageColor)
+                    .frame(width: width - CGFloat(i) * 3, height: height - CGFloat(i) * 2)
+                    .offset(x: -CGFloat(i) * 1.5, y: CGFloat(i) * 1)
+                    .shadow(color: pageShadowColor, radius: 1, x: -1, y: 1)
+            }
 
-            // Spine
-            Rectangle()
-                .fill(spineColor)
-                .frame(width: 4, height: height)
-
-            // Accent stripe on cover
-            RoundedRectangle(cornerRadius: 2)
-                .fill(accentColor)
-                .frame(width: width * 0.15, height: height * 0.6)
-                .offset(x: -width * 0.35)
+            // Text lines on top page
+            pageLines(width: width, height: height)
         }
     }
 
-    private func leftPages(width: CGFloat, height: CGFloat) -> some View {
+    private func rightPageStack(width: CGFloat, height: CGFloat) -> some View {
         ZStack {
-            ForEach(0..<4, id: \.self) { i in
+            // Stack of pages on the right (to be read)
+            ForEach(0..<3, id: \.self) { i in
                 RoundedRectangle(cornerRadius: 2)
                     .fill(pageColor)
-                    .frame(width: width - CGFloat(i) * 2, height: height - CGFloat(i) * 2)
-                    .shadow(color: .black.opacity(0.05), radius: 1, x: -1, y: 0)
+                    .frame(width: width - CGFloat(i) * 3, height: height - CGFloat(i) * 2)
+                    .offset(x: CGFloat(i) * 1.5, y: CGFloat(i) * 1)
+                    .shadow(color: pageShadowColor, radius: 1, x: 1, y: 1)
             }
+
+            // Text lines on top page
+            pageLines(width: width, height: height)
         }
     }
 
-    private func rightPages(width: CGFloat, height: CGFloat) -> some View {
-        ZStack {
-            ForEach(0..<4, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(pageColor)
-                    .frame(width: width - CGFloat(i) * 2, height: height - CGFloat(i) * 2)
-                    .shadow(color: .black.opacity(0.05), radius: 1, x: 1, y: 0)
+    private func pageLines(width: CGFloat, height: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: height * 0.08) {
+            ForEach(0..<6, id: \.self) { i in
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(lineColor)
+                    .frame(width: width * (i == 5 ? 0.5 : 0.75), height: 2)
             }
         }
+        .frame(width: width * 0.8, alignment: .leading)
     }
 
     private func startAnimation() {
-        // Reset and start the flip cycle
+        guard !isAnimating else { return }
+        isAnimating = true
         currentPage = 0
 
-        // Animate through pages
+        // Animate through pages with staggered timing
         for i in 1...pageCount {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * (flipDuration * 0.7)) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * flipDuration * 0.8) {
                 withAnimation(.easeInOut(duration: flipDuration)) {
                     currentPage = i
                 }
@@ -119,55 +125,58 @@ struct BookFlipAnimation: View {
         }
 
         // Reset and repeat
-        let totalDuration = Double(pageCount + 1) * flipDuration
+        let totalDuration = Double(pageCount + 2) * flipDuration
         DispatchQueue.main.asyncAfter(deadline: .now() + totalDuration) {
+            isAnimating = false
             currentPage = 0
             startAnimation()
         }
     }
 }
 
-/// A single page that flips from right to left
-struct FlippingPage: View {
+/// A single page that flips from right to left in an open book
+struct OpenBookFlippingPage: View {
     let width: CGFloat
     let height: CGFloat
     let pageColor: Color
+    let lineColor: Color
+    let shadowColor: Color
     let isFlipping: Bool
-    let delay: Double
+    let pageIndex: Int
 
     @State private var rotation: Double = 0
 
     var body: some View {
         ZStack {
-            // Page front (visible when not flipped)
+            // Page with text lines
             RoundedRectangle(cornerRadius: 2)
                 .fill(pageColor)
                 .frame(width: width, height: height)
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                .shadow(color: shadowColor, radius: 3, x: rotation > 90 ? -2 : 2, y: 2)
                 .overlay {
-                    // Page lines (text simulation)
-                    VStack(spacing: 6) {
-                        ForEach(0..<5, id: \.self) { _ in
+                    // Text simulation
+                    VStack(alignment: .leading, spacing: height * 0.08) {
+                        ForEach(0..<6, id: \.self) { i in
                             RoundedRectangle(cornerRadius: 1)
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(height: 2)
-                                .padding(.horizontal, 8)
+                                .fill(lineColor)
+                                .frame(width: width * (i == 5 ? 0.5 : 0.75), height: 2)
                         }
                     }
-                    .padding(.vertical, 12)
+                    .frame(width: width * 0.8, alignment: .leading)
+                    .opacity(rotation > 90 ? 0 : 1)
                 }
         }
         .rotation3DEffect(
             .degrees(rotation),
             axis: (x: 0, y: 1, z: 0),
             anchor: .leading,
-            perspective: 0.5
+            perspective: 0.4
         )
-        .offset(x: width * 0.5)
-        .opacity(rotation > 90 ? 0 : 1)
+        .offset(x: width / 2 + 3)
+        .zIndex(Double(10 - pageIndex) + (rotation > 90 ? -20 : 0))
         .onChange(of: isFlipping) { _, flipping in
             if flipping {
-                withAnimation(.easeInOut(duration: 0.5).delay(delay)) {
+                withAnimation(.easeInOut(duration: 0.5)) {
                     rotation = 180
                 }
             } else {

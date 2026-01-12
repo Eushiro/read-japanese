@@ -29,26 +29,26 @@ struct StoryCard: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .center, spacing: 12) {
             // Thumbnail
             StoryThumbnail(
                 imageURL: story.metadata.coverImageURL,
-                level: story.metadata.jlptLevel,
-                isCompleted: isCompleted
+                level: story.metadata.jlptLevel
             )
 
             // Content
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 // Title
                 VStack(alignment: .leading, spacing: 2) {
                     Text(story.metadata.titleJapanese ?? story.metadata.title)
                         .font(.headline)
+                        .foregroundStyle(isCompleted ? secondaryTextColor : .primary)
                         .lineLimit(1)
 
                     if showEnglishTitles, story.metadata.titleJapanese != nil {
                         Text(story.metadata.title)
                             .font(.caption)
-                            .foregroundStyle(secondaryTextColor)
+                            .foregroundStyle(tertiaryTextColor)
                             .lineLimit(1)
                     }
                 }
@@ -57,8 +57,8 @@ struct StoryCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(story.metadata.summaryJapanese ?? story.metadata.summary)
                         .font(.subheadline)
-                        .foregroundStyle(secondaryTextColor)
-                        .lineLimit(showEnglishDescriptions ? 1 : 2)
+                        .foregroundStyle(isCompleted ? tertiaryTextColor : secondaryTextColor)
+                        .lineLimit(2)
 
                     if showEnglishDescriptions, story.metadata.summaryJapanese != nil {
                         Text(story.metadata.summary)
@@ -68,18 +68,13 @@ struct StoryCard: View {
                     }
                 }
 
-                Spacer(minLength: 0)
-
                 // Metadata row
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     JLPTBadge(level: story.metadata.jlptLevel)
 
                     // Developer badges
                     if showTokenizerSource {
-                        // Model badge (always shows the AI model name)
                         ModelBadge(model: story.metadata.author)
-
-                        // Tokenizer badge (if tokenized with dictionary-based tokenizer)
                         if let source = story.metadata.tokenizerSource?.lowercased() {
                             if source == "janome" {
                                 TokenizerBadge(name: "Janome")
@@ -89,31 +84,18 @@ struct StoryCard: View {
                         }
                     }
 
+                    Text(story.metadata.genre)
+                        .font(.caption)
+                        .foregroundStyle(secondaryTextColor)
+
                     if story.hasChapters {
-                        Text("\(story.chapterCount) ch")
-                            .font(.caption2)
+                        Text("• \(story.chapterCount) ch")
+                            .font(.caption)
                             .foregroundStyle(secondaryTextColor)
                     }
 
-                    Text("•")
-                        .font(.caption2)
-                        .foregroundStyle(secondaryTextColor)
-
-                    Text("\(story.estimatedReadingTime) min")
-                        .font(.caption2)
-                        .foregroundStyle(secondaryTextColor)
-
-                    Spacer()
-
-                    // Author (developer option)
-                    if showAuthor {
-                        Text(story.metadata.author)
-                            .font(.caption2)
-                            .foregroundStyle(tertiaryTextColor)
-                    }
-
-                    Text(story.metadata.genre)
-                        .font(.caption2)
+                    Text("• \(story.estimatedReadingTime) min")
+                        .font(.caption)
                         .foregroundStyle(secondaryTextColor)
                 }
 
@@ -123,12 +105,24 @@ struct StoryCard: View {
                         .tint(story.metadata.jlptLevel.color)
                 }
             }
+
+            Spacer()
+
+            // Read badge on the right, centered
+            if isCompleted {
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.body)
+                    Text("Read")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                }
+                .foregroundStyle(.green)
+            }
         }
-        .padding(12)
-        .frame(height: 130)
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+        .opacity(isCompleted ? 0.5 : 1.0)
     }
 }
 
@@ -136,51 +130,34 @@ struct StoryCard: View {
 struct StoryThumbnail: View {
     let imageURL: String?
     let level: JLPTLevel
-    let isCompleted: Bool
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            // Image or placeholder
-            Group {
-                if let urlString = imageURL, let url = URL(string: urlString) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
-                            placeholderView
-                                .overlay {
-                                    ProgressView()
-                                        .scaleEffect(0.7)
-                                }
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        case .failure:
-                            placeholderView
-                        @unknown default:
-                            placeholderView
-                        }
+        Group {
+            if let urlString = imageURL, let url = URL(string: urlString) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        placeholderView
+                            .overlay {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                            }
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    case .failure:
+                        placeholderView
+                    @unknown default:
+                        placeholderView
                     }
-                } else {
-                    placeholderView
                 }
-            }
-            .frame(width: 85, height: 106)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-
-            // Completion badge
-            if isCompleted {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(.white)
-                    .background(
-                        Circle()
-                            .fill(.green)
-                            .frame(width: 20, height: 20)
-                    )
-                    .offset(x: 4, y: -4)
+            } else {
+                placeholderView
             }
         }
+        .frame(width: 85, height: 106)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private var placeholderView: some View {
