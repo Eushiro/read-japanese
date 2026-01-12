@@ -78,7 +78,7 @@ class StoryPipeline:
             logger.info("Step 2/4: Skipping tokenization")
 
         # Step 3: Generate cover image
-        if generate_image:
+        if generate_image and self.image_generator.is_configured:
             logger.info("Step 3/4: Generating cover image...")
             image_path = await self.image_generator.generate_cover(
                 story_title=story["metadata"]["title"],
@@ -90,7 +90,7 @@ class StoryPipeline:
             if image_path:
                 story["metadata"]["coverImageURL"] = image_path
         else:
-            logger.info("Step 3/4: Skipping image generation")
+            logger.info("Step 3/4: Skipping image generation (not configured or disabled)")
 
         # Step 4: Generate audio
         if generate_audio and self.audio_generator.is_configured:

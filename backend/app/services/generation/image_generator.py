@@ -1,13 +1,14 @@
 """
-Image generation service using OpenAI DALL-E 3
+Image generation service using Google Imagen 3
 Generates cover art for Japanese graded reader stories.
 """
 import os
 import logging
-import httpx
+import base64
 from pathlib import Path
 from typing import Optional
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
@@ -16,10 +17,20 @@ IMAGES_DIR = Path(__file__).parent.parent.parent / "static" / "images"
 
 
 class ImageGenerator:
-    """Generates cover images using DALL-E 3"""
+    """Generates cover images using Google Imagen 3"""
 
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        api_key = os.getenv("GOOGLE_AI_API_KEY")
+        if api_key:
+            self.client = genai.Client(api_key=api_key)
+        else:
+            self.client = None
+        self.model = "imagen-3.0-generate-002"  # Imagen 3 Fast
+
+    @property
+    def is_configured(self) -> bool:
+        """Check if API is configured"""
+        return self.client is not None
 
     async def generate_cover(
         self,
@@ -42,23 +53,35 @@ class ImageGenerator:
         Returns:
             Local path to the saved image, or None if generation failed
         """
+        if not self.is_configured:
+            logger.warning("Google AI API key not configured")
+            return None
+
         logger.info(f"Generating cover for: {story_title}")
 
         prompt = self._build_prompt(story_title, story_summary, genre, style)
 
         try:
-            response = await self.client.images.generate(
-                model="dall-e-3",
+            # Generate image using Imagen 3
+            response = self.client.models.generate_images(
+                model=self.model,
                 prompt=prompt,
-                size="1024x1024",
-                quality="standard",
-                n=1
+                config=types.GenerateImagesConfig(
+                    number_of_images=1,
+                    aspect_ratio="1:1",
+                    safety_filter_level="BLOCK_MEDIUM_AND_ABOVE"
+                )
             )
 
-            image_url = response.data[0].url
+            if not response.generated_images:
+                logger.error("No images generated")
+                return None
 
-            # Download and save the image
-            image_path = await self._download_image(image_url, story_title)
+            # Get the image data
+            image_data = response.generated_images[0].image.image_bytes
+
+            # Save the image
+            image_path = self._save_image(image_data, story_title)
             return image_path
 
         except Exception as e:
@@ -99,8 +122,8 @@ Requirements:
 - High quality, professional illustration
 - Culturally appropriate imagery"""
 
-    async def _download_image(self, url: str, title: str) -> str:
-        """Download image from URL and save locally"""
+    def _save_image(self, image_data: bytes, title: str) -> str:
+        """Save image bytes to file"""
         import re
         import uuid
 
@@ -114,12 +137,8 @@ Requirements:
 
         filepath = IMAGES_DIR / filename
 
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            response.raise_for_status()
-
-            with open(filepath, "wb") as f:
-                f.write(response.content)
+        with open(filepath, "wb") as f:
+            f.write(image_data)
 
         logger.info(f"Image saved to: {filepath}")
 
@@ -141,6 +160,9 @@ Requirements:
         Returns:
             Local path to the saved image
         """
+        if not self.is_configured:
+            return None
+
         style_descriptions = {
             "anime": "anime illustration style",
             "watercolor": "soft watercolor style",
@@ -160,26 +182,28 @@ Requirements:
 - Suitable for a language learning book"""
 
         try:
-            response = await self.client.images.generate(
-                model="dall-e-3",
+            response = self.client.models.generate_images(
+                model=self.model,
                 prompt=prompt,
-                size="1792x1024",
-                quality="standard",
-                n=1
+                config=types.GenerateImagesConfig(
+                    number_of_images=1,
+                    aspect_ratio="16:9",
+                    safety_filter_level="BLOCK_MEDIUM_AND_ABOVE"
+                )
             )
 
-            image_url = response.data[0].url
+            if not response.generated_images:
+                return None
+
+            image_data = response.generated_images[0].image.image_bytes
 
             import uuid
             filename = f"scene_{uuid.uuid4().hex[:12]}.png"
             IMAGES_DIR.mkdir(parents=True, exist_ok=True)
             filepath = IMAGES_DIR / filename
 
-            async with httpx.AsyncClient() as client:
-                resp = await client.get(image_url)
-                resp.raise_for_status()
-                with open(filepath, "wb") as f:
-                    f.write(resp.content)
+            with open(filepath, "wb") as f:
+                f.write(image_data)
 
             return f"/cdn/images/{filename}"
 
