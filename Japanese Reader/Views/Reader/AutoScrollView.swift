@@ -74,21 +74,16 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
         // Update scroll speed
         context.coordinator.currentSpeed = scrollSpeed
 
-        // Handle external scroll offset reset (e.g., when changing chapters)
-        if scrollOffset == 0 && scrollView.contentOffset.y > 0 {
-            // Only reset if we're not currently being dragged
-            if !scrollView.isDragging && !scrollView.isDecelerating {
-                scrollView.setContentOffset(.zero, animated: false)
-            }
-        }
-
         // Handle programmatic scroll to offset
         if let targetOffset = scrollToOffset {
-            let clampedOffset = min(targetOffset, max(0, scrollView.contentSize.height - scrollView.bounds.height))
-            scrollView.setContentOffset(CGPoint(x: 0, y: clampedOffset), animated: true)
-            // Clear the target after scrolling
-            DispatchQueue.main.async {
-                self.scrollToOffset = nil
+            // Wait for content size to be ready
+            if scrollView.contentSize.height > scrollView.bounds.height {
+                let clampedOffset = min(targetOffset, max(0, scrollView.contentSize.height - scrollView.bounds.height))
+                scrollView.setContentOffset(CGPoint(x: 0, y: clampedOffset), animated: true)
+                // Clear the target after animation completes
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    self.scrollToOffset = nil
+                }
             }
         }
 
@@ -156,6 +151,11 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
         @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
             switch gesture.state {
             case .began:
+                // Only start auto-scroll if there's room to scroll
+                guard let scrollView = scrollView,
+                      scrollView.contentSize.height > scrollView.bounds.height else {
+                    return
+                }
                 longPressActive = true
                 startAutoScroll()
                 DispatchQueue.main.async {
@@ -227,8 +227,8 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
             var newOffset = scrollView.contentOffset
             newOffset.y += scrollDelta
 
-            // Check if we've reached the bottom
-            let maxOffset = max(0, scrollView.contentSize.height - scrollView.bounds.height + scrollView.contentInset.bottom)
+            // Check if we've reached the bottom (same calculation as manual scrolling)
+            let maxOffset = max(0, scrollView.contentSize.height - scrollView.bounds.height)
             if newOffset.y >= maxOffset {
                 newOffset.y = maxOffset
                 scrollView.contentOffset = newOffset

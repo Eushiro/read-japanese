@@ -25,7 +25,8 @@ struct ReaderView: View {
     @State private var containerWidth: CGFloat = 0
     @State private var showAudioPlayer = false
     @State private var scrollToChapterIndex: Int? = nil  // For continuous mode scrolling
-    @State private var continuousScrollProxy: ScrollViewProxy? = nil
+    @State private var chapterHeights: [Int: CGFloat] = [:]  // Store chapter heights for offset calculation
+    @State private var scrollToTargetOffset: CGFloat? = nil  // For programmatic scrolling in continuous mode
 
     // Audio player
     @StateObject private var audioPlayer = AudioPlayerService()
@@ -84,12 +85,6 @@ struct ReaderView: View {
                 if chapterViewMode == "continuous" {
                     // Continuous mode - all chapters in one scrolling view
                     continuousScrollView(width: screenWidth)
-                        .overlay(alignment: .bottom) {
-                            if isAutoScrolling {
-                                autoScrollIndicator
-                                    .padding(.bottom, 100)
-                            }
-                        }
                         .onAppear {
                             containerWidth = screenWidth
                         }
@@ -109,12 +104,6 @@ struct ReaderView: View {
                         }
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
-                    .overlay(alignment: .bottom) {
-                        if isAutoScrolling {
-                            autoScrollIndicator
-                                .padding(.bottom, 100)
-                        }
-                    }
                     .onAppear {
                         containerWidth = screenWidth
                     }
@@ -134,7 +123,15 @@ struct ReaderView: View {
             nativeBottomToolbar
         }
         .background(Color(.systemBackground))
+        .overlay(alignment: .bottom) {
+            // Auto-scroll indicator (floating above footer)
+            if isAutoScrolling {
+                autoScrollIndicator
+                    .padding(.bottom, 70)  // Above the bottom toolbar
+            }
+        }
         .animation(.easeInOut(duration: 0.2), value: showAudioPlayer)
+        .animation(.easeInOut(duration: 0.15), value: isAutoScrolling)
         .navigationBarHidden(true)
         .sheet(isPresented: $showSettings) {
             SettingsView()
@@ -158,8 +155,10 @@ struct ReaderView: View {
                 onDismiss?()
                 return
             }
-            // Reset scroll offset when changing chapters (for swipe gestures)
-            scrollOffset = 0
+            // Reset scroll offset when changing chapters (only in paged mode)
+            if chapterViewMode == "paged" {
+                scrollOffset = 0
+            }
             // Auto-mark as read when reaching the last chapter
             if newIndex >= story.chapterCount - 1 && newIndex >= 0 {
                 appState.markCompleted(storyId: story.id)
@@ -388,6 +387,7 @@ struct ReaderView: View {
                         .background(.ultraThinMaterial)
                         .clipShape(Circle())
                 }
+                .id(currentChapterIndex)  // Force menu rebuild when chapter changes
                 .menuOrder(.fixed)
                 .foregroundStyle(.primary)
             }
@@ -448,68 +448,116 @@ struct ReaderView: View {
 
     /// Helper to create a continuous scroll view with all chapters
     private func continuousScrollView(width: CGFloat) -> some View {
-        ScrollViewReader { proxy in
-            ScrollView(.vertical, showsIndicators: true) {
-                VStack(alignment: .leading, spacing: 48) {
-                    ForEach(0..<max(story.chapterCount, 1), id: \.self) { chapterIndex in
-                        VStack(alignment: .leading, spacing: 24) {
-                            // Chapter number indicator for continuous mode
-                            if story.hasChapters {
-                                HStack(spacing: 8) {
-                                    Text("Chapter \(chapterIndex + 1)/\(story.chapterCount)")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundStyle(.secondary)
+        AutoScrollView(
+            isAutoScrolling: $isAutoScrolling,
+            scrollOffset: $scrollOffset,
+            scrollToOffset: $scrollToTargetOffset,
+            scrollSpeed: scrollSpeedPointsPerSecond
+        ) {
+            VStack(alignment: .leading, spacing: 48) {
+                ForEach(0..<max(story.chapterCount, 1), id: \.self) { chapterIndex in
+                    VStack(alignment: .leading, spacing: 24) {
+                        // Chapter number indicator for continuous mode
+                        if story.hasChapters {
+                            HStack(spacing: 8) {
+                                Text("Chapter \(chapterIndex + 1)/\(story.chapterCount)")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.secondary)
 
-                                    Rectangle()
-                                        .fill(Color.secondary.opacity(0.3))
-                                        .frame(height: 1)
-                                }
-                                .padding(.bottom, 4)
+                                Rectangle()
+                                    .fill(Color.secondary.opacity(0.3))
+                                    .frame(height: 1)
                             }
-
-                            chapterBodyContent(forChapterIndex: chapterIndex)
+                            .padding(.bottom, 4)
                         }
-                        .id("chapter_\(chapterIndex)")
-                        .background(
-                            GeometryReader { geo in
-                                Color.clear
-                                    .preference(
-                                        key: VisibleChapterPreferenceKey.self,
-                                        value: geo.frame(in: .named("continuousScroll")).minY < 100 ? chapterIndex : -1
-                                    )
-                            }
-                        )
+
+                        chapterBodyContent(forChapterIndex: chapterIndex)
                     }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
-                .padding(.bottom, 32)
-            }
-            .coordinateSpace(name: "continuousScroll")
-            .onPreferenceChange(VisibleChapterPreferenceKey.self) { visibleIndex in
-                if visibleIndex >= 0 && visibleIndex != currentChapterIndex {
-                    currentChapterIndex = visibleIndex
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear
+                                .onAppear {
+                                    // Capture chapter height on initial layout
+                                    chapterHeights[chapterIndex] = geo.size.height
+                                }
+                                .onChange(of: geo.size.height) { _, newHeight in
+                                    chapterHeights[chapterIndex] = newHeight
+                                }
+                        }
+                    )
                 }
             }
-            .onAppear {
-                continuousScrollProxy = proxy
-            }
-            .onChange(of: scrollToChapterIndex) { _, newIndex in
-                if let index = newIndex {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        proxy.scrollTo("chapter_\(index)", anchor: .top)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
+            .padding(.bottom, 32)
+        }
+        .onChange(of: scrollOffset) { _, newOffset in
+            // Update chapter marker on any scroll change
+            updateVisibleChapter(for: newOffset)
+        }
+        .onChange(of: scrollToChapterIndex) { _, newIndex in
+            if let index = newIndex {
+                // Small delay to ensure chapter heights are captured
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    // Calculate offset for the target chapter
+                    let targetOffset = calculateChapterOffset(for: index)
+                    if targetOffset > 0 || index == 0 {
+                        scrollToTargetOffset = targetOffset
+                        currentChapterIndex = index
                     }
-                    // Update current chapter immediately when navigating
-                    currentChapterIndex = index
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                        scrollToChapterIndex = nil
-                    }
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    scrollToChapterIndex = nil
                 }
             }
         }
         .frame(width: width)
+    }
+
+    /// Calculate the scroll offset for a given chapter index
+    private func calculateChapterOffset(for chapterIndex: Int) -> CGFloat {
+        let topPadding: CGFloat = 16
+        let chapterSpacing: CGFloat = 48
+        var offset = topPadding
+
+        for i in 0..<chapterIndex {
+            offset += (chapterHeights[i] ?? 0) + chapterSpacing
+        }
+
+        return offset
+    }
+
+    /// Update which chapter is currently visible based on scroll offset
+    private func updateVisibleChapter(for offset: CGFloat) {
+        // Don't update if we don't have chapter heights yet
+        guard !chapterHeights.isEmpty else { return }
+
+        let topPadding: CGFloat = 16
+        let chapterSpacing: CGFloat = 48
+        var cumulativeOffset = topPadding
+
+        for i in 0..<story.chapterCount {
+            // Skip if we don't have height for this chapter yet
+            guard let chapterHeight = chapterHeights[i], chapterHeight > 0 else { continue }
+            let chapterEnd = cumulativeOffset + chapterHeight
+
+            // Chapter is visible if scroll position is within its bounds
+            if offset < chapterEnd - 50 {  // 50pt threshold before switching
+                if currentChapterIndex != i {
+                    currentChapterIndex = i
+                }
+                return
+            }
+
+            cumulativeOffset = chapterEnd + chapterSpacing
+        }
+
+        // If scrolled past all chapters, set to last chapter
+        if currentChapterIndex != story.chapterCount - 1 {
+            currentChapterIndex = story.chapterCount - 1
+        }
     }
 
     /// Helper to create a scroll view for a specific chapter
@@ -1033,19 +1081,6 @@ struct ChapterRowButtonStyle: ButtonStyle {
             .onChange(of: configuration.isPressed) { _, newValue in
                 isPressed = newValue
             }
-    }
-}
-
-/// Preference key for tracking which chapter is currently visible in continuous scroll mode
-struct VisibleChapterPreferenceKey: PreferenceKey {
-    static var defaultValue: Int = -1
-
-    static func reduce(value: inout Int, nextValue: () -> Int) {
-        let next = nextValue()
-        // Keep the highest valid chapter index (the one closest to top)
-        if next >= 0 {
-            value = max(value, next)
-        }
     }
 }
 
