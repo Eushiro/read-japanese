@@ -883,31 +883,32 @@ struct ReaderView: View {
 
     // Chapter image view with async loading - adapts to image's natural aspect ratio
     private func chapterImageView(url: URL) -> some View {
-        AsyncImage(url: url) { phase in
-            switch phase {
-            case .empty:
-                // Loading placeholder with 1:1 default aspect ratio
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.secondarySystemBackground))
-                    .aspectRatio(1, contentMode: .fit)
-                    .frame(maxWidth: 400)
-                    .overlay {
-                        ProgressView()
-                    }
-            case .success(let image):
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: 400)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            case .failure:
-                // Error state - show nothing or placeholder
-                EmptyView()
-            @unknown default:
-                EmptyView()
+        HStack {
+            Spacer()
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty:
+                    // Loading placeholder
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.secondarySystemBackground))
+                        .frame(width: 200, height: 200)
+                        .overlay {
+                            ProgressView()
+                        }
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: 400)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                case .failure:
+                    EmptyView()
+                @unknown default:
+                    EmptyView()
+                }
             }
+            Spacer()
         }
-        .frame(maxWidth: .infinity, alignment: .center)
     }
 
 
