@@ -80,15 +80,17 @@ class StoryPipeline:
         # Step 3: Generate cover image
         if generate_image and self.image_generator.is_configured:
             logger.info("Step 3/4: Generating cover image...")
-            image_path = await self.image_generator.generate_cover(
+            image_result = await self.image_generator.generate_cover(
                 story_title=story["metadata"]["title"],
                 story_summary=story["metadata"]["summary"],
                 genre=genre,
                 jlpt_level=jlpt_level,
                 style=image_style
             )
-            if image_path:
-                story["metadata"]["coverImageURL"] = image_path
+            if image_result:
+                story["metadata"]["coverImageURL"] = image_result["url"]
+                story["metadata"]["coverImageModel"] = image_result["model"]
+                story["metadata"]["coverImageModelName"] = image_result["model_name"]
         else:
             logger.info("Step 3/4: Skipping image generation (not configured or disabled)")
 

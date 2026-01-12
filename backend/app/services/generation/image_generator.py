@@ -84,7 +84,11 @@ class ImageGenerator:
                     image_data = part.inline_data.data
                     # Save the image
                     image_path = self._save_image(base64.b64decode(image_data), story_title)
-                    return image_path
+                    return {
+                        "url": image_path,
+                        "model": self.model,
+                        "model_name": "Nano Banana"
+                    }
 
             logger.error("No image data in response")
             return None
