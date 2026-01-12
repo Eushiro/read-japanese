@@ -3,6 +3,9 @@ import SwiftUI
 /// Standalone settings view accessible from Library and Vocabulary pages
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var authService: AuthService
+    @State private var showingLogoutConfirmation = false
+    @State private var showingDeleteConfirmation = false
 
     // Reader settings (stored in AppStorage)
     @AppStorage("autoScrollSpeed") private var autoScrollSpeed: Double = 300.0
@@ -321,6 +324,104 @@ struct SettingsView: View {
                 }
                 #endif
 
+                // Account section
+                Section {
+                    if authService.isAuthenticated, let user = authService.currentUser {
+                        // User info
+                        HStack(spacing: 12) {
+                            // Profile image or placeholder
+                            if let photoURL = user.photoURL {
+                                AsyncImage(url: photoURL) { image in
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                } placeholder: {
+                                    Image(systemName: "person.circle.fill")
+                                        .font(.system(size: 40))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .frame(width: 44, height: 44)
+                                .clipShape(Circle())
+                            } else {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(user.displayName ?? "User")
+                                    .font(.headline)
+                                if let email = user.email {
+                                    Text(email)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+
+                        // Sign out button
+                        Button(role: .destructive) {
+                            showingLogoutConfirmation = true
+                        } label: {
+                            Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+
+                        // Delete account button
+                        Button(role: .destructive) {
+                            showingDeleteConfirmation = true
+                        } label: {
+                            Label("Delete Account", systemImage: "trash")
+                                .foregroundStyle(.red)
+                        }
+                    } else {
+                        // Not signed in
+                        HStack {
+                            Image(systemName: "person.circle")
+                                .font(.system(size: 40))
+                                .foregroundStyle(.secondary)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Guest")
+                                    .font(.headline)
+                                Text("Sign in to sync your progress")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+
+                        Button {
+                            Task {
+                                await authService.signInWithGoogle()
+                            }
+                        } label: {
+                            Label("Sign in with Google", systemImage: "person.badge.plus")
+                        }
+                    }
+                } header: {
+                    Text("Account")
+                }
+                .confirmationDialog("Sign Out", isPresented: $showingLogoutConfirmation) {
+                    Button("Sign Out", role: .destructive) {
+                        authService.signOut()
+                        AnalyticsService.shared.track(.logoutCompleted)
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Are you sure you want to sign out?")
+                }
+                .confirmationDialog("Delete Account", isPresented: $showingDeleteConfirmation) {
+                    Button("Delete Account", role: .destructive) {
+                        Task {
+                            await authService.deleteAccount()
+                        }
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This will permanently delete your account. This action cannot be undone.")
+                }
+
                 // About section
                 Section {
                     HStack {
@@ -360,4 +461,5 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
+        .environmentObject(AuthService.shared)
 }

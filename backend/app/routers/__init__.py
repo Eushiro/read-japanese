@@ -1,2 +1,2 @@
 # Routers
-from . import health, stories, tokenize
+from . import health, stories, tokenize, generate

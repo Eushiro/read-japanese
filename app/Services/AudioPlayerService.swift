@@ -52,7 +52,18 @@ class AudioPlayerService: ObservableObject {
         isLoaded = false
 
         do {
-            let asset = AVURLAsset(url: audioURL)
+            // Try to get cached local URL, download if needed
+            let localURL: URL
+            if audioURL.isFileURL {
+                localURL = audioURL
+            } else if let cachedURL = await AudioCacheService.shared.localURL(for: audioURL) {
+                localURL = cachedURL
+            } else {
+                // Fall back to streaming if cache fails
+                localURL = audioURL
+            }
+
+            let asset = AVURLAsset(url: localURL)
             let duration = try await asset.load(.duration)
             self.duration = CMTimeGetSeconds(duration)
 

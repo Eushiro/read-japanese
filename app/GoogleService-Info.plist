@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>1084363010320-hd672djfhmkfpsif2psm4b4ibj8n5n72.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.1084363010320-hd672djfhmkfpsif2psm4b4ibj8n5n72</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBfKCZ5jBV8HQRyL3EgfItHhSKLrYwSUZ4</string>
+	<key>GCM_SENDER_ID</key>
+	<string>1084363010320</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>HiroAyettey.Read-Japanese</string>
+	<key>PROJECT_ID</key>
+	<string>read-japanese</string>
+	<key>STORAGE_BUCKET</key>
+	<string>read-japanese.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1084363010320:ios:0bb98c181e6cc5c116b595</string>
+</dict>
+</plist>

@@ -56,7 +56,19 @@ class StoryService {
     /// Base delay between retries (uses exponential backoff)
     private let retryDelay: TimeInterval = 1.0
 
-    private init() {}
+    /// Cache expiration time (24 hours)
+    private let cacheMaxAge: TimeInterval = 24 * 60 * 60
+
+    private init() {
+        // Load disk cache on init
+        Task {
+            if let diskCached = await StoryCacheService.shared.loadCachedStories() {
+                await MainActor.run {
+                    self.cachedStories = diskCached
+                }
+            }
+        }
+    }
 
     // MARK: - Public Methods
 
@@ -154,6 +166,9 @@ class StoryService {
     /// Clear cached stories (useful for pull-to-refresh)
     func clearCache() {
         cachedStories = []
+        Task {
+            await StoryCacheService.shared.clearCache()
+        }
     }
 
     // MARK: - Private Methods
@@ -201,6 +216,9 @@ class StoryService {
                 }
                 return story1.metadata.title < story2.metadata.title
             }
+
+            // Save to disk cache
+            await StoryCacheService.shared.saveStories(sortedStories)
 
             return .success(sortedStories)
         } catch let error as URLError {

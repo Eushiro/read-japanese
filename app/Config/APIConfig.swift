@@ -5,20 +5,15 @@ enum APIConfig {
     // MARK: - Production URL
     // TODO: Update this with your Render URL after deployment
     // Format: https://your-app-name.onrender.com
-    private static let productionURL = "https://japanese-reader-api.onrender.com"
+    private static let productionURL = "https://read-japanese.onrender.com"
 
     /// Base URL for the API
     /// - In DEBUG builds: Uses localhost for simulator development
     /// - In RELEASE builds: Uses the production server URL
     static var baseURL: String {
-        #if DEBUG
-        // Development - for simulator use
-        // Change this to your local IP if testing on a physical device
-        // Example for physical device: "http://192.168.1.100:8000"
-        return "http://localhost:8000"
-        #else
+        // Using production server for all builds
+        // To use local server, change to: "http://localhost:8000"
         return productionURL
-        #endif
     }
 
     /// Request timeout interval in seconds

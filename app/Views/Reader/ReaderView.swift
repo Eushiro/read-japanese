@@ -141,11 +141,23 @@ struct ReaderView: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showSettings) {
             SettingsView()
+                .environmentObject(AuthService.shared)
+        }
+        .onAppear {
+            AnalyticsService.shared.track(.readerOpened, properties: [
+                "story_id": story.id,
+                "jlpt_level": story.metadata.jlptLevel.rawValue
+            ])
+            AnalyticsService.shared.trackScreen("Reader")
         }
         .onDisappear {
             isAutoScrolling = false
             saveProgress()
             audioPlayer.cleanup()
+            AnalyticsService.shared.track(.readerClosed, properties: [
+                "story_id": story.id,
+                "chapters_read": currentChapterIndex + 1
+            ])
         }
         .onChange(of: story.id) { _, _ in
             // Reset to first chapter when a new story is selected

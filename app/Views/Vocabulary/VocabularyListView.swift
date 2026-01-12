@@ -165,9 +165,11 @@ struct VocabularyListView: View {
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
+                .environmentObject(AuthService.shared)
         }
         .onAppear {
             appState.loadVocabularyFromStorage()
+            AnalyticsService.shared.trackScreen("Vocabulary")
         }
         .onDisappear {
             if isEditMode {

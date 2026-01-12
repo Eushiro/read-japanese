@@ -6,8 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1F83357B2F14C3A9004ED216 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 1F83357A2F14C3A9004ED216 /* PostHog */; };
+		1F83357E2F14C41C004ED216 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 1F83357D2F14C41C004ED216 /* FirebaseAuth */; };
+		1F8335802F14C41C004ED216 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1F83357F2F14C41C004ED216 /* FirebaseCore */; };
+		1F8335872F14C726004ED216 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 1F8335862F14C726004ED216 /* GoogleSignIn */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		1F6239212F0DDFFC0010EDA5 /* Read Japanese.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Read Japanese.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1F8335882F14C7ED004ED216 /* Read-Japanese-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Read-Japanese-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -23,6 +31,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1F83357B2F14C3A9004ED216 /* PostHog in Frameworks */,
+				1F8335872F14C726004ED216 /* GoogleSignIn in Frameworks */,
+				1F8335802F14C41C004ED216 /* FirebaseCore in Frameworks */,
+				1F83357E2F14C41C004ED216 /* FirebaseAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32,6 +44,7 @@
 		1F6239182F0DDFFC0010EDA5 = {
 			isa = PBXGroup;
 			children = (
+				1F8335882F14C7ED004ED216 /* Read-Japanese-Info.plist */,
 				1F6239232F0DDFFC0010EDA5 /* app */,
 				1F6239222F0DDFFC0010EDA5 /* Products */,
 			);
@@ -65,6 +78,10 @@
 			);
 			name = "Read Japanese";
 			packageProductDependencies = (
+				1F83357A2F14C3A9004ED216 /* PostHog */,
+				1F83357D2F14C41C004ED216 /* FirebaseAuth */,
+				1F83357F2F14C41C004ED216 /* FirebaseCore */,
+				1F8335862F14C726004ED216 /* GoogleSignIn */,
 			);
 			productName = "Read Japanese";
 			productReference = 1F6239212F0DDFFC0010EDA5 /* Read Japanese.app */;
@@ -94,6 +111,11 @@
 			);
 			mainGroup = 1F6239182F0DDFFC0010EDA5;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1F8335792F14C3A9004ED216 /* XCRemoteSwiftPackageReference "posthog-ios" */,
+				1F83357C2F14C41C004ED216 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				1F8335852F14C726004ED216 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1F6239222F0DDFFC0010EDA5 /* Products */;
 			projectDirPath = "";
@@ -251,8 +273,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C87F942JNS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Read-Japanese-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Read Japanese";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -283,8 +307,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C87F942JNS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Read-Japanese-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Read Japanese";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -330,6 +356,56 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1F8335792F14C3A9004ED216 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.37.2;
+			};
+		};
+		1F83357C2F14C41C004ED216 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.7.0;
+			};
+		};
+		1F8335852F14C726004ED216 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1F83357A2F14C3A9004ED216 /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F8335792F14C3A9004ED216 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
+		};
+		1F83357D2F14C41C004ED216 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F83357C2F14C41C004ED216 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		1F83357F2F14C41C004ED216 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F83357C2F14C41C004ED216 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		1F8335862F14C726004ED216 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F8335852F14C726004ED216 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1F6239192F0DDFFC0010EDA5 /* Project object */;
 }

@@ -104,6 +104,7 @@ struct LibraryView: View {
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
+                .environmentObject(AuthService.shared)
         }
         .task {
             if appState.stories.isEmpty {
@@ -112,6 +113,15 @@ struct LibraryView: View {
         }
         .refreshable {
             await appState.refreshStories()
+        }
+        .onAppear {
+            AnalyticsService.shared.trackScreen("Library")
+        }
+        .onChange(of: selectedLevel) { _, newValue in
+            AnalyticsService.shared.track(.storyFilterChanged, properties: [
+                "filter_type": "level",
+                "level": newValue?.rawValue ?? "all"
+            ])
         }
         .overlay(alignment: .top) {
             // Show banner when using cached data
@@ -227,6 +237,11 @@ struct LibraryView: View {
                 Section {
                     ForEach(levelGroup.stories) { story in
                         Button {
+                            AnalyticsService.shared.track(.storySelected, properties: [
+                                "story_id": story.id,
+                                "jlpt_level": story.metadata.jlptLevel.rawValue,
+                                "title": story.metadata.title
+                            ])
                             onStorySelected?(story)
                         } label: {
                             StoryCard(story: story)
