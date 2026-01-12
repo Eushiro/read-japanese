@@ -252,39 +252,49 @@ struct TokenPartsView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            if let parts = token.parts, !parts.isEmpty {
-                ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
-                    VStack(spacing: 0) {
-                        if showFurigana, let reading = part.reading {
-                            Text(reading)
-                                .font(selectedFont.font(size: fontSize * 0.5))
-                                .foregroundStyle(furiganaColor)
-                        } else {
-                            Text(" ")
-                                .font(selectedFont.font(size: fontSize * 0.5))
-                                .opacity(0)
+        VStack(spacing: 0) {
+            // Furigana row (only when showing)
+            if showFurigana {
+                HStack(spacing: 0) {
+                    if let parts = token.parts, !parts.isEmpty {
+                        ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
+                            if let reading = part.reading {
+                                Text(reading)
+                                    .font(selectedFont.font(size: fontSize * 0.5))
+                                    .foregroundStyle(furiganaColor)
+                            } else {
+                                Text(String(repeating: " ", count: part.text.count))
+                                    .font(selectedFont.font(size: fontSize * 0.5))
+                                    .opacity(0)
+                            }
                         }
+                    } else {
+                        Text(" ")
+                            .font(selectedFont.font(size: fontSize * 0.5))
+                            .opacity(0)
+                    }
+                }
+                .background(highlightColor)
+            }
+
+            // Main text row
+            HStack(spacing: 0) {
+                if let parts = token.parts, !parts.isEmpty {
+                    ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
                         Text(part.text)
                             .font(selectedFont.font(size: fontSize))
                             .foregroundStyle(.primary)
                     }
-                    .fixedSize(horizontal: true, vertical: false)
-                }
-            } else {
-                VStack(spacing: 0) {
-                    Text(" ")
-                        .font(selectedFont.font(size: fontSize * 0.5))
-                        .opacity(0)
+                } else {
                     Text(token.surface)
                         .font(selectedFont.font(size: fontSize))
                         .foregroundStyle(.primary)
                 }
-                .fixedSize(horizontal: true, vertical: false)
             }
+            .background(highlightColor)
+            .cornerRadius(4)
         }
-        .background(highlightColor)
-        .cornerRadius(4)
+        .fixedSize(horizontal: true, vertical: false)
         .background(
             GeometryReader { geo in
                 Color.clear
@@ -338,23 +348,22 @@ struct WordTapView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Furigana (only when showing)
             if let reading = displayReading {
                 Text(reading)
                     .font(selectedFont.font(size: fontSize * 0.5))
                     .foregroundStyle(furiganaColor)
-            } else {
-                Text(" ")
-                    .font(selectedFont.font(size: fontSize * 0.5))
-                    .opacity(0)
+                    .background(highlightColor)
             }
 
+            // Main text
             Text(wordInfo.surface)
                 .font(selectedFont.font(size: fontSize))
                 .foregroundStyle(.primary)
+                .background(highlightColor)
+                .cornerRadius(4)
         }
-        .background(highlightColor)
         .fixedSize(horizontal: true, vertical: false)
-        .cornerRadius(4)
         .background(
             GeometryReader { geo in
                 Color.clear

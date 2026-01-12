@@ -648,7 +648,7 @@ struct ReaderView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 24)
-            .padding(.top, 16)
+            .padding(.top, 4)
             .padding(.bottom, 32)
         }
         .onChange(of: scrollOffset) { _, newOffset in
@@ -728,7 +728,7 @@ struct ReaderView: View {
             chapterBodyContent(forChapterIndex: index)
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 24)
-                .padding(.top, 16)
+                .padding(.top, 4)
                 .padding(.bottom, 32)
         }
         .frame(width: width)
@@ -786,46 +786,44 @@ struct ReaderView: View {
         let segments = story.segments(forChapter: chapterIndex)
         let chapter: Chapter? = story.hasChapters ? story.chapters?[safe: chapterIndex] : nil
         let isLast = chapterIndex >= story.chapterCount - 1
-        let hasChapterImage = chapter?.imageURL != nil
 
         return VStack(alignment: .leading, spacing: 24) {
-            // Chapter header (title + optional image)
+            // Chapter header (title only)
             if let chapter = chapter {
-                VStack(alignment: .leading, spacing: hasChapterImage ? 16 : 8) {
-                    // Chapter title
-                    VStack(alignment: .leading, spacing: 4) {
-                        // Chapter title with furigana if available
-                        if let titleTokens = chapter.titleTokens, !titleTokens.isEmpty {
-                            chapterTitleWithFurigana(tokens: titleTokens, chapterIndex: chapterIndex)
-                        } else if let titleJapanese = chapter.titleJapanese {
-                            // Make plain Japanese title tappable
-                            tappableChapterTitle(titleJapanese, chapterIndex: chapterIndex)
-                        } else {
-                            Text(chapter.title)
-                                .font(.title3)
-                                .fontWeight(.semibold)
-                        }
-
-                        // English chapter title (if setting enabled)
-                        if showEnglishTitles, chapter.titleJapanese != nil {
-                            Text(chapter.title)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
+                VStack(alignment: .leading, spacing: 4) {
+                    // Chapter title with furigana if available
+                    if let titleTokens = chapter.titleTokens, !titleTokens.isEmpty {
+                        chapterTitleWithFurigana(tokens: titleTokens, chapterIndex: chapterIndex)
+                    } else if let titleJapanese = chapter.titleJapanese {
+                        // Make plain Japanese title tappable
+                        tappableChapterTitle(titleJapanese, chapterIndex: chapterIndex)
+                    } else {
+                        Text(chapter.title)
+                            .font(.title3)
+                            .fontWeight(.semibold)
                     }
 
-                    // Chapter image
-                    if let imageURL = chapter.imageURL, let url = URL(string: imageURL) {
-                        chapterImageView(url: url)
+                    // English chapter title (if setting enabled)
+                    if showEnglishTitles, chapter.titleJapanese != nil {
+                        Text(chapter.title)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
                 }
-                .padding(.bottom, hasChapterImage ? 0 : -8)
             }
 
             // Story segments for this chapter
             ForEach(Array(segments.enumerated()), id: \.element.id) { index, segment in
                 segmentView(segment, index: index)
                     .id(segment.id)
+            }
+
+            // Chapter image at end of chapter (before completion section)
+            if let chapter = chapter,
+               let imageURL = chapter.imageURL,
+               let url = URL(string: imageURL) {
+                chapterImageView(url: url)
+                    .padding(.top, 8)
             }
 
             // Completion section (only on last chapter or single-chapter stories)
@@ -885,33 +883,31 @@ struct ReaderView: View {
 
     // Chapter image view with async loading - adapts to image's natural aspect ratio
     private func chapterImageView(url: URL) -> some View {
-        HStack {
-            Spacer()
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .empty:
-                    // Loading placeholder with 1:1 default aspect ratio
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.secondarySystemBackground))
-                        .aspectRatio(1, contentMode: .fit)
-                        .overlay {
-                            ProgressView()
-                        }
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                case .failure:
-                    // Error state - show nothing or placeholder
-                    EmptyView()
-                @unknown default:
-                    EmptyView()
-                }
+        AsyncImage(url: url) { phase in
+            switch phase {
+            case .empty:
+                // Loading placeholder with 1:1 default aspect ratio
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.secondarySystemBackground))
+                    .aspectRatio(1, contentMode: .fit)
+                    .frame(maxWidth: 400)
+                    .overlay {
+                        ProgressView()
+                    }
+            case .success(let image):
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 400)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            case .failure:
+                // Error state - show nothing or placeholder
+                EmptyView()
+            @unknown default:
+                EmptyView()
             }
-            .frame(maxWidth: 200)
-            Spacer()
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
 

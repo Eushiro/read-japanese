@@ -131,7 +131,7 @@ struct StoryCard: View {
     }
 }
 
-/// Thumbnail view for story cards - adapts to image's natural aspect ratio
+/// Thumbnail view for story cards - consistent size with fill
 struct StoryThumbnail: View {
     let imageURL: String?
     let level: JLPTLevel
@@ -150,7 +150,7 @@ struct StoryThumbnail: View {
                     case .success(let image):
                         image
                             .resizable()
-                            .aspectRatio(contentMode: .fit)
+                            .aspectRatio(contentMode: .fill)
                     case .failure:
                         placeholderView
                     @unknown default:
@@ -162,6 +162,7 @@ struct StoryThumbnail: View {
             }
         }
         .frame(width: 85, height: 106)
+        .clipped()
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 

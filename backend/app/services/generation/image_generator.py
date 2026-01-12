@@ -43,7 +43,7 @@ class ImageGenerator:
         genre: str,
         jlpt_level: str,
         style: str = "anime",
-        aspect_ratio: str = "3:4"
+        aspect_ratio: str = "4:5"
     ) -> Optional[dict]:
         """
         Generate a cover image for a story.
@@ -54,7 +54,7 @@ class ImageGenerator:
             genre: Story genre
             jlpt_level: JLPT level (for style hints)
             style: Art style ("anime", "watercolor", "minimalist", "realistic")
-            aspect_ratio: Image aspect ratio (default "3:4" for book covers)
+            aspect_ratio: Image aspect ratio (default "4:5" to match thumbnail)
                 Options: "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
 
         Returns:
@@ -199,7 +199,8 @@ Requirements:
         chapter_content: str,
         story_title: str,
         genre: str,
-        style: str = "anime"
+        style: str = "anime",
+        aspect_ratio: str = "16:9"
     ) -> Optional[dict]:
         """
         Generate an illustration for a story chapter.
@@ -210,6 +211,7 @@ Requirements:
             story_title: The overall story title
             genre: Story genre
             style: Art style
+            aspect_ratio: Image aspect ratio (default "16:9" for landscape chapter images)
 
         Returns:
             Dict with url, model, model_name, or None if generation failed
@@ -218,7 +220,7 @@ Requirements:
             logger.warning("Google AI API key not configured")
             return None
 
-        logger.info(f"Generating chapter image for: {chapter_title}")
+        logger.info(f"Generating chapter image for: {chapter_title} (aspect ratio: {aspect_ratio})")
 
         style_descriptions = {
             "anime": "in beautiful anime/manga art style, soft colors, detailed backgrounds",
@@ -240,7 +242,7 @@ Scene: {chapter_content}
 Style: {style_desc}
 
 Requirements:
-- Wide landscape composition (16:9 aspect ratio)
+- Landscape composition
 - No text or letters in the image
 - Evoke the mood and setting of this chapter
 - Suitable for a Japanese language learning book
@@ -252,7 +254,10 @@ Requirements:
                 model=self.model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                    response_modalities=["IMAGE", "TEXT"]
+                    response_modalities=["IMAGE", "TEXT"],
+                    image_config=types.ImageConfig(
+                        aspect_ratio=aspect_ratio
+                    )
                 )
             )
 
