@@ -15,29 +15,20 @@ logger = logging.getLogger(__name__)
 # Directory for storing generated images
 IMAGES_DIR = Path(__file__).parent.parent.parent / "static" / "images"
 
-# Available Nano Banana models
-NANO_BANANA_MODELS = {
-    "fast": "gemini-2.5-flash-image",      # Nano Banana - fast, 1024px
-    "pro": "gemini-3-pro-image-preview"     # Nano Banana Pro - high quality, up to 4K
-}
+# Nano Banana model (Gemini 2.5 Flash Image)
+NANO_BANANA_MODEL = "gemini-2.5-flash-image"
 
 
 class ImageGenerator:
     """Generates cover images using Google Nano Banana (Gemini Image)"""
 
-    def __init__(self, model: str = "fast"):
-        """
-        Initialize the image generator.
-
-        Args:
-            model: "fast" for Nano Banana, "pro" for Nano Banana Pro
-        """
+    def __init__(self):
         api_key = os.getenv("GOOGLE_AI_API_KEY")
         if api_key:
             self.client = genai.Client(api_key=api_key)
         else:
             self.client = None
-        self.model = NANO_BANANA_MODELS.get(model, NANO_BANANA_MODELS["fast"])
+        self.model = NANO_BANANA_MODEL
 
     @property
     def is_configured(self) -> bool:
@@ -227,18 +218,3 @@ Requirements:
             logger.error(f"Scene image generation failed: {e}")
             return None
 
-    @staticmethod
-    def get_available_models() -> dict:
-        """Get available Nano Banana models"""
-        return {
-            "fast": {
-                "id": NANO_BANANA_MODELS["fast"],
-                "name": "Nano Banana",
-                "description": "Fast generation, 1024px resolution"
-            },
-            "pro": {
-                "id": NANO_BANANA_MODELS["pro"],
-                "name": "Nano Banana Pro",
-                "description": "High quality, up to 4K resolution, better text rendering"
-            }
-        }
