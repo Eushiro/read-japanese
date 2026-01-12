@@ -648,7 +648,7 @@ struct ReaderView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 24)
-            .padding(.top, 4)
+            .padding(.top, 16)
             .padding(.bottom, 32)
         }
         .onChange(of: scrollOffset) { _, newOffset in
@@ -728,7 +728,7 @@ struct ReaderView: View {
             chapterBodyContent(forChapterIndex: index)
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 24)
-                .padding(.top, 4)
+                .padding(.top, 16)
                 .padding(.bottom, 32)
         }
         .frame(width: width)
