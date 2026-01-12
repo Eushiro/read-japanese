@@ -1,5 +1,5 @@
 """
-Image generation service using Google Imagen 3
+Image generation service using Google Nano Banana (Gemini Image)
 Generates cover art for Japanese graded reader stories.
 """
 import os
@@ -15,17 +15,29 @@ logger = logging.getLogger(__name__)
 # Directory for storing generated images
 IMAGES_DIR = Path(__file__).parent.parent.parent / "static" / "images"
 
+# Available Nano Banana models
+NANO_BANANA_MODELS = {
+    "fast": "gemini-2.5-flash-image",      # Nano Banana - fast, 1024px
+    "pro": "gemini-3-pro-image-preview"     # Nano Banana Pro - high quality, up to 4K
+}
+
 
 class ImageGenerator:
-    """Generates cover images using Google Imagen 3"""
+    """Generates cover images using Google Nano Banana (Gemini Image)"""
 
-    def __init__(self):
+    def __init__(self, model: str = "fast"):
+        """
+        Initialize the image generator.
+
+        Args:
+            model: "fast" for Nano Banana, "pro" for Nano Banana Pro
+        """
         api_key = os.getenv("GOOGLE_AI_API_KEY")
         if api_key:
             self.client = genai.Client(api_key=api_key)
         else:
             self.client = None
-        self.model = "imagen-3.0-generate-002"  # Imagen 3 Fast
+        self.model = NANO_BANANA_MODELS.get(model, NANO_BANANA_MODELS["fast"])
 
     @property
     def is_configured(self) -> bool:
@@ -62,27 +74,29 @@ class ImageGenerator:
         prompt = self._build_prompt(story_title, story_summary, genre, style)
 
         try:
-            # Generate image using Imagen 3
-            response = self.client.models.generate_images(
+            # Generate image using Nano Banana (Gemini Image)
+            response = self.client.models.generate_content(
                 model=self.model,
-                prompt=prompt,
-                config=types.GenerateImagesConfig(
-                    number_of_images=1,
-                    aspect_ratio="1:1",
-                    safety_filter_level="BLOCK_MEDIUM_AND_ABOVE"
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_modalities=["IMAGE", "TEXT"]
                 )
             )
 
-            if not response.generated_images:
+            # Extract image from response
+            if not response.candidates or not response.candidates[0].content.parts:
                 logger.error("No images generated")
                 return None
 
-            # Get the image data
-            image_data = response.generated_images[0].image.image_bytes
+            for part in response.candidates[0].content.parts:
+                if hasattr(part, 'inline_data') and part.inline_data:
+                    image_data = part.inline_data.data
+                    # Save the image
+                    image_path = self._save_image(base64.b64decode(image_data), story_title)
+                    return image_path
 
-            # Save the image
-            image_path = self._save_image(image_data, story_title)
-            return image_path
+            logger.error("No image data in response")
+            return None
 
         except Exception as e:
             logger.error(f"Image generation failed: {e}")
@@ -182,31 +196,49 @@ Requirements:
 - Suitable for a language learning book"""
 
         try:
-            response = self.client.models.generate_images(
+            response = self.client.models.generate_content(
                 model=self.model,
-                prompt=prompt,
-                config=types.GenerateImagesConfig(
-                    number_of_images=1,
-                    aspect_ratio="16:9",
-                    safety_filter_level="BLOCK_MEDIUM_AND_ABOVE"
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_modalities=["IMAGE", "TEXT"]
                 )
             )
 
-            if not response.generated_images:
+            if not response.candidates or not response.candidates[0].content.parts:
                 return None
 
-            image_data = response.generated_images[0].image.image_bytes
+            for part in response.candidates[0].content.parts:
+                if hasattr(part, 'inline_data') and part.inline_data:
+                    image_data = base64.b64decode(part.inline_data.data)
 
-            import uuid
-            filename = f"scene_{uuid.uuid4().hex[:12]}.png"
-            IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-            filepath = IMAGES_DIR / filename
+                    import uuid
+                    filename = f"scene_{uuid.uuid4().hex[:12]}.png"
+                    IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+                    filepath = IMAGES_DIR / filename
 
-            with open(filepath, "wb") as f:
-                f.write(image_data)
+                    with open(filepath, "wb") as f:
+                        f.write(image_data)
 
-            return f"/cdn/images/{filename}"
+                    return f"/cdn/images/{filename}"
+
+            return None
 
         except Exception as e:
             logger.error(f"Scene image generation failed: {e}")
             return None
+
+    @staticmethod
+    def get_available_models() -> dict:
+        """Get available Nano Banana models"""
+        return {
+            "fast": {
+                "id": NANO_BANANA_MODELS["fast"],
+                "name": "Nano Banana",
+                "description": "Fast generation, 1024px resolution"
+            },
+            "pro": {
+                "id": NANO_BANANA_MODELS["pro"],
+                "name": "Nano Banana Pro",
+                "description": "High quality, up to 4K resolution, better text rendering"
+            }
+        }
