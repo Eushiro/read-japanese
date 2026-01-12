@@ -35,13 +35,17 @@ struct LibraryView: View {
             result = result.filter { $0.metadata.jlptLevel == level }
         }
 
-        // Filter by search text
+        // Filter by search text (supports romaji input)
         if !searchText.isEmpty {
             result = result.filter { story in
+                // Title matches (English)
                 story.metadata.title.localizedCaseInsensitiveContains(searchText) ||
-                (story.metadata.titleJapanese?.contains(searchText) ?? false) ||
+                // Japanese title matches (direct or romaji converted)
+                (story.metadata.titleJapanese?.matchesJapaneseSearch(searchText) ?? false) ||
+                // Summary matches
                 story.metadata.summary.localizedCaseInsensitiveContains(searchText) ||
-                titleReading(for: story).contains(searchText)
+                // Title reading matches (hiragana or romaji)
+                titleReading(for: story).matchesJapaneseSearch(searchText)
             }
         }
 
@@ -69,45 +73,12 @@ struct LibraryView: View {
         }
     }
 
-    /// Search suggestions based on story titles and genres
-    var searchSuggestions: [String] {
-        guard !searchText.isEmpty else { return [] }
-        let lowercasedSearch = searchText.lowercased()
-
-        var suggestions: Set<String> = []
-
-        for story in appState.stories {
-            // Match Japanese titles
-            if let japaneseTitle = story.metadata.titleJapanese,
-               japaneseTitle.contains(searchText) {
-                suggestions.insert(japaneseTitle)
-            }
-
-            // Match hiragana reading of title
-            let reading = titleReading(for: story)
-            if !reading.isEmpty && reading.contains(searchText),
-               let japaneseTitle = story.metadata.titleJapanese {
-                suggestions.insert(japaneseTitle)
-            }
-
-            // Match English titles
-            if story.metadata.title.lowercased().contains(lowercasedSearch) {
-                suggestions.insert(story.metadata.title)
-            }
-
-            // Match genres
-            if story.metadata.genre.lowercased().contains(lowercasedSearch) {
-                suggestions.insert(story.metadata.genre)
-            }
-        }
-
-        return Array(suggestions).sorted().prefix(5).map { $0 }
-    }
-
     var body: some View {
         Group {
-            if appState.isLoadingStories {
+            if appState.isLoadingStories && appState.stories.isEmpty {
                 loadingView
+            } else if let error = appState.storiesError, appState.stories.isEmpty {
+                errorView(error)
             } else if appState.stories.isEmpty {
                 emptyView
             } else {
@@ -116,14 +87,6 @@ struct LibraryView: View {
         }
         .navigationTitle("Library")
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search stories")
-        .searchSuggestions {
-            if !searchText.isEmpty {
-                ForEach(searchSuggestions, id: \.self) { suggestion in
-                    Label(suggestion, systemImage: "magnifyingglass")
-                        .searchCompletion(suggestion)
-                }
-            }
-        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 sortButton
@@ -145,6 +108,25 @@ struct LibraryView: View {
         .task {
             if appState.stories.isEmpty {
                 await appState.loadStories()
+            }
+        }
+        .refreshable {
+            await appState.refreshStories()
+        }
+        .overlay(alignment: .top) {
+            // Show banner when using cached data
+            if appState.isUsingCachedData {
+                HStack {
+                    Image(systemName: "wifi.slash")
+                    Text("Offline - Showing cached data")
+                }
+                .font(.caption)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.orange)
+                .cornerRadius(8)
+                .padding(.top, 8)
             }
         }
     }
@@ -186,6 +168,57 @@ struct LibraryView: View {
             .buttonStyle(.borderedProminent)
         }
         .padding()
+    }
+
+    private func errorView(_ error: NetworkError) -> some View {
+        VStack(spacing: 20) {
+            Image(systemName: errorIcon(for: error))
+                .font(.system(size: 60))
+                .foregroundStyle(.red.opacity(0.7))
+
+            Text(errorTitle(for: error))
+                .font(.title2)
+
+            Text(error.localizedDescription)
+                .foregroundStyle(secondaryTextColor)
+                .multilineTextAlignment(.center)
+
+            Button {
+                Task {
+                    await appState.loadStories(forceRefresh: true)
+                }
+            } label: {
+                Label("Try Again", systemImage: "arrow.clockwise")
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+    }
+
+    private func errorIcon(for error: NetworkError) -> String {
+        switch error {
+        case .noConnection:
+            return "wifi.slash"
+        case .timeout:
+            return "clock.badge.exclamationmark"
+        case .serverError:
+            return "server.rack"
+        default:
+            return "exclamationmark.triangle"
+        }
+    }
+
+    private func errorTitle(for error: NetworkError) -> String {
+        switch error {
+        case .noConnection:
+            return "No Connection"
+        case .timeout:
+            return "Request Timed Out"
+        case .serverError:
+            return "Server Error"
+        default:
+            return "Something Went Wrong"
+        }
     }
 
     private var storyListView: some View {

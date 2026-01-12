@@ -1,0 +1,33 @@
+# Render Blueprint - Infrastructure as Code
+# Deploy with: Connect your GitHub repo to Render and it will auto-detect this file
+
+services:
+  # Main API service
+  - type: web
+    name: japanese-reader-api
+    runtime: python
+    region: oregon  # Change to: frankfurt, singapore, ohio, etc.
+    plan: free      # Options: free, starter ($7/mo), standard ($25/mo)
+
+    # Build settings
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers 2
+
+    # Health check
+    healthCheckPath: /health
+
+    # Environment variables
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: ALLOWED_ORIGINS
+        sync: false  # Set manually in Render dashboard for security
+      - key: RATE_LIMIT
+        value: 100/minute
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+    # Auto-deploy on push to main branch
+    autoDeploy: true

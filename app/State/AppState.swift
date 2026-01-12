@@ -9,17 +9,14 @@ class AppState: ObservableObject {
 
     @Published var stories: [Story] = []
     @Published var isLoadingStories = false
-    @Published var storiesError: Error?
+    @Published var storiesError: NetworkError?
+    @Published var isUsingCachedData = false  // True if showing stale data due to network error
 
     // Reading progress tracking
     @Published var readingProgress: [String: ReadingProgress] = [:]
 
     // Vocabulary items
     @Published var vocabularyItems: [VocabularyItem] = []
-
-    // MARK: - Services
-
-    let storyService = StoryService()
 
     // MARK: - Initialization
 
@@ -46,14 +43,34 @@ class AppState: ObservableObject {
 
     // MARK: - Story Loading
 
-    /// Load all stories from JSON files
-    func loadStories() async {
+    /// Load all stories from the backend API
+    /// - Parameter forceRefresh: If true, bypasses cache and fetches fresh data
+    func loadStories(forceRefresh: Bool = false) async {
         isLoadingStories = true
         storiesError = nil
+        isUsingCachedData = false
 
-        stories = await storyService.loadAllStories()
+        let result = await StoryService.shared.loadAllStories(forceRefresh: forceRefresh)
+
+        switch result {
+        case .success(let loadedStories):
+            stories = loadedStories
+            storiesError = nil
+        case .cached(let cachedStories):
+            stories = cachedStories
+            isUsingCachedData = true
+            // Don't set error - we have data to show
+        case .failure(let error):
+            storiesError = error
+            // Keep existing stories if we have them
+        }
 
         isLoadingStories = false
+    }
+
+    /// Refresh stories (force fetch from server)
+    func refreshStories() async {
+        await loadStories(forceRefresh: true)
     }
 
     /// Get stories for a specific level

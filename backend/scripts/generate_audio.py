@@ -1,22 +1,18 @@
 #!/usr/bin/env python3
 """
-Generate audio files and timing data for Japanese Reader stories.
-
-This script uses a TTS service to generate audio for each segment
-and records timing information for sentence synchronization.
+Generate audio for stories using Eleven Labs TTS API.
 
 Usage:
-    python scripts/generate_audio.py [story_id] [--all]
+    export ELEVEN_LABS_API_KEY=your_api_key
+    python scripts/generate_audio.py [--level N5] [--story story_id] [--list]
 
-Options:
-    story_id    Generate audio for a specific story
-    --all       Generate audio for all stories without audio
-    --list      List stories and their audio status
+Environment Variables:
+    ELEVEN_LABS_API_KEY - Your Eleven Labs API key (required)
 """
 
-import argparse
-import json
 import os
+import json
+import asyncio
 import sys
 from pathlib import Path
 from typing import Optional
@@ -24,8 +20,35 @@ from typing import Optional
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+try:
+    import httpx
+except ImportError:
+    print("Error: httpx not installed. Run: pip install httpx")
+    sys.exit(1)
+
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Configuration
+ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY")
+ELEVEN_LABS_BASE_URL = "https://api.elevenlabs.io/v1"
+
+# Japanese voice - Makoto from Eleven Labs Voice Library
+# Other Japanese voices: Eiko (female): GR4dBIFsYe57TxyrHKXz, Akari (female): EkK6wL8GaH8IgBZTTDGJ
+VOICE_ID = "6wdSVG3CMjPfAthsnMv9"  # Makoto - Japanese male, narrative/story
+VOICE_NAME = "Makoto"
+MODEL_ID = "eleven_multilingual_v2"
+
+# Paths
 STORIES_DIR = Path(__file__).parent.parent / "app" / "data" / "stories"
 AUDIO_DIR = Path(__file__).parent.parent / "app" / "static" / "audio"
+
+
+def extract_text_from_tokens(tokens: list) -> str:
+    """Extract plain text from token list by joining surface forms."""
+    return "".join(token.get("surface", "") for token in tokens)
 
 
 def load_story(story_path: Path) -> dict:
@@ -47,6 +70,37 @@ def get_segment_text(segment: dict) -> str:
     return segment.get("text", "")
 
 
+def extract_story_text(story_data: dict) -> list[dict]:
+    """
+    Extract all text segments from a story.
+    Returns list of {id, text} dicts for each segment.
+    """
+    segments = []
+
+    # Handle chapter-based stories
+    if "chapters" in story_data and story_data["chapters"]:
+        for chapter in story_data["chapters"]:
+            for segment in chapter.get("content", []):
+                text = get_segment_text(segment)
+                if text.strip():
+                    segments.append({
+                        "id": segment["id"],
+                        "text": text
+                    })
+
+    # Handle non-chapter stories
+    elif "content" in story_data:
+        for segment in story_data["content"]:
+            text = get_segment_text(segment)
+            if text.strip():
+                segments.append({
+                    "id": segment["id"],
+                    "text": text
+                })
+
+    return segments
+
+
 def list_stories() -> None:
     """List all stories and their audio status."""
     print("\nStories in library:")
@@ -55,145 +109,170 @@ def list_stories() -> None:
     for story_file in sorted(STORIES_DIR.glob("*.json")):
         story = load_story(story_file)
         story_id = story["id"]
+        level = story["metadata"].get("jlptLevel", "?")
         title = story["metadata"].get("titleJapanese") or story["metadata"]["title"]
         has_audio = story["metadata"].get("audioURL") is not None
 
-        status = "[AUDIO]" if has_audio else "[NO AUDIO]"
-        print(f"{status} {story_id}: {title}")
+        status = "[AUDIO]" if has_audio else "[     ]"
+        print(f"{status} [{level}] {story_id}: {title}")
 
     print("-" * 60)
 
 
-def generate_audio_for_story(story_path: Path, tts_engine: str = "macos") -> bool:
-    """
-    Generate audio for a story.
-
-    Args:
-        story_path: Path to the story JSON file
-        tts_engine: Which TTS engine to use ('macos', 'google', 'azure')
-
-    Returns:
-        True if successful, False otherwise
-    """
-    story = load_story(story_path)
-    story_id = story["id"]
-
-    print(f"\nGenerating audio for: {story_id}")
-    print(f"Title: {story['metadata'].get('titleJapanese') or story['metadata']['title']}")
-
-    # Create audio directory
-    story_audio_dir = AUDIO_DIR / story_id
-    story_audio_dir.mkdir(parents=True, exist_ok=True)
-
-    # Get all segments (handle both chapter-based and content-based stories)
-    all_segments = []
-    if story.get("chapters"):
-        for chapter_idx, chapter in enumerate(story["chapters"]):
-            segments = chapter.get("segments") or chapter.get("content", [])
-            for seg in segments:
-                all_segments.append((chapter_idx, seg))
-    elif story.get("content"):
-        for seg in story["content"]:
-            all_segments.append((0, seg))
-
-    if not all_segments:
-        print(f"  No segments found in story")
+async def generate_audio(text: str, output_path: Path) -> bool:
+    """Generate audio using Eleven Labs API."""
+    if not ELEVEN_LABS_API_KEY:
+        print("Error: ELEVEN_LABS_API_KEY not set")
         return False
 
-    print(f"  Found {len(all_segments)} segments")
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": ELEVEN_LABS_API_KEY
+    }
 
-    # For now, just show what we would generate
-    # Full TTS implementation would go here
+    data = {
+        "text": text,
+        "model_id": MODEL_ID,
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.75,
+            "style": 0.0,
+            "use_speaker_boost": True
+        }
+    }
 
-    current_time = 0.0
-    timing_data = []
+    url = f"{ELEVEN_LABS_BASE_URL}/text-to-speech/{VOICE_ID}"
 
-    for chapter_idx, segment in all_segments:
-        text = get_segment_text(segment)
-        if not text.strip():
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        try:
+            print(f"  Calling Eleven Labs API...")
+            response = await client.post(url, headers=headers, json=data)
+            if response.status_code == 200:
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, "wb") as f:
+                    f.write(response.content)
+                return True
+            else:
+                print(f"  Error generating audio: {response.status_code}")
+                print(f"  Response: {response.text}")
+                return False
+        except Exception as e:
+            print(f"  Error: {e}")
+            return False
+
+
+async def generate_story_audio(story_id: str) -> bool:
+    """Generate audio for all segments in a story."""
+    # Find the story file
+    story_file = None
+    for f in STORIES_DIR.glob("*.json"):
+        data = load_story(f)
+        if data.get("id") == story_id:
+            story_file = f
+            break
+
+    if not story_file:
+        print(f"Story not found: {story_id}")
+        return False
+
+    print(f"\nProcessing: {story_file.name}")
+    story_data = load_story(story_file)
+
+    segments = extract_story_text(story_data)
+    if not segments:
+        print("  No segments found")
+        return False
+
+    # Create combined text for full story audio
+    full_text = "\n".join(seg["text"] for seg in segments)
+
+    print(f"  Segments: {len(segments)}")
+    print(f"  Total characters: {len(full_text)}")
+
+    # Generate full story audio
+    audio_filename = f"{story_id}.mp3"
+    audio_path = AUDIO_DIR / audio_filename
+
+    success = await generate_audio(full_text, audio_path)
+
+    if success:
+        # Update story JSON with audio URL and voice info
+        story_data["metadata"]["audioURL"] = f"/cdn/audio/{audio_filename}"
+        story_data["metadata"]["audioVoiceId"] = VOICE_ID
+        story_data["metadata"]["audioVoiceName"] = VOICE_NAME
+        save_story(story_file, story_data)
+
+        print(f"  Audio saved: {audio_path}")
+        print(f"  Story updated with audio URL and voice: {VOICE_NAME}")
+        return True
+
+    return False
+
+
+async def generate_all_audio(level: Optional[str] = None):
+    """Generate audio for all stories (optionally filtered by level)."""
+    if not ELEVEN_LABS_API_KEY:
+        print("Error: ELEVEN_LABS_API_KEY environment variable not set")
+        print("Please set it with: export ELEVEN_LABS_API_KEY=your_key")
+        return
+
+    AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
+    for story_file in sorted(STORIES_DIR.glob("*.json")):
+        story_data = load_story(story_file)
+
+        # Filter by level if specified
+        story_level = story_data["metadata"].get("jlptLevel", "").upper()
+        if level and story_level != level.upper():
             continue
 
-        # Estimate duration based on character count
-        # Japanese speech is roughly 5-7 characters per second
-        char_count = len(text)
-        estimated_duration = char_count / 5.0
+        story_id = story_data.get("id")
+        if not story_id:
+            continue
 
-        segment_timing = {
-            "segment_id": segment["id"],
-            "chapter_index": chapter_idx,
-            "text": text,
-            "start_time": current_time,
-            "end_time": current_time + estimated_duration
-        }
-        timing_data.append(segment_timing)
+        # Skip if audio already exists
+        if story_data["metadata"].get("audioURL"):
+            print(f"Skipping {story_id} - audio already exists")
+            continue
 
-        print(f"  [{segment['id']}] {current_time:.2f}s - {current_time + estimated_duration:.2f}s: {text[:30]}...")
+        await generate_story_audio(story_id)
 
-        current_time += estimated_duration + 0.3  # Add small pause between segments
-
-    total_duration = current_time
-    print(f"\n  Total estimated duration: {total_duration:.1f} seconds")
-
-    # Save timing data
-    timing_file = story_audio_dir / "timing.json"
-    with open(timing_file, "w", encoding="utf-8") as f:
-        json.dump(timing_data, f, ensure_ascii=False, indent=2)
-    print(f"  Saved timing data to: {timing_file}")
-
-    # Note: Actual audio generation would happen here
-    # For demo purposes, we'll just create the timing data
-
-    print("\n  NOTE: Audio file generation requires a TTS service.")
-    print("  Supported options:")
-    print("    - macOS 'say' command (Japanese voice required)")
-    print("    - Google Cloud TTS (requires API key)")
-    print("    - Azure Cognitive Services (requires API key)")
-
-    return True
+        # Rate limit - wait between requests
+        print("  Waiting 2 seconds before next request...")
+        await asyncio.sleep(2)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate audio for Japanese Reader stories")
-    parser.add_argument("story_id", nargs="?", help="Story ID to generate audio for")
-    parser.add_argument("--all", action="store_true", help="Generate audio for all stories")
-    parser.add_argument("--list", action="store_true", help="List stories and their audio status")
-    parser.add_argument("--engine", choices=["macos", "google", "azure"], default="macos",
-                       help="TTS engine to use (default: macos)")
+    import argparse
 
+    parser = argparse.ArgumentParser(description="Generate audio for stories using Eleven Labs")
+    parser.add_argument("--level", help="Filter by JLPT level (e.g., N5)")
+    parser.add_argument("--story", help="Generate audio for specific story ID")
+    parser.add_argument("--list", action="store_true", help="List stories and their audio status")
     args = parser.parse_args()
 
     if args.list:
         list_stories()
         return
 
-    if args.all:
-        print("Generating audio for all stories...")
-        for story_file in sorted(STORIES_DIR.glob("*.json")):
-            story = load_story(story_file)
-            if not story["metadata"].get("audioURL"):
-                generate_audio_for_story(story_file, args.engine)
+    if not ELEVEN_LABS_API_KEY:
+        print("=" * 60)
+        print("ELEVEN_LABS_API_KEY not set!")
+        print()
+        print("To generate audio, set your API key:")
+        print("  export ELEVEN_LABS_API_KEY=your_api_key_here")
+        print()
+        print("You can also add it to backend/.env file")
+        print("=" * 60)
+        print()
+        list_stories()
         return
 
-    if args.story_id:
-        # Find the story file
-        story_file = None
-        for f in STORIES_DIR.glob("*.json"):
-            story = load_story(f)
-            if story["id"] == args.story_id:
-                story_file = f
-                break
-
-        if not story_file:
-            print(f"Error: Story '{args.story_id}' not found")
-            sys.exit(1)
-
-        generate_audio_for_story(story_file, args.engine)
-        return
-
-    # No arguments - show help
-    parser.print_help()
-    print("\n")
-    list_stories()
+    if args.story:
+        asyncio.run(generate_story_audio(args.story))
+    else:
+        asyncio.run(generate_all_audio(args.level))
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1F6239232F0DDFFC0010EDA5 /* Read Japanese */ = {
+		1F6239232F0DDFFC0010EDA5 /* app */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = app;
 			sourceTree = "<group>";
@@ -32,7 +32,7 @@
 		1F6239182F0DDFFC0010EDA5 = {
 			isa = PBXGroup;
 			children = (
-				1F6239232F0DDFFC0010EDA5 /* Read Japanese */,
+				1F6239232F0DDFFC0010EDA5 /* app */,
 				1F6239222F0DDFFC0010EDA5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -61,7 +61,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				1F6239232F0DDFFC0010EDA5 /* Read Japanese */,
+				1F6239232F0DDFFC0010EDA5 /* app */,
 			);
 			name = "Read Japanese";
 			packageProductDependencies = (

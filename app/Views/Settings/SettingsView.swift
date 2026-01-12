@@ -304,7 +304,8 @@ struct SettingsView: View {
                     Text("Shows English translations beneath Japanese text throughout the app.")
                 }
 
-                // Developer section
+                #if DEBUG
+                // Developer section (only visible in debug builds)
                 Section {
                     Toggle(isOn: $showTokenizerSource) {
                         Label("Tokenizer Source", systemImage: "wrench.and.screwdriver")
@@ -318,6 +319,7 @@ struct SettingsView: View {
                 } footer: {
                     Text("Shows technical information about how stories were processed.")
                 }
+                #endif
 
                 // About section
                 Section {

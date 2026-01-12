@@ -235,6 +235,7 @@ struct TokenPartsView: View {
     var onLongPress: (() -> Void)?
 
     @State private var isPressed = false
+    @State private var viewFrame: CGRect = .zero
     @Environment(\.colorScheme) private var colorScheme
 
     private var selectedFont: JapaneseFont {
@@ -267,7 +268,6 @@ struct TokenPartsView: View {
                         Text(part.text)
                             .font(selectedFont.font(size: fontSize))
                             .foregroundStyle(.primary)
-                            .background(highlightColor)
                     }
                     .fixedSize(horizontal: true, vertical: false)
                 }
@@ -279,27 +279,31 @@ struct TokenPartsView: View {
                     Text(token.surface)
                         .font(selectedFont.font(size: fontSize))
                         .foregroundStyle(.primary)
-                        .background(highlightColor)
                 }
                 .fixedSize(horizontal: true, vertical: false)
             }
         }
+        .background(highlightColor)
         .cornerRadius(4)
-        .overlay(
+        .background(
             GeometryReader { geo in
                 Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        onTap?(geo.frame(in: .global))
+                    .onAppear { viewFrame = geo.frame(in: .global) }
+                    .onChange(of: geo.frame(in: .global)) { _, newFrame in
+                        viewFrame = newFrame
                     }
-                    .onLongPressGesture(minimumDuration: 0.3, pressing: { pressing in
-                        isPressed = pressing
-                    }, perform: {
-                        onLongPress?()
-                        isPressed = false
-                    })
             }
         )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap?(viewFrame)
+        }
+        .onLongPressGesture(minimumDuration: 0.3, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {
+            onLongPress?()
+            isPressed = false
+        })
     }
 }
 
@@ -316,6 +320,7 @@ struct WordTapView: View {
     var onLongPress: ((WordInfo) -> Void)?
 
     @State private var isPressed = false
+    @State private var viewFrame: CGRect = .zero
     @Environment(\.colorScheme) private var colorScheme
 
     private var selectedFont: JapaneseFont {
@@ -346,25 +351,29 @@ struct WordTapView: View {
             Text(wordInfo.surface)
                 .font(selectedFont.font(size: fontSize))
                 .foregroundStyle(.primary)
-                .background(highlightColor)
         }
+        .background(highlightColor)
         .fixedSize(horizontal: true, vertical: false)
         .cornerRadius(4)
-        .overlay(
+        .background(
             GeometryReader { geo in
                 Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        onTap?(wordInfo, geo.frame(in: .global))
+                    .onAppear { viewFrame = geo.frame(in: .global) }
+                    .onChange(of: geo.frame(in: .global)) { _, newFrame in
+                        viewFrame = newFrame
                     }
-                    .onLongPressGesture(minimumDuration: 0.3, pressing: { pressing in
-                        isPressed = pressing
-                    }, perform: {
-                        onLongPress?(wordInfo)
-                        isPressed = false
-                    })
             }
         )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap?(wordInfo, viewFrame)
+        }
+        .onLongPressGesture(minimumDuration: 0.3, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {
+            onLongPress?(wordInfo)
+            isPressed = false
+        })
     }
 }
 

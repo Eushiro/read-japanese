@@ -27,6 +27,8 @@ struct ReaderView: View {
     @State private var scrollToChapterIndex: Int? = nil  // For continuous mode scrolling
     @State private var chapterHeights: [Int: CGFloat] = [:]  // Store chapter heights for offset calculation
     @State private var scrollToTargetOffset: CGFloat? = nil  // For programmatic scrolling in continuous mode
+    @State private var isScrubbing = false  // Track when user is scrubbing audio
+    @State private var scrubPosition: Double = 0  // Temporary position while scrubbing
 
     // Audio player
     @StateObject private var audioPlayer = AudioPlayerService()
@@ -52,20 +54,30 @@ struct ReaderView: View {
         CGFloat(autoScrollSpeed)
     }
 
-    /// Whether the current chapter/story has audio
+    /// Whether the current chapter/story has audio (checks both chapter and story level)
     private var hasAudio: Bool {
-        if let chapter = currentChapter {
-            return chapter.audioURL != nil
+        if let chapter = currentChapter, chapter.audioURL != nil {
+            return true
         }
         return story.metadata.audioURL != nil
     }
 
-    /// Current audio URL (chapter or story level)
+    /// Current audio URL (chapter or story level), with base URL prepended for relative paths
     private var currentAudioURL: String? {
+        let audioPath: String?
         if let chapter = currentChapter {
-            return chapter.audioURL ?? story.metadata.audioURL
+            audioPath = chapter.audioURL ?? story.metadata.audioURL
+        } else {
+            audioPath = story.metadata.audioURL
         }
-        return story.metadata.audioURL
+
+        guard let path = audioPath else { return nil }
+
+        // If it's a relative path, prepend the API base URL
+        if path.hasPrefix("/") {
+            return APIConfig.baseURL + path
+        }
+        return path
     }
 
     /// Segment ID being highlighted by audio playback
@@ -113,13 +125,7 @@ struct ReaderView: View {
                 }
             }
 
-            // Audio player bar (shown when toggled)
-            if showAudioPlayer && hasAudio {
-                AudioPlayerBar(audioPlayer: audioPlayer)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-
-            // Bottom toolbar
+            // Bottom toolbar (includes audio controls when active)
             nativeBottomToolbar
         }
         .background(Color(.systemBackground))
@@ -337,111 +343,250 @@ struct ReaderView: View {
     // MARK: - Bottom Toolbar
 
     private var nativeBottomToolbar: some View {
-        HStack(spacing: 16) {
-            // Furigana toggle (old style with checkmark)
-            Button {
-                showFurigana.toggle()
-            } label: {
-                VStack(spacing: 4) {
-                    Image(systemName: showFurigana ? "checkmark.circle.fill" : "circle")
-                        .font(.title2)
-                        .foregroundStyle(showFurigana ? .green : .secondary)
-                    Text("Furigana")
+        VStack(spacing: 0) {
+            // Audio scrubber (when audio player is active)
+            if showAudioPlayer && hasAudio {
+                HStack(spacing: 8) {
+                    Text(formatAudioTime(isScrubbing ? scrubPosition : audioPlayer.currentTime))
                         .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .frame(width: 40, alignment: .trailing)
+
+                    Slider(
+                        value: Binding(
+                            get: { isScrubbing ? scrubPosition : audioPlayer.currentTime },
+                            set: { newValue in
+                                scrubPosition = newValue
+                                if !isScrubbing {
+                                    isScrubbing = true
+                                }
+                            }
+                        ),
+                        in: 0...max(audioPlayer.duration, 1),
+                        onEditingChanged: { editing in
+                            if !editing {
+                                // User finished scrubbing - seek to position
+                                audioPlayer.seek(to: scrubPosition)
+                                isScrubbing = false
+                            }
+                        }
+                    )
+                    .tint(.blue)
+
+                    Text(formatAudioTime(audioPlayer.duration))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .frame(width: 40, alignment: .leading)
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
             }
-            .foregroundStyle(showFurigana ? .primary : .secondary)
 
-            Spacer()
-
-            // Audio button (if audio available)
-            if hasAudio {
+            HStack(spacing: 12) {
+                // Furigana toggle
                 Button {
-                    showAudioPlayer.toggle()
+                    showFurigana.toggle()
                 } label: {
-                    Image(systemName: audioPlayer.isPlaying ? "waveform" : "speaker.wave.2")
-                        .font(.title2)
+                    Image(systemName: "character.book.closed")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(width: 36, height: 36)
+                        .background {
+                            if showFurigana {
+                                Circle().fill(Color.green.opacity(0.2))
+                            } else {
+                                Circle().fill(.ultraThinMaterial)
+                            }
+                        }
                 }
-                .foregroundStyle(audioPlayer.isPlaying ? .blue : .primary)
-            }
+                .buttonStyle(.plain)
+                .foregroundStyle(showFurigana ? .green : .primary)
 
-            // Chapter menu (only show for multi-chapter stories)
-            if story.hasChapters, let chapters = story.chapters {
-                Menu {
-                    ForEach(Array(chapters.enumerated()), id: \.element.id) { index, chapter in
+                // Audio controls (if audio available)
+                if hasAudio {
+                    if showAudioPlayer {
+                        // Expanded audio controls
+                        HStack(spacing: 8) {
+                            // Skip backward
+                            Button {
+                                audioPlayer.skipBackward(seconds: 5)
+                            } label: {
+                                Image(systemName: "gobackward.5")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .frame(width: 32, height: 32)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.primary)
+
+                            // Play/Pause
+                            Button {
+                                audioPlayer.togglePlayback()
+                            } label: {
+                                Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .frame(width: 36, height: 36)
+                                    .background(Color.blue)
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.white)
+
+                            // Skip forward
+                            Button {
+                                audioPlayer.skipForward(seconds: 5)
+                            } label: {
+                                Image(systemName: "goforward.5")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .frame(width: 32, height: 32)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.primary)
+
+                            // Close audio controls
+                            Button {
+                                showAudioPlayer = false
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .frame(width: 28, height: 28)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        // Collapsed audio button
                         Button {
-                            goToChapter(index)
+                            showAudioPlayer = true
                         } label: {
-                            HStack {
-                                Text("\(index + 1). \(chapter.titleJapanese ?? chapter.title)")
-                                if index == currentChapterIndex {
-                                    Image(systemName: "checkmark")
+                            Image(systemName: audioPlayer.isPlaying ? "waveform" : "speaker.wave.2")
+                                .font(.system(size: 17, weight: .semibold))
+                                .frame(width: 36, height: 36)
+                                .background {
+                                    if audioPlayer.isPlaying {
+                                        Circle().fill(Color.blue.opacity(0.2))
+                                    } else {
+                                        Circle().fill(.ultraThinMaterial)
+                                    }
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(audioPlayer.isPlaying ? .blue : .primary)
+                    }
+                }
+
+                Spacer()
+
+                // Chapter menu (only show for multi-chapter stories, hide when audio expanded)
+                if story.hasChapters, let chapters = story.chapters, !showAudioPlayer {
+                    Menu {
+                        ForEach(Array(chapters.enumerated()), id: \.element.id) { index, chapter in
+                            Button {
+                                goToChapter(index)
+                            } label: {
+                                HStack {
+                                    Text("\(index + 1). \(chapter.titleJapanese ?? chapter.title)")
+                                    if index == currentChapterIndex {
+                                        Image(systemName: "checkmark")
+                                    }
                                 }
                             }
                         }
-                    }
-                } label: {
-                    Image(systemName: "list.bullet")
-                        .font(.system(size: 17, weight: .semibold))
-                        .frame(width: 36, height: 36)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
-                }
-                .id(currentChapterIndex)  // Force menu rebuild when chapter changes
-                .menuOrder(.fixed)
-                .foregroundStyle(.primary)
-            }
-
-            // Settings button
-            Button {
-                showSettings = true
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 17, weight: .semibold))
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.primary)
-
-            // Previous/Next chapter buttons (only show for multi-chapter stories in paged mode)
-            if story.hasChapters && chapterViewMode == "paged" {
-                HStack(spacing: 12) {
-                    Button {
-                        goToPreviousChapter()
                     } label: {
-                        Image(systemName: "chevron.left")
+                        Image(systemName: "list.bullet")
+                            .font(.system(size: 17, weight: .semibold))
+                            .frame(width: 36, height: 36)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
+                    }
+                    .id(currentChapterIndex)
+                    .menuOrder(.fixed)
+                    .foregroundStyle(.primary)
+                }
+
+                // Settings button (hide when audio expanded)
+                if !showAudioPlayer {
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
                             .font(.system(size: 17, weight: .semibold))
                             .frame(width: 36, height: 36)
                             .background(.ultraThinMaterial)
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
-                    .disabled(currentChapterIndex <= 0)
-                    .opacity(currentChapterIndex <= 0 ? 0.3 : 1)
+                    .foregroundStyle(.primary)
+                }
 
+                #if DEBUG
+                // Debug: Toggle between paged and continuous mode (hide when audio expanded)
+                if !showAudioPlayer {
                     Button {
-                        goToNextChapter()
+                        chapterViewMode = chapterViewMode == "paged" ? "continuous" : "paged"
                     } label: {
-                        Image(systemName: "chevron.right")
+                        Image(systemName: chapterViewMode == "paged" ? "rectangle.split.3x1" : "scroll")
                             .font(.system(size: 17, weight: .semibold))
                             .frame(width: 36, height: 36)
                             .background(.ultraThinMaterial)
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
-                    .disabled(currentChapterIndex >= story.chapterCount - 1)
-                    .opacity(currentChapterIndex >= story.chapterCount - 1 ? 0.3 : 1)
+                    .foregroundStyle(.primary)
+                }
+                #endif
+
+                // Previous/Next chapter buttons (only show for multi-chapter stories in paged mode, hide when audio expanded)
+                if story.hasChapters && chapterViewMode == "paged" && !showAudioPlayer {
+                    HStack(spacing: 8) {
+                        Button {
+                            goToPreviousChapter()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 17, weight: .semibold))
+                                .frame(width: 36, height: 36)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(currentChapterIndex <= 0)
+                        .opacity(currentChapterIndex <= 0 ? 0.3 : 1)
+
+                        Button {
+                            goToNextChapter()
+                        } label: {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 17, weight: .semibold))
+                                .frame(width: 36, height: 36)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(currentChapterIndex >= story.chapterCount - 1)
+                        .opacity(currentChapterIndex >= story.chapterCount - 1 ? 0.3 : 1)
+                    }
                 }
             }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 10)
         .background(Color(.systemBackground))
         .overlay(alignment: .top) {
             Divider()
         }
+    }
+
+    /// Format audio time as m:ss
+    private func formatAudioTime(_ seconds: Double) -> String {
+        let mins = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        return String(format: "%d:%02d", mins, secs)
     }
 
     // MARK: - Story Content
@@ -452,7 +597,8 @@ struct ReaderView: View {
             isAutoScrolling: $isAutoScrolling,
             scrollOffset: $scrollOffset,
             scrollToOffset: $scrollToTargetOffset,
-            scrollSpeed: scrollSpeedPointsPerSecond
+            scrollSpeed: scrollSpeedPointsPerSecond,
+            onSwipeBack: { onDismiss?() }
         ) {
             VStack(alignment: .leading, spacing: 48) {
                 ForEach(0..<max(story.chapterCount, 1), id: \.self) { chapterIndex in
@@ -638,11 +784,10 @@ struct ReaderView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         // Chapter title with furigana if available
                         if let titleTokens = chapter.titleTokens, !titleTokens.isEmpty {
-                            chapterTitleWithFurigana(tokens: titleTokens)
+                            chapterTitleWithFurigana(tokens: titleTokens, chapterIndex: chapterIndex)
                         } else if let titleJapanese = chapter.titleJapanese {
-                            Text(titleJapanese)
-                                .font(.title3)
-                                .fontWeight(.semibold)
+                            // Make plain Japanese title tappable
+                            tappableChapterTitle(titleJapanese, chapterIndex: chapterIndex)
                         } else {
                             Text(chapter.title)
                                 .font(.title3)
@@ -678,10 +823,10 @@ struct ReaderView: View {
         }
     }
 
-    // Chapter title with furigana support
-    private func chapterTitleWithFurigana(tokens: [Token]) -> some View {
+    // Chapter title with furigana support and tappable words
+    private func chapterTitleWithFurigana(tokens: [Token], chapterIndex: Int) -> some View {
         WrappingHStack(alignment: .bottom, spacing: 0) {
-            ForEach(Array(tokens.enumerated()), id: \.offset) { _, token in
+            ForEach(Array(tokens.enumerated()), id: \.offset) { index, token in
                 if token.isPunctuation {
                     VStack(spacing: 0) {
                         Text(" ")
@@ -693,37 +838,34 @@ struct ReaderView: View {
                     }
                     .fixedSize(horizontal: true, vertical: false)
                 } else {
-                    HStack(spacing: 0) {
-                        if let parts = token.parts, !parts.isEmpty {
-                            ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
-                                VStack(spacing: 0) {
-                                    if showFurigana, let reading = part.reading {
-                                        Text(reading)
-                                            .font(.system(size: 10))
-                                            .foregroundStyle(furiganaColor)
-                                    } else {
-                                        Text(" ")
-                                            .font(.system(size: 10))
-                                            .opacity(0)
+                    // Tappable word token
+                    let tokenId = "chapter_\(chapterIndex)_title_\(index)"
+                    let wordInfo = WordInfo.from(token)
+                    let isSelected = selectedTokenId == tokenId
+
+                    ChapterTitleTokenView(
+                        token: token,
+                        showFurigana: showFurigana,
+                        furiganaColor: furiganaColor,
+                        isSelected: isSelected,
+                        onTap: { frame in
+                            selectedWordInfo = wordInfo
+                            selectedTokenId = tokenId
+                            selectedWordFrame = frame
+                            showTooltip = true
+                        },
+                        onLongPress: {
+                            Task {
+                                await quickSaveWord(wordInfo)
+                                await MainActor.run {
+                                    showSaveToast = true
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                        showSaveToast = false
                                     }
-                                    Text(part.text)
-                                        .font(.title3)
-                                        .fontWeight(.semibold)
                                 }
-                                .fixedSize(horizontal: true, vertical: false)
                             }
-                        } else {
-                            VStack(spacing: 0) {
-                                Text(" ")
-                                    .font(.system(size: 10))
-                                    .opacity(0)
-                                Text(token.surface)
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
-                            }
-                            .fixedSize(horizontal: true, vertical: false)
                         }
-                    }
+                    )
                 }
             }
         }
@@ -937,6 +1079,157 @@ struct ReaderView: View {
         }
 
         await audioPlayer.loadAudio(from: audioURL, segments: currentSegments)
+    }
+
+    // MARK: - Tappable Chapter Title (non-tokenized)
+
+    private func tappableChapterTitle(_ title: String, chapterIndex: Int) -> some View {
+        TappableChapterTitleView(
+            title: title,
+            chapterIndex: chapterIndex,
+            isSelected: selectedTokenId == "chapter_\(chapterIndex)_title_plain",
+            colorScheme: colorScheme,
+            onTap: { frame in
+                selectedWordInfo = WordInfo.surface(title)
+                selectedTokenId = "chapter_\(chapterIndex)_title_plain"
+                selectedWordFrame = frame
+                showTooltip = true
+            },
+            onLongPress: {
+                Task {
+                    await quickSaveWord(WordInfo.surface(title))
+                    await MainActor.run {
+                        showSaveToast = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            showSaveToast = false
+                        }
+                    }
+                }
+            }
+        )
+    }
+}
+
+/// Tappable chapter title view that properly captures its frame
+struct TappableChapterTitleView: View {
+    let title: String
+    let chapterIndex: Int
+    let isSelected: Bool
+    let colorScheme: ColorScheme
+    var onTap: ((CGRect) -> Void)?
+    var onLongPress: (() -> Void)?
+
+    @State private var viewFrame: CGRect = .zero
+    @State private var isPressed = false
+
+    private var highlightColor: Color {
+        guard isPressed || isSelected else { return Color.clear }
+        return colorScheme == .dark ? Color.blue.opacity(0.4) : Color.blue.opacity(0.25)
+    }
+
+    var body: some View {
+        Text(title)
+            .font(.title3)
+            .fontWeight(.semibold)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2)
+            .background(highlightColor)
+            .cornerRadius(4)
+            .background(
+                GeometryReader { geo in
+                    Color.clear
+                        .onAppear { viewFrame = geo.frame(in: .global) }
+                        .onChange(of: geo.frame(in: .global)) { _, newFrame in
+                            viewFrame = newFrame
+                        }
+                }
+            )
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onTap?(viewFrame)
+            }
+            .onLongPressGesture(minimumDuration: 0.3, pressing: { pressing in
+                isPressed = pressing
+            }, perform: {
+                onLongPress?()
+                isPressed = false
+            })
+    }
+}
+
+// MARK: - Chapter Title Token View
+
+/// A tappable token view for chapter titles with furigana support
+struct ChapterTitleTokenView: View {
+    let token: Token
+    let showFurigana: Bool
+    let furiganaColor: Color
+    var isSelected: Bool = false
+    var onTap: ((CGRect) -> Void)?
+    var onLongPress: (() -> Void)?
+
+    @State private var isPressed = false
+    @State private var viewFrame: CGRect = .zero
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var highlightColor: Color {
+        guard isPressed || isSelected else { return Color.clear }
+        return colorScheme == .dark ? Color.blue.opacity(0.4) : Color.blue.opacity(0.25)
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            if let parts = token.parts, !parts.isEmpty {
+                ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
+                    VStack(spacing: 0) {
+                        if showFurigana, let reading = part.reading {
+                            Text(reading)
+                                .font(.system(size: 10))
+                                .foregroundStyle(furiganaColor)
+                        } else {
+                            Text(" ")
+                                .font(.system(size: 10))
+                                .opacity(0)
+                        }
+                        Text(part.text)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                    }
+                    .fixedSize(horizontal: true, vertical: false)
+                }
+            } else {
+                VStack(spacing: 0) {
+                    Text(" ")
+                        .font(.system(size: 10))
+                        .opacity(0)
+                    Text(token.surface)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                }
+                .fixedSize(horizontal: true, vertical: false)
+            }
+        }
+        .background(highlightColor)
+        .cornerRadius(4)
+        .background(
+            GeometryReader { geo in
+                Color.clear
+                    .onAppear { viewFrame = geo.frame(in: .global) }
+                    .onChange(of: geo.frame(in: .global)) { _, newFrame in
+                        viewFrame = newFrame
+                    }
+            }
+        )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap?(viewFrame)
+        }
+        .onLongPressGesture(minimumDuration: 0.3, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {
+            onLongPress?()
+            isPressed = false
+        })
     }
 }
 

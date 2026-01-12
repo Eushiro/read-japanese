@@ -54,10 +54,14 @@ struct VocabularyListView: View {
     private var filteredItems: [VocabularyItem] {
         var result = appState.vocabularyItems
 
+        // Filter by search text (supports romaji input)
         if !searchText.isEmpty {
             result = result.filter { item in
-                item.word.contains(searchText) ||
-                item.reading.contains(searchText) ||
+                // Match word (kanji) - supports romaji conversion
+                item.word.matchesJapaneseSearch(searchText) ||
+                // Match reading (hiragana) - supports romaji conversion
+                item.reading.matchesJapaneseSearch(searchText) ||
+                // Match meaning (English)
                 item.meaning.localizedCaseInsensitiveContains(searchText)
             }
         }
@@ -112,34 +116,6 @@ struct VocabularyListView: View {
         selectedLevelFilter != nil || selectedStoryFilter != nil
     }
 
-    /// Search suggestions based on saved vocabulary
-    private var vocabSearchSuggestions: [String] {
-        guard !searchText.isEmpty else { return [] }
-
-        var suggestions: Set<String> = []
-
-        for item in appState.vocabularyItems {
-            // Match word (kanji)
-            if item.word.contains(searchText) {
-                suggestions.insert(item.word)
-            }
-
-            // Match reading (hiragana)
-            if item.reading.contains(searchText) {
-                suggestions.insert(item.reading)
-            }
-
-            // Match meaning (English)
-            if item.meaning.lowercased().contains(searchText.lowercased()) {
-                // Extract first definition for cleaner suggestion
-                let firstMeaning = item.meaning.components(separatedBy: ";").first?.trimmingCharacters(in: .whitespaces) ?? item.meaning
-                suggestions.insert(firstMeaning)
-            }
-        }
-
-        return Array(suggestions).sorted().prefix(5).map { $0 }
-    }
-
     var body: some View {
         Group {
             if appState.vocabularyItems.isEmpty {
@@ -152,14 +128,6 @@ struct VocabularyListView: View {
         }
         .navigationTitle("Vocabulary")
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
-        .searchSuggestions {
-            if !searchText.isEmpty {
-                ForEach(vocabSearchSuggestions, id: \.self) { suggestion in
-                    Label(suggestion, systemImage: "character.book.closed")
-                        .searchCompletion(suggestion)
-                }
-            }
-        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 if isEditMode {

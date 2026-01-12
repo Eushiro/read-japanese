@@ -72,6 +72,11 @@ struct StoryCard: View {
                 HStack(spacing: 6) {
                     JLPTBadge(level: story.metadata.jlptLevel)
 
+                    // Audio badge
+                    if story.metadata.audioURL != nil {
+                        AudioBadge()
+                    }
+
                     // Developer badges
                     if showTokenizerSource {
                         ModelBadge(model: story.metadata.author)
@@ -222,6 +227,24 @@ struct TokenizerBadge: View {
             .padding(.vertical, 2)
             .background(Color.green)
             .clipShape(Capsule())
+    }
+}
+
+/// Badge indicating story has audio narration
+struct AudioBadge: View {
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "headphones")
+                .font(.caption2)
+            Text("Audio")
+                .font(.caption2)
+                .fontWeight(.semibold)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(Color.purple)
+        .clipShape(Capsule())
     }
 }
 

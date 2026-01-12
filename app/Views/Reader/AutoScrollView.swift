@@ -8,9 +8,10 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
     let content: Content
     @Binding var isAutoScrolling: Bool
     @Binding var scrollOffset: CGFloat
-    @Binding var scrollToOffset: CGFloat?  // Programmatic scroll target
-    @Binding var scrollToIdentifier: String?  // Scroll to view with this accessibility identifier
-    let scrollSpeed: CGFloat // Points per second
+    @Binding var scrollToOffset: CGFloat?
+    @Binding var scrollToIdentifier: String?
+    let scrollSpeed: CGFloat
+    var onSwipeBack: (() -> Void)?
 
     init(
         isAutoScrolling: Binding<Bool>,
@@ -18,6 +19,7 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
         scrollToOffset: Binding<CGFloat?> = .constant(nil),
         scrollToIdentifier: Binding<String?> = .constant(nil),
         scrollSpeed: CGFloat,
+        onSwipeBack: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self._isAutoScrolling = isAutoScrolling
@@ -25,6 +27,7 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
         self._scrollToOffset = scrollToOffset
         self._scrollToIdentifier = scrollToIdentifier
         self.scrollSpeed = scrollSpeed
+        self.onSwipeBack = onSwipeBack
         self.content = content()
     }
 
@@ -35,9 +38,16 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.alwaysBounceVertical = true
 
+        // These settings allow taps to reach content while still enabling scrolling
+        scrollView.delaysContentTouches = false
+        scrollView.canCancelContentTouches = true
+
         let hostingController = UIHostingController(rootView: content)
         hostingController.view.backgroundColor = .clear
         hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+
+        // Critical: Make hosting view not intercept touches it doesn't need
+        hostingController.view.isUserInteractionEnabled = true
 
         scrollView.addSubview(hostingController.view)
         context.coordinator.hostingController = hostingController
@@ -51,61 +61,58 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
             hostingController.view.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor)
         ])
 
-        // Add long press gesture for hold-to-scroll
+        // Long press for auto-scroll
         let longPressGesture = UILongPressGestureRecognizer(
             target: context.coordinator,
             action: #selector(Coordinator.handleLongPress(_:))
         )
-        longPressGesture.minimumPressDuration = 0.3
+        longPressGesture.minimumPressDuration = 0.5
+        longPressGesture.delegate = context.coordinator
         scrollView.addGestureRecognizer(longPressGesture)
+
+        // Edge pan for swipe-back
+        let edgePanGesture = UIScreenEdgePanGestureRecognizer(
+            target: context.coordinator,
+            action: #selector(Coordinator.handleEdgePan(_:))
+        )
+        edgePanGesture.edges = .left
+        edgePanGesture.delegate = context.coordinator
+        scrollView.addGestureRecognizer(edgePanGesture)
 
         return scrollView
     }
 
     func updateUIView(_ scrollView: UIScrollView, context: Context) {
-        // Update content
         context.coordinator.hostingController?.rootView = content
-
-        // Force layout update to recalculate content size
         context.coordinator.hostingController?.view.invalidateIntrinsicContentSize()
         context.coordinator.hostingController?.view.setNeedsLayout()
         context.coordinator.hostingController?.view.layoutIfNeeded()
-
-        // Update scroll speed
         context.coordinator.currentSpeed = scrollSpeed
 
-        // Handle programmatic scroll to offset
         if let targetOffset = scrollToOffset {
-            // Wait for content size to be ready
             if scrollView.contentSize.height > scrollView.bounds.height {
                 let clampedOffset = min(targetOffset, max(0, scrollView.contentSize.height - scrollView.bounds.height))
                 scrollView.setContentOffset(CGPoint(x: 0, y: clampedOffset), animated: true)
-                // Clear the target after animation completes
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     self.scrollToOffset = nil
                 }
             }
         }
 
-        // Handle scroll to view with accessibility identifier
         if let identifier = scrollToIdentifier {
-            // Find view with matching accessibility identifier in the hosting controller's view hierarchy
             if let hostingView = context.coordinator.hostingController?.view {
                 if let targetView = findView(withAccessibilityIdentifier: identifier, in: hostingView) {
-                    // Convert the target view's frame to scroll view coordinates
                     let frameInScrollView = targetView.convert(targetView.bounds, to: scrollView)
                     let targetOffset = max(0, frameInScrollView.origin.y)
                     let clampedOffset = min(targetOffset, max(0, scrollView.contentSize.height - scrollView.bounds.height))
                     scrollView.setContentOffset(CGPoint(x: 0, y: clampedOffset), animated: true)
                 }
             }
-            // Clear the target after scrolling
             DispatchQueue.main.async {
                 self.scrollToIdentifier = nil
             }
         }
 
-        // Sync auto-scrolling state (for external control)
         if isAutoScrolling && !context.coordinator.isScrolling {
             context.coordinator.startAutoScroll()
         } else if !isAutoScrolling && context.coordinator.isScrolling {
@@ -117,11 +124,8 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
         Coordinator(parent: self)
     }
 
-    /// Recursively find a view with the specified accessibility identifier in the view hierarchy
     private func findView(withAccessibilityIdentifier identifier: String, in view: UIView) -> UIView? {
-        if view.accessibilityIdentifier == identifier {
-            return view
-        }
+        if view.accessibilityIdentifier == identifier { return view }
         for subview in view.subviews {
             if let found = findView(withAccessibilityIdentifier: identifier, in: subview) {
                 return found
@@ -130,7 +134,7 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
         return nil
     }
 
-    class Coordinator: NSObject, UIScrollViewDelegate {
+    class Coordinator: NSObject, UIScrollViewDelegate, UIGestureRecognizerDelegate {
         var parent: AutoScrollView
         var hostingController: UIHostingController<Content>?
         weak var scrollView: UIScrollView?
@@ -138,45 +142,70 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
         private var lastTimestamp: CFTimeInterval = 0
         var currentSpeed: CGFloat = 50
         var isScrolling: Bool = false
-        private var isProgrammaticScroll: Bool = false  // Track if we're scrolling programmatically
-        private var longPressActive: Bool = false  // Track if long press is still held
-        private var lastReportedOffset: CGFloat = 0  // Track last reported offset to avoid excessive updates
-        private var offsetUpdateWorkItem: DispatchWorkItem?  // Debounce offset updates
+        private var isProgrammaticScroll: Bool = false
+        private var longPressActive: Bool = false
+        private var lastReportedOffset: CGFloat = 0
+        private var offsetUpdateWorkItem: DispatchWorkItem?
 
         init(parent: AutoScrollView) {
             self.parent = parent
             self.currentSpeed = parent.scrollSpeed
         }
 
+        // MARK: - UIGestureRecognizerDelegate
+
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            // Allow edge pan to work with scroll
+            if gestureRecognizer is UIScreenEdgePanGestureRecognizer {
+                return true
+            }
+            return true
+        }
+
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            // Edge pan takes priority over scroll pan
+            if gestureRecognizer is UIScreenEdgePanGestureRecognizer,
+               otherGestureRecognizer == scrollView?.panGestureRecognizer {
+                return true
+            }
+            return false
+        }
+
+        // MARK: - Gesture Handlers
+
         @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
             switch gesture.state {
             case .began:
-                // Only start auto-scroll if there's room to scroll
                 guard let scrollView = scrollView,
-                      scrollView.contentSize.height > scrollView.bounds.height else {
-                    return
-                }
+                      scrollView.contentSize.height > scrollView.bounds.height else { return }
                 longPressActive = true
                 startAutoScroll()
-                DispatchQueue.main.async {
-                    self.parent.isAutoScrolling = true
-                }
+                DispatchQueue.main.async { self.parent.isAutoScrolling = true }
             case .ended, .cancelled, .failed:
                 longPressActive = false
                 stopAutoScroll()
-                DispatchQueue.main.async {
-                    self.parent.isAutoScrolling = false
-                }
+                DispatchQueue.main.async { self.parent.isAutoScrolling = false }
             default:
                 break
             }
         }
 
+        @objc func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
+            if gesture.state == .ended {
+                let velocity = gesture.velocity(in: gesture.view)
+                let translation = gesture.translation(in: gesture.view)
+                if translation.x > 80 || velocity.x > 400 {
+                    DispatchQueue.main.async { self.parent.onSwipeBack?() }
+                }
+            }
+        }
+
+        // MARK: - Auto Scroll
+
         func startAutoScroll() {
             guard !isScrolling, scrollView != nil else { return }
             isScrolling = true
             isProgrammaticScroll = true
-
             lastTimestamp = 0
             displayLink = CADisplayLink(target: self, selector: #selector(handleDisplayLink(_:)))
             displayLink?.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
@@ -192,103 +221,69 @@ struct AutoScrollView<Content: View>: UIViewRepresentable {
         }
 
         @objc private func handleDisplayLink(_ displayLink: CADisplayLink) {
-            guard let scrollView = scrollView else {
-                stopAutoScroll()
-                return
-            }
+            guard let scrollView = scrollView else { stopAutoScroll(); return }
 
-            // Stop if long press is no longer active
             if !longPressActive {
                 stopAutoScroll()
-                DispatchQueue.main.async {
-                    self.parent.isAutoScrolling = false
-                }
+                DispatchQueue.main.async { self.parent.isAutoScrolling = false }
                 return
             }
 
-            if lastTimestamp == 0 {
-                lastTimestamp = displayLink.timestamp
-                return
-            }
+            if lastTimestamp == 0 { lastTimestamp = displayLink.timestamp; return }
 
             let deltaTime = displayLink.timestamp - lastTimestamp
             lastTimestamp = displayLink.timestamp
 
-            // Skip if delta time is too large (app was in background or similar)
-            if deltaTime > 0.5 {
-                lastTimestamp = displayLink.timestamp
-                return
-            }
+            if deltaTime > 0.5 { return }
 
-            // Calculate scroll delta based on current speed (points per second)
             let scrollDelta = currentSpeed * CGFloat(deltaTime)
-
-            // Calculate new offset
             var newOffset = scrollView.contentOffset
             newOffset.y += scrollDelta
 
-            // Check if we've reached the bottom (same calculation as manual scrolling)
             let maxOffset = max(0, scrollView.contentSize.height - scrollView.bounds.height)
             if newOffset.y >= maxOffset {
                 newOffset.y = maxOffset
                 scrollView.contentOffset = newOffset
-                // Stop auto-scrolling when reaching the end
                 stopAutoScroll()
-                DispatchQueue.main.async {
-                    self.parent.isAutoScrolling = false
-                }
+                DispatchQueue.main.async { self.parent.isAutoScrolling = false }
                 return
             }
 
-            // Apply the new offset
             if newOffset.y >= 0 {
                 isProgrammaticScroll = true
                 scrollView.contentOffset = newOffset
             }
         }
 
-        // UIScrollViewDelegate - stop auto-scroll on manual drag (but not programmatic scroll)
+        // MARK: - UIScrollViewDelegate
+
         func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-            // Only stop if this is a real user drag, not our programmatic scrolling
             if isScrolling && !isProgrammaticScroll {
                 longPressActive = false
                 stopAutoScroll()
-                DispatchQueue.main.async {
-                    self.parent.isAutoScrolling = false
-                }
+                DispatchQueue.main.async { self.parent.isAutoScrolling = false }
             }
-            // Reset flag after check
             isProgrammaticScroll = false
         }
 
-        // UIScrollViewDelegate - report scroll offset (throttled to avoid feedback loops)
         func scrollViewDidScroll(_ scrollView: UIScrollView) {
             let currentOffset = max(0, scrollView.contentOffset.y)
-
-            // Only update if the change is significant (more than 2 points)
-            // This prevents feedback loops with header collapse animations
             let delta = abs(currentOffset - lastReportedOffset)
             guard delta > 2 else { return }
 
-            // Cancel any pending update
             offsetUpdateWorkItem?.cancel()
-
-            // Debounce updates to reduce SwiftUI view update frequency
             let workItem = DispatchWorkItem { [weak self] in
                 guard let self = self else { return }
                 self.lastReportedOffset = currentOffset
                 self.parent.scrollOffset = currentOffset
             }
             offsetUpdateWorkItem = workItem
-
-            // Execute after a tiny delay to batch rapid updates
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.016, execute: workItem)
         }
     }
 }
 
 #else
-// Fallback for non-iOS platforms (macOS, etc.)
 struct AutoScrollView<Content: View>: View {
     let content: Content
     @Binding var isAutoScrolling: Bool
@@ -303,6 +298,7 @@ struct AutoScrollView<Content: View>: View {
         scrollToOffset: Binding<CGFloat?> = .constant(nil),
         scrollToIdentifier: Binding<String?> = .constant(nil),
         scrollSpeed: CGFloat,
+        onSwipeBack: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self._isAutoScrolling = isAutoScrolling
@@ -321,15 +317,13 @@ struct AutoScrollView<Content: View>: View {
 }
 #endif
 
-// MARK: - Preview
-
 #Preview {
     struct PreviewWrapper: View {
         @State private var isAutoScrolling = false
 
         var body: some View {
             VStack {
-                Text(isAutoScrolling ? "Hold to scroll (scrolling...)" : "Long press to auto-scroll")
+                Text(isAutoScrolling ? "Scrolling..." : "Long press to auto-scroll")
                     .padding()
                     .background(isAutoScrolling ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
                     .cornerRadius(8)
@@ -348,6 +342,5 @@ struct AutoScrollView<Content: View>: View {
             }
         }
     }
-
     return PreviewWrapper()
 }

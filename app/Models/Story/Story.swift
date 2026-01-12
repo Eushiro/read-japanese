@@ -185,6 +185,8 @@ struct StoryMetadata: Codable, Hashable {
     let summaryJapanese: String?
     let coverImageURL: String?
     let audioURL: String?
+    let audioVoiceId: String?
+    let audioVoiceName: String?
     let createdDate: Date
 
     enum CodingKeys: String, CodingKey {
@@ -202,6 +204,8 @@ struct StoryMetadata: Codable, Hashable {
         case summaryJapanese
         case coverImageURL
         case audioURL
+        case audioVoiceId
+        case audioVoiceName
         case createdDate
     }
 
@@ -221,6 +225,8 @@ struct StoryMetadata: Codable, Hashable {
         summaryJapanese = try container.decodeIfPresent(String.self, forKey: .summaryJapanese)
         coverImageURL = try container.decodeIfPresent(String.self, forKey: .coverImageURL)
         audioURL = try container.decodeIfPresent(String.self, forKey: .audioURL)
+        audioVoiceId = try container.decodeIfPresent(String.self, forKey: .audioVoiceId)
+        audioVoiceName = try container.decodeIfPresent(String.self, forKey: .audioVoiceName)
 
         // Handle ISO8601 date string
         let dateString = try container.decode(String.self, forKey: .createdDate)
@@ -248,6 +254,8 @@ struct StoryMetadata: Codable, Hashable {
         try container.encodeIfPresent(summaryJapanese, forKey: .summaryJapanese)
         try container.encodeIfPresent(coverImageURL, forKey: .coverImageURL)
         try container.encodeIfPresent(audioURL, forKey: .audioURL)
+        try container.encodeIfPresent(audioVoiceId, forKey: .audioVoiceId)
+        try container.encodeIfPresent(audioVoiceName, forKey: .audioVoiceName)
 
         let formatter = ISO8601DateFormatter()
         try container.encode(formatter.string(from: createdDate), forKey: .createdDate)
@@ -268,6 +276,8 @@ struct StoryMetadata: Codable, Hashable {
         summaryJapanese: String?,
         coverImageURL: String? = nil,
         audioURL: String? = nil,
+        audioVoiceId: String? = nil,
+        audioVoiceName: String? = nil,
         createdDate: Date = Date()
     ) {
         self.title = title
@@ -284,6 +294,8 @@ struct StoryMetadata: Codable, Hashable {
         self.summaryJapanese = summaryJapanese
         self.coverImageURL = coverImageURL
         self.audioURL = audioURL
+        self.audioVoiceId = audioVoiceId
+        self.audioVoiceName = audioVoiceName
         self.createdDate = createdDate
     }
 }
