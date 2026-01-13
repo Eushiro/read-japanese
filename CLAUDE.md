@@ -2,6 +2,16 @@
 
 Notes for Claude when working on this project.
 
+## Important: Do Not Over-Engineer
+
+**Only make changes that are explicitly requested.**
+
+- Do NOT change button appearances, colors, or styling unless asked
+- Do NOT make headers sticky or add UI behaviors that weren't requested
+- Do NOT refactor or "improve" code that isn't part of the task
+- Do NOT add features, animations, or enhancements beyond what was asked
+- Keep changes minimal and focused on the specific request
+
 ## Deployment
 
 **Backend is deployed on Render, not localhost.**
