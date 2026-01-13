@@ -71,8 +71,12 @@ struct FuriganaTextView: View {
             // Tappable word with parts-based furigana
             let wordInfo = WordInfo.from(token)
             let isSelected = selectedTokenId == tokenId
-            // Check if this word matches the current audio word
-            let isWordHighlighted = currentAudioWord != nil && token.surface.contains(currentAudioWord!)
+            // Check if this word matches the current audio word (bidirectional matching)
+            // Match if token contains the audio word OR audio word contains the token
+            let isWordHighlighted: Bool = {
+                guard let audioWord = currentAudioWord, !audioWord.isEmpty else { return false }
+                return token.surface.contains(audioWord) || audioWord.contains(token.surface)
+            }()
             TokenPartsView(
                 token: token,
                 fontSize: fontSize,
@@ -95,8 +99,11 @@ struct FuriganaTextView: View {
             // Tappable word (with or without furigana)
             let wordInfo = WordInfo.surface(part.text)
             let isSelected = selectedTokenId == partId
-            // Check if this word matches the current audio word
-            let isWordHighlighted = currentAudioWord != nil && part.text.contains(currentAudioWord!)
+            // Check if this word matches the current audio word (bidirectional matching)
+            let isWordHighlighted: Bool = {
+                guard let audioWord = currentAudioWord, !audioWord.isEmpty else { return false }
+                return part.text.contains(audioWord) || audioWord.contains(part.text)
+            }()
             WordTapView(
                 wordInfo: wordInfo,
                 displayReading: showFurigana ? part.reading : nil,
@@ -285,10 +292,11 @@ struct TokenPartsView: View {
                                 .font(selectedFont.font(size: fontSize * 0.5))
                                 .foregroundStyle(part.reading != nil ? furiganaColor : .clear)
                         }
-                        // Main text
+                        // Main text with highlight only on text
                         Text(part.text)
                             .font(selectedFont.font(size: fontSize))
                             .foregroundStyle(.primary)
+                            .background(highlightColor)
                     }
                 }
             } else {
@@ -301,11 +309,11 @@ struct TokenPartsView: View {
                     Text(token.surface)
                         .font(selectedFont.font(size: fontSize))
                         .foregroundStyle(.primary)
+                        .background(highlightColor)
                 }
             }
         }
-        .background(highlightColor)
-        .cornerRadius(4)
+        .fixedSize(horizontal: true, vertical: false)
         .overlay(alignment: .bottom) {
             if shouldUnderline {
                 Rectangle()
@@ -314,7 +322,6 @@ struct TokenPartsView: View {
                     .offset(y: 2)
             }
         }
-        .fixedSize(horizontal: true, vertical: false)
         .background(
             GeometryReader { geo in
                 Color.clear
