@@ -62,6 +62,14 @@ struct ReaderView: View {
         return story.metadata.audioURL != nil
     }
 
+    /// Resolve image URL, prepending base URL for relative paths
+    private func resolveImageURL(_ path: String) -> URL? {
+        if path.hasPrefix("/") {
+            return URL(string: APIConfig.baseURL + path)
+        }
+        return URL(string: path)
+    }
+
     /// Current audio URL (chapter or story level), with base URL prepended for relative paths
     private var currentAudioURL: String? {
         let audioPath: String?
@@ -142,6 +150,7 @@ struct ReaderView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView()
                 .environmentObject(AuthService.shared)
+                .environmentObject(appState)
         }
         .onAppear {
             AnalyticsService.shared.track(.readerOpened, properties: [
@@ -648,7 +657,7 @@ struct ReaderView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 24)
-            .padding(.top, 16)
+            .padding(.top, 24)
             .padding(.bottom, 32)
         }
         .onChange(of: scrollOffset) { _, newOffset in
@@ -676,15 +685,17 @@ struct ReaderView: View {
 
     /// Calculate the scroll offset for a given chapter index
     private func calculateChapterOffset(for chapterIndex: Int) -> CGFloat {
-        let topPadding: CGFloat = 16
+        let topPadding: CGFloat = 24
         let chapterSpacing: CGFloat = 48
+        let headerMargin: CGFloat = 16  // Extra space below header when scrolling to chapter
         var offset = topPadding
 
         for i in 0..<chapterIndex {
             offset += (chapterHeights[i] ?? 0) + chapterSpacing
         }
 
-        return offset
+        // Subtract margin so chapter title appears below the header, not flush against it
+        return max(0, offset - headerMargin)
     }
 
     /// Update which chapter is currently visible based on scroll offset
@@ -692,7 +703,7 @@ struct ReaderView: View {
         // Don't update if we don't have chapter heights yet
         guard !chapterHeights.isEmpty else { return }
 
-        let topPadding: CGFloat = 16
+        let topPadding: CGFloat = 24
         let chapterSpacing: CGFloat = 48
         var cumulativeOffset = topPadding
 
@@ -728,7 +739,7 @@ struct ReaderView: View {
             chapterBodyContent(forChapterIndex: index)
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 24)
-                .padding(.top, 16)
+                .padding(.top, 24)
                 .padding(.bottom, 32)
         }
         .frame(width: width)
@@ -821,7 +832,7 @@ struct ReaderView: View {
             // Chapter image at end of chapter (before completion section)
             if let chapter = chapter,
                let imageURL = chapter.imageURL,
-               let url = URL(string: imageURL) {
+               let url = resolveImageURL(imageURL) {
                 chapterImageView(url: url)
                     .padding(.top, 8)
             }

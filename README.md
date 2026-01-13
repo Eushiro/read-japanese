@@ -131,6 +131,12 @@ Stories are stored as JSON files in `backend/app/data/stories/`. Each story incl
 - Audio URLs (when available)
 - Chapter illustrations
 
+## Documentation
+
+- [PRD.md](PRD.md) - Product requirements and implementation status
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Codebase guide for developers/AI agents
+- [docs/ROADMAP.md](docs/ROADMAP.md) - Feature roadmap and priorities
+
 ## License
 
 This project is private and not licensed for public distribution.

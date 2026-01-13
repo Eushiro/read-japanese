@@ -39,7 +39,8 @@ class StoryService:
                 genre=story.metadata.genre,
                 summary=story.metadata.summary,
                 coverImageURL=story.metadata.coverImageURL,
-                chapterCount=len(story.chapters)
+                chapterCount=len(story.chapters),
+                isPremium=story.metadata.isPremium
             )
             for story in self._stories_cache.values()
         ]
@@ -60,7 +61,8 @@ class StoryService:
                 genre=story.metadata.genre,
                 summary=story.metadata.summary,
                 coverImageURL=story.metadata.coverImageURL,
-                chapterCount=len(story.chapters)
+                chapterCount=len(story.chapters),
+                isPremium=story.metadata.isPremium
             )
             for story in self._stories_cache.values()
             if story.metadata.jlptLevel.upper() == jlpt_level.upper()

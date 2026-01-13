@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var appState: AppState
     @State private var showingLogoutConfirmation = false
     @State private var showingDeleteConfirmation = false
 
@@ -317,10 +318,14 @@ struct SettingsView: View {
                     Toggle(isOn: $showAuthor) {
                         Label("Story Author", systemImage: "person.text.rectangle")
                     }
+
+                    Toggle(isOn: $appState.isPremiumUser) {
+                        Label("Premium User (Mock)", systemImage: "crown.fill")
+                    }
                 } header: {
                     Text("Developer")
                 } footer: {
-                    Text("Shows technical information about how stories were processed.")
+                    Text("Shows technical information. Premium toggle simulates subscription.")
                 }
                 #endif
 

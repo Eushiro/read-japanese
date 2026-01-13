@@ -18,11 +18,15 @@ class AppState: ObservableObject {
     // Vocabulary items
     @Published var vocabularyItems: [VocabularyItem] = []
 
+    // Premium subscription state (mock - persisted in UserDefaults)
+    @Published var isPremiumUser: Bool = false
+
     // MARK: - Initialization
 
     init() {
         loadVocabularyFromStorage()
         loadReadingProgressFromStorage()
+        loadPremiumStateFromStorage()
     }
 
     // MARK: - Computed Properties
@@ -54,6 +58,10 @@ class AppState: ObservableObject {
 
         switch result {
         case .success(let loadedStories):
+            // Clear image cache only after successful fetch so new images load
+            if forceRefresh {
+                URLCache.shared.removeAllCachedResponses()
+            }
             stories = loadedStories
             storiesError = nil
         case .cached(let cachedStories):
@@ -259,6 +267,35 @@ class AppState: ObservableObject {
         if let data = try? JSONEncoder().encode(readingProgress) {
             UserDefaults.standard.set(data, forKey: "readingProgress")
         }
+    }
+
+    // MARK: - Premium Subscription (Mock)
+
+    /// Check if a story is accessible (free or user is premium)
+    func canAccessStory(_ story: Story) -> Bool {
+        !story.metadata.isPremium || isPremiumUser
+    }
+
+    /// Set premium subscription state
+    func setPremiumUser(_ isPremium: Bool) {
+        isPremiumUser = isPremium
+        savePremiumStateToStorage()
+    }
+
+    /// Toggle premium subscription state (for testing)
+    func togglePremiumSubscription() {
+        isPremiumUser.toggle()
+        savePremiumStateToStorage()
+    }
+
+    /// Load premium state from UserDefaults
+    private func loadPremiumStateFromStorage() {
+        isPremiumUser = UserDefaults.standard.bool(forKey: "isPremiumUser")
+    }
+
+    /// Save premium state to UserDefaults
+    private func savePremiumStateToStorage() {
+        UserDefaults.standard.set(isPremiumUser, forKey: "isPremiumUser")
     }
 }
 

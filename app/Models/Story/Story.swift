@@ -188,6 +188,7 @@ struct StoryMetadata: Codable, Hashable {
     let audioVoiceId: String?
     let audioVoiceName: String?
     let createdDate: Date
+    let isPremium: Bool
 
     enum CodingKeys: String, CodingKey {
         case title
@@ -207,6 +208,7 @@ struct StoryMetadata: Codable, Hashable {
         case audioVoiceId
         case audioVoiceName
         case createdDate
+        case isPremium
     }
 
     init(from decoder: Decoder) throws {
@@ -236,6 +238,9 @@ struct StoryMetadata: Codable, Hashable {
         } else {
             createdDate = Date()
         }
+
+        // Premium flag with default of false
+        isPremium = try container.decodeIfPresent(Bool.self, forKey: .isPremium) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -259,6 +264,7 @@ struct StoryMetadata: Codable, Hashable {
 
         let formatter = ISO8601DateFormatter()
         try container.encode(formatter.string(from: createdDate), forKey: .createdDate)
+        try container.encode(isPremium, forKey: .isPremium)
     }
 
     init(
@@ -278,7 +284,8 @@ struct StoryMetadata: Codable, Hashable {
         audioURL: String? = nil,
         audioVoiceId: String? = nil,
         audioVoiceName: String? = nil,
-        createdDate: Date = Date()
+        createdDate: Date = Date(),
+        isPremium: Bool = false
     ) {
         self.title = title
         self.titleJapanese = titleJapanese
@@ -297,6 +304,7 @@ struct StoryMetadata: Codable, Hashable {
         self.audioVoiceId = audioVoiceId
         self.audioVoiceName = audioVoiceName
         self.createdDate = createdDate
+        self.isPremium = isPremium
     }
 }
 

@@ -76,6 +76,7 @@ class StoryMetadata(BaseModel):
     coverImageURL: Optional[str] = None
     audioURL: Optional[str] = None
     createdDate: str
+    isPremium: bool = False  # Whether this story requires premium subscription
 
 
 class Story(BaseModel):
@@ -99,3 +100,4 @@ class StoryListItem(BaseModel):
     summary: str
     coverImageURL: Optional[str] = None
     chapterCount: int
+    isPremium: bool = False

@@ -18,6 +18,11 @@ struct StoryCard: View {
         progress?.isCompleted ?? false
     }
 
+    /// Whether this story is locked (premium and user is not premium)
+    private var isLocked: Bool {
+        story.metadata.isPremium && !appState.isPremiumUser
+    }
+
     /// Adaptive secondary color for better dark mode readability
     private var secondaryTextColor: Color {
         Color.adaptiveSecondary(for: colorScheme)
@@ -30,11 +35,17 @@ struct StoryCard: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            // Thumbnail
-            StoryThumbnail(
-                imageURL: story.metadata.coverImageURL,
-                level: story.metadata.jlptLevel
-            )
+            // Thumbnail with lock overlay for premium stories
+            ZStack {
+                StoryThumbnail(
+                    imageURL: story.metadata.coverImageURL,
+                    level: story.metadata.jlptLevel
+                )
+
+                if isLocked {
+                    PremiumLockOverlay()
+                }
+            }
 
             // Content
             VStack(alignment: .leading, spacing: 6) {
@@ -71,6 +82,11 @@ struct StoryCard: View {
                 // Metadata row
                 HStack(spacing: 6) {
                     JLPTBadge(level: story.metadata.jlptLevel)
+
+                    // Premium badge
+                    if story.metadata.isPremium {
+                        PremiumBadge()
+                    }
 
                     // Audio badge
                     if story.metadata.audioURL != nil {
@@ -136,9 +152,19 @@ struct StoryThumbnail: View {
     let imageURL: String?
     let level: JLPTLevel
 
+    /// Construct full URL, prepending base URL for relative paths
+    private var resolvedURL: URL? {
+        guard let urlString = imageURL else { return nil }
+        // If it's a relative path, prepend the API base URL
+        if urlString.hasPrefix("/") {
+            return URL(string: APIConfig.baseURL + urlString)
+        }
+        return URL(string: urlString)
+    }
+
     var body: some View {
         Group {
-            if let urlString = imageURL, let url = URL(string: urlString) {
+            if let url = resolvedURL {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .empty:
@@ -245,6 +271,24 @@ struct AudioBadge: View {
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
         .background(Color.purple)
+        .clipShape(Capsule())
+    }
+}
+
+/// Badge indicating premium story
+struct PremiumBadge: View {
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "crown.fill")
+                .font(.caption2)
+            Text("Premium")
+                .font(.caption2)
+                .fontWeight(.semibold)
+        }
+        .foregroundStyle(.black.opacity(0.8))
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(Color.yellow)
         .clipShape(Capsule())
     }
 }

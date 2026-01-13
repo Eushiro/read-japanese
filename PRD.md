@@ -357,8 +357,69 @@ _(Unchanged in core functionality, applies across chapters and long stories)_
 
 ---
 
+---
+
+## Implementation Status
+
+### Completed Features ✅
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| **JLPT-Leveled Story Library** | ✅ Complete | Stories organized by N5-N1 levels |
+| **Chapter-Based Story Structure** | ✅ Complete | Multi-chapter stories with images |
+| **Interactive Reading Interface** | ✅ Complete | Tap-to-define, definitions via Jisho.org |
+| **Furigana Support** | ✅ Complete | Toggle on/off per user preference |
+| **Dark Mode** | ✅ Complete | System/Light/Dark theme options |
+| **Custom Fonts** | ✅ Complete | 4 Japanese fonts (System, Hiragino Sans, Mincho, Rounded) |
+| **Adjustable Text Size** | ✅ Complete | 14-32pt range |
+| **Two Reading Modes** | ✅ Complete | Paged (swipe) + Continuous (scroll) |
+| **Auto-Scroll** | ✅ Complete | Long-press to activate, configurable speed |
+| **Story Thumbnails** | ✅ Complete | Cover images in library view |
+| **Chapter Images** | ✅ Complete | AI-generated images per chapter |
+| **Reading Progress** | ✅ Complete | Auto-save, resume, completion tracking |
+| **Story Recommendations** | ✅ Complete | 3 suggestions at end of story |
+| **Vocabulary System** | ✅ Complete | Save words, view list, filter/sort |
+| **Premium Subscription (Mock)** | ✅ Complete | Lock stories, paywall, toggle in debug |
+| **Offline Caching** | ✅ Complete | Story data cached for offline reading |
+| **Image Generation Pipeline** | ✅ Complete | DALL-E 3 integration for chapter art |
+| **Romaji Search** | ✅ Complete | Search Japanese with romaji input |
+| **Story Refresh** | ✅ Complete | Pull-to-refresh with cache management |
+
+### In Progress 🚧
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| **Audio Narration** | 🚧 Partial | Backend pipeline exists, not all stories have audio |
+| **Audio Highlighting** | 🚧 Planned | Sentence sync stored in data model |
+| **Account System** | 🚧 Partial | Google Sign-In UI exists, sync not implemented |
+
+### Not Started ❌
+
+| Feature | Priority | Notes |
+|---------|----------|-------|
+| **iOS Share Sheet Import** | High | Share any webpage → tokenized story with images |
+| **Personalized Story Generation** | High | AI generates stories tailored to user's level & interests |
+| **Instant Sentence Mining** | High | One-tap sentence save with Anki export |
+| **Real Payment Integration** | High | Currently using mock subscription |
+| **Audio Voice Selection** | Medium | AI-selected voices per story |
+| **Story Generation UI** | Medium | Backend exists, needs mobile/web GUI |
+| **Story Ratings** | Low | Like/dislike system |
+| **Popularity Sorting** | Low | Sort by user engagement |
+
+---
+
+## Known Issues
+
+| Issue | Severity | Description |
+|-------|----------|-------------|
+| Word tap in continuous mode | Medium | Tapping words doesn't always register in continuous scroll mode |
+| Furigana accuracy | Low | Some stories have incorrect furigana annotations |
+| Audio timing sync | Medium | Word-level highlighting not yet implemented |
+
+---
+
 ## Document Control
 
-**Version**: 1.1
-**Last Updated**: 2026-01-07
-**Status**: Updated with requested additions
+**Version**: 1.2
+**Last Updated**: 2026-01-12
+**Status**: Updated with implementation status and known issues

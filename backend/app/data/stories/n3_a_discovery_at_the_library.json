@@ -65,7 +65,8 @@
     "coverImageURL": "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=400&q=80",
     "audioURL": null,
     "createdDate": "2026-01-10T00:00:00Z",
-    "tokenizerSource": "fugashi-ipadic"
+    "tokenizerSource": "fugashi-ipadic",
+    "isPremium": true
   },
   "chapters": [
     {

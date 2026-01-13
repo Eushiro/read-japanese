@@ -18,6 +18,8 @@ struct LibraryView: View {
     @State private var searchText = ""
     @State private var sortOrder: SortOrder = .easyToHard
     @State private var showSettings = false
+    @State private var showPaywall = false
+    @State private var selectedPremiumStory: Story? = nil
 
     /// Callback when a story is selected
     var onStorySelected: ((Story) -> Void)? = nil
@@ -105,6 +107,11 @@ struct LibraryView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView()
                 .environmentObject(AuthService.shared)
+                .environmentObject(appState)
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView(story: selectedPremiumStory)
+                .environmentObject(appState)
         }
         .task {
             if appState.stories.isEmpty {
@@ -237,12 +244,18 @@ struct LibraryView: View {
                 Section {
                     ForEach(levelGroup.stories) { story in
                         Button {
-                            AnalyticsService.shared.track(.storySelected, properties: [
-                                "story_id": story.id,
-                                "jlpt_level": story.metadata.jlptLevel.rawValue,
-                                "title": story.metadata.title
-                            ])
-                            onStorySelected?(story)
+                            // Check if story is premium and user is not subscribed
+                            if story.metadata.isPremium && !appState.isPremiumUser {
+                                selectedPremiumStory = story
+                                showPaywall = true
+                            } else {
+                                AnalyticsService.shared.track(.storySelected, properties: [
+                                    "story_id": story.id,
+                                    "jlpt_level": story.metadata.jlptLevel.rawValue,
+                                    "title": story.metadata.title
+                                ])
+                                onStorySelected?(story)
+                            }
                         } label: {
                             StoryCard(story: story)
                                 .frame(maxWidth: .infinity, alignment: .leading)

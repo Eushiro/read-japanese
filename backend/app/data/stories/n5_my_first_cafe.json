@@ -51,7 +51,8 @@
     "summaryJapanese": "学生が友達と初めてカフェに行って、新しい飲み物とケーキを楽しみます。",
     "coverImageURL": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80",
     "audioURL": null,
-    "createdDate": "2026-01-11T13:54:09.061667Z"
+    "createdDate": "2026-01-11T13:54:09.061667Z",
+    "isPremium": true
   },
   "chapters": [
     {

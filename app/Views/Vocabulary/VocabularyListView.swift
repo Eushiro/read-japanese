@@ -166,6 +166,7 @@ struct VocabularyListView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView()
                 .environmentObject(AuthService.shared)
+                .environmentObject(appState)
         }
         .onAppear {
             appState.loadVocabularyFromStorage()
