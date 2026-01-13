@@ -274,49 +274,45 @@ struct TokenPartsView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Furigana row (only when showing)
-            if showFurigana {
-                HStack(spacing: 0) {
-                    if let parts = token.parts, !parts.isEmpty {
-                        ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
-                            if let reading = part.reading {
-                                Text(reading)
-                                    .font(selectedFont.font(size: fontSize * 0.5))
-                                    .foregroundStyle(furiganaColor)
-                            } else {
-                                Text(String(repeating: " ", count: part.text.count))
-                                    .font(selectedFont.font(size: fontSize * 0.5))
-                                    .opacity(0)
-                            }
+        // Each part rendered as furigana above text, aligned horizontally
+        HStack(alignment: .bottom, spacing: 0) {
+            if let parts = token.parts, !parts.isEmpty {
+                ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
+                    VStack(spacing: 0) {
+                        // Furigana (centered above text)
+                        if showFurigana {
+                            Text(part.reading ?? " ")
+                                .font(selectedFont.font(size: fontSize * 0.5))
+                                .foregroundStyle(part.reading != nil ? furiganaColor : .clear)
                         }
-                    } else {
-                        Text(" ")
-                            .font(selectedFont.font(size: fontSize * 0.5))
-                            .opacity(0)
-                    }
-                }
-                .background(highlightColor)
-            }
-
-            // Main text row
-            HStack(spacing: 0) {
-                if let parts = token.parts, !parts.isEmpty {
-                    ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
+                        // Main text
                         Text(part.text)
                             .font(selectedFont.font(size: fontSize))
                             .foregroundStyle(.primary)
-                            .underline(shouldUnderline, color: audioUnderlineColor)
                     }
-                } else {
+                }
+            } else {
+                VStack(spacing: 0) {
+                    if showFurigana {
+                        Text(" ")
+                            .font(selectedFont.font(size: fontSize * 0.5))
+                            .foregroundStyle(.clear)
+                    }
                     Text(token.surface)
                         .font(selectedFont.font(size: fontSize))
                         .foregroundStyle(.primary)
-                        .underline(shouldUnderline, color: audioUnderlineColor)
                 }
             }
-            .background(highlightColor)
-            .cornerRadius(4)
+        }
+        .background(highlightColor)
+        .cornerRadius(4)
+        .overlay(alignment: .bottom) {
+            if shouldUnderline {
+                Rectangle()
+                    .fill(audioUnderlineColor)
+                    .frame(height: 3)
+                    .offset(y: 2)
+            }
         }
         .fixedSize(horizontal: true, vertical: false)
         .background(
@@ -383,21 +379,27 @@ struct WordTapView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Furigana (only when showing)
+            // Furigana (only when showing) - no highlight here, only on main text
             if let reading = displayReading {
                 Text(reading)
                     .font(selectedFont.font(size: fontSize * 0.5))
                     .foregroundStyle(furiganaColor)
-                    .background(highlightColor)
             }
 
             // Main text
             Text(wordInfo.surface)
                 .font(selectedFont.font(size: fontSize))
                 .foregroundStyle(.primary)
-                .underline(shouldUnderline, color: audioUnderlineColor)
                 .background(highlightColor)
                 .cornerRadius(4)
+                .overlay(alignment: .bottom) {
+                    if shouldUnderline {
+                        Rectangle()
+                            .fill(audioUnderlineColor)
+                            .frame(height: 3)
+                            .offset(y: 2)
+                    }
+                }
         }
         .fixedSize(horizontal: true, vertical: false)
         .background(

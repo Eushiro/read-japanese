@@ -18,9 +18,8 @@ final class AnalyticsService {
         )
         config.captureScreenViews = true
         config.captureApplicationLifecycleEvents = true
-        config.sessionReplay = true
-        config.sessionReplayConfig.maskAllTextInputs = true
-        config.sessionReplayConfig.maskAllImages = false
+        // Session replay disabled - causes SwiftUI view hierarchy warnings
+        config.sessionReplay = false
 
         PostHogSDK.shared.setup(config)
     }

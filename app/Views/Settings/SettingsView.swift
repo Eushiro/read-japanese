@@ -9,7 +9,6 @@ struct SettingsView: View {
     @State private var showingDeleteConfirmation = false
 
     // Reader settings (stored in AppStorage)
-    @AppStorage("autoScrollSpeed") private var autoScrollSpeed: Double = 300.0
     @AppStorage("fontSize") private var fontSize: Double = 20.0
     @AppStorage("fontName") private var fontName: String = "System"
     @AppStorage("showFurigana") private var showFurigana: Bool = true
@@ -24,13 +23,6 @@ struct SettingsView: View {
     private var selectedFont: JapaneseFont {
         JapaneseFont(rawValue: fontName) ?? .system
     }
-
-    // Speed presets (in points per second)
-    private let speedPresets: [(name: String, value: Double)] = [
-        ("Slow", 200.0),
-        ("Medium", 350.0),
-        ("Fast", 600.0)
-    ]
 
     // Color scheme options
     private let colorSchemeOptions: [(name: String, value: String, icon: String)] = [
@@ -308,56 +300,6 @@ struct SettingsView: View {
                     Text("Reading")
                 } footer: {
                     Text("Paged shows one chapter at a time with swipe navigation. Continuous shows all chapters in one scrolling view.")
-                }
-
-                // Auto-scroll section
-                Section {
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            Label("Scroll Speed", systemImage: "arrow.down.circle")
-                            Spacer()
-                            Text("\(Int(autoScrollSpeed)) pts/sec")
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-
-                        Slider(value: $autoScrollSpeed, in: 200...600, step: 25)
-                            .tint(.accentColor)
-
-                        // Speed presets
-                        HStack(spacing: 10) {
-                            ForEach(speedPresets, id: \.name) { preset in
-                                Button {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        autoScrollSpeed = preset.value
-                                    }
-                                } label: {
-                                    Text(preset.name)
-                                        .font(.subheadline)
-                                        .fontWeight(.medium)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 10)
-                                        .background(
-                                            autoScrollSpeed == preset.value
-                                                ? Color.accentColor
-                                                : Color(.tertiarySystemGroupedBackground)
-                                        )
-                                        .foregroundStyle(
-                                            autoScrollSpeed == preset.value
-                                                ? .white
-                                                : .primary
-                                        )
-                                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 4)
-                } header: {
-                    Text("Auto-Scroll")
-                } footer: {
-                    Text("Long-press while reading to start auto-scrolling. Release to stop.")
                 }
 
                 // Language section

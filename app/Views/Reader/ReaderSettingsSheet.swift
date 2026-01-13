@@ -2,7 +2,6 @@ import SwiftUI
 
 /// Settings sheet for reader preferences (accessible while reading)
 struct ReaderSettingsSheet: View {
-    @Binding var autoScrollSpeed: Double
     @Binding var fontSize: Double
     @Binding var showFurigana: Bool
 
@@ -12,13 +11,6 @@ struct ReaderSettingsSheet: View {
     @AppStorage("showEnglishDescriptions") private var showEnglishDescriptions: Bool = false
     @AppStorage("showTokenizerSource") private var showTokenizerSource: Bool = false
     @AppStorage("showAuthor") private var showAuthor: Bool = false
-
-    // Speed presets (in points per second)
-    private let speedPresets: [(name: String, value: Double)] = [
-        ("Slow", 200.0),
-        ("Medium", 350.0),
-        ("Fast", 600.0)
-    ]
 
     // Color scheme options
     private let colorSchemeOptions: [(name: String, value: String, icon: String)] = [
@@ -30,52 +22,6 @@ struct ReaderSettingsSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                // Auto-scroll section
-                Section("Auto-Scroll") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("Speed")
-                            Spacer()
-                            Text("\(Int(autoScrollSpeed)) pts/sec")
-                                .foregroundStyle(.secondary)
-                        }
-
-                        Slider(value: $autoScrollSpeed, in: 200...600, step: 25)
-
-                        // Speed presets
-                        HStack {
-                            ForEach(speedPresets, id: \.name) { preset in
-                                Button {
-                                    withAnimation {
-                                        autoScrollSpeed = preset.value
-                                    }
-                                } label: {
-                                    Text(preset.name)
-                                        .font(.caption)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            autoScrollSpeed == preset.value
-                                                ? Color.accentColor
-                                                : Color.secondary.opacity(0.2)
-                                        )
-                                        .foregroundStyle(
-                                            autoScrollSpeed == preset.value
-                                                ? .white
-                                                : .primary
-                                        )
-                                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-
-                    Text("Long-press on the story to start auto-scrolling. Release to stop.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
                 // Text display section
                 Section("Text Display") {
                     VStack(alignment: .leading, spacing: 12) {
@@ -181,7 +127,6 @@ struct ReaderSettingsSheet: View {
 
 #Preview {
     ReaderSettingsSheet(
-        autoScrollSpeed: .constant(50.0),
         fontSize: .constant(20.0),
         showFurigana: .constant(true)
     )

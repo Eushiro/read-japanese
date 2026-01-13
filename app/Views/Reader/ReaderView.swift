@@ -11,7 +11,6 @@ struct ReaderView: View {
 
     // MARK: - Local State
 
-    @State private var isAutoScrolling = false
     @State private var showSettings = false
     @State private var currentSegmentIndex = 0
     @State private var currentChapterIndex = 0
@@ -30,12 +29,12 @@ struct ReaderView: View {
     @State private var isScrubbing = false  // Track when user is scrubbing audio
     @State private var scrubPosition: Double = 0  // Temporary position while scrubbing
     @State private var scrollToAudioSegmentId: String? = nil  // For auto-scrolling to active audio segment
+    @State private var loadedAudioURL: String? = nil  // Track currently loaded audio to avoid reloading
 
     // Audio player
     @StateObject private var audioPlayer = AudioPlayerService()
 
     // Settings (persisted)
-    @AppStorage("autoScrollSpeed") private var autoScrollSpeed: Double = 300.0
     @AppStorage("fontSize") private var fontSize: Double = 20.0
     @AppStorage("showFurigana") private var showFurigana: Bool = true
     @AppStorage("showEnglishTitles") private var showEnglishTitles: Bool = false
@@ -49,11 +48,6 @@ struct ReaderView: View {
     /// Furigana color that adapts to dark mode
     private var furiganaColor: Color {
         colorScheme == .dark ? Color(white: 0.65) : Color(white: 0.4)
-    }
-
-    /// Scroll speed in points per second (direct from settings)
-    private var scrollSpeedPointsPerSecond: CGFloat {
-        CGFloat(autoScrollSpeed)
     }
 
     /// Whether the current chapter/story has audio (checks both chapter and story level)
@@ -139,15 +133,7 @@ struct ReaderView: View {
             nativeBottomToolbar
         }
         .background(Color(.systemBackground))
-        .overlay(alignment: .bottom) {
-            // Auto-scroll indicator (floating above footer)
-            if isAutoScrolling {
-                autoScrollIndicator
-                    .padding(.bottom, 70)  // Above the bottom toolbar
-            }
-        }
         .animation(.easeInOut(duration: 0.2), value: showAudioPlayer)
-        .animation(.easeInOut(duration: 0.15), value: isAutoScrolling)
         .navigationBarHidden(true)
         .sheet(isPresented: $showSettings) {
             SettingsView()
@@ -162,9 +148,9 @@ struct ReaderView: View {
             AnalyticsService.shared.trackScreen("Reader")
         }
         .onDisappear {
-            isAutoScrolling = false
             saveProgress()
             audioPlayer.cleanup()
+            loadedAudioURL = nil
             AnalyticsService.shared.track(.readerClosed, properties: [
                 "story_id": story.id,
                 "chapters_read": currentChapterIndex + 1
@@ -174,6 +160,7 @@ struct ReaderView: View {
             // Reset to first chapter when a new story is selected
             currentChapterIndex = 0
             scrollOffset = 0
+            loadedAudioURL = nil  // Reset so audio will reload for new story
         }
         .task {
             await loadAudioIfAvailable()
@@ -199,6 +186,17 @@ struct ReaderView: View {
         .onChange(of: audioPlayer.currentSegmentId) { _, newSegmentId in
             // Auto-scroll to the currently playing segment when audio is playing
             if audioPlayer.isPlaying, let segmentId = newSegmentId {
+                // In paged mode, change to the chapter containing this segment
+                if chapterViewMode != "continuous" {
+                    if let chapterIndex = findChapterIndex(forSegmentId: segmentId) {
+                        if chapterIndex != currentChapterIndex {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                currentChapterIndex = chapterIndex
+                            }
+                        }
+                    }
+                }
+                // Scroll to the segment within the current view
                 scrollToAudioSegmentId = segmentId
             }
         }
@@ -382,26 +380,41 @@ struct ReaderView: View {
                         .monospacedDigit()
                         .frame(width: 40, alignment: .trailing)
 
-                    Slider(
-                        value: Binding(
-                            get: { isScrubbing ? scrubPosition : audioPlayer.currentTime },
-                            set: { newValue in
-                                scrubPosition = newValue
-                                if !isScrubbing {
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            // Track background
+                            Capsule()
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(height: 6)
+
+                            // Progress fill
+                            Capsule()
+                                .fill(Color.blue)
+                                .frame(width: max(0, geometry.size.width * CGFloat((isScrubbing ? scrubPosition : audioPlayer.currentTime) / max(audioPlayer.duration, 1))), height: 6)
+
+                            // Thumb
+                            Circle()
+                                .fill(Color.blue)
+                                .frame(width: 14, height: 14)
+                                .offset(x: max(0, geometry.size.width * CGFloat((isScrubbing ? scrubPosition : audioPlayer.currentTime) / max(audioPlayer.duration, 1)) - 7))
+                        }
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    let progress = min(max(0, value.location.x / geometry.size.width), 1)
+                                    scrubPosition = Double(progress) * audioPlayer.duration
                                     isScrubbing = true
                                 }
-                            }
-                        ),
-                        in: 0...max(audioPlayer.duration, 1),
-                        onEditingChanged: { editing in
-                            if !editing {
-                                // User finished scrubbing - seek to position
-                                audioPlayer.seek(to: scrubPosition)
-                                isScrubbing = false
-                            }
-                        }
-                    )
-                    .tint(.blue)
+                                .onEnded { value in
+                                    let progress = min(max(0, value.location.x / geometry.size.width), 1)
+                                    let seekTime = Double(progress) * audioPlayer.duration
+                                    audioPlayer.seek(to: seekTime)
+                                    isScrubbing = false
+                                }
+                        )
+                    }
+                    .frame(height: 20)
 
                     Text(formatAudioTime(audioPlayer.duration))
                         .font(.caption2)
@@ -622,70 +635,56 @@ struct ReaderView: View {
 
     /// Helper to create a continuous scroll view with all chapters
     private func continuousScrollView(width: CGFloat) -> some View {
-        AutoScrollView(
-            isAutoScrolling: $isAutoScrolling,
-            scrollOffset: $scrollOffset,
-            scrollToOffset: $scrollToTargetOffset,
-            scrollToIdentifier: $scrollToAudioSegmentId,
-            scrollSpeed: scrollSpeedPointsPerSecond,
-            onSwipeBack: { onDismiss?() }
-        ) {
-            VStack(alignment: .leading, spacing: 48) {
-                ForEach(0..<max(story.chapterCount, 1), id: \.self) { chapterIndex in
-                    VStack(alignment: .leading, spacing: 24) {
-                        // Chapter number indicator for continuous mode
-                        if story.hasChapters {
-                            HStack(spacing: 8) {
-                                Text("Chapter \(chapterIndex + 1)/\(story.chapterCount)")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(.secondary)
+        ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(alignment: .leading, spacing: 48) {
+                    ForEach(0..<max(story.chapterCount, 1), id: \.self) { chapterIndex in
+                        VStack(alignment: .leading, spacing: 24) {
+                            // Chapter number indicator for continuous mode
+                            if story.hasChapters {
+                                HStack(spacing: 8) {
+                                    Text("Chapter \(chapterIndex + 1)/\(story.chapterCount)")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.secondary)
 
-                                Rectangle()
-                                    .fill(Color.secondary.opacity(0.3))
-                                    .frame(height: 1)
+                                    Rectangle()
+                                        .fill(Color.secondary.opacity(0.3))
+                                        .frame(height: 1)
+                                }
+                                .padding(.bottom, 4)
+                                .id("chapter_\(chapterIndex)")
                             }
-                            .padding(.bottom, 4)
-                        }
 
-                        chapterBodyContent(forChapterIndex: chapterIndex)
-                    }
-                    .background(
-                        GeometryReader { geo in
-                            Color.clear
-                                .onAppear {
-                                    // Capture chapter height on initial layout
-                                    chapterHeights[chapterIndex] = geo.size.height
-                                }
-                                .onChange(of: geo.size.height) { _, newHeight in
-                                    chapterHeights[chapterIndex] = newHeight
-                                }
+                            chapterBodyContent(forChapterIndex: chapterIndex)
                         }
-                    )
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                .padding(.bottom, 32)
+            }
+            .onChange(of: scrollToChapterIndex) { _, newIndex in
+                if let index = newIndex {
+                    withAnimation {
+                        proxy.scrollTo("chapter_\(index)", anchor: .top)
+                    }
+                    currentChapterIndex = index
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        scrollToChapterIndex = nil
+                    }
                 }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-            .padding(.bottom, 32)
-        }
-        .onChange(of: scrollOffset) { _, newOffset in
-            // Update chapter marker on any scroll change
-            updateVisibleChapter(for: newOffset)
-        }
-        .onChange(of: scrollToChapterIndex) { _, newIndex in
-            if let index = newIndex {
-                // Small delay to ensure chapter heights are captured
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    // Calculate offset for the target chapter
-                    let targetOffset = calculateChapterOffset(for: index)
-                    if targetOffset > 0 || index == 0 {
-                        scrollToTargetOffset = targetOffset
-                        currentChapterIndex = index
+            .onChange(of: scrollToAudioSegmentId) { _, segmentId in
+                if let id = segmentId {
+                    withAnimation {
+                        // Scroll to top third of screen so more text is visible below
+                        proxy.scrollTo(id, anchor: UnitPoint(x: 0.5, y: 0.25))
                     }
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    scrollToChapterIndex = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        scrollToAudioSegmentId = nil
+                    }
                 }
             }
         }
@@ -740,17 +739,25 @@ struct ReaderView: View {
 
     /// Helper to create a scroll view for a specific chapter
     private func chapterScrollView(forChapterIndex index: Int, width: CGFloat) -> some View {
-        AutoScrollView(
-            isAutoScrolling: $isAutoScrolling,
-            scrollOffset: index == currentChapterIndex ? $scrollOffset : .constant(0),
-            scrollToIdentifier: index == currentChapterIndex ? $scrollToAudioSegmentId : .constant(nil),
-            scrollSpeed: scrollSpeedPointsPerSecond
-        ) {
-            chapterBodyContent(forChapterIndex: index)
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
-                .padding(.bottom, 32)
+        ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: true) {
+                chapterBodyContent(forChapterIndex: index)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
+                    .padding(.bottom, 32)
+            }
+            .onChange(of: scrollToAudioSegmentId) { _, segmentId in
+                if index == currentChapterIndex, let id = segmentId {
+                    withAnimation {
+                        // Scroll to top third of screen so more text is visible below
+                        proxy.scrollTo(id, anchor: UnitPoint(x: 0.5, y: 0.25))
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        scrollToAudioSegmentId = nil
+                    }
+                }
+            }
         }
         .frame(width: width)
         .id("chapter_\(index)")
@@ -800,6 +807,18 @@ struct ReaderView: View {
             scrollOffset = 0
             currentChapterIndex = index
         }
+    }
+
+    /// Find which chapter contains a given segment ID
+    private func findChapterIndex(forSegmentId segmentId: String) -> Int? {
+        if let chapters = story.chapters {
+            for (index, chapter) in chapters.enumerated() {
+                if chapter.segments.contains(where: { $0.id == segmentId }) {
+                    return index
+                }
+            }
+        }
+        return nil
     }
 
     // Scrollable chapter body content for a specific chapter index
@@ -1022,23 +1041,6 @@ struct ReaderView: View {
         }
     }
 
-    // MARK: - Auto-scroll
-
-    private var autoScrollIndicator: some View {
-        HStack {
-            Image(systemName: "arrow.down.circle.fill")
-            Text("Release to stop")
-        }
-        .font(.caption)
-        .fontWeight(.medium)
-        .foregroundStyle(.white)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(Color.blue.opacity(0.9))
-        .clipShape(Capsule())
-        .shadow(radius: 4)
-    }
-
     // MARK: - Word Actions
 
     /// Dismiss the word action tooltip
@@ -1113,7 +1115,14 @@ struct ReaderView: View {
             return
         }
 
-        await audioPlayer.loadAudio(from: audioURL, segments: currentSegments)
+        // Only reload if the audio URL has changed
+        if audioURLString == loadedAudioURL {
+            return
+        }
+
+        loadedAudioURL = audioURLString
+        // Load with ALL segments so we can track position across chapters
+        await audioPlayer.loadAudio(from: audioURL, segments: story.allSegments)
     }
 
     // MARK: - Tappable Chapter Title (non-tokenized)

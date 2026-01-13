@@ -89,6 +89,10 @@ class AudioPlayerService: ObservableObject {
     /// Start or resume playback
     func play() {
         guard isLoaded, let player = player else { return }
+        // If at the end, restart from beginning
+        if currentTime >= duration - 0.5 {
+            seek(to: 0)
+        }
         player.play()
         isPlaying = true
     }
@@ -196,9 +200,13 @@ class AudioPlayerService: ObservableObject {
         NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.isPlaying = false
-                self?.currentTime = 0
-                self?.currentSegmentId = nil
+                guard let self = self else { return }
+                self.isPlaying = false
+                self.currentSegmentId = nil
+                self.currentWordText = nil
+                self.currentWordStart = nil
+                // Seek to beginning so scrubber and player are in sync
+                self.seek(to: 0)
             }
             .store(in: &cancellables)
     }
