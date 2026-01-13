@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """
-Generate audio for stories using Eleven Labs TTS API.
+Generate audio for stories using Google Gemini TTS API.
 
 Usage:
-    export ELEVEN_LABS_API_KEY=your_api_key
+    export GEMINI_API_KEY=your_api_key
     python scripts/generate_audio.py [--level N5] [--story story_id] [--list]
 
 Environment Variables:
-    ELEVEN_LABS_API_KEY - Your Eleven Labs API key (required)
+    GEMINI_API_KEY - Your Google AI API key (required)
 """
 
 import os
+import io
 import json
+import wave
 import asyncio
 import sys
 from pathlib import Path
@@ -20,30 +22,44 @@ from typing import Optional
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-try:
-    import httpx
-except ImportError:
-    print("Error: httpx not installed. Run: pip install httpx")
-    sys.exit(1)
-
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# Configuration
-ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY")
-ELEVEN_LABS_BASE_URL = "https://api.elevenlabs.io/v1"
+# Import Google GenAI
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    print("Error: google-genai not installed. Run: pip install google-genai")
+    sys.exit(1)
 
-# Japanese voice - Makoto from Eleven Labs Voice Library
-# Other Japanese voices: Eiko (female): GR4dBIFsYe57TxyrHKXz, Akari (female): EkK6wL8GaH8IgBZTTDGJ
-VOICE_ID = "6wdSVG3CMjPfAthsnMv9"  # Makoto - Japanese male, narrative/story
-VOICE_NAME = "Makoto"
-MODEL_ID = "eleven_multilingual_v2"
+import subprocess
+import tempfile
+
+# Configuration
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_AI_API_KEY")
+GEMINI_MODEL = "gemini-2.5-flash-preview-tts"
+
+# Voice selection with weighted probabilities
+# 30% Leda, 30% Aoede, 20% Alnilam, 20% Rasalgethi
+VOICES = ["Leda", "Aoede", "Alnilam", "Rasalgethi"]
+VOICE_WEIGHTS = [0.30, 0.30, 0.20, 0.20]
+
+# Prompt for graded reader narration - kept simple to avoid text generation
+NARRATION_PROMPT = "Read aloud clearly and slowly for language learners:\n\n"
+
+
+def select_voice() -> str:
+    """Select a random voice based on weighted probabilities."""
+    import random
+    return random.choices(VOICES, weights=VOICE_WEIGHTS, k=1)[0]
 
 # Paths
 STORIES_DIR = Path(__file__).parent.parent / "app" / "data" / "stories"
 AUDIO_DIR = Path(__file__).parent.parent / "app" / "static" / "audio"
+AUDIO_ORIGINALS_DIR = AUDIO_DIR / "originals"
 
 
 def extract_text_from_tokens(tokens: list) -> str:
@@ -119,50 +135,70 @@ def list_stories() -> None:
     print("-" * 60)
 
 
-async def generate_audio(text: str, output_path: Path) -> bool:
-    """Generate audio using Eleven Labs API."""
-    if not ELEVEN_LABS_API_KEY:
-        print("Error: ELEVEN_LABS_API_KEY not set")
+def save_audio(pcm_data: bytes, output_path: Path) -> bool:
+    """Save PCM audio as WAV original and MP3 for serving."""
+    # Ensure directories exist
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    AUDIO_ORIGINALS_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Save WAV original
+    wav_path = AUDIO_ORIGINALS_DIR / output_path.with_suffix(".wav").name
+    with wave.open(str(wav_path), "wb") as wf:
+        wf.setnchannels(1)  # mono
+        wf.setsampwidth(2)  # 16-bit
+        wf.setframerate(24000)  # 24kHz
+        wf.writeframes(pcm_data)
+    print(f"  WAV original saved: {wav_path.name}")
+
+    try:
+        # Convert to MP3 using ffmpeg
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", str(wav_path), "-b:a", "48k", str(output_path)],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            print(f"  ffmpeg error: {result.stderr}")
+            return False
+        return True
+    except Exception as e:
+        print(f"  Error saving audio: {e}")
         return False
 
-    headers = {
-        "Accept": "audio/mpeg",
-        "Content-Type": "application/json",
-        "xi-api-key": ELEVEN_LABS_API_KEY
-    }
 
-    data = {
-        "text": text,
-        "model_id": MODEL_ID,
-        "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.75,
-            "style": 0.0,
-            "use_speaker_boost": True
-        }
-    }
+def generate_audio(client: genai.Client, text: str, output_path: Path, voice: str) -> bool:
+    """Generate audio using Gemini TTS API."""
+    try:
+        prompt = NARRATION_PROMPT + text
 
-    url = f"{ELEVEN_LABS_BASE_URL}/text-to-speech/{VOICE_ID}"
+        print(f"  Calling Gemini TTS API with voice: {voice}...")
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_modalities=["AUDIO"],
+                speech_config=types.SpeechConfig(
+                    voice_config=types.VoiceConfig(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                            voice_name=voice,
+                        )
+                    )
+                ),
+            )
+        )
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        try:
-            print(f"  Calling Eleven Labs API...")
-            response = await client.post(url, headers=headers, json=data)
-            if response.status_code == 200:
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(output_path, "wb") as f:
-                    f.write(response.content)
-                return True
-            else:
-                print(f"  Error generating audio: {response.status_code}")
-                print(f"  Response: {response.text}")
-                return False
-        except Exception as e:
-            print(f"  Error: {e}")
-            return False
+        # Extract PCM audio data from response
+        audio_data = response.candidates[0].content.parts[0].inline_data.data
+
+        # Save to file
+        return save_audio(audio_data, output_path)
+
+    except Exception as e:
+        print(f"  Error generating audio: {e}")
+        return False
 
 
-async def generate_story_audio(story_id: str) -> bool:
+def generate_story_audio(client: genai.Client, story_id: str) -> bool:
     """Generate audio for all segments in a story."""
     # Find the story file
     story_file = None
@@ -190,33 +226,34 @@ async def generate_story_audio(story_id: str) -> bool:
     print(f"  Segments: {len(segments)}")
     print(f"  Total characters: {len(full_text)}")
 
+    # Select random voice
+    voice = select_voice()
+
     # Generate full story audio
     audio_filename = f"{story_id}.mp3"
     audio_path = AUDIO_DIR / audio_filename
 
-    success = await generate_audio(full_text, audio_path)
+    success = generate_audio(client, full_text, audio_path, voice)
 
     if success:
-        # Update story JSON with audio URL and voice info
+        # Update story JSON with audio metadata
         story_data["metadata"]["audioURL"] = f"/cdn/audio/{audio_filename}"
-        story_data["metadata"]["audioVoiceId"] = VOICE_ID
-        story_data["metadata"]["audioVoiceName"] = VOICE_NAME
+        story_data["metadata"]["audioModel"] = GEMINI_MODEL
+        story_data["metadata"]["audioPrompt"] = NARRATION_PROMPT.strip()
+        story_data["metadata"]["audioVoice"] = voice
         save_story(story_file, story_data)
 
-        print(f"  Audio saved: {audio_path}")
-        print(f"  Story updated with audio URL and voice: {VOICE_NAME}")
+        file_size = audio_path.stat().st_size / 1024
+        print(f"  Audio saved: {audio_path} ({file_size:.1f}KB)")
+        print(f"  Model: {GEMINI_MODEL}")
+        print(f"  Voice: {voice}")
         return True
 
     return False
 
 
-async def generate_all_audio(level: Optional[str] = None):
+def generate_all_audio(client: genai.Client, level: Optional[str] = None):
     """Generate audio for all stories (optionally filtered by level)."""
-    if not ELEVEN_LABS_API_KEY:
-        print("Error: ELEVEN_LABS_API_KEY environment variable not set")
-        print("Please set it with: export ELEVEN_LABS_API_KEY=your_key")
-        return
-
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
     for story_file in sorted(STORIES_DIR.glob("*.json")):
@@ -236,17 +273,18 @@ async def generate_all_audio(level: Optional[str] = None):
             print(f"Skipping {story_id} - audio already exists")
             continue
 
-        await generate_story_audio(story_id)
+        generate_story_audio(client, story_id)
 
         # Rate limit - wait between requests
-        print("  Waiting 2 seconds before next request...")
-        await asyncio.sleep(2)
+        print("  Waiting 1 second before next request...")
+        import time
+        time.sleep(1)
 
 
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Generate audio for stories using Eleven Labs")
+    parser = argparse.ArgumentParser(description="Generate audio for stories using Gemini TTS")
     parser.add_argument("--level", help="Filter by JLPT level (e.g., N5)")
     parser.add_argument("--story", help="Generate audio for specific story ID")
     parser.add_argument("--list", action="store_true", help="List stories and their audio status")
@@ -256,23 +294,27 @@ def main():
         list_stories()
         return
 
-    if not ELEVEN_LABS_API_KEY:
+    if not GEMINI_API_KEY:
         print("=" * 60)
-        print("ELEVEN_LABS_API_KEY not set!")
+        print("GEMINI_API_KEY not set!")
         print()
         print("To generate audio, set your API key:")
-        print("  export ELEVEN_LABS_API_KEY=your_api_key_here")
+        print("  export GEMINI_API_KEY=your_api_key_here")
         print()
         print("You can also add it to backend/.env file")
+        print("Get your key from: https://aistudio.google.com/app/apikey")
         print("=" * 60)
         print()
         list_stories()
         return
 
+    # Initialize client
+    client = genai.Client(api_key=GEMINI_API_KEY)
+
     if args.story:
-        asyncio.run(generate_story_audio(args.story))
+        generate_story_audio(client, args.story)
     else:
-        asyncio.run(generate_all_audio(args.level))
+        generate_all_audio(client, args.level)
 
 
 if __name__ == "__main__":

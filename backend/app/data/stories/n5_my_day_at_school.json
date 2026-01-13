@@ -62,11 +62,14 @@
     "summary": "A student describes their typical day at school, from morning classes to going home.",
     "summaryJapanese": "学生が朝の授業から帰るまでの学校の一日を話します。",
     "coverImageURL": "/cdn/images/cover_my_day_at_school_6090c5cb.webp",
-    "audioURL": null,
+    "audioURL": "/cdn/audio/n5_school_day_001.mp3",
     "createdDate": "2026-01-10T00:00:00Z",
     "tokenizerSource": "fugashi-ipadic",
     "coverImageModel": "gemini-2.5-flash-image",
-    "coverImageModelName": "Nano Banana"
+    "coverImageModelName": "Nano Banana",
+    "audioModel": "gemini-2.5-flash-preview-tts",
+    "audioPrompt": "Read aloud clearly and slowly for language learners:",
+    "audioVoice": "Aoede"
   },
   "chapters": [
     {
@@ -314,6 +317,95 @@
               "baseForm": "。",
               "partOfSpeech": "punctuation"
             }
+          ],
+          "audioStartTime": 0.26,
+          "audioEndTime": 7.3,
+          "audioWords": [
+            {
+              "text": "私",
+              "start": 0.26,
+              "end": 0.64
+            },
+            {
+              "text": "は",
+              "start": 0.64,
+              "end": 0.94
+            },
+            {
+              "text": "毎",
+              "start": 0.94,
+              "end": 1.42
+            },
+            {
+              "text": "日",
+              "start": 1.42,
+              "end": 1.84
+            },
+            {
+              "text": "時",
+              "start": 2.32,
+              "end": 2.6
+            },
+            {
+              "text": "に",
+              "start": 2.6,
+              "end": 2.74
+            },
+            {
+              "text": "きます",
+              "start": 2.88,
+              "end": 3.26
+            },
+            {
+              "text": "朝",
+              "start": 4.52,
+              "end": 4.74
+            },
+            {
+              "text": "ご",
+              "start": 4.74,
+              "end": 4.96
+            },
+            {
+              "text": "を",
+              "start": 5.2,
+              "end": 5.32
+            },
+            {
+              "text": "食べ",
+              "start": 5.32,
+              "end": 5.5
+            },
+            {
+              "text": "て",
+              "start": 5.5,
+              "end": 5.92
+            },
+            {
+              "text": "学",
+              "start": 5.92,
+              "end": 6.38
+            },
+            {
+              "text": "校",
+              "start": 6.54,
+              "end": 6.66
+            },
+            {
+              "text": "へ",
+              "start": 6.66,
+              "end": 6.88
+            },
+            {
+              "text": "行",
+              "start": 6.92,
+              "end": 7.02
+            },
+            {
+              "text": "きます",
+              "start": 7.02,
+              "end": 7.3
+            }
           ]
         },
         {
@@ -450,6 +542,75 @@
               ],
               "baseForm": "。",
               "partOfSpeech": "punctuation"
+            }
+          ],
+          "audioStartTime": 8.72,
+          "audioEndTime": 12.86,
+          "audioWords": [
+            {
+              "text": "学",
+              "start": 8.72,
+              "end": 8.82
+            },
+            {
+              "text": "校",
+              "start": 8.82,
+              "end": 9.14
+            },
+            {
+              "text": "は",
+              "start": 9.14,
+              "end": 9.4
+            },
+            {
+              "text": "家",
+              "start": 9.4,
+              "end": 9.74
+            },
+            {
+              "text": "から",
+              "start": 9.74,
+              "end": 10.04
+            },
+            {
+              "text": "近",
+              "start": 10.04,
+              "end": 10.28
+            },
+            {
+              "text": "い",
+              "start": 10.3,
+              "end": 10.46
+            },
+            {
+              "text": "です",
+              "start": 10.46,
+              "end": 10.74
+            },
+            {
+              "text": "分",
+              "start": 11.7,
+              "end": 11.92
+            },
+            {
+              "text": "ぐ",
+              "start": 11.92,
+              "end": 12.14
+            },
+            {
+              "text": "らい",
+              "start": 12.14,
+              "end": 12.3
+            },
+            {
+              "text": "歩",
+              "start": 12.3,
+              "end": 12.52
+            },
+            {
+              "text": "きます",
+              "start": 12.52,
+              "end": 12.86
             }
           ]
         }
@@ -670,6 +831,115 @@
               "baseForm": "。",
               "partOfSpeech": "punctuation"
             }
+          ],
+          "audioStartTime": 14.28,
+          "audioEndTime": 20.2,
+          "audioWords": [
+            {
+              "text": "午",
+              "start": 14.28,
+              "end": 14.38
+            },
+            {
+              "text": "前",
+              "start": 14.38,
+              "end": 14.56
+            },
+            {
+              "text": "は",
+              "start": 14.56,
+              "end": 14.84
+            },
+            {
+              "text": "日本",
+              "start": 14.84,
+              "end": 15.5
+            },
+            {
+              "text": "語",
+              "start": 15.5,
+              "end": 15.82
+            },
+            {
+              "text": "と",
+              "start": 15.82,
+              "end": 15.96
+            },
+            {
+              "text": "数",
+              "start": 15.96,
+              "end": 16.22
+            },
+            {
+              "text": "学",
+              "start": 16.22,
+              "end": 16.4
+            },
+            {
+              "text": "の",
+              "start": 16.44,
+              "end": 16.64
+            },
+            {
+              "text": "授",
+              "start": 16.64,
+              "end": 16.8
+            },
+            {
+              "text": "業",
+              "start": 16.8,
+              "end": 16.94
+            },
+            {
+              "text": "が",
+              "start": 16.94,
+              "end": 17.14
+            },
+            {
+              "text": "あります",
+              "start": 17.14,
+              "end": 17.44
+            },
+            {
+              "text": "私",
+              "start": 18.56,
+              "end": 18.88
+            },
+            {
+              "text": "は",
+              "start": 18.88,
+              "end": 19.1
+            },
+            {
+              "text": "日本",
+              "start": 19.1,
+              "end": 19.34
+            },
+            {
+              "text": "語",
+              "start": 19.34,
+              "end": 19.62
+            },
+            {
+              "text": "が",
+              "start": 19.62,
+              "end": 19.76
+            },
+            {
+              "text": "好",
+              "start": 19.76,
+              "end": 19.9
+            },
+            {
+              "text": "き",
+              "start": 19.9,
+              "end": 20.0
+            },
+            {
+              "text": "です",
+              "start": 20.0,
+              "end": 20.2
+            }
           ]
         },
         {
@@ -836,6 +1106,85 @@
               ],
               "baseForm": "。",
               "partOfSpeech": "punctuation"
+            }
+          ],
+          "audioStartTime": 21.56,
+          "audioEndTime": 26.22,
+          "audioWords": [
+            {
+              "text": "先生",
+              "start": 21.56,
+              "end": 21.74
+            },
+            {
+              "text": "は",
+              "start": 21.74,
+              "end": 22.16
+            },
+            {
+              "text": "と",
+              "start": 22.16,
+              "end": 22.3
+            },
+            {
+              "text": "て",
+              "start": 22.3,
+              "end": 22.44
+            },
+            {
+              "text": "も",
+              "start": 22.44,
+              "end": 22.56
+            },
+            {
+              "text": "優",
+              "start": 22.56,
+              "end": 22.7
+            },
+            {
+              "text": "しい",
+              "start": 22.7,
+              "end": 23.04
+            },
+            {
+              "text": "です",
+              "start": 23.04,
+              "end": 23.48
+            },
+            {
+              "text": "から",
+              "start": 24.38,
+              "end": 24.56
+            },
+            {
+              "text": "ない",
+              "start": 24.56,
+              "end": 24.82
+            },
+            {
+              "text": "時",
+              "start": 24.82,
+              "end": 25.0
+            },
+            {
+              "text": "は",
+              "start": 25.0,
+              "end": 25.28
+            },
+            {
+              "text": "質",
+              "start": 25.28,
+              "end": 25.7
+            },
+            {
+              "text": "問",
+              "start": 25.72,
+              "end": 25.9
+            },
+            {
+              "text": "します",
+              "start": 25.9,
+              "end": 26.22
             }
           ]
         }
@@ -1075,6 +1424,90 @@
               "baseForm": "。",
               "partOfSpeech": "punctuation"
             }
+          ],
+          "audioStartTime": 27.98,
+          "audioEndTime": 32.08,
+          "audioWords": [
+            {
+              "text": "時",
+              "start": 27.98,
+              "end": 28.2
+            },
+            {
+              "text": "に",
+              "start": 28.2,
+              "end": 28.34
+            },
+            {
+              "text": "昼",
+              "start": 28.34,
+              "end": 28.54
+            },
+            {
+              "text": "ご",
+              "start": 28.54,
+              "end": 28.72
+            },
+            {
+              "text": "飯",
+              "start": 28.72,
+              "end": 28.94
+            },
+            {
+              "text": "を",
+              "start": 28.94,
+              "end": 29.08
+            },
+            {
+              "text": "食べ",
+              "start": 29.08,
+              "end": 29.24
+            },
+            {
+              "text": "ます",
+              "start": 29.24,
+              "end": 29.66
+            },
+            {
+              "text": "友",
+              "start": 30.54,
+              "end": 30.64
+            },
+            {
+              "text": "達",
+              "start": 30.64,
+              "end": 30.96
+            },
+            {
+              "text": "と",
+              "start": 30.96,
+              "end": 31.14
+            },
+            {
+              "text": "一",
+              "start": 31.14,
+              "end": 31.32
+            },
+            {
+              "text": "緒",
+              "start": 31.32,
+              "end": 31.46
+            },
+            {
+              "text": "に",
+              "start": 31.46,
+              "end": 31.58
+            },
+            {
+              "text": "食べ",
+              "start": 31.58,
+              "end": 31.74
+            },
+            {
+              "text": "ます",
+              "start": 31.74,
+              "end": 32.08
+            }
           ]
         },
         {
@@ -1228,6 +1661,90 @@
               ],
               "baseForm": "。",
               "partOfSpeech": "punctuation"
+            }
+          ],
+          "audioStartTime": 33.4,
+          "audioEndTime": 37.8,
+          "audioWords": [
+            {
+              "text": "午",
+              "start": 33.4,
+              "end": 33.5
+            },
+            {
+              "text": "後",
+              "start": 33.5,
+              "end": 33.66
+            },
+            {
+              "text": "は",
+              "start": 33.66,
+              "end": 33.92
+            },
+            {
+              "text": "英",
+              "start": 33.92,
+              "end": 34.32
+            },
+            {
+              "text": "語",
+              "start": 34.32,
+              "end": 34.52
+            },
+            {
+              "text": "と",
+              "start": 34.52,
+              "end": 34.68
+            },
+            {
+              "text": "音",
+              "start": 34.68,
+              "end": 34.88
+            },
+            {
+              "text": "楽",
+              "start": 34.88,
+              "end": 35.06
+            },
+            {
+              "text": "が",
+              "start": 35.06,
+              "end": 35.26
+            },
+            {
+              "text": "あります",
+              "start": 35.26,
+              "end": 35.6
+            },
+            {
+              "text": "音",
+              "start": 36.56,
+              "end": 36.72
+            },
+            {
+              "text": "楽",
+              "start": 36.72,
+              "end": 36.94
+            },
+            {
+              "text": "は",
+              "start": 36.94,
+              "end": 37.1
+            },
+            {
+              "text": "楽",
+              "start": 37.1,
+              "end": 37.3
+            },
+            {
+              "text": "しい",
+              "start": 37.3,
+              "end": 37.58
+            },
+            {
+              "text": "です",
+              "start": 37.58,
+              "end": 37.8
             }
           ]
         },
@@ -1459,6 +1976,100 @@
               ],
               "baseForm": "。",
               "partOfSpeech": "punctuation"
+            }
+          ],
+          "audioStartTime": 39.44,
+          "audioEndTime": 45.14,
+          "audioWords": [
+            {
+              "text": "時",
+              "start": 39.44,
+              "end": 39.62
+            },
+            {
+              "text": "に",
+              "start": 39.62,
+              "end": 39.84
+            },
+            {
+              "text": "授",
+              "start": 39.84,
+              "end": 40.14
+            },
+            {
+              "text": "業",
+              "start": 40.14,
+              "end": 40.32
+            },
+            {
+              "text": "が",
+              "start": 40.32,
+              "end": 40.5
+            },
+            {
+              "text": "終",
+              "start": 40.5,
+              "end": 40.62
+            },
+            {
+              "text": "わ",
+              "start": 40.62,
+              "end": 40.7
+            },
+            {
+              "text": "ります",
+              "start": 40.7,
+              "end": 41.04
+            },
+            {
+              "text": "家",
+              "start": 41.84,
+              "end": 41.98
+            },
+            {
+              "text": "へ",
+              "start": 41.98,
+              "end": 42.18
+            },
+            {
+              "text": "帰",
+              "start": 42.18,
+              "end": 42.4
+            },
+            {
+              "text": "ります",
+              "start": 42.4,
+              "end": 42.78
+            },
+            {
+              "text": "今日",
+              "start": 43.7,
+              "end": 43.82
+            },
+            {
+              "text": "も",
+              "start": 43.82,
+              "end": 44.06
+            },
+            {
+              "text": "いい",
+              "start": 44.06,
+              "end": 44.38
+            },
+            {
+              "text": "一",
+              "start": 44.38,
+              "end": 44.64
+            },
+            {
+              "text": "日",
+              "start": 44.64,
+              "end": 44.8
+            },
+            {
+              "text": "でした",
+              "start": 44.8,
+              "end": 45.14
             }
           ]
         }

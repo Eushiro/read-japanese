@@ -24,7 +24,8 @@ class ImageGenerator:
     """Generates cover images using Google Nano Banana (Gemini Image)"""
 
     def __init__(self):
-        api_key = os.getenv("GOOGLE_AI_API_KEY")
+        # Use GEMINI_API_KEY or fall back to GOOGLE_AI_API_KEY
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_AI_API_KEY")
         if api_key:
             self.client = genai.Client(api_key=api_key)
         else:

@@ -1,79 +1,74 @@
 """
-Audio generation service using Eleven Labs TTS
+Audio generation service using Google Gemini TTS
 Generates audio narration for Japanese graded reader stories.
 """
 import os
+import io
+import wave
 import logging
 from pathlib import Path
 from typing import Optional, List
-import httpx
+
+from google import genai
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
 # Directory for storing generated audio
 AUDIO_DIR = Path(__file__).parent.parent.parent / "static" / "audio"
 
-# Audio output format (Eleven Labs)
-# Options: mp3_44100_128, mp3_44100_64, mp3_22050_32, pcm_16000, pcm_22050, pcm_24000, pcm_44100, ulaw_8000
-AUDIO_FORMAT = "mp3_44100_64"  # 64kbps - good quality for speech, half the size of 128kbps
+# Gemini TTS configuration
+GEMINI_MODEL = "gemini-2.5-flash-preview-tts"
 
-# Available Japanese voices on Eleven Labs
-JAPANESE_VOICES = {
-    "makoto": {
-        "id": "6wdSVG3CMjPfAthsnMv9",
-        "name": "Makoto",
-        "gender": "male",
-        "description": "Japanese male, narrative/story style"
-    },
-    "eiko": {
-        "id": "GR4dBIFsYe57TxyrHKXz",
-        "name": "Eiko",
-        "gender": "female",
-        "description": "Japanese female, clear pronunciation"
-    },
-    "akari": {
-        "id": "EkK6wL8GaH8IgBZTTDGJ",
-        "name": "Akari",
-        "gender": "female",
-        "description": "Japanese female, warm tone"
-    }
-}
+# Voice selection with weighted probabilities
+# 30% Leda, 30% Aoede, 20% Alnilam, 20% Rasalgethi
+VOICES = ["Leda", "Aoede", "Alnilam", "Rasalgethi"]
+VOICE_WEIGHTS = [0.30, 0.30, 0.20, 0.20]
 
-DEFAULT_VOICE = "makoto"
+# Prompt for graded reader narration - kept simple to avoid text generation
+NARRATION_PROMPT = "Read aloud clearly and slowly for language learners:\n\n"
+
+
+def select_voice() -> str:
+    """Select a random voice based on weighted probabilities."""
+    import random
+    return random.choices(VOICES, weights=VOICE_WEIGHTS, k=1)[0]
 
 
 class AudioGenerator:
-    """Generates audio using Eleven Labs TTS"""
+    """Generates audio using Google Gemini TTS"""
 
     def __init__(self):
-        self.api_key = os.getenv("ELEVEN_LABS_API_KEY")
-        self.base_url = "https://api.elevenlabs.io/v1"
-        self.model_id = "eleven_multilingual_v2"
+        # Use GEMINI_API_KEY or fall back to GOOGLE_AI_API_KEY
+        self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_AI_API_KEY")
+        self.client = None
+        if self.api_key:
+            self.client = genai.Client(api_key=self.api_key)
 
     @property
     def is_configured(self) -> bool:
         """Check if API key is configured"""
-        return bool(self.api_key)
+        return self.client is not None
 
     async def generate_story_audio(
         self,
         story_id: str,
         chapters: List[dict],
-        voice: str = DEFAULT_VOICE
-    ) -> Optional[str]:
+        voice: Optional[str] = None
+    ) -> Optional[dict]:
         """
         Generate audio for an entire story.
 
         Args:
             story_id: Unique story identifier
             chapters: List of chapter dicts with content
-            voice: Voice name (makoto, eiko, akari)
+            voice: Voice name (optional, randomly selected if not provided)
 
         Returns:
-            CDN path to the audio file, or None if generation failed
+            Dict with audioURL and metadata, or None if generation failed
         """
         if not self.is_configured:
-            logger.warning("Eleven Labs API key not configured")
+            logger.warning("Gemini API key not configured")
             return None
 
         # Extract all text from chapters
@@ -83,23 +78,33 @@ class AudioGenerator:
             logger.warning("No text to generate audio for")
             return None
 
-        voice_config = JAPANESE_VOICES.get(voice.lower(), JAPANESE_VOICES[DEFAULT_VOICE])
-        logger.info(f"Generating audio for {story_id} with voice {voice_config['name']}")
+        # Select voice if not provided
+        if voice is None:
+            voice = select_voice()
+
+        logger.info(f"Generating audio for {story_id} with voice {voice}")
 
         audio_path = await self._generate_audio(
             text=full_text,
-            voice_id=voice_config["id"],
+            voice=voice,
             filename=f"{story_id}.mp3"
         )
 
-        return audio_path
+        if audio_path:
+            return {
+                "audioURL": audio_path,
+                "audioModel": GEMINI_MODEL,
+                "audioPrompt": NARRATION_PROMPT.strip(),
+                "audioVoice": voice
+            }
+        return None
 
     async def generate_chapter_audio(
         self,
         story_id: str,
         chapter_number: int,
         content: List[dict],
-        voice: str = DEFAULT_VOICE
+        voice: Optional[str] = None
     ) -> Optional[str]:
         """
         Generate audio for a single chapter.
@@ -108,7 +113,7 @@ class AudioGenerator:
             story_id: Story identifier
             chapter_number: Chapter number
             content: List of segment dicts
-            voice: Voice name
+            voice: Voice name (optional, randomly selected if not provided)
 
         Returns:
             CDN path to the audio file
@@ -120,11 +125,12 @@ class AudioGenerator:
         if not text:
             return None
 
-        voice_config = JAPANESE_VOICES.get(voice.lower(), JAPANESE_VOICES[DEFAULT_VOICE])
+        if voice is None:
+            voice = select_voice()
 
         return await self._generate_audio(
             text=text,
-            voice_id=voice_config["id"],
+            voice=voice,
             filename=f"{story_id}_ch{chapter_number}.mp3"
         )
 
@@ -132,7 +138,7 @@ class AudioGenerator:
         self,
         segment_id: str,
         text: str,
-        voice: str = DEFAULT_VOICE
+        voice: Optional[str] = None
     ) -> Optional[str]:
         """
         Generate audio for a single segment/sentence.
@@ -140,7 +146,7 @@ class AudioGenerator:
         Args:
             segment_id: Segment identifier
             text: Japanese text to speak
-            voice: Voice name
+            voice: Voice name (optional, randomly selected if not provided)
 
         Returns:
             CDN path to the audio file
@@ -148,85 +154,101 @@ class AudioGenerator:
         if not self.is_configured or not text:
             return None
 
-        voice_config = JAPANESE_VOICES.get(voice.lower(), JAPANESE_VOICES[DEFAULT_VOICE])
+        if voice is None:
+            voice = select_voice()
 
         return await self._generate_audio(
             text=text,
-            voice_id=voice_config["id"],
+            voice=voice,
             filename=f"{segment_id}.mp3"
         )
 
     async def _generate_audio(
         self,
         text: str,
-        voice_id: str,
+        voice: str,
         filename: str
     ) -> Optional[str]:
         """
-        Generate audio using Eleven Labs API.
+        Generate audio using Google Gemini TTS API.
 
         Args:
             text: Text to convert to speech
-            voice_id: Eleven Labs voice ID
+            voice: Voice name (e.g., Aoede)
             filename: Output filename
 
         Returns:
             CDN path to the saved audio file
         """
-        url = f"{self.base_url}/text-to-speech/{voice_id}?output_format={AUDIO_FORMAT}"
-
-        headers = {
-            "Accept": "audio/mpeg",
-            "Content-Type": "application/json",
-            "xi-api-key": self.api_key
-        }
-
-        data = {
-            "text": text,
-            "model_id": self.model_id,
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.75,
-                "style": 0.0,
-                "use_speaker_boost": True
-            }
-        }
-
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                response = await client.post(url, headers=headers, json=data)
+            # Prepare the prompt with narration instructions
+            prompt = NARRATION_PROMPT + text
 
-                if response.status_code != 200:
-                    logger.error(f"Eleven Labs API error: {response.status_code} - {response.text}")
-                    return None
+            # Generate audio using Gemini TTS
+            response = self.client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_modalities=["AUDIO"],
+                    speech_config=types.SpeechConfig(
+                        voice_config=types.VoiceConfig(
+                            prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                voice_name=voice,
+                            )
+                        )
+                    ),
+                )
+            )
 
-                # Save and compress audio file
-                AUDIO_DIR.mkdir(parents=True, exist_ok=True)
-                filepath = AUDIO_DIR / filename
+            # Extract PCM audio data from response
+            audio_data = response.candidates[0].content.parts[0].inline_data.data
 
-                original_size = len(response.content)
+            # Ensure output directory exists
+            AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+            filepath = AUDIO_DIR / filename
 
-                # Compress using pydub if available
-                try:
-                    import io
-                    from pydub import AudioSegment
+            # Convert PCM to MP3
+            await self._save_as_mp3(audio_data, filepath)
 
-                    audio = AudioSegment.from_mp3(io.BytesIO(response.content))
-                    # Export with lower bitrate for smaller file size
-                    audio.export(filepath, format="mp3", bitrate="48k")
-                    final_size = filepath.stat().st_size
-                    logger.info(f"Audio compressed: {original_size/1024:.1f}KB -> {final_size/1024:.1f}KB")
-                except ImportError:
-                    # pydub not available, save as-is
-                    with open(filepath, "wb") as f:
-                        f.write(response.content)
-                    logger.info(f"Audio saved: {original_size/1024:.1f}KB (no compression)")
-
-                return f"/cdn/audio/{filename}"
+            logger.info(f"Audio saved: {filepath.stat().st_size / 1024:.1f}KB")
+            return f"/cdn/audio/{filename}"
 
         except Exception as e:
             logger.error(f"Audio generation failed: {e}")
             return None
+
+    async def _save_as_mp3(self, pcm_data: bytes, output_path: Path) -> None:
+        """
+        Convert PCM audio data to MP3 and save using ffmpeg.
+
+        Args:
+            pcm_data: Raw PCM audio (24kHz, 16-bit, mono)
+            output_path: Path to save MP3 file
+        """
+        import subprocess
+        import tempfile
+
+        # Save PCM as temporary WAV file
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp_path = tmp.name
+            with wave.open(tmp, "wb") as wf:
+                wf.setnchannels(1)  # mono
+                wf.setsampwidth(2)  # 16-bit
+                wf.setframerate(24000)  # 24kHz
+                wf.writeframes(pcm_data)
+
+        try:
+            # Convert to MP3 using ffmpeg
+            result = subprocess.run(
+                ["ffmpeg", "-y", "-i", tmp_path, "-b:a", "48k", str(output_path)],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode != 0:
+                logger.error(f"ffmpeg error: {result.stderr}")
+        finally:
+            # Clean up temp file
+            Path(tmp_path).unlink(missing_ok=True)
 
     def _extract_story_text(self, chapters: List[dict]) -> str:
         """Extract all text from story chapters"""
@@ -265,5 +287,10 @@ class AudioGenerator:
 
     @staticmethod
     def get_available_voices() -> dict:
-        """Get list of available voices"""
-        return JAPANESE_VOICES
+        """Get list of available Gemini TTS voices with selection weights"""
+        return {
+            "Leda": {"weight": 0.30},
+            "Aoede": {"weight": 0.30},
+            "Alnilam": {"weight": 0.20},
+            "Rasalgethi": {"weight": 0.20},
+        }

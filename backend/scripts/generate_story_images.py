@@ -70,7 +70,7 @@ async def generate_images(story_path: str, style: str = "anime", skip_cover: boo
 
     if not generator.is_configured:
         print("ERROR: Google AI API key not configured!")
-        print("Please set GOOGLE_AI_API_KEY in .env file")
+        print("Please set GEMINI_API_KEY in .env file")
         return
 
     print("Image generator configured successfully")
