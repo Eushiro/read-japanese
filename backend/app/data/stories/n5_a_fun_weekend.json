@@ -224,6 +224,190 @@
               "baseForm": "。",
               "partOfSpeech": "punctuation"
             }
+          ],
+          "audioStartTime": 0.0,
+          "audioEndTime": 6.14,
+          "audioWords": [
+            {
+              "text": "先",
+              "start": 0.0,
+              "end": 0.22,
+              "confidence": 0.78
+            },
+            {
+              "text": "週",
+              "start": 0.22,
+              "end": 0.42,
+              "confidence": 0.99
+            },
+            {
+              "text": "の",
+              "start": 0.42,
+              "end": 0.54,
+              "confidence": 1.0
+            },
+            {
+              "text": "金",
+              "start": 0.54,
+              "end": 0.72,
+              "confidence": 0.95
+            },
+            {
+              "text": "曜",
+              "start": 0.72,
+              "end": 0.9,
+              "confidence": 1.0
+            },
+            {
+              "text": "日",
+              "start": 0.9,
+              "end": 1.02,
+              "confidence": 1.0
+            },
+            {
+              "text": "私",
+              "start": 1.02,
+              "end": 1.36,
+              "confidence": 0.78
+            },
+            {
+              "text": "は",
+              "start": 1.36,
+              "end": 1.58,
+              "confidence": 1.0
+            },
+            {
+              "text": "友",
+              "start": 1.58,
+              "end": 1.7,
+              "confidence": 0.97
+            },
+            {
+              "text": "達",
+              "start": 1.7,
+              "end": 1.84,
+              "confidence": 0.97
+            },
+            {
+              "text": "と",
+              "start": 1.84,
+              "end": 1.96,
+              "confidence": 1.0
+            },
+            {
+              "text": "話",
+              "start": 1.96,
+              "end": 2.1,
+              "confidence": 0.99
+            },
+            {
+              "text": "しました",
+              "start": 2.1,
+              "end": 2.44,
+              "confidence": 0.99
+            },
+            {
+              "text": "土",
+              "start": 3.64,
+              "end": 3.76,
+              "confidence": 0.96
+            },
+            {
+              "text": "曜",
+              "start": 3.76,
+              "end": 3.88,
+              "confidence": 1.0
+            },
+            {
+              "text": "日",
+              "start": 3.88,
+              "end": 3.96,
+              "confidence": 1.0
+            },
+            {
+              "text": "に",
+              "start": 3.96,
+              "end": 4.1,
+              "confidence": 0.99
+            },
+            {
+              "text": "山",
+              "start": 4.1,
+              "end": 4.26,
+              "confidence": 0.84
+            },
+            {
+              "text": "へ",
+              "start": 4.26,
+              "end": 4.44,
+              "confidence": 0.92
+            },
+            {
+              "text": "を",
+              "start": 4.44,
+              "end": 4.54,
+              "confidence": 0.69
+            },
+            {
+              "text": "行",
+              "start": 4.54,
+              "end": 4.66,
+              "confidence": 0.84
+            },
+            {
+              "text": "き",
+              "start": 4.66,
+              "end": 4.7,
+              "confidence": 0.96
+            },
+            {
+              "text": "ません",
+              "start": 4.7,
+              "end": 4.9,
+              "confidence": 0.99
+            },
+            {
+              "text": "か",
+              "start": 4.9,
+              "end": 5.1,
+              "confidence": 0.97
+            },
+            {
+              "text": "と",
+              "start": 5.1,
+              "end": 5.22,
+              "confidence": 0.57
+            },
+            {
+              "text": "私",
+              "start": 5.22,
+              "end": 5.42,
+              "confidence": 0.97
+            },
+            {
+              "text": "が",
+              "start": 5.42,
+              "end": 5.62,
+              "confidence": 0.99
+            },
+            {
+              "text": "聞",
+              "start": 5.62,
+              "end": 5.8,
+              "confidence": 0.86
+            },
+            {
+              "text": "き",
+              "start": 5.8,
+              "end": 5.86,
+              "confidence": 0.99
+            },
+            {
+              "text": "ました",
+              "start": 5.86,
+              "end": 6.14,
+              "confidence": 0.99
+            }
           ]
         },
         {
@@ -410,6 +594,160 @@
               ],
               "baseForm": "。",
               "partOfSpeech": "punctuation"
+            }
+          ],
+          "audioStartTime": 3.64,
+          "audioEndTime": 8.42,
+          "audioWords": [
+            {
+              "text": "土",
+              "start": 3.64,
+              "end": 3.76,
+              "confidence": 0.96
+            },
+            {
+              "text": "曜",
+              "start": 3.76,
+              "end": 3.88,
+              "confidence": 1.0
+            },
+            {
+              "text": "日",
+              "start": 3.88,
+              "end": 3.96,
+              "confidence": 1.0
+            },
+            {
+              "text": "に",
+              "start": 3.96,
+              "end": 4.1,
+              "confidence": 0.99
+            },
+            {
+              "text": "山",
+              "start": 4.1,
+              "end": 4.26,
+              "confidence": 0.84
+            },
+            {
+              "text": "へ",
+              "start": 4.26,
+              "end": 4.44,
+              "confidence": 0.92
+            },
+            {
+              "text": "を",
+              "start": 4.44,
+              "end": 4.54,
+              "confidence": 0.69
+            },
+            {
+              "text": "行",
+              "start": 4.54,
+              "end": 4.66,
+              "confidence": 0.84
+            },
+            {
+              "text": "き",
+              "start": 4.66,
+              "end": 4.7,
+              "confidence": 0.96
+            },
+            {
+              "text": "ません",
+              "start": 4.7,
+              "end": 4.9,
+              "confidence": 0.99
+            },
+            {
+              "text": "か",
+              "start": 4.9,
+              "end": 5.1,
+              "confidence": 0.97
+            },
+            {
+              "text": "と",
+              "start": 5.1,
+              "end": 5.22,
+              "confidence": 0.57
+            },
+            {
+              "text": "私",
+              "start": 5.22,
+              "end": 5.42,
+              "confidence": 0.97
+            },
+            {
+              "text": "が",
+              "start": 5.42,
+              "end": 5.62,
+              "confidence": 0.99
+            },
+            {
+              "text": "聞",
+              "start": 5.62,
+              "end": 5.8,
+              "confidence": 0.86
+            },
+            {
+              "text": "き",
+              "start": 5.8,
+              "end": 5.86,
+              "confidence": 0.99
+            },
+            {
+              "text": "ました",
+              "start": 5.86,
+              "end": 6.14,
+              "confidence": 0.99
+            },
+            {
+              "text": "み",
+              "start": 7.04,
+              "end": 7.14,
+              "confidence": 0.81
+            },
+            {
+              "text": "んな",
+              "start": 7.14,
+              "end": 7.28,
+              "confidence": 0.99
+            },
+            {
+              "text": "は",
+              "start": 7.28,
+              "end": 7.44,
+              "confidence": 0.55
+            },
+            {
+              "text": "いい",
+              "start": 7.44,
+              "end": 7.58,
+              "confidence": 0.68
+            },
+            {
+              "text": "ですね",
+              "start": 7.58,
+              "end": 7.86,
+              "confidence": 1.0
+            },
+            {
+              "text": "と",
+              "start": 7.86,
+              "end": 8.06,
+              "confidence": 0.97
+            },
+            {
+              "text": "言",
+              "start": 8.06,
+              "end": 8.18,
+              "confidence": 0.84
+            },
+            {
+              "text": "いました",
+              "start": 8.18,
+              "end": 8.42,
+              "confidence": 0.88
             }
           ]
         },
@@ -674,6 +1012,310 @@
               ],
               "baseForm": "。",
               "partOfSpeech": "punctuation"
+            }
+          ],
+          "audioStartTime": 7.04,
+          "audioEndTime": 19.84,
+          "audioWords": [
+            {
+              "text": "み",
+              "start": 7.04,
+              "end": 7.14,
+              "confidence": 0.81
+            },
+            {
+              "text": "んな",
+              "start": 7.14,
+              "end": 7.28,
+              "confidence": 0.99
+            },
+            {
+              "text": "は",
+              "start": 7.28,
+              "end": 7.44,
+              "confidence": 0.55
+            },
+            {
+              "text": "いい",
+              "start": 7.44,
+              "end": 7.58,
+              "confidence": 0.68
+            },
+            {
+              "text": "ですね",
+              "start": 7.58,
+              "end": 7.86,
+              "confidence": 1.0
+            },
+            {
+              "text": "と",
+              "start": 7.86,
+              "end": 8.06,
+              "confidence": 0.97
+            },
+            {
+              "text": "言",
+              "start": 8.06,
+              "end": 8.18,
+              "confidence": 0.84
+            },
+            {
+              "text": "いました",
+              "start": 8.18,
+              "end": 8.42,
+              "confidence": 0.88
+            },
+            {
+              "text": "言",
+              "start": 8.98,
+              "end": 9.12,
+              "confidence": 0.78
+            },
+            {
+              "text": "いました",
+              "start": 9.12,
+              "end": 9.38,
+              "confidence": 0.99
+            },
+            {
+              "text": "私",
+              "start": 10.3,
+              "end": 10.46,
+              "confidence": 0.99
+            },
+            {
+              "text": "た",
+              "start": 10.46,
+              "end": 10.6,
+              "confidence": 0.96
+            },
+            {
+              "text": "ちは",
+              "start": 10.6,
+              "end": 10.78,
+              "confidence": 1.0
+            },
+            {
+              "text": "お",
+              "start": 10.78,
+              "end": 11.0,
+              "confidence": 0.89
+            },
+            {
+              "text": "弁",
+              "start": 11.0,
+              "end": 11.16,
+              "confidence": 0.99
+            },
+            {
+              "text": "当",
+              "start": 11.16,
+              "end": 11.32,
+              "confidence": 0.99
+            },
+            {
+              "text": "と",
+              "start": 11.32,
+              "end": 11.46,
+              "confidence": 1.0
+            },
+            {
+              "text": "投",
+              "start": 11.46,
+              "end": 11.62,
+              "confidence": 0.13
+            },
+            {
+              "text": "げ",
+              "start": 11.62,
+              "end": 11.7,
+              "confidence": 0.85
+            },
+            {
+              "text": "つ",
+              "start": 11.7,
+              "end": 11.82,
+              "confidence": 0.54
+            },
+            {
+              "text": "を",
+              "start": 11.82,
+              "end": 11.92,
+              "confidence": 0.95
+            },
+            {
+              "text": "準備",
+              "start": 11.92,
+              "end": 12.14,
+              "confidence": 0.99
+            },
+            {
+              "text": "しました",
+              "start": 12.14,
+              "end": 12.52,
+              "confidence": 1.0
+            },
+            {
+              "text": "土",
+              "start": 13.5,
+              "end": 13.64,
+              "confidence": 1.0
+            },
+            {
+              "text": "曜",
+              "start": 13.64,
+              "end": 13.74,
+              "confidence": 1.0
+            },
+            {
+              "text": "日",
+              "start": 13.74,
+              "end": 13.84,
+              "confidence": 1.0
+            },
+            {
+              "text": "の",
+              "start": 13.84,
+              "end": 13.96,
+              "confidence": 1.0
+            },
+            {
+              "text": "朝",
+              "start": 13.96,
+              "end": 14.16,
+              "confidence": 0.97
+            },
+            {
+              "text": "私",
+              "start": 14.16,
+              "end": 15.02,
+              "confidence": 0.92
+            },
+            {
+              "text": "は",
+              "start": 15.02,
+              "end": 15.24,
+              "confidence": 1.0
+            },
+            {
+              "text": "岸",
+              "start": 15.24,
+              "end": 15.42,
+              "confidence": 0.52
+            },
+            {
+              "text": "に",
+              "start": 15.42,
+              "end": 15.58,
+              "confidence": 0.59
+            },
+            {
+              "text": "起",
+              "start": 15.58,
+              "end": 15.72,
+              "confidence": 0.83
+            },
+            {
+              "text": "き",
+              "start": 15.72,
+              "end": 15.78,
+              "confidence": 1.0
+            },
+            {
+              "text": "ました",
+              "start": 15.78,
+              "end": 16.06,
+              "confidence": 1.0
+            },
+            {
+              "text": "朝",
+              "start": 16.92,
+              "end": 17.1,
+              "confidence": 0.99
+            },
+            {
+              "text": "ご",
+              "start": 17.1,
+              "end": 17.32,
+              "confidence": 0.98
+            },
+            {
+              "text": "飯",
+              "start": 17.32,
+              "end": 17.48,
+              "confidence": 0.51
+            },
+            {
+              "text": "を",
+              "start": 17.48,
+              "end": 17.6,
+              "confidence": 1.0
+            },
+            {
+              "text": "食べ",
+              "start": 17.6,
+              "end": 17.74,
+              "confidence": 0.99
+            },
+            {
+              "text": "て",
+              "start": 17.74,
+              "end": 17.88,
+              "confidence": 0.98
+            },
+            {
+              "text": "から",
+              "start": 17.88,
+              "end": 18.1,
+              "confidence": 0.99
+            },
+            {
+              "text": "や",
+              "start": 18.1,
+              "end": 18.76,
+              "confidence": 0.35
+            },
+            {
+              "text": "か",
+              "start": 18.76,
+              "end": 18.86,
+              "confidence": 0.94
+            },
+            {
+              "text": "で",
+              "start": 18.86,
+              "end": 18.98,
+              "confidence": 0.7
+            },
+            {
+              "text": "友",
+              "start": 18.98,
+              "end": 19.12,
+              "confidence": 0.99
+            },
+            {
+              "text": "達",
+              "start": 19.12,
+              "end": 19.3,
+              "confidence": 0.99
+            },
+            {
+              "text": "に",
+              "start": 19.3,
+              "end": 19.44,
+              "confidence": 1.0
+            },
+            {
+              "text": "会",
+              "start": 19.44,
+              "end": 19.56,
+              "confidence": 0.85
+            },
+            {
+              "text": "いました",
+              "start": 19.56,
+              "end": 19.84,
+              "confidence": 0.99
             }
           ]
         }
@@ -1037,6 +1679,316 @@
               "baseForm": "。",
               "partOfSpeech": "punctuation"
             }
+          ],
+          "audioStartTime": 16.92,
+          "audioEndTime": 29.98,
+          "audioWords": [
+            {
+              "text": "朝",
+              "start": 16.92,
+              "end": 17.1,
+              "confidence": 0.99
+            },
+            {
+              "text": "ご",
+              "start": 17.1,
+              "end": 17.32,
+              "confidence": 0.98
+            },
+            {
+              "text": "飯",
+              "start": 17.32,
+              "end": 17.48,
+              "confidence": 0.51
+            },
+            {
+              "text": "を",
+              "start": 17.48,
+              "end": 17.6,
+              "confidence": 1.0
+            },
+            {
+              "text": "食べ",
+              "start": 17.6,
+              "end": 17.74,
+              "confidence": 0.99
+            },
+            {
+              "text": "て",
+              "start": 17.74,
+              "end": 17.88,
+              "confidence": 0.98
+            },
+            {
+              "text": "から",
+              "start": 17.88,
+              "end": 18.1,
+              "confidence": 0.99
+            },
+            {
+              "text": "や",
+              "start": 18.1,
+              "end": 18.76,
+              "confidence": 0.35
+            },
+            {
+              "text": "か",
+              "start": 18.76,
+              "end": 18.86,
+              "confidence": 0.94
+            },
+            {
+              "text": "で",
+              "start": 18.86,
+              "end": 18.98,
+              "confidence": 0.7
+            },
+            {
+              "text": "友",
+              "start": 18.98,
+              "end": 19.12,
+              "confidence": 0.99
+            },
+            {
+              "text": "達",
+              "start": 19.12,
+              "end": 19.3,
+              "confidence": 0.99
+            },
+            {
+              "text": "に",
+              "start": 19.3,
+              "end": 19.44,
+              "confidence": 1.0
+            },
+            {
+              "text": "会",
+              "start": 19.44,
+              "end": 19.56,
+              "confidence": 0.85
+            },
+            {
+              "text": "いました",
+              "start": 19.56,
+              "end": 19.84,
+              "confidence": 0.99
+            },
+            {
+              "text": "電",
+              "start": 21.02,
+              "end": 21.16,
+              "confidence": 0.99
+            },
+            {
+              "text": "車",
+              "start": 21.16,
+              "end": 21.32,
+              "confidence": 1.0
+            },
+            {
+              "text": "で",
+              "start": 21.32,
+              "end": 21.46,
+              "confidence": 1.0
+            },
+            {
+              "text": "1",
+              "start": 21.46,
+              "end": 21.62,
+              "confidence": 0.81
+            },
+            {
+              "text": "時間",
+              "start": 21.62,
+              "end": 21.88,
+              "confidence": 0.99
+            },
+            {
+              "text": "ぐ",
+              "start": 21.88,
+              "end": 22.14,
+              "confidence": 0.81
+            },
+            {
+              "text": "らい",
+              "start": 22.14,
+              "end": 22.24,
+              "confidence": 0.97
+            },
+            {
+              "text": "終",
+              "start": 22.24,
+              "end": 22.38,
+              "confidence": 0.9
+            },
+            {
+              "text": "わ",
+              "start": 22.38,
+              "end": 22.46,
+              "confidence": 0.99
+            },
+            {
+              "text": "って",
+              "start": 22.46,
+              "end": 22.68,
+              "confidence": 0.96
+            },
+            {
+              "text": "シ",
+              "start": 22.68,
+              "end": 23.32,
+              "confidence": 0.46
+            },
+            {
+              "text": "ャ",
+              "start": 23.32,
+              "end": 23.38,
+              "confidence": 1.0
+            },
+            {
+              "text": "ー",
+              "start": 23.38,
+              "end": 23.42,
+              "confidence": 0.43
+            },
+            {
+              "text": "に",
+              "start": 23.42,
+              "end": 23.52,
+              "confidence": 0.46
+            },
+            {
+              "text": "倒",
+              "start": 23.52,
+              "end": 23.7,
+              "confidence": 0.91
+            },
+            {
+              "text": "き",
+              "start": 23.7,
+              "end": 23.82,
+              "confidence": 0.65
+            },
+            {
+              "text": "ました",
+              "start": 23.82,
+              "end": 24.1,
+              "confidence": 1.0
+            },
+            {
+              "text": "天",
+              "start": 25.44,
+              "end": 25.58,
+              "confidence": 0.69
+            },
+            {
+              "text": "気",
+              "start": 25.58,
+              "end": 25.74,
+              "confidence": 1.0
+            },
+            {
+              "text": "は",
+              "start": 25.74,
+              "end": 25.86,
+              "confidence": 0.98
+            },
+            {
+              "text": "と",
+              "start": 25.86,
+              "end": 25.98,
+              "confidence": 1.0
+            },
+            {
+              "text": "て",
+              "start": 25.98,
+              "end": 26.1,
+              "confidence": 1.0
+            },
+            {
+              "text": "も",
+              "start": 26.1,
+              "end": 26.18,
+              "confidence": 1.0
+            },
+            {
+              "text": "良",
+              "start": 26.18,
+              "end": 26.28,
+              "confidence": 0.85
+            },
+            {
+              "text": "かった",
+              "start": 26.28,
+              "end": 26.54,
+              "confidence": 1.0
+            },
+            {
+              "text": "です",
+              "start": 26.54,
+              "end": 26.88,
+              "confidence": 1.0
+            },
+            {
+              "text": "風",
+              "start": 27.84,
+              "end": 28.06,
+              "confidence": 0.83
+            },
+            {
+              "text": "は",
+              "start": 28.06,
+              "end": 28.24,
+              "confidence": 0.4
+            },
+            {
+              "text": "軽",
+              "start": 28.24,
+              "end": 28.44,
+              "confidence": 0.96
+            },
+            {
+              "text": "く",
+              "start": 28.44,
+              "end": 28.56,
+              "confidence": 1.0
+            },
+            {
+              "text": "て",
+              "start": 28.56,
+              "end": 28.7,
+              "confidence": 0.99
+            },
+            {
+              "text": "か",
+              "start": 28.7,
+              "end": 29.24,
+              "confidence": 0.47
+            },
+            {
+              "text": "く",
+              "start": 29.24,
+              "end": 29.36,
+              "confidence": 1.0
+            },
+            {
+              "text": "な",
+              "start": 29.36,
+              "end": 29.46,
+              "confidence": 0.99
+            },
+            {
+              "text": "かった",
+              "start": 29.46,
+              "end": 29.68,
+              "confidence": 1.0
+            },
+            {
+              "text": "です",
+              "start": 29.68,
+              "end": 29.98,
+              "confidence": 0.99
+            }
           ]
         },
         {
@@ -1375,6 +2327,364 @@
               "baseForm": "。",
               "partOfSpeech": "punctuation"
             }
+          ],
+          "audioStartTime": 27.84,
+          "audioEndTime": 41.56,
+          "audioWords": [
+            {
+              "text": "風",
+              "start": 27.84,
+              "end": 28.06,
+              "confidence": 0.83
+            },
+            {
+              "text": "は",
+              "start": 28.06,
+              "end": 28.24,
+              "confidence": 0.4
+            },
+            {
+              "text": "軽",
+              "start": 28.24,
+              "end": 28.44,
+              "confidence": 0.96
+            },
+            {
+              "text": "く",
+              "start": 28.44,
+              "end": 28.56,
+              "confidence": 1.0
+            },
+            {
+              "text": "て",
+              "start": 28.56,
+              "end": 28.7,
+              "confidence": 0.99
+            },
+            {
+              "text": "か",
+              "start": 28.7,
+              "end": 29.24,
+              "confidence": 0.47
+            },
+            {
+              "text": "く",
+              "start": 29.24,
+              "end": 29.36,
+              "confidence": 1.0
+            },
+            {
+              "text": "な",
+              "start": 29.36,
+              "end": 29.46,
+              "confidence": 0.99
+            },
+            {
+              "text": "かった",
+              "start": 29.46,
+              "end": 29.68,
+              "confidence": 1.0
+            },
+            {
+              "text": "です",
+              "start": 29.68,
+              "end": 29.98,
+              "confidence": 0.99
+            },
+            {
+              "text": "私",
+              "start": 31.28,
+              "end": 31.46,
+              "confidence": 1.0
+            },
+            {
+              "text": "た",
+              "start": 31.46,
+              "end": 31.62,
+              "confidence": 0.99
+            },
+            {
+              "text": "ちは",
+              "start": 31.62,
+              "end": 31.78,
+              "confidence": 1.0
+            },
+            {
+              "text": "山",
+              "start": 31.78,
+              "end": 31.96,
+              "confidence": 0.99
+            },
+            {
+              "text": "の",
+              "start": 31.96,
+              "end": 32.14,
+              "confidence": 1.0
+            },
+            {
+              "text": "道",
+              "start": 32.14,
+              "end": 32.28,
+              "confidence": 0.99
+            },
+            {
+              "text": "を",
+              "start": 32.28,
+              "end": 32.46,
+              "confidence": 1.0
+            },
+            {
+              "text": "歩",
+              "start": 32.46,
+              "end": 32.56,
+              "confidence": 1.0
+            },
+            {
+              "text": "き",
+              "start": 32.56,
+              "end": 32.68,
+              "confidence": 1.0
+            },
+            {
+              "text": "ました",
+              "start": 32.68,
+              "end": 32.94,
+              "confidence": 1.0
+            },
+            {
+              "text": "き",
+              "start": 33.48,
+              "end": 33.6,
+              "confidence": 0.48
+            },
+            {
+              "text": "れ",
+              "start": 33.6,
+              "end": 33.68,
+              "confidence": 1.0
+            },
+            {
+              "text": "い",
+              "start": 33.68,
+              "end": 33.76,
+              "confidence": 1.0
+            },
+            {
+              "text": "な",
+              "start": 33.76,
+              "end": 33.84,
+              "confidence": 1.0
+            },
+            {
+              "text": "話",
+              "start": 33.84,
+              "end": 34.02,
+              "confidence": 0.99
+            },
+            {
+              "text": "が",
+              "start": 34.02,
+              "end": 34.24,
+              "confidence": 1.0
+            },
+            {
+              "text": "た",
+              "start": 34.24,
+              "end": 34.38,
+              "confidence": 0.91
+            },
+            {
+              "text": "く",
+              "start": 34.38,
+              "end": 34.5,
+              "confidence": 1.0
+            },
+            {
+              "text": "さん",
+              "start": 34.5,
+              "end": 34.62,
+              "confidence": 1.0
+            },
+            {
+              "text": "あり",
+              "start": 34.62,
+              "end": 34.78,
+              "confidence": 0.98
+            },
+            {
+              "text": "ました",
+              "start": 34.78,
+              "end": 35.08,
+              "confidence": 1.0
+            },
+            {
+              "text": "だ",
+              "start": 36.14,
+              "end": 36.26,
+              "confidence": 0.63
+            },
+            {
+              "text": "と",
+              "start": 36.26,
+              "end": 36.36,
+              "confidence": 0.98
+            },
+            {
+              "text": "大",
+              "start": 36.36,
+              "end": 36.52,
+              "confidence": 0.98
+            },
+            {
+              "text": "き",
+              "start": 36.52,
+              "end": 36.7,
+              "confidence": 1.0
+            },
+            {
+              "text": "い",
+              "start": 36.7,
+              "end": 36.74,
+              "confidence": 0.95
+            },
+            {
+              "text": "目",
+              "start": 36.74,
+              "end": 36.82,
+              "confidence": 0.86
+            },
+            {
+              "text": "も",
+              "start": 36.82,
+              "end": 36.96,
+              "confidence": 0.98
+            },
+            {
+              "text": "見",
+              "start": 36.96,
+              "end": 37.08,
+              "confidence": 0.94
+            },
+            {
+              "text": "ました",
+              "start": 37.08,
+              "end": 37.36,
+              "confidence": 0.99
+            },
+            {
+              "text": "母",
+              "start": 37.96,
+              "end": 38.12,
+              "confidence": 0.42
+            },
+            {
+              "text": "後",
+              "start": 38.12,
+              "end": 38.24,
+              "confidence": 0.1
+            },
+            {
+              "text": "に",
+              "start": 38.24,
+              "end": 38.36,
+              "confidence": 0.98
+            },
+            {
+              "text": "私",
+              "start": 38.36,
+              "end": 38.68,
+              "confidence": 0.99
+            },
+            {
+              "text": "た",
+              "start": 38.68,
+              "end": 38.84,
+              "confidence": 0.99
+            },
+            {
+              "text": "ちは",
+              "start": 38.84,
+              "end": 39.02,
+              "confidence": 1.0
+            },
+            {
+              "text": "お",
+              "start": 39.02,
+              "end": 39.14,
+              "confidence": 1.0
+            },
+            {
+              "text": "弁",
+              "start": 39.14,
+              "end": 39.32,
+              "confidence": 1.0
+            },
+            {
+              "text": "当",
+              "start": 39.32,
+              "end": 39.46,
+              "confidence": 1.0
+            },
+            {
+              "text": "を",
+              "start": 39.46,
+              "end": 39.58,
+              "confidence": 0.99
+            },
+            {
+              "text": "食べ",
+              "start": 39.58,
+              "end": 39.7,
+              "confidence": 1.0
+            },
+            {
+              "text": "ました",
+              "start": 39.7,
+              "end": 40.02,
+              "confidence": 1.0
+            },
+            {
+              "text": "と",
+              "start": 40.46,
+              "end": 40.6,
+              "confidence": 1.0
+            },
+            {
+              "text": "て",
+              "start": 40.6,
+              "end": 40.72,
+              "confidence": 1.0
+            },
+            {
+              "text": "も",
+              "start": 40.72,
+              "end": 40.8,
+              "confidence": 1.0
+            },
+            {
+              "text": "美味",
+              "start": 40.8,
+              "end": 40.94,
+              "confidence": 0.74
+            },
+            {
+              "text": "し",
+              "start": 40.94,
+              "end": 41.0,
+              "confidence": 0.98
+            },
+            {
+              "text": "かった",
+              "start": 41.0,
+              "end": 41.22,
+              "confidence": 1.0
+            },
+            {
+              "text": "です",
+              "start": 41.22,
+              "end": 41.56,
+              "confidence": 1.0
+            }
           ]
         },
         {
@@ -1664,6 +2974,298 @@
               ],
               "baseForm": "。",
               "partOfSpeech": "punctuation"
+            }
+          ],
+          "audioStartTime": 40.46,
+          "audioEndTime": 51.64,
+          "audioWords": [
+            {
+              "text": "と",
+              "start": 40.46,
+              "end": 40.6,
+              "confidence": 1.0
+            },
+            {
+              "text": "て",
+              "start": 40.6,
+              "end": 40.72,
+              "confidence": 1.0
+            },
+            {
+              "text": "も",
+              "start": 40.72,
+              "end": 40.8,
+              "confidence": 1.0
+            },
+            {
+              "text": "美味",
+              "start": 40.8,
+              "end": 40.94,
+              "confidence": 0.74
+            },
+            {
+              "text": "し",
+              "start": 40.94,
+              "end": 41.0,
+              "confidence": 0.98
+            },
+            {
+              "text": "かった",
+              "start": 41.0,
+              "end": 41.22,
+              "confidence": 1.0
+            },
+            {
+              "text": "です",
+              "start": 41.22,
+              "end": 41.56,
+              "confidence": 1.0
+            },
+            {
+              "text": "誰",
+              "start": 42.12,
+              "end": 42.26,
+              "confidence": 0.99
+            },
+            {
+              "text": "も",
+              "start": 42.26,
+              "end": 42.44,
+              "confidence": 0.99
+            },
+            {
+              "text": "飲",
+              "start": 42.44,
+              "end": 42.56,
+              "confidence": 0.92
+            },
+            {
+              "text": "み",
+              "start": 42.56,
+              "end": 42.66,
+              "confidence": 0.99
+            },
+            {
+              "text": "ました",
+              "start": 42.66,
+              "end": 42.92,
+              "confidence": 1.0
+            },
+            {
+              "text": "嫌",
+              "start": 43.54,
+              "end": 43.7,
+              "confidence": 0.91
+            },
+            {
+              "text": "で",
+              "start": 43.7,
+              "end": 43.84,
+              "confidence": 0.74
+            },
+            {
+              "text": "写",
+              "start": 43.84,
+              "end": 44.04,
+              "confidence": 0.89
+            },
+            {
+              "text": "写",
+              "start": 44.04,
+              "end": 44.16,
+              "confidence": 0.73
+            },
+            {
+              "text": "真",
+              "start": 44.16,
+              "end": 44.28,
+              "confidence": 0.73
+            },
+            {
+              "text": "を",
+              "start": 44.28,
+              "end": 44.42,
+              "confidence": 0.99
+            },
+            {
+              "text": "た",
+              "start": 44.42,
+              "end": 44.54,
+              "confidence": 0.97
+            },
+            {
+              "text": "く",
+              "start": 44.54,
+              "end": 44.68,
+              "confidence": 1.0
+            },
+            {
+              "text": "さん",
+              "start": 44.68,
+              "end": 44.82,
+              "confidence": 1.0
+            },
+            {
+              "text": "撮",
+              "start": 44.82,
+              "end": 45.0,
+              "confidence": 0.77
+            },
+            {
+              "text": "りました",
+              "start": 45.0,
+              "end": 45.28,
+              "confidence": 1.0
+            },
+            {
+              "text": "夕",
+              "start": 46.3,
+              "end": 46.44,
+              "confidence": 0.88
+            },
+            {
+              "text": "方",
+              "start": 46.44,
+              "end": 46.6,
+              "confidence": 0.99
+            },
+            {
+              "text": "私",
+              "start": 46.6,
+              "end": 47.26,
+              "confidence": 0.83
+            },
+            {
+              "text": "た",
+              "start": 47.26,
+              "end": 47.44,
+              "confidence": 0.99
+            },
+            {
+              "text": "ちは",
+              "start": 47.44,
+              "end": 47.6,
+              "confidence": 1.0
+            },
+            {
+              "text": "電",
+              "start": 47.6,
+              "end": 47.78,
+              "confidence": 0.99
+            },
+            {
+              "text": "車",
+              "start": 47.78,
+              "end": 47.94,
+              "confidence": 1.0
+            },
+            {
+              "text": "で",
+              "start": 47.94,
+              "end": 48.08,
+              "confidence": 1.0
+            },
+            {
+              "text": "家",
+              "start": 48.08,
+              "end": 48.2,
+              "confidence": 0.99
+            },
+            {
+              "text": "に",
+              "start": 48.2,
+              "end": 48.3,
+              "confidence": 0.99
+            },
+            {
+              "text": "帰",
+              "start": 48.3,
+              "end": 48.48,
+              "confidence": 0.99
+            },
+            {
+              "text": "りました",
+              "start": 48.48,
+              "end": 48.8,
+              "confidence": 0.99
+            },
+            {
+              "text": "少",
+              "start": 49.2,
+              "end": 49.32,
+              "confidence": 0.99
+            },
+            {
+              "text": "し",
+              "start": 49.32,
+              "end": 49.54,
+              "confidence": 1.0
+            },
+            {
+              "text": "疲",
+              "start": 49.54,
+              "end": 49.74,
+              "confidence": 0.98
+            },
+            {
+              "text": "れ",
+              "start": 49.74,
+              "end": 49.84,
+              "confidence": 0.99
+            },
+            {
+              "text": "ました",
+              "start": 49.84,
+              "end": 50.06,
+              "confidence": 1.0
+            },
+            {
+              "text": "が",
+              "start": 50.06,
+              "end": 50.26,
+              "confidence": 1.0
+            },
+            {
+              "text": "と",
+              "start": 50.26,
+              "end": 50.48,
+              "confidence": 0.96
+            },
+            {
+              "text": "て",
+              "start": 50.48,
+              "end": 50.6,
+              "confidence": 1.0
+            },
+            {
+              "text": "も",
+              "start": 50.6,
+              "end": 50.7,
+              "confidence": 1.0
+            },
+            {
+              "text": "楽",
+              "start": 50.7,
+              "end": 50.92,
+              "confidence": 0.99
+            },
+            {
+              "text": "し",
+              "start": 50.92,
+              "end": 51.08,
+              "confidence": 0.99
+            },
+            {
+              "text": "かった",
+              "start": 51.08,
+              "end": 51.3,
+              "confidence": 1.0
+            },
+            {
+              "text": "です",
+              "start": 51.3,
+              "end": 51.64,
+              "confidence": 1.0
             }
           ]
         },
@@ -2019,6 +3621,358 @@
               "baseForm": "。",
               "partOfSpeech": "punctuation"
             }
+          ],
+          "audioStartTime": 49.2,
+          "audioEndTime": 61.42,
+          "audioWords": [
+            {
+              "text": "少",
+              "start": 49.2,
+              "end": 49.32,
+              "confidence": 0.99
+            },
+            {
+              "text": "し",
+              "start": 49.32,
+              "end": 49.54,
+              "confidence": 1.0
+            },
+            {
+              "text": "疲",
+              "start": 49.54,
+              "end": 49.74,
+              "confidence": 0.98
+            },
+            {
+              "text": "れ",
+              "start": 49.74,
+              "end": 49.84,
+              "confidence": 0.99
+            },
+            {
+              "text": "ました",
+              "start": 49.84,
+              "end": 50.06,
+              "confidence": 1.0
+            },
+            {
+              "text": "が",
+              "start": 50.06,
+              "end": 50.26,
+              "confidence": 1.0
+            },
+            {
+              "text": "と",
+              "start": 50.26,
+              "end": 50.48,
+              "confidence": 0.96
+            },
+            {
+              "text": "て",
+              "start": 50.48,
+              "end": 50.6,
+              "confidence": 1.0
+            },
+            {
+              "text": "も",
+              "start": 50.6,
+              "end": 50.7,
+              "confidence": 1.0
+            },
+            {
+              "text": "楽",
+              "start": 50.7,
+              "end": 50.92,
+              "confidence": 0.99
+            },
+            {
+              "text": "し",
+              "start": 50.92,
+              "end": 51.08,
+              "confidence": 0.99
+            },
+            {
+              "text": "かった",
+              "start": 51.08,
+              "end": 51.3,
+              "confidence": 1.0
+            },
+            {
+              "text": "です",
+              "start": 51.3,
+              "end": 51.64,
+              "confidence": 1.0
+            },
+            {
+              "text": "夜",
+              "start": 52.36,
+              "end": 52.54,
+              "confidence": 0.99
+            },
+            {
+              "text": "私",
+              "start": 52.54,
+              "end": 53.16,
+              "confidence": 0.96
+            },
+            {
+              "text": "は",
+              "start": 53.16,
+              "end": 53.38,
+              "confidence": 1.0
+            },
+            {
+              "text": "写",
+              "start": 53.38,
+              "end": 53.5,
+              "confidence": 0.99
+            },
+            {
+              "text": "真",
+              "start": 53.5,
+              "end": 53.66,
+              "confidence": 0.98
+            },
+            {
+              "text": "を",
+              "start": 53.66,
+              "end": 53.84,
+              "confidence": 1.0
+            },
+            {
+              "text": "見",
+              "start": 53.84,
+              "end": 53.94,
+              "confidence": 0.97
+            },
+            {
+              "text": "ました",
+              "start": 53.94,
+              "end": 54.22,
+              "confidence": 0.99
+            },
+            {
+              "text": "と",
+              "start": 54.22,
+              "end": 54.52,
+              "confidence": 0.71
+            },
+            {
+              "text": "て",
+              "start": 54.52,
+              "end": 54.66,
+              "confidence": 1.0
+            },
+            {
+              "text": "も",
+              "start": 54.66,
+              "end": 54.76,
+              "confidence": 1.0
+            },
+            {
+              "text": "良",
+              "start": 54.76,
+              "end": 54.9,
+              "confidence": 0.62
+            },
+            {
+              "text": "い",
+              "start": 54.9,
+              "end": 54.92,
+              "confidence": 1.0
+            },
+            {
+              "text": "思",
+              "start": 54.92,
+              "end": 55.08,
+              "confidence": 0.95
+            },
+            {
+              "text": "い",
+              "start": 55.08,
+              "end": 55.18,
+              "confidence": 0.99
+            },
+            {
+              "text": "出",
+              "start": 55.18,
+              "end": 55.28,
+              "confidence": 0.98
+            },
+            {
+              "text": "にな",
+              "start": 55.28,
+              "end": 55.42,
+              "confidence": 0.97
+            },
+            {
+              "text": "りました",
+              "start": 55.42,
+              "end": 55.76,
+              "confidence": 1.0
+            },
+            {
+              "text": "来",
+              "start": 56.86,
+              "end": 57.0,
+              "confidence": 0.94
+            },
+            {
+              "text": "月",
+              "start": 57.0,
+              "end": 57.18,
+              "confidence": 0.99
+            },
+            {
+              "text": "も",
+              "start": 57.18,
+              "end": 57.38,
+              "confidence": 0.97
+            },
+            {
+              "text": "また",
+              "start": 57.38,
+              "end": 57.56,
+              "confidence": 0.91
+            },
+            {
+              "text": "家",
+              "start": 57.56,
+              "end": 57.7,
+              "confidence": 0.85
+            },
+            {
+              "text": "は",
+              "start": 57.7,
+              "end": 57.82,
+              "confidence": 0.71
+            },
+            {
+              "text": "行",
+              "start": 57.82,
+              "end": 57.92,
+              "confidence": 0.81
+            },
+            {
+              "text": "き",
+              "start": 57.92,
+              "end": 57.98,
+              "confidence": 0.99
+            },
+            {
+              "text": "ましょう",
+              "start": 57.98,
+              "end": 58.2,
+              "confidence": 0.99
+            },
+            {
+              "text": "ね",
+              "start": 58.2,
+              "end": 58.4,
+              "confidence": 0.65
+            },
+            {
+              "text": "と",
+              "start": 58.4,
+              "end": 58.52,
+              "confidence": 0.66
+            },
+            {
+              "text": "友",
+              "start": 58.52,
+              "end": 58.72,
+              "confidence": 0.9
+            },
+            {
+              "text": "達",
+              "start": 58.72,
+              "end": 58.92,
+              "confidence": 0.96
+            },
+            {
+              "text": "と",
+              "start": 58.92,
+              "end": 59.06,
+              "confidence": 1.0
+            },
+            {
+              "text": "話",
+              "start": 59.06,
+              "end": 59.22,
+              "confidence": 0.96
+            },
+            {
+              "text": "しました",
+              "start": 59.22,
+              "end": 59.5,
+              "confidence": 0.99
+            },
+            {
+              "text": "私",
+              "start": 59.64,
+              "end": 59.82,
+              "confidence": 0.97
+            },
+            {
+              "text": "は",
+              "start": 59.82,
+              "end": 59.96,
+              "confidence": 0.99
+            },
+            {
+              "text": "次",
+              "start": 59.96,
+              "end": 60.12,
+              "confidence": 0.99
+            },
+            {
+              "text": "の",
+              "start": 60.12,
+              "end": 60.26,
+              "confidence": 0.99
+            },
+            {
+              "text": "週",
+              "start": 60.26,
+              "end": 60.4,
+              "confidence": 0.94
+            },
+            {
+              "text": "末",
+              "start": 60.4,
+              "end": 60.58,
+              "confidence": 1.0
+            },
+            {
+              "text": "が",
+              "start": 60.58,
+              "end": 60.76,
+              "confidence": 0.98
+            },
+            {
+              "text": "楽",
+              "start": 60.76,
+              "end": 60.94,
+              "confidence": 1.0
+            },
+            {
+              "text": "し",
+              "start": 60.94,
+              "end": 61.08,
+              "confidence": 0.96
+            },
+            {
+              "text": "み",
+              "start": 61.08,
+              "end": 61.2,
+              "confidence": 1.0
+            },
+            {
+              "text": "です",
+              "start": 61.2,
+              "end": 61.42,
+              "confidence": 1.0
+            }
           ]
         }
       ]
@@ -2313,6 +4267,292 @@
               "baseForm": "。",
               "partOfSpeech": "punctuation"
             }
+          ],
+          "audioStartTime": 49.2,
+          "audioEndTime": 59.5,
+          "audioWords": [
+            {
+              "text": "少",
+              "start": 49.2,
+              "end": 49.32,
+              "confidence": 0.99
+            },
+            {
+              "text": "し",
+              "start": 49.32,
+              "end": 49.54,
+              "confidence": 1.0
+            },
+            {
+              "text": "疲",
+              "start": 49.54,
+              "end": 49.74,
+              "confidence": 0.98
+            },
+            {
+              "text": "れ",
+              "start": 49.74,
+              "end": 49.84,
+              "confidence": 0.99
+            },
+            {
+              "text": "ました",
+              "start": 49.84,
+              "end": 50.06,
+              "confidence": 1.0
+            },
+            {
+              "text": "が",
+              "start": 50.06,
+              "end": 50.26,
+              "confidence": 1.0
+            },
+            {
+              "text": "と",
+              "start": 50.26,
+              "end": 50.48,
+              "confidence": 0.96
+            },
+            {
+              "text": "て",
+              "start": 50.48,
+              "end": 50.6,
+              "confidence": 1.0
+            },
+            {
+              "text": "も",
+              "start": 50.6,
+              "end": 50.7,
+              "confidence": 1.0
+            },
+            {
+              "text": "楽",
+              "start": 50.7,
+              "end": 50.92,
+              "confidence": 0.99
+            },
+            {
+              "text": "し",
+              "start": 50.92,
+              "end": 51.08,
+              "confidence": 0.99
+            },
+            {
+              "text": "かった",
+              "start": 51.08,
+              "end": 51.3,
+              "confidence": 1.0
+            },
+            {
+              "text": "です",
+              "start": 51.3,
+              "end": 51.64,
+              "confidence": 1.0
+            },
+            {
+              "text": "夜",
+              "start": 52.36,
+              "end": 52.54,
+              "confidence": 0.99
+            },
+            {
+              "text": "私",
+              "start": 52.54,
+              "end": 53.16,
+              "confidence": 0.96
+            },
+            {
+              "text": "は",
+              "start": 53.16,
+              "end": 53.38,
+              "confidence": 1.0
+            },
+            {
+              "text": "写",
+              "start": 53.38,
+              "end": 53.5,
+              "confidence": 0.99
+            },
+            {
+              "text": "真",
+              "start": 53.5,
+              "end": 53.66,
+              "confidence": 0.98
+            },
+            {
+              "text": "を",
+              "start": 53.66,
+              "end": 53.84,
+              "confidence": 1.0
+            },
+            {
+              "text": "見",
+              "start": 53.84,
+              "end": 53.94,
+              "confidence": 0.97
+            },
+            {
+              "text": "ました",
+              "start": 53.94,
+              "end": 54.22,
+              "confidence": 0.99
+            },
+            {
+              "text": "と",
+              "start": 54.22,
+              "end": 54.52,
+              "confidence": 0.71
+            },
+            {
+              "text": "て",
+              "start": 54.52,
+              "end": 54.66,
+              "confidence": 1.0
+            },
+            {
+              "text": "も",
+              "start": 54.66,
+              "end": 54.76,
+              "confidence": 1.0
+            },
+            {
+              "text": "良",
+              "start": 54.76,
+              "end": 54.9,
+              "confidence": 0.62
+            },
+            {
+              "text": "い",
+              "start": 54.9,
+              "end": 54.92,
+              "confidence": 1.0
+            },
+            {
+              "text": "思",
+              "start": 54.92,
+              "end": 55.08,
+              "confidence": 0.95
+            },
+            {
+              "text": "い",
+              "start": 55.08,
+              "end": 55.18,
+              "confidence": 0.99
+            },
+            {
+              "text": "出",
+              "start": 55.18,
+              "end": 55.28,
+              "confidence": 0.98
+            },
+            {
+              "text": "にな",
+              "start": 55.28,
+              "end": 55.42,
+              "confidence": 0.97
+            },
+            {
+              "text": "りました",
+              "start": 55.42,
+              "end": 55.76,
+              "confidence": 1.0
+            },
+            {
+              "text": "来",
+              "start": 56.86,
+              "end": 57.0,
+              "confidence": 0.94
+            },
+            {
+              "text": "月",
+              "start": 57.0,
+              "end": 57.18,
+              "confidence": 0.99
+            },
+            {
+              "text": "も",
+              "start": 57.18,
+              "end": 57.38,
+              "confidence": 0.97
+            },
+            {
+              "text": "また",
+              "start": 57.38,
+              "end": 57.56,
+              "confidence": 0.91
+            },
+            {
+              "text": "家",
+              "start": 57.56,
+              "end": 57.7,
+              "confidence": 0.85
+            },
+            {
+              "text": "は",
+              "start": 57.7,
+              "end": 57.82,
+              "confidence": 0.71
+            },
+            {
+              "text": "行",
+              "start": 57.82,
+              "end": 57.92,
+              "confidence": 0.81
+            },
+            {
+              "text": "き",
+              "start": 57.92,
+              "end": 57.98,
+              "confidence": 0.99
+            },
+            {
+              "text": "ましょう",
+              "start": 57.98,
+              "end": 58.2,
+              "confidence": 0.99
+            },
+            {
+              "text": "ね",
+              "start": 58.2,
+              "end": 58.4,
+              "confidence": 0.65
+            },
+            {
+              "text": "と",
+              "start": 58.4,
+              "end": 58.52,
+              "confidence": 0.66
+            },
+            {
+              "text": "友",
+              "start": 58.52,
+              "end": 58.72,
+              "confidence": 0.9
+            },
+            {
+              "text": "達",
+              "start": 58.72,
+              "end": 58.92,
+              "confidence": 0.96
+            },
+            {
+              "text": "と",
+              "start": 58.92,
+              "end": 59.06,
+              "confidence": 1.0
+            },
+            {
+              "text": "話",
+              "start": 59.06,
+              "end": 59.22,
+              "confidence": 0.96
+            },
+            {
+              "text": "しました",
+              "start": 59.22,
+              "end": 59.5,
+              "confidence": 0.99
+            }
           ]
         },
         {
@@ -2510,6 +4750,172 @@
               ],
               "baseForm": "。",
               "partOfSpeech": "punctuation"
+            }
+          ],
+          "audioStartTime": 56.86,
+          "audioEndTime": 61.42,
+          "audioWords": [
+            {
+              "text": "来",
+              "start": 56.86,
+              "end": 57.0,
+              "confidence": 0.94
+            },
+            {
+              "text": "月",
+              "start": 57.0,
+              "end": 57.18,
+              "confidence": 0.99
+            },
+            {
+              "text": "も",
+              "start": 57.18,
+              "end": 57.38,
+              "confidence": 0.97
+            },
+            {
+              "text": "また",
+              "start": 57.38,
+              "end": 57.56,
+              "confidence": 0.91
+            },
+            {
+              "text": "家",
+              "start": 57.56,
+              "end": 57.7,
+              "confidence": 0.85
+            },
+            {
+              "text": "は",
+              "start": 57.7,
+              "end": 57.82,
+              "confidence": 0.71
+            },
+            {
+              "text": "行",
+              "start": 57.82,
+              "end": 57.92,
+              "confidence": 0.81
+            },
+            {
+              "text": "き",
+              "start": 57.92,
+              "end": 57.98,
+              "confidence": 0.99
+            },
+            {
+              "text": "ましょう",
+              "start": 57.98,
+              "end": 58.2,
+              "confidence": 0.99
+            },
+            {
+              "text": "ね",
+              "start": 58.2,
+              "end": 58.4,
+              "confidence": 0.65
+            },
+            {
+              "text": "と",
+              "start": 58.4,
+              "end": 58.52,
+              "confidence": 0.66
+            },
+            {
+              "text": "友",
+              "start": 58.52,
+              "end": 58.72,
+              "confidence": 0.9
+            },
+            {
+              "text": "達",
+              "start": 58.72,
+              "end": 58.92,
+              "confidence": 0.96
+            },
+            {
+              "text": "と",
+              "start": 58.92,
+              "end": 59.06,
+              "confidence": 1.0
+            },
+            {
+              "text": "話",
+              "start": 59.06,
+              "end": 59.22,
+              "confidence": 0.96
+            },
+            {
+              "text": "しました",
+              "start": 59.22,
+              "end": 59.5,
+              "confidence": 0.99
+            },
+            {
+              "text": "私",
+              "start": 59.64,
+              "end": 59.82,
+              "confidence": 0.97
+            },
+            {
+              "text": "は",
+              "start": 59.82,
+              "end": 59.96,
+              "confidence": 0.99
+            },
+            {
+              "text": "次",
+              "start": 59.96,
+              "end": 60.12,
+              "confidence": 0.99
+            },
+            {
+              "text": "の",
+              "start": 60.12,
+              "end": 60.26,
+              "confidence": 0.99
+            },
+            {
+              "text": "週",
+              "start": 60.26,
+              "end": 60.4,
+              "confidence": 0.94
+            },
+            {
+              "text": "末",
+              "start": 60.4,
+              "end": 60.58,
+              "confidence": 1.0
+            },
+            {
+              "text": "が",
+              "start": 60.58,
+              "end": 60.76,
+              "confidence": 0.98
+            },
+            {
+              "text": "楽",
+              "start": 60.76,
+              "end": 60.94,
+              "confidence": 1.0
+            },
+            {
+              "text": "し",
+              "start": 60.94,
+              "end": 61.08,
+              "confidence": 0.96
+            },
+            {
+              "text": "み",
+              "start": 61.08,
+              "end": 61.2,
+              "confidence": 1.0
+            },
+            {
+              "text": "です",
+              "start": 61.2,
+              "end": 61.42,
+              "confidence": 1.0
             }
           ]
         },
@@ -2783,6 +5189,172 @@
               ],
               "baseForm": "。",
               "partOfSpeech": "punctuation"
+            }
+          ],
+          "audioStartTime": 56.86,
+          "audioEndTime": 61.42,
+          "audioWords": [
+            {
+              "text": "来",
+              "start": 56.86,
+              "end": 57.0,
+              "confidence": 0.94
+            },
+            {
+              "text": "月",
+              "start": 57.0,
+              "end": 57.18,
+              "confidence": 0.99
+            },
+            {
+              "text": "も",
+              "start": 57.18,
+              "end": 57.38,
+              "confidence": 0.97
+            },
+            {
+              "text": "また",
+              "start": 57.38,
+              "end": 57.56,
+              "confidence": 0.91
+            },
+            {
+              "text": "家",
+              "start": 57.56,
+              "end": 57.7,
+              "confidence": 0.85
+            },
+            {
+              "text": "は",
+              "start": 57.7,
+              "end": 57.82,
+              "confidence": 0.71
+            },
+            {
+              "text": "行",
+              "start": 57.82,
+              "end": 57.92,
+              "confidence": 0.81
+            },
+            {
+              "text": "き",
+              "start": 57.92,
+              "end": 57.98,
+              "confidence": 0.99
+            },
+            {
+              "text": "ましょう",
+              "start": 57.98,
+              "end": 58.2,
+              "confidence": 0.99
+            },
+            {
+              "text": "ね",
+              "start": 58.2,
+              "end": 58.4,
+              "confidence": 0.65
+            },
+            {
+              "text": "と",
+              "start": 58.4,
+              "end": 58.52,
+              "confidence": 0.66
+            },
+            {
+              "text": "友",
+              "start": 58.52,
+              "end": 58.72,
+              "confidence": 0.9
+            },
+            {
+              "text": "達",
+              "start": 58.72,
+              "end": 58.92,
+              "confidence": 0.96
+            },
+            {
+              "text": "と",
+              "start": 58.92,
+              "end": 59.06,
+              "confidence": 1.0
+            },
+            {
+              "text": "話",
+              "start": 59.06,
+              "end": 59.22,
+              "confidence": 0.96
+            },
+            {
+              "text": "しました",
+              "start": 59.22,
+              "end": 59.5,
+              "confidence": 0.99
+            },
+            {
+              "text": "私",
+              "start": 59.64,
+              "end": 59.82,
+              "confidence": 0.97
+            },
+            {
+              "text": "は",
+              "start": 59.82,
+              "end": 59.96,
+              "confidence": 0.99
+            },
+            {
+              "text": "次",
+              "start": 59.96,
+              "end": 60.12,
+              "confidence": 0.99
+            },
+            {
+              "text": "の",
+              "start": 60.12,
+              "end": 60.26,
+              "confidence": 0.99
+            },
+            {
+              "text": "週",
+              "start": 60.26,
+              "end": 60.4,
+              "confidence": 0.94
+            },
+            {
+              "text": "末",
+              "start": 60.4,
+              "end": 60.58,
+              "confidence": 1.0
+            },
+            {
+              "text": "が",
+              "start": 60.58,
+              "end": 60.76,
+              "confidence": 0.98
+            },
+            {
+              "text": "楽",
+              "start": 60.76,
+              "end": 60.94,
+              "confidence": 1.0
+            },
+            {
+              "text": "し",
+              "start": 60.94,
+              "end": 61.08,
+              "confidence": 0.96
+            },
+            {
+              "text": "み",
+              "start": 61.08,
+              "end": 61.2,
+              "confidence": 1.0
+            },
+            {
+              "text": "です",
+              "start": 61.2,
+              "end": 61.42,
+              "confidence": 1.0
             }
           ]
         }

@@ -308,6 +308,14 @@ struct StoryMetadata: Codable, Hashable {
     }
 }
 
+/// Word-level audio timing from Whisper alignment
+struct AudioWord: Codable, Hashable {
+    let text: String
+    let start: Double
+    let end: Double
+    let confidence: Double?
+}
+
 /// A segment of story content (paragraph, dialogue, etc.)
 struct StorySegment: Identifiable, Codable, Hashable {
     let id: String
@@ -323,6 +331,9 @@ struct StorySegment: Identifiable, Codable, Hashable {
     // Audio timing for sentence sync (in seconds)
     let audioStartTime: Double?
     let audioEndTime: Double?
+
+    // Word-level audio timing from Whisper
+    let audioWords: [AudioWord]?
 
     enum SegmentType: String, Codable {
         case paragraph
@@ -340,6 +351,11 @@ struct StorySegment: Identifiable, Codable, Hashable {
         audioStartTime != nil && audioEndTime != nil
     }
 
+    /// Whether this segment has word-level audio timing
+    var hasWordTiming: Bool {
+        audioWords != nil && !(audioWords?.isEmpty ?? true)
+    }
+
     /// Get the full text of the segment (works for both formats)
     var fullText: String {
         if let tokens = tokens, !tokens.isEmpty {
@@ -349,7 +365,7 @@ struct StorySegment: Identifiable, Codable, Hashable {
     }
 
     /// Custom initializer for legacy format
-    init(id: String, text: String, furigana: [FuriganaAnnotation]?, segmentType: SegmentType, audioStartTime: Double? = nil, audioEndTime: Double? = nil) {
+    init(id: String, text: String, furigana: [FuriganaAnnotation]?, segmentType: SegmentType, audioStartTime: Double? = nil, audioEndTime: Double? = nil, audioWords: [AudioWord]? = nil) {
         self.id = id
         self.text = text
         self.furigana = furigana
@@ -357,10 +373,11 @@ struct StorySegment: Identifiable, Codable, Hashable {
         self.tokens = nil
         self.audioStartTime = audioStartTime
         self.audioEndTime = audioEndTime
+        self.audioWords = audioWords
     }
 
     /// Custom initializer for tokenized format
-    init(id: String, tokens: [Token], segmentType: SegmentType, audioStartTime: Double? = nil, audioEndTime: Double? = nil) {
+    init(id: String, tokens: [Token], segmentType: SegmentType, audioStartTime: Double? = nil, audioEndTime: Double? = nil, audioWords: [AudioWord]? = nil) {
         self.id = id
         self.tokens = tokens
         self.segmentType = segmentType
@@ -368,6 +385,7 @@ struct StorySegment: Identifiable, Codable, Hashable {
         self.furigana = nil
         self.audioStartTime = audioStartTime
         self.audioEndTime = audioEndTime
+        self.audioWords = audioWords
     }
 }
 

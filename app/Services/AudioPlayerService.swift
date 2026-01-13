@@ -18,6 +18,12 @@ class AudioPlayerService: ObservableObject {
     /// The ID of the currently highlighted segment (based on audio position)
     @Published private(set) var currentSegmentId: String?
 
+    /// The text of the currently spoken word (for word-level highlighting)
+    @Published private(set) var currentWordText: String?
+
+    /// The start time of the current word (for matching in UI)
+    @Published private(set) var currentWordStart: Double?
+
     /// Whether audio is loaded and ready to play
     @Published private(set) var isLoaded = false
 
@@ -199,16 +205,35 @@ class AudioPlayerService: ObservableObject {
 
     private func updateCurrentSegment() {
         // Find the segment that contains the current playback time
-        let newSegmentId = segments.first { segment in
+        let currentSegment = segments.first { segment in
             guard let start = segment.audioStartTime,
                   let end = segment.audioEndTime else {
                 return false
             }
             return currentTime >= start && currentTime < end
-        }?.id
+        }
 
+        let newSegmentId = currentSegment?.id
         if newSegmentId != currentSegmentId {
             currentSegmentId = newSegmentId
+        }
+
+        // Find current word within the segment (for word-level highlighting)
+        if let segment = currentSegment,
+           let audioWords = segment.audioWords {
+            let currentWord = audioWords.first { word in
+                currentTime >= word.start && currentTime < word.end
+            }
+
+            if currentWord?.text != currentWordText || currentWord?.start != currentWordStart {
+                currentWordText = currentWord?.text
+                currentWordStart = currentWord?.start
+            }
+        } else {
+            if currentWordText != nil {
+                currentWordText = nil
+                currentWordStart = nil
+            }
         }
     }
 }

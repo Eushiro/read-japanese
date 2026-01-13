@@ -29,6 +29,7 @@ struct ReaderView: View {
     @State private var scrollToTargetOffset: CGFloat? = nil  // For programmatic scrolling in continuous mode
     @State private var isScrubbing = false  // Track when user is scrubbing audio
     @State private var scrubPosition: Double = 0  // Temporary position while scrubbing
+    @State private var scrollToAudioSegmentId: String? = nil  // For auto-scrolling to active audio segment
 
     // Audio player
     @StateObject private var audioPlayer = AudioPlayerService()
@@ -39,6 +40,7 @@ struct ReaderView: View {
     @AppStorage("showFurigana") private var showFurigana: Bool = true
     @AppStorage("showEnglishTitles") private var showEnglishTitles: Bool = false
     @AppStorage("chapterViewMode") private var chapterViewMode: String = "paged"
+    @AppStorage("audioHighlightMode") private var audioHighlightMode: String = "sentence"
 
     // Environment
     @Environment(\.dismiss) private var dismiss
@@ -192,6 +194,12 @@ struct ReaderView: View {
             }
             Task {
                 await loadAudioIfAvailable()
+            }
+        }
+        .onChange(of: audioPlayer.currentSegmentId) { _, newSegmentId in
+            // Auto-scroll to the currently playing segment when audio is playing
+            if audioPlayer.isPlaying, let segmentId = newSegmentId {
+                scrollToAudioSegmentId = segmentId
             }
         }
         .overlay {
@@ -618,6 +626,7 @@ struct ReaderView: View {
             isAutoScrolling: $isAutoScrolling,
             scrollOffset: $scrollOffset,
             scrollToOffset: $scrollToTargetOffset,
+            scrollToIdentifier: $scrollToAudioSegmentId,
             scrollSpeed: scrollSpeedPointsPerSecond,
             onSwipeBack: { onDismiss?() }
         ) {
@@ -734,6 +743,7 @@ struct ReaderView: View {
         AutoScrollView(
             isAutoScrolling: $isAutoScrolling,
             scrollOffset: index == currentChapterIndex ? $scrollOffset : .constant(0),
+            scrollToIdentifier: index == currentChapterIndex ? $scrollToAudioSegmentId : .constant(nil),
             scrollSpeed: scrollSpeedPointsPerSecond
         ) {
             chapterBodyContent(forChapterIndex: index)
@@ -962,13 +972,21 @@ struct ReaderView: View {
     }
 
     private func segmentView(_ segment: StorySegment, index: Int) -> some View {
-        let isAudioHighlighted = audioPlayer.isPlaying && audioPlayer.currentSegmentId == segment.id
+        let isCurrentSegment = audioPlayer.isPlaying && audioPlayer.currentSegmentId == segment.id
+        // In sentence mode, highlight whole segment; in word mode, don't highlight segment
+        let isAudioHighlighted = isCurrentSegment && audioHighlightMode == "sentence"
+        // In word mode, pass current word for highlighting; in sentence mode, pass nil
+        let currentWord = (audioHighlightMode == "word" && isCurrentSegment) ? audioPlayer.currentWordText : nil
+        let currentWordStart = (audioHighlightMode == "word" && isCurrentSegment) ? audioPlayer.currentWordStart : nil
 
         return VStack(alignment: .leading, spacing: 8) {
             FuriganaTextView(
                 segment: segment,
                 fontSize: fontSize,
                 showFurigana: showFurigana,
+                isAudioHighlighted: isAudioHighlighted,
+                currentAudioWord: currentWord,
+                currentAudioWordStart: currentWordStart,
                 selectedTokenId: showTooltip ? selectedTokenId : nil,
                 onWordTap: { wordInfo, tokenId, frame in
                     selectedWordInfo = wordInfo
@@ -991,14 +1009,7 @@ struct ReaderView: View {
                 }
             )
         }
-        .padding(.vertical, isAudioHighlighted ? 8 : 0)
-        .padding(.horizontal, isAudioHighlighted ? 12 : 0)
-        .background(
-            isAudioHighlighted
-                ? Color.blue.opacity(colorScheme == .dark ? 0.2 : 0.1)
-                : Color.clear
-        )
-        .clipShape(RoundedRectangle(cornerRadius: isAudioHighlighted ? 8 : 0))
+        .accessibilityIdentifier(segment.id)
         .animation(.easeInOut(duration: 0.2), value: isAudioHighlighted)
         .onAppear {
             currentSegmentIndex = max(currentSegmentIndex, index)

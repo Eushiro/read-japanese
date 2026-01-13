@@ -8,6 +8,9 @@ struct FuriganaTextView: View {
     let segment: StorySegment
     let fontSize: CGFloat
     let showFurigana: Bool
+    var isAudioHighlighted: Bool = false  // True when this segment is being read aloud (sentence mode)
+    var currentAudioWord: String? = nil   // Current word being spoken (word mode)
+    var currentAudioWordStart: Double? = nil  // Start time of current word for matching
     var selectedTokenId: String? = nil  // Unique token ID for highlighting (segment.id + index)
     var onWordTap: ((WordInfo, String, CGRect) -> Void)? = nil  // (wordInfo, tokenId, frame)
     var onWordLongPress: ((WordInfo) -> Void)? = nil  // Long press to save
@@ -68,11 +71,15 @@ struct FuriganaTextView: View {
             // Tappable word with parts-based furigana
             let wordInfo = WordInfo.from(token)
             let isSelected = selectedTokenId == tokenId
+            // Check if this word matches the current audio word
+            let isWordHighlighted = currentAudioWord != nil && token.surface.contains(currentAudioWord!)
             TokenPartsView(
                 token: token,
                 fontSize: fontSize,
                 fontName: fontName,
                 showFurigana: showFurigana,
+                isAudioHighlighted: isAudioHighlighted,
+                isWordHighlighted: isWordHighlighted,
                 isSelected: isSelected,
                 onTap: { onWordTap?(wordInfo, tokenId, $0) },
                 onLongPress: { onWordLongPress?(wordInfo) }
@@ -88,11 +95,15 @@ struct FuriganaTextView: View {
             // Tappable word (with or without furigana)
             let wordInfo = WordInfo.surface(part.text)
             let isSelected = selectedTokenId == partId
+            // Check if this word matches the current audio word
+            let isWordHighlighted = currentAudioWord != nil && part.text.contains(currentAudioWord!)
             WordTapView(
                 wordInfo: wordInfo,
                 displayReading: showFurigana ? part.reading : nil,
                 fontSize: fontSize,
                 fontName: fontName,
+                isAudioHighlighted: isAudioHighlighted,
+                isWordHighlighted: isWordHighlighted,
                 isSelected: isSelected,
                 onTap: { info, frame in onWordTap?(info, partId, frame) },
                 onLongPress: { info in onWordLongPress?(info) }
@@ -230,6 +241,8 @@ struct TokenPartsView: View {
     let fontSize: CGFloat
     let fontName: String
     let showFurigana: Bool
+    var isAudioHighlighted: Bool = false  // True when segment is being read aloud (sentence mode)
+    var isWordHighlighted: Bool = false   // True when this specific word is being spoken (word mode)
     var isSelected: Bool = false
     var onTap: ((CGRect) -> Void)?
     var onLongPress: (() -> Void)?
@@ -245,6 +258,15 @@ struct TokenPartsView: View {
     private var highlightColor: Color {
         guard isPressed || isSelected else { return Color.clear }
         return colorScheme == .dark ? Color.blue.opacity(0.4) : Color.blue.opacity(0.25)
+    }
+
+    private var audioUnderlineColor: Color {
+        colorScheme == .dark ? Color.blue.opacity(0.8) : Color.blue.opacity(0.6)
+    }
+
+    /// Whether to show underline (either sentence or word mode)
+    private var shouldUnderline: Bool {
+        isAudioHighlighted || isWordHighlighted
     }
 
     private var furiganaColor: Color {
@@ -284,11 +306,13 @@ struct TokenPartsView: View {
                         Text(part.text)
                             .font(selectedFont.font(size: fontSize))
                             .foregroundStyle(.primary)
+                            .underline(shouldUnderline, color: audioUnderlineColor)
                     }
                 } else {
                     Text(token.surface)
                         .font(selectedFont.font(size: fontSize))
                         .foregroundStyle(.primary)
+                        .underline(shouldUnderline, color: audioUnderlineColor)
                 }
             }
             .background(highlightColor)
@@ -325,6 +349,8 @@ struct WordTapView: View {
     let displayReading: String?
     let fontSize: CGFloat
     let fontName: String
+    var isAudioHighlighted: Bool = false  // True when segment is being read aloud (sentence mode)
+    var isWordHighlighted: Bool = false   // True when this specific word is being spoken (word mode)
     var isSelected: Bool = false
     var onTap: ((WordInfo, CGRect) -> Void)?
     var onLongPress: ((WordInfo) -> Void)?
@@ -340,6 +366,15 @@ struct WordTapView: View {
     private var highlightColor: Color {
         guard isPressed || isSelected else { return Color.clear }
         return colorScheme == .dark ? Color.blue.opacity(0.4) : Color.blue.opacity(0.25)
+    }
+
+    private var audioUnderlineColor: Color {
+        colorScheme == .dark ? Color.blue.opacity(0.8) : Color.blue.opacity(0.6)
+    }
+
+    /// Whether to show underline (either sentence or word mode)
+    private var shouldUnderline: Bool {
+        isAudioHighlighted || isWordHighlighted
     }
 
     private var furiganaColor: Color {
@@ -360,6 +395,7 @@ struct WordTapView: View {
             Text(wordInfo.surface)
                 .font(selectedFont.font(size: fontSize))
                 .foregroundStyle(.primary)
+                .underline(shouldUnderline, color: audioUnderlineColor)
                 .background(highlightColor)
                 .cornerRadius(4)
         }

@@ -19,6 +19,7 @@ struct SettingsView: View {
     @AppStorage("showTokenizerSource") private var showTokenizerSource: Bool = false
     @AppStorage("showAuthor") private var showAuthor: Bool = false
     @AppStorage("chapterViewMode") private var chapterViewMode: String = "paged"
+    @AppStorage("audioHighlightMode") private var audioHighlightMode: String = "sentence"  // "sentence" or "word"
 
     private var selectedFont: JapaneseFont {
         JapaneseFont(rawValue: fontName) ?? .system
@@ -171,6 +172,72 @@ struct SettingsView: View {
                     Toggle(isOn: $showFurigana) {
                         Label("Show Furigana", systemImage: "character.phonetic.ja")
                     }
+
+                    // Audio highlight mode
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label("Audio Highlight", systemImage: "waveform")
+
+                        HStack(spacing: 10) {
+                            // Sentence mode
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    audioHighlightMode = "sentence"
+                                }
+                            } label: {
+                                VStack(spacing: 6) {
+                                    Image(systemName: "text.alignleft")
+                                        .font(.title2)
+                                    Text("Sentence")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(
+                                    audioHighlightMode == "sentence"
+                                        ? Color.accentColor
+                                        : Color(.tertiarySystemGroupedBackground)
+                                )
+                                .foregroundStyle(
+                                    audioHighlightMode == "sentence"
+                                        ? .white
+                                        : .primary
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
+                            .buttonStyle(.plain)
+
+                            // Word mode
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    audioHighlightMode = "word"
+                                }
+                            } label: {
+                                VStack(spacing: 6) {
+                                    Image(systemName: "character.cursor.ibeam")
+                                        .font(.title2)
+                                    Text("Word")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(
+                                    audioHighlightMode == "word"
+                                        ? Color.accentColor
+                                        : Color(.tertiarySystemGroupedBackground)
+                                )
+                                .foregroundStyle(
+                                    audioHighlightMode == "word"
+                                        ? .white
+                                        : .primary
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.vertical, 4)
 
                     // Chapter view mode
                     VStack(alignment: .leading, spacing: 12) {
