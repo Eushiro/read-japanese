@@ -6,6 +6,7 @@ import os
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from pathlib import Path
@@ -46,6 +47,9 @@ app = FastAPI(
 # Add rate limiter to app state
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# GZip compression for JSON responses (70-80% size reduction)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # CORS middleware for iOS app
 # In production, set ALLOWED_ORIGINS to your specific domain(s)
