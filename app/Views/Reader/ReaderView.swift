@@ -899,10 +899,10 @@ struct ReaderView: View {
             AsyncImage(url: url) { phase in
                 switch phase {
                 case .empty:
-                    // Loading placeholder
+                    // Loading placeholder - match expected image size
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(.secondarySystemBackground))
-                        .frame(width: 200, height: 200)
+                        .frame(width: 400, height: 300)
                         .overlay {
                             ProgressView()
                         }
@@ -918,6 +918,7 @@ struct ReaderView: View {
                     EmptyView()
                 }
             }
+            .frame(maxWidth: 400)
             Spacer()
         }
     }
