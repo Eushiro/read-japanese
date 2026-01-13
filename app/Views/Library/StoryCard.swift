@@ -46,6 +46,7 @@ struct StoryCard: View {
                     PremiumLockOverlay()
                 }
             }
+            .frame(width: 85, height: 106)
 
             // Content
             VStack(alignment: .leading, spacing: 6) {

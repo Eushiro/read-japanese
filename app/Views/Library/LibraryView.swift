@@ -264,21 +264,24 @@ struct LibraryView: View {
                         .contentShape(Rectangle())
                         .listRowSeparator(.hidden)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            let isCompleted = appState.progress(for: story.id)?.isCompleted ?? false
-                            if isCompleted {
-                                Button {
-                                    appState.markUnread(storyId: story.id)
-                                } label: {
-                                    Label("Mark Unread", systemImage: "arrow.counterclockwise")
+                            // Don't allow marking read/unread for locked stories
+                            if !(story.metadata.isPremium && !appState.isPremiumUser) {
+                                let isCompleted = appState.progress(for: story.id)?.isCompleted ?? false
+                                if isCompleted {
+                                    Button {
+                                        appState.markUnread(storyId: story.id)
+                                    } label: {
+                                        Label("Mark Unread", systemImage: "arrow.counterclockwise")
+                                    }
+                                    .tint(.orange)
+                                } else {
+                                    Button {
+                                        appState.markCompleted(storyId: story.id)
+                                    } label: {
+                                        Label("Mark Read", systemImage: "checkmark.circle.fill")
+                                    }
+                                    .tint(.green)
                                 }
-                                .tint(.orange)
-                            } else {
-                                Button {
-                                    appState.markCompleted(storyId: story.id)
-                                } label: {
-                                    Label("Mark Read", systemImage: "checkmark.circle.fill")
-                                }
-                                .tint(.green)
                             }
                         }
                     }

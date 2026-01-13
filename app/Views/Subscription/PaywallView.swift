@@ -52,13 +52,13 @@ struct PaywallView: View {
 
                 Spacer()
 
-                // Mock subscribe button (enables premium for testing)
+                // Subscribe button
                 VStack(spacing: 12) {
                     Button {
                         appState.setPremiumUser(true)
                         dismiss()
                     } label: {
-                        Text("Subscribe (Mock)")
+                        Text("Subscribe")
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -66,10 +66,6 @@ struct PaywallView: View {
                             .foregroundStyle(.white)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-
-                    Text("This is a mock subscription for testing.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal)
                 .padding(.bottom)
