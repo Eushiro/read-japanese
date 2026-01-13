@@ -917,6 +917,40 @@
             }
           ]
         }
+      ],
+      "titleTokens": [
+        {
+          "surface": "降雪",
+          "parts": [
+            {
+              "text": "降雪",
+              "reading": "こうせつ"
+            }
+          ],
+          "baseForm": "降雪",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "の",
+          "parts": [
+            {
+              "text": "の"
+            }
+          ],
+          "baseForm": "の",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "予兆",
+          "parts": [
+            {
+              "text": "予兆",
+              "reading": "よちょう"
+            }
+          ],
+          "baseForm": "予兆",
+          "partOfSpeech": "noun"
+        }
       ]
     },
     {
@@ -1669,6 +1703,33 @@
               "partOfSpeech": "punctuation"
             }
           ]
+        }
+      ],
+      "titleTokens": [
+        {
+          "surface": "蘇る",
+          "parts": [
+            {
+              "text": "蘇",
+              "reading": "よみがえ"
+            },
+            {
+              "text": "る"
+            }
+          ],
+          "baseForm": "蘇る",
+          "partOfSpeech": "verb"
+        },
+        {
+          "surface": "面影",
+          "parts": [
+            {
+              "text": "面影",
+              "reading": "おもかげ"
+            }
+          ],
+          "baseForm": "面影",
+          "partOfSpeech": "noun"
         }
       ]
     },
@@ -2465,6 +2526,61 @@
               "partOfSpeech": "punctuation"
             }
           ]
+        }
+      ],
+      "titleTokens": [
+        {
+          "surface": "過去",
+          "parts": [
+            {
+              "text": "過去",
+              "reading": "かこ"
+            }
+          ],
+          "baseForm": "過去",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "と",
+          "parts": [
+            {
+              "text": "と"
+            }
+          ],
+          "baseForm": "と",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "現在",
+          "parts": [
+            {
+              "text": "現在",
+              "reading": "げんざい"
+            }
+          ],
+          "baseForm": "現在",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "の",
+          "parts": [
+            {
+              "text": "の"
+            }
+          ],
+          "baseForm": "の",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "狭間",
+          "parts": [
+            {
+              "text": "狭間",
+              "reading": "はざま"
+            }
+          ],
+          "baseForm": "狭間",
+          "partOfSpeech": "noun"
         }
       ]
     },
@@ -3313,6 +3429,40 @@
               "partOfSpeech": "punctuation"
             }
           ]
+        }
+      ],
+      "titleTokens": [
+        {
+          "surface": "記憶",
+          "parts": [
+            {
+              "text": "記憶",
+              "reading": "きおく"
+            }
+          ],
+          "baseForm": "記憶",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "の",
+          "parts": [
+            {
+              "text": "の"
+            }
+          ],
+          "baseForm": "の",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "本質",
+          "parts": [
+            {
+              "text": "本質",
+              "reading": "ほんしつ"
+            }
+          ],
+          "baseForm": "本質",
+          "partOfSpeech": "noun"
         }
       ]
     },
@@ -4229,6 +4379,40 @@
             }
           ]
         }
+      ],
+      "titleTokens": [
+        {
+          "surface": "最後",
+          "parts": [
+            {
+              "text": "最後",
+              "reading": "さいご"
+            }
+          ],
+          "baseForm": "最後",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "の",
+          "parts": [
+            {
+              "text": "の"
+            }
+          ],
+          "baseForm": "の",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "冬",
+          "parts": [
+            {
+              "text": "冬",
+              "reading": "ふゆ"
+            }
+          ],
+          "baseForm": "冬",
+          "partOfSpeech": "noun"
+        }
       ]
     },
     {
@@ -5048,6 +5232,43 @@
             }
           ]
         }
+      ],
+      "titleTokens": [
+        {
+          "surface": "痛み",
+          "parts": [
+            {
+              "text": "痛",
+              "reading": "いた"
+            },
+            {
+              "text": "み"
+            }
+          ],
+          "baseForm": "痛み",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "と",
+          "parts": [
+            {
+              "text": "と"
+            }
+          ],
+          "baseForm": "と",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "美",
+          "parts": [
+            {
+              "text": "美",
+              "reading": "よし"
+            }
+          ],
+          "baseForm": "美",
+          "partOfSpeech": "noun"
+        }
       ]
     },
     {
@@ -5826,6 +6047,40 @@
             }
           ]
         }
+      ],
+      "titleTokens": [
+        {
+          "surface": "脆弱",
+          "parts": [
+            {
+              "text": "脆弱",
+              "reading": "ぜいじゃく"
+            }
+          ],
+          "baseForm": "脆弱",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "な",
+          "parts": [
+            {
+              "text": "な"
+            }
+          ],
+          "baseForm": "だ",
+          "partOfSpeech": "auxiliary"
+        },
+        {
+          "surface": "宝物",
+          "parts": [
+            {
+              "text": "宝物",
+              "reading": "ほうもつ"
+            }
+          ],
+          "baseForm": "宝物",
+          "partOfSpeech": "noun"
+        }
       ]
     },
     {
@@ -6562,6 +6817,40 @@
               "partOfSpeech": "punctuation"
             }
           ]
+        }
+      ],
+      "titleTokens": [
+        {
+          "surface": "受容",
+          "parts": [
+            {
+              "text": "受容",
+              "reading": "じゅよう"
+            }
+          ],
+          "baseForm": "受容",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "の",
+          "parts": [
+            {
+              "text": "の"
+            }
+          ],
+          "baseForm": "の",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "境地",
+          "parts": [
+            {
+              "text": "境地",
+              "reading": "きょうち"
+            }
+          ],
+          "baseForm": "境地",
+          "partOfSpeech": "noun"
         }
       ]
     },
@@ -7381,6 +7670,43 @@
               "partOfSpeech": "punctuation"
             }
           ]
+        }
+      ],
+      "titleTokens": [
+        {
+          "surface": "雪",
+          "parts": [
+            {
+              "text": "雪",
+              "reading": "ゆき"
+            }
+          ],
+          "baseForm": "雪",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "の",
+          "parts": [
+            {
+              "text": "の"
+            }
+          ],
+          "baseForm": "の",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "教え",
+          "parts": [
+            {
+              "text": "教",
+              "reading": "おし"
+            },
+            {
+              "text": "え"
+            }
+          ],
+          "baseForm": "教え",
+          "partOfSpeech": "noun"
         }
       ]
     },
@@ -8631,6 +8957,40 @@
               "partOfSpeech": "punctuation"
             }
           ]
+        }
+      ],
+      "titleTokens": [
+        {
+          "surface": "静謐",
+          "parts": [
+            {
+              "text": "静謐",
+              "reading": "せいひつ"
+            }
+          ],
+          "baseForm": "静謐",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "なる",
+          "parts": [
+            {
+              "text": "なる"
+            }
+          ],
+          "baseForm": "なり",
+          "partOfSpeech": "auxiliary"
+        },
+        {
+          "surface": "調和",
+          "parts": [
+            {
+              "text": "調和",
+              "reading": "ちょうわ"
+            }
+          ],
+          "baseForm": "調和",
+          "partOfSpeech": "noun"
         }
       ]
     }

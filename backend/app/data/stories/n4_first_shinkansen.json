@@ -1036,6 +1036,40 @@
             }
           ]
         }
+      ],
+      "titleTokens": [
+        {
+          "surface": "東京",
+          "parts": [
+            {
+              "text": "東京",
+              "reading": "とうきょう"
+            }
+          ],
+          "baseForm": "東京",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "駅",
+          "parts": [
+            {
+              "text": "駅",
+              "reading": "えき"
+            }
+          ],
+          "baseForm": "駅",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "へ",
+          "parts": [
+            {
+              "text": "へ"
+            }
+          ],
+          "baseForm": "へ",
+          "partOfSpeech": "particle"
+        }
       ]
     },
     {
@@ -2273,6 +2307,40 @@
             }
           ]
         }
+      ],
+      "titleTokens": [
+        {
+          "surface": "乗車",
+          "parts": [
+            {
+              "text": "乗車",
+              "reading": "じょうしゃ"
+            }
+          ],
+          "baseForm": "乗車",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "と",
+          "parts": [
+            {
+              "text": "と"
+            }
+          ],
+          "baseForm": "と",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "出発",
+          "parts": [
+            {
+              "text": "出発",
+              "reading": "しゅっぱつ"
+            }
+          ],
+          "baseForm": "出発",
+          "partOfSpeech": "noun"
+        }
       ]
     },
     {
@@ -3389,6 +3457,40 @@
               "partOfSpeech": "punctuation"
             }
           ]
+        }
+      ],
+      "titleTokens": [
+        {
+          "surface": "旅",
+          "parts": [
+            {
+              "text": "旅",
+              "reading": "たび"
+            }
+          ],
+          "baseForm": "旅",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "の",
+          "parts": [
+            {
+              "text": "の"
+            }
+          ],
+          "baseForm": "の",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "途中",
+          "parts": [
+            {
+              "text": "途中",
+              "reading": "とちゅう"
+            }
+          ],
+          "baseForm": "途中",
+          "partOfSpeech": "noun"
         }
       ]
     },
@@ -4515,6 +4617,40 @@
               "partOfSpeech": "punctuation"
             }
           ]
+        }
+      ],
+      "titleTokens": [
+        {
+          "surface": "到着",
+          "parts": [
+            {
+              "text": "到着",
+              "reading": "とうちゃく"
+            }
+          ],
+          "baseForm": "到着",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "と",
+          "parts": [
+            {
+              "text": "と"
+            }
+          ],
+          "baseForm": "と",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "感想",
+          "parts": [
+            {
+              "text": "感想",
+              "reading": "かんそう"
+            }
+          ],
+          "baseForm": "感想",
+          "partOfSpeech": "noun"
         }
       ]
     }

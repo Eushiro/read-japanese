@@ -1050,6 +1050,50 @@
             }
           ]
         }
+      ],
+      "titleTokens": [
+        {
+          "surface": "雨",
+          "parts": [
+            {
+              "text": "雨",
+              "reading": "あめ"
+            }
+          ],
+          "baseForm": "雨",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "の",
+          "parts": [
+            {
+              "text": "の"
+            }
+          ],
+          "baseForm": "の",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "中",
+          "parts": [
+            {
+              "text": "中",
+              "reading": "なか"
+            }
+          ],
+          "baseForm": "中",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "で",
+          "parts": [
+            {
+              "text": "で"
+            }
+          ],
+          "baseForm": "で",
+          "partOfSpeech": "particle"
+        }
       ]
     },
     {
@@ -2596,6 +2640,40 @@
             }
           ]
         }
+      ],
+      "titleTokens": [
+        {
+          "surface": "不思議",
+          "parts": [
+            {
+              "text": "不思議",
+              "reading": "ふしぎ"
+            }
+          ],
+          "baseForm": "不思議",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "な",
+          "parts": [
+            {
+              "text": "な"
+            }
+          ],
+          "baseForm": "だ",
+          "partOfSpeech": "auxiliary"
+        },
+        {
+          "surface": "力",
+          "parts": [
+            {
+              "text": "力",
+              "reading": "ちから"
+            }
+          ],
+          "baseForm": "力",
+          "partOfSpeech": "noun"
+        }
       ]
     },
     {
@@ -4002,6 +4080,40 @@
               "partOfSpeech": "punctuation"
             }
           ]
+        }
+      ],
+      "titleTokens": [
+        {
+          "surface": "猫",
+          "parts": [
+            {
+              "text": "猫",
+              "reading": "ねこ"
+            }
+          ],
+          "baseForm": "猫",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "の",
+          "parts": [
+            {
+              "text": "の"
+            }
+          ],
+          "baseForm": "の",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "物語",
+          "parts": [
+            {
+              "text": "物語",
+              "reading": "ものがたり"
+            }
+          ],
+          "baseForm": "物語",
+          "partOfSpeech": "noun"
         }
       ]
     },
@@ -5428,6 +5540,50 @@
               "partOfSpeech": "punctuation"
             }
           ]
+        }
+      ],
+      "titleTokens": [
+        {
+          "surface": "別れ",
+          "parts": [
+            {
+              "text": "別",
+              "reading": "わか"
+            },
+            {
+              "text": "れ"
+            }
+          ],
+          "baseForm": "別れ",
+          "partOfSpeech": "noun"
+        },
+        {
+          "surface": "と",
+          "parts": [
+            {
+              "text": "と"
+            }
+          ],
+          "baseForm": "と",
+          "partOfSpeech": "particle"
+        },
+        {
+          "surface": "贈り物",
+          "parts": [
+            {
+              "text": "贈",
+              "reading": "おく"
+            },
+            {
+              "text": "り"
+            },
+            {
+              "text": "物",
+              "reading": "もの"
+            }
+          ],
+          "baseForm": "贈り物",
+          "partOfSpeech": "noun"
         }
       ]
     }
