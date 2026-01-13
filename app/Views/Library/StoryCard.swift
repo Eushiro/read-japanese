@@ -144,7 +144,7 @@ struct StoryCard: View {
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
-        .opacity(isCompleted ? 0.5 : 1.0)
+        .opacity(isCompleted && !isLocked ? 0.5 : 1.0)
     }
 }
 
