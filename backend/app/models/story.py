@@ -17,6 +17,14 @@ class Token(BaseModel):
     partOfSpeech: Optional[str] = None
 
 
+class AudioWord(BaseModel):
+    """Word-level audio timing from Whisper alignment"""
+    text: str
+    start: float
+    end: float
+    confidence: Optional[float] = None
+
+
 class ContentSegment(BaseModel):
     """A segment of content (paragraph or dialogue)"""
     id: str
@@ -25,6 +33,8 @@ class ContentSegment(BaseModel):
     # Audio timing for sentence sync (in seconds)
     audioStartTime: Optional[float] = None
     audioEndTime: Optional[float] = None
+    # Word-level audio timing from Whisper
+    audioWords: Optional[List[AudioWord]] = None
 
 
 class Chapter(BaseModel):
