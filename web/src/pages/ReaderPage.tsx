@@ -37,7 +37,6 @@ export function ReaderPage() {
   // Get settings from Convex
   const { settings, setShowFurigana } = useSettings();
   const showFurigana = settings.showFurigana;
-  const audioHighlightMode = settings.audioHighlightMode;
 
   const chapters = story?.chapters || [];
   const currentChapter = chapters[currentChapterIndex];
@@ -249,7 +248,6 @@ export function ReaderPage() {
               showFurigana={showFurigana}
               onTokenClick={handleTokenClick}
               currentAudioTime={audioTime}
-              audioHighlightMode={audioHighlightMode}
             />
           ) : (
             <div className="text-center text-foreground-muted py-12">

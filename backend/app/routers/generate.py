@@ -27,6 +27,8 @@ class StoryGenerationRequest(BaseModel):
     image_style: str = Field("anime", description="Cover art style")
     generate_audio: bool = Field(True, description="Generate audio narration")
     generate_image: bool = Field(True, description="Generate cover image")
+    generate_chapter_images: bool = Field(True, description="Generate chapter illustrations")
+    align_audio: bool = Field(True, description="Align audio with text for word-level timestamps")
 
 
 class IdeaGenerationRequest(BaseModel):
@@ -84,7 +86,9 @@ async def _generate_story_task(job_id: str, request: StoryGenerationRequest):
             voice=request.voice,
             image_style=request.image_style,
             generate_audio=request.generate_audio,
-            generate_image=request.generate_image
+            generate_image=request.generate_image,
+            generate_chapter_images=request.generate_chapter_images,
+            align_audio=request.align_audio
         )
 
         _generation_status[job_id] = {
@@ -120,7 +124,9 @@ async def generate_story_sync(request: StoryGenerationRequest):
             voice=request.voice,
             image_style=request.image_style,
             generate_audio=request.generate_audio,
-            generate_image=request.generate_image
+            generate_image=request.generate_image,
+            generate_chapter_images=request.generate_chapter_images,
+            align_audio=request.align_audio
         )
 
         return {"status": "completed", "story": story}

@@ -11,6 +11,7 @@
 		1F83357E2F14C41C004ED216 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 1F83357D2F14C41C004ED216 /* FirebaseAuth */; };
 		1F8335802F14C41C004ED216 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1F83357F2F14C41C004ED216 /* FirebaseCore */; };
 		1F8335872F14C726004ED216 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 1F8335862F14C726004ED216 /* GoogleSignIn */; };
+		1F8335952F175775004ED216 /* ConvexMobile in Frameworks */ = {isa = PBXBuildFile; productRef = 1F8335942F175775004ED216 /* ConvexMobile */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1F8335952F175775004ED216 /* ConvexMobile in Frameworks */,
 				1F83357B2F14C3A9004ED216 /* PostHog in Frameworks */,
 				1F8335872F14C726004ED216 /* GoogleSignIn in Frameworks */,
 				1F8335802F14C41C004ED216 /* FirebaseCore in Frameworks */,
@@ -82,6 +84,7 @@
 				1F83357D2F14C41C004ED216 /* FirebaseAuth */,
 				1F83357F2F14C41C004ED216 /* FirebaseCore */,
 				1F8335862F14C726004ED216 /* GoogleSignIn */,
+				1F8335942F175775004ED216 /* ConvexMobile */,
 			);
 			productName = "Read Japanese";
 			productReference = 1F6239212F0DDFFC0010EDA5 /* Read Japanese.app */;
@@ -115,6 +118,7 @@
 				1F8335792F14C3A9004ED216 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 				1F83357C2F14C41C004ED216 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				1F8335852F14C726004ED216 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				1F8335932F175775004ED216 /* XCRemoteSwiftPackageReference "convex-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1F6239222F0DDFFC0010EDA5 /* Products */;
@@ -382,6 +386,14 @@
 				minimumVersion = 9.1.0;
 			};
 		};
+		1F8335932F175775004ED216 /* XCRemoteSwiftPackageReference "convex-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/get-convex/convex-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.7.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -404,6 +416,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1F8335852F14C726004ED216 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignIn;
+		};
+		1F8335942F175775004ED216 /* ConvexMobile */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F8335932F175775004ED216 /* XCRemoteSwiftPackageReference "convex-swift" */;
+			productName = ConvexMobile;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

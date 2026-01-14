@@ -47,8 +47,8 @@ GEMINI_MODEL = "gemini-2.5-flash-preview-tts"
 VOICES = ["Leda", "Aoede", "Alnilam", "Rasalgethi"]
 VOICE_WEIGHTS = [0.30, 0.30, 0.20, 0.20]
 
-# Prompt for graded reader narration - kept simple to avoid text generation
-NARRATION_PROMPT = "Read aloud clearly and slowly for language learners:\n\n"
+# Prompt for expressive narration
+NARRATION_PROMPT = "You are a skilled storyteller reading a story aloud. Use natural emotion and emphasis to bring the story to life while maintaining clear pronunciation. Pause briefly between sentences.\n\n"
 
 
 def select_voice() -> str:

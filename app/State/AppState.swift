@@ -21,12 +21,94 @@ class AppState: ObservableObject {
     // Premium subscription state (mock - persisted in UserDefaults)
     @Published var isPremiumUser: Bool = false
 
+    // MARK: - Convex Sync
+
+    private var convexService = ConvexService.shared
+    private var cancellables = Set<AnyCancellable>()
+
     // MARK: - Initialization
 
     init() {
         loadVocabularyFromStorage()
         loadReadingProgressFromStorage()
         loadPremiumStateFromStorage()
+        setupConvexSync()
+    }
+
+    // MARK: - Convex Integration
+
+    /// Set up observers for Convex data changes
+    private func setupConvexSync() {
+        // Sync vocabulary from Convex when it changes
+        convexService.$vocabulary
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] convexItems in
+                guard let self = self, !convexItems.isEmpty else { return }
+                // Merge Convex items with local items (Convex takes priority)
+                self.mergeVocabularyFromConvex(convexItems)
+            }
+            .store(in: &cancellables)
+
+        // Sync reading progress from Convex when it changes
+        convexService.$readingProgress
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] convexProgress in
+                guard let self = self, !convexProgress.isEmpty else { return }
+                // Merge Convex progress with local progress (Convex takes priority)
+                self.mergeReadingProgressFromConvex(convexProgress)
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Merge vocabulary items from Convex into local state
+    private func mergeVocabularyFromConvex(_ convexItems: [ConvexVocabularyItem]) {
+        for convexItem in convexItems {
+            // Check if word already exists locally
+            if !vocabularyItems.contains(where: { $0.word == convexItem.word }) {
+                let vocabItem = VocabularyItem(
+                    word: convexItem.word,
+                    reading: convexItem.reading,
+                    meaning: convexItem.meaning,
+                    jlptLevel: convexItem.jlptLevel,
+                    sourceStoryId: convexItem.sourceStoryId
+                )
+                vocabularyItems.append(vocabItem)
+            }
+        }
+        saveVocabularyToStorage()
+    }
+
+    /// Merge reading progress from Convex into local state
+    private func mergeReadingProgressFromConvex(_ convexProgress: [String: ConvexReadingProgress]) {
+        for (storyId, convexItem) in convexProgress {
+            // Only update if Convex has newer data
+            if let localProgress = readingProgress[storyId] {
+                let convexDate = Date(timeIntervalSince1970: convexItem.lastReadAt / 1000)
+                if convexDate > localProgress.lastReadDate {
+                    var updatedProgress = localProgress
+                    updatedProgress.currentSegmentIndex = convexItem.currentSegmentIndex
+                    updatedProgress.percentComplete = convexItem.percentComplete
+                    updatedProgress.lastReadDate = convexDate
+                    if convexItem.isCompleted && updatedProgress.completedDate == nil {
+                        updatedProgress.completedDate = convexDate
+                    }
+                    readingProgress[storyId] = updatedProgress
+                }
+            } else {
+                // Create new local progress from Convex data
+                var newProgress = ReadingProgress(
+                    storyId: storyId,
+                    currentSegmentIndex: convexItem.currentSegmentIndex,
+                    percentComplete: convexItem.percentComplete
+                )
+                newProgress.lastReadDate = Date(timeIntervalSince1970: convexItem.lastReadAt / 1000)
+                if convexItem.isCompleted {
+                    newProgress.completedDate = newProgress.lastReadDate
+                }
+                readingProgress[storyId] = newProgress
+            }
+        }
+        saveReadingProgressToStorage()
     }
 
     // MARK: - Computed Properties
@@ -99,7 +181,7 @@ class AppState: ObservableObject {
     }
 
     /// Update reading progress for a story
-    func updateProgress(for storyId: String, segmentIndex: Int, percentComplete: Double) {
+    func updateProgress(for storyId: String, chapterIndex: Int = 0, segmentIndex: Int, percentComplete: Double) {
         if var progress = readingProgress[storyId] {
             progress.currentSegmentIndex = segmentIndex
             progress.percentComplete = percentComplete
@@ -113,6 +195,17 @@ class AppState: ObservableObject {
             )
         }
         saveReadingProgressToStorage()
+
+        // Sync to Convex
+        Task {
+            try? await convexService.updateProgress(
+                storyId: storyId,
+                currentChapterIndex: chapterIndex,
+                currentSegmentIndex: segmentIndex,
+                percentComplete: percentComplete,
+                isCompleted: false
+            )
+        }
     }
 
     /// Mark a story as completed
@@ -131,12 +224,25 @@ class AppState: ObservableObject {
             readingProgress[storyId] = progress
         }
         saveReadingProgressToStorage()
+
+        // Sync to Convex
+        Task {
+            try? await convexService.updateProgress(
+                storyId: storyId,
+                currentChapterIndex: 0,
+                currentSegmentIndex: 0,
+                percentComplete: 100.0,
+                isCompleted: true
+            )
+        }
     }
 
     /// Mark a story as unread (remove all progress)
     func markUnread(storyId: String) {
         readingProgress.removeValue(forKey: storyId)
         saveReadingProgressToStorage()
+        // Note: Convex doesn't have a remove progress mutation yet
+        // Progress will be overwritten when user starts reading again
     }
 
     /// Check if a story has been started
@@ -213,6 +319,17 @@ class AppState: ObservableObject {
         if !vocabularyItems.contains(where: { $0.word == item.word }) {
             vocabularyItems.append(item)
             saveVocabularyToStorage()
+
+            // Sync to Convex
+            Task {
+                try? await convexService.addVocabulary(
+                    word: item.word,
+                    reading: item.reading,
+                    meaning: item.meaning,
+                    jlptLevel: item.jlptLevel,
+                    sourceStoryId: item.sourceStoryId
+                )
+            }
         }
     }
 
@@ -220,6 +337,13 @@ class AppState: ObservableObject {
     func removeVocabularyItem(_ item: VocabularyItem) {
         vocabularyItems.removeAll { $0.id == item.id }
         saveVocabularyToStorage()
+
+        // Find and remove from Convex
+        if let convexItem = convexService.vocabulary.first(where: { $0.word == item.word }) {
+            Task {
+                try? await convexService.removeVocabulary(id: convexItem._id)
+            }
+        }
     }
 
     /// Remove a vocabulary item by word (checks both surface and base form)
@@ -228,6 +352,14 @@ class AppState: ObservableObject {
             item.word == word || (baseForm != nil && item.word == baseForm)
         }
         saveVocabularyToStorage()
+
+        // Find and remove from Convex
+        let wordToFind = baseForm ?? word
+        if let convexItem = convexService.vocabulary.first(where: { $0.word == wordToFind || $0.word == word }) {
+            Task {
+                try? await convexService.removeVocabulary(id: convexItem._id)
+            }
+        }
     }
 
     /// Check if a word is in vocabulary (checks both surface and base form)

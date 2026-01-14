@@ -1,67 +1,50 @@
 import { useMemo } from "react";
 import { FuriganaText } from "./FuriganaText";
-import type { StorySegment, Token, AudioWord } from "@/types/story";
-import type { AudioHighlightMode } from "@/hooks/useSettings";
+import type { StorySegment, Token } from "@/types/story";
 
 interface SegmentProps {
   segment: StorySegment;
   showFurigana?: boolean;
   onTokenClick?: (token: Token, event: React.MouseEvent) => void;
   currentAudioTime?: number;
-  audioHighlightMode?: AudioHighlightMode;
 }
 
-// Find which audio word is currently being spoken
-function getCurrentAudioWord(audioWords: AudioWord[] | undefined, time: number): AudioWord | null {
-  if (!audioWords || audioWords.length === 0) return null;
+// Find sentence boundaries (indices of 。tokens) and return ranges
+function getSentenceRanges(tokens: Token[]): Array<{ start: number; end: number }> {
+  const ranges: Array<{ start: number; end: number }> = [];
+  let sentenceStart = 0;
 
-  for (const word of audioWords) {
-    if (time >= word.start && time < word.end) {
-      return word;
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i].surface === "。") {
+      ranges.push({ start: sentenceStart, end: i + 1 }); // Include the period
+      sentenceStart = i + 1;
     }
   }
-  return null;
+
+  // Handle remaining tokens after last period (if any)
+  if (sentenceStart < tokens.length) {
+    ranges.push({ start: sentenceStart, end: tokens.length });
+  }
+
+  return ranges;
 }
 
-// Check if a token matches the current audio word
-function isTokenHighlighted(
-  token: Token,
-  tokenIndex: number,
-  tokens: Token[],
-  currentWord: AudioWord | null,
-  audioWords: AudioWord[] | undefined
-): boolean {
-  if (!currentWord || !audioWords) return false;
+// Get which sentence index is currently being spoken based on time proportion
+function getCurrentSentenceIndex(
+  currentTime: number,
+  startTime: number,
+  endTime: number,
+  sentenceCount: number
+): number {
+  if (sentenceCount <= 1) return 0;
 
-  // Build the text up to and including this token
-  let textBefore = "";
-  for (let i = 0; i < tokenIndex; i++) {
-    textBefore += tokens[i].surface;
-  }
+  const duration = endTime - startTime;
+  const elapsed = currentTime - startTime;
+  const progress = elapsed / duration;
 
-  // Build the text with this token
-  const textWithToken = textBefore + token.surface;
-
-  // Build the audio text up to current word
-  const currentWordIndex = audioWords.indexOf(currentWord);
-  let audioTextUpToCurrent = "";
-  for (let i = 0; i <= currentWordIndex; i++) {
-    audioTextUpToCurrent += audioWords[i].text;
-  }
-
-  // Check if this token's position overlaps with the current audio word
-  // This is a fuzzy match since tokenization and audio words don't align perfectly
-  const tokenStart = textBefore.length;
-  const tokenEnd = textWithToken.length;
-
-  let audioStart = 0;
-  for (let i = 0; i < currentWordIndex; i++) {
-    audioStart += audioWords[i].text.length;
-  }
-  const audioEnd = audioStart + currentWord.text.length;
-
-  // Check for overlap
-  return tokenStart < audioEnd && tokenEnd > audioStart;
+  // Distribute time evenly across sentences
+  const sentenceIndex = Math.floor(progress * sentenceCount);
+  return Math.min(sentenceIndex, sentenceCount - 1);
 }
 
 export function Segment({
@@ -69,7 +52,6 @@ export function Segment({
   showFurigana = true,
   onTokenClick,
   currentAudioTime = 0,
-  audioHighlightMode = "sentence",
 }: SegmentProps) {
   const baseClasses = "leading-loose text-foreground";
 
@@ -87,16 +69,22 @@ export function Segment({
     return currentAudioTime >= segment.audioStartTime && currentAudioTime <= segment.audioEndTime;
   }, [currentAudioTime, segment.audioStartTime, segment.audioEndTime]);
 
-  // Get current audio word
-  const currentAudioWord = useMemo(() => {
-    if (!isSegmentActive) return null;
-    return getCurrentAudioWord(segment.audioWords, currentAudioTime);
-  }, [isSegmentActive, segment.audioWords, currentAudioTime]);
+  // Get sentence ranges within this segment
+  const sentenceRanges = useMemo(() => {
+    if (!segment.tokens) return [];
+    return getSentenceRanges(segment.tokens);
+  }, [segment.tokens]);
 
-  // Determine if we should use sentence-level or word-level highlighting
-  // Use word-level only if the setting is enabled AND we have audioWords data
-  const hasWordLevelTiming = segment.audioWords && segment.audioWords.length > 0;
-  const useWordHighlighting = audioHighlightMode === "word" && hasWordLevelTiming;
+  // Get current sentence index based on audio progress
+  const currentSentenceIndex = useMemo(() => {
+    if (!isSegmentActive || sentenceRanges.length === 0) return -1;
+    return getCurrentSentenceIndex(
+      currentAudioTime,
+      segment.audioStartTime!,
+      segment.audioEndTime!,
+      sentenceRanges.length
+    );
+  }, [isSegmentActive, currentAudioTime, segment.audioStartTime, segment.audioEndTime, sentenceRanges.length]);
 
   if (!segment.tokens || segment.tokens.length === 0) {
     return <p className={className}>{segment.text || ""}</p>;
@@ -105,13 +93,12 @@ export function Segment({
   return (
     <p className={`${className} ${isSegmentActive ? "transition-colors duration-200" : ""}`}>
       {segment.tokens.map((token, index) => {
-        // For word-level highlighting, check if this specific token is being spoken
-        // For sentence-level highlighting, highlight all tokens when segment is active
-        const isHighlighted = isSegmentActive && (
-          useWordHighlighting
-            ? isTokenHighlighted(token, index, segment.tokens!, currentAudioWord, segment.audioWords)
-            : true  // Sentence-level: highlight all tokens in active segment
-        );
+        // Check if this token is in the currently spoken sentence
+        let isHighlighted = false;
+        if (isSegmentActive && currentSentenceIndex >= 0 && currentSentenceIndex < sentenceRanges.length) {
+          const range = sentenceRanges[currentSentenceIndex];
+          isHighlighted = index >= range.start && index < range.end;
+        }
 
         return (
           <FuriganaText

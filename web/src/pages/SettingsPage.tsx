@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Settings, Crown, Code, Users, Highlighter } from "lucide-react";
-import { useSettings, isDevUserEnabled, setDevUserEnabled, type AudioHighlightMode } from "@/hooks/useSettings";
+import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Settings, Crown, Code, Users } from "lucide-react";
+import { useSettings, isDevUserEnabled, setDevUserEnabled } from "@/hooks/useSettings";
 
 type Theme = "light" | "dark" | "system";
 
@@ -12,7 +12,6 @@ export function SettingsPage() {
     setTheme: updateTheme,
     setFontSize: updateFontSize,
     setAutoplayAudio: updateAutoplayAudio,
-    setAudioHighlightMode: updateAudioHighlightMode,
     userId,
   } = useSettings();
 
@@ -27,7 +26,6 @@ export function SettingsPage() {
   const showFurigana = settings.showFurigana;
   const autoplayAudio = settings.autoplayAudio;
   const fontSize = settings.fontSize;
-  const audioHighlightMode = settings.audioHighlightMode;
 
   // Apply theme
   useEffect(() => {
@@ -50,7 +48,6 @@ export function SettingsPage() {
   const setTheme = (value: Theme) => updateTheme(value);
   const setFontSize = (value: string) => updateFontSize(value);
   const setAutoplayAudio = (value: boolean) => updateAutoplayAudio(value);
-  const setAudioHighlightMode = (value: AudioHighlightMode) => updateAudioHighlightMode(value);
 
   return (
     <div className="min-h-screen">
@@ -170,42 +167,6 @@ export function SettingsPage() {
                     }`}
                   />
                 </button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-muted">
-                    <Highlighter className="w-4 h-4 text-foreground-muted" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-foreground">Audio Highlight</div>
-                    <div className="text-sm text-foreground-muted">
-                      Highlight words or sentences during playback
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setAudioHighlightMode("sentence")}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                      audioHighlightMode === "sentence"
-                        ? "bg-accent text-white"
-                        : "bg-muted text-foreground-muted hover:text-foreground"
-                    }`}
-                  >
-                    Sentence
-                  </button>
-                  <button
-                    onClick={() => setAudioHighlightMode("word")}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                      audioHighlightMode === "word"
-                        ? "bg-accent text-white"
-                        : "bg-muted text-foreground-muted hover:text-foreground"
-                    }`}
-                  >
-                    Word
-                  </button>
-                </div>
               </div>
 
               <div className="space-y-3">

@@ -2,7 +2,6 @@ import { Segment } from "./Segment";
 import { FuriganaText } from "./FuriganaText";
 import { getCdnUrl } from "@/api/stories";
 import type { Chapter, Token } from "@/types/story";
-import type { AudioHighlightMode } from "@/hooks/useSettings";
 import { CheckCircle2 } from "lucide-react";
 
 interface ChapterViewProps {
@@ -12,7 +11,6 @@ interface ChapterViewProps {
   showFurigana?: boolean;
   onTokenClick?: (token: Token, event: React.MouseEvent) => void;
   currentAudioTime?: number;
-  audioHighlightMode?: AudioHighlightMode;
 }
 
 export function ChapterView({
@@ -22,7 +20,6 @@ export function ChapterView({
   showFurigana = true,
   onTokenClick,
   currentAudioTime = 0,
-  audioHighlightMode = "sentence",
 }: ChapterViewProps) {
   const segments = chapter.segments || chapter.content || [];
   const imageUrl = chapter.imageURL ? getCdnUrl(chapter.imageURL) : null;
@@ -76,7 +73,6 @@ export function ChapterView({
             showFurigana={showFurigana}
             onTokenClick={onTokenClick}
             currentAudioTime={currentAudioTime}
-            audioHighlightMode={audioHighlightMode}
           />
         ))}
       </div>
