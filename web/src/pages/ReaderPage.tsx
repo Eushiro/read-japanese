@@ -35,6 +35,11 @@ export function ReaderPage() {
   const [audioTime, setAudioTime] = useState(0);
   const [manualNavigation, setManualNavigation] = useState(false);
 
+  // Reset scroll position when entering the reader or changing story
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [storyId]);
+
   // Get settings from Convex
   const { settings, setShowFurigana } = useSettings();
   const showFurigana = settings.showFurigana;
