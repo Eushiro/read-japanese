@@ -81,3 +81,18 @@ Temporary Items
 # Environment
 .env
 .env.local
+
+# Playwright MCP
+.playwright-mcp/
+page-*.png
+page-*.jpeg
+
+# Node
+node_modules/
+bun.lock
+package-lock.json
+yarn.lock
+
+# Build artifacts
+dist/
+.vite/

@@ -594,6 +594,43 @@ def proofread_story(story: Story) -> List[Issue]:
 
 ---
 
+## Backend Improvements
+
+### Local Dictionary (JMdict)
+**Description**: Replace Jisho API proxy with local SQLite dictionary for faster, more reliable lookups.
+
+**Current State**: Using Jisho API proxy at `/api/dictionary/{word}` to avoid CORS issues.
+
+**Proposed**:
+- Download JMdict XML (~50MB compressed, same data Jisho uses)
+- Parse and load into SQLite with indexes on word/reading
+- Query by exact match or prefix
+- Include JLPT level tags from standard vocab lists
+
+**Benefits**:
+- Instant lookups (no external API call)
+- Works offline / no Jisho dependency
+- Can customize for learners (add JLPT levels, filter results)
+
+**Files**:
+- New `backend/scripts/build_dictionary.py`
+- New `backend/app/services/dictionary.py`
+- Update `backend/app/routers/dictionary.py`
+
+---
+
+### Premium Content Protection (Server-Side)
+**Description**: Backend should not return full story content for premium stories to non-premium users.
+
+**Current State**: Premium enforcement only on frontend (users could bypass via API).
+
+**Implementation**:
+- Add user authentication check in `GET /api/stories/{id}`
+- Return only metadata (title, summary, cover) for locked premium stories
+- Require valid premium token to get full chapter content
+
+---
+
 ## Priority Matrix
 
 | Priority | Feature | Effort | Impact |
