@@ -6,6 +6,7 @@ import {
   Link,
   useLocation,
 } from "@tanstack/react-router";
+import { LandingPage } from "@/pages/LandingPage";
 import { LibraryPage } from "@/pages/LibraryPage";
 import { ReaderPage } from "@/pages/ReaderPage";
 import { VocabularyPage } from "@/pages/VocabularyPage";
@@ -33,7 +34,7 @@ function Navigation() {
   const location = useLocation();
 
   const links = [
-    { to: "/", label: "Library", icon: BookOpen },
+    { to: "/library", label: "Library", icon: BookOpen },
     { to: "/vocabulary", label: "Vocabulary", icon: BookmarkCheck },
     { to: "/generate", label: "Generate", icon: Sparkles },
     { to: "/settings", label: "Settings", icon: Settings },
@@ -93,6 +94,12 @@ function Navigation() {
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
+  component: LandingPage,
+});
+
+const libraryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/library",
   component: LibraryPage,
 });
 
@@ -123,6 +130,7 @@ const settingsRoute = createRoute({
 // Route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  libraryRoute,
   readerRoute,
   vocabularyRoute,
   generateRoute,

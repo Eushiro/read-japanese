@@ -17,6 +17,7 @@ export const get = query({
         theme: "system",
         fontSize: "medium",
         autoplayAudio: false,
+        audioHighlightMode: "sentence",
       };
     }
 
@@ -25,6 +26,7 @@ export const get = query({
       theme: settings.theme ?? "system",
       fontSize: settings.fontSize ?? "medium",
       autoplayAudio: settings.autoplayAudio ?? false,
+      audioHighlightMode: settings.audioHighlightMode ?? "sentence",
     };
   },
 });
@@ -37,6 +39,7 @@ export const update = mutation({
     theme: v.optional(v.string()),
     fontSize: v.optional(v.string()),
     autoplayAudio: v.optional(v.boolean()),
+    audioHighlightMode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { userId, ...updates } = args;
@@ -58,6 +61,7 @@ export const update = mutation({
         theme: updates.theme ?? "system",
         fontSize: updates.fontSize ?? "medium",
         autoplayAudio: updates.autoplayAudio ?? false,
+        audioHighlightMode: updates.audioHighlightMode ?? "sentence",
       });
     }
   },

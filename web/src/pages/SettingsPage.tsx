@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Settings, Crown, Code } from "lucide-react";
-import { useSettings } from "@/hooks/useSettings";
+import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Settings, Crown, Code, Users, Highlighter } from "lucide-react";
+import { useSettings, isDevUserEnabled, setDevUserEnabled, type AudioHighlightMode } from "@/hooks/useSettings";
 
 type Theme = "light" | "dark" | "system";
 
@@ -12,17 +12,22 @@ export function SettingsPage() {
     setTheme: updateTheme,
     setFontSize: updateFontSize,
     setAutoplayAudio: updateAutoplayAudio,
+    setAudioHighlightMode: updateAudioHighlightMode,
+    userId,
   } = useSettings();
 
   const [isPremiumUser, setIsPremiumUser] = useState(() => {
     return localStorage.getItem("isPremiumUser") === "true";
   });
 
+  const [devUserToggle, setDevUserToggle] = useState(() => isDevUserEnabled());
+
   const isDev = import.meta.env.DEV;
   const theme = settings.theme as Theme;
   const showFurigana = settings.showFurigana;
   const autoplayAudio = settings.autoplayAudio;
   const fontSize = settings.fontSize;
+  const audioHighlightMode = settings.audioHighlightMode;
 
   // Apply theme
   useEffect(() => {
@@ -45,6 +50,7 @@ export function SettingsPage() {
   const setTheme = (value: Theme) => updateTheme(value);
   const setFontSize = (value: string) => updateFontSize(value);
   const setAutoplayAudio = (value: boolean) => updateAutoplayAudio(value);
+  const setAudioHighlightMode = (value: AudioHighlightMode) => updateAudioHighlightMode(value);
 
   return (
     <div className="min-h-screen">
@@ -166,6 +172,42 @@ export function SettingsPage() {
                 </button>
               </div>
 
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-muted">
+                    <Highlighter className="w-4 h-4 text-foreground-muted" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-foreground">Audio Highlight</div>
+                    <div className="text-sm text-foreground-muted">
+                      Highlight words or sentences during playback
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setAudioHighlightMode("sentence")}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                      audioHighlightMode === "sentence"
+                        ? "bg-accent text-white"
+                        : "bg-muted text-foreground-muted hover:text-foreground"
+                    }`}
+                  >
+                    Sentence
+                  </button>
+                  <button
+                    onClick={() => setAudioHighlightMode("word")}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                      audioHighlightMode === "word"
+                        ? "bg-accent text-white"
+                        : "bg-muted text-foreground-muted hover:text-foreground"
+                    }`}
+                  >
+                    Word
+                  </button>
+                </div>
+              </div>
+
               <div className="space-y-3">
                 <label className="font-medium text-foreground">Text Size</label>
                 <select
@@ -210,30 +252,64 @@ export function SettingsPage() {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-amber-500/10">
-                    <Crown className="w-4 h-4 text-amber-500" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-foreground">Premium Access</div>
-                    <div className="text-sm text-foreground-muted">
-                      Unlock all premium stories
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-amber-500/10">
+                      <Crown className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground">Premium Access</div>
+                      <div className="text-sm text-foreground-muted">
+                        Unlock all premium stories
+                      </div>
                     </div>
                   </div>
-                </div>
-                <button
-                  onClick={() => setIsPremiumUser(!isPremiumUser)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    isPremiumUser ? "bg-amber-500" : "bg-muted"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                      isPremiumUser ? "translate-x-6" : "translate-x-1"
+                  <button
+                    onClick={() => setIsPremiumUser(!isPremiumUser)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      isPremiumUser ? "bg-amber-500" : "bg-muted"
                     }`}
-                  />
-                </button>
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                        isPremiumUser ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-amber-500/10">
+                      <Users className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground">Shared Dev User</div>
+                      <div className="text-sm text-foreground-muted">
+                        Use shared user for Convex sync testing
+                      </div>
+                      <div className="text-xs text-amber-600 mt-1">
+                        User ID: {userId}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setDevUserToggle(!devUserToggle);
+                      setDevUserEnabled(!devUserToggle);
+                    }}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      devUserToggle ? "bg-amber-500" : "bg-muted"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                        devUserToggle ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             </section>
           )}

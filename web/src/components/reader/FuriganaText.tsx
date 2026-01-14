@@ -25,7 +25,7 @@ export function FuriganaText({
     return (
       <span
         className={`cursor-pointer hover:bg-accent/10 rounded transition-colors ${
-          isHighlighted ? "bg-accent/20 text-accent rounded-sm" : ""
+          isHighlighted ? "underline decoration-accent decoration-2 underline-offset-4" : ""
         }`}
         onClick={onClick}
       >
@@ -37,7 +37,7 @@ export function FuriganaText({
   return (
     <ruby
       className={`cursor-pointer hover:bg-accent/10 rounded transition-colors ${
-        isHighlighted ? "bg-accent/20 text-accent rounded-sm" : ""
+        isHighlighted ? "underline decoration-accent decoration-2 underline-offset-4" : ""
       }`}
       onClick={onClick}
     >

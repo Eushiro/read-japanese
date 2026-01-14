@@ -1,12 +1,14 @@
 import { useMemo } from "react";
 import { FuriganaText } from "./FuriganaText";
 import type { StorySegment, Token, AudioWord } from "@/types/story";
+import type { AudioHighlightMode } from "@/hooks/useSettings";
 
 interface SegmentProps {
   segment: StorySegment;
   showFurigana?: boolean;
   onTokenClick?: (token: Token, event: React.MouseEvent) => void;
   currentAudioTime?: number;
+  audioHighlightMode?: AudioHighlightMode;
 }
 
 // Find which audio word is currently being spoken
@@ -67,6 +69,7 @@ export function Segment({
   showFurigana = true,
   onTokenClick,
   currentAudioTime = 0,
+  audioHighlightMode = "sentence",
 }: SegmentProps) {
   const baseClasses = "leading-loose text-foreground";
 
@@ -90,19 +93,24 @@ export function Segment({
     return getCurrentAudioWord(segment.audioWords, currentAudioTime);
   }, [isSegmentActive, segment.audioWords, currentAudioTime]);
 
+  // Determine if we should use sentence-level or word-level highlighting
+  // Use word-level only if the setting is enabled AND we have audioWords data
+  const hasWordLevelTiming = segment.audioWords && segment.audioWords.length > 0;
+  const useWordHighlighting = audioHighlightMode === "word" && hasWordLevelTiming;
+
   if (!segment.tokens || segment.tokens.length === 0) {
     return <p className={className}>{segment.text || ""}</p>;
   }
 
   return (
-    <p className={className}>
+    <p className={`${className} ${isSegmentActive ? "transition-colors duration-200" : ""}`}>
       {segment.tokens.map((token, index) => {
-        const isHighlighted = isSegmentActive && isTokenHighlighted(
-          token,
-          index,
-          segment.tokens!,
-          currentAudioWord,
-          segment.audioWords
+        // For word-level highlighting, check if this specific token is being spoken
+        // For sentence-level highlighting, highlight all tokens when segment is active
+        const isHighlighted = isSegmentActive && (
+          useWordHighlighting
+            ? isTokenHighlighted(token, index, segment.tokens!, currentAudioWord, segment.audioWords)
+            : true  // Sentence-level: highlight all tokens in active segment
         );
 
         return (

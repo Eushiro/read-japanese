@@ -37,5 +37,6 @@ export default defineSchema({
     theme: v.optional(v.string()),
     fontSize: v.optional(v.string()),
     autoplayAudio: v.optional(v.boolean()),
+    audioHighlightMode: v.optional(v.string()), // "word" | "sentence"
   }).index("by_user", ["userId"]),
 });

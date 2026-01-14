@@ -221,7 +221,7 @@ export function GeneratePage() {
           {/* Options */}
           <div className="space-y-4">
             <label className="text-sm font-medium text-foreground">Options</label>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-6">
               <label className="flex items-center gap-3 cursor-pointer group">
                 <div className="relative">
                   <input
@@ -239,8 +239,10 @@ export function GeneratePage() {
                     )}
                   </div>
                 </div>
-                <Volume2 className="w-4 h-4 text-foreground-muted group-hover:text-foreground transition-colors" />
-                <span className="text-sm text-foreground">Generate Audio</span>
+                <span className="flex items-center gap-2">
+                  <Volume2 className="w-4 h-4 text-foreground-muted group-hover:text-foreground transition-colors" />
+                  <span className="text-sm text-foreground">Generate Audio</span>
+                </span>
               </label>
 
               <label className="flex items-center gap-3 cursor-pointer group">
@@ -260,8 +262,10 @@ export function GeneratePage() {
                     )}
                   </div>
                 </div>
-                <Image className="w-4 h-4 text-foreground-muted group-hover:text-foreground transition-colors" />
-                <span className="text-sm text-foreground">Generate Images</span>
+                <span className="flex items-center gap-2">
+                  <Image className="w-4 h-4 text-foreground-muted group-hover:text-foreground transition-colors" />
+                  <span className="text-sm text-foreground">Generate Images</span>
+                </span>
               </label>
             </div>
           </div>

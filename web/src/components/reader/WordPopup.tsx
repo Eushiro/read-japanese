@@ -5,9 +5,7 @@ import { lookupWord, type DictionaryEntry } from "@/api/dictionary";
 import type { Token } from "@/types/story";
 import { getTokenReading } from "@/types/story";
 import { Plus, Check, ExternalLink } from "lucide-react";
-
-// TODO: Replace with actual user ID from auth
-const MOCK_USER_ID = "demo-user";
+import { getCurrentUserId } from "@/hooks/useSettings";
 
 interface WordPopupProps {
   token: Token;
@@ -94,7 +92,7 @@ export function WordPopup({
     setIsSaving(true);
     try {
       await addVocabulary({
-        userId: MOCK_USER_ID,
+        userId: getCurrentUserId(),
         word: token.surface,
         reading: reading,
         meaning: entry?.meanings[0] || "(No definition)",
