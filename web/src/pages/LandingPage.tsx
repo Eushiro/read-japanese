@@ -166,11 +166,11 @@ export function LandingPage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-w-4xl mx-auto">
-            <LevelBadge level="N5" label="Beginner" color="bg-green-500" />
-            <LevelBadge level="N4" label="Elementary" color="bg-teal-500" />
-            <LevelBadge level="N3" label="Intermediate" color="bg-blue-500" />
-            <LevelBadge level="N2" label="Upper-Int" color="bg-purple-500" />
-            <LevelBadge level="N1" label="Advanced" color="bg-red-500" />
+            <LevelBadge level="N5" label="Beginner" color="bg-jlpt-n5" />
+            <LevelBadge level="N4" label="Elementary" color="bg-jlpt-n4" />
+            <LevelBadge level="N3" label="Intermediate" color="bg-jlpt-n3" />
+            <LevelBadge level="N2" label="Upper-Int" color="bg-jlpt-n2" />
+            <LevelBadge level="N1" label="Advanced" color="bg-jlpt-n1" />
           </div>
         </div>
       </section>
