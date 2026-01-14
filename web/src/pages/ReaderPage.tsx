@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "@tanstack/react-router";
 import { ChapterView } from "@/components/reader/ChapterView";
 import { WordPopup } from "@/components/reader/WordPopup";
 import { AudioPlayer } from "@/components/reader/AudioPlayer";
+import { FuriganaText } from "@/components/reader/FuriganaText";
 import { useStory } from "@/hooks/useStory";
 import { useSettings } from "@/hooks/useSettings";
 import { getAudioUrl } from "@/api/stories";
@@ -163,7 +164,18 @@ export function ReaderPage() {
                   className="font-semibold text-foreground truncate"
                   style={{ fontFamily: 'var(--font-japanese)' }}
                 >
-                  {story.metadata.titleJapanese || story.metadata.title}
+                  {story.metadata.titleTokens ? (
+                    story.metadata.titleTokens.map((token, i) => (
+                      <FuriganaText
+                        key={i}
+                        token={token}
+                        showFurigana={showFurigana}
+                        onClick={(e) => handleTokenClick(token, e)}
+                      />
+                    ))
+                  ) : (
+                    story.metadata.titleJapanese || story.metadata.title
+                  )}
                 </h1>
                 <div className="flex items-center gap-2 text-sm text-foreground-muted">
                   <Badge
