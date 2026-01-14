@@ -66,3 +66,16 @@ export const isSaved = query({
     return item !== null;
   },
 });
+
+// Get a vocabulary item by word (returns item with ID for removal)
+export const getByWord = query({
+  args: { userId: v.string(), word: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("vocabulary")
+      .withIndex("by_user_and_word", (q) =>
+        q.eq("userId", args.userId).eq("word", args.word)
+      )
+      .first();
+  },
+});

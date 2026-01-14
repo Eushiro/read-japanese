@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { lookupWord, type DictionaryEntry } from "@/api/dictionary";
 import type { Token } from "@/types/story";
 import { getTokenReading } from "@/types/story";
-import { Plus, Check, ExternalLink } from "lucide-react";
+import { Plus, Check, Minus, ExternalLink } from "lucide-react";
 import { getCurrentUserId } from "@/hooks/useSettings";
 
 interface WordPopupProps {
@@ -24,13 +24,25 @@ export function WordPopup({
 }: WordPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
   const [entry, setEntry] = useState<DictionaryEntry | null>(null);
-  const [isSaved, setIsSaved] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+  const [justRemoved, setJustRemoved] = useState(false);
 
+  const userId = getCurrentUserId();
   const addVocabulary = useMutation(api.vocabulary.add);
+  const removeVocabulary = useMutation(api.vocabulary.remove);
 
   const word = token.baseForm || token.surface;
   const reading = getTokenReading(token) || token.surface;
+
+  // Check if word is already in vocabulary
+  const existingVocab = useQuery(api.vocabulary.getByWord, {
+    userId,
+    word: token.surface,
+  });
+
+  // Determine saved state (query result, but allow local override for immediate feedback)
+  const isSaved = justSaved || (existingVocab !== null && existingVocab !== undefined && !justRemoved);
 
   // Look up the word
   useEffect(() => {
@@ -87,12 +99,12 @@ export function WordPopup({
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isSaved || isSaving) return;
+    if (isProcessing) return;
 
-    setIsSaving(true);
+    setIsProcessing(true);
     try {
       await addVocabulary({
-        userId: getCurrentUserId(),
+        userId,
         word: token.surface,
         reading: reading,
         meaning: entry?.meanings[0] || "(No definition)",
@@ -100,11 +112,28 @@ export function WordPopup({
         sourceStoryId: storyId,
         sourceStoryTitle: storyTitle,
       });
-      setIsSaved(true);
+      setJustSaved(true);
+      setJustRemoved(false);
     } catch (err) {
       console.error("Failed to save vocabulary:", err);
     } finally {
-      setIsSaving(false);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRemove = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isProcessing || !existingVocab) return;
+
+    setIsProcessing(true);
+    try {
+      await removeVocabulary({ id: existingVocab._id });
+      setJustRemoved(true);
+      setJustSaved(false);
+    } catch (err) {
+      console.error("Failed to remove vocabulary:", err);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -165,23 +194,34 @@ export function WordPopup({
             )}
           </div>
 
-          {/* Save button */}
-          <button
-            onClick={handleSave}
-            disabled={isSaved || isSaving}
-            className={`shrink-0 p-1.5 rounded-lg transition-all ${
-              isSaved
-                ? "bg-success/10 text-success"
-                : "bg-accent/10 text-accent hover:bg-accent/20"
-            }`}
-            title={isSaved ? "Saved" : "Save to vocabulary"}
-          >
-            {isSaved ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Plus className="w-4 h-4" />
-            )}
-          </button>
+          {/* Save/Remove button */}
+          {isSaved ? (
+            <button
+              onClick={handleRemove}
+              disabled={isProcessing}
+              className="shrink-0 p-1.5 rounded-lg transition-all bg-success/10 text-success hover:bg-destructive/10 hover:text-destructive"
+              title="Remove from vocabulary"
+            >
+              {isProcessing ? (
+                <Check className="w-4 h-4 animate-pulse" />
+              ) : (
+                <Minus className="w-4 h-4" />
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={handleSave}
+              disabled={isProcessing}
+              className="shrink-0 p-1.5 rounded-lg transition-all bg-accent/10 text-accent hover:bg-accent/20"
+              title="Save to vocabulary"
+            >
+              {isProcessing ? (
+                <Plus className="w-4 h-4 animate-pulse" />
+              ) : (
+                <Plus className="w-4 h-4" />
+              )}
+            </button>
+          )}
         </div>
 
         {/* Part of speech */}
