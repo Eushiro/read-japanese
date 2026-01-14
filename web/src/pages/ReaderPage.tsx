@@ -33,6 +33,7 @@ export function ReaderPage() {
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [audioTime, setAudioTime] = useState(0);
+  const [manualNavigation, setManualNavigation] = useState(false);
 
   // Get settings from Convex
   const { settings, setShowFurigana } = useSettings();
@@ -41,9 +42,9 @@ export function ReaderPage() {
   const chapters = story?.chapters || [];
   const currentChapter = chapters[currentChapterIndex];
 
-  // Auto-advance chapters based on audio time
+  // Auto-advance chapters based on audio time (skip if user manually navigated)
   useEffect(() => {
-    if (!chapters.length || audioTime === 0) return;
+    if (!chapters.length || audioTime === 0 || manualNavigation) return;
 
     // Find which chapter contains the current audio time
     for (let i = 0; i < chapters.length; i++) {
@@ -70,10 +71,29 @@ export function ReaderPage() {
         break;
       }
     }
-  }, [audioTime, chapters, currentChapterIndex]);
+  }, [audioTime, chapters, currentChapterIndex, manualNavigation]);
+
+  // Re-enable auto-advance when audio catches up to manually selected chapter
+  useEffect(() => {
+    if (!manualNavigation || !chapters.length) return;
+
+    const currentChapter = chapters[currentChapterIndex];
+    const segments = currentChapter?.segments || currentChapter?.content || [];
+    if (segments.length === 0) return;
+
+    const firstSegmentWithTime = segments.find(s => s.audioStartTime !== undefined);
+    const lastSegmentWithTime = [...segments].reverse().find(s => s.audioEndTime !== undefined);
+    if (!firstSegmentWithTime || !lastSegmentWithTime) return;
+
+    // If audio time is now within the manually selected chapter, re-enable auto-advance
+    if (audioTime >= firstSegmentWithTime.audioStartTime! && audioTime <= lastSegmentWithTime.audioEndTime!) {
+      setManualNavigation(false);
+    }
+  }, [audioTime, chapters, currentChapterIndex, manualNavigation]);
 
   const handlePreviousChapter = useCallback(() => {
     if (currentChapterIndex > 0) {
+      setManualNavigation(true);
       setCurrentChapterIndex((prev) => prev - 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -81,6 +101,7 @@ export function ReaderPage() {
 
   const handleNextChapter = useCallback(() => {
     if (currentChapterIndex < chapters.length - 1) {
+      setManualNavigation(true);
       setCurrentChapterIndex((prev) => prev + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -276,6 +297,7 @@ export function ReaderPage() {
                   <button
                     key={index}
                     onClick={() => {
+                      setManualNavigation(true);
                       setCurrentChapterIndex(index);
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
