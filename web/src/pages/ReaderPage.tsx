@@ -160,7 +160,7 @@ export function ReaderPage() {
             <p className="text-lg font-medium text-destructive">
               {error?.message || "Story not found"}
             </p>
-            <Button variant="outline" className="mt-4" onClick={() => navigate({ to: "/" })}>
+            <Button variant="outline" className="mt-4" onClick={() => navigate({ to: "/library" })}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Library
             </Button>
@@ -180,7 +180,7 @@ export function ReaderPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate({ to: "/" })}
+                onClick={() => navigate({ to: "/library" })}
                 className="shrink-0"
               >
                 <ArrowLeft className="w-4 h-4" />
