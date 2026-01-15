@@ -47,7 +47,15 @@ export function GeneratePage() {
   const [generateAudio, setGenerateAudio] = useState(true);
   const [generateImages, setGenerateImages] = useState(true);
 
+  // Generation temporarily disabled
+  const isGenerationEnabled = false;
+
   const handleGenerate = async () => {
+    if (!isGenerationEnabled) {
+      setError("Story generation is coming soon! Check back later.");
+      return;
+    }
+
     setIsGenerating(true);
     setError(null);
     setProgress("Starting generation...");
@@ -288,7 +296,7 @@ export function GeneratePage() {
           {/* Generate Button */}
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating}
+            disabled={isGenerating || !isGenerationEnabled}
             className="w-full"
             size="lg"
           >
@@ -300,14 +308,16 @@ export function GeneratePage() {
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2" />
-                Generate Story
+                {isGenerationEnabled ? "Generate Story" : "Coming Soon"}
               </>
             )}
           </Button>
 
           {/* Info */}
           <p className="text-xs text-foreground-muted text-center">
-            Story generation may take 2-5 minutes depending on options selected.
+            {isGenerationEnabled
+              ? "Story generation may take 2-5 minutes depending on options selected."
+              : "Custom story generation will be available soon. For now, enjoy our curated stories!"}
           </p>
         </div>
       </div>
