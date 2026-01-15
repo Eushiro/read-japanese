@@ -33,7 +33,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@rollup/rollup-darwin-x64": "^4.55.1",
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.8",
