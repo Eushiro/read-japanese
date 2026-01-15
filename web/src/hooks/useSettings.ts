@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useCallback, useMemo, useEffect, useRef } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Storage key for dev user login
 const DEV_USER_STORAGE_KEY = "devUserEnabled";
@@ -9,6 +10,7 @@ const SETTINGS_CACHE_KEY = "settingsCache";
 // Default shared user ID for dev testing
 const SHARED_USER_ID = "shared-dev-user";
 const DEMO_USER_ID = "demo-user";
+const ANONYMOUS_USER_PREFIX = "anon-";
 
 export type AudioHighlightMode = "word" | "sentence";
 
@@ -50,13 +52,41 @@ function cacheSettings(settings: UserSettings) {
   }
 }
 
-// Get current user ID based on dev mode setting
+// Get anonymous user ID (creates one if doesn't exist)
+function getAnonymousUserId(): string {
+  const storageKey = "anonymousUserId";
+  let anonId = localStorage.getItem(storageKey);
+  if (!anonId) {
+    anonId = ANONYMOUS_USER_PREFIX + crypto.randomUUID();
+    localStorage.setItem(storageKey, anonId);
+  }
+  return anonId;
+}
+
+// Get current user ID based on dev mode setting (fallback for non-authenticated)
 export function getCurrentUserId(): string {
+  // Check if there's an authenticated user ID stored
+  const authUserId = localStorage.getItem("authUserId");
+  if (authUserId) {
+    return authUserId;
+  }
+
   if (import.meta.env.DEV) {
     const devUserEnabled = localStorage.getItem(DEV_USER_STORAGE_KEY) === "true";
     return devUserEnabled ? SHARED_USER_ID : DEMO_USER_ID;
   }
-  return DEMO_USER_ID;
+
+  // Use anonymous ID for non-authenticated users in production
+  return getAnonymousUserId();
+}
+
+// Set the authenticated user ID (called from useSettings when auth state changes)
+function setAuthUserId(userId: string | null) {
+  if (userId) {
+    localStorage.setItem("authUserId", userId);
+  } else {
+    localStorage.removeItem("authUserId");
+  }
 }
 
 // Check if dev user is enabled
@@ -72,7 +102,16 @@ export function setDevUserEnabled(enabled: boolean) {
 }
 
 export function useSettings() {
-  const userId = getCurrentUserId();
+  const { user, isAuthenticated } = useAuth();
+
+  // Use Firebase UID when authenticated, otherwise fall back to anonymous/demo ID
+  const userId = isAuthenticated && user ? user.id : getCurrentUserId();
+
+  // Sync auth user ID to localStorage so getCurrentUserId() works outside React
+  useEffect(() => {
+    setAuthUserId(isAuthenticated && user ? user.id : null);
+  }, [isAuthenticated, user]);
+
   const settings = useQuery(api.settings.get, { userId });
   const updateMutation = useMutation(api.settings.update);
 

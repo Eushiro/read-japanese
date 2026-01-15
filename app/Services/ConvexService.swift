@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import FirebaseAuth
 
 #if canImport(ConvexMobile)
 import ConvexMobile
@@ -50,9 +51,24 @@ class ConvexService: ObservableObject {
     // Convex deployment URL - same as web app
     private let deploymentUrl = "https://sensible-puma-385.convex.cloud"
 
-    // TODO: Replace with actual user ID from authentication
-    // Using shared-dev-user for testing sync between iOS and web apps
-    private let userId = "shared-dev-user"
+    // Get user ID from Firebase Auth - falls back to anonymous ID if not authenticated
+    private var userId: String {
+        if let firebaseUser = Auth.auth().currentUser {
+            return firebaseUser.uid
+        }
+        // Fallback for non-authenticated users
+        return getOrCreateAnonymousUserId()
+    }
+
+    private func getOrCreateAnonymousUserId() -> String {
+        let key = "anonymousUserId"
+        if let existingId = UserDefaults.standard.string(forKey: key) {
+            return existingId
+        }
+        let newId = "anon-\(UUID().uuidString)"
+        UserDefaults.standard.set(newId, forKey: key)
+        return newId
+    }
 
     #if canImport(ConvexMobile)
     private var client: ConvexClient?
