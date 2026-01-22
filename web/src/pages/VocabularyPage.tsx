@@ -44,8 +44,6 @@ export function VocabularyPage() {
   const [masteryFilter, setMasteryFilter] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
-  // Track vocabulary IDs that are being enhanced in the background
-  const [enhancingIds, setEnhancingIds] = useState<Set<string>>(new Set());
 
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id ?? "anonymous";
@@ -371,9 +369,7 @@ export function VocabularyPage() {
                       onRemove={handleRemove}
                       showMastery={false}
                       delay={Math.min(index * 30, 150)}
-                      isPremiumUser={isPremiumUser}
                       onShowPaywall={() => setShowPaywall(true)}
-                      isEnhancing={enhancingIds.has(item._id)}
                     />
                   ))}
                 </div>
@@ -390,9 +386,7 @@ export function VocabularyPage() {
                 onRemove={handleRemove}
                 showMastery={true}
                 delay={Math.min(index * 30, 150)}
-                isPremiumUser={isPremiumUser}
                 onShowPaywall={() => setShowPaywall(true)}
-                isEnhancing={enhancingIds.has(item._id)}
               />
             ))}
           </div>
@@ -404,12 +398,6 @@ export function VocabularyPage() {
         <AddWordModal
           userId={userId}
           onClose={() => setShowAddModal(false)}
-          onEnhanceStart={(id) => setEnhancingIds((prev) => new Set(prev).add(id))}
-          onEnhanceComplete={(id) => setEnhancingIds((prev) => {
-            const next = new Set(prev);
-            next.delete(id);
-            return next;
-          })}
         />
       )}
 
@@ -439,68 +427,27 @@ interface VocabularyCardProps {
   onRemove: (id: string) => void;
   showMastery?: boolean;
   delay?: number;
-  isPremiumUser?: boolean;
   onShowPaywall?: () => void;
-  isEnhancing?: boolean;
 }
 
-function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremiumUser = false, onShowPaywall, isEnhancing = false }: VocabularyCardProps) {
+function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowPaywall }: VocabularyCardProps) {
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
-  const [generated, setGenerated] = useState(false);
 
-  // Check if flashcard already exists
+  // Check if flashcard already exists (for audio/sentence display)
   const existingFlashcard = useQuery(api.flashcards.getByVocabulary, {
     vocabularyId: item._id as GenericId<"vocabulary">,
   });
 
   const generateFlashcardWithAudio = useAction(api.ai.generateFlashcardWithAudio);
-  const generateFlashcardAudio = useAction(api.ai.generateFlashcardAudio);
 
-  // Query states: undefined = loading, null = no flashcard, object = has flashcard
+  // Query states: undefined = loading
   const isLoadingFlashcard = existingFlashcard === undefined;
   const hasFlashcard = existingFlashcard !== undefined && existingFlashcard !== null;
-  const hasAudio = hasFlashcard && !!existingFlashcard?.audioUrl;
 
   const handleGenerateFlashcard = async () => {
-    if (!isPremiumUser) {
-      onShowPaywall?.();
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      await generateFlashcardWithAudio({
-        vocabularyId: item._id as GenericId<"vocabulary">,
-        includeAudio: true,
-      });
-      setGenerated(true);
-    } catch (error) {
-      console.error("Failed to generate flashcard:", error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleGenerateAudio = async () => {
-    if (!isPremiumUser) {
-      onShowPaywall?.();
-      return;
-    }
-
-    if (!existingFlashcard?._id) return;
-
-    setIsGeneratingAudio(true);
-    try {
-      await generateFlashcardAudio({
-        flashcardId: existingFlashcard._id,
-      });
-    } catch (error) {
-      console.error("Failed to generate audio:", error);
-    } finally {
-      setIsGeneratingAudio(false);
-    }
+    // Show paywall - user needs premium to generate
+    onShowPaywall?.();
   };
 
   return (
@@ -596,14 +543,9 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
               {MASTERY_LABELS[item.masteryState]?.label ?? item.masteryState}
             </span>
           )}
-          {/* Flashcard generation button - hide while loading to prevent flicker */}
-          {!isLoadingFlashcard && (
-            hasFlashcard || generated ? (
-              <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-600 flex items-center gap-1">
-                <Check className="w-3 h-3" />
-                Flashcard
-              </span>
-            ) : isEnhancing || isGenerating ? (
+          {/* Generate flashcard button - only show if no flashcard exists yet */}
+          {!isLoadingFlashcard && !hasFlashcard && (
+            isGenerating ? (
               <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent flex items-center gap-1.5 animate-pulse">
                 <Loader2 className="w-3 h-3 animate-spin" />
                 Generating...
@@ -613,9 +555,8 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
                 variant="ghost"
                 size="sm"
                 onClick={handleGenerateFlashcard}
-                disabled={isGenerating}
                 className="text-foreground-muted hover:text-accent hover:bg-accent/10"
-                title="Generate flashcard"
+                title="Generate AI flashcard"
               >
                 <Sparkles className="w-4 h-4" />
               </Button>
@@ -639,11 +580,9 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
 interface AddWordModalProps {
   userId: string;
   onClose: () => void;
-  onEnhanceStart?: (vocabId: string) => void;
-  onEnhanceComplete?: (vocabId: string) => void;
 }
 
-function AddWordModal({ userId, onClose, onEnhanceStart, onEnhanceComplete }: AddWordModalProps) {
+function AddWordModal({ userId, onClose }: AddWordModalProps) {
   const [word, setWord] = useState("");
   const [reading, setReading] = useState("");
   const [definitions, setDefinitions] = useState("");
@@ -723,22 +662,14 @@ function AddWordModal({ userId, onClose, onEnhanceStart, onEnhanceComplete }: Ad
       onClose();
 
       // Trigger AI enhancement in background (sentence + audio + image)
-      // This runs after modal closes - the VocabularyCard will show loading state
       if (vocabId) {
-        const vocabIdString = vocabId as string;
-        onEnhanceStart?.(vocabIdString);
         generateFlashcardWithAudio({
           vocabularyId: vocabId,
           includeAudio: true,
           includeImage: true,
-        })
-          .then(() => {
-            onEnhanceComplete?.(vocabIdString);
-          })
-          .catch((err) => {
-            console.error("Background AI enhancement failed:", err);
-            onEnhanceComplete?.(vocabIdString);
-          });
+        }).catch((err) => {
+          console.error("Background AI enhancement failed:", err);
+        });
       }
     } catch (error) {
       console.error("Failed to add word:", error);

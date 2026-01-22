@@ -108,6 +108,10 @@ export function PlacementTestPage() {
       setCurrentQuestionIndex(idx);
       setViewingIndex(idx);
       setPreviousQuestions(existingTest.questions.map((q) => q.question));
+    } else if (existingTest && existingTest.status === "completed") {
+      // Show results for completed test
+      hasInitializedFromExisting.current = true;
+      setTestId(existingTest._id);
     }
   }, [existingTest]);
 
@@ -349,15 +353,27 @@ export function PlacementTestPage() {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-2xl">
           {/* Header */}
-          <div className="flex items-center gap-3 mb-8">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate({ to: "/settings" })}
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <h1 className="text-xl font-bold">Placement Test Results</h1>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate({ to: "/settings" })}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <h1 className="text-xl font-bold">Placement Test Results</h1>
+            </div>
+            {isAdmin && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleResetTest}
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset Test
+              </Button>
+            )}
           </div>
 
           {/* Results Card */}
@@ -442,23 +458,35 @@ export function PlacementTestPage() {
     );
   }
 
-  // Start test view
-  if (!testId || (currentTest && currentTest.questions.length === 0)) {
+  // Start test view - but not if we're generating the first question
+  if (!testId || (currentTest && currentTest.questions.length === 0 && !isGeneratingQuestion)) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-2xl">
           {/* Header */}
-          <div className="flex items-center gap-3 mb-8">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate({ to: "/settings" })}
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <h1 className="text-xl font-bold">
-              {languageFlags[language]} {languageNames[language]} Placement Test
-            </h1>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate({ to: "/settings" })}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <h1 className="text-xl font-bold">
+                {languageFlags[language]} {languageNames[language]} Placement Test
+              </h1>
+            </div>
+            {isAdmin && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleResetTest}
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset
+              </Button>
+            )}
           </div>
 
           {/* Start Card */}
@@ -550,9 +578,20 @@ export function PlacementTestPage() {
               {languageFlags[language]} Placement Test
             </h1>
           </div>
-          <Badge variant="outline">
-            Question {(viewingIndex ?? 0) + 1}{isViewingPastQuestion ? ` of ${currentQuestionIndex + 1}` : ""}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">
+              Question {(viewingIndex ?? 0) + 1}{isViewingPastQuestion ? ` of ${currentQuestionIndex + 1}` : ""}
+            </Badge>
+            {isAdmin && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleResetTest}
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Progress */}

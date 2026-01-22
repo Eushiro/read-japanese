@@ -895,7 +895,7 @@ export const generateFlashcardWithAudio = action({
 
 interface ComprehensionQuestion {
   questionId: string;
-  type: "multiple_choice" | "short_answer" | "essay";
+  type: "multiple_choice" | "translation" | "short_answer" | "inference" | "prediction" | "grammar" | "opinion";
   question: string;
   questionTranslation: string;
   options?: string[];
@@ -1277,10 +1277,32 @@ IMPORTANT:
       },
     };
 
-    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500, placementSchema);
+    let response: string;
+    try {
+      response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500, placementSchema);
+    } catch (apiError) {
+      // If structured output fails, try without schema
+      console.log("Schema-enforced call failed, trying without schema:", apiError);
+      response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500);
+    }
+
+    // Log the response for debugging
+    console.log("AI Response for placement question:", response);
+
+    if (!response || response.trim() === "") {
+      throw new Error("Empty response from AI");
+    }
+
+    // Clean up response - remove markdown code blocks if present
+    let cleanedResponse = response.trim();
+    if (cleanedResponse.startsWith("```json")) {
+      cleanedResponse = cleanedResponse.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+    } else if (cleanedResponse.startsWith("```")) {
+      cleanedResponse = cleanedResponse.replace(/^```\n?/, "").replace(/\n?```$/, "");
+    }
 
     try {
-      const parsed = JSON.parse(response) as {
+      const parsed = JSON.parse(cleanedResponse) as {
         question: string;
         questionTranslation: string;
         options: string[];
@@ -1321,8 +1343,8 @@ IMPORTANT:
 
       return questionData;
     } catch (error) {
-      console.error("Failed to parse placement question:", response);
-      throw new Error("Failed to generate placement question: Invalid AI response format");
+      console.error("Failed to parse placement question. Response:", response, "Error:", error);
+      throw new Error(`Failed to generate placement question: ${error instanceof Error ? error.message : "Invalid AI response format"}`);
     }
   },
 });

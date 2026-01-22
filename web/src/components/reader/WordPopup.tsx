@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { lookupWord, type DictionaryEntry } from "@/api/dictionary";
 import type { Token } from "@/types/story";
@@ -50,9 +50,14 @@ export function WordPopup({
   const userId = getCurrentUserId();
   const addVocabulary = useMutation(api.vocabulary.add);
   const removeVocabulary = useMutation(api.vocabulary.remove);
+  const generateFlashcardWithAudio = useAction(api.ai.generateFlashcardWithAudio);
 
   const word = token.baseForm || token.surface;
   const reading = getTokenReading(token) || token.surface;
+
+  // Check subscription for premium features
+  const subscription = useQuery(api.subscriptions.get, { userId });
+  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
   // Check if word is already in vocabulary
   const existingVocab = useQuery(api.vocabulary.getByWord, {
@@ -122,7 +127,7 @@ export function WordPopup({
 
     setIsProcessing(true);
     try {
-      await addVocabulary({
+      const vocabId = await addVocabulary({
         userId,
         word: token.surface,
         reading: reading,
@@ -136,6 +141,17 @@ export function WordPopup({
       });
       setJustSaved(true);
       setJustRemoved(false);
+
+      // Auto-generate AI flashcard in background for premium users only
+      if (vocabId && isPremiumUser) {
+        generateFlashcardWithAudio({
+          vocabularyId: vocabId,
+          includeAudio: true,
+          includeImage: true,
+        }).catch((err) => {
+          console.error("Background AI flashcard generation failed:", err);
+        });
+      }
     } catch (err) {
       console.error("Failed to save vocabulary:", err);
     } finally {
