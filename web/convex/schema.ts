@@ -143,6 +143,8 @@ export default defineSchema({
     sentence: v.string(), // AI-generated example sentence
     sentenceTranslation: v.string(),
     audioUrl: v.optional(v.string()), // TTS audio of sentence
+    wordAudioUrl: v.optional(v.string()), // TTS audio of just the word
+    imageUrl: v.optional(v.string()), // AI-generated image for the word
 
     // FSRS algorithm fields
     state: cardStateValidator,

@@ -101,6 +101,34 @@ export const updateFlashcardAudio = internalMutation({
   },
 });
 
+// Update flashcard with image URL
+export const updateFlashcardImage = internalMutation({
+  args: {
+    flashcardId: v.id("flashcards"),
+    imageUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.flashcardId, {
+      imageUrl: args.imageUrl,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Update flashcard with word audio URL
+export const updateFlashcardWordAudio = internalMutation({
+  args: {
+    flashcardId: v.id("flashcards"),
+    wordAudioUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.flashcardId, {
+      wordAudioUrl: args.wordAudioUrl,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 // Get flashcard by ID
 export const getFlashcard = internalQuery({
   args: {

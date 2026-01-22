@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { useQuery as useTanstackQuery, keepPreviousData } from "@tanstack/react-query";
 import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
@@ -44,8 +44,6 @@ export function VocabularyPage() {
   const [languageFilter, setLanguageFilter] = useState<Language | null>(null);
   const [masteryFilter, setMasteryFilter] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [isGeneratingAll, setIsGeneratingAll] = useState(false);
-  const [bulkResult, setBulkResult] = useState<{ success: number; failed: number } | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
 
   const { user, isAuthenticated } = useAuth();
@@ -56,7 +54,6 @@ export function VocabularyPage() {
     isAuthenticated ? { userId, language: languageFilter ?? undefined } : "skip"
   );
   const removeWord = useMutation(api.vocabulary.remove);
-  const generateFlashcardsBulk = useAction(api.ai.generateFlashcardsBulk);
 
   // Subscription check
   const subscription = useQuery(
@@ -64,30 +61,6 @@ export function VocabularyPage() {
     isAuthenticated && user ? { userId: user.id } : "skip"
   );
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
-
-  // Handle bulk flashcard generation
-  const handleGenerateAll = async () => {
-    if (!vocabulary || vocabulary.length === 0) return;
-
-    if (!isPremiumUser) {
-      setShowPaywall(true);
-      return;
-    }
-
-    setIsGeneratingAll(true);
-    setBulkResult(null);
-
-    try {
-      const result = await generateFlashcardsBulk({
-        vocabularyIds: vocabulary.map((v) => v._id as GenericId<"vocabulary">),
-      });
-      setBulkResult(result);
-    } catch (error) {
-      console.error("Failed to generate flashcards:", error);
-    } finally {
-      setIsGeneratingAll(false);
-    }
-  };
 
   // Filter vocabulary
   const filteredVocabulary = useMemo(() => {
@@ -205,39 +178,13 @@ export function VocabularyPage() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                {vocabulary && vocabulary.length > 0 && (
-                  <Button
-                    variant="outline"
-                    onClick={handleGenerateAll}
-                    disabled={isGeneratingAll}
-                    className="gap-2"
-                  >
-                    {isGeneratingAll ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4" />
-                        Generate All Flashcards
-                      </>
-                    )}
-                  </Button>
-                )}
+                {/* Generate All Flashcards button removed to prevent accidental mass AI requests */}
                 <Button onClick={() => setShowAddModal(true)} className="gap-2">
                   <Plus className="w-4 h-4" />
                   Add Word
                 </Button>
               </div>
             </div>
-            {/* Bulk generation result */}
-            {bulkResult && (
-              <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-600 text-sm">
-                Generated {bulkResult.success} flashcards
-                {bulkResult.failed > 0 && ` (${bulkResult.failed} failed)`}
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -501,6 +448,11 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
   const generateFlashcardWithAudio = useAction(api.ai.generateFlashcardWithAudio);
   const generateFlashcardAudio = useAction(api.ai.generateFlashcardAudio);
 
+  // Query states: undefined = loading, null = no flashcard, object = has flashcard
+  const isLoadingFlashcard = existingFlashcard === undefined;
+  const hasFlashcard = existingFlashcard !== undefined && existingFlashcard !== null;
+  const hasAudio = hasFlashcard && !!existingFlashcard?.audioUrl;
+
   const handleGenerateFlashcard = async () => {
     if (!isPremiumUser) {
       onShowPaywall?.();
@@ -541,9 +493,6 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
     }
   };
 
-  const hasFlashcard = existingFlashcard !== undefined && existingFlashcard !== null;
-  const hasAudio = hasFlashcard && !!existingFlashcard?.audioUrl;
-
   return (
     <div
       className="p-5 rounded-xl bg-surface border border-border hover:border-foreground-muted/30 transition-all duration-200 animate-fade-in-up"
@@ -551,12 +500,24 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <span
-            className="text-xl font-semibold text-foreground"
-            style={{ fontFamily: languageFont }}
-          >
-            {item.word}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className="text-xl font-semibold text-foreground"
+              style={{ fontFamily: languageFont }}
+            >
+              {item.word}
+            </span>
+            {/* Word audio button - only show after query loads */}
+            {!isLoadingFlashcard && existingFlashcard?.wordAudioUrl && (
+              <button
+                onClick={() => new Audio(existingFlashcard.wordAudioUrl!).play()}
+                className="p-1.5 rounded-lg text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors"
+                title="Play word pronunciation"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
           {item.reading && (
             <div className="text-sm text-foreground-muted mb-2">
               {item.reading}
@@ -565,10 +526,10 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
           <div className="text-foreground">
             {item.definitions.join("; ")}
           </div>
-          {/* Example sentences */}
+          {/* Example sentence - show source context OR generated sentence (not both) */}
           {(item.sourceContext || existingFlashcard?.sentence) && (
-            <div className="mt-3 space-y-2">
-              {item.sourceContext && (
+            <div className="mt-3">
+              {item.sourceContext ? (
                 <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
                   <p
                     className="text-sm text-foreground"
@@ -576,10 +537,9 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
                   >
                     {item.sourceContext}
                   </p>
-                  <p className="text-xs text-foreground-muted mt-1">Source context</p>
+                  <p className="text-xs text-foreground-muted mt-1">Original context</p>
                 </div>
-              )}
-              {existingFlashcard?.sentence && existingFlashcard.sentence !== item.sourceContext && (
+              ) : existingFlashcard?.sentence && (
                 <div className="p-2.5 rounded-lg bg-accent/5 border border-accent/20">
                   <div className="flex items-start justify-between gap-2">
                     <p
@@ -598,11 +558,7 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
                       </button>
                     )}
                   </div>
-                  {existingFlashcard.sentenceTranslation && (
-                    <p className="text-xs text-foreground-muted mt-1">
-                      {existingFlashcard.sentenceTranslation}
-                    </p>
-                  )}
+                  <p className="text-xs text-foreground-muted mt-1">Example sentence</p>
                 </div>
               )}
             </div>
@@ -630,46 +586,29 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
               {MASTERY_LABELS[item.masteryState]?.label ?? item.masteryState}
             </span>
           )}
-          {/* Flashcard generation button */}
-          {hasFlashcard || generated ? (
-            <>
+          {/* Flashcard generation button - hide while loading to prevent flicker */}
+          {!isLoadingFlashcard && (
+            hasFlashcard || generated ? (
               <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-600 flex items-center gap-1">
                 <Check className="w-3 h-3" />
                 Flashcard
               </span>
-              {/* Audio generation button if flashcard exists but no audio */}
-              {hasFlashcard && !hasAudio && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleGenerateAudio}
-                  disabled={isGeneratingAudio}
-                  className="text-foreground-muted hover:text-accent hover:bg-accent/10"
-                  title="Generate audio narration"
-                >
-                  {isGeneratingAudio ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Volume2 className="w-4 h-4" />
-                  )}
-                </Button>
-              )}
-            </>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleGenerateFlashcard}
-              disabled={isGenerating}
-              className="text-foreground-muted hover:text-accent hover:bg-accent/10"
-              title="Generate flashcard"
-            >
-              {isGenerating ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-            </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleGenerateFlashcard}
+                disabled={isGenerating}
+                className="text-foreground-muted hover:text-accent hover:bg-accent/10"
+                title="Generate flashcard"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+              </Button>
+            )
           )}
           <Button
             variant="ghost"

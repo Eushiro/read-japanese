@@ -5,15 +5,57 @@ import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 // ============================================
-// GEMINI TTS CONFIGURATION
+// GEMINI TTS CONFIGURATION (Generative Language API)
 // ============================================
 
-const GEMINI_TTS_MODEL = "gemini-2.0-flash-preview-tts";
+const GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
+
+/**
+ * Convert raw PCM audio data to WAV format
+ * PCM specs: 24kHz sample rate, 16-bit, mono
+ */
+function pcmToWav(pcmData: Uint8Array): Uint8Array {
+  const sampleRate = 24000;
+  const numChannels = 1;
+  const bitsPerSample = 16;
+  const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+  const blockAlign = numChannels * (bitsPerSample / 8);
+  const dataSize = pcmData.length;
+  const headerSize = 44;
+  const fileSize = headerSize + dataSize;
+
+  const wav = new Uint8Array(fileSize);
+  const view = new DataView(wav.buffer);
+
+  // RIFF header
+  wav.set([0x52, 0x49, 0x46, 0x46], 0); // "RIFF"
+  view.setUint32(4, fileSize - 8, true); // File size - 8
+  wav.set([0x57, 0x41, 0x56, 0x45], 8); // "WAVE"
+
+  // fmt subchunk
+  wav.set([0x66, 0x6d, 0x74, 0x20], 12); // "fmt "
+  view.setUint32(16, 16, true); // Subchunk1 size (16 for PCM)
+  view.setUint16(20, 1, true); // Audio format (1 = PCM)
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitsPerSample, true);
+
+  // data subchunk
+  wav.set([0x64, 0x61, 0x74, 0x61], 36); // "data"
+  view.setUint32(40, dataSize, true);
+
+  // PCM data
+  wav.set(pcmData, headerSize);
+
+  return wav;
+}
 
 // Voices optimized for language learning narration
 const VOICES_BY_LANGUAGE: Record<string, string[]> = {
-  japanese: ["Aoede", "Leda", "Alnilam"],
+  japanese: ["Aoede", "Leda", "Kore"],
   english: ["Puck", "Charon", "Kore"],
   french: ["Aoede", "Leda", "Puck"],
 };
@@ -24,13 +66,12 @@ function selectVoice(language: string): string {
 }
 
 /**
- * Generate audio for a sentence using Gemini TTS
- * Returns base64 encoded PCM audio data
+ * Generate audio for a sentence using Gemini 2.5 Flash TTS
+ * Returns PCM audio data (24kHz, 16-bit mono)
  */
 async function generateTTSAudio(
   text: string,
-  language: string,
-  voice?: string
+  language: string
 ): Promise<{ audioData: Uint8Array; mimeType: string } | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -38,10 +79,15 @@ async function generateTTSAudio(
     return null;
   }
 
-  const selectedVoice = voice || selectVoice(language);
+  const voice = selectVoice(language);
 
-  // Prepare narration prompt for language learners
-  const narrationPrompt = `Read aloud clearly and slowly for language learners:\n\n${text}`;
+  // Language-specific pronunciation hints
+  const languageHints: Record<string, string> = {
+    japanese: "Read this Japanese text clearly and naturally for language learners:",
+    english: "Read this English text clearly and naturally for language learners:",
+    french: "Read this French text clearly and naturally for language learners:",
+  };
+  const hint = languageHints[language] || languageHints.english;
 
   try {
     const response = await fetch(
@@ -54,7 +100,7 @@ async function generateTTSAudio(
         body: JSON.stringify({
           contents: [
             {
-              parts: [{ text: narrationPrompt }],
+              parts: [{ text: `${hint}\n\n${text}` }],
             },
           ],
           generationConfig: {
@@ -62,7 +108,7 @@ async function generateTTSAudio(
             speechConfig: {
               voiceConfig: {
                 prebuiltVoiceConfig: {
-                  voiceName: selectedVoice,
+                  voiceName: voice,
                 },
               },
             },
@@ -82,23 +128,140 @@ async function generateTTSAudio(
     // Extract audio data from response
     const audioData = result.candidates?.[0]?.content?.parts?.[0]?.inlineData;
     if (!audioData?.data) {
-      console.error("No audio data in Gemini response");
+      console.error("No audio data in Gemini TTS response:", JSON.stringify(result));
       return null;
     }
 
-    // Decode base64 audio
+    // Decode base64 PCM audio (24kHz, 16-bit mono)
     const binaryString = atob(audioData.data);
-    const bytes = new Uint8Array(binaryString.length);
+    const pcmBytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+      pcmBytes[i] = binaryString.charCodeAt(i);
     }
 
+    // Convert PCM to WAV for browser playback
+    const wavBytes = pcmToWav(pcmBytes);
+
     return {
-      audioData: bytes,
-      mimeType: audioData.mimeType || "audio/wav",
+      audioData: wavBytes,
+      mimeType: "audio/wav",
     };
   } catch (error) {
     console.error("TTS generation failed:", error);
+    return null;
+  }
+}
+
+// ============================================
+// IMAGE GENERATION (OpenRouter + Gemini)
+// ============================================
+
+/**
+ * Generate an image for a flashcard using OpenRouter with Gemini
+ */
+async function generateFlashcardImage(
+  word: string,
+  sentence: string,
+  language: string
+): Promise<{ imageData: Uint8Array; mimeType: string } | null> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    console.error("OPENROUTER_API_KEY not configured");
+    return null;
+  }
+
+  const languageNames: Record<string, string> = {
+    japanese: "Japanese",
+    english: "English",
+    french: "French",
+  };
+  const languageName = languageNames[language] || "English";
+
+  const prompt = `Generate an illustration that helps a language learner remember this ${languageName} vocabulary word: "${word}"
+
+Context sentence: "${sentence}"
+
+The image should:
+- Be a clear, memorable visual representation of the word's meaning
+- Use a simple, clean art style suitable for educational flashcards
+- Avoid any text in the image
+- Be colorful but not cluttered`;
+
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://sanlang.app",
+        "X-Title": "SanLang",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        modalities: ["image", "text"],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Image generation error: ${response.status} - ${errorText}`);
+      return null;
+    }
+
+    const result = await response.json();
+    console.log("Image generation response:", JSON.stringify(result, null, 2));
+
+    // Check for images array in the response (OpenRouter format)
+    const images = result.choices?.[0]?.message?.images;
+    if (images && images.length > 0) {
+      const imageUrl = images[0]?.image_url?.url;
+      if (imageUrl && imageUrl.startsWith("data:image/")) {
+        const base64Match = imageUrl.match(/data:image\/(\w+);base64,(.+)/);
+        if (base64Match) {
+          const mimeType = `image/${base64Match[1]}`;
+          const base64Data = base64Match[2];
+          const binaryString = atob(base64Data);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          return {
+            imageData: bytes,
+            mimeType,
+          };
+        }
+      }
+    }
+
+    // Fallback: Check content for base64 data URL
+    const content = result.choices?.[0]?.message?.content;
+    if (content && typeof content === "string") {
+      const base64Match = content.match(/data:image\/(\w+);base64,([A-Za-z0-9+/=]+)/);
+      if (base64Match) {
+        const mimeType = `image/${base64Match[1]}`;
+        const base64Data = base64Match[2];
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        return {
+          imageData: bytes,
+          mimeType,
+        };
+      }
+    }
+
+    console.error("No image data found in response");
+    return null;
+  } catch (error) {
+    console.error("Image generation failed:", error);
     return null;
   }
 }
@@ -539,13 +702,14 @@ export const generateFlashcardAudio = action({
   },
 });
 
-// Generate flashcard with audio
+// Generate flashcard with audio and image
 export const generateFlashcardWithAudio = action({
   args: {
     vocabularyId: v.id("vocabulary"),
     includeAudio: v.optional(v.boolean()),
+    includeImage: v.optional(v.boolean()),
   },
-  handler: async (ctx, args): Promise<{ success: boolean; flashcardId?: string; audioUrl?: string }> => {
+  handler: async (ctx, args): Promise<{ success: boolean; flashcardId?: string; audioUrl?: string; wordAudioUrl?: string; imageUrl?: string }> => {
     // Get the vocabulary item
     const vocab = await ctx.runQuery(internal.aiHelpers.getVocabulary, {
       vocabularyId: args.vocabularyId,
@@ -573,8 +737,10 @@ export const generateFlashcardWithAudio = action({
     });
 
     let audioUrl: string | undefined;
+    let wordAudioUrl: string | undefined;
+    let imageUrl: string | undefined;
 
-    // Generate audio if requested
+    // Generate sentence audio if requested (default: true)
     if (args.includeAudio !== false) {
       try {
         const audioResult = await generateTTSAudio(
@@ -596,11 +762,64 @@ export const generateFlashcardWithAudio = action({
           }
         }
       } catch (error) {
-        console.error("Audio generation failed:", error);
+        console.error("Sentence audio generation failed:", error);
         // Continue without audio - flashcard is still created
+      }
+
+      // Generate word-only audio
+      try {
+        const wordAudioResult = await generateTTSAudio(
+          vocab.word,
+          vocab.language
+        );
+
+        if (wordAudioResult) {
+          // Store word audio in Convex file storage
+          const blob = new Blob([new Uint8Array(wordAudioResult.audioData)], { type: wordAudioResult.mimeType });
+          const storageId = await ctx.storage.store(blob);
+          wordAudioUrl = await ctx.storage.getUrl(storageId) ?? undefined;
+
+          if (wordAudioUrl) {
+            await ctx.runMutation(internal.aiHelpers.updateFlashcardWordAudio, {
+              flashcardId: flashcardId as any,
+              wordAudioUrl,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Word audio generation failed:", error);
+        // Continue without word audio - flashcard is still created
       }
     }
 
-    return { success: true, flashcardId, audioUrl };
+    // Generate image if requested (default: true)
+    if (args.includeImage !== false) {
+      try {
+        const imageResult = await generateFlashcardImage(
+          vocab.word,
+          generated.sentence,
+          vocab.language
+        );
+
+        if (imageResult) {
+          // Store image in Convex file storage
+          const blob = new Blob([new Uint8Array(imageResult.imageData)], { type: imageResult.mimeType });
+          const storageId = await ctx.storage.store(blob);
+          imageUrl = await ctx.storage.getUrl(storageId) ?? undefined;
+
+          if (imageUrl) {
+            await ctx.runMutation(internal.aiHelpers.updateFlashcardImage, {
+              flashcardId: flashcardId as any,
+              imageUrl,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Image generation failed:", error);
+        // Continue without image - flashcard is still created
+      }
+    }
+
+    return { success: true, flashcardId, audioUrl, wordAudioUrl, imageUrl };
   },
 });

@@ -12,8 +12,6 @@ import {
   Loader2,
   BookOpen,
   Volume2,
-  Eye,
-  EyeOff,
   Sparkles
 } from "lucide-react";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
@@ -25,6 +23,8 @@ type CardType = {
   sentence: string;
   sentenceTranslation: string;
   audioUrl?: string | null;
+  wordAudioUrl?: string | null;
+  imageUrl?: string | null;
   vocabulary?: {
     word: string;
     reading?: string | null;
@@ -345,6 +345,8 @@ interface FlashcardDisplayProps {
     sentence: string;
     sentenceTranslation: string;
     audioUrl?: string | null;
+    wordAudioUrl?: string | null;
+    imageUrl?: string | null;
     vocabulary?: {
       word: string;
       reading?: string | null;
@@ -357,14 +359,28 @@ interface FlashcardDisplayProps {
 }
 
 function FlashcardDisplay({ card, showAnswer, onShowAnswer }: FlashcardDisplayProps) {
-  const [showReading, setShowReading] = useState(false);
   const vocab = card.vocabulary;
   const isJapanese = vocab?.language === "japanese";
   const languageFont = isJapanese ? "var(--font-japanese)" : "inherit";
 
+  const playAudio = (url: string) => {
+    new Audio(url).play();
+  };
+
   return (
     <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
-      {/* Front - Word */}
+      {/* Image - only show after answer */}
+      {showAnswer && card.imageUrl && (
+        <div className="mb-6 flex justify-center">
+          <img
+            src={card.imageUrl}
+            alt={vocab?.word || "Flashcard image"}
+            className="max-w-full h-auto max-h-48 rounded-xl object-contain"
+          />
+        </div>
+      )}
+
+      {/* Front - Word (no reading shown) */}
       <div className="text-center mb-6">
         <div
           className="text-4xl sm:text-5xl font-bold text-foreground mb-2"
@@ -372,35 +388,46 @@ function FlashcardDisplay({ card, showAnswer, onShowAnswer }: FlashcardDisplayPr
         >
           {vocab?.word}
         </div>
-        {isJapanese && vocab?.reading && (
-          <button
-            onClick={() => setShowReading(!showReading)}
-            className="inline-flex items-center gap-1 text-sm text-foreground-muted hover:text-foreground transition-colors"
-          >
-            {showReading ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-            {showReading ? vocab.reading : "Show reading"}
-          </button>
+        {/* Word Audio Button - only show after answer */}
+        {showAnswer && card.wordAudioUrl && (
+          <div className="mt-2">
+            <button
+              onClick={() => playAudio(card.wordAudioUrl!)}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <Volume2 className="w-4 h-4" />
+              Play Word
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Example Sentence */}
+      {/* Example Sentence with Translation below - Centered */}
       <div className="bg-muted/50 rounded-xl p-4 mb-6">
-        <div className="flex items-start justify-between gap-2">
-          <p
-            className="text-lg text-foreground leading-relaxed"
-            style={{ fontFamily: languageFont }}
-          >
-            {card.sentence}
+        <p
+          className="text-lg text-foreground leading-relaxed text-center"
+          style={{ fontFamily: languageFont }}
+        >
+          {card.sentence}
+        </p>
+        {/* Sentence Translation - shown directly below sentence */}
+        {showAnswer && (
+          <p className="text-sm text-foreground-muted text-center mt-2 italic">
+            {card.sentenceTranslation}
           </p>
-          {card.audioUrl && (
+        )}
+        {/* Sentence Audio Button - only show after answer */}
+        {showAnswer && card.audioUrl && (
+          <div className="flex justify-center mt-3">
             <button
-              onClick={() => new Audio(card.audioUrl!).play()}
-              className="p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-muted transition-colors shrink-0"
+              onClick={() => playAudio(card.audioUrl!)}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
             >
-              <Volume2 className="w-5 h-5" />
+              <Volume2 className="w-4 h-4" />
+              Play Sentence
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Show Answer Button / Answer */}
@@ -410,19 +437,21 @@ function FlashcardDisplay({ card, showAnswer, onShowAnswer }: FlashcardDisplayPr
         </Button>
       ) : (
         <div className="space-y-4 animate-fade-in-up">
+          {/* Reading (for Japanese) */}
+          {isJapanese && vocab?.reading && (
+            <div className="text-center">
+              <div className="text-sm text-foreground-muted mb-1">Reading</div>
+              <div className="text-2xl text-foreground" style={{ fontFamily: languageFont }}>
+                {vocab.reading}
+              </div>
+            </div>
+          )}
+
           {/* Definition */}
           <div className="text-center">
             <div className="text-sm text-foreground-muted mb-1">Definition</div>
             <div className="text-xl font-medium text-foreground">
               {vocab?.definitions.join("; ")}
-            </div>
-          </div>
-
-          {/* Sentence Translation */}
-          <div className="text-center pt-4 border-t border-border">
-            <div className="text-sm text-foreground-muted mb-1">Translation</div>
-            <div className="text-foreground">
-              {card.sentenceTranslation}
             </div>
           </div>
         </div>
