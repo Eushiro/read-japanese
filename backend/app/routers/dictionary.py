@@ -23,56 +23,17 @@ class DictionaryResponse(BaseModel):
 _jamdict_instance = None
 _wordnet_initialized = False
 _japanese_word_index: list[tuple[str, str, list[str], str | None, int]] | None = None  # (reading, word, meanings, pos, priority)
-_english_word_index: list[tuple[str, list[str], str | None, int]] | None = None  # (word, meanings, pos, frequency_rank)
-_french_word_index: list[tuple[str, list[str], str | None]] | None = None  # (word, meanings, pos)
+_english_word_index: list[tuple[str, list[str], str | None, float]] | None = None  # (word, meanings, pos, frequency)
+_french_word_index: list[tuple[str, list[str], str | None, float]] | None = None  # (word, meanings, pos, frequency)
 
-# Top 1000 most common English words for frequency ranking
-# Source: Simplified from various word frequency lists
-COMMON_ENGLISH_WORDS = {
-    # Top 100 most common
-    "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
-    "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
-    "this", "but", "his", "by", "from", "they", "we", "say", "her", "she",
-    "or", "an", "will", "my", "one", "all", "would", "there", "their", "what",
-    "so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
-    "when", "make", "can", "like", "time", "no", "just", "him", "know", "take",
-    "people", "into", "year", "your", "good", "some", "could", "them", "see", "other",
-    "than", "then", "now", "look", "only", "come", "its", "over", "think", "also",
-    "back", "after", "use", "two", "how", "our", "work", "first", "well", "way",
-    "even", "new", "want", "because", "any", "these", "give", "day", "most", "us",
-    # 100-200
-    "is", "are", "was", "were", "been", "being", "has", "had", "did", "does",
-    "very", "more", "much", "many", "such", "before", "must", "may", "might", "should",
-    "still", "between", "each", "through", "where", "while", "why", "here", "too", "own",
-    "same", "another", "great", "old", "high", "long", "small", "large", "big", "little",
-    "right", "left", "next", "last", "never", "always", "often", "once", "under", "again",
-    "world", "life", "man", "woman", "child", "home", "house", "school", "country", "city",
-    "family", "friend", "mother", "father", "part", "place", "case", "week", "company", "system",
-    "program", "question", "government", "number", "night", "point", "hand", "water", "room", "book",
-    # Common verbs and adjectives
-    "tell", "ask", "try", "need", "feel", "become", "leave", "put", "mean", "keep",
-    "let", "begin", "seem", "help", "show", "hear", "play", "run", "move", "live",
-    "believe", "hold", "bring", "happen", "write", "provide", "sit", "stand", "lose", "pay",
-    "meet", "include", "continue", "set", "learn", "change", "lead", "understand", "watch", "follow",
-    "stop", "create", "speak", "read", "allow", "add", "spend", "grow", "open", "walk",
-    "win", "offer", "remember", "love", "consider", "appear", "buy", "wait", "serve", "die",
-    "send", "expect", "build", "stay", "fall", "cut", "reach", "kill", "remain", "suggest",
-    "raise", "pass", "sell", "require", "report", "decide", "pull", "return", "explain", "hope",
-    # Common nouns
-    "hello", "world", "name", "thing", "person", "money", "job", "power", "war", "peace",
-    "idea", "story", "fact", "month", "lot", "study", "word", "business", "issue", "side",
-    "kind", "head", "eye", "body", "face", "hour", "game", "line", "member", "law",
-    "car", "food", "music", "art", "police", "party", "door", "court", "office", "late",
-    "young", "national", "social", "important", "possible", "able", "bad", "local", "sure", "free",
-    "better", "real", "best", "hard", "different", "whole", "public", "early", "strong", "true",
-}
 
-def get_english_frequency_rank(word: str) -> int:
-    """Get frequency rank for English word. Lower = more common."""
-    word_lower = word.lower()
-    if word_lower in COMMON_ENGLISH_WORDS:
-        return 1  # Common word
-    return 100  # Default rank for uncommon words
+def get_word_frequency(word: str, lang: str) -> float:
+    """Get word frequency from wordfreq library. Higher = more common."""
+    try:
+        from wordfreq import word_frequency
+        return word_frequency(word, lang)
+    except Exception:
+        return 0.0
 
 
 def convert_romaji_to_hiragana(text: str) -> str:
@@ -313,8 +274,12 @@ def search_japanese(query: str, limit: int) -> list[DictionaryEntry]:
     return entries
 
 
-def build_english_index() -> list[tuple[str, list[str], str | None]]:
-    """Build in-memory index of English words for fast prefix search."""
+def build_english_index() -> list[tuple[str, list[str], str | None, float]]:
+    """Build in-memory index of English words for fast prefix search.
+
+    Uses wordfreq library for accurate frequency ranking.
+    Index is sorted alphabetically for binary search; frequency is stored for sorting results.
+    """
     global _english_word_index
     if _english_word_index is not None:
         return _english_word_index
@@ -329,7 +294,7 @@ def build_english_index() -> list[tuple[str, list[str], str | None]]:
     try:
         import wn
 
-        index: list[tuple[str, list[str], str | None]] = []
+        index: list[tuple[str, list[str], str | None, float]] = []
         seen = set()
         pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
 
@@ -361,8 +326,11 @@ def build_english_index() -> list[tuple[str, list[str], str | None]]:
                 continue
 
             pos = ", ".join(pos_map.get(p, p) for p in pos_tags if p)
-            freq_rank = get_english_frequency_rank(lemma_lower)
-            index.append((lemma_lower, meanings[:3], pos if pos else None, freq_rank))
+
+            # Get frequency from wordfreq library
+            freq = get_word_frequency(lemma_lower, 'en')
+
+            index.append((lemma_lower, meanings[:3], pos if pos else None, freq))
 
         # Sort alphabetically for binary search
         index.sort(key=lambda x: x[0])
@@ -371,6 +339,8 @@ def build_english_index() -> list[tuple[str, list[str], str | None]]:
 
     except Exception as e:
         print(f"Failed to build English index: {e}")
+        import traceback
+        traceback.print_exc()
         _english_word_index = []
 
     return _english_word_index
@@ -379,7 +349,7 @@ def build_english_index() -> list[tuple[str, list[str], str | None]]:
 def search_english(query: str, limit: int) -> list[DictionaryEntry]:
     """Search English dictionary using in-memory index.
 
-    Results prioritize: common words > exact match > shorter words.
+    Uses binary search for prefix matching, then sorts by frequency (higher = more common).
     """
     import bisect
 
@@ -388,26 +358,24 @@ def search_english(query: str, limit: int) -> list[DictionaryEntry]:
         return []
 
     query_lower = query.lower()
-    matches: list[tuple[int, int, int, str, list[str], str | None]] = []
+    matches: list[tuple[float, str, list[str], str | None]] = []
 
     # Binary search for prefix matches
     left = bisect.bisect_left(index, (query_lower,))
 
-    for i in range(left, min(left + limit * 20, len(index))):
-        word, meanings, pos, freq_rank = index[i]
+    for i in range(left, len(index)):
+        word, meanings, pos, freq = index[i]
 
         if not word.startswith(query_lower):
             break
 
-        # Priority: frequency rank (1=common, 100=uncommon), then exact match, then length
-        exact_bonus = 0 if word == query_lower else 10
-        matches.append((freq_rank, exact_bonus, len(word), word, meanings, pos))
+        matches.append((freq, word, meanings, pos))
 
-    # Sort by priority
-    matches.sort(key=lambda x: (x[0], x[1], x[2]))
+    # Sort by frequency (higher = more common, so negate for descending)
+    matches.sort(key=lambda x: -x[0])
 
     entries = []
-    for _, _, _, word, meanings, pos in matches[:limit]:
+    for _, word, meanings, pos in matches[:limit]:
         entries.append(DictionaryEntry(
             word=word,
             reading="",
@@ -418,8 +386,12 @@ def search_english(query: str, limit: int) -> list[DictionaryEntry]:
     return entries
 
 
-def build_french_index() -> list[tuple[str, list[str], str | None]]:
-    """Build in-memory index of French words for fast prefix search."""
+def build_french_index() -> list[tuple[str, list[str], str | None, float]]:
+    """Build in-memory index of French words for fast prefix search.
+
+    Uses wordfreq library for accurate frequency ranking.
+    Index is sorted alphabetically for binary search; frequency is stored for sorting results.
+    """
     global _french_word_index
     if _french_word_index is not None:
         return _french_word_index
@@ -445,7 +417,7 @@ def build_french_index() -> list[tuple[str, list[str], str | None]]:
         except Exception:
             en_wordnet = None
 
-        index: list[tuple[str, list[str], str | None]] = []
+        index: list[tuple[str, list[str], str | None, float]] = []
         seen = set()
         pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
 
@@ -483,7 +455,11 @@ def build_french_index() -> list[tuple[str, list[str], str | None]]:
                 continue
 
             pos = ", ".join(pos_map.get(p, p) for p in pos_tags if p)
-            index.append((lemma_lower, meanings[:3], pos if pos else None))
+
+            # Get frequency from wordfreq library
+            freq = get_word_frequency(lemma_lower, 'fr')
+
+            index.append((lemma_lower, meanings[:3], pos if pos else None, freq))
 
         # Sort alphabetically for binary search
         index.sort(key=lambda x: x[0])
@@ -492,13 +468,18 @@ def build_french_index() -> list[tuple[str, list[str], str | None]]:
 
     except Exception as e:
         print(f"Failed to build French index: {e}")
+        import traceback
+        traceback.print_exc()
         _french_word_index = []
 
     return _french_word_index
 
 
 def search_french(query: str, limit: int) -> list[DictionaryEntry]:
-    """Search French dictionary using in-memory index."""
+    """Search French dictionary using in-memory index.
+
+    Uses binary search for prefix matching, then sorts by frequency (higher = more common).
+    """
     import bisect
 
     index = build_french_index()
@@ -506,26 +487,30 @@ def search_french(query: str, limit: int) -> list[DictionaryEntry]:
         return []
 
     query_lower = query.lower()
-    entries = []
+    matches: list[tuple[float, str, list[str], str | None]] = []
 
     # Binary search for prefix matches
     left = bisect.bisect_left(index, (query_lower,))
 
-    for i in range(left, min(left + limit * 2, len(index))):
-        word, meanings, pos = index[i]
+    for i in range(left, len(index)):
+        word, meanings, pos, freq = index[i]
 
         if not word.startswith(query_lower):
             break
 
+        matches.append((freq, word, meanings, pos))
+
+    # Sort by frequency (higher = more common, so negate for descending)
+    matches.sort(key=lambda x: -x[0])
+
+    entries = []
+    for _, word, meanings, pos in matches[:limit]:
         entries.append(DictionaryEntry(
             word=word,
             reading="",
             meanings=meanings,
             partOfSpeech=pos,
         ))
-
-        if len(entries) >= limit:
-            break
 
     return entries
 
