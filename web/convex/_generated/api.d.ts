@@ -17,6 +17,7 @@ import type * as mockTests from "../mockTests.js";
 import type * as progress from "../progress.js";
 import type * as scheduledJobs from "../scheduledJobs.js";
 import type * as settings from "../settings.js";
+import type * as storyComprehension from "../storyComprehension.js";
 import type * as stripe from "../stripe.js";
 import type * as stripeHelpers from "../stripeHelpers.js";
 import type * as subscriptions from "../subscriptions.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   progress: typeof progress;
   scheduledJobs: typeof scheduledJobs;
   settings: typeof settings;
+  storyComprehension: typeof storyComprehension;
   stripe: typeof stripe;
   stripeHelpers: typeof stripeHelpers;
   subscriptions: typeof subscriptions;

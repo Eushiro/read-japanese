@@ -48,11 +48,12 @@ export const getStats = query({
   handler: async (ctx, args) => {
     let comprehensions;
 
-    if (args.language) {
+    if (args.language !== undefined) {
+      const lang = args.language;
       comprehensions = await ctx.db
         .query("storyComprehension")
         .withIndex("by_user_and_language", (q) =>
-          q.eq("userId", args.userId).eq("language", args.language)
+          q.eq("userId", args.userId).eq("language", lang)
         )
         .collect();
     } else {
@@ -91,20 +92,21 @@ export const list = query({
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
 
-    let query;
-    if (args.language) {
-      query = ctx.db
+    let dbQuery;
+    if (args.language !== undefined) {
+      const lang = args.language;
+      dbQuery = ctx.db
         .query("storyComprehension")
         .withIndex("by_user_and_language", (q) =>
-          q.eq("userId", args.userId).eq("language", args.language)
+          q.eq("userId", args.userId).eq("language", lang)
         );
     } else {
-      query = ctx.db
+      dbQuery = ctx.db
         .query("storyComprehension")
         .withIndex("by_user", (q) => q.eq("userId", args.userId));
     }
 
-    return await query.order("desc").take(limit);
+    return await dbQuery.order("desc").take(limit);
   },
 });
 
