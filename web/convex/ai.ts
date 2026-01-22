@@ -847,7 +847,7 @@ export const generateComprehensionQuestions = action({
   args: {
     storyId: v.string(),
     storyTitle: v.string(),
-    storyContent: v.string(), // Full story text
+    storyContent: v.string(), // Full story text (plain text, not JSON)
     language: v.union(
       v.literal("japanese"),
       v.literal("english"),
@@ -862,58 +862,69 @@ export const generateComprehensionQuestions = action({
     const languageName = languageNames[args.language];
     const levelInfo = args.userLevel ? ` The learner is at ${args.userLevel} level.` : "";
 
+    // Grammar examples for Japanese
+    const grammarExamples = args.language === "japanese" ? `
+- Grammar implication questions: Test understanding of nuances like:
+  - 〜たい (want to do)
+  - はず (expectation/should be)
+  - 〜てしまう (completion/regret)
+  - 〜ようにする (try to/make sure to)
+  - Passive vs causative forms
+  - Conditional forms (〜たら, 〜ば, 〜なら)` : "";
+
     const systemPrompt = `You are a language learning assistant creating comprehension questions for a ${languageName} reading passage.${levelInfo}
 
-Create ${count} questions that test understanding at different levels:
-- 2-3 multiple choice questions (test basic comprehension of facts and details)
-- 1-2 short answer questions (test understanding of meaning and context)
-- 1 essay/discussion question (test deeper analysis and critical thinking)
+Create ${count} varied questions from these types:
+1. TRANSLATION: Ask learner to translate a sentence or phrase from the story
+2. COMPREHENSION: Multiple choice about facts, details, or sequence of events
+3. PREDICTION: "What do you think happens next?" or "What would the character do if...?"
+4. OPINION: Ask learner's opinion about a character's decision or theme
+5. GRAMMAR_IMPLICATION: How does a specific grammar pattern affect meaning?${grammarExamples}
+6. INFERENCE: What can we infer about a character or situation?
 
-Respond ONLY with valid JSON in this exact format:
+Respond ONLY with valid JSON:
 {
   "questions": [
     {
       "type": "multiple_choice",
-      "question": "the question in ${languageName}",
-      "questionTranslation": "English translation of the question",
-      "options": ["option A", "option B", "option C", "option D"],
-      "correctAnswer": "the correct option text",
-      "relatedChapter": 1,
+      "question": "question in ${languageName}",
+      "questionTranslation": "English translation",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "the correct option",
       "points": 10
     },
     {
-      "type": "short_answer",
-      "question": "the question in ${languageName}",
-      "questionTranslation": "English translation",
-      "correctAnswer": "expected answer format or key points",
-      "relatedChapter": 2,
+      "type": "translation",
+      "question": "Translate: [sentence from story]",
+      "questionTranslation": "Translate this sentence to English",
+      "correctAnswer": "expected translation",
       "points": 15
     },
     {
-      "type": "essay",
-      "question": "the question in ${languageName}",
+      "type": "short_answer",
+      "question": "question in ${languageName}",
       "questionTranslation": "English translation",
-      "rubric": "Grading criteria: 1) addresses main point (30pts), 2) uses evidence (30pts), 3) language quality (40pts)",
-      "points": 25
+      "correctAnswer": "key points for answer",
+      "points": 15
+    },
+    {
+      "type": "opinion",
+      "question": "What do you think about [character's action]? Why?",
+      "questionTranslation": "English translation",
+      "rubric": "Award points for: clear opinion, supporting evidence, language quality",
+      "points": 20
     }
   ]
 }
 
-IMPORTANT:
-- Questions should progress from literal comprehension to analytical
-- Multiple choice should have exactly 4 options with one clearly correct answer
-- Short answer should have a brief expected answer for grading reference
-- Essay rubric should outline grading criteria
-- Points should reflect question difficulty (MC: 10, Short: 15-20, Essay: 20-25)`;
+Mix question types for variety. Include at least one translation and one opinion/prediction question.`;
 
-    const prompt = `Create ${count} comprehension questions for this ${languageName} story:
+    const prompt = `Story Title: ${args.storyTitle}
 
-Title: ${args.storyTitle}
-
-Story Content:
 ${args.storyContent}
 
-Generate questions that test the reader's understanding of the story.`;
+---
+Create ${count} comprehension questions for the story above.`;
 
     const response = await callOpenRouter(prompt, systemPrompt, "qwen/qwen3-next-80b-a3b-instruct:free");
 
