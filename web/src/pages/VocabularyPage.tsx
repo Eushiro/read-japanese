@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
-import { useQuery as useTanstackQuery } from "@tanstack/react-query";
+import { useQuery as useTanstackQuery, keepPreviousData } from "@tanstack/react-query";
 import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -612,7 +612,7 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
   const [language, setLanguage] = useState<Language>("japanese");
   const [examLevel, setExamLevel] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // Debounced search term
   const [debouncedWord, setDebouncedWord] = useState("");
@@ -635,16 +635,20 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
   }, [word]);
 
   // TanStack Query handles race conditions automatically
-  const { data: suggestions = [], isFetching: isSearching } = useTanstackQuery({
+  // keepPreviousData prevents jumpiness by showing old results while loading
+  const { data: suggestions = [] } = useTanstackQuery({
     queryKey: ["dictionary-search", debouncedWord, language],
     queryFn: () => searchDictionary(debouncedWord, language, 5),
     enabled: debouncedWord.length > 0,
     staleTime: 1000 * 60 * 5, // Cache results for 5 minutes
+    placeholderData: keepPreviousData,
   });
+
+  // Show suggestions when input focused and we have results
+  const showSuggestions = isInputFocused && debouncedWord.length > 0 && suggestions.length > 0;
 
   // Clear form when language changes
   useEffect(() => {
-    setShowSuggestions(false);
     setWord("");
     setDebouncedWord("");
     setReading("");
@@ -656,7 +660,7 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
     setDebouncedWord(""); // Clear debounced word to stop showing suggestions
     setReading(entry.reading || "");
     setDefinitions(entry.meanings.join("; "));
-    setShowSuggestions(false);
+    setIsInputFocused(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -729,22 +733,17 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
                 type="text"
                 value={word}
                 onChange={(e) => setWord(e.target.value)}
-                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                onFocus={() => setIsInputFocused(true)}
+                onBlur={() => setTimeout(() => setIsInputFocused(false), 150)}
                 placeholder={language === "japanese" ? "食べる" : "Enter word"}
-                className="w-full px-4 py-2.5 pr-10 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                 style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
                 autoComplete="off"
                 required
               />
 
-              {/* Loading indicator */}
-              {isSearching && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-foreground-muted" />
-              )}
-
               {/* Suggestions dropdown */}
-              {showSuggestions && suggestions.length > 0 && (
+              {showSuggestions && (
                 <div className="absolute z-50 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                   {suggestions.map((entry, index) => (
                     <button
