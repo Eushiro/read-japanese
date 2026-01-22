@@ -153,7 +153,7 @@ def save_audio(pcm_data: bytes, output_path: Path) -> bool:
     try:
         # Convert to MP3 using ffmpeg
         result = subprocess.run(
-            ["ffmpeg", "-y", "-i", str(wav_path), "-b:a", "48k", str(output_path)],
+            ["ffmpeg", "-y", "-i", str(wav_path), "-b:a", "64k", str(output_path)],
             capture_output=True,
             text=True
         )

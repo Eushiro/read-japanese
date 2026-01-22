@@ -1,73 +1,77 @@
 import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
+import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter } from "lucide-react";
-import { getCurrentUserId } from "@/hooks/useSettings";
+import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Sort options
-type SortOption = "newest" | "oldest" | "alphabetical" | "alphabetical-reverse" | "by-level";
+type SortOption = "newest" | "oldest" | "alphabetical" | "alphabetical-reverse" | "by-mastery";
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "newest", label: "Newest First" },
   { value: "oldest", label: "Oldest First" },
   { value: "alphabetical", label: "A → Z" },
   { value: "alphabetical-reverse", label: "Z → A" },
-  { value: "by-level", label: "By Level" },
+  { value: "by-mastery", label: "By Mastery" },
 ];
 
-// JLPT level order and metadata
-const LEVEL_ORDER = ["N5", "N4", "N3", "N2", "N1"] as const;
-const LEVEL_DESCRIPTIONS: Record<string, string> = {
-  N5: "Beginner",
-  N4: "Elementary",
-  N3: "Intermediate",
-  N2: "Upper Intermediate",
-  N1: "Advanced",
-  Other: "Uncategorized",
+// Mastery state metadata
+const MASTERY_ORDER = ["new", "learning", "tested", "mastered"] as const;
+const MASTERY_LABELS: Record<string, { label: string; color: string }> = {
+  new: { label: "New", color: "bg-blue-500/10 text-blue-600" },
+  learning: { label: "Learning", color: "bg-amber-500/10 text-amber-600" },
+  tested: { label: "Tested", color: "bg-purple-500/10 text-purple-600" },
+  mastered: { label: "Mastered", color: "bg-green-500/10 text-green-600" },
 };
 
-// Normalize JLPT level string to badge variant and display text
-function normalizeJlptLevel(level: string | undefined | null): { variant: "n5" | "n4" | "n3" | "n2" | "n1"; display: string } | null {
-  if (!level) return null;
-  const match = level.toLowerCase().match(/n([1-5])/);
-  if (!match) return null;
+// Language options
+const LANGUAGES = [
+  { value: "japanese", label: "Japanese" },
+  { value: "english", label: "English" },
+  { value: "french", label: "French" },
+] as const;
 
-  const num = match[1] as "1" | "2" | "3" | "4" | "5";
-  return {
-    variant: `n${num}` as "n5" | "n4" | "n3" | "n2" | "n1",
-    display: `N${num}`,
-  };
-}
-
-// Get normalized level string for grouping/sorting
-function getNormalizedLevel(level: string | undefined | null): string {
-  const normalized = normalizeJlptLevel(level);
-  return normalized?.display ?? "Other";
-}
+type Language = typeof LANGUAGES[number]["value"];
 
 export function VocabularyPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [levelFilter, setLevelFilter] = useState<string | null>(null);
-  const [storyFilter, setStoryFilter] = useState<string | null>(null);
+  const [languageFilter, setLanguageFilter] = useState<Language | null>(null);
+  const [masteryFilter, setMasteryFilter] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{ success: number; failed: number } | null>(null);
 
-  const userId = getCurrentUserId();
-  const vocabulary = useQuery(api.vocabulary.list, { userId });
+  const { user, isAuthenticated } = useAuth();
+  const userId = user?.id ?? "anonymous";
+
+  const vocabulary = useQuery(
+    api.vocabulary.list,
+    isAuthenticated ? { userId, language: languageFilter ?? undefined } : "skip"
+  );
   const removeWord = useMutation(api.vocabulary.remove);
+  const generateFlashcardsBulk = useAction(api.ai.generateFlashcardsBulk);
 
-  // Get unique stories for filter dropdown
-  const uniqueStories = useMemo(() => {
-    if (!vocabulary) return [];
-    const stories = new Map<string, string>();
-    vocabulary.forEach((item) => {
-      if (item.sourceStoryId && item.sourceStoryTitle) {
-        stories.set(item.sourceStoryId, item.sourceStoryTitle);
-      }
-    });
-    return Array.from(stories.entries()).map(([id, title]) => ({ id, title }));
-  }, [vocabulary]);
+  // Handle bulk flashcard generation
+  const handleGenerateAll = async () => {
+    if (!vocabulary || vocabulary.length === 0) return;
+
+    setIsGeneratingAll(true);
+    setBulkResult(null);
+
+    try {
+      const result = await generateFlashcardsBulk({
+        vocabularyIds: vocabulary.map((v) => v._id as GenericId<"vocabulary">),
+      });
+      setBulkResult(result);
+    } catch (error) {
+      console.error("Failed to generate flashcards:", error);
+    } finally {
+      setIsGeneratingAll(false);
+    }
+  };
 
   // Filter vocabulary
   const filteredVocabulary = useMemo(() => {
@@ -79,29 +83,19 @@ export function VocabularyPage() {
         const term = searchTerm.toLowerCase();
         const matchesSearch =
           item.word.toLowerCase().includes(term) ||
-          item.reading.toLowerCase().includes(term) ||
-          item.meaning.toLowerCase().includes(term);
+          (item.reading?.toLowerCase().includes(term) ?? false) ||
+          item.definitions.some((def) => def.toLowerCase().includes(term));
         if (!matchesSearch) return false;
       }
 
-      // Level filter
-      if (levelFilter) {
-        const itemLevel = getNormalizedLevel(item.jlptLevel);
-        if (levelFilter === "Other") {
-          if (itemLevel !== "Other") return false;
-        } else {
-          if (itemLevel !== levelFilter) return false;
-        }
-      }
-
-      // Story filter
-      if (storyFilter && item.sourceStoryId !== storyFilter) {
+      // Mastery filter
+      if (masteryFilter && item.masteryState !== masteryFilter) {
         return false;
       }
 
       return true;
     });
-  }, [vocabulary, searchTerm, levelFilter, storyFilter]);
+  }, [vocabulary, searchTerm, masteryFilter]);
 
   // Sort vocabulary
   const sortedVocabulary = useMemo(() => {
@@ -116,12 +110,10 @@ export function VocabularyPage() {
         return items.sort((a, b) => a.word.localeCompare(b.word, "ja"));
       case "alphabetical-reverse":
         return items.sort((a, b) => b.word.localeCompare(a.word, "ja"));
-      case "by-level":
+      case "by-mastery":
         return items.sort((a, b) => {
-          const levelA = getNormalizedLevel(a.jlptLevel);
-          const levelB = getNormalizedLevel(b.jlptLevel);
-          const idxA = LEVEL_ORDER.indexOf(levelA as typeof LEVEL_ORDER[number]);
-          const idxB = LEVEL_ORDER.indexOf(levelB as typeof LEVEL_ORDER[number]);
+          const idxA = MASTERY_ORDER.indexOf(a.masteryState as typeof MASTERY_ORDER[number]);
+          const idxB = MASTERY_ORDER.indexOf(b.masteryState as typeof MASTERY_ORDER[number]);
           return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
         });
       default:
@@ -129,38 +121,49 @@ export function VocabularyPage() {
     }
   }, [filteredVocabulary, sortBy]);
 
-  // Group by level (only when sorted by level)
-  const groupedByLevel = useMemo(() => {
-    if (sortBy !== "by-level") return null;
+  // Group by mastery (only when sorted by mastery)
+  const groupedByMastery = useMemo(() => {
+    if (sortBy !== "by-mastery") return null;
 
     const groups = new Map<string, typeof sortedVocabulary>();
 
     sortedVocabulary.forEach((item) => {
-      const level = getNormalizedLevel(item.jlptLevel);
-      if (!groups.has(level)) {
-        groups.set(level, []);
+      const mastery = item.masteryState;
+      if (!groups.has(mastery)) {
+        groups.set(mastery, []);
       }
-      groups.get(level)!.push(item);
+      groups.get(mastery)!.push(item);
     });
 
-    // Return in level order
-    return [...LEVEL_ORDER, "Other"]
-      .filter((level) => groups.has(level))
-      .map((level) => ({
-        level,
-        items: groups.get(level)!,
+    return [...MASTERY_ORDER]
+      .filter((mastery) => groups.has(mastery))
+      .map((mastery) => ({
+        mastery,
+        items: groups.get(mastery)!,
       }));
   }, [sortedVocabulary, sortBy]);
 
   const handleRemove = async (id: string) => {
     try {
-      await removeWord({ id: id as any });
+      await removeWord({ id: id as GenericId<"vocabulary"> });
     } catch (err) {
       console.error("Failed to remove word:", err);
     }
   };
 
-  const hasActiveFilters = levelFilter !== null || storyFilter !== null;
+  const hasActiveFilters = languageFilter !== null || masteryFilter !== null;
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <BookmarkCheck className="w-12 h-12 text-foreground-muted mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">Sign in to view your vocabulary</h2>
+          <p className="text-foreground-muted">Your saved words will appear here once you sign in.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -168,20 +171,57 @@ export function VocabularyPage() {
       <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
         <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-4xl">
           <div className="animate-fade-in-up">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-accent/10">
-                <BookmarkCheck className="w-5 h-5 text-accent" />
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-accent/10">
+                    <BookmarkCheck className="w-5 h-5 text-accent" />
+                  </div>
+                  <span className="text-sm font-medium text-accent uppercase tracking-wider">
+                    Your Words
+                  </span>
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+                  Vocabulary
+                </h1>
+                <p className="text-foreground-muted text-lg">
+                  {vocabulary?.length || 0} words in your collection
+                </p>
               </div>
-              <span className="text-sm font-medium text-accent uppercase tracking-wider">
-                Your Words
-              </span>
+              <div className="flex items-center gap-2">
+                {vocabulary && vocabulary.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={handleGenerateAll}
+                    disabled={isGeneratingAll}
+                    className="gap-2"
+                  >
+                    {isGeneratingAll ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Generate All Flashcards
+                      </>
+                    )}
+                  </Button>
+                )}
+                <Button onClick={() => setShowAddModal(true)} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Word
+                </Button>
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Vocabulary
-            </h1>
-            <p className="text-foreground-muted text-lg">
-              {vocabulary?.length || 0} words saved from your reading
-            </p>
+            {/* Bulk generation result */}
+            {bulkResult && (
+              <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-600 text-sm">
+                Generated {bulkResult.success} flashcards
+                {bulkResult.failed > 0 && ` (${bulkResult.failed} failed)`}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -219,76 +259,73 @@ export function VocabularyPage() {
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted pointer-events-none" />
             </div>
 
-            {/* Level Filter */}
+            {/* Language Filter */}
             <div className="relative">
               <select
-                value={levelFilter ?? ""}
-                onChange={(e) => setLevelFilter(e.target.value || null)}
+                value={languageFilter ?? ""}
+                onChange={(e) => setLanguageFilter((e.target.value || null) as Language | null)}
                 className={`appearance-none pl-9 pr-9 py-2.5 rounded-lg border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent cursor-pointer transition-all ${
-                  levelFilter ? "border-accent bg-accent/5 text-accent" : "border-border bg-surface text-foreground"
+                  languageFilter ? "border-accent bg-accent/5 text-accent" : "border-border bg-surface text-foreground"
                 }`}
               >
-                <option value="">All Levels</option>
-                {LEVEL_ORDER.map((level) => (
-                  <option key={level} value={level}>
-                    {level} - {LEVEL_DESCRIPTIONS[level]}
+                <option value="">All Languages</option>
+                {LANGUAGES.map((lang) => (
+                  <option key={lang.value} value={lang.value}>
+                    {lang.label}
                   </option>
                 ))}
-                <option value="Other">Other</option>
               </select>
-              <Filter className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${levelFilter ? "text-accent" : "text-foreground-muted"}`} />
-              <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${levelFilter ? "text-accent" : "text-foreground-muted"}`} />
+              <Filter className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${languageFilter ? "text-accent" : "text-foreground-muted"}`} />
+              <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${languageFilter ? "text-accent" : "text-foreground-muted"}`} />
             </div>
 
-            {/* Story Filter (only show if there are stories) */}
-            {uniqueStories.length > 0 && (
-              <div className="relative">
-                <select
-                  value={storyFilter ?? ""}
-                  onChange={(e) => setStoryFilter(e.target.value || null)}
-                  className={`appearance-none pl-9 pr-9 py-2.5 rounded-lg border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent cursor-pointer transition-all max-w-[200px] truncate ${
-                    storyFilter ? "border-accent bg-accent/5 text-accent" : "border-border bg-surface text-foreground"
-                  }`}
-                >
-                  <option value="">All Stories</option>
-                  {uniqueStories.map((story) => (
-                    <option key={story.id} value={story.id}>
-                      {story.title}
-                    </option>
-                  ))}
-                </select>
-                <BookOpen className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${storyFilter ? "text-accent" : "text-foreground-muted"}`} />
-                <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${storyFilter ? "text-accent" : "text-foreground-muted"}`} />
-              </div>
-            )}
+            {/* Mastery Filter */}
+            <div className="relative">
+              <select
+                value={masteryFilter ?? ""}
+                onChange={(e) => setMasteryFilter(e.target.value || null)}
+                className={`appearance-none pl-9 pr-9 py-2.5 rounded-lg border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent cursor-pointer transition-all ${
+                  masteryFilter ? "border-accent bg-accent/5 text-accent" : "border-border bg-surface text-foreground"
+                }`}
+              >
+                <option value="">All Mastery</option>
+                {MASTERY_ORDER.map((mastery) => (
+                  <option key={mastery} value={mastery}>
+                    {MASTERY_LABELS[mastery].label}
+                  </option>
+                ))}
+              </select>
+              <BookmarkCheck className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${masteryFilter ? "text-accent" : "text-foreground-muted"}`} />
+              <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${masteryFilter ? "text-accent" : "text-foreground-muted"}`} />
+            </div>
           </div>
 
           {/* Active filters summary */}
           {hasActiveFilters && (
             <div className="flex items-center gap-2 mt-3">
               <span className="text-xs text-foreground-muted">Filters:</span>
-              {levelFilter && (
+              {languageFilter && (
                 <button
-                  onClick={() => setLevelFilter(null)}
+                  onClick={() => setLanguageFilter(null)}
                   className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium hover:bg-accent/20 transition-colors"
                 >
-                  {levelFilter}
+                  {LANGUAGES.find((l) => l.value === languageFilter)?.label}
                   <span className="ml-1">×</span>
                 </button>
               )}
-              {storyFilter && (
+              {masteryFilter && (
                 <button
-                  onClick={() => setStoryFilter(null)}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium hover:bg-accent/20 transition-colors max-w-[150px] truncate"
+                  onClick={() => setMasteryFilter(null)}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium hover:bg-accent/20 transition-colors"
                 >
-                  {uniqueStories.find((s) => s.id === storyFilter)?.title}
-                  <span className="ml-1 shrink-0">×</span>
+                  {MASTERY_LABELS[masteryFilter]?.label}
+                  <span className="ml-1">×</span>
                 </button>
               )}
               <button
                 onClick={() => {
-                  setLevelFilter(null);
-                  setStoryFilter(null);
+                  setLanguageFilter(null);
+                  setMasteryFilter(null);
                 }}
                 className="text-xs text-foreground-muted hover:text-foreground transition-colors"
               >
@@ -337,29 +374,29 @@ export function VocabularyPage() {
             <p className="text-lg font-medium text-foreground mb-1">
               {searchTerm || hasActiveFilters ? "No matching words found" : "No vocabulary saved yet"}
             </p>
-            <p className="text-sm text-center max-w-sm">
+            <p className="text-sm text-center max-w-sm mb-4">
               {searchTerm || hasActiveFilters
                 ? "Try adjusting your search or filters"
-                : "Tap on words while reading to save them to your vocabulary"}
+                : "Add words manually or save them while reading"}
             </p>
+            {!searchTerm && !hasActiveFilters && (
+              <Button onClick={() => setShowAddModal(true)} variant="outline" className="gap-2">
+                <Plus className="w-4 h-4" />
+                Add Your First Word
+              </Button>
+            )}
           </div>
-        ) : groupedByLevel ? (
-          // Grouped by level view
+        ) : groupedByMastery ? (
+          // Grouped by mastery view
           <div className="space-y-8">
-            {groupedByLevel.map(({ level, items }) => (
-              <section key={level}>
+            {groupedByMastery.map(({ mastery, items }) => (
+              <section key={mastery}>
                 <div className="flex items-center gap-3 mb-4">
-                  {level !== "Other" && normalizeJlptLevel(level) ? (
-                    <Badge variant={normalizeJlptLevel(level)!.variant} className="text-sm px-3 py-1">
-                      {level}
-                    </Badge>
-                  ) : (
-                    <span className="text-sm font-medium text-foreground-muted px-3 py-1 bg-muted rounded-full">
-                      Other
-                    </span>
-                  )}
+                  <span className={`text-sm font-medium px-3 py-1 rounded-full ${MASTERY_LABELS[mastery].color}`}>
+                    {MASTERY_LABELS[mastery].label}
+                  </span>
                   <span className="text-sm text-foreground-muted">
-                    {LEVEL_DESCRIPTIONS[level]} • {items.length} {items.length === 1 ? "word" : "words"}
+                    {items.length} {items.length === 1 ? "word" : "words"}
                   </span>
                 </div>
                 <div className="space-y-3">
@@ -368,7 +405,7 @@ export function VocabularyPage() {
                       key={item._id}
                       item={item}
                       onRemove={handleRemove}
-                      showLevel={false}
+                      showMastery={false}
                       delay={Math.min(index * 30, 150)}
                     />
                   ))}
@@ -384,13 +421,21 @@ export function VocabularyPage() {
                 key={item._id}
                 item={item}
                 onRemove={handleRemove}
-                showLevel={true}
+                showMastery={true}
                 delay={Math.min(index * 30, 150)}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Add Word Modal */}
+      {showAddModal && (
+        <AddWordModal
+          userId={userId}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -400,17 +445,46 @@ interface VocabularyCardProps {
   item: {
     _id: string;
     word: string;
-    reading: string;
-    meaning: string;
-    jlptLevel?: string | null;
+    reading?: string | null;
+    definitions: string[];
+    language: string;
+    masteryState: string;
+    examLevel?: string | null;
     sourceStoryTitle?: string | null;
   };
   onRemove: (id: string) => void;
-  showLevel?: boolean;
+  showMastery?: boolean;
   delay?: number;
 }
 
-function VocabularyCard({ item, onRemove, showLevel = true, delay = 0 }: VocabularyCardProps) {
+function VocabularyCard({ item, onRemove, showMastery = true, delay = 0 }: VocabularyCardProps) {
+  const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generated, setGenerated] = useState(false);
+
+  // Check if flashcard already exists
+  const existingFlashcard = useQuery(api.flashcards.getByVocabulary, {
+    vocabularyId: item._id as GenericId<"vocabulary">,
+  });
+
+  const generateFlashcard = useAction(api.ai.generateFlashcard);
+
+  const handleGenerateFlashcard = async () => {
+    setIsGenerating(true);
+    try {
+      await generateFlashcard({
+        vocabularyId: item._id as GenericId<"vocabulary">,
+      });
+      setGenerated(true);
+    } catch (error) {
+      console.error("Failed to generate flashcard:", error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const hasFlashcard = existingFlashcard !== undefined && existingFlashcard !== null;
+
   return (
     <div
       className="p-5 rounded-xl bg-surface border border-border hover:border-foreground-muted/30 transition-all duration-200 animate-fade-in-up"
@@ -420,29 +494,62 @@ function VocabularyCard({ item, onRemove, showLevel = true, delay = 0 }: Vocabul
         <div className="flex-1 min-w-0">
           <span
             className="text-xl font-semibold text-foreground"
-            style={{ fontFamily: 'var(--font-japanese)' }}
+            style={{ fontFamily: languageFont }}
           >
             {item.word}
           </span>
-          <div className="text-sm text-foreground-muted mb-2">
-            {item.reading}
-          </div>
-          <div className="text-foreground">{item.meaning}</div>
-          {item.sourceStoryTitle && (
-            <div className="text-xs text-foreground-muted mt-3 flex items-center gap-1">
-              <BookOpen className="w-3 h-3" />
-              From: {item.sourceStoryTitle}
+          {item.reading && (
+            <div className="text-sm text-foreground-muted mb-2">
+              {item.reading}
             </div>
           )}
+          <div className="text-foreground">
+            {item.definitions.join("; ")}
+          </div>
+          <div className="flex items-center gap-2 mt-3">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-foreground-muted capitalize">
+              {item.language}
+            </span>
+            {item.examLevel && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                {item.examLevel}
+              </span>
+            )}
+            {item.sourceStoryTitle && (
+              <span className="text-xs text-foreground-muted flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                {item.sourceStoryTitle}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {showLevel && item.jlptLevel && normalizeJlptLevel(item.jlptLevel) && (
-            <Badge
-              variant={normalizeJlptLevel(item.jlptLevel)!.variant}
-              className="text-xs"
+          {showMastery && (
+            <span className={`text-xs px-2 py-1 rounded-full ${MASTERY_LABELS[item.masteryState]?.color ?? "bg-muted text-foreground-muted"}`}>
+              {MASTERY_LABELS[item.masteryState]?.label ?? item.masteryState}
+            </span>
+          )}
+          {/* Flashcard generation button */}
+          {hasFlashcard || generated ? (
+            <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-600 flex items-center gap-1">
+              <Check className="w-3 h-3" />
+              Flashcard
+            </span>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleGenerateFlashcard}
+              disabled={isGenerating}
+              className="text-foreground-muted hover:text-accent hover:bg-accent/10"
+              title="Generate AI flashcard"
             >
-              {normalizeJlptLevel(item.jlptLevel)!.display}
-            </Badge>
+              {isGenerating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+            </Button>
           )}
           <Button
             variant="ghost"
@@ -453,6 +560,175 @@ function VocabularyCard({ item, onRemove, showLevel = true, delay = 0 }: Vocabul
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Add Word Modal
+interface AddWordModalProps {
+  userId: string;
+  onClose: () => void;
+}
+
+function AddWordModal({ userId, onClose }: AddWordModalProps) {
+  const [word, setWord] = useState("");
+  const [reading, setReading] = useState("");
+  const [definitions, setDefinitions] = useState("");
+  const [language, setLanguage] = useState<Language>("japanese");
+  const [examLevel, setExamLevel] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const addWord = useMutation(api.vocabulary.add);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!word.trim() || !definitions.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      await addWord({
+        userId,
+        language,
+        word: word.trim(),
+        reading: reading.trim() || undefined,
+        definitions: definitions.split(/[,;]/).map((d) => d.trim()).filter(Boolean),
+        sourceType: "manual",
+        examLevel: examLevel.trim() || undefined,
+      });
+      onClose();
+    } catch (error) {
+      console.error("Failed to add word:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-md mx-4 animate-fade-in-up">
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+            Add New Word
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Language */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Language
+            </label>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as Language)}
+              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+            >
+              {LANGUAGES.map((lang) => (
+                <option key={lang.value} value={lang.value}>
+                  {lang.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Word */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Word <span className="text-destructive">*</span>
+            </label>
+            <input
+              type="text"
+              value={word}
+              onChange={(e) => setWord(e.target.value)}
+              placeholder={language === "japanese" ? "食べる" : "Enter word"}
+              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+              style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+              required
+            />
+          </div>
+
+          {/* Reading (for Japanese) */}
+          {language === "japanese" && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Reading (Hiragana)
+              </label>
+              <input
+                type="text"
+                value={reading}
+                onChange={(e) => setReading(e.target.value)}
+                placeholder="たべる"
+                className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                style={{ fontFamily: "var(--font-japanese)" }}
+              />
+            </div>
+          )}
+
+          {/* Definitions */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Definition(s) <span className="text-destructive">*</span>
+            </label>
+            <input
+              type="text"
+              value={definitions}
+              onChange={(e) => setDefinitions(e.target.value)}
+              placeholder="to eat, to consume"
+              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+              required
+            />
+            <p className="text-xs text-foreground-muted mt-1">
+              Separate multiple definitions with commas
+            </p>
+          </div>
+
+          {/* Exam Level */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Exam Level (optional)
+            </label>
+            <input
+              type="text"
+              value={examLevel}
+              onChange={(e) => setExamLevel(e.target.value)}
+              placeholder={language === "japanese" ? "N5" : "B2"}
+              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+            />
+          </div>
+
+          {/* Submit */}
+          <div className="flex gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !word.trim() || !definitions.trim()}
+              className="flex-1"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                "Add Word"
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

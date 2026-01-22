@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   createRouter,
   createRoute,
@@ -6,13 +7,19 @@ import {
   Link,
   useLocation,
 } from "@tanstack/react-router";
+import { useQuery } from "convex/react";
+import { api } from "../convex/_generated/api";
+import { useAuth, SignInButton } from "@/contexts/AuthContext";
+import { OnboardingModal } from "@/components/OnboardingModal";
 import { LandingPage } from "@/pages/LandingPage";
 import { LibraryPage } from "@/pages/LibraryPage";
 import { ReaderPage } from "@/pages/ReaderPage";
 import { VocabularyPage } from "@/pages/VocabularyPage";
+import { FlashcardsPage } from "@/pages/FlashcardsPage";
+import { PracticePage } from "@/pages/PracticePage";
 import { GeneratePage } from "@/pages/GeneratePage";
 import { SettingsPage } from "@/pages/SettingsPage";
-import { BookOpen, BookmarkCheck, Settings, Sparkles } from "lucide-react";
+import { BookOpen, BookmarkCheck, Settings, Sparkles, Brain, PenLine } from "lucide-react";
 
 // Root layout
 const rootRoute = createRootRoute({
@@ -20,25 +27,85 @@ const rootRoute = createRootRoute({
 });
 
 function RootLayout() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [forceOnboarding, setForceOnboarding] = useState(false);
+  const location = useLocation();
+
+  // Check URL for onboarding trigger
+  useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("onboarding") === "true") {
+      setForceOnboarding(true);
+      // Clean up URL
+      params.delete("onboarding");
+      const newUrl = params.toString()
+        ? `${window.location.pathname}?${params.toString()}`
+        : window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  });
+
+  // Check if user has completed onboarding
+  const userProfile = useQuery(
+    api.users.getByClerkId,
+    isAuthenticated && user ? { clerkId: user.id } : "skip"
+  );
+
+  // Show onboarding if user is authenticated but has no profile, or if forced
+  const showOnboarding =
+    isAuthenticated &&
+    user &&
+    !isLoading &&
+    (userProfile === null || forceOnboarding) &&
+    !onboardingComplete;
+
+  const handleOnboardingComplete = () => {
+    setOnboardingComplete(true);
+    setForceOnboarding(false);
+    // Navigate to library after onboarding
+    if (window.location.pathname === "/" || window.location.pathname === "/settings") {
+      window.location.href = "/library";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background paper-texture">
       <Navigation />
       <main className="animate-fade-in">
         <Outlet />
       </main>
+      {showOnboarding && (
+        <OnboardingModal
+          userId={user.id}
+          userEmail={user.email}
+          userName={user.displayName}
+          onComplete={handleOnboardingComplete}
+        />
+      )}
     </div>
   );
 }
 
 function Navigation() {
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
 
-  const links = [
+  // Links visible to everyone
+  const publicLinks = [
     { to: "/library", label: "Library", icon: BookOpen },
+  ] as const;
+
+  // Links only visible when signed in
+  const authLinks = [
     { to: "/vocabulary", label: "Vocabulary", icon: BookmarkCheck },
+    { to: "/flashcards", label: "Review", icon: Brain },
+    { to: "/practice", label: "Practice", icon: PenLine },
     { to: "/generate", label: "Generate", icon: Sparkles },
     { to: "/settings", label: "Settings", icon: Settings },
   ] as const;
+
+  const links = isAuthenticated ? [...publicLinks, ...authLinks] : publicLinks;
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
@@ -56,7 +123,7 @@ function Navigation() {
             </div>
             <div className="hidden sm:block">
               <span className="text-lg font-semibold text-foreground tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
-                Read Japanese
+                SanLang
               </span>
             </div>
           </Link>
@@ -83,6 +150,15 @@ function Navigation() {
                 </Link>
               );
             })}
+
+            {/* Sign In button when not authenticated */}
+            {!isAuthenticated && (
+              <SignInButton mode="modal">
+                <button className="ml-2 px-4 py-2 rounded-lg text-sm font-medium bg-accent text-white hover:bg-accent/90 transition-colors">
+                  Sign In
+                </button>
+              </SignInButton>
+            )}
           </div>
         </div>
       </div>
@@ -115,6 +191,18 @@ const vocabularyRoute = createRoute({
   component: VocabularyPage,
 });
 
+const flashcardsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/flashcards",
+  component: FlashcardsPage,
+});
+
+const practiceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/practice",
+  component: PracticePage,
+});
+
 const generateRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/generate",
@@ -133,6 +221,8 @@ const routeTree = rootRoute.addChildren([
   libraryRoute,
   readerRoute,
   vocabularyRoute,
+  flashcardsRoute,
+  practiceRoute,
   generateRoute,
   settingsRoute,
 ]);

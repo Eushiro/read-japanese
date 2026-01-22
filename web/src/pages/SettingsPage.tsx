@@ -1,8 +1,43 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Settings, Crown, Code, Users, LogOut, Loader2 } from "lucide-react";
+import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Settings, Crown, Code, Users, LogOut, Loader2, CreditCard, Zap, Check, Globe, GraduationCap, Sparkles } from "lucide-react";
 import { useSettings, isDevUserEnabled, setDevUserEnabled } from "@/hooks/useSettings";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, SignInButton, UserButton } from "@/contexts/AuthContext";
+import { useQuery, useAction, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+
+// Language and exam options
+const LANGUAGES = [
+  { value: "japanese", label: "Japanese", flag: "🇯🇵" },
+  { value: "english", label: "English", flag: "🇬🇧" },
+  { value: "french", label: "French", flag: "🇫🇷" },
+] as const;
+
+const EXAMS_BY_LANGUAGE = {
+  japanese: [
+    { value: "jlpt_n5", label: "JLPT N5" },
+    { value: "jlpt_n4", label: "JLPT N4" },
+    { value: "jlpt_n3", label: "JLPT N3" },
+    { value: "jlpt_n2", label: "JLPT N2" },
+    { value: "jlpt_n1", label: "JLPT N1" },
+  ],
+  english: [
+    { value: "toefl", label: "TOEFL" },
+    { value: "sat", label: "SAT" },
+    { value: "gre", label: "GRE" },
+  ],
+  french: [
+    { value: "delf_a1", label: "DELF A1" },
+    { value: "delf_a2", label: "DELF A2" },
+    { value: "delf_b1", label: "DELF B1" },
+    { value: "delf_b2", label: "DELF B2" },
+    { value: "dalf_c1", label: "DALF C1" },
+    { value: "dalf_c2", label: "DALF C2" },
+    { value: "tcf", label: "TCF" },
+  ],
+} as const;
+
+type Language = typeof LANGUAGES[number]["value"];
 
 type Theme = "light" | "dark" | "system";
 
@@ -16,17 +51,110 @@ export function SettingsPage() {
     userId,
   } = useSettings();
 
-  const { user, isAuthenticated, isLoading: authLoading, signInWithGoogle, signOut } = useAuth();
-  const [isSigningIn, setIsSigningIn] = useState(false);
+  const { user, isAuthenticated, isLoading: authLoading, signOut } = useAuth();
 
-  const handleSignIn = async () => {
-    setIsSigningIn(true);
+  // Subscription data
+  const subscription = useQuery(
+    api.subscriptions.get,
+    isAuthenticated && user ? { userId: user.id } : "skip"
+  );
+  const createCheckout = useAction(api.stripe.createCheckoutSession);
+  const createPortal = useAction(api.stripe.createPortalSession);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  // User profile data
+  const userProfile = useQuery(
+    api.users.getByClerkId,
+    isAuthenticated && user ? { clerkId: user.id } : "skip"
+  );
+  const updateLanguages = useMutation(api.users.updateLanguages);
+  const updateTargetExams = useMutation(api.users.updateTargetExams);
+  const upsertUser = useMutation(api.users.upsert);
+
+  // Initialize user if they don't exist
+  useEffect(() => {
+    if (isAuthenticated && user && userProfile === null) {
+      upsertUser({
+        clerkId: user.id,
+        email: user.email ?? undefined,
+        name: user.displayName ?? undefined,
+      });
+    }
+  }, [isAuthenticated, user, userProfile, upsertUser]);
+
+  const handleLanguageToggle = async (lang: Language) => {
+    if (!user || !userProfile) return;
+
+    const currentLanguages = userProfile.languages || [];
+    const newLanguages = currentLanguages.includes(lang)
+      ? currentLanguages.filter((l) => l !== lang)
+      : [...currentLanguages, lang];
+
+    // Don't allow removing all languages
+    if (newLanguages.length === 0) return;
+
+    await updateLanguages({
+      clerkId: user.id,
+      languages: newLanguages as ("japanese" | "english" | "french")[],
+    });
+  };
+
+  const handleExamToggle = async (exam: string) => {
+    if (!user || !userProfile) return;
+
+    const currentExams = userProfile.targetExams || [];
+    const newExams = currentExams.includes(exam as any)
+      ? currentExams.filter((e) => e !== exam)
+      : [...currentExams, exam];
+
+    await updateTargetExams({
+      clerkId: user.id,
+      targetExams: newExams as any[],
+    });
+  };
+
+  const handlePrimaryLanguageChange = async (lang: Language) => {
+    if (!user || !userProfile) return;
+
+    await updateLanguages({
+      clerkId: user.id,
+      languages: userProfile.languages || ["japanese"],
+      primaryLanguage: lang,
+    });
+  };
+
+  const handleUpgrade = async (tier: "basic" | "pro" | "unlimited") => {
+    if (!user) return;
+    setCheckoutLoading(tier);
     try {
-      await signInWithGoogle();
-    } catch {
-      // Error is handled in AuthContext
+      const result = await createCheckout({
+        userId: user.id,
+        tier,
+        successUrl: `${window.location.origin}/settings?success=true`,
+        cancelUrl: `${window.location.origin}/settings?canceled=true`,
+      });
+      if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
     } finally {
-      setIsSigningIn(false);
+      setCheckoutLoading(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    if (!user) return;
+    try {
+      const result = await createPortal({
+        userId: user.id,
+        returnUrl: `${window.location.origin}/settings`,
+      });
+      if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      console.error("Portal error:", error);
     }
   };
 
@@ -208,6 +336,114 @@ export function SettingsPage() {
             </div>
           </section>
 
+          {/* Languages & Exams */}
+          {isAuthenticated && user && (
+            <section className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <Globe className="w-5 h-5 text-accent" />
+                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                  Languages & Exams
+                </h2>
+              </div>
+
+              {/* Languages */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-foreground mb-3">
+                  Languages you're learning
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {LANGUAGES.map((lang) => {
+                    const isSelected = userProfile?.languages?.includes(lang.value) ?? lang.value === "japanese";
+                    return (
+                      <button
+                        key={lang.value}
+                        onClick={() => handleLanguageToggle(lang.value)}
+                        className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                          isSelected
+                            ? "border-accent bg-accent/10 text-accent"
+                            : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
+                        }`}
+                      >
+                        <span className="mr-2">{lang.flag}</span>
+                        {lang.label}
+                        {isSelected && <Check className="w-4 h-4 ml-2 inline" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Active Study Language */}
+              {userProfile?.languages && userProfile.languages.length > 1 && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Active study language
+                  </label>
+                  <p className="text-xs text-foreground-muted mb-3">
+                    This is the language shown by default in your vocabulary and flashcards
+                  </p>
+                  <select
+                    value={userProfile.primaryLanguage || "japanese"}
+                    onChange={(e) => handlePrimaryLanguageChange(e.target.value as Language)}
+                    className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                  >
+                    {userProfile.languages.map((lang) => {
+                      const langInfo = LANGUAGES.find((l) => l.value === lang);
+                      return (
+                        <option key={lang} value={lang}>
+                          {langInfo?.flag} {langInfo?.label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
+
+              {/* Target Exams */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <GraduationCap className="w-4 h-4 text-foreground-muted" />
+                  <label className="block text-sm font-medium text-foreground">
+                    Target exams
+                  </label>
+                </div>
+                <div className="space-y-4">
+                  {(userProfile?.languages || ["japanese"]).map((lang) => {
+                    const langInfo = LANGUAGES.find((l) => l.value === lang);
+                    const exams = EXAMS_BY_LANGUAGE[lang as keyof typeof EXAMS_BY_LANGUAGE] || [];
+
+                    return (
+                      <div key={lang}>
+                        <div className="text-xs font-medium text-foreground-muted mb-2 uppercase tracking-wider">
+                          {langInfo?.flag} {langInfo?.label}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {exams.map((exam) => {
+                            const isSelected = userProfile?.targetExams?.includes(exam.value as any) ?? false;
+                            return (
+                              <button
+                                key={exam.value}
+                                onClick={() => handleExamToggle(exam.value)}
+                                className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                                  isSelected
+                                    ? "border-accent bg-accent/10 text-accent"
+                                    : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
+                                }`}
+                              >
+                                {exam.label}
+                                {isSelected && <Check className="w-3 h-3 ml-1 inline" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Account */}
           <section className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>
@@ -241,6 +477,7 @@ export function SettingsPage() {
                       {user.email}
                     </div>
                   </div>
+                  <UserButton />
                 </div>
                 <Button variant="outline" onClick={handleSignOut} className="w-full">
                   <LogOut className="w-4 h-4 mr-2" />
@@ -252,44 +489,124 @@ export function SettingsPage() {
                 <p className="text-sm text-foreground-muted mb-3">
                   Sign in to sync your vocabulary and reading progress across devices.
                 </p>
-                <Button
-                  variant="outline"
-                  onClick={handleSignIn}
-                  disabled={isSigningIn}
-                  className="w-full"
-                >
-                  {isSigningIn ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-                        <path
-                          fill="currentColor"
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                          fill="currentColor"
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                          fill="currentColor"
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                        />
-                        <path
-                          fill="currentColor"
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        />
-                      </svg>
-                      Sign in with Google
-                    </>
-                  )}
-                </Button>
+                <SignInButton mode="modal">
+                  <Button variant="outline" className="w-full">
+                    Sign In
+                  </Button>
+                </SignInButton>
               </div>
             )}
           </section>
+
+          {/* Subscription */}
+          {isAuthenticated && user && (
+            <section className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <CreditCard className="w-5 h-5 text-accent" />
+                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                  Subscription
+                </h2>
+              </div>
+
+              {/* Current Plan */}
+              <div className="p-4 rounded-xl bg-muted/50 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm text-foreground-muted">Current Plan</div>
+                    <div className="text-lg font-semibold text-foreground capitalize">
+                      {subscription?.tier || "Free"}
+                    </div>
+                  </div>
+                  {subscription?.tier && subscription.tier !== "free" && (
+                    <Button variant="outline" size="sm" onClick={handleManageSubscription}>
+                      Manage
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Upgrade Options */}
+              {(!subscription?.tier || subscription.tier === "free") && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-foreground-muted">Upgrade your plan</h3>
+                  <div className="grid gap-3">
+                    {/* Basic */}
+                    <div className="p-4 rounded-xl border border-border hover:border-accent/50 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-blue-500" />
+                          <span className="font-medium text-foreground">Basic</span>
+                        </div>
+                        <span className="text-sm text-foreground-muted">$5/mo</span>
+                      </div>
+                      <ul className="text-sm text-foreground-muted space-y-1 mb-3">
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 200 AI checks/month</li>
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 20 stories</li>
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 5 personalized stories</li>
+                      </ul>
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleUpgrade("basic")}
+                        disabled={checkoutLoading === "basic"}
+                      >
+                        {checkoutLoading === "basic" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upgrade to Basic"}
+                      </Button>
+                    </div>
+
+                    {/* Pro */}
+                    <div className="p-4 rounded-xl border-2 border-accent bg-accent/5">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Crown className="w-4 h-4 text-accent" />
+                          <span className="font-medium text-foreground">Pro</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-accent text-white">Popular</span>
+                        </div>
+                        <span className="text-sm text-foreground-muted">$15/mo</span>
+                      </div>
+                      <ul className="text-sm text-foreground-muted space-y-1 mb-3">
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 1000 AI checks/month</li>
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> Unlimited reading</li>
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 20 personalized stories</li>
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 10 mock tests</li>
+                      </ul>
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleUpgrade("pro")}
+                        disabled={checkoutLoading === "pro"}
+                      >
+                        {checkoutLoading === "pro" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upgrade to Pro"}
+                      </Button>
+                    </div>
+
+                    {/* Unlimited */}
+                    <div className="p-4 rounded-xl border border-border hover:border-accent/50 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-purple-500" />
+                          <span className="font-medium text-foreground">Unlimited</span>
+                        </div>
+                        <span className="text-sm text-foreground-muted">$45/mo</span>
+                      </div>
+                      <ul className="text-sm text-foreground-muted space-y-1 mb-3">
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> Unlimited everything</li>
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> Priority support</li>
+                      </ul>
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleUpgrade("unlimited")}
+                        disabled={checkoutLoading === "unlimited"}
+                      >
+                        {checkoutLoading === "unlimited" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upgrade to Unlimited"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
 
           {/* Developer Settings - only visible in development */}
           {isDev && (
@@ -305,6 +622,29 @@ export function SettingsPage() {
               </div>
 
               <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-amber-500/10">
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground">Show Onboarding</div>
+                      <div className="text-sm text-foreground-muted">
+                        Preview the onboarding flow
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      window.location.href = "/settings?onboarding=true";
+                    }}
+                  >
+                    Show
+                  </Button>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-amber-500/10">
@@ -372,8 +712,8 @@ export function SettingsPage() {
               About
             </h2>
             <div className="text-sm text-foreground-muted space-y-1">
-              <p className="font-medium text-foreground">Read Japanese Web v1.0.0</p>
-              <p>Learn Japanese through graded readers</p>
+              <p className="font-medium text-foreground">SanLang v1.0.0</p>
+              <p>Personalized exam prep powered by AI</p>
             </div>
           </section>
         </div>

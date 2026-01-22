@@ -8,10 +8,16 @@ import {
   GraduationCap,
   ArrowRight,
   Check,
+  PenLine,
+  Brain,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth, SignInButton } from "@/contexts/AuthContext";
 
 export function LandingPage() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -21,49 +27,84 @@ export function LandingPage() {
           <div className="max-w-3xl mx-auto text-center animate-fade-in-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" />
-              Learn Japanese naturally
+              AI-Powered Exam Prep
             </div>
             <h1
               className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Master Japanese Through{" "}
-              <span className="text-accent">Graded Stories</span>
+              Personalized Learning{" "}
+              <span className="whitespace-nowrap">
+                for <span className="text-accent">Your Exam</span>
+              </span>
             </h1>
             <p className="text-lg sm:text-xl text-foreground-muted mb-8 max-w-2xl mx-auto">
-              Immerse yourself in Japanese reading with stories tailored to your
-              JLPT level. Tap any word for instant definitions, listen with
-              native audio, and build vocabulary naturally.
+              AI generates content from your vocabulary, verifies your writing,
+              and creates mock tests tailored to your target exam. Not generic
+              study materials—a learning path built for you.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {isAuthenticated ? (
+                <Link to="/library">
+                  <Button size="lg" className="w-full sm:w-auto">
+                    <BookOpen className="w-5 h-5 mr-2" />
+                    Start Learning
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              ) : (
+                <SignInButton mode="modal">
+                  <Button size="lg" className="w-full sm:w-auto">
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Get Started Free
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </SignInButton>
+              )}
               <Link to="/library">
-                <Button size="lg" className="w-full sm:w-auto">
-                  <BookOpen className="w-5 h-5 mr-2" />
-                  Start Reading
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-              <Link to="/generate">
                 <Button
                   size="lg"
                   variant="outline"
                   className="w-full sm:w-auto"
                 >
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Generate a Story
+                  <BookOpen className="w-5 h-5 mr-2" />
+                  Browse Library
                 </Button>
               </Link>
             </div>
           </div>
 
-          {/* Decorative Japanese text */}
+          {/* Decorative text */}
           <div className="absolute -right-20 top-1/2 -translate-y-1/2 text-[200px] font-bold text-accent/5 select-none hidden lg:block">
-            読
+            三
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Supported Exams */}
+      <section className="py-16 sm:py-24 bg-surface border-b border-border">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <h2
+              className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Prep for the exams that matter
+            </h2>
+            <p className="text-foreground-muted text-lg max-w-2xl mx-auto">
+              Content and tests aligned with official exam formats and vocabulary lists.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
+            <LanguageCard flag="🇯🇵" language="Japanese" exams={["JLPT N5", "JLPT N4", "JLPT N3", "JLPT N2", "JLPT N1"]} />
+            <LanguageCard flag="🇬🇧" language="English" exams={["TOEFL", "SAT", "GRE"]} />
+            <LanguageCard flag="🇫🇷" language="French" exams={["DELF A1-B2", "DALF C1-C2", "TCF"]} />
+          </div>
+        </div>
+      </section>
+
+      {/* What Makes Us Different */}
       <section className="py-16 sm:py-24">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
@@ -71,50 +112,39 @@ export function LandingPage() {
               className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Everything you need to read Japanese
+              Not another flashcard app
             </h2>
             <p className="text-foreground-muted text-lg max-w-2xl mx-auto">
-              Our graded reader is designed specifically for Japanese learners,
-              with features that make reading accessible at any level.
+              Most apps test what you recognize. We test what you can produce.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <FeatureCard
-              icon={GraduationCap}
-              title="JLPT-Graded Content"
-              description="Stories carefully crafted for N5 through N1 levels, using vocabulary and grammar appropriate for your stage."
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <ComparisonCard
+              title="SanLang"
+              isUs={true}
+              items={[
+                "Write sentences, get AI feedback",
+                "Content generated from YOUR vocabulary",
+                "Mock tests in real exam formats",
+                "Multi-modal: text, audio, images",
+              ]}
             />
-            <FeatureCard
-              icon={Languages}
-              title="Tap-to-Define"
-              description="Tap any word to instantly see its meaning, reading, and part of speech. No more switching to a dictionary."
-            />
-            <FeatureCard
-              icon={BookOpen}
-              title="Furigana Support"
-              description="Reading annotations appear above kanji, helping you read fluently while learning new characters."
-            />
-            <FeatureCard
-              icon={Volume2}
-              title="Native Audio"
-              description="Listen to stories read by native speakers with synchronized highlighting to follow along."
-            />
-            <FeatureCard
-              icon={BookmarkCheck}
-              title="Vocabulary Tracking"
-              description="Save words you want to remember. Review them anytime and watch your vocabulary grow."
-            />
-            <FeatureCard
-              icon={Sparkles}
-              title="AI-Generated Stories"
-              description="Create custom stories tailored to your interests and level using our AI story generator."
+            <ComparisonCard
+              title="Other Apps"
+              isUs={false}
+              items={[
+                "Flip cards, tap correct answer",
+                "Generic word lists for everyone",
+                "Gamified but not exam-focused",
+                "Usually single-modal",
+              ]}
             />
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
+      {/* The Learning Loop */}
       <section className="py-16 sm:py-24 bg-surface border-y border-border">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
@@ -122,34 +152,43 @@ export function LandingPage() {
               className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              How it works
+              The complete learning loop
             </h2>
-            <p className="text-foreground-muted text-lg">
-              Start reading Japanese in three simple steps
+            <p className="text-foreground-muted text-lg max-w-2xl mx-auto">
+              Input, practice, output, repeat. Every feature connects to help you actually learn.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <StepCard
-              number={1}
-              title="Choose Your Level"
-              description="Select a story that matches your JLPT level, from beginner (N5) to advanced (N1)."
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            <LoopCard
+              icon={BookOpen}
+              step={1}
+              title="Input"
+              description="Read stories, listen to audio, watch videos—all at your level"
             />
-            <StepCard
-              number={2}
-              title="Read & Listen"
-              description="Read at your own pace, tap words for definitions, and listen to native audio narration."
+            <LoopCard
+              icon={BookmarkCheck}
+              step={2}
+              title="Capture"
+              description="Save words automatically or manually. Build your personal vocabulary."
             />
-            <StepCard
-              number={3}
-              title="Build Vocabulary"
-              description="Save new words to your vocabulary list and review them to reinforce your learning."
+            <LoopCard
+              icon={Brain}
+              step={3}
+              title="Review"
+              description="AI-generated flashcards with example sentences, refreshed to stay relevant"
+            />
+            <LoopCard
+              icon={PenLine}
+              step={4}
+              title="Output"
+              description="Write sentences, get instant AI feedback on grammar and usage"
             />
           </div>
         </div>
       </section>
 
-      {/* Levels Section */}
+      {/* Features */}
       <section className="py-16 sm:py-24">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
@@ -157,20 +196,44 @@ export function LandingPage() {
               className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Content for every level
+              Everything you need to pass your exam
             </h2>
             <p className="text-foreground-muted text-lg max-w-2xl mx-auto">
-              From your first steps in Japanese to advanced reading, we have
-              stories for you.
+              From vocabulary building to mock tests, we've got you covered.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-w-4xl mx-auto">
-            <LevelBadge level="N5" label="Beginner" color="bg-jlpt-n5" />
-            <LevelBadge level="N4" label="Elementary" color="bg-jlpt-n4" />
-            <LevelBadge level="N3" label="Intermediate" color="bg-jlpt-n3" />
-            <LevelBadge level="N2" label="Upper-Int" color="bg-jlpt-n2" />
-            <LevelBadge level="N1" label="Advanced" color="bg-jlpt-n1" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <FeatureCard
+              icon={Sparkles}
+              title="AI-Powered Flashcards"
+              description="Cards auto-generated with example sentences at your level. Sentences refresh periodically so you don't just memorize patterns."
+            />
+            <FeatureCard
+              icon={PenLine}
+              title="Writing Practice"
+              description="Create sentences using target words. AI checks grammar, word usage, and naturalness—then shows you how to improve."
+            />
+            <FeatureCard
+              icon={Target}
+              title="Personalized Content"
+              description="Stories and tests generated from YOUR vocabulary. Practice exactly what you need to learn."
+            />
+            <FeatureCard
+              icon={GraduationCap}
+              title="Real Exam Formats"
+              description="Mock tests that match JLPT, TOEFL, DELF, and other official exam structures and scoring."
+            />
+            <FeatureCard
+              icon={Volume2}
+              title="Native Audio"
+              description="Listen to stories and flashcards with natural pronunciation. Train your ears while you learn."
+            />
+            <FeatureCard
+              icon={Languages}
+              title="Tap-to-Define"
+              description="Tap any word for instant definitions. Reading aids like furigana help you stay in flow."
+            />
           </div>
         </div>
       </section>
@@ -182,26 +245,36 @@ export function LandingPage() {
             className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Ready to start reading?
+            Start learning smarter
           </h2>
           <p className="text-foreground-muted text-lg mb-8 max-w-xl mx-auto">
-            Jump into our library of graded Japanese stories and start your
-            reading journey today.
+            Join learners who are preparing for their exams with AI-powered,
+            personalized study materials.
           </p>
-          <Link to="/library">
-            <Button size="lg">
-              <BookOpen className="w-5 h-5 mr-2" />
-              Browse Stories
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/library">
+              <Button size="lg">
+                <BookOpen className="w-5 h-5 mr-2" />
+                Go to Library
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          ) : (
+            <SignInButton mode="modal">
+              <Button size="lg">
+                <Sparkles className="w-5 h-5 mr-2" />
+                Get Started Free
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </SignInButton>
+          )}
         </div>
       </section>
 
       {/* Footer */}
       <footer className="py-8 border-t border-border">
         <div className="container mx-auto px-4 sm:px-6 text-center text-foreground-muted text-sm">
-          <p>Read Japanese - Learn through stories</p>
+          <p>SanLang - Personalized exam prep powered by AI</p>
         </div>
       </footer>
     </div>
@@ -226,17 +299,23 @@ function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
   );
 }
 
-interface StepCardProps {
-  number: number;
+interface LoopCardProps {
+  icon: React.ComponentType<{ className?: string }>;
+  step: number;
   title: string;
   description: string;
 }
 
-function StepCard({ number, title, description }: StepCardProps) {
+function LoopCard({ icon: Icon, step, title, description }: LoopCardProps) {
   return (
-    <div className="text-center">
-      <div className="w-14 h-14 rounded-full bg-accent text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">
-        {number}
+    <div className="text-center p-6">
+      <div className="relative inline-block mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center">
+          <Icon className="w-8 h-8 text-accent" />
+        </div>
+        <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center">
+          {step}
+        </div>
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
       <p className="text-foreground-muted text-sm">{description}</p>
@@ -244,23 +323,57 @@ function StepCard({ number, title, description }: StepCardProps) {
   );
 }
 
-interface LevelBadgeProps {
-  level: string;
-  label: string;
-  color: string;
+interface ComparisonCardProps {
+  title: string;
+  isUs: boolean;
+  items: string[];
 }
 
-function LevelBadge({ level, label, color }: LevelBadgeProps) {
+function ComparisonCard({ title, isUs, items }: ComparisonCardProps) {
   return (
-    <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-surface border border-border">
-      <div
-        className={`w-10 h-10 rounded-lg ${color} text-white font-bold flex items-center justify-center`}
-      >
-        {level}
-      </div>
-      <div className="text-left">
-        <div className="font-semibold text-foreground">{level}</div>
-        <div className="text-xs text-foreground-muted">{label}</div>
+    <div className={`p-6 rounded-xl border ${isUs ? "border-accent bg-accent/5" : "border-border bg-surface"}`}>
+      <h3 className={`text-lg font-semibold mb-4 ${isUs ? "text-accent" : "text-foreground-muted"}`}>
+        {title}
+      </h3>
+      <ul className="space-y-3">
+        {items.map((item, i) => (
+          <li key={i} className="flex items-start gap-3">
+            {isUs ? (
+              <Check className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+            ) : (
+              <div className="w-5 h-5 shrink-0 mt-0.5 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-foreground-muted" />
+              </div>
+            )}
+            <span className={isUs ? "text-foreground" : "text-foreground-muted"}>
+              {item}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+interface LanguageCardProps {
+  flag: string;
+  language: string;
+  exams: string[];
+}
+
+function LanguageCard({ flag, language, exams }: LanguageCardProps) {
+  return (
+    <div className="flex flex-col items-center gap-4 px-6 py-8 rounded-xl bg-background border border-border hover:border-accent/30 transition-colors">
+      <div className="text-5xl">{flag}</div>
+      <div className="text-center">
+        <div className="font-bold text-foreground text-lg mb-2">{language}</div>
+        <div className="flex flex-wrap justify-center gap-1.5">
+          {exams.map((exam) => (
+            <span key={exam} className="text-xs font-medium px-2 py-1 rounded-md bg-accent/10 text-accent">
+              {exam}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );

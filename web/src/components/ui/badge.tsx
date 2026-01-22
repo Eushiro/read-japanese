@@ -22,6 +22,13 @@ const badgeVariants = cva(
         n3: "bg-jlpt-n3 text-white shadow-sm",
         n2: "bg-jlpt-n2 text-white shadow-sm",
         n1: "bg-jlpt-n1 text-white shadow-sm",
+        // CEFR Level variants (French/English)
+        a1: "bg-cefr-a1 text-white shadow-sm",
+        a2: "bg-cefr-a2 text-white shadow-sm",
+        b1: "bg-cefr-b1 text-white shadow-sm",
+        b2: "bg-cefr-b2 text-white shadow-sm",
+        c1: "bg-cefr-c1 text-white shadow-sm",
+        c2: "bg-cefr-c2 text-white shadow-sm",
       },
     },
     defaultVariants: {

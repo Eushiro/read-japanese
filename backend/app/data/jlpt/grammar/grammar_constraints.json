@@ -1,0 +1,131 @@
+{
+  "N5": {
+    "allowed": [
+      {"pattern": "です/ます", "description": "polite copula and verb endings"},
+      {"pattern": "は/が", "description": "topic and subject markers"},
+      {"pattern": "を/に/で/へ", "description": "basic object and location particles"},
+      {"pattern": "も/と/や", "description": "basic conjunction particles (also, and, or)"},
+      {"pattern": "てください", "description": "polite requests"},
+      {"pattern": "ている", "description": "progressive/state (is doing, is in a state)"},
+      {"pattern": "たい", "description": "want to do something"},
+      {"pattern": "た/ました", "description": "past tense"},
+      {"pattern": "ない/ません", "description": "negative forms"},
+      {"pattern": "から", "description": "because (simple reason at end of sentence)"},
+      {"pattern": "けど/が", "description": "but (simple contrast)"},
+      {"pattern": "の/んです", "description": "explanatory tone"},
+      {"pattern": "ね/よ", "description": "sentence-ending particles"},
+      {"pattern": "か", "description": "question marker"},
+      {"pattern": "adjective + noun", "description": "simple adjective modification"},
+      {"pattern": "time + に", "description": "at a specific time"}
+    ],
+    "forbidden": [
+      {"pattern": "relative clauses", "description": "noun-modifying clauses (verb/adjective directly before noun)", "example": "本を読んでいる人 (the person who is reading a book)"},
+      {"pattern": "passive voice", "description": "〜られる/〜れる passive forms", "example": "食べられる (to be eaten)"},
+      {"pattern": "causative", "description": "〜させる make/let someone do", "example": "食べさせる (to make someone eat)"},
+      {"pattern": "conditional ば", "description": "ば conditional form", "example": "行けば (if [I] go)"},
+      {"pattern": "volitional よう", "description": "volitional/intentional form", "example": "食べよう (let's eat / I'll eat)"},
+      {"pattern": "potential form", "description": "〜られる/〜える (can do)", "example": "食べられる (can eat)"},
+      {"pattern": "giving/receiving verbs", "description": "あげる/もらう/くれる auxiliary patterns", "example": "教えてもらう (have someone teach)"},
+      {"pattern": "てしまう", "description": "completion/regret form", "example": "食べてしまった (ended up eating)"},
+      {"pattern": "ておく", "description": "preparation form", "example": "準備しておく (prepare in advance)"},
+      {"pattern": "ようにする", "description": "try to / make sure to", "example": "早く寝るようにする"},
+      {"pattern": "ことができる", "description": "ability expression", "example": "日本語を話すことができる"},
+      {"pattern": "なければならない", "description": "must do (obligation)", "example": "行かなければならない"},
+      {"pattern": "たら conditional", "description": "if/when conditional", "example": "食べたら (if/when [I] eat)"},
+      {"pattern": "と conditional", "description": "natural consequence conditional", "example": "押すと開く (if you push, it opens)"}
+    ]
+  },
+  "N4": {
+    "allowed": [
+      {"pattern": "All N5 patterns", "description": "plus the following:"},
+      {"pattern": "て-form connections", "description": "connecting sentences with て"},
+      {"pattern": "たら conditional", "description": "if/when conditional"},
+      {"pattern": "と conditional", "description": "natural consequence conditional"},
+      {"pattern": "potential form", "description": "can do something (〜られる/〜える)"},
+      {"pattern": "volitional よう", "description": "let's / intend to"},
+      {"pattern": "ている/てある", "description": "resultant states"},
+      {"pattern": "giving/receiving", "description": "あげる/もらう/くれる as auxiliaries"},
+      {"pattern": "ようにする", "description": "try to do / make effort to"},
+      {"pattern": "ことができる", "description": "be able to"},
+      {"pattern": "なければならない", "description": "must do"},
+      {"pattern": "てもいい", "description": "may / is allowed to"},
+      {"pattern": "てはいけない", "description": "must not"},
+      {"pattern": "simple relative clauses", "description": "short noun-modifying clauses", "example": "買った本 (the book I bought)"}
+    ],
+    "forbidden": [
+      {"pattern": "passive voice", "description": "〜られる/〜れる passive", "example": "先生に褒められた (was praised by teacher)"},
+      {"pattern": "causative", "description": "〜させる make someone do", "example": "子供に野菜を食べさせる (make the child eat vegetables)"},
+      {"pattern": "causative-passive", "description": "〜させられる", "example": "食べさせられた (was made to eat)"},
+      {"pattern": "ば conditional", "description": "ば form conditional", "example": "行けば分かる (if you go, you'll understand)"},
+      {"pattern": "complex relative clauses", "description": "long noun-modifying clauses with multiple verbs", "example": "昨日買った本を読んでいる人"},
+      {"pattern": "のに/なのに", "description": "despite / although", "example": "約束したのに来なかった (didn't come despite promising)"},
+      {"pattern": "ために", "description": "in order to / because of", "example": "日本語を勉強するために (in order to study Japanese)"},
+      {"pattern": "ようになる", "description": "come to be able to / come to do", "example": "日本語が話せるようになった"},
+      {"pattern": "ことにする/なる", "description": "decide to / it turns out that", "example": "行くことにした (decided to go)"},
+      {"pattern": "らしい", "description": "apparently / seems like (hearsay)", "example": "雨が降るらしい"},
+      {"pattern": "そうだ (hearsay)", "description": "I heard that", "example": "明日は休みだそうだ"},
+      {"pattern": "はずだ", "description": "should be / supposed to be", "example": "届いているはずだ"}
+    ]
+  },
+  "N3": {
+    "allowed": [
+      {"pattern": "All N4 patterns", "description": "plus the following:"},
+      {"pattern": "passive voice", "description": "〜られる passive constructions"},
+      {"pattern": "causative", "description": "〜させる causative"},
+      {"pattern": "ば conditional", "description": "all conditional forms now available"},
+      {"pattern": "complex relative clauses", "description": "noun-modifying clauses of any length"},
+      {"pattern": "のに/なのに", "description": "despite / although"},
+      {"pattern": "ために", "description": "purpose and cause"},
+      {"pattern": "ようになる", "description": "come to be / come to do"},
+      {"pattern": "ことにする/なる", "description": "decide / it turns out"},
+      {"pattern": "らしい", "description": "apparently (hearsay)"},
+      {"pattern": "そうだ (hearsay)", "description": "I heard that"},
+      {"pattern": "はずだ", "description": "should be / supposed to"},
+      {"pattern": "わけだ", "description": "that's why / that means"},
+      {"pattern": "ことになる", "description": "it has been decided that"},
+      {"pattern": "ところだ", "description": "about to / just finished"}
+    ],
+    "forbidden": [
+      {"pattern": "causative-passive", "description": "〜させられる", "example": "食べさせられた (was made to eat)"},
+      {"pattern": "べき/べきだ", "description": "should / ought to (literary)", "example": "行くべきだ (should go)"},
+      {"pattern": "formal written style", "description": "である/においては", "example": "問題である (it is a problem)"},
+      {"pattern": "complex embedded clauses", "description": "multiple nested clauses"},
+      {"pattern": "classical grammar", "description": "ぬ/ざる/ごとし forms", "example": "知らぬ間に (before one knew it)"},
+      {"pattern": "〜ものだ (reminiscence)", "description": "used to / it's natural that", "example": "よく遊んだものだ"},
+      {"pattern": "〜ざるを得ない", "description": "cannot help but", "example": "行かざるを得ない"},
+      {"pattern": "〜にほかならない", "description": "nothing but / precisely", "example": "努力の結果にほかならない"},
+      {"pattern": "〜かねる", "description": "find it difficult to", "example": "お答えしかねます"}
+    ]
+  },
+  "N2": {
+    "allowed": [
+      {"pattern": "All N3 patterns", "description": "plus the following:"},
+      {"pattern": "causative-passive", "description": "all causative-passive forms"},
+      {"pattern": "べき/べきだ", "description": "should / ought to"},
+      {"pattern": "formal written style", "description": "である style allowed"},
+      {"pattern": "complex conditionals", "description": "nested conditionals"},
+      {"pattern": "〜ものだ", "description": "reminiscence and natural expectations"},
+      {"pattern": "〜ざるを得ない", "description": "cannot help but"},
+      {"pattern": "〜にほかならない", "description": "nothing but"},
+      {"pattern": "〜かねる", "description": "find it difficult to"},
+      {"pattern": "〜に関して/について", "description": "regarding / concerning"},
+      {"pattern": "〜において", "description": "in / at (formal)"},
+      {"pattern": "〜に対して", "description": "toward / against"},
+      {"pattern": "〜を通じて", "description": "through / throughout"}
+    ],
+    "forbidden": [
+      {"pattern": "classical/archaic patterns", "description": "classical Japanese expressions", "example": "あらざる (not being)"},
+      {"pattern": "highly literary expressions", "description": "literary/poetic forms", "example": "〜んばかり (as if about to)"},
+      {"pattern": "rare keigo patterns", "description": "obscure honorific forms"},
+      {"pattern": "legal/academic jargon", "description": "specialized formal language", "example": "〜たる (being / as)"},
+      {"pattern": "classical conditionals", "description": "archaic conditional forms", "example": "〜ば〜ほど (the more... the more)"},
+      {"pattern": "〜まじき", "description": "archaic negative obligation", "example": "許すまじき (unforgivable)"}
+    ]
+  },
+  "N1": {
+    "allowed": [
+      {"pattern": "All grammar patterns", "description": "No restrictions at N1 level"}
+    ],
+    "forbidden": []
+  }
+}

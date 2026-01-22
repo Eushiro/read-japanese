@@ -69,6 +69,40 @@ class Chapter(BaseModel):
         return self.segments or self.content or []
 
 
+class VocabularyValidation(BaseModel):
+    """Result of JLPT vocabulary validation using Learning Value Score"""
+    # Story metrics
+    totalTokens: int                              # Total token count (for threshold scaling)
+    uniqueWords: int                              # Unique word count
+    wordsByLevel: dict = {}                       # {"N5": 40, "N4": 30, ..., "unknown": 5}
+
+    # Unique counts (what we test against thresholds)
+    targetLevelCount: int                         # Unique words AT target level
+    aboveLevelCount: int                          # Unique words ABOVE target level
+    unknownCount: int                             # Unique words not in any JLPT list
+
+    # Calculated thresholds (for transparency)
+    minTargetThreshold: int
+    maxAboveThreshold: int                        # -1 means no limit (N1)
+    maxUnknownThreshold: int
+
+    # Pass/fail checks
+    hasLearningValue: bool                        # target_level_count >= min_target_threshold
+    notTooHard: bool                              # above_level_count <= max_above_threshold
+    notTooObscure: bool                           # unknown_count <= max_unknown_threshold
+    passed: bool                                  # All three checks pass
+
+    # Informational
+    readabilityScore: float                       # % of tokens at or below target level
+    targetLevel: str
+    message: str
+
+    # Detailed word lists for debugging/display
+    targetLevelWords: List[str] = []
+    aboveLevelWords: List[str] = []
+    unknownWords: List[str] = []
+
+
 class StoryMetadata(BaseModel):
     """Metadata for a story"""
     title: str
@@ -87,6 +121,7 @@ class StoryMetadata(BaseModel):
     audioURL: Optional[str] = None
     createdDate: str
     isPremium: bool = False  # Whether this story requires premium subscription
+    vocabularyValidation: Optional[VocabularyValidation] = None  # JLPT vocabulary validation result
 
 
 class Story(BaseModel):

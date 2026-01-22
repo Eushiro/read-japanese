@@ -107,8 +107,10 @@ export function WordPopup({
         userId,
         word: token.surface,
         reading: reading,
-        meaning: entry?.meanings[0] || "(No definition)",
+        definitions: entry?.meanings || ["(No definition)"],
         partOfSpeech: entry?.partOfSpeech || token.partOfSpeech,
+        language: "japanese",
+        sourceType: "story",
         sourceStoryId: storyId,
         sourceStoryTitle: storyTitle,
       });

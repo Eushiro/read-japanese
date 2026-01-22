@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listStories } from "@/api/stories";
-import type { StoryListItem, JLPTLevel } from "@/types/story";
+import type { StoryListItem, ProficiencyLevel } from "@/types/story";
 import { toHiragana, isRomaji, toKatakana } from "wanakana";
 
 // Fetch stories with caching
@@ -18,7 +18,7 @@ export function useStories() {
 export function useFilteredStories(
   stories: StoryListItem[] | undefined,
   searchTerm: string,
-  level: JLPTLevel | null
+  level: ProficiencyLevel | null
 ): StoryListItem[] {
   return useMemo(() => {
     if (!stories) return [];

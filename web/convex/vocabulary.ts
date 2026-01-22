@@ -1,10 +1,32 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import {
+  languageValidator,
+  masteryStateValidator,
+  sourceTypeValidator,
+} from "./schema";
+
+// ============================================
+// QUERIES
+// ============================================
 
 // Get all vocabulary items for a user
 export const list = query({
-  args: { userId: v.string() },
+  args: {
+    userId: v.string(),
+    language: v.optional(languageValidator),
+  },
   handler: async (ctx, args) => {
+    if (args.language) {
+      return await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user_and_language", (q) =>
+          q.eq("userId", args.userId).eq("language", args.language!)
+        )
+        .order("desc")
+        .collect();
+    }
+
     return await ctx.db
       .query("vocabulary")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -13,43 +35,99 @@ export const list = query({
   },
 });
 
-// Add a word to vocabulary
-export const add = mutation({
+// Get vocabulary by mastery state
+export const listByMastery = query({
   args: {
     userId: v.string(),
-    word: v.string(),
-    reading: v.string(),
-    meaning: v.string(),
-    jlptLevel: v.optional(v.string()),
-    partOfSpeech: v.optional(v.string()),
-    sourceStoryId: v.optional(v.string()),
-    sourceStoryTitle: v.optional(v.string()),
+    language: languageValidator,
+    masteryState: masteryStateValidator,
   },
   handler: async (ctx, args) => {
-    // Check if word already exists for this user
-    const existing = await ctx.db
+    return await ctx.db
       .query("vocabulary")
-      .withIndex("by_user_and_word", (q) =>
-        q.eq("userId", args.userId).eq("word", args.word)
+      .withIndex("by_user_language_mastery", (q) =>
+        q
+          .eq("userId", args.userId)
+          .eq("language", args.language)
+          .eq("masteryState", args.masteryState)
       )
-      .first();
-
-    if (existing) {
-      return existing._id;
-    }
-
-    return await ctx.db.insert("vocabulary", {
-      ...args,
-      createdAt: Date.now(),
-    });
+      .collect();
   },
 });
 
-// Remove a word from vocabulary
-export const remove = mutation({
-  args: { id: v.id("vocabulary") },
+// Get vocabulary stats
+export const getStats = query({
+  args: {
+    userId: v.string(),
+    language: v.optional(languageValidator),
+  },
   handler: async (ctx, args) => {
-    await ctx.db.delete(args.id);
+    let items;
+    if (args.language) {
+      items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user_and_language", (q) =>
+          q.eq("userId", args.userId).eq("language", args.language!)
+        )
+        .collect();
+    } else {
+      items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .collect();
+    }
+
+    const stats = {
+      total: items.length,
+      new: 0,
+      learning: 0,
+      tested: 0,
+      mastered: 0,
+      byLanguage: {} as Record<string, number>,
+      bySource: {} as Record<string, number>,
+    };
+
+    for (const item of items) {
+      stats[item.masteryState as keyof typeof stats]++;
+      stats.byLanguage[item.language] = (stats.byLanguage[item.language] ?? 0) + 1;
+      stats.bySource[item.sourceType] = (stats.bySource[item.sourceType] ?? 0) + 1;
+    }
+
+    return stats;
+  },
+});
+
+// Search vocabulary
+export const search = query({
+  args: {
+    userId: v.string(),
+    query: v.string(),
+    language: v.optional(languageValidator),
+  },
+  handler: async (ctx, args) => {
+    const searchTerm = args.query.toLowerCase();
+
+    let items;
+    if (args.language) {
+      items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user_and_language", (q) =>
+          q.eq("userId", args.userId).eq("language", args.language!)
+        )
+        .collect();
+    } else {
+      items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .collect();
+    }
+
+    return items.filter(
+      (item) =>
+        item.word.toLowerCase().includes(searchTerm) ||
+        item.reading?.toLowerCase().includes(searchTerm) ||
+        item.definitions.some((def) => def.toLowerCase().includes(searchTerm))
+    );
   },
 });
 
@@ -67,7 +145,7 @@ export const isSaved = query({
   },
 });
 
-// Get a vocabulary item by word (returns item with ID for removal)
+// Get a vocabulary item by word
 export const getByWord = query({
   args: { userId: v.string(), word: v.string() },
   handler: async (ctx, args) => {
@@ -77,5 +155,232 @@ export const getByWord = query({
         q.eq("userId", args.userId).eq("word", args.word)
       )
       .first();
+  },
+});
+
+// Get a vocabulary item by ID
+export const getById = query({
+  args: { id: v.id("vocabulary") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});
+
+// ============================================
+// MUTATIONS
+// ============================================
+
+// Add a word to vocabulary
+export const add = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    word: v.string(),
+    reading: v.optional(v.string()),
+    definitions: v.array(v.string()),
+    partOfSpeech: v.optional(v.string()),
+    sourceType: sourceTypeValidator,
+    sourceStoryId: v.optional(v.string()),
+    sourceStoryTitle: v.optional(v.string()),
+    sourceYoutubeId: v.optional(v.string()),
+    examLevel: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Check if word already exists for this user
+    const existing = await ctx.db
+      .query("vocabulary")
+      .withIndex("by_user_and_word", (q) =>
+        q.eq("userId", args.userId).eq("word", args.word)
+      )
+      .first();
+
+    if (existing) {
+      return existing._id;
+    }
+
+    const now = Date.now();
+    return await ctx.db.insert("vocabulary", {
+      userId: args.userId,
+      language: args.language,
+      word: args.word,
+      reading: args.reading,
+      definitions: args.definitions,
+      partOfSpeech: args.partOfSpeech,
+      masteryState: "new",
+      sourceType: args.sourceType,
+      sourceStoryId: args.sourceStoryId,
+      sourceStoryTitle: args.sourceStoryTitle,
+      sourceYoutubeId: args.sourceYoutubeId,
+      examLevel: args.examLevel,
+      timesReviewed: 0,
+      timesCorrect: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+// Bulk add vocabulary (for imports)
+export const bulkAdd = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    sourceType: sourceTypeValidator,
+    items: v.array(
+      v.object({
+        word: v.string(),
+        reading: v.optional(v.string()),
+        definitions: v.array(v.string()),
+        partOfSpeech: v.optional(v.string()),
+        examLevel: v.optional(v.string()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const addedIds = [];
+
+    for (const item of args.items) {
+      // Check if word already exists
+      const existing = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user_and_word", (q) =>
+          q.eq("userId", args.userId).eq("word", item.word)
+        )
+        .first();
+
+      if (!existing) {
+        const id = await ctx.db.insert("vocabulary", {
+          userId: args.userId,
+          language: args.language,
+          word: item.word,
+          reading: item.reading,
+          definitions: item.definitions,
+          partOfSpeech: item.partOfSpeech,
+          masteryState: "new",
+          sourceType: args.sourceType,
+          examLevel: item.examLevel,
+          timesReviewed: 0,
+          timesCorrect: 0,
+          createdAt: now,
+          updatedAt: now,
+        });
+        addedIds.push(id);
+      }
+    }
+
+    return { addedCount: addedIds.length, ids: addedIds };
+  },
+});
+
+// Update mastery state
+export const updateMastery = mutation({
+  args: {
+    id: v.id("vocabulary"),
+    masteryState: masteryStateValidator,
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      masteryState: args.masteryState,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Update vocabulary item
+export const update = mutation({
+  args: {
+    id: v.id("vocabulary"),
+    reading: v.optional(v.string()),
+    definitions: v.optional(v.array(v.string())),
+    partOfSpeech: v.optional(v.string()),
+    examLevel: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...updates } = args;
+    const filteredUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([_, v]) => v !== undefined)
+    );
+
+    await ctx.db.patch(id, {
+      ...filteredUpdates,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Remove a word from vocabulary
+export const remove = mutation({
+  args: { id: v.id("vocabulary") },
+  handler: async (ctx, args) => {
+    // Also delete associated flashcard
+    const flashcard = await ctx.db
+      .query("flashcards")
+      .withIndex("by_vocabulary", (q) => q.eq("vocabularyId", args.id))
+      .first();
+
+    if (flashcard) {
+      await ctx.db.delete(flashcard._id);
+    }
+
+    await ctx.db.delete(args.id);
+  },
+});
+
+// Record a review result (called from flashcard review)
+export const recordReview = mutation({
+  args: {
+    id: v.id("vocabulary"),
+    isCorrect: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const vocab = await ctx.db.get(args.id);
+    if (!vocab) return;
+
+    await ctx.db.patch(args.id, {
+      timesReviewed: vocab.timesReviewed + 1,
+      timesCorrect: vocab.timesCorrect + (args.isCorrect ? 1 : 0),
+      lastReviewedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Get vocabulary items needing review (low accuracy)
+export const getNeedingReview = query({
+  args: {
+    userId: v.string(),
+    language: v.optional(languageValidator),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    let items;
+    if (args.language) {
+      items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user_and_language", (q) =>
+          q.eq("userId", args.userId).eq("language", args.language!)
+        )
+        .collect();
+    } else {
+      items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .collect();
+    }
+
+    // Filter items with low accuracy (< 70%) and at least 3 reviews
+    return items
+      .filter((item) => {
+        if (item.timesReviewed < 3) return false;
+        const accuracy = item.timesCorrect / item.timesReviewed;
+        return accuracy < 0.7;
+      })
+      .sort((a, b) => {
+        const accuracyA = a.timesCorrect / a.timesReviewed;
+        const accuracyB = b.timesCorrect / b.timesReviewed;
+        return accuracyA - accuracyB;
+      })
+      .slice(0, args.limit ?? 20);
   },
 });

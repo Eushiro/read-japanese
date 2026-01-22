@@ -240,7 +240,7 @@ class AudioGenerator:
         try:
             # Convert to MP3 using ffmpeg
             result = subprocess.run(
-                ["ffmpeg", "-y", "-i", tmp_path, "-b:a", "48k", str(output_path)],
+                ["ffmpeg", "-y", "-i", tmp_path, "-b:a", "64k", str(output_path)],
                 capture_output=True,
                 text=True
             )

@@ -13,6 +13,14 @@
   --color-jlpt-n2: #C2410C;
   --color-jlpt-n1: #BE123C;
 
+  /* CEFR Level Colors (French/English) */
+  --color-cefr-a1: #22C55E;
+  --color-cefr-a2: #10B981;
+  --color-cefr-b1: #0EA5E9;
+  --color-cefr-b2: #6366F1;
+  --color-cefr-c1: #8B5CF6;
+  --color-cefr-c2: #A855F7;
+
   /* Light theme - Warm paper tones */
   --color-background: #FAF7F2;
   --color-background-subtle: #F5F0E8;

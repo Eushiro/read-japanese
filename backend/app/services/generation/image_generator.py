@@ -1,14 +1,15 @@
 """
-Image generation service using Google Nano Banana (Gemini Image)
-Generates cover art for Japanese graded reader stories.
+Image generation service using OpenRouter with Gemini Image model.
+Generates cover art and chapter illustrations for Japanese graded reader stories.
 """
 import os
 import logging
 import base64
+import httpx
 from pathlib import Path
 from typing import Optional
-from google import genai
-from google.genai import types
+
+from ...config.models import ModelConfig
 
 logger = logging.getLogger(__name__)
 
@@ -16,26 +17,201 @@ logger = logging.getLogger(__name__)
 IMAGES_DIR = Path(__file__).parent.parent.parent / "static" / "images"
 ORIGINALS_DIR = Path(__file__).parent.parent.parent / "static" / "images" / "originals"
 
-# Nano Banana model (Gemini 2.5 Flash Image)
-NANO_BANANA_MODEL = "gemini-2.5-flash-image"
-
 
 class ImageGenerator:
-    """Generates cover images using Google Nano Banana (Gemini Image)"""
+    """Generates images using OpenRouter with Gemini Image model"""
+
+    # Narrative style descriptions (Gemini prefers descriptions over keywords)
+    STYLE_NARRATIVES = {
+        "anime": "rendered in a beautiful anime art style with soft cel-shading, clean line work, and vibrant yet harmonious colors typical of Japanese animation",
+        "watercolor": "painted in a delicate watercolor style with soft edges, translucent washes of color, and an ethereal dreamy quality",
+        "minimalist": "illustrated in a minimalist Japanese art style with clean precise lines, a limited refined color palette, and elegant simplicity",
+        "realistic": "depicted in a realistic digital art style with careful attention to lighting, natural proportions, and cinematic composition",
+        "ghibli": "rendered in the warm, whimsical style of Studio Ghibli with rich detailed backgrounds, expressive characters, and a sense of wonder"
+    }
 
     def __init__(self):
-        # Use GEMINI_API_KEY or fall back to GOOGLE_AI_API_KEY
-        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_AI_API_KEY")
-        if api_key:
-            self.client = genai.Client(api_key=api_key)
-        else:
-            self.client = None
-        self.model = NANO_BANANA_MODEL
+        self.api_key = ModelConfig.OPENROUTER_API_KEY
+        self.base_url = ModelConfig.OPENROUTER_BASE_URL
+        self.model = ModelConfig.IMAGE_MODEL
 
     @property
     def is_configured(self) -> bool:
         """Check if API is configured"""
-        return self.client is not None
+        return bool(self.api_key)
+
+    async def _call_openrouter_image(
+        self,
+        prompt: str,
+        reference_image: Optional[bytes] = None
+    ) -> Optional[bytes]:
+        """
+        Call OpenRouter API to generate an image.
+
+        Args:
+            prompt: The image generation prompt
+            reference_image: Optional reference image for style consistency
+
+        Returns:
+            Image bytes or None if failed
+        """
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://read-japanese.onrender.com",
+            "X-Title": "Read Japanese"
+        }
+
+        # Build messages with optional reference image
+        messages = []
+
+        if reference_image:
+            # Add reference image as a user message with image
+            ref_b64 = base64.b64encode(reference_image).decode()
+            messages.append({
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/png;base64,{ref_b64}"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": "Use this image as a style reference. Maintain the same artistic style, color palette, and character appearances."
+                    }
+                ]
+            })
+
+        # Add the main prompt
+        messages.append({
+            "role": "user",
+            "content": prompt
+        })
+
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "modalities": ["image"],  # Request image output
+            "max_tokens": 4096
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=headers,
+                    json=payload
+                )
+                response.raise_for_status()
+                result = response.json()
+
+                # Extract image from response
+                if result.get("choices") and len(result["choices"]) > 0:
+                    choice = result["choices"][0]
+                    message = choice.get("message", {})
+
+                    # Check for image in content
+                    content = message.get("content")
+                    if isinstance(content, list):
+                        for part in content:
+                            if part.get("type") == "image_url":
+                                image_url = part.get("image_url", {}).get("url", "")
+                                if image_url.startswith("data:"):
+                                    # Extract base64 data
+                                    _, b64_data = image_url.split(",", 1)
+                                    return base64.b64decode(b64_data)
+                    elif isinstance(content, str) and content.startswith("data:"):
+                        # Direct base64 image
+                        _, b64_data = content.split(",", 1)
+                        return base64.b64decode(b64_data)
+
+                    # Check for image in tool calls or other formats
+                    if "image" in message:
+                        image_data = message["image"]
+                        if isinstance(image_data, str):
+                            return base64.b64decode(image_data)
+
+                logger.error(f"No image in response: {result}")
+                return None
+
+        except httpx.HTTPStatusError as e:
+            logger.error(f"OpenRouter API error: {e.response.status_code} - {e.response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"Image generation failed: {e}")
+            return None
+
+    async def generate_from_description(
+        self,
+        description: str,
+        visual_tags: Optional[str] = None,
+        character_descriptions: Optional[dict] = None,
+        color_palette: Optional[str] = None,
+        style: str = "anime",
+        aspect_ratio: str = "16:9",
+        reference_image: Optional[bytes] = None,
+        filename_prefix: str = "image"
+    ) -> Optional[dict]:
+        """
+        Generate an image from a synthesized description with optional reference.
+
+        Args:
+            description: Pre-synthesized image description from ImageDescriber
+            visual_tags: Cinematic visual tags (lighting, angle, composition)
+            character_descriptions: Dict of character name -> visual description
+            color_palette: Color mood/palette description
+            style: Art style name
+            aspect_ratio: Image aspect ratio
+            reference_image: Optional reference image bytes for style consistency
+            filename_prefix: Prefix for saved filename
+
+        Returns:
+            Dict with url, model, model_name, image_bytes, or None if failed
+        """
+        if not self.is_configured:
+            logger.warning("OpenRouter API key not configured")
+            return None
+
+        logger.info(f"Generating image from description (aspect ratio: {aspect_ratio})")
+
+        # Build narrative prompt
+        style_narrative = self.STYLE_NARRATIVES.get(style, self.STYLE_NARRATIVES["anime"])
+
+        # Build character context as narrative
+        char_narrative = ""
+        if character_descriptions:
+            char_parts = [f"{name} appears as {desc}" for name, desc in character_descriptions.items()]
+            char_narrative = f"\n\nThe characters are: {'; '.join(char_parts)}."
+
+        # Add visual tags if provided
+        visual_context = ""
+        if visual_tags:
+            visual_context = f"\n\nVisual style: {visual_tags}"
+
+        prompt = f"""Generate an illustration for a Japanese graded reader story.
+
+Scene: {description}{char_narrative}{visual_context}
+
+The overall color mood is {color_palette or 'warm and inviting'}. The image is {style_narrative}.
+
+The composition should feel like a key moment from a storybook, with careful attention to atmosphere and emotional resonance. No text, letters, or writing should appear in the image.
+
+Aspect ratio: {aspect_ratio}"""
+
+        image_bytes = await self._call_openrouter_image(prompt, reference_image)
+
+        if image_bytes:
+            image_path = self._save_image_with_prefix(image_bytes, filename_prefix)
+            return {
+                "url": image_path,
+                "model": self.model,
+                "model_name": "Gemini Image (OpenRouter)",
+                "image_bytes": image_bytes
+            }
+
+        return None
 
     async def generate_cover(
         self,
@@ -47,152 +223,38 @@ class ImageGenerator:
         aspect_ratio: str = "4:5"
     ) -> Optional[dict]:
         """
-        Generate a cover image for a story.
-
-        Args:
-            story_title: The story title
-            story_summary: Brief summary of the story
-            genre: Story genre
-            jlpt_level: JLPT level (for style hints)
-            style: Art style ("anime", "watercolor", "minimalist", "realistic")
-            aspect_ratio: Image aspect ratio (default "4:5" to match thumbnail)
-                Options: "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
-
-        Returns:
-            Dict with url, model, model_name, or None if generation failed
+        Generate a cover image for a story (legacy method).
         """
         if not self.is_configured:
-            logger.warning("Google AI API key not configured")
+            logger.warning("OpenRouter API key not configured")
             return None
 
         logger.info(f"Generating cover for: {story_title} (aspect ratio: {aspect_ratio})")
 
-        prompt = self._build_prompt(story_title, story_summary, genre, style)
+        style_narrative = self.STYLE_NARRATIVES.get(style, self.STYLE_NARRATIVES["anime"])
 
-        try:
-            # Generate image using Nano Banana (Gemini Image)
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_modalities=["IMAGE", "TEXT"],
-                    image_config=types.ImageConfig(
-                        aspect_ratio=aspect_ratio
-                    )
-                )
-            )
+        prompt = f"""Generate a book cover illustration for a Japanese graded reader story.
 
-            # Extract image from response
-            if not response.candidates or not response.candidates[0].content.parts:
-                logger.error("No images generated")
-                return None
+The story is called "{story_title}" and is a {genre} story. {story_summary}
 
-            for part in response.candidates[0].content.parts:
-                if hasattr(part, 'inline_data') and part.inline_data:
-                    image_data = part.inline_data.data
-                    # Handle both bytes and base64-encoded string
-                    if isinstance(image_data, bytes):
-                        image_bytes = image_data
-                    else:
-                        image_bytes = base64.b64decode(image_data)
-                    # Save the image
-                    image_path = self._save_image(image_bytes, story_title)
-                    return {
-                        "url": image_path,
-                        "model": self.model,
-                        "model_name": "Nano Banana"
-                    }
+The illustration is {style_narrative}. It should capture the essence and mood of the story in a single compelling image.
 
-            logger.error("No image data in response")
-            return None
+The composition is vertical (portrait orientation), suitable for a book cover. No text, letters, or writing should appear in the image. The illustration should be professional quality, culturally appropriate for Japan, and evocative of the story's themes.
 
-        except Exception as e:
-            logger.error(f"Image generation failed: {e}")
-            return None
+Aspect ratio: {aspect_ratio}"""
 
-    def _build_prompt(
-        self,
-        title: str,
-        summary: str,
-        genre: str,
-        style: str
-    ) -> str:
-        """Build DALL-E prompt for cover generation"""
-        style_descriptions = {
-            "anime": "in beautiful anime/manga art style, soft colors, detailed backgrounds",
-            "watercolor": "in soft watercolor illustration style, dreamy and artistic",
-            "minimalist": "in minimalist Japanese art style, clean lines, limited color palette",
-            "realistic": "in realistic digital art style, cinematic lighting",
-            "ghibli": "in Studio Ghibli inspired style, whimsical and detailed"
-        }
+        image_bytes = await self._call_openrouter_image(prompt)
 
-        style_desc = style_descriptions.get(style, style_descriptions["anime"])
+        if image_bytes:
+            image_path = self._save_image(image_bytes, story_title)
+            return {
+                "url": image_path,
+                "model": self.model,
+                "model_name": "Gemini Image (OpenRouter)",
+                "image_bytes": image_bytes
+            }
 
-        return f"""Create a book cover illustration for a Japanese graded reader story.
-
-Title: "{title}"
-Genre: {genre}
-Story: {summary}
-
-Style: {style_desc}
-
-Requirements:
-- Vertical book cover composition (portrait orientation)
-- No text or letters in the image
-- Evoke the mood and setting of the story
-- Suitable for a Japanese language learning book
-- High quality, professional illustration
-- Culturally appropriate imagery"""
-
-    def _save_image(self, image_data: bytes, title: str, max_size: int = 800, quality: int = 85) -> str:
-        """Save original and optimized image bytes to file
-
-        Args:
-            image_data: Raw image bytes
-            title: Title for filename
-            max_size: Maximum dimension (width or height) in pixels
-            quality: WebP quality (1-100)
-        """
-        import re
-        import uuid
-        import io
-        from PIL import Image
-
-        # Create safe filename from title
-        safe_title = re.sub(r'[^\w\s-]', '', title.lower())
-        safe_title = re.sub(r'[-\s]+', '_', safe_title)
-        base_filename = f"cover_{safe_title}_{uuid.uuid4().hex[:8]}"
-
-        # Ensure directories exist
-        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-        ORIGINALS_DIR.mkdir(parents=True, exist_ok=True)
-
-        # Save original PNG
-        original_path = ORIGINALS_DIR / f"{base_filename}.png"
-        with open(original_path, "wb") as f:
-            f.write(image_data)
-
-        # Open and optimize the image
-        img = Image.open(io.BytesIO(image_data))
-
-        # Convert to RGB if necessary (WebP doesn't support all modes)
-        if img.mode in ('RGBA', 'P'):
-            img = img.convert('RGB')
-
-        # Resize if larger than max_size while preserving aspect ratio
-        if max(img.size) > max_size:
-            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-
-        # Save as optimized WebP
-        optimized_path = IMAGES_DIR / f"{base_filename}.webp"
-        img.save(optimized_path, 'WEBP', quality=quality, method=6)
-
-        original_size = len(image_data)
-        final_size = optimized_path.stat().st_size
-        logger.info(f"Image saved: original {original_size/1024:.1f}KB -> optimized {final_size/1024:.1f}KB")
-
-        # Return the CDN path to optimized version
-        return f"/cdn/images/{base_filename}.webp"
+        return None
 
     async def generate_chapter_image(
         self,
@@ -204,104 +266,122 @@ Requirements:
         aspect_ratio: str = "16:9"
     ) -> Optional[dict]:
         """
-        Generate an illustration for a story chapter.
-
-        Args:
-            chapter_title: The chapter title
-            chapter_content: Brief description or text of the chapter
-            story_title: The overall story title
-            genre: Story genre
-            style: Art style
-            aspect_ratio: Image aspect ratio (default "16:9" for landscape chapter images)
-
-        Returns:
-            Dict with url, model, model_name, or None if generation failed
+        Generate an illustration for a story chapter (legacy method).
         """
         if not self.is_configured:
-            logger.warning("Google AI API key not configured")
+            logger.warning("OpenRouter API key not configured")
             return None
 
-        logger.info(f"Generating chapter image for: {chapter_title} (aspect ratio: {aspect_ratio})")
+        logger.info(f"Generating chapter image for: {chapter_title}")
 
-        style_descriptions = {
-            "anime": "in beautiful anime/manga art style, soft colors, detailed backgrounds",
-            "watercolor": "in soft watercolor illustration style, dreamy and artistic",
-            "minimalist": "in minimalist Japanese art style, clean lines, limited color palette",
-            "realistic": "in realistic digital art style, cinematic lighting",
-            "ghibli": "in Studio Ghibli inspired style, whimsical and detailed"
-        }
+        style_narrative = self.STYLE_NARRATIVES.get(style, self.STYLE_NARRATIVES["anime"])
 
-        style_desc = style_descriptions.get(style, style_descriptions["anime"])
+        prompt = f"""Generate an illustration for a chapter in a Japanese graded reader story.
 
-        prompt = f"""Create an illustration for a chapter in a Japanese graded reader story.
+The story "{story_title}" is a {genre} story. This chapter, "{chapter_title}", depicts the following scene: {chapter_content}
 
-Story: "{story_title}"
-Chapter: "{chapter_title}"
-Genre: {genre}
-Scene: {chapter_content}
+The illustration is {style_narrative}. It should capture a key moment from this chapter with careful attention to atmosphere and emotional resonance.
 
-Style: {style_desc}
+The composition is landscape (horizontal), suitable for a chapter illustration. No text, letters, or writing should appear in the image. The illustration should be professional quality and culturally appropriate for Japan.
 
-Requirements:
-- Landscape composition
-- No text or letters in the image
-- Evoke the mood and setting of this chapter
-- Suitable for a Japanese language learning book
-- High quality, professional illustration
-- Culturally appropriate imagery for Japan"""
+Aspect ratio: {aspect_ratio}"""
 
-        try:
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_modalities=["IMAGE", "TEXT"],
-                    image_config=types.ImageConfig(
-                        aspect_ratio=aspect_ratio
-                    )
-                )
-            )
+        image_bytes = await self._call_openrouter_image(prompt)
 
-            if not response.candidates or not response.candidates[0].content.parts:
-                logger.error("No images generated for chapter")
-                return None
+        if image_bytes:
+            image_path = self._save_chapter_image(image_bytes, story_title, chapter_title)
+            return {
+                "url": image_path,
+                "model": self.model,
+                "model_name": "Gemini Image (OpenRouter)",
+                "image_bytes": image_bytes
+            }
 
-            for part in response.candidates[0].content.parts:
-                if hasattr(part, 'inline_data') and part.inline_data:
-                    image_data = part.inline_data.data
-                    # Handle both bytes and base64-encoded string
-                    if isinstance(image_data, bytes):
-                        image_bytes = image_data
-                    else:
-                        image_bytes = base64.b64decode(image_data)
-                    image_path = self._save_chapter_image(
-                        image_bytes,
-                        story_title,
-                        chapter_title
-                    )
-                    return {
-                        "url": image_path,
-                        "model": self.model,
-                        "model_name": "Nano Banana"
-                    }
+        return None
 
-            logger.error("No image data in response")
-            return None
+    def _save_image_with_prefix(
+        self,
+        image_data: bytes,
+        prefix: str,
+        max_size: int = 800,
+        quality: int = 85
+    ) -> str:
+        """Save image with custom prefix"""
+        import re
+        import uuid
+        import io
+        from PIL import Image
 
-        except Exception as e:
-            logger.error(f"Chapter image generation failed: {e}")
-            return None
+        safe_prefix = re.sub(r'[^\w\s-]', '', prefix.lower())
+        safe_prefix = re.sub(r'[-\s]+', '_', safe_prefix)
+        base_filename = f"{safe_prefix}_{uuid.uuid4().hex[:8]}"
 
-    def _save_chapter_image(self, image_data: bytes, story_title: str, chapter_title: str, max_size: int = 800, quality: int = 85) -> str:
-        """Save original and optimized chapter image bytes to file
+        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+        ORIGINALS_DIR.mkdir(parents=True, exist_ok=True)
 
-        Args:
-            image_data: Raw image bytes
-            story_title: Story title for filename
-            chapter_title: Chapter title for filename
-            max_size: Maximum dimension (width or height) in pixels
-            quality: WebP quality (1-100)
-        """
+        # Save original PNG
+        original_path = ORIGINALS_DIR / f"{base_filename}.png"
+        with open(original_path, "wb") as f:
+            f.write(image_data)
+
+        # Optimize
+        img = Image.open(io.BytesIO(image_data))
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+        if max(img.size) > max_size:
+            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+
+        optimized_path = IMAGES_DIR / f"{base_filename}.webp"
+        img.save(optimized_path, 'WEBP', quality=quality, method=6)
+
+        original_size = len(image_data)
+        final_size = optimized_path.stat().st_size
+        logger.info(f"Image saved: original {original_size/1024:.1f}KB -> optimized {final_size/1024:.1f}KB")
+
+        return f"/cdn/images/{base_filename}.webp"
+
+    def _save_image(self, image_data: bytes, title: str, max_size: int = 800, quality: int = 85) -> str:
+        """Save original and optimized image bytes to file"""
+        import re
+        import uuid
+        import io
+        from PIL import Image
+
+        safe_title = re.sub(r'[^\w\s-]', '', title.lower())
+        safe_title = re.sub(r'[-\s]+', '_', safe_title)
+        base_filename = f"cover_{safe_title}_{uuid.uuid4().hex[:8]}"
+
+        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+        ORIGINALS_DIR.mkdir(parents=True, exist_ok=True)
+
+        original_path = ORIGINALS_DIR / f"{base_filename}.png"
+        with open(original_path, "wb") as f:
+            f.write(image_data)
+
+        img = Image.open(io.BytesIO(image_data))
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+        if max(img.size) > max_size:
+            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+
+        optimized_path = IMAGES_DIR / f"{base_filename}.webp"
+        img.save(optimized_path, 'WEBP', quality=quality, method=6)
+
+        original_size = len(image_data)
+        final_size = optimized_path.stat().st_size
+        logger.info(f"Image saved: original {original_size/1024:.1f}KB -> optimized {final_size/1024:.1f}KB")
+
+        return f"/cdn/images/{base_filename}.webp"
+
+    def _save_chapter_image(
+        self,
+        image_data: bytes,
+        story_title: str,
+        chapter_title: str,
+        max_size: int = 800,
+        quality: int = 85
+    ) -> str:
+        """Save original and optimized chapter image bytes to file"""
         import re
         import uuid
         import io
@@ -313,27 +393,19 @@ Requirements:
         safe_chapter = re.sub(r'[-\s]+', '_', safe_chapter)
         base_filename = f"chapter_{safe_story}_{safe_chapter}_{uuid.uuid4().hex[:8]}"
 
-        # Ensure directories exist
         IMAGES_DIR.mkdir(parents=True, exist_ok=True)
         ORIGINALS_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Save original PNG
         original_path = ORIGINALS_DIR / f"{base_filename}.png"
         with open(original_path, "wb") as f:
             f.write(image_data)
 
-        # Open and optimize the image
         img = Image.open(io.BytesIO(image_data))
-
-        # Convert to RGB if necessary (WebP doesn't support all modes)
         if img.mode in ('RGBA', 'P'):
             img = img.convert('RGB')
-
-        # Resize if larger than max_size while preserving aspect ratio
         if max(img.size) > max_size:
             img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
 
-        # Save as optimized WebP
         optimized_path = IMAGES_DIR / f"{base_filename}.webp"
         img.save(optimized_path, 'WEBP', quality=quality, method=6)
 
@@ -342,77 +414,3 @@ Requirements:
         logger.info(f"Chapter image saved: original {original_size/1024:.1f}KB -> optimized {final_size/1024:.1f}KB")
 
         return f"/cdn/images/{base_filename}.webp"
-
-    async def generate_scene_image(
-        self,
-        scene_description: str,
-        style: str = "anime"
-    ) -> Optional[str]:
-        """
-        Generate an illustration for a specific scene.
-
-        Args:
-            scene_description: Description of the scene
-            style: Art style
-
-        Returns:
-            Local path to the saved image
-        """
-        if not self.is_configured:
-            return None
-
-        style_descriptions = {
-            "anime": "anime illustration style",
-            "watercolor": "soft watercolor style",
-            "minimalist": "minimalist Japanese art"
-        }
-
-        style_desc = style_descriptions.get(style, "anime style")
-
-        prompt = f"""Illustrate this scene from a Japanese story, {style_desc}:
-
-{scene_description}
-
-Requirements:
-- No text or letters
-- Horizontal landscape composition
-- Detailed and expressive
-- Suitable for a language learning book"""
-
-        try:
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_modalities=["IMAGE", "TEXT"]
-                )
-            )
-
-            if not response.candidates or not response.candidates[0].content.parts:
-                return None
-
-            for part in response.candidates[0].content.parts:
-                if hasattr(part, 'inline_data') and part.inline_data:
-                    image_data = part.inline_data.data
-                    # Handle both bytes and base64-encoded string
-                    if isinstance(image_data, bytes):
-                        image_bytes = image_data
-                    else:
-                        image_bytes = base64.b64decode(image_data)
-
-                    import uuid
-                    filename = f"scene_{uuid.uuid4().hex[:12]}.png"
-                    IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-                    filepath = IMAGES_DIR / filename
-
-                    with open(filepath, "wb") as f:
-                        f.write(image_bytes)
-
-                    return f"/cdn/images/{filename}"
-
-            return None
-
-        except Exception as e:
-            logger.error(f"Scene image generation failed: {e}")
-            return None
-

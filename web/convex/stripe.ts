@@ -1,0 +1,212 @@
+"use node";
+
+import { v } from "convex/values";
+import { action } from "./_generated/server";
+import { internal } from "./_generated/api";
+import Stripe from "stripe";
+
+// ============================================
+// STRIPE CONFIGURATION
+// ============================================
+
+// Price IDs for each tier (you'll set these in Stripe Dashboard)
+const PRICE_IDS: Record<"basic" | "pro" | "unlimited", string | undefined> = {
+  basic: process.env.STRIPE_PRICE_BASIC,
+  pro: process.env.STRIPE_PRICE_PRO,
+  unlimited: process.env.STRIPE_PRICE_UNLIMITED,
+};
+
+// Tier from price ID (reverse lookup)
+const TIER_FROM_PRICE: Record<string, "basic" | "pro" | "unlimited"> = {};
+if (PRICE_IDS.basic) TIER_FROM_PRICE[PRICE_IDS.basic] = "basic";
+if (PRICE_IDS.pro) TIER_FROM_PRICE[PRICE_IDS.pro] = "pro";
+if (PRICE_IDS.unlimited) TIER_FROM_PRICE[PRICE_IDS.unlimited] = "unlimited";
+
+function getStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+  }
+  return new Stripe(key);
+}
+
+function getTierFromPriceId(priceId: string): "basic" | "pro" | "unlimited" | null {
+  return TIER_FROM_PRICE[priceId] || null;
+}
+
+// ============================================
+// CHECKOUT ACTIONS
+// ============================================
+
+// Create a checkout session for subscription
+export const createCheckoutSession = action({
+  args: {
+    userId: v.string(),
+    tier: v.union(v.literal("basic"), v.literal("pro"), v.literal("unlimited")),
+    successUrl: v.string(),
+    cancelUrl: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ sessionId: string; url: string | null }> => {
+    const stripe = getStripe();
+
+    const priceId = PRICE_IDS[args.tier];
+    if (!priceId) {
+      throw new Error(`No price configured for tier: ${args.tier}`);
+    }
+
+    // Check if user already has a Stripe customer ID
+    const existingSub = await ctx.runQuery(internal.stripeHelpers.getSubscriptionByUserId, {
+      userId: args.userId,
+    });
+
+    let customerId: string | undefined = existingSub?.stripeCustomerId ?? undefined;
+
+    // Create customer if doesn't exist
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        metadata: { userId: args.userId },
+      });
+      customerId = customer.id;
+    }
+
+    // Create checkout session
+    const checkoutSession = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "subscription",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: args.successUrl,
+      cancel_url: args.cancelUrl,
+      subscription_data: {
+        metadata: { userId: args.userId },
+      },
+      metadata: {
+        userId: args.userId,
+        tier: args.tier,
+      },
+    });
+
+    return { sessionId: checkoutSession.id, url: checkoutSession.url };
+  },
+});
+
+// Create a customer portal session for managing subscription
+export const createPortalSession = action({
+  args: {
+    userId: v.string(),
+    returnUrl: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ url: string }> => {
+    const stripe = getStripe();
+
+    const existingSub = await ctx.runQuery(internal.stripeHelpers.getSubscriptionByUserId, {
+      userId: args.userId,
+    });
+
+    if (!existingSub?.stripeCustomerId) {
+      throw new Error("No Stripe customer found for this user");
+    }
+
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: existingSub.stripeCustomerId,
+      return_url: args.returnUrl,
+    });
+
+    return { url: portalSession.url };
+  },
+});
+
+// ============================================
+// WEBHOOK PROCESSING ACTION
+// ============================================
+
+// Process Stripe webhook (called by HTTP endpoint)
+export const processWebhook = action({
+  args: {
+    body: v.string(),
+    signature: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; error?: string }> => {
+    const stripe = getStripe();
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      return { success: false, error: "Webhook secret not configured" };
+    }
+
+    let event: Stripe.Event;
+
+    try {
+      event = stripe.webhooks.constructEvent(args.body, args.signature, webhookSecret);
+    } catch {
+      return { success: false, error: "Invalid signature" };
+    }
+
+    // Handle the event
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.userId;
+        const tier = session.metadata?.tier as "basic" | "pro" | "unlimited" | undefined;
+
+        if (userId && tier && session.subscription) {
+          const subscriptionData = await stripe.subscriptions.retrieve(
+            session.subscription as string
+          ) as unknown as { id: string; current_period_end: number };
+
+          await ctx.runMutation(internal.stripeHelpers.handleSubscriptionCreated, {
+            userId,
+            stripeCustomerId: session.customer as string,
+            stripeSubscriptionId: subscriptionData.id,
+            tier,
+            currentPeriodEnd: subscriptionData.current_period_end * 1000,
+          });
+        }
+        break;
+      }
+
+      case "customer.subscription.updated": {
+        const subscriptionData = event.data.object;
+        const priceId = (subscriptionData as { items?: { data?: Array<{ price?: { id?: string } }> } }).items?.data?.[0]?.price?.id;
+        const tier = priceId ? getTierFromPriceId(priceId) : null;
+
+        if (tier) {
+          const subStatus = (subscriptionData as { status?: string }).status;
+          let status: "active" | "cancelled" | "expired" = "active";
+          if (subStatus === "canceled") {
+            status = "cancelled";
+          } else if (subStatus === "past_due" || subStatus === "unpaid") {
+            status = "expired";
+          }
+
+          await ctx.runMutation(internal.stripeHelpers.handleSubscriptionUpdated, {
+            stripeSubscriptionId: (subscriptionData as { id: string }).id,
+            tier,
+            status,
+            currentPeriodEnd: ((subscriptionData as { current_period_end?: number }).current_period_end ?? 0) * 1000,
+          });
+        }
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const subscriptionData = event.data.object;
+
+        await ctx.runMutation(internal.stripeHelpers.handleSubscriptionCancelled, {
+          stripeSubscriptionId: (subscriptionData as { id: string }).id,
+        });
+        break;
+      }
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+
+    return { success: true };
+  },
+});

@@ -9,6 +9,8 @@ from typing import Optional
 from .story_generator import StoryGenerator
 from .image_generator import ImageGenerator
 from .audio_generator import AudioGenerator
+from .image_describer import get_image_describer
+from .vocabulary_validator import get_validator
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +28,15 @@ class StoryPipeline:
         self.story_generator = StoryGenerator()
         self.image_generator = ImageGenerator()
         self.audio_generator = AudioGenerator()
+        self.image_describer = get_image_describer()
 
     async def generate_complete_story(
         self,
         jlpt_level: str,
-        genre: str,
+        genre: Optional[str] = None,
         theme: Optional[str] = None,
+        user_prompt: Optional[str] = None,
+        refine_prompt: bool = True,
         num_chapters: int = 5,
         words_per_chapter: int = 100,
         voice: str = "makoto",
@@ -40,15 +45,18 @@ class StoryPipeline:
         generate_image: bool = True,
         generate_chapter_images: bool = True,
         align_audio: bool = True,
-        tokenize: bool = True
+        tokenize: bool = True,
+        max_regeneration_attempts: int = 3
     ) -> dict:
         """
         Generate a complete story with all assets.
 
         Args:
             jlpt_level: Target JLPT level (N5-N1)
-            genre: Story genre
+            genre: Story genre (optional if user_prompt provided)
             theme: Optional theme/topic
+            user_prompt: User's story idea (will be refined if refine_prompt=True)
+            refine_prompt: Whether to refine the user's prompt using AI
             num_chapters: Number of chapters
             words_per_chapter: Approximate characters per chapter
             voice: TTS voice name
@@ -58,56 +66,94 @@ class StoryPipeline:
             generate_chapter_images: Whether to generate chapter illustrations
             align_audio: Whether to align audio with text for word-level timestamps
             tokenize: Whether to tokenize the story text
+            max_regeneration_attempts: Max attempts to regenerate if vocabulary validation fails
 
         Returns:
             Complete story dict with all generated content
         """
-        logger.info(f"Starting story pipeline: {jlpt_level} {genre}")
+        logger.info(f"Starting story pipeline: {jlpt_level} {genre or 'auto'}")
 
-        # Step 1: Generate story content
-        logger.info("Step 1/6: Generating story content...")
-        story = await self.story_generator.generate_story(
+        # Step 1: Generate story content with regeneration loop
+        story = await self._generate_with_validation_loop(
             jlpt_level=jlpt_level,
             genre=genre,
             theme=theme,
+            user_prompt=user_prompt,
+            refine_prompt=refine_prompt,
             num_chapters=num_chapters,
-            words_per_chapter=words_per_chapter
+            words_per_chapter=words_per_chapter,
+            tokenize=tokenize,
+            max_attempts=max_regeneration_attempts
         )
 
-        # Step 2: Tokenize the story
-        if tokenize:
-            logger.info("Step 2/6: Tokenizing story content...")
-            story = await self._tokenize_story(story)
-        else:
-            logger.info("Step 2/6: Skipping tokenization")
+        # Step 3: Generate image descriptions (all at once for consistency)
+        image_descriptions = None
+        cover_image_bytes = None
 
-        # Step 3: Generate cover image
+        if (generate_image or generate_chapter_images) and self.image_generator.is_configured:
+            logger.info("Step 3/6: Generating image descriptions...")
+            try:
+                image_descriptions = await self.image_describer.describe_all_images(story)
+                story["imageDescriptions"] = image_descriptions
+                logger.info(f"  Generated descriptions for cover + {len(image_descriptions.get('chapters', []))} chapters")
+            except Exception as e:
+                logger.warning(f"  Image description generation failed: {e}, using fallback")
+                image_descriptions = None
+        else:
+            logger.info("Step 3/6: Skipping image description generation")
+
+        # Step 4: Generate cover image
         if generate_image and self.image_generator.is_configured:
-            logger.info("Step 3/6: Generating cover image...")
-            image_result = await self.image_generator.generate_cover(
-                story_title=story["metadata"]["title"],
-                story_summary=story["metadata"]["summary"],
-                genre=genre,
-                jlpt_level=jlpt_level,
-                style=image_style
-            )
+            logger.info("Step 4/6: Generating cover image...")
+            if image_descriptions:
+                # Use synthesized description for consistency
+                # Handle both new format (dict with description/visual_tags) and old format (string)
+                cover_data = image_descriptions.get("cover", {})
+                if isinstance(cover_data, dict):
+                    cover_description = cover_data.get("description", story["metadata"]["summary"])
+                    cover_visual_tags = cover_data.get("visual_tags")
+                else:
+                    cover_description = cover_data or story["metadata"]["summary"]
+                    cover_visual_tags = None
+
+                image_result = await self.image_generator.generate_from_description(
+                    description=cover_description,
+                    visual_tags=cover_visual_tags,
+                    character_descriptions=image_descriptions.get("characterDescriptions"),
+                    color_palette=image_descriptions.get("colorPalette"),
+                    style=image_style,
+                    aspect_ratio="4:5",
+                    filename_prefix=f"cover_{story['id']}"
+                )
+            else:
+                # Fallback to legacy method
+                image_result = await self.image_generator.generate_cover(
+                    story_title=story["metadata"]["title"],
+                    story_summary=story["metadata"]["summary"],
+                    genre=genre,
+                    jlpt_level=jlpt_level,
+                    style=image_style
+                )
             if image_result:
                 story["metadata"]["coverImageURL"] = image_result["url"]
                 story["metadata"]["coverImageModel"] = image_result["model"]
                 story["metadata"]["coverImageModelName"] = image_result["model_name"]
+                cover_image_bytes = image_result.get("image_bytes")  # Save for reference
         else:
-            logger.info("Step 3/6: Skipping cover image generation (not configured or disabled)")
+            logger.info("Step 4/6: Skipping cover image generation (not configured or disabled)")
 
-        # Step 4: Generate chapter images
+        # Step 5: Generate chapter images
         if generate_chapter_images and self.image_generator.is_configured:
-            logger.info("Step 4/6: Generating chapter images...")
-            story = await self._generate_chapter_images(story, genre, image_style)
+            logger.info("Step 5/6: Generating chapter images...")
+            story = await self._generate_chapter_images(
+                story, genre, image_style, image_descriptions, cover_image_bytes
+            )
         else:
-            logger.info("Step 4/6: Skipping chapter image generation")
+            logger.info("Step 5/6: Skipping chapter image generation")
 
-        # Step 5: Generate audio
+        # Step 6: Generate audio
         if generate_audio and self.audio_generator.is_configured:
-            logger.info("Step 5/6: Generating audio narration...")
+            logger.info("Step 6/7: Generating audio narration...")
             audio_result = await self.audio_generator.generate_story_audio(
                 story_id=story["id"],
                 chapters=story["chapters"],
@@ -117,14 +163,14 @@ class StoryPipeline:
                 story["metadata"]["audioURL"] = audio_result
                 story["metadata"]["audioVoiceName"] = voice.capitalize()
         else:
-            logger.info("Step 5/6: Skipping audio generation")
+            logger.info("Step 6/7: Skipping audio generation")
 
-        # Step 6: Align audio with text
+        # Step 7: Align audio with text
         if align_audio and generate_audio and story["metadata"].get("audioURL"):
-            logger.info("Step 6/6: Aligning audio with text...")
+            logger.info("Step 7/7: Aligning audio with text...")
             story = await self._align_audio(story)
         else:
-            logger.info("Step 6/6: Skipping audio alignment")
+            logger.info("Step 7/7: Skipping audio alignment")
 
         # Save story to file
         await self._save_story(story)
@@ -177,6 +223,245 @@ class StoryPipeline:
             ]
         return result
 
+    async def _validate_vocabulary(self, story: dict, jlpt_level: str) -> dict:
+        """Validate story vocabulary against JLPT level"""
+        logger.info(f"Validating vocabulary for {jlpt_level}...")
+
+        # Collect all tokens from story
+        all_tokens = []
+        for chapter in story.get("chapters", []):
+            # Include title tokens
+            if chapter.get("titleTokens"):
+                all_tokens.extend(chapter["titleTokens"])
+            # Include content tokens
+            for segment in chapter.get("content", []):
+                if segment.get("tokens"):
+                    all_tokens.extend(segment["tokens"])
+
+        # Include story title tokens
+        if story["metadata"].get("titleTokens"):
+            all_tokens.extend(story["metadata"]["titleTokens"])
+
+        if not all_tokens:
+            logger.warning("No tokens found for validation")
+            return story
+
+        # Run validation
+        validator = get_validator()
+        result = validator.validate_tokens(all_tokens, jlpt_level)
+
+        # Add validation result to story metadata
+        story["metadata"]["vocabularyValidation"] = validator.to_dict(result)
+
+        # Log result
+        if result.passed:
+            logger.info(f"  ✓ Vocabulary validation passed: {result.difficulty_score:.1%} appropriate")
+        else:
+            logger.warning(f"  ✗ Vocabulary validation failed: {result.message}")
+            if result.above_level_words:
+                logger.warning(f"    Above level words: {', '.join(result.above_level_words[:10])}")
+            if result.below_level_words:
+                logger.warning(f"    Below level words: {', '.join(result.below_level_words[:10])}")
+
+        return story
+
+    async def _generate_with_validation_loop(
+        self,
+        jlpt_level: str,
+        genre: Optional[str],
+        theme: Optional[str],
+        user_prompt: Optional[str],
+        refine_prompt: bool,
+        num_chapters: int,
+        words_per_chapter: int,
+        tokenize: bool,
+        max_attempts: int = 3
+    ) -> dict:
+        """
+        Generate story with validation loop.
+        Regenerates if vocabulary validation fails.
+
+        Args:
+            jlpt_level: Target JLPT level
+            genre: Story genre (optional if user_prompt provided)
+            theme: Optional theme
+            user_prompt: User's story idea
+            refine_prompt: Whether to refine user's prompt
+            num_chapters: Number of chapters
+            words_per_chapter: Words per chapter
+            tokenize: Whether to tokenize
+            max_attempts: Maximum generation attempts
+
+        Returns:
+            Story dict with validation passed (or best attempt if all fail)
+        """
+        import asyncio
+
+        best_story = None
+        best_validation = None
+        refined_params = None
+
+        for attempt in range(1, max_attempts + 1):
+            logger.info(f"Step 1/6: Generating story content (attempt {attempt}/{max_attempts})...")
+
+            if attempt == 1:
+                # First attempt: use user prompt or theme
+                if user_prompt:
+                    # Refine user prompt if requested
+                    if refine_prompt:
+                        refined_params = await self.story_generator.refine_user_prompt(
+                            user_prompt, jlpt_level, genre
+                        )
+                        story = await self.story_generator.generate_story(
+                            jlpt_level=jlpt_level,
+                            genre=refined_params.get("genre", genre or "slice of life"),
+                            theme=refined_params.get("refined_theme", user_prompt),
+                            num_chapters=refined_params.get("num_chapters", num_chapters),
+                            words_per_chapter=refined_params.get("words_per_chapter", words_per_chapter)
+                        )
+                        story["metadata"]["promptRefinement"] = refined_params
+                        story["metadata"]["originalPrompt"] = user_prompt
+                    else:
+                        story = await self.story_generator.generate_story(
+                            jlpt_level=jlpt_level,
+                            genre=genre or "slice of life",
+                            theme=user_prompt,
+                            num_chapters=num_chapters,
+                            words_per_chapter=words_per_chapter
+                        )
+                        story["metadata"]["originalPrompt"] = user_prompt
+                else:
+                    # No user prompt, use theme/genre directly
+                    story = await self.story_generator.generate_story(
+                        jlpt_level=jlpt_level,
+                        genre=genre or "slice of life",
+                        theme=theme,
+                        num_chapters=num_chapters,
+                        words_per_chapter=words_per_chapter
+                    )
+            else:
+                # Subsequent attempts: regenerate with feedback
+                # Use refined parameters if available
+                regen_genre = genre or "slice of life"
+                regen_theme = theme
+                regen_chapters = num_chapters
+                regen_words = words_per_chapter
+
+                if refined_params:
+                    regen_genre = refined_params.get("genre", regen_genre)
+                    regen_theme = refined_params.get("refined_theme", user_prompt or theme)
+                    regen_chapters = refined_params.get("num_chapters", num_chapters)
+                    regen_words = refined_params.get("words_per_chapter", words_per_chapter)
+                elif user_prompt:
+                    regen_theme = user_prompt
+
+                story = await self.story_generator.regenerate_story(
+                    failed_story=best_story,
+                    validation_result=best_validation,
+                    jlpt_level=jlpt_level,
+                    genre=regen_genre,
+                    theme=regen_theme,
+                    num_chapters=regen_chapters,
+                    words_per_chapter=regen_words,
+                    attempt=attempt
+                )
+
+                # Preserve original prompt and refinement info
+                if user_prompt:
+                    story["metadata"]["originalPrompt"] = user_prompt
+                if refined_params:
+                    story["metadata"]["promptRefinement"] = refined_params
+
+            # Tokenize
+            if tokenize:
+                logger.info("Step 2/6: Tokenizing story content...")
+                story = await self._tokenize_story(story)
+
+            # Validate vocabulary
+            if tokenize:
+                story = await self._validate_vocabulary(story, jlpt_level)
+                validation = story["metadata"].get("vocabularyValidation", {})
+
+                # Track best attempt (in case all fail)
+                if best_story is None or self._is_better_validation(validation, best_validation):
+                    best_story = story
+                    best_validation = validation
+
+                # Check if passed
+                if validation.get("passed", False):
+                    logger.info(f"  ✓ Vocabulary validation passed on attempt {attempt}")
+                    story["metadata"]["generationAttempts"] = attempt
+                    return story
+
+                # After 2nd failure, try simplifier before full regeneration
+                if attempt == 2:
+                    logger.info("  Trying sentence simplifier before regeneration...")
+                    problematic_words = (
+                        validation.get("aboveLevelWords", []) +
+                        validation.get("unknownWords", [])
+                    )
+                    if problematic_words:
+                        simplified_story = await self.story_generator.simplify_sentences(
+                            story, problematic_words, jlpt_level
+                        )
+                        # Re-tokenize the simplified story
+                        simplified_story = await self._tokenize_story(simplified_story)
+                        simplified_story = await self._validate_vocabulary(simplified_story, jlpt_level)
+                        simplified_validation = simplified_story["metadata"].get("vocabularyValidation", {})
+
+                        if simplified_validation.get("passed", False):
+                            logger.info(f"  ✓ Simplifier fixed vocabulary issues!")
+                            simplified_story["metadata"]["generationAttempts"] = attempt
+                            simplified_story["metadata"]["simplifierUsed"] = True
+                            return simplified_story
+
+                        # Update best if simplifier improved things
+                        if self._is_better_validation(simplified_validation, best_validation):
+                            best_story = simplified_story
+                            best_validation = simplified_validation
+                            logger.info("  Simplifier improved validation, continuing with attempts...")
+                        else:
+                            logger.info("  Simplifier didn't fix all issues, continuing with regeneration...")
+
+                # Log failure and prepare for retry
+                if attempt < max_attempts:
+                    logger.warning(f"  Vocabulary validation failed, regenerating...")
+                    # Brief pause before retry
+                    await asyncio.sleep(1)
+            else:
+                # No tokenization means no validation
+                story["metadata"]["generationAttempts"] = 1
+                return story
+
+        # All attempts failed, return best attempt
+        logger.warning(f"  All {max_attempts} attempts failed validation, using best attempt")
+        best_story["metadata"]["generationAttempts"] = max_attempts
+        best_story["metadata"]["validationPassedOnRetry"] = False
+        return best_story
+
+    def _is_better_validation(self, new_val: dict, old_val: dict) -> bool:
+        """Compare two validations to determine which is better"""
+        if old_val is None:
+            return True
+
+        # Count how many checks pass
+        new_passes = sum([
+            new_val.get("hasLearningValue", False),
+            new_val.get("notTooHard", False),
+            new_val.get("notTooObscure", False)
+        ])
+        old_passes = sum([
+            old_val.get("hasLearningValue", False),
+            old_val.get("notTooHard", False),
+            old_val.get("notTooObscure", False)
+        ])
+
+        if new_passes != old_passes:
+            return new_passes > old_passes
+
+        # If same number of checks pass, prefer higher readability score
+        return new_val.get("readabilityScore", 0) > old_val.get("readabilityScore", 0)
+
     async def _save_story(self, story: dict) -> None:
         """Save story to JSON file"""
         STORIES_DIR.mkdir(parents=True, exist_ok=True)
@@ -189,25 +474,57 @@ class StoryPipeline:
 
         logger.info(f"Story saved to: {filepath}")
 
-    async def _generate_chapter_images(self, story: dict, genre: str, style: str) -> dict:
-        """Generate images for each chapter"""
+    async def _generate_chapter_images(
+        self,
+        story: dict,
+        genre: str,
+        style: str,
+        image_descriptions: Optional[dict] = None,
+        reference_image: Optional[bytes] = None
+    ) -> dict:
+        """Generate images for each chapter using descriptions and reference image for consistency"""
         import asyncio
+
+        chapter_descriptions = image_descriptions.get("chapters", []) if image_descriptions else []
+        character_descriptions = image_descriptions.get("characterDescriptions") if image_descriptions else None
+        color_palette = image_descriptions.get("colorPalette") if image_descriptions else None
 
         for i, chapter in enumerate(story.get("chapters", [])):
             chapter_title = chapter.get("titleJapanese") or chapter.get("title", f"Chapter {i+1}")
             logger.info(f"  Generating image for chapter {i+1}: {chapter_title}")
 
-            # Extract description from chapter content
-            description = self._extract_chapter_description(chapter)
+            # Use pre-generated description if available
+            if i < len(chapter_descriptions):
+                chapter_data = chapter_descriptions[i]
+                # Handle both new format (dict with description/visual_tags) and old format (string)
+                if isinstance(chapter_data, dict):
+                    description = chapter_data.get("description", "")
+                    visual_tags = chapter_data.get("visual_tags")
+                else:
+                    description = chapter_data
+                    visual_tags = None
 
-            chapter_result = await self.image_generator.generate_chapter_image(
-                chapter_title=chapter_title,
-                chapter_content=description,
-                story_title=story["metadata"]["title"],
-                genre=genre,
-                style=style,
-                aspect_ratio="16:9"
-            )
+                chapter_result = await self.image_generator.generate_from_description(
+                    description=description,
+                    visual_tags=visual_tags,
+                    character_descriptions=character_descriptions,
+                    color_palette=color_palette,
+                    style=style,
+                    aspect_ratio="16:9",
+                    reference_image=reference_image,
+                    filename_prefix=f"chapter_{story['id']}_ch{i+1}"
+                )
+            else:
+                # Fallback to legacy method
+                description = self._extract_chapter_description(chapter)
+                chapter_result = await self.image_generator.generate_chapter_image(
+                    chapter_title=chapter_title,
+                    chapter_content=description,
+                    story_title=story["metadata"]["title"],
+                    genre=genre,
+                    style=style,
+                    aspect_ratio="16:9"
+                )
 
             if chapter_result:
                 chapter["imageURL"] = chapter_result["url"]

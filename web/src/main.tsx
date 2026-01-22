@@ -2,7 +2,9 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
+import { ConvexReactClient } from "convex/react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { router } from "./router.tsx";
 import "./index.css";
@@ -20,14 +22,23 @@ const queryClient = new QueryClient({
 // Create Convex client
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
+// Clerk publishable key
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
+
+if (!clerkPubKey) {
+  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY environment variable");
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <ConvexProvider client={convex}>
-          <RouterProvider router={router} />
-        </ConvexProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+    <ClerkProvider publishableKey={clerkPubKey}>
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <RouterProvider router={router} />
+          </QueryClientProvider>
+        </AuthProvider>
+      </ConvexProviderWithClerk>
+    </ClerkProvider>
   </StrictMode>
 );

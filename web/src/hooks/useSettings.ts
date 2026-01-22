@@ -104,7 +104,7 @@ export function setDevUserEnabled(enabled: boolean) {
 export function useSettings() {
   const { user, isAuthenticated } = useAuth();
 
-  // Use Firebase UID when authenticated, otherwise fall back to anonymous/demo ID
+  // Use Clerk user ID when authenticated, otherwise fall back to anonymous/demo ID
   const userId = isAuthenticated && user ? user.id : getCurrentUserId();
 
   // Sync auth user ID to localStorage so getCurrentUserId() works outside React
