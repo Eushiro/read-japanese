@@ -672,25 +672,33 @@ export function PlacementTestPage() {
                   : "Generating your next question..."}
               </span>
             </div>
-            {/* Skeleton for question type badges */}
-            <div className="flex items-center gap-2 mb-4">
+            {/* Skeleton for question type badges - staggered animation */}
+            <div className="flex items-center gap-2 mb-4 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
               <Skeleton className="h-5 w-20 rounded-full" />
               <Skeleton className="h-4 w-16" />
             </div>
             {/* Skeleton for question text */}
-            <div className="mb-6 space-y-2">
+            <div className="mb-6 space-y-2 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
               <Skeleton className="h-6 w-full" />
               <Skeleton className="h-6 w-3/4" />
             </div>
-            {/* Skeleton for options */}
+            {/* Skeleton for options - staggered */}
             <div className="space-y-3">
-              <Skeleton className="h-14 w-full rounded-xl" />
-              <Skeleton className="h-14 w-full rounded-xl" />
-              <Skeleton className="h-14 w-full rounded-xl" />
-              <Skeleton className="h-14 w-full rounded-xl" />
+              <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                <Skeleton className="h-14 w-full rounded-xl" />
+              </div>
+              <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+                <Skeleton className="h-14 w-full rounded-xl" />
+              </div>
+              <div className="animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+                <Skeleton className="h-14 w-full rounded-xl" />
+              </div>
+              <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
+                <Skeleton className="h-14 w-full rounded-xl" />
+              </div>
             </div>
             {/* Skeleton for button */}
-            <div className="mt-6">
+            <div className="mt-6 animate-fade-in-up" style={{ animationDelay: '600ms' }}>
               <Skeleton className="h-10 w-full rounded-lg" />
             </div>
           </div>
