@@ -284,42 +284,78 @@ interface OpenRouterResponse {
   }>;
 }
 
+// Free models to try in order of preference
+const FREE_MODELS = [
+  "qwen/qwen3-next-80b-a3b-instruct:free",
+  "google/gemini-2.0-flash-exp:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+];
+
 async function callOpenRouter(
   prompt: string,
   systemPrompt: string,
-  model: string = "qwen/qwen3-next-80b-a3b-instruct:free"
+  model: string = FREE_MODELS[0],
+  maxTokens: number = 500
 ): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY environment variable is not set");
   }
 
-  const response = await fetch(OPENROUTER_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      "HTTP-Referer": "https://sanlang.app",
-      "X-Title": "SanLang",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    }),
-  });
+  // Get list of models to try - start with specified model, then fallbacks
+  const modelsToTry = model === FREE_MODELS[0]
+    ? FREE_MODELS
+    : [model, ...FREE_MODELS.filter(m => m !== model)];
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+  let lastError: Error | null = null;
+
+  for (const currentModel of modelsToTry) {
+    try {
+      const response = await fetch(OPENROUTER_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://sanlang.app",
+          "X-Title": "SanLang",
+        },
+        body: JSON.stringify({
+          model: currentModel,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.7,
+          max_tokens: maxTokens,
+        }),
+      });
+
+      if (response.status === 429) {
+        // Rate limited - try next model
+        const errorText = await response.text();
+        console.log(`Model ${currentModel} rate limited, trying next...`);
+        lastError = new Error(`OpenRouter API error: 429 - ${errorText}`);
+        continue;
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = (await response.json()) as OpenRouterResponse;
+      return data.choices[0]?.message?.content ?? "";
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("429")) {
+        lastError = error;
+        continue;
+      }
+      throw error;
+    }
   }
 
-  const data = (await response.json()) as OpenRouterResponse;
-  return data.choices[0]?.message?.content ?? "";
+  // All models failed
+  throw lastError || new Error("All models rate limited");
 }
 
 // ============================================
