@@ -282,11 +282,27 @@ async function callOpenRouter(
   prompt: string,
   systemPrompt: string,
   model: string = DEFAULT_MODEL,
-  maxTokens: number = 500
+  maxTokens: number = 500,
+  jsonMode: boolean = false
 ): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY environment variable is not set");
+  }
+
+  const body: Record<string, unknown> = {
+    model,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: prompt },
+    ],
+    temperature: 0.7,
+    max_tokens: maxTokens,
+  };
+
+  // Enable structured JSON output when needed
+  if (jsonMode) {
+    body.response_format = { type: "json_object" };
   }
 
   const response = await fetch(OPENROUTER_API_URL, {
@@ -297,15 +313,7 @@ async function callOpenRouter(
       "HTTP-Referer": "https://sanlang.app",
       "X-Title": "SanLang",
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.7,
-      max_tokens: maxTokens,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
@@ -936,7 +944,7 @@ ${args.storyContent}
 ---
 Create comprehension questions for the story above, aiming for a total of ${workBudget} work units.`;
 
-    const response = await callOpenRouter(prompt, systemPrompt);
+    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 1500, true);
 
     try {
       const parsed = JSON.parse(response) as { questions: Omit<ComprehensionQuestion, "questionId">[] };
@@ -1153,7 +1161,7 @@ IMPORTANT:
 
     const prompt = `Generate a ${args.questionType} question for a ${languageName} placement test at ${level} level (difficulty: ${args.targetDifficulty.toFixed(1)}).`;
 
-    const response = await callOpenRouter(prompt, systemPrompt);
+    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500, true);
 
     try {
       const parsed = JSON.parse(response) as {
@@ -1257,8 +1265,19 @@ export const getNextQuestionDifficulty = action({
       };
     }
 
-    // Calculate optimal difficulty (slightly above current ability for best information)
-    const targetDifficulty = test.currentAbilityEstimate + 0.3 + (Math.random() * 0.4 - 0.2);
+    // Calculate optimal difficulty based on test progress
+    // Start easy and increase difficulty based on performance
+    let targetDifficulty: number;
+    if (test.questionsAnswered === 0) {
+      // First question: start at lower-middle level (N4 for Japanese, A2 for CEFR)
+      targetDifficulty = -1.0;
+    } else if (test.questionsAnswered < 3) {
+      // Early questions: slightly above current ability but capped low
+      targetDifficulty = Math.min(0, test.currentAbilityEstimate + 0.3);
+    } else {
+      // After initial questions: normal CAT behavior
+      targetDifficulty = test.currentAbilityEstimate + 0.3 + (Math.random() * 0.4 - 0.2);
+    }
     const clampedDifficulty = Math.max(-3, Math.min(3, targetDifficulty));
 
     // Cycle through question types
