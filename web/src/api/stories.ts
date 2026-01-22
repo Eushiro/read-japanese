@@ -1,15 +1,41 @@
 import apiClient from "./client";
-import type { Story, StoryListItem, JLPTLevel } from "@/types/story";
+import type { Story, StoryListItem, ProficiencyLevel } from "@/types/story";
+
+// Backend story types (with jlptLevel instead of level)
+interface BackendStoryListItem extends Omit<StoryListItem, "level"> {
+  jlptLevel: string;
+}
+
+interface BackendStory extends Omit<Story, "metadata"> {
+  metadata: Omit<Story["metadata"], "level"> & { jlptLevel: string };
+}
+
+// Map backend jlptLevel to frontend level
+function mapStoryListItem(item: BackendStoryListItem): StoryListItem {
+  const { jlptLevel, ...rest } = item;
+  return { ...rest, level: jlptLevel as ProficiencyLevel };
+}
+
+function mapStory(story: BackendStory): Story {
+  const { metadata, ...rest } = story;
+  const { jlptLevel, ...metadataRest } = metadata;
+  return {
+    ...rest,
+    metadata: { ...metadataRest, level: jlptLevel as ProficiencyLevel },
+  };
+}
 
 // List all stories (summary view)
-export async function listStories(level?: JLPTLevel): Promise<StoryListItem[]> {
+export async function listStories(level?: ProficiencyLevel): Promise<StoryListItem[]> {
   const endpoint = level ? `/api/stories?level=${level}` : "/api/stories";
-  return apiClient.get<StoryListItem[]>(endpoint);
+  const stories = await apiClient.get<BackendStoryListItem[]>(endpoint);
+  return stories.map(mapStoryListItem);
 }
 
 // Get a single story with full content
 export async function getStory(storyId: string): Promise<Story> {
-  return apiClient.get<Story>(`/api/stories/${storyId}`);
+  const story = await apiClient.get<BackendStory>(`/api/stories/${storyId}`);
+  return mapStory(story);
 }
 
 // Reload stories from disk (admin function)

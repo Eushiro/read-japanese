@@ -9,19 +9,27 @@ import { useSettings } from "@/hooks/useSettings";
 import { getAudioUrl } from "@/api/stories";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Token, JLPTLevel } from "@/types/story";
+import type { Token, ProficiencyLevel } from "@/types/story";
 import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 
-const levelVariantMap: Record<JLPTLevel, "n5" | "n4" | "n3" | "n2" | "n1"> = {
+type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
+
+const levelVariantMap: Record<ProficiencyLevel, BadgeVariant> = {
   N5: "n5",
   N4: "n4",
   N3: "n3",
   N2: "n2",
   N1: "n1",
+  A1: "a1",
+  A2: "a2",
+  B1: "b1",
+  B2: "b2",
+  C1: "c1",
+  C2: "c2",
 };
 
 export function ReaderPage() {
@@ -32,6 +40,7 @@ export function ReaderPage() {
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  const [selectedSegmentText, setSelectedSegmentText] = useState<string | undefined>(undefined);
   const [audioTime, setAudioTime] = useState(0);
   const [manualNavigation, setManualNavigation] = useState(false);
 
@@ -113,7 +122,7 @@ export function ReaderPage() {
   }, [currentChapterIndex, chapters.length]);
 
   const handleTokenClick = useCallback(
-    (token: Token, event: React.MouseEvent) => {
+    (token: Token, event: React.MouseEvent, segmentText?: string) => {
       // Don't show popup for punctuation
       if (token.partOfSpeech === "punctuation" || token.partOfSpeech === "symbol") {
         return;
@@ -125,6 +134,7 @@ export function ReaderPage() {
         y: rect.bottom + 8,
       });
       setSelectedToken(token);
+      setSelectedSegmentText(segmentText);
     },
     []
   );
@@ -205,10 +215,10 @@ export function ReaderPage() {
                 </h1>
                 <div className="flex items-center gap-2 text-sm text-foreground-muted">
                   <Badge
-                    variant={levelVariantMap[story.metadata.jlptLevel]}
+                    variant={levelVariantMap[story.metadata.level]}
                     className="text-xs"
                   >
-                    {story.metadata.jlptLevel}
+                    {story.metadata.level}
                   </Badge>
                   <span>{story.metadata.genre}</span>
                 </div>
@@ -273,7 +283,7 @@ export function ReaderPage() {
               totalChapters={chapters.length}
               showFurigana={showFurigana}
               onTokenClick={handleTokenClick}
-              currentAudioTime={audioTime}
+              currentAudioTime={story.metadata.audioURL ? audioTime : undefined}
             />
           ) : (
             <div className="text-center text-foreground-muted py-12">
@@ -336,6 +346,7 @@ export function ReaderPage() {
           position={popupPosition}
           storyId={story.id}
           storyTitle={story.metadata.title}
+          sourceContext={selectedSegmentText}
           onClose={handleClosePopup}
         />
       )}

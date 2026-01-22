@@ -5,6 +5,8 @@ import { api } from "../../convex/_generated/api";
 import { StoryCard } from "@/components/library/StoryCard";
 import { SearchBar } from "@/components/library/SearchBar";
 import { LevelFilter } from "@/components/library/LevelFilter";
+import { Paywall } from "@/components/Paywall";
+import { GenerateStoryModal } from "@/components/GenerateStoryModal";
 import {
   useStories,
   useFilteredStories,
@@ -12,8 +14,9 @@ import {
   type SortOption,
 } from "@/hooks/useStories";
 import type { ProficiencyLevel, StoryListItem } from "@/types/story";
-import { ChevronDown, Library, BookOpen } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { ChevronDown, Library, BookOpen, Sparkles } from "lucide-react";
+import { useAuth, SignInButton } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 type Language = "japanese" | "english" | "french";
 
@@ -30,9 +33,18 @@ export function LibraryPage() {
   const [selectedLevel, setSelectedLevel] = useState<ProficiencyLevel | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("level-asc");
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
 
-  // Check if user has premium access (dev setting stored in localStorage)
-  const isPremiumUser = localStorage.getItem("isPremiumUser") === "true";
+  // Check subscription from Convex (with dev override fallback)
+  const subscription = useQuery(
+    api.subscriptions.get,
+    isAuthenticated && user ? { userId: user.id } : "skip"
+  );
+
+  // Premium if subscription tier is not free, or if dev toggle is enabled
+  const devPremiumOverride = localStorage.getItem("isPremiumUser") === "true";
+  const isPremiumUser = devPremiumOverride || (subscription?.tier && subscription.tier !== "free");
 
   // Get user profile to access their languages
   const userProfile = useQuery(
@@ -57,15 +69,16 @@ export function LibraryPage() {
   const hasMultipleLanguages = userLanguages && userLanguages.length > 1;
 
   const { data: stories, isLoading, error } = useStories();
-  const filteredStories = useFilteredStories(stories, searchTerm, selectedLevel);
+  const filteredStories = useFilteredStories(stories, searchTerm, selectedLevel, selectedLanguage);
   const sortedStories = useMemo(
     () => sortStories(filteredStories, sortBy),
     [filteredStories, sortBy]
   );
 
   const handleStoryClick = (story: StoryListItem) => {
-    // Block access to premium stories if user doesn't have premium
+    // Show paywall for premium stories if user doesn't have premium
     if (story.isPremium && !isPremiumUser) {
+      setShowPaywall(true);
       return;
     }
     navigate({ to: "/read/$storyId", params: { storyId: story.id } });
@@ -100,6 +113,23 @@ export function LibraryPage() {
             <p className="text-foreground-muted text-lg">
               Stories tailored to your level. Tap any word to see its meaning.
             </p>
+
+            {/* Generate Story CTA */}
+            <div className="mt-6">
+              {isAuthenticated ? (
+                <Button className="gap-2" onClick={() => setShowGenerateModal(true)}>
+                  <Sparkles className="w-4 h-4" />
+                  Generate Custom Story
+                </Button>
+              ) : (
+                <SignInButton mode="modal">
+                  <Button className="gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Generate Custom Story
+                  </Button>
+                </SignInButton>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -196,6 +226,19 @@ export function LibraryPage() {
           </div>
         )}
       </div>
+
+      {/* Paywall Modal */}
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="stories"
+      />
+
+      {/* Generate Story Modal */}
+      <GenerateStoryModal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+      />
     </div>
   );
 }

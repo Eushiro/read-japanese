@@ -98,7 +98,7 @@ export interface StoryMetadata {
   titleTokens?: Token[];
   author: string;
   tokenizerSource?: string;
-  jlptLevel: JLPTLevel;
+  level: ProficiencyLevel;
   wordCount: number;
   characterCount: number;
   genre: string;
@@ -128,7 +128,7 @@ export interface StoryListItem {
   id: string;
   title: string;
   titleJapanese?: string;
-  jlptLevel: JLPTLevel;
+  level: ProficiencyLevel;
   wordCount: number;
   genre: string;
   summary: string;

@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Paywall } from "@/components/Paywall";
 import {
   generateStory,
   pollGenerationStatus,
@@ -10,6 +13,7 @@ import {
 } from "@/api/generate";
 import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
 import { Loader2, Sparkles, Volume2, Image } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const GENRES = [
   "Daily Life",
@@ -34,6 +38,7 @@ const levelVariantMap: Record<JLPTLevel, "n5" | "n4" | "n3" | "n2" | "n1"> = {
 
 export function GeneratePage() {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string>("");
@@ -47,12 +52,24 @@ export function GeneratePage() {
   const [generateAudio, setGenerateAudio] = useState(true);
   const [generateImages, setGenerateImages] = useState(true);
 
-  // Generation temporarily disabled
-  const isGenerationEnabled = false;
+  // Check subscription status
+  const subscription = useQuery(
+    api.subscriptions.get,
+    isAuthenticated && user ? { userId: user.id } : "skip"
+  );
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  // Enable generation for premium users (basic, pro, unlimited)
+  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
+  const isGenerationEnabled = isPremiumUser;
 
   const handleGenerate = async () => {
+    if (!isAuthenticated) {
+      setError("Please sign in to generate stories.");
+      return;
+    }
     if (!isGenerationEnabled) {
-      setError("Story generation is coming soon! Check back later.");
+      setShowPaywall(true);
       return;
     }
 
@@ -296,7 +313,7 @@ export function GeneratePage() {
           {/* Generate Button */}
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating || !isGenerationEnabled}
+            disabled={isGenerating}
             className="w-full"
             size="lg"
           >
@@ -308,19 +325,24 @@ export function GeneratePage() {
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2" />
-                {isGenerationEnabled ? "Generate Story" : "Coming Soon"}
+                Generate Story
               </>
             )}
           </Button>
 
           {/* Info */}
           <p className="text-xs text-foreground-muted text-center">
-            {isGenerationEnabled
-              ? "Story generation may take 2-5 minutes depending on options selected."
-              : "Custom story generation will be available soon. For now, enjoy our curated stories!"}
+            Story generation may take 2-5 minutes depending on options selected.
           </p>
         </div>
       </div>
+
+      {/* Paywall Modal */}
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="stories"
+      />
     </div>
   );
 }

@@ -3,12 +3,12 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { Paywall } from "@/components/Paywall";
 import {
   PenLine,
   Send,
   Loader2,
   Check,
-  X,
   RefreshCw,
   ChevronRight,
   Sparkles,
@@ -29,6 +29,7 @@ export function PracticePage() {
   const [selectedWord, setSelectedWord] = useState<typeof vocabulary extends (infer T)[] ? T : never | null>(null);
   const [sentence, setSentence] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   const [result, setResult] = useState<{
     isCorrect: boolean;
     grammarScore: number;
@@ -47,6 +48,13 @@ export function PracticePage() {
   const verifySentence = useAction(api.ai.verifySentence);
   const submitSentence = useMutation(api.userSentences.submit);
 
+  // Subscription check
+  const subscription = useQuery(
+    api.subscriptions.get,
+    isAuthenticated && user ? { userId: user.id } : "skip"
+  );
+  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
+
   // Filter vocabulary for practice (prefer new/learning words)
   const practiceWords = vocabulary?.filter(
     (v) => v.masteryState === "new" || v.masteryState === "learning"
@@ -60,6 +68,11 @@ export function PracticePage() {
 
   const handleSubmit = async () => {
     if (!selectedWord || !sentence.trim()) return;
+
+    if (!isPremiumUser) {
+      setShowPaywall(true);
+      return;
+    }
 
     setIsSubmitting(true);
     setResult(null);
@@ -379,6 +392,13 @@ export function PracticePage() {
           </div>
         )}
       </div>
+
+      {/* Paywall Modal */}
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="sentences"
+      />
     </div>
   );
 }

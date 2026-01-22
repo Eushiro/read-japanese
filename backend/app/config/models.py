@@ -13,8 +13,8 @@ class ModelConfig:
     OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
     # Text model (story generation + image descriptions)
-    # Gemini 3 Flash via OpenRouter for better Japanese
-    TEXT_MODEL = os.getenv("TEXT_MODEL", "google/gemini-3-flash-preview")
+    # Gemini 2.5 Flash via OpenRouter
+    TEXT_MODEL = os.getenv("TEXT_MODEL", "qwen/qwen3-next-80b-a3b-instruct:free")
 
     # Image generation model via OpenRouter
     IMAGE_MODEL = os.getenv("IMAGE_MODEL", "google/gemini-2.5-flash-image")

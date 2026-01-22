@@ -19,7 +19,9 @@ import { FlashcardsPage } from "@/pages/FlashcardsPage";
 import { PracticePage } from "@/pages/PracticePage";
 import { GeneratePage } from "@/pages/GeneratePage";
 import { SettingsPage } from "@/pages/SettingsPage";
-import { BookOpen, BookmarkCheck, Settings, Sparkles, Brain, PenLine } from "lucide-react";
+import { DashboardPage } from "@/pages/DashboardPage";
+import { LearnPage } from "@/pages/LearnPage";
+import { BookOpen, GraduationCap, Settings, Home } from "lucide-react";
 
 // Root layout
 const rootRoute = createRootRoute({
@@ -63,9 +65,9 @@ function RootLayout() {
   const handleOnboardingComplete = () => {
     setOnboardingComplete(true);
     setForceOnboarding(false);
-    // Navigate to library after onboarding
+    // Navigate to dashboard after onboarding
     if (window.location.pathname === "/" || window.location.pathname === "/settings") {
-      window.location.href = "/library";
+      window.location.href = "/dashboard";
     }
   };
 
@@ -91,21 +93,23 @@ function Navigation() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
 
-  // Links visible to everyone
+  // Links visible to everyone (logged-out users see preview dashboard)
   const publicLinks = [
+    { to: "/dashboard", label: "Home", icon: Home },
     { to: "/library", label: "Library", icon: BookOpen },
   ] as const;
 
-  // Links only visible when signed in
+  // Links only visible when signed in - simplified to 4 tabs
   const authLinks = [
-    { to: "/vocabulary", label: "Vocabulary", icon: BookmarkCheck },
-    { to: "/flashcards", label: "Review", icon: Brain },
-    { to: "/practice", label: "Practice", icon: PenLine },
-    { to: "/generate", label: "Generate", icon: Sparkles },
+    { to: "/dashboard", label: "Home", icon: Home },
+    { to: "/learn", label: "Learn", icon: GraduationCap },
+    { to: "/library", label: "Library", icon: BookOpen },
     { to: "/settings", label: "Settings", icon: Settings },
   ] as const;
 
-  const links = isAuthenticated ? [...publicLinks, ...authLinks] : publicLinks;
+  // When authenticated, use full authLinks
+  // When not authenticated, show publicLinks (includes preview dashboard)
+  const links = isAuthenticated ? authLinks : publicLinks;
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
@@ -173,6 +177,18 @@ const indexRoute = createRoute({
   component: LandingPage,
 });
 
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/dashboard",
+  component: DashboardPage,
+});
+
+const learnRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/learn",
+  component: LearnPage,
+});
+
 const libraryRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/library",
@@ -185,6 +201,7 @@ const readerRoute = createRoute({
   component: ReaderPage,
 });
 
+// Legacy routes - redirect to /learn with appropriate tab
 const vocabularyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/vocabulary",
@@ -218,6 +235,8 @@ const settingsRoute = createRoute({
 // Route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  dashboardRoute,
+  learnRoute,
   libraryRoute,
   readerRoute,
   vocabularyRoute,

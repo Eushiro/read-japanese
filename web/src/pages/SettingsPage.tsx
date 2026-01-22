@@ -44,6 +44,7 @@ type Theme = "light" | "dark" | "system";
 export function SettingsPage() {
   const {
     settings,
+    isLoading: settingsLoading,
     setShowFurigana,
     setTheme: updateTheme,
     setFontSize: updateFontSize,
@@ -70,6 +71,7 @@ export function SettingsPage() {
   const updateLanguages = useMutation(api.users.updateLanguages);
   const updateTargetExams = useMutation(api.users.updateTargetExams);
   const upsertUser = useMutation(api.users.upsert);
+  const upsertSubscription = useMutation(api.subscriptions.upsert);
 
   // Initialize user if they don't exist
   useEffect(() => {
@@ -110,16 +112,6 @@ export function SettingsPage() {
     await updateTargetExams({
       clerkId: user.id,
       targetExams: newExams as any[],
-    });
-  };
-
-  const handlePrimaryLanguageChange = async (lang: Language) => {
-    if (!user || !userProfile) return;
-
-    await updateLanguages({
-      clerkId: user.id,
-      languages: userProfile.languages || ["japanese"],
-      primaryLanguage: lang,
     });
   };
 
@@ -166,9 +158,7 @@ export function SettingsPage() {
     }
   };
 
-  const [isPremiumUser, setIsPremiumUser] = useState(() => {
-    return localStorage.getItem("isPremiumUser") === "true";
-  });
+  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
   const [devUserToggle, setDevUserToggle] = useState(() => isDevUserEnabled());
 
@@ -191,10 +181,6 @@ export function SettingsPage() {
     }
   }, [theme]);
 
-  // Save premium setting to localStorage (dev only)
-  useEffect(() => {
-    localStorage.setItem("isPremiumUser", String(isPremiumUser));
-  }, [isPremiumUser]);
 
   const setTheme = (value: Theme) => updateTheme(value);
   const setFontSize = (value: string) => updateFontSize(value);
@@ -229,32 +215,40 @@ export function SettingsPage() {
             <h2 className="text-lg font-semibold text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>
               Appearance
             </h2>
-            <div className="flex gap-2">
-              <Button
-                variant={theme === "light" ? "default" : "outline"}
-                onClick={() => setTheme("light")}
-                className="flex-1"
-              >
-                <Sun className="w-4 h-4 mr-2" />
-                Light
-              </Button>
-              <Button
-                variant={theme === "dark" ? "default" : "outline"}
-                onClick={() => setTheme("dark")}
-                className="flex-1"
-              >
-                <Moon className="w-4 h-4 mr-2" />
-                Dark
-              </Button>
-              <Button
-                variant={theme === "system" ? "default" : "outline"}
-                onClick={() => setTheme("system")}
-                className="flex-1"
-              >
-                <Monitor className="w-4 h-4 mr-2" />
-                System
-              </Button>
-            </div>
+            {settingsLoading ? (
+              <div className="flex gap-2 animate-pulse">
+                <div className="flex-1 h-10 bg-muted rounded-lg" />
+                <div className="flex-1 h-10 bg-muted rounded-lg" />
+                <div className="flex-1 h-10 bg-muted rounded-lg" />
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  variant={theme === "light" ? "default" : "outline"}
+                  onClick={() => setTheme("light")}
+                  className="flex-1"
+                >
+                  <Sun className="w-4 h-4 mr-2" />
+                  Light
+                </Button>
+                <Button
+                  variant={theme === "dark" ? "default" : "outline"}
+                  onClick={() => setTheme("dark")}
+                  className="flex-1"
+                >
+                  <Moon className="w-4 h-4 mr-2" />
+                  Dark
+                </Button>
+                <Button
+                  variant={theme === "system" ? "default" : "outline"}
+                  onClick={() => setTheme("system")}
+                  className="flex-1"
+                >
+                  <Monitor className="w-4 h-4 mr-2" />
+                  System
+                </Button>
+              </div>
+            )}
           </section>
 
           {/* Reading */}
@@ -263,77 +257,110 @@ export function SettingsPage() {
               Reading
             </h2>
 
-            <div className="space-y-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-muted">
-                    {showFurigana ? (
-                      <Eye className="w-4 h-4 text-foreground-muted" />
-                    ) : (
-                      <EyeOff className="w-4 h-4 text-foreground-muted" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="font-medium text-foreground">Show Furigana</div>
-                    <div className="text-sm text-foreground-muted">
-                      Display readings above kanji
+            {settingsLoading ? (
+              // Loading state to avoid flickering defaults
+              <div className="space-y-5 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted" />
+                    <div>
+                      <div className="h-4 w-28 bg-muted rounded mb-2" />
+                      <div className="h-3 w-40 bg-muted rounded" />
                     </div>
                   </div>
+                  <div className="w-11 h-6 bg-muted rounded-full" />
                 </div>
-                <button
-                  onClick={() => setShowFurigana(!showFurigana)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    showFurigana ? "bg-accent" : "bg-muted"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                      showFurigana ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-muted">
-                    <Volume2 className="w-4 h-4 text-foreground-muted" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-foreground">Autoplay Audio</div>
-                    <div className="text-sm text-foreground-muted">
-                      Automatically play chapter audio
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted" />
+                    <div>
+                      <div className="h-4 w-28 bg-muted rounded mb-2" />
+                      <div className="h-3 w-44 bg-muted rounded" />
                     </div>
                   </div>
+                  <div className="w-11 h-6 bg-muted rounded-full" />
                 </div>
-                <button
-                  onClick={() => setAutoplayAudio(!autoplayAudio)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    autoplayAudio ? "bg-accent" : "bg-muted"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                      autoplayAudio ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
+                <div className="space-y-3">
+                  <div className="h-4 w-20 bg-muted rounded" />
+                  <div className="w-full h-12 bg-muted rounded-lg" />
+                </div>
               </div>
+            ) : (
+              <div className="space-y-5">
+                {/* Show furigana toggle only if user is studying Japanese */}
+                {userProfile?.languages?.includes("japanese") && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-muted">
+                        {showFurigana ? (
+                          <Eye className="w-4 h-4 text-foreground-muted" />
+                        ) : (
+                          <EyeOff className="w-4 h-4 text-foreground-muted" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground">Show Furigana</div>
+                        <div className="text-sm text-foreground-muted">
+                          Display readings above kanji
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowFurigana(!showFurigana)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        showFurigana ? "bg-accent" : "bg-muted"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                          showFurigana ? "translate-x-6" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                )}
 
-              <div className="space-y-3">
-                <label className="font-medium text-foreground">Text Size</label>
-                <select
-                  value={fontSize}
-                  onChange={(e) => setFontSize(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-                >
-                  <option value="small">Small</option>
-                  <option value="medium">Medium</option>
-                  <option value="large">Large</option>
-                  <option value="x-large">Extra Large</option>
-                </select>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <Volume2 className="w-4 h-4 text-foreground-muted" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground">Autoplay Audio</div>
+                      <div className="text-sm text-foreground-muted">
+                        Automatically play chapter audio
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setAutoplayAudio(!autoplayAudio)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      autoplayAudio ? "bg-accent" : "bg-muted"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                        autoplayAudio ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="font-medium text-foreground">Text Size</label>
+                  <select
+                    value={fontSize}
+                    onChange={(e) => setFontSize(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                  >
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                    <option value="x-large">Extra Large</option>
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
           </section>
 
           {/* Languages & Exams */}
@@ -346,101 +373,101 @@ export function SettingsPage() {
                 </h2>
               </div>
 
-              {/* Languages */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  Languages you're learning
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {LANGUAGES.map((lang) => {
-                    const isSelected = userProfile?.languages?.includes(lang.value) ?? lang.value === "japanese";
-                    return (
-                      <button
-                        key={lang.value}
-                        onClick={() => handleLanguageToggle(lang.value)}
-                        className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
-                          isSelected
-                            ? "border-accent bg-accent/10 text-accent"
-                            : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
-                        }`}
-                      >
-                        <span className="mr-2">{lang.flag}</span>
-                        {lang.label}
-                        {isSelected && <Check className="w-4 h-4 ml-2 inline" />}
-                      </button>
-                    );
-                  })}
+              {userProfile === undefined ? (
+                // Loading state
+                <div className="space-y-6 animate-pulse">
+                  <div>
+                    <div className="h-4 w-40 bg-muted rounded mb-3" />
+                    <div className="flex gap-2">
+                      <div className="h-10 w-28 bg-muted rounded-lg" />
+                      <div className="h-10 w-24 bg-muted rounded-lg" />
+                      <div className="h-10 w-24 bg-muted rounded-lg" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="h-4 w-32 bg-muted rounded mb-3" />
+                    <div className="flex flex-wrap gap-2">
+                      <div className="h-8 w-20 bg-muted rounded-lg" />
+                      <div className="h-8 w-20 bg-muted rounded-lg" />
+                      <div className="h-8 w-20 bg-muted rounded-lg" />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Languages */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-foreground mb-3">
+                      Languages you're learning
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {LANGUAGES.map((lang) => {
+                        const isSelected = userProfile?.languages?.includes(lang.value) ?? false;
+                        return (
+                          <button
+                            key={lang.value}
+                            onClick={() => handleLanguageToggle(lang.value)}
+                            className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                              isSelected
+                                ? "border-accent bg-accent/10 text-accent"
+                                : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
+                            }`}
+                          >
+                            <span className="mr-2">{lang.flag}</span>
+                            {lang.label}
+                            {isSelected && <Check className="w-4 h-4 ml-2 inline" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-              {/* Active Study Language */}
-              {userProfile?.languages && userProfile.languages.length > 1 && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Active study language
-                  </label>
-                  <p className="text-xs text-foreground-muted mb-3">
-                    This is the language shown by default in your vocabulary and flashcards
-                  </p>
-                  <select
-                    value={userProfile.primaryLanguage || "japanese"}
-                    onChange={(e) => handlePrimaryLanguageChange(e.target.value as Language)}
-                    className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-                  >
-                    {userProfile.languages.map((lang) => {
-                      const langInfo = LANGUAGES.find((l) => l.value === lang);
-                      return (
-                        <option key={lang} value={lang}>
-                          {langInfo?.flag} {langInfo?.label}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              )}
-
-              {/* Target Exams */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <GraduationCap className="w-4 h-4 text-foreground-muted" />
-                  <label className="block text-sm font-medium text-foreground">
-                    Target exams
-                  </label>
-                </div>
-                <div className="space-y-4">
-                  {(userProfile?.languages || ["japanese"]).map((lang) => {
-                    const langInfo = LANGUAGES.find((l) => l.value === lang);
-                    const exams = EXAMS_BY_LANGUAGE[lang as keyof typeof EXAMS_BY_LANGUAGE] || [];
-
-                    return (
-                      <div key={lang}>
-                        <div className="text-xs font-medium text-foreground-muted mb-2 uppercase tracking-wider">
-                          {langInfo?.flag} {langInfo?.label}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {exams.map((exam) => {
-                            const isSelected = userProfile?.targetExams?.includes(exam.value as any) ?? false;
-                            return (
-                              <button
-                                key={exam.value}
-                                onClick={() => handleExamToggle(exam.value)}
-                                className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                                  isSelected
-                                    ? "border-accent bg-accent/10 text-accent"
-                                    : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
-                                }`}
-                              >
-                                {exam.label}
-                                {isSelected && <Check className="w-3 h-3 ml-1 inline" />}
-                              </button>
-                            );
-                          })}
-                        </div>
+                  {/* Target Exams */}
+                  {userProfile?.languages && userProfile.languages.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <GraduationCap className="w-4 h-4 text-foreground-muted" />
+                        <label className="block text-sm font-medium text-foreground">
+                          Target exams
+                        </label>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
+                      <div className="space-y-4">
+                        {userProfile.languages.map((lang) => {
+                          const langInfo = LANGUAGES.find((l) => l.value === lang);
+                          const exams = EXAMS_BY_LANGUAGE[lang as keyof typeof EXAMS_BY_LANGUAGE] || [];
+
+                          return (
+                            <div key={lang}>
+                              <div className="text-xs font-medium text-foreground-muted mb-2 uppercase tracking-wider">
+                                {langInfo?.flag} {langInfo?.label}
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {exams.map((exam) => {
+                                  const isSelected = userProfile?.targetExams?.includes(exam.value as any) ?? false;
+                                  return (
+                                    <button
+                                      key={exam.value}
+                                      onClick={() => handleExamToggle(exam.value)}
+                                      className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                                        isSelected
+                                          ? "border-accent bg-accent/10 text-accent"
+                                          : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
+                                      }`}
+                                    >
+                                      {exam.label}
+                                      {isSelected && <Check className="w-3 h-3 ml-1 inline" />}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </section>
           )}
 
@@ -450,8 +477,15 @@ export function SettingsPage() {
               Account
             </h2>
             {authLoading ? (
-              <div className="p-4 rounded-xl bg-muted/50 flex items-center justify-center">
-                <Loader2 className="w-5 h-5 animate-spin text-foreground-muted" />
+              <div className="space-y-4 animate-pulse">
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
+                  <div className="w-12 h-12 rounded-full bg-muted" />
+                  <div className="min-w-0 flex-1">
+                    <div className="h-4 w-24 bg-muted rounded mb-2" />
+                    <div className="h-3 w-40 bg-muted rounded" />
+                  </div>
+                </div>
+                <div className="h-10 w-full bg-muted rounded-lg" />
               </div>
             ) : isAuthenticated && user ? (
               <div className="space-y-4">
@@ -527,79 +561,93 @@ export function SettingsPage() {
 
               {/* Upgrade Options */}
               {(!subscription?.tier || subscription.tier === "free") && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <h3 className="text-sm font-medium text-foreground-muted">Upgrade your plan</h3>
-                  <div className="grid gap-3">
+                  <div className="grid gap-4">
                     {/* Basic */}
-                    <div className="p-4 rounded-xl border border-border hover:border-accent/50 transition-colors">
-                      <div className="flex items-center justify-between mb-2">
+                    <div className="p-5 rounded-xl border border-border hover:border-accent/50 transition-colors">
+                      <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <Zap className="w-4 h-4 text-blue-500" />
-                          <span className="font-medium text-foreground">Basic</span>
+                          <Zap className="w-5 h-5 text-blue-500" />
+                          <span className="font-semibold text-foreground text-lg">Basic</span>
                         </div>
-                        <span className="text-sm text-foreground-muted">$5/mo</span>
+                        <div className="text-right">
+                          <span className="text-2xl font-bold text-foreground">$5</span>
+                          <span className="text-foreground-muted">/mo</span>
+                        </div>
                       </div>
-                      <ul className="text-sm text-foreground-muted space-y-1 mb-3">
-                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 200 AI checks/month</li>
-                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 20 stories</li>
-                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 5 personalized stories</li>
+                      <ul className="text-sm text-foreground-muted space-y-1.5 mb-4">
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> 5 AI stories/month</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> 200 AI checks/month</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> 500 flashcards/month</li>
                       </ul>
                       <Button
-                        size="sm"
+                        variant="outline"
                         className="w-full"
                         onClick={() => handleUpgrade("basic")}
                         disabled={checkoutLoading === "basic"}
                       >
-                        {checkoutLoading === "basic" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upgrade to Basic"}
+                        {checkoutLoading === "basic" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Basic"}
                       </Button>
                     </div>
 
                     {/* Pro */}
-                    <div className="p-4 rounded-xl border-2 border-accent bg-accent/5">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Crown className="w-4 h-4 text-accent" />
-                          <span className="font-medium text-foreground">Pro</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-accent text-white">Popular</span>
-                        </div>
-                        <span className="text-sm text-foreground-muted">$15/mo</span>
+                    <div className="p-5 rounded-xl border-2 border-accent bg-accent/5 relative">
+                      <div className="absolute -top-3 left-4">
+                        <span className="text-xs px-3 py-1 rounded-full bg-accent text-white font-medium">
+                          Most Popular
+                        </span>
                       </div>
-                      <ul className="text-sm text-foreground-muted space-y-1 mb-3">
-                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 1000 AI checks/month</li>
-                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> Unlimited reading</li>
-                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 20 personalized stories</li>
-                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 10 mock tests</li>
+                      <div className="flex items-start justify-between mb-3 mt-1">
+                        <div className="flex items-center gap-2">
+                          <Crown className="w-5 h-5 text-accent" />
+                          <span className="font-semibold text-foreground text-lg">Pro</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-2xl font-bold text-foreground">$15</span>
+                          <span className="text-foreground-muted">/mo</span>
+                        </div>
+                      </div>
+                      <ul className="text-sm text-foreground-muted space-y-1.5 mb-4">
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 20 AI stories/month</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 1,000 AI checks/month</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> Unlimited flashcards</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 10 mock tests/month</li>
                       </ul>
                       <Button
-                        size="sm"
                         className="w-full"
                         onClick={() => handleUpgrade("pro")}
                         disabled={checkoutLoading === "pro"}
                       >
-                        {checkoutLoading === "pro" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upgrade to Pro"}
+                        {checkoutLoading === "pro" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Pro"}
                       </Button>
                     </div>
 
                     {/* Unlimited */}
-                    <div className="p-4 rounded-xl border border-border hover:border-accent/50 transition-colors">
-                      <div className="flex items-center justify-between mb-2">
+                    <div className="p-5 rounded-xl border border-border bg-gradient-to-b from-purple-500/5 to-transparent hover:border-purple-500/50 transition-colors">
+                      <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <Zap className="w-4 h-4 text-purple-500" />
-                          <span className="font-medium text-foreground">Unlimited</span>
+                          <Sparkles className="w-5 h-5 text-purple-500" />
+                          <span className="font-semibold text-foreground text-lg">Unlimited</span>
                         </div>
-                        <span className="text-sm text-foreground-muted">$45/mo</span>
+                        <div className="text-right">
+                          <span className="text-2xl font-bold text-foreground">$45</span>
+                          <span className="text-foreground-muted">/mo</span>
+                        </div>
                       </div>
-                      <ul className="text-sm text-foreground-muted space-y-1 mb-3">
-                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> Unlimited everything</li>
-                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> Priority support</li>
+                      <ul className="text-sm text-foreground-muted space-y-1.5 mb-4">
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited AI stories</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited AI checks</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited flashcards</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited mock tests</li>
                       </ul>
                       <Button
-                        size="sm"
-                        className="w-full"
+                        variant="outline"
+                        className="w-full border-purple-500/30 hover:bg-purple-500/10"
                         onClick={() => handleUpgrade("unlimited")}
                         disabled={checkoutLoading === "unlimited"}
                       >
-                        {checkoutLoading === "unlimited" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upgrade to Unlimited"}
+                        {checkoutLoading === "unlimited" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Unlimited"}
                       </Button>
                     </div>
                   </div>
@@ -645,31 +693,39 @@ export function SettingsPage() {
                   </Button>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-amber-500/10">
-                      <Crown className="w-4 h-4 text-amber-500" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground">Premium Access</div>
-                      <div className="text-sm text-foreground-muted">
-                        Unlock all premium stories
+                {user?.email === "hiro.ayettey@gmail.com" && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-amber-500/10">
+                        <Crown className="w-4 h-4 text-amber-500" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground">Premium Access</div>
+                        <div className="text-sm text-foreground-muted">
+                          Toggle Pro subscription for testing
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => setIsPremiumUser(!isPremiumUser)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      isPremiumUser ? "bg-amber-500" : "bg-muted"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                        isPremiumUser ? "translate-x-6" : "translate-x-1"
+                    <button
+                      onClick={async () => {
+                        if (!user) return;
+                        await upsertSubscription({
+                          userId: user.id,
+                          tier: isPremiumUser ? "free" : "pro",
+                        });
+                      }}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        isPremiumUser ? "bg-amber-500" : "bg-muted"
                       }`}
-                    />
-                  </button>
-                </div>
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                          isPremiumUser ? "translate-x-6" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">

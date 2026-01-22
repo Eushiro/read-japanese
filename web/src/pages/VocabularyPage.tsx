@@ -1,10 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { Paywall } from "@/components/Paywall";
 import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { searchDictionary, type DictionaryEntry } from "@/api/dictionary";
 
 // Sort options
 type SortOption = "newest" | "oldest" | "alphabetical" | "alphabetical-reverse" | "by-mastery";
@@ -43,6 +45,7 @@ export function VocabularyPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const [bulkResult, setBulkResult] = useState<{ success: number; failed: number } | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id ?? "anonymous";
@@ -54,9 +57,21 @@ export function VocabularyPage() {
   const removeWord = useMutation(api.vocabulary.remove);
   const generateFlashcardsBulk = useAction(api.ai.generateFlashcardsBulk);
 
+  // Subscription check
+  const subscription = useQuery(
+    api.subscriptions.get,
+    isAuthenticated && user ? { userId: user.id } : "skip"
+  );
+  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
+
   // Handle bulk flashcard generation
   const handleGenerateAll = async () => {
     if (!vocabulary || vocabulary.length === 0) return;
+
+    if (!isPremiumUser) {
+      setShowPaywall(true);
+      return;
+    }
 
     setIsGeneratingAll(true);
     setBulkResult(null);
@@ -407,6 +422,8 @@ export function VocabularyPage() {
                       onRemove={handleRemove}
                       showMastery={false}
                       delay={Math.min(index * 30, 150)}
+                      isPremiumUser={isPremiumUser}
+                      onShowPaywall={() => setShowPaywall(true)}
                     />
                   ))}
                 </div>
@@ -423,6 +440,8 @@ export function VocabularyPage() {
                 onRemove={handleRemove}
                 showMastery={true}
                 delay={Math.min(index * 30, 150)}
+                isPremiumUser={isPremiumUser}
+                onShowPaywall={() => setShowPaywall(true)}
               />
             ))}
           </div>
@@ -436,6 +455,13 @@ export function VocabularyPage() {
           onClose={() => setShowAddModal(false)}
         />
       )}
+
+      {/* Paywall Modal */}
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="flashcards"
+      />
     </div>
   );
 }
@@ -455,9 +481,11 @@ interface VocabularyCardProps {
   onRemove: (id: string) => void;
   showMastery?: boolean;
   delay?: number;
+  isPremiumUser?: boolean;
+  onShowPaywall?: () => void;
 }
 
-function VocabularyCard({ item, onRemove, showMastery = true, delay = 0 }: VocabularyCardProps) {
+function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremiumUser = false, onShowPaywall }: VocabularyCardProps) {
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
   const [isGenerating, setIsGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
@@ -470,6 +498,11 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0 }: Vocab
   const generateFlashcard = useAction(api.ai.generateFlashcard);
 
   const handleGenerateFlashcard = async () => {
+    if (!isPremiumUser) {
+      onShowPaywall?.();
+      return;
+    }
+
     setIsGenerating(true);
     try {
       await generateFlashcard({
@@ -579,7 +612,48 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
   const [examLevel, setExamLevel] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState<DictionaryEntry[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+
   const addWord = useMutation(api.vocabulary.add);
+
+  // Debounced dictionary search
+  useEffect(() => {
+    if (word.trim().length < 1) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setIsSearching(true);
+      const results = await searchDictionary(word.trim(), language, 5);
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
+      setIsSearching(false);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [word, language]);
+
+  // Clear suggestions when language changes
+  useEffect(() => {
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setWord("");
+    setReading("");
+    setDefinitions("");
+  }, [language]);
+
+  const handleSelectSuggestion = (entry: DictionaryEntry) => {
+    setWord(entry.word);
+    setReading(entry.reading || "");
+    setDefinitions(entry.meanings.join("; "));
+    setShowSuggestions(false);
+    setSuggestions([]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -625,33 +699,80 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
             <label className="block text-sm font-medium text-foreground mb-1.5">
               Language
             </label>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value as Language)}
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-            >
-              {LANGUAGES.map((lang) => (
-                <option key={lang.value} value={lang.value}>
-                  {lang.label}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as Language)}
+                className="w-full px-4 py-2.5 pr-10 rounded-lg border border-border bg-background text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all cursor-pointer"
+              >
+                {LANGUAGES.map((lang) => (
+                  <option key={lang.value} value={lang.value}>
+                    {lang.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted pointer-events-none" />
+            </div>
           </div>
 
-          {/* Word */}
+          {/* Word with Autocomplete */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
               Word <span className="text-destructive">*</span>
             </label>
-            <input
-              type="text"
-              value={word}
-              onChange={(e) => setWord(e.target.value)}
-              placeholder={language === "japanese" ? "食べる" : "Enter word"}
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-              style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
-              required
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                placeholder={language === "japanese" ? "食べる" : "Enter word"}
+                className="w-full px-4 py-2.5 pr-10 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                autoComplete="off"
+                required
+              />
+
+              {/* Loading indicator */}
+              {isSearching && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-foreground-muted" />
+              )}
+
+              {/* Suggestions dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {suggestions.map((entry, index) => (
+                    <button
+                      key={`${entry.word}-${index}`}
+                      type="button"
+                      onMouseDown={() => handleSelectSuggestion(entry)}
+                      className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border last:border-b-0"
+                    >
+                      <div className="flex items-baseline gap-2">
+                        <span
+                          className="font-medium text-foreground"
+                          style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                        >
+                          {entry.word}
+                        </span>
+                        {entry.reading && entry.reading !== entry.word && (
+                          <span
+                            className="text-sm text-foreground-muted"
+                            style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                          >
+                            ({entry.reading})
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-foreground-muted truncate mt-0.5">
+                        {entry.meanings[0]}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Reading (for Japanese) */}

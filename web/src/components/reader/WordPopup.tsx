@@ -12,6 +12,7 @@ interface WordPopupProps {
   position: { x: number; y: number };
   storyId: string;
   storyTitle: string;
+  sourceContext?: string; // The sentence where the word appears
   onClose: () => void;
 }
 
@@ -20,6 +21,7 @@ export function WordPopup({
   position,
   storyId,
   storyTitle,
+  sourceContext,
   onClose,
 }: WordPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
@@ -113,6 +115,7 @@ export function WordPopup({
         sourceType: "story",
         sourceStoryId: storyId,
         sourceStoryTitle: storyTitle,
+        sourceContext: sourceContext, // The sentence where the word was found
       });
       setJustSaved(true);
       setJustRemoved(false);

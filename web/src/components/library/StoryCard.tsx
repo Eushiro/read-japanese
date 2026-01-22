@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { getCoverImageUrl } from "@/api/stories";
-import type { StoryListItem, JLPTLevel } from "@/types/story";
+import type { StoryListItem, ProficiencyLevel } from "@/types/story";
 import { Crown, BookOpen } from "lucide-react";
 
 interface StoryCardProps {
@@ -11,12 +11,20 @@ interface StoryCardProps {
   style?: React.CSSProperties;
 }
 
-const levelVariantMap: Record<JLPTLevel, "n5" | "n4" | "n3" | "n2" | "n1"> = {
+type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
+
+const levelVariantMap: Record<ProficiencyLevel, BadgeVariant> = {
   N5: "n5",
   N4: "n4",
   N3: "n3",
   N2: "n2",
   N1: "n1",
+  A1: "a1",
+  A2: "a2",
+  B1: "b1",
+  B2: "b2",
+  C1: "c1",
+  C2: "c2",
 };
 
 export function StoryCard({
@@ -54,12 +62,12 @@ export function StoryCard({
         {/* Gradient overlay for better badge visibility */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* JLPT Level Badge */}
+        {/* Level Badge */}
         <Badge
-          variant={levelVariantMap[story.jlptLevel]}
+          variant={levelVariantMap[story.level]}
           className="absolute top-3 left-3 shadow-sm"
         >
-          {story.jlptLevel}
+          {story.level}
         </Badge>
 
         {/* Progress Bar */}

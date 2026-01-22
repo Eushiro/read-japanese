@@ -9,7 +9,7 @@ interface ChapterViewProps {
   chapterIndex: number;
   totalChapters: number;
   showFurigana?: boolean;
-  onTokenClick?: (token: Token, event: React.MouseEvent) => void;
+  onTokenClick?: (token: Token, event: React.MouseEvent, segmentText?: string) => void;
   currentAudioTime?: number;
 }
 
@@ -19,7 +19,7 @@ export function ChapterView({
   totalChapters,
   showFurigana = true,
   onTokenClick,
-  currentAudioTime = 0,
+  currentAudioTime,
 }: ChapterViewProps) {
   const segments = chapter.segments || chapter.content || [];
   const imageUrl = chapter.imageURL ? getCdnUrl(chapter.imageURL) : null;

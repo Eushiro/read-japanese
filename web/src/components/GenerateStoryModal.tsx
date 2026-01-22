@@ -1,0 +1,347 @@
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Paywall } from "@/components/Paywall";
+import {
+  generateStory,
+  pollGenerationStatus,
+  type GenerateStoryRequest,
+  type GenerationStatus,
+} from "@/api/generate";
+import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
+import { Loader2, Sparkles, Volume2, Image, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+
+const GENRES = [
+  "Daily Life",
+  "Fantasy",
+  "Mystery",
+  "Travel",
+  "School",
+  "Food",
+  "Nature",
+  "Adventure",
+  "Romance",
+  "Historical",
+];
+
+const levelVariantMap: Record<JLPTLevel, "n5" | "n4" | "n3" | "n2" | "n1"> = {
+  N5: "n5",
+  N4: "n4",
+  N3: "n3",
+  N2: "n2",
+  N1: "n1",
+};
+
+interface GenerateStoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps) {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string>("");
+
+  // Form state
+  const [jlptLevel, setJlptLevel] = useState<JLPTLevel>("N5");
+  const [genre, setGenre] = useState("Daily Life");
+  const [theme, setTheme] = useState("");
+  const [numChapters, setNumChapters] = useState(3);
+  const [wordsPerChapter, setWordsPerChapter] = useState(150);
+  const [generateAudio, setGenerateAudio] = useState(true);
+  const [generateImages, setGenerateImages] = useState(true);
+
+  // Check subscription status
+  const subscription = useQuery(
+    api.subscriptions.get,
+    isAuthenticated && user ? { userId: user.id } : "skip"
+  );
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  // Enable generation for premium users (basic, pro, unlimited)
+  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
+  const isGenerationEnabled = isPremiumUser;
+
+  const handleGenerate = async () => {
+    if (!isAuthenticated) {
+      setError("Please sign in to generate stories.");
+      return;
+    }
+    if (!isGenerationEnabled) {
+      setShowPaywall(true);
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    setProgress("Starting generation...");
+
+    try {
+      const request: GenerateStoryRequest = {
+        jlpt_level: jlptLevel,
+        genre,
+        theme: theme || undefined,
+        num_chapters: numChapters,
+        words_per_chapter: wordsPerChapter,
+        generate_audio: generateAudio,
+        generate_image: generateImages,
+        generate_chapter_images: generateImages,
+        align_audio: generateAudio,
+      };
+
+      const response = await generateStory(request);
+
+      if (response.status === "failed") {
+        throw new Error(response.message);
+      }
+
+      // Poll for completion
+      const status = await pollGenerationStatus(
+        response.story_id!,
+        (status: GenerationStatus) => {
+          setProgress(status.progress || status.status);
+        }
+      );
+
+      if (status.status === "completed" && status.story_id) {
+        onClose();
+        navigate({ to: "/read/$storyId", params: { storyId: status.story_id } });
+      } else if (status.status === "failed") {
+        throw new Error(status.error || "Generation failed");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Generation failed");
+    } finally {
+      setIsGenerating(false);
+      setProgress("");
+    }
+  };
+
+  const handleClose = () => {
+    if (!isGenerating) {
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="bg-surface rounded-2xl border border-border shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden animate-fade-in-up">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/10">
+                <Sparkles className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                  Generate Story
+                </h2>
+                <p className="text-sm text-foreground-muted">
+                  Create a custom story for your level
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleClose}
+              disabled={isGenerating}
+              className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              <X className="w-5 h-5 text-foreground-muted" />
+            </button>
+          </div>
+
+          {/* Form */}
+          <div className="p-4 space-y-5 overflow-y-auto max-h-[calc(90vh-180px)]">
+            {/* JLPT Level */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                JLPT Level
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {JLPT_LEVELS.map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => setJlptLevel(level)}
+                    disabled={isGenerating}
+                    className="transition-all duration-200"
+                  >
+                    <Badge
+                      variant={levelVariantMap[level]}
+                      className={`cursor-pointer px-3 py-1.5 text-sm ${
+                        jlptLevel === level
+                          ? "ring-2 ring-accent/30 ring-offset-2 ring-offset-surface scale-105"
+                          : "opacity-60 hover:opacity-80"
+                      }`}
+                    >
+                      {level}
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Genre */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Genre</label>
+              <select
+                value={genre}
+                onChange={(e) => setGenre(e.target.value)}
+                disabled={isGenerating}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+              >
+                {GENRES.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Theme */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Theme <span className="text-foreground-muted font-normal">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                value={theme}
+                onChange={(e) => setTheme(e.target.value)}
+                placeholder="e.g., cherry blossoms, summer festival..."
+                disabled={isGenerating}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+              />
+            </div>
+
+            {/* Chapters & Words */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Chapters
+                </label>
+                <select
+                  value={numChapters}
+                  onChange={(e) => setNumChapters(Number(e.target.value))}
+                  disabled={isGenerating}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                >
+                  {[2, 3, 4, 5, 6].map((n) => (
+                    <option key={n} value={n}>
+                      {n} chapters
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Words/Chapter
+                </label>
+                <select
+                  value={wordsPerChapter}
+                  onChange={(e) => setWordsPerChapter(Number(e.target.value))}
+                  disabled={isGenerating}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                >
+                  {[100, 150, 200, 250, 300].map((n) => (
+                    <option key={n} value={n}>
+                      ~{n} words
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Options */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">Options</label>
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={generateAudio}
+                    onChange={(e) => setGenerateAudio(e.target.checked)}
+                    disabled={isGenerating}
+                    className="w-4 h-4 rounded border-border text-accent focus:ring-accent/20"
+                  />
+                  <span className="flex items-center gap-1.5 text-sm text-foreground">
+                    <Volume2 className="w-4 h-4 text-foreground-muted" />
+                    Audio
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={generateImages}
+                    onChange={(e) => setGenerateImages(e.target.checked)}
+                    disabled={isGenerating}
+                    className="w-4 h-4 rounded border-border text-accent focus:ring-accent/20"
+                  />
+                  <span className="flex items-center gap-1.5 text-sm text-foreground">
+                    <Image className="w-4 h-4 text-foreground-muted" />
+                    Images
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Error */}
+            {error && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Progress */}
+            {progress && (
+              <div className="p-3 rounded-lg bg-accent/10 border border-accent/20 text-foreground text-sm flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                {progress}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-border bg-muted/30">
+            <Button
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="w-full"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Story
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-foreground-muted text-center mt-2">
+              Generation takes 2-5 minutes
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Paywall Modal */}
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="stories"
+      />
+    </>
+  );
+}

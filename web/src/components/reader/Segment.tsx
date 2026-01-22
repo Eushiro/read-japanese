@@ -5,7 +5,7 @@ import type { StorySegment, Token } from "@/types/story";
 interface SegmentProps {
   segment: StorySegment;
   showFurigana?: boolean;
-  onTokenClick?: (token: Token, event: React.MouseEvent) => void;
+  onTokenClick?: (token: Token, event: React.MouseEvent, segmentText: string) => void;
   currentAudioTime?: number;
 }
 
@@ -13,7 +13,7 @@ export function Segment({
   segment,
   showFurigana = true,
   onTokenClick,
-  currentAudioTime = 0,
+  currentAudioTime,
 }: SegmentProps) {
   const baseClasses = "leading-loose text-foreground";
 
@@ -27,6 +27,7 @@ export function Segment({
 
   // Check if this segment is currently playing
   const isSegmentActive = useMemo(() => {
+    if (currentAudioTime === undefined) return false;
     if (segment.audioStartTime === undefined || segment.audioEndTime === undefined) return false;
     return currentAudioTime >= segment.audioStartTime && currentAudioTime <= segment.audioEndTime;
   }, [currentAudioTime, segment.audioStartTime, segment.audioEndTime]);
@@ -35,6 +36,9 @@ export function Segment({
     return <p className={className}>{segment.text || ""}</p>;
   }
 
+  // Get the full sentence text from the segment
+  const segmentText = segment.text || segment.tokens.map(t => t.surface).join("");
+
   return (
     <p className={`${className} ${isSegmentActive ? "transition-colors duration-200" : ""}`}>
       {segment.tokens.map((token, index) => (
@@ -42,7 +46,7 @@ export function Segment({
           key={`${segment.id}-${index}`}
           token={token}
           showFurigana={showFurigana}
-          onClick={(event) => onTokenClick?.(token, event)}
+          onClick={(event) => onTokenClick?.(token, event, segmentText)}
           isHighlighted={isSegmentActive}
         />
       ))}

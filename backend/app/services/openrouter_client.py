@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class OpenRouterClient:
     """
     Client for OpenRouter API.
-    Provides access to various LLMs including free models like MiMo.
+    Provides access to various LLMs including Gemini models.
     """
 
     def __init__(self, model: Optional[str] = None):

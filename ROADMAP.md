@@ -168,14 +168,18 @@ Usage limits (example):
 | Phase | Name | Status | Progress |
 |-------|------|--------|----------|
 | 0 | Infrastructure | ✅ Complete | Clerk auth, Convex deployed |
+| 0.25 | Onboarding & Learning Loop | ✅ Complete | Dashboard, simplified nav, improved onboarding |
+| 0.5 | Analytics & Quick Wins | 🚧 In Progress | Save sentence context done, PostHog pending |
 | 1 | Flashcard Foundation | 🚧 In Progress | UI complete, Stripe setup + audio pending |
 | 2 | Active Output Verification | ✅ UI Complete | Practice page with AI feedback |
 | 3 | Personalized Story Generation | ❌ Not Started | - |
 | 4 | Multi-Language Foundation | ✅ UI Complete | Language/exam settings in UI |
 | 5 | Mock Test Generation | ✅ Backend Ready | Schema + functions done |
+| 5.5 | Listening & Speaking Practice | ❌ Not Started | Shadowing, dictation |
 | 6 | YouTube Integration | ❌ Not Started | Schema placeholder only |
 | 7 | Image-Based Learning | ❌ Not Started | - |
 | 8 | Email Marketing | ❌ Not Started | - |
+| 9 | Exam Digitization & Q&A | ❌ Not Started | Blocked on sourcing exam content |
 
 ---
 
@@ -198,6 +202,59 @@ Usage limits (example):
 | Clerk auth integration | ✅ Complete | Clerk provider + Convex JWT auth configured |
 | Remove Firebase | ✅ Complete | Firebase package and config removed |
 | Deploy schema to Convex | ✅ Complete | Schema deployed with all indexes |
+
+---
+
+### Phase 0.25: Onboarding & Learning Loop Visibility
+**Goal:** Make the learning loop obvious in the product and guide users through the experience
+
+**Status:** ✅ Complete
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Dashboard page | ✅ Complete | Home with learning loop visualization, daily activities |
+| Simplified navigation | ✅ Complete | 6 tabs → 4 tabs (Home, Learn, Library, Settings) |
+| Combined Learn page | ✅ Complete | Vocab/Review/Practice together with internal tabs |
+| Sentence context saving | ✅ Complete | Save source sentence when saving word from Reader |
+| Onboarding loop explanation | ✅ Complete | New step explaining how the learning loop works |
+
+**Files created:**
+- `web/src/pages/DashboardPage.tsx` - Main dashboard
+- `web/src/pages/LearnPage.tsx` - Combined learning page
+- `web/src/components/dashboard/LearningLoopViz.tsx` - Loop visualization
+- `web/src/components/dashboard/DailyActivities.tsx` - Today's activities
+
+**Files modified:**
+- `web/src/router.tsx` - New routes, updated navigation
+- `web/src/components/OnboardingModal.tsx` - Added learning loop step
+- `web/src/components/reader/WordPopup.tsx` - Saves sourceContext
+- `web/convex/schema.ts` - Added sourceContext field
+- `web/convex/vocabulary.ts` - Accepts sourceContext
+
+---
+
+### Phase 0.5: Analytics & Quick Wins
+**Goal:** Add analytics foundation and vocabulary UX improvements before building more features
+
+**Status:** 🚧 In Progress
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| PostHog integration | ❌ Not Started | Event tracking, funnels, session replay, feature flags |
+| Save sentence with word | ✅ Complete | Moved to Phase 0.25 |
+| Manual vocab + AI enhance | ❌ Not Started | User types word, AI fills reading, definitions, example sentence |
+| Add word autocomplete | ❌ Not Started | Autocomplete when adding words manually |
+| Premade flashcard decks | ❌ Not Started | Pre-built vocabulary decks for each exam level |
+
+**Tech notes:**
+- PostHog: Use `posthog-js` for web, initialize in `main.tsx`
+- Sentence context: Add `sourceContext` field to vocabulary schema
+- AI enhance: Extend OpenRouter integration to enrich manual word entries
+
+**Why this phase:**
+- PostHog gives us data to measure feature impact
+- Vocab UX improvements are quick wins that improve core loop
+- No external dependencies - can build immediately
 
 ---
 
@@ -317,6 +374,31 @@ Usage limits (example):
 
 ---
 
+### Phase 5.5: Listening & Speaking Practice
+**Goal:** Active listening and pronunciation practice with AI feedback
+
+**Status:** ❌ Not Started
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Shadowing practice | ❌ Not Started | Listen to audio, repeat, AI evaluates pronunciation |
+| Dictation exercises | ❌ Not Started | Listen, type what you hear, compare to transcript |
+| Audio comprehension | ❌ Not Started | Listen to passages, answer questions |
+| Pronunciation scoring | ❌ Not Started | AI feedback on accent/fluency |
+
+**Tech notes:**
+- Speech recognition: Web Speech API or Whisper API for transcription
+- Pronunciation scoring: Compare user audio transcription to target text
+- Audio generation: Use existing ElevenLabs integration for target audio
+- Start simple: Basic matching before advanced pronunciation analysis
+
+**Why this comes before Phase 9:**
+- Can be built entirely with AI (no external content dependencies)
+- Shadowing is highly requested for language learning
+- Builds on existing audio infrastructure
+
+---
+
 ### Phase 6: YouTube Integration
 **Goal:** Learn from real video content
 
@@ -400,6 +482,57 @@ Usage limits (example):
 | **Loops** | Marketing automation | Built for SaaS, good drip campaigns |
 | **Customer.io** | Both | Powerful segmentation, event-based |
 | **Postmark** | Transactional | Excellent deliverability |
+
+---
+
+### Phase 9: Exam Digitization & Q&A
+**Goal:** Build a question bank from real exams and enable Q&A for test questions
+
+**Status:** ❌ Not Started (Blocked on sourcing exam content)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Source official practice tests | ❌ Not Started | JLPT, TOEFL, DELF official materials |
+| Question bank schema | ❌ Not Started | question, options, answer, explanation, source, year |
+| Exam parser/digitizer | ❌ Not Started | Parse PDF/images into structured questions |
+| Question-level Q&A | ❌ Not Started | "Why is this wrong?" with AI explanation |
+| Q&A conversation history | ❌ Not Started | Store follow-up questions per question |
+
+**Data sources to acquire:**
+- JLPT: Official JLPT practice workbooks, 日本語能力試験 past papers
+- TOEFL: ETS official practice tests, TPO materials
+- DELF/DALF: Official CIEP/France Éducation sample papers
+
+**Tech notes:**
+- Question bank: Separate from AI-generated questions, tagged with source
+- Parser: May need OCR for scanned materials (consider Textract or Tesseract)
+- Q&A: Conversational interface attached to each question
+- Could crowdsource explanations from community later
+
+**Why this is Phase 9:**
+- Blocked on acquiring/licensing official exam content
+- Listening/Speaking (Phase 5.5) can be built with AI immediately
+- Value is high but dependency is external
+
+---
+
+## Ongoing Research
+
+Research to inform product decisions (not phases, but continuous):
+
+| Research Area | Purpose | Status |
+|---------------|---------|--------|
+| **Duolingo engagement study** | Understand gamification, streaks, XP, lesson structure | 📚 Ongoing |
+| **Competitor analysis** | WaniKani, Bunpro, Anki, Lingodeer patterns | 📚 Ongoing |
+| **Exam format research** | Deep dive into each exam's actual format/rubrics | 📚 Ongoing |
+
+**Duolingo observations to track:**
+- Streak mechanics and psychology
+- XP and leveling system
+- Lesson structure and pacing
+- Mistake handling and retry flow
+- Social features (leaderboards, friends)
+- Notification strategies
 
 ---
 
@@ -544,14 +677,12 @@ UsageLimits (per tier)
 
 ## Next Steps
 
-### Immediate (Phase 1 - Payments & Core UI)
+### Immediate (Phase 0.5 - Analytics & Quick Wins)
 | Task | Status | Blocked By |
 |------|--------|------------|
-| Add Stripe integration for subscriptions | ✅ Complete | - |
-| Build vocabulary input UI | ✅ Complete | - |
-| Build flashcard review UI | ✅ Complete | - |
-| Integrate OpenRouter for sentence generation | ✅ Complete | - |
-| Create Convex action for AI calls | ✅ Complete | - |
+| Add PostHog integration | ❌ Not Started | - |
+| Save sentence context with vocabulary | ❌ Not Started | - |
+| Manual vocab entry + AI enhancement | ❌ Not Started | - |
 
 ### Short-term (Phase 1 - Audio & Polish)
 | Task | Status | Blocked By |
@@ -564,18 +695,19 @@ UsageLimits (per tier)
 |------|--------|-------|
 | Import JLPT vocabulary lists | ❌ Not Started | Need data source |
 | Import TOEFL/SAT/GRE vocabulary | ❌ Not Started | Need data source |
-| Build AI verification UI (Phase 2) | ❌ Not Started | After Phase 1 |
+| Build shadowing practice (Phase 5.5) | ❌ Not Started | Can build with AI |
 
 ### Later
 | Task | Status | Notes |
 |------|--------|-------|
 | Register domain (sanlang.app) | ❌ Not Started | Before public launch |
 | Set up email provider | ❌ Not Started | Phase 8 |
+| Source official exam content | ❌ Not Started | Phase 9 blocker |
 
 ---
 
 ## Document Control
 
-**Version**: 2.3
+**Version**: 2.4
 **Last Updated**: 2026-01-21
-**Status**: Active development - Phase 1 (Flashcard Foundation)
+**Status**: Active development - Phase 0.5 (Analytics & Quick Wins)

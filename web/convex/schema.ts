@@ -114,6 +114,7 @@ export default defineSchema({
     sourceStoryId: v.optional(v.string()),
     sourceStoryTitle: v.optional(v.string()),
     sourceYoutubeId: v.optional(v.string()),
+    sourceContext: v.optional(v.string()), // The sentence where the word was found
 
     // Exam association
     examLevel: v.optional(v.string()), // e.g., "N3", "B2", etc.

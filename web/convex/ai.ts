@@ -21,7 +21,7 @@ interface OpenRouterResponse {
 async function callOpenRouter(
   prompt: string,
   systemPrompt: string,
-  model: string = "anthropic/claude-3.5-haiku"
+  model: string = "qwen/qwen3-next-80b-a3b-instruct:free"
 ): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {

@@ -183,6 +183,7 @@ export const add = mutation({
     sourceStoryId: v.optional(v.string()),
     sourceStoryTitle: v.optional(v.string()),
     sourceYoutubeId: v.optional(v.string()),
+    sourceContext: v.optional(v.string()), // The sentence where the word was found
     examLevel: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -211,6 +212,7 @@ export const add = mutation({
       sourceStoryId: args.sourceStoryId,
       sourceStoryTitle: args.sourceStoryTitle,
       sourceYoutubeId: args.sourceYoutubeId,
+      sourceContext: args.sourceContext,
       examLevel: args.examLevel,
       timesReviewed: 0,
       timesCorrect: 0,
