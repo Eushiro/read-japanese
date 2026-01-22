@@ -209,31 +209,24 @@ def export_japanese():
         cursor = conn.cursor()
 
         # Get entries with kanji and kana forms, prioritizing common words
-        # JMdict uses priority markers: ichi1 (top 10k), news1 (newspaper common), nfXX (frequency rank)
-        # KJP = Kanji Priority, KNP = Kana Priority
+        # JMdict uses priority markers: ichi1 (top 10k), news1 (newspaper common)
+        # KJP = Kanji Priority table
+        # Uses idseq to link tables (not entry_id), sid for sense glosses
         cursor.execute("""
-            SELECT DISTINCT
-                k.text as kanji,
+            SELECT
+                COALESCE(k.text, r.text) as word,
                 r.text as reading,
-                GROUP_CONCAT(DISTINCT g.text, '|||') as glosses,
-                MAX(CASE
-                    WHEN COALESCE(kp.text, knp.text) = 'ichi1' THEN 100
-                    WHEN COALESCE(kp.text, knp.text) = 'news1' THEN 90
-                    WHEN COALESCE(kp.text, knp.text) LIKE 'nf%' THEN 80 - CAST(SUBSTR(COALESCE(kp.text, knp.text), 3) AS INTEGER)
-                    WHEN COALESCE(kp.text, knp.text) = 'ichi2' THEN 50
-                    WHEN COALESCE(kp.text, knp.text) = 'news2' THEN 40
-                    ELSE 0
-                END) as priority
+                GROUP_CONCAT(g.text, '|||') as glosses,
+                MAX(CASE WHEN kp.text IN ('ichi1', 'news1') THEN 1 ELSE 0 END) as is_common
             FROM Entry e
-            LEFT JOIN Kanji k ON k.entry_id = e.id
-            LEFT JOIN Kana r ON r.entry_id = e.id
+            LEFT JOIN Kanji k ON k.idseq = e.idseq
+            LEFT JOIN Kana r ON r.idseq = e.idseq
             LEFT JOIN KJP kp ON kp.kid = k.ID
-            LEFT JOIN KNP knp ON knp.kid = r.ID
-            JOIN Sense s ON s.entry_id = e.id
-            JOIN SenseGloss g ON g.sense_id = s.id AND g.lang = 'eng'
+            JOIN Sense s ON s.idseq = e.idseq
+            JOIN SenseGloss g ON g.sid = s.ID AND g.lang = 'eng'
             WHERE (k.text IS NOT NULL OR r.text IS NOT NULL)
-            GROUP BY COALESCE(k.text, r.text), r.text
-            ORDER BY priority DESC, LENGTH(COALESCE(k.text, r.text))
+            GROUP BY e.idseq
+            ORDER BY is_common DESC, LENGTH(COALESCE(k.text, r.text))
             LIMIT ?
         """, (CACHE_SIZE,))
 
@@ -241,9 +234,9 @@ def export_japanese():
         seen = set()
 
         for row in cursor.fetchall():
-            kanji, reading, glosses_str = row
-            word_text = kanji or reading or ""
-            reading_text = reading or ""
+            word_text, reading_text, glosses_str, _ = row
+            word_text = word_text or ""
+            reading_text = reading_text or ""
 
             if not word_text or word_text in seen:
                 continue

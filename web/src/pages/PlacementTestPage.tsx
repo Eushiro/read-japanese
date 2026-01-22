@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -61,6 +61,8 @@ export function PlacementTestPage() {
   // Pre-generated next question for instant transitions
   const [nextQuestionReady, setNextQuestionReady] = useState(false);
   const [isPreGenerating, setIsPreGenerating] = useState(false);
+  // Track if we've initialized from an existing test (to avoid re-running on every query update)
+  const hasInitializedFromExisting = useRef(false);
 
   // Queries
   const existingTest = useQuery(
@@ -80,11 +82,18 @@ export function PlacementTestPage() {
   const generateQuestion = useAction(api.ai.generatePlacementQuestion);
   const getNextDifficulty = useAction(api.ai.getNextQuestionDifficulty);
 
-  // Initialize or resume test
+  // Reset initialization flag when language changes
+  useEffect(() => {
+    hasInitializedFromExisting.current = false;
+  }, [language]);
+
+  // Initialize or resume test (only runs once per language, not on every query update)
   useEffect(() => {
     if (existingTest === undefined) return; // Still loading
+    if (hasInitializedFromExisting.current) return; // Already initialized
 
     if (existingTest && existingTest.status === "in_progress") {
+      hasInitializedFromExisting.current = true;
       setTestId(existingTest._id);
       // Resume at the last unanswered question
       const lastAnswered = existingTest.questions.findIndex(
