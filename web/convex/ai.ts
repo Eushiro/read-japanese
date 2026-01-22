@@ -1050,16 +1050,18 @@ Create comprehension questions for the story above, aiming for a total of ${work
       }));
     };
 
-    // Try up to 2 times
+    // Try up to 2 times - fall back to Claude Haiku on retry
+    const FALLBACK_MODEL = "anthropic/claude-haiku-4-5-20241022";
     let lastError: Error | null = null;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 1500, comprehensionSchema);
+        const model = attempt === 0 ? DEFAULT_MODEL : FALLBACK_MODEL;
+        const response = await callOpenRouter(prompt, systemPrompt, model, 1500, comprehensionSchema);
         const parsed = JSON.parse(response) as { questions: Omit<ComprehensionQuestion, "questionId">[] };
 
-        // Check for corrupted response on first attempt
+        // Check for corrupted response on first attempt - retry with Claude Haiku
         if (attempt === 0 && isCorrupted(parsed)) {
-          console.warn("Comprehension questions response corrupted (attempt 1), retrying...");
+          console.warn("Comprehension questions response corrupted (Gemini), retrying with Claude Haiku...");
           continue;
         }
 
