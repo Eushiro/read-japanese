@@ -208,25 +208,66 @@ def export_japanese():
         conn = jamdict_sqlite.connect(str(db_path))
         cursor = conn.cursor()
 
-        # Get entries with kanji and kana forms, prioritizing common words
-        # JMdict uses priority markers: ichi1 (top 10k), news1 (newspaper common)
-        # KJP = Kanji Priority table
-        # Uses idseq to link tables (not entry_id), sid for sense glosses
+        # Get entries with kanji and kana forms, prioritizing by frequency
+        # JMdict priority markers:
+        #   nfXX = frequency rank (nf01 = top 500, nf48 = ~24000th)
+        #   ichi1 = "Ichimango" common word list (~10k words)
+        #   news1/news2 = newspaper frequency
+        #
+        # Priority formula: combine nfXX rank with ichi1/news1 bonuses
+        # - nf01-nf10 (top 5k): priority 90-99
+        # - nf11-nf24 + ichi1 bonus: priority 70-89
+        # - ichi1 alone (no nfXX): priority 60
+        # - news1 alone: priority 50
+        # - Lower nfXX or ichi2/news2: priority 30-49
         cursor.execute("""
             SELECT
                 COALESCE(k.text, r.text) as word,
                 r.text as reading,
                 GROUP_CONCAT(g.text, '|||') as glosses,
-                MAX(CASE WHEN kp.text IN ('ichi1', 'news1') THEN 1 ELSE 0 END) as is_common
+                (
+                    -- Base score from nfXX (if present)
+                    COALESCE(
+                        MAX(CASE
+                            WHEN COALESCE(kp.text, knp.text) LIKE 'nf%' THEN
+                                CASE
+                                    -- nf01-nf10: priority 90-99 (top 5000 words)
+                                    WHEN CAST(SUBSTR(COALESCE(kp.text, knp.text), 3) AS INTEGER) <= 10
+                                        THEN 100 - CAST(SUBSTR(COALESCE(kp.text, knp.text), 3) AS INTEGER)
+                                    -- nf11-nf24: priority 65-78
+                                    WHEN CAST(SUBSTR(COALESCE(kp.text, knp.text), 3) AS INTEGER) <= 24
+                                        THEN 89 - CAST(SUBSTR(COALESCE(kp.text, knp.text), 3) AS INTEGER)
+                                    -- nf25-nf48: priority 30-54
+                                    ELSE 79 - CAST(SUBSTR(COALESCE(kp.text, knp.text), 3) AS INTEGER)
+                                END
+                        END),
+                        0
+                    )
+                    +
+                    -- Bonus for ichi1/news1 (high value to ensure common words rank high)
+                    -- ichi1 = "Ichimango" 10k most common words - should rank VERY high
+                    COALESCE(
+                        MAX(CASE
+                            WHEN COALESCE(kp.text, knp.text) = 'ichi1' THEN 100
+                            WHEN COALESCE(kp.text, knp.text) = 'news1' THEN 80
+                            WHEN COALESCE(kp.text, knp.text) = 'ichi2' THEN 20
+                            WHEN COALESCE(kp.text, knp.text) = 'news2' THEN 15
+                            WHEN COALESCE(kp.text, knp.text) = 'gai1' THEN 10
+                            ELSE 0
+                        END),
+                        0
+                    )
+                ) as priority
             FROM Entry e
             LEFT JOIN Kanji k ON k.idseq = e.idseq
             LEFT JOIN Kana r ON r.idseq = e.idseq
             LEFT JOIN KJP kp ON kp.kid = k.ID
+            LEFT JOIN KNP knp ON knp.kid = r.ID
             JOIN Sense s ON s.idseq = e.idseq
             JOIN SenseGloss g ON g.sid = s.ID AND g.lang = 'eng'
             WHERE (k.text IS NOT NULL OR r.text IS NOT NULL)
             GROUP BY e.idseq
-            ORDER BY is_common DESC, LENGTH(COALESCE(k.text, r.text))
+            ORDER BY priority DESC, LENGTH(COALESCE(k.text, r.text))
             LIMIT ?
         """, (CACHE_SIZE,))
 
