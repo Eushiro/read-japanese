@@ -51,7 +51,8 @@ export function PlacementTestPage() {
   const language = (search.language as Language) || "japanese";
 
   const [testId, setTestId] = useState<Id<"placementTests"> | null>(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1); // The latest question (unanswered)
+  const [viewingIndex, setViewingIndex] = useState(-1); // Which question we're currently viewing
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,9 +90,9 @@ export function PlacementTestPage() {
       const lastAnswered = existingTest.questions.findIndex(
         (q) => q.userAnswer === undefined
       );
-      setCurrentQuestionIndex(
-        lastAnswered >= 0 ? lastAnswered : existingTest.questions.length
-      );
+      const idx = lastAnswered >= 0 ? lastAnswered : existingTest.questions.length;
+      setCurrentQuestionIndex(idx);
+      setViewingIndex(idx);
       setPreviousQuestions(existingTest.questions.map((q) => q.question));
     }
   }, [existingTest]);
@@ -118,6 +119,7 @@ export function PlacementTestPage() {
       const id = await createTest({ userId: user.id, language });
       setTestId(id);
       setCurrentQuestionIndex(0);
+      setViewingIndex(0);
       setPreviousQuestions([]);
 
       // Generate first question
@@ -166,6 +168,7 @@ export function PlacementTestPage() {
         setNextQuestionReady(true);
       } else {
         setCurrentQuestionIndex(afterIndex);
+        setViewingIndex(afterIndex);
         setNextQuestionReady(false);
         // Start pre-generating the next question in background
         preGenerateNextQuestion(tid, afterIndex + 1);
@@ -229,12 +232,31 @@ export function PlacementTestPage() {
     } else if (nextQuestionReady) {
       // Use pre-generated question - just advance the index
       setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setViewingIndex(currentQuestionIndex + 1);
       setNextQuestionReady(false);
       // Start pre-generating the next question in background
       preGenerateNextQuestion(testId, currentQuestionIndex + 2);
     } else {
       // Fall back to generating if pre-generation didn't complete
       await generateNextQuestion(testId, currentQuestionIndex + 1);
+    }
+  };
+
+  // Navigate to previous question (view only, can't change answers)
+  const handlePreviousQuestion = () => {
+    if (viewingIndex > 0) {
+      setViewingIndex(viewingIndex - 1);
+      setSelectedAnswer(null);
+      setShowFeedback(false);
+    }
+  };
+
+  // Navigate forward through answered questions
+  const handleViewNextQuestion = () => {
+    if (viewingIndex < currentQuestionIndex) {
+      setViewingIndex(viewingIndex + 1);
+      setSelectedAnswer(null);
+      setShowFeedback(false);
     }
   };
 
@@ -273,8 +295,13 @@ export function PlacementTestPage() {
     );
   }
 
-  const currentQuestion =
-    currentTest?.questions[currentQuestionIndex] as PlacementQuestion | undefined;
+  // The question we're currently viewing (may be a past answered question)
+  const viewingQuestion =
+    currentTest?.questions[viewingIndex] as PlacementQuestion | undefined;
+  // Whether we're viewing a past question (already answered)
+  const isViewingPastQuestion = viewingIndex < currentQuestionIndex;
+  // Whether we're on the current unanswered question
+  const isOnCurrentQuestion = viewingIndex === currentQuestionIndex;
   const isTestComplete = currentTest?.status === "completed";
 
   // Results view
@@ -485,7 +512,7 @@ export function PlacementTestPage() {
             </h1>
           </div>
           <Badge variant="outline">
-            Question {(currentQuestionIndex ?? 0) + 1}
+            Question {(viewingIndex ?? 0) + 1}{isViewingPastQuestion ? ` of ${currentQuestionIndex + 1}` : ""}
           </Badge>
         </div>
 
@@ -523,14 +550,19 @@ export function PlacementTestPage() {
               <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
               <p className="text-foreground-muted">Generating question...</p>
             </div>
-          ) : currentQuestion ? (
+          ) : viewingQuestion ? (
             <>
               {/* Question type badge */}
               <div className="flex items-center gap-2 mb-4">
                 <Badge variant="outline" className="capitalize">
-                  {currentQuestion.type}
+                  {viewingQuestion.type}
                 </Badge>
-                <Badge variant="outline">{currentQuestion.level}</Badge>
+                <Badge variant="outline">{viewingQuestion.level}</Badge>
+                {isViewingPastQuestion && (
+                  <Badge variant="outline" className="bg-muted">
+                    Reviewing
+                  </Badge>
+                )}
               </div>
 
               {/* Question */}
@@ -539,24 +571,27 @@ export function PlacementTestPage() {
                   className="text-lg font-medium mb-2"
                   style={{ fontFamily: "var(--font-japanese)" }}
                 >
-                  {currentQuestion.question}
+                  {viewingQuestion.question}
                 </p>
               </div>
 
               {/* Options */}
               <div className="space-y-3 mb-6">
-                {currentQuestion.options.map((option, index) => {
-                  const isSelected = selectedAnswer === option;
-                  const isCorrect = option === currentQuestion.correctAnswer;
-                  const showCorrectness = showFeedback;
+                {viewingQuestion.options.map((option, index) => {
+                  // For past questions, show the user's answer and correct answer
+                  const userAnswer = isViewingPastQuestion ? viewingQuestion.userAnswer : selectedAnswer;
+                  const isSelected = userAnswer === option;
+                  const isCorrect = option === viewingQuestion.correctAnswer;
+                  // Show correctness for past questions or when feedback is shown
+                  const showCorrectness = isViewingPastQuestion || showFeedback;
 
                   return (
                     <button
                       key={index}
                       onClick={() =>
-                        !showFeedback && !isSubmitting && setSelectedAnswer(option)
+                        !isViewingPastQuestion && !showFeedback && !isSubmitting && setSelectedAnswer(option)
                       }
-                      disabled={showFeedback || isSubmitting}
+                      disabled={isViewingPastQuestion || showFeedback || isSubmitting}
                       className={`w-full text-left p-4 rounded-xl border transition-all ${
                         showCorrectness
                           ? isCorrect
@@ -584,31 +619,58 @@ export function PlacementTestPage() {
                 })}
               </div>
 
-              {/* Submit / Next button */}
-              {showFeedback ? (
-                <Button
-                  className="w-full"
-                  onClick={handleNextQuestion}
-                >
-                  Next Question
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </Button>
-              ) : (
-                <Button
-                  className="w-full"
-                  onClick={handleSubmitAnswer}
-                  disabled={selectedAnswer === null || isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Submitting...
-                    </>
+              {/* Navigation buttons */}
+              <div className="flex gap-3">
+                {/* Previous button - show if not on first question */}
+                {viewingIndex > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={handlePreviousQuestion}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Previous
+                  </Button>
+                )}
+
+                {/* Main action button */}
+                <div className="flex-1">
+                  {isViewingPastQuestion ? (
+                    // Viewing a past question - show "Next" or "Return to Current"
+                    <Button
+                      className="w-full"
+                      onClick={handleViewNextQuestion}
+                    >
+                      {viewingIndex === currentQuestionIndex - 1 ? "Return to Current" : "Next"}
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  ) : showFeedback ? (
+                    // Just answered current question - show "Next Question"
+                    <Button
+                      className="w-full"
+                      onClick={handleNextQuestion}
+                    >
+                      Next Question
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
                   ) : (
-                    "Submit Answer"
+                    // On current question, not yet answered - show "Submit"
+                    <Button
+                      className="w-full"
+                      onClick={handleSubmitAnswer}
+                      disabled={selectedAnswer === null || isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        "Submit Answer"
+                      )}
+                    </Button>
                   )}
-                </Button>
-              )}
+                </div>
+              </div>
             </>
           ) : (
             <div className="text-center py-12 text-foreground-muted">
