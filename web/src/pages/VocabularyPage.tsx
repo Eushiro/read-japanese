@@ -398,6 +398,7 @@ export function VocabularyPage() {
         <AddWordModal
           userId={userId}
           onClose={() => setShowAddModal(false)}
+          isPremiumUser={!!isPremiumUser}
         />
       )}
 
@@ -580,9 +581,10 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
 interface AddWordModalProps {
   userId: string;
   onClose: () => void;
+  isPremiumUser: boolean;
 }
 
-function AddWordModal({ userId, onClose }: AddWordModalProps) {
+function AddWordModal({ userId, onClose, isPremiumUser }: AddWordModalProps) {
   const [word, setWord] = useState("");
   const [reading, setReading] = useState("");
   const [definitions, setDefinitions] = useState("");
@@ -661,8 +663,8 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
       // Close modal immediately for better UX
       onClose();
 
-      // Trigger AI enhancement in background (sentence + audio + image)
-      if (vocabId) {
+      // Trigger AI enhancement in background for premium users only
+      if (vocabId && isPremiumUser) {
         generateFlashcardWithAudio({
           vocabularyId: vocabId,
           includeAudio: true,

@@ -387,8 +387,12 @@ export default defineSchema({
       questionId: v.string(),
       type: v.union(
         v.literal("multiple_choice"),
+        v.literal("translation"),
         v.literal("short_answer"),
-        v.literal("essay")
+        v.literal("inference"),
+        v.literal("prediction"),
+        v.literal("grammar"),
+        v.literal("opinion")
       ),
       question: v.string(),
       questionTranslation: v.optional(v.string()), // English translation for learners
