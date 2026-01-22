@@ -229,14 +229,23 @@ export function PlacementTestPage() {
         return;
       }
 
-      // Generate question at optimal difficulty
-      const question = await generateQuestion({
-        testId: tid,
-        language,
-        targetDifficulty: nextInfo.targetDifficulty,
-        questionType: nextInfo.suggestedType,
-        previousQuestions,
-      });
+      // For the first question, add minimum 6 second delay for better UX
+      const isFirstQuestion = afterIndex === 0 && !isPreGeneration;
+      const minDelayPromise = isFirstQuestion
+        ? new Promise((resolve) => setTimeout(resolve, 6000))
+        : Promise.resolve();
+
+      // Generate question at optimal difficulty (in parallel with min delay)
+      const [question] = await Promise.all([
+        generateQuestion({
+          testId: tid,
+          language,
+          targetDifficulty: nextInfo.targetDifficulty,
+          questionType: nextInfo.suggestedType,
+          previousQuestions,
+        }),
+        minDelayPromise,
+      ]);
 
       setPreviousQuestions((prev) => [...prev, question.question]);
 
@@ -688,44 +697,26 @@ export function PlacementTestPage() {
 
         {/* Question Card */}
         {isGeneratingQuestion ? (
-          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
-            {/* Skeleton for question type badges with loading indicator */}
-            <div className="flex items-center justify-between mb-4 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-5 w-20 rounded-full" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-              <div className="flex items-center gap-2 text-sm text-foreground-muted">
-                <Loader2 className="w-4 h-4 animate-spin text-accent" />
-                <span className="transition-opacity duration-300">
-                  {LOADING_PHRASES[loadingPhraseIndex]}
-                </span>
-              </div>
-            </div>
-            {/* Skeleton for question text */}
-            <div className="mb-6 space-y-2 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-5 w-1/2" />
-            </div>
-            {/* Skeleton for options - staggered */}
-            <div className="space-y-3">
-              <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-                <Skeleton className="h-14 w-full rounded-xl" />
-              </div>
-              <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-                <Skeleton className="h-14 w-full rounded-xl" />
-              </div>
-              <div className="animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-                <Skeleton className="h-14 w-full rounded-xl" />
-              </div>
-              <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
-                <Skeleton className="h-14 w-full rounded-xl" />
-              </div>
-            </div>
-            {/* Skeleton for button */}
-            <div className="mt-6 animate-fade-in-up" style={{ animationDelay: '600ms' }}>
-              <Skeleton className="h-10 w-full rounded-lg" />
+          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm min-h-[400px] flex flex-col items-center justify-center">
+            {/* Centered shimmering loading text */}
+            <div className="flex flex-col items-center gap-6">
+              <Loader2 className="w-8 h-8 animate-spin text-accent" />
+              <p
+                key={loadingPhraseIndex}
+                className="text-xl sm:text-2xl font-medium text-foreground text-center animate-fade-in-up"
+                style={{
+                  background: 'linear-gradient(90deg, var(--foreground) 0%, var(--accent) 50%, var(--foreground) 100%)',
+                  backgroundSize: '200% 100%',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  animation: 'shimmer 2s ease-in-out infinite, fade-in-up 0.3s ease-out',
+                }}
+              >
+                {LOADING_PHRASES[loadingPhraseIndex]}
+              </p>
+              <p className="text-sm text-foreground-muted">
+                Question {currentQuestionIndex + 1}
+              </p>
             </div>
           </div>
         ) : viewingQuestion ? (
