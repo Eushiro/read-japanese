@@ -121,7 +121,6 @@ export function ReaderPage() {
       storyContent: getStoryContent(),
       language: getLanguage(),
       userId,
-      questionCount: 3,
     }).catch((err) => {
       console.error("Background comprehension question generation failed:", err);
     });

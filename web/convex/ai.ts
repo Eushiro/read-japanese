@@ -858,11 +858,9 @@ export const generateComprehensionQuestions = action({
       v.literal("french")
     ),
     userId: v.string(),
-    questionCount: v.optional(v.number()), // Default 5
     userLevel: v.optional(v.string()), // User's proficiency level (N3, B2, etc.)
   },
   handler: async (ctx, args): Promise<{ comprehensionId: string; questions: ComprehensionQuestion[] }> => {
-    const count = args.questionCount ?? 5;
     const languageName = languageNames[args.language];
     const levelInfo = args.userLevel ? ` The learner is at ${args.userLevel} level.` : "";
 
@@ -876,15 +874,35 @@ export const generateComprehensionQuestions = action({
   - Passive vs causative forms
   - Conditional forms (〜たら, 〜ば, 〜なら)` : "";
 
+    // Work budget system: aim for ~6 work units total
+    // This creates variety - could be 6 easy questions or 2 hard ones
+    const workBudget = 6;
+
     const systemPrompt = `You are a language learning assistant creating comprehension questions for a ${languageName} reading passage.${levelInfo}
 
-Create ${count} varied questions from these types:
-1. TRANSLATION: Ask learner to translate a sentence or phrase from the story
-2. COMPREHENSION: Multiple choice about facts, details, or sequence of events
-3. PREDICTION: "What do you think happens next?" or "What would the character do if...?"
-4. OPINION: Ask learner's opinion about a character's decision or theme
-5. GRAMMAR_IMPLICATION: How does a specific grammar pattern affect meaning?${grammarExamples}
-6. INFERENCE: What can we infer about a character or situation?
+Create questions with a MIX of difficulty levels. Each question type has a "work cost":
+- multiple_choice: 1 work (quick to answer)
+- translation: 2 work (requires writing)
+- short_answer: 2 work (requires brief written response)
+- inference: 2 work (requires thinking + brief answer)
+- prediction: 2 work (creative thinking + brief answer)
+- grammar: 2 work (analyze grammar usage)
+- opinion: 3 work (requires longer thoughtful response)
+
+Your TOTAL work must equal approximately ${workBudget}. Examples:
+- 6 multiple choice (6 work)
+- 3 multiple choice + 1 opinion (6 work)
+- 2 multiple choice + 2 translation (6 work)
+- 1 multiple choice + 1 translation + 1 opinion (6 work)
+
+Question type details:
+1. multiple_choice: Facts, details, or sequence of events (4 options)
+2. translation: Translate a sentence/phrase from the story
+3. short_answer: Brief response about meaning or context
+4. inference: What can we infer about a character or situation?
+5. prediction: What happens next? What would character do if...?
+6. grammar: How does a grammar pattern affect meaning?${grammarExamples}
+7. opinion: Learner's opinion about character decision or theme
 
 Respond ONLY with valid JSON:
 {
@@ -905,30 +923,23 @@ Respond ONLY with valid JSON:
       "points": 15
     },
     {
-      "type": "short_answer",
-      "question": "question in ${languageName}",
-      "questionTranslation": "English translation",
-      "correctAnswer": "key points for answer",
-      "points": 15
-    },
-    {
       "type": "opinion",
-      "question": "What do you think about [character's action]? Why?",
+      "question": "What do you think about [topic]? Why?",
       "questionTranslation": "English translation",
       "rubric": "Award points for: clear opinion, supporting evidence, language quality",
-      "points": 20
+      "points": 25
     }
   ]
 }
 
-Mix question types for variety. Include at least one translation and one opinion/prediction question.`;
+IMPORTANT: Vary the question types! Don't use all multiple choice.`;
 
     const prompt = `Story Title: ${args.storyTitle}
 
 ${args.storyContent}
 
 ---
-Create ${count} comprehension questions for the story above.`;
+Create comprehension questions for the story above, aiming for a total of ${workBudget} work units.`;
 
     const response = await callOpenRouter(prompt, systemPrompt, "qwen/qwen3-next-80b-a3b-instruct:free");
 
