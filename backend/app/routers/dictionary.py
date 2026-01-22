@@ -1,9 +1,13 @@
-"""Dictionary lookup endpoint - multi-language support with local dictionaries."""
+"""Dictionary lookup endpoint - multi-language support with local dictionaries.
+
+Memory-optimized with efficient SQLite queries for fast prefix search.
+"""
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Literal
-import httpx
+import sqlite3
+from pathlib import Path
 
 router = APIRouter()
 
@@ -19,43 +23,8 @@ class DictionaryResponse(BaseModel):
     entries: list[DictionaryEntry]
 
 
-# Singleton instances for dictionaries
+# Singleton instance for jamdict (lazy loaded)
 _jamdict_instance = None
-_wordnet_initialized = False
-_japanese_word_index: list[tuple[str, str, list[str], str | None, int]] | None = None  # (reading, word, meanings, pos, priority)
-_english_word_index: list[tuple[str, list[str], str | None, float]] | None = None  # (word, meanings, pos, frequency)
-_french_word_index: list[tuple[str, list[str], str | None, float]] | None = None  # (word, meanings, pos, frequency)
-
-
-def get_word_frequency(word: str, lang: str) -> float:
-    """Get word frequency from wordfreq library. Higher = more common."""
-    try:
-        from wordfreq import word_frequency
-        return word_frequency(word, lang)
-    except Exception:
-        return 0.0
-
-
-def convert_romaji_to_hiragana(text: str) -> str:
-    """Convert romaji to hiragana using wanakana-python library."""
-    try:
-        import wanakana
-        if wanakana.is_romaji(text):
-            return wanakana.to_hiragana(text)
-        return text
-    except Exception as e:
-        print(f"Romaji conversion error: {e}")
-        return text
-
-
-def is_romaji(text: str) -> bool:
-    """Check if text appears to be romaji using wanakana-python."""
-    try:
-        import wanakana
-        return wanakana.is_romaji(text)
-    except Exception:
-        # Fallback: check if ASCII letters only
-        return all(c.isascii() and (c.isalpha() or c in "'-") for c in text) and len(text) > 0
 
 
 def get_jamdict():
@@ -71,463 +40,37 @@ def get_jamdict():
     return _jamdict_instance
 
 
-def init_wordnet():
-    """Initialize WordNet for English lookups."""
-    global _wordnet_initialized
-    if not _wordnet_initialized:
-        try:
-            import wn
-            # Download English WordNet if not present
-            if not wn.lexicons():
-                wn.download('ewn:2020')
-            _wordnet_initialized = True
-        except Exception as e:
-            print(f"Failed to initialize WordNet: {e}")
-            return False
-    return _wordnet_initialized
-
-
-def build_japanese_index() -> list[tuple[str, str, list[str], str | None, int]]:
-    """Build in-memory index of Japanese words for fast prefix search.
-
-    Returns list of (reading, word, meanings, pos, priority_score) tuples.
-    Lower priority_score = more common word.
-    """
-    global _japanese_word_index
-    if _japanese_word_index is not None:
-        return _japanese_word_index
-
-    jmd = get_jamdict()
-    if jmd is None:
-        return []
-
-    print("Building Japanese word index (one-time operation)...")
-    import time
-    from collections import defaultdict
-    start = time.time()
-
-    db = jmd.jmdict
-
+def convert_romaji_to_hiragana(text: str) -> str:
+    """Convert romaji to hiragana using wanakana-python library."""
     try:
-        # Load all data at once (much faster than individual lookups)
-        all_kana = list(db.Kana.select())
-        all_kanji = list(db.Kanji.select())
-        all_senses = list(db.Sense.select())
-        all_glosses = list(db.SenseGloss.select())
-        all_knp = list(db.KNP.select())  # Kana priorities
-        all_kjp = list(db.KJP.select())  # Kanji priorities
-
-        # Build lookup dictionaries
-        kana_by_id = defaultdict(list)
-        for k in all_kana:
-            kana_by_id[k.idseq].append(k)
-
-        kanji_by_id = defaultdict(list)
-        for k in all_kanji:
-            kanji_by_id[k.idseq].append(k.text)
-
-        # Gloss lookup by sense ID
-        gloss_by_sid = defaultdict(list)
-        for g in all_glosses:
-            if g.lang == 'eng' or not g.lang:  # English glosses
-                gloss_by_sid[g.sid].append(g.text)
-
-        # Sense lookup by entry idseq
-        sense_by_idseq = defaultdict(list)
-        for s in all_senses:
-            sense_by_idseq[s.idseq].append(s)
-
-        # Priority lookup by kana ID
-        # Priority scoring: ichi1=1, news1=2, nf01=3, nf02=4, ..., spec1=50, no priority=100
-        priority_by_kid = {}
-        for knp in all_knp:
-            tag = knp.text
-            score = 100
-            if tag == 'ichi1':
-                score = 1
-            elif tag == 'news1':
-                score = 2
-            elif tag == 'ichi2':
-                score = 10
-            elif tag == 'news2':
-                score = 11
-            elif tag.startswith('nf'):
-                try:
-                    score = 2 + int(tag[2:])
-                except ValueError:
-                    score = 50
-            elif tag in ('spec1', 'gai1'):
-                score = 50
-            elif tag in ('spec2', 'gai2'):
-                score = 60
-
-            if knp.kid not in priority_by_kid or score < priority_by_kid[knp.kid]:
-                priority_by_kid[knp.kid] = score
-
-        # Build the index
-        index: list[tuple[str, str, list[str], str | None, int]] = []
-        seen = set()
-
-        for idseq, kana_list in kana_by_id.items():
-            if not kana_list:
-                continue
-
-            # Get first kana reading
-            first_kana = kana_list[0]
-            reading = first_kana.text
-
-            # Get word (kanji if available, else kana)
-            kanji_list = kanji_by_id.get(idseq, [])
-            word = kanji_list[0] if kanji_list else reading
-
-            key = (word, reading)
-            if key in seen:
-                continue
-            seen.add(key)
-
-            # Get meanings from senses
-            meanings = []
-            senses = sense_by_idseq.get(idseq, [])
-            for sense in senses[:3]:
-                glosses = gloss_by_sid.get(sense.ID, [])
-                if glosses:
-                    meanings.append(", ".join(glosses[:3]))
-
-            if not meanings:
-                continue
-
-            # Get priority score (lower = more common)
-            priority = priority_by_kid.get(first_kana.ID, 100)
-
-            index.append((reading, word, meanings, None, priority))
-
-        # Sort by reading (primary) for binary search, priority preserved per-entry
-        index.sort(key=lambda x: x[0])
-        _japanese_word_index = index
-        print(f"Japanese word index built: {len(index)} entries in {time.time() - start:.1f}s")
-
-    except Exception as e:
-        print(f"Failed to build Japanese index: {e}")
-        import traceback
-        traceback.print_exc()
-        _japanese_word_index = []
-
-    return _japanese_word_index
+        import wanakana
+        if wanakana.is_romaji(text):
+            return wanakana.to_hiragana(text)
+        return text
+    except Exception:
+        return text
 
 
-def search_japanese(query: str, limit: int) -> list[DictionaryEntry]:
-    """Search Japanese dictionary using in-memory index. Supports romaji input.
-
-    Results are sorted by word frequency (most common words first).
-    """
-    import bisect
-
-    # Convert romaji to hiragana if needed
-    search_query = query
-    if is_romaji(query):
-        search_query = convert_romaji_to_hiragana(query)
-
-    index = build_japanese_index()
-    if not index:
-        return []
-
-    matches: list[tuple[int, str, str, list[str], str | None]] = []  # (priority, reading, word, meanings, pos)
-    seen_words = set()
-
-    # Binary search for prefix matches on reading
-    left = bisect.bisect_left(index, (search_query,))
-
-    for i in range(left, min(left + limit * 10, len(index))):
-        reading, word, meanings, pos, priority = index[i]
-
-        # Stop if we've passed the prefix
-        if not reading.startswith(search_query):
-            break
-
-        if word in seen_words:
-            continue
-        seen_words.add(word)
-
-        matches.append((priority, reading, word, meanings, pos))
-
-    # Also search by kanji/word if query might contain kanji
-    if not search_query.isascii():
-        for reading, word, meanings, pos, priority in index:
-            if word.startswith(query) and word not in seen_words:
-                seen_words.add(word)
-                matches.append((priority, reading, word, meanings, pos))
-                if len(matches) >= limit * 10:
-                    break
-
-    # Sort by priority (lower = more common) and take top results
-    matches.sort(key=lambda x: x[0])
-
-    entries = []
-    for priority, reading, word, meanings, pos in matches[:limit]:
-        entries.append(DictionaryEntry(
-            word=word,
-            reading=reading,
-            meanings=meanings,
-            partOfSpeech=pos,
-        ))
-
-    return entries
-
-
-def build_english_index() -> list[tuple[str, list[str], str | None, float]]:
-    """Build in-memory index of English words for fast prefix search.
-
-    Uses wordfreq library for accurate frequency ranking.
-    Index is sorted alphabetically for binary search; frequency is stored for sorting results.
-    """
-    global _english_word_index
-    if _english_word_index is not None:
-        return _english_word_index
-
-    if not init_wordnet():
-        return []
-
-    print("Building English word index (one-time operation)...")
-    import time
-    start = time.time()
-
+def is_romaji(text: str) -> bool:
+    """Check if text appears to be romaji."""
     try:
-        import wn
-
-        index: list[tuple[str, list[str], str | None, float]] = []
-        seen = set()
-        pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
-
-        for word in wn.words():
-            lemma = word.lemma()
-            lemma_lower = lemma.lower()
-
-            if lemma_lower in seen:
-                continue
-            # Skip multi-word entries for autocomplete
-            if ' ' in lemma:
-                continue
-            seen.add(lemma_lower)
-
-            synsets = word.synsets()
-            if not synsets:
-                continue
-
-            meanings = []
-            pos_tags = set()
-
-            for synset in synsets[:3]:
-                definition = synset.definition()
-                if definition:
-                    meanings.append(definition)
-                pos_tags.add(synset.pos)
-
-            if not meanings:
-                continue
-
-            pos = ", ".join(pos_map.get(p, p) for p in pos_tags if p)
-
-            # Get frequency from wordfreq library
-            freq = get_word_frequency(lemma_lower, 'en')
-
-            index.append((lemma_lower, meanings[:3], pos if pos else None, freq))
-
-        # Sort alphabetically for binary search
-        index.sort(key=lambda x: x[0])
-        _english_word_index = index
-        print(f"English word index built: {len(index)} entries in {time.time() - start:.1f}s")
-
-    except Exception as e:
-        print(f"Failed to build English index: {e}")
-        import traceback
-        traceback.print_exc()
-        _english_word_index = []
-
-    return _english_word_index
-
-
-def search_english(query: str, limit: int) -> list[DictionaryEntry]:
-    """Search English dictionary using in-memory index.
-
-    Uses binary search for prefix matching, then sorts by frequency (higher = more common).
-    """
-    import bisect
-
-    index = build_english_index()
-    if not index:
-        return []
-
-    query_lower = query.lower()
-    matches: list[tuple[float, str, list[str], str | None]] = []
-
-    # Binary search for prefix matches
-    left = bisect.bisect_left(index, (query_lower,))
-
-    for i in range(left, len(index)):
-        word, meanings, pos, freq = index[i]
-
-        if not word.startswith(query_lower):
-            break
-
-        matches.append((freq, word, meanings, pos))
-
-    # Sort by frequency (higher = more common, so negate for descending)
-    matches.sort(key=lambda x: -x[0])
-
-    entries = []
-    for _, word, meanings, pos in matches[:limit]:
-        entries.append(DictionaryEntry(
-            word=word,
-            reading="",
-            meanings=meanings,
-            partOfSpeech=pos,
-        ))
-
-    return entries
-
-
-def build_french_index() -> list[tuple[str, list[str], str | None, float]]:
-    """Build in-memory index of French words for fast prefix search.
-
-    Uses wordfreq library for accurate frequency ranking.
-    Index is sorted alphabetically for binary search; frequency is stored for sorting results.
-    """
-    global _french_word_index
-    if _french_word_index is not None:
-        return _french_word_index
-
-    print("Building French word index (one-time operation)...")
-    import time
-    start = time.time()
-
-    try:
-        import wn
-
-        # Ensure French lexicon is loaded
-        if not wn.lexicons(lang='fr'):
-            try:
-                wn.download('omw-fr:1.4')
-            except Exception:
-                _french_word_index = []
-                return []
-
-        # Get English WordNet for definitions
-        try:
-            en_wordnet = wn.Wordnet(lang='en', lexicon='ewn:2020')
-        except Exception:
-            en_wordnet = None
-
-        index: list[tuple[str, list[str], str | None, float]] = []
-        seen = set()
-        pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
-
-        for word in wn.words(lang='fr'):
-            lemma = word.lemma()
-            lemma_lower = lemma.lower()
-
-            if lemma_lower in seen:
-                continue
-            # Skip multi-word entries for autocomplete
-            if ' ' in lemma:
-                continue
-            seen.add(lemma_lower)
-
-            synsets = word.synsets()
-            if not synsets:
-                continue
-
-            meanings = []
-            pos_tags = set()
-
-            for synset in synsets[:3]:
-                # French OMW doesn't have definitions - get from English via ILI
-                definition = synset.definition()
-                if not definition and en_wordnet and synset.ili:
-                    en_synsets = list(en_wordnet.synsets(ili=synset.ili))
-                    if en_synsets:
-                        definition = en_synsets[0].definition()
-
-                if definition:
-                    meanings.append(definition)
-                pos_tags.add(synset.pos)
-
-            if not meanings:
-                continue
-
-            pos = ", ".join(pos_map.get(p, p) for p in pos_tags if p)
-
-            # Get frequency from wordfreq library
-            freq = get_word_frequency(lemma_lower, 'fr')
-
-            index.append((lemma_lower, meanings[:3], pos if pos else None, freq))
-
-        # Sort alphabetically for binary search
-        index.sort(key=lambda x: x[0])
-        _french_word_index = index
-        print(f"French word index built: {len(index)} entries in {time.time() - start:.1f}s")
-
-    except Exception as e:
-        print(f"Failed to build French index: {e}")
-        import traceback
-        traceback.print_exc()
-        _french_word_index = []
-
-    return _french_word_index
-
-
-def search_french(query: str, limit: int) -> list[DictionaryEntry]:
-    """Search French dictionary using in-memory index.
-
-    Uses binary search for prefix matching, then sorts by frequency (higher = more common).
-    """
-    import bisect
-
-    index = build_french_index()
-    if not index:
-        return []
-
-    query_lower = query.lower()
-    matches: list[tuple[float, str, list[str], str | None]] = []
-
-    # Binary search for prefix matches
-    left = bisect.bisect_left(index, (query_lower,))
-
-    for i in range(left, len(index)):
-        word, meanings, pos, freq = index[i]
-
-        if not word.startswith(query_lower):
-            break
-
-        matches.append((freq, word, meanings, pos))
-
-    # Sort by frequency (higher = more common, so negate for descending)
-    matches.sort(key=lambda x: -x[0])
-
-    entries = []
-    for _, word, meanings, pos in matches[:limit]:
-        entries.append(DictionaryEntry(
-            word=word,
-            reading="",
-            meanings=meanings,
-            partOfSpeech=pos,
-        ))
-
-    return entries
+        import wanakana
+        return wanakana.is_romaji(text)
+    except Exception:
+        return all(c.isascii() and (c.isalpha() or c in "'-") for c in text) and len(text) > 0
 
 
 def lookup_japanese_exact(word: str) -> list[DictionaryEntry]:
-    """Look up a Japanese word using local jamdict database (exact match)."""
+    """Look up a Japanese word using jamdict (exact match)."""
     jmd = get_jamdict()
     if jmd is None:
         return []
 
     try:
-        # Use jamdict's lookup for exact match
         result = jmd.lookup(word)
-
         entries = []
+
         for entry in result.entries[:3]:
-            # Get the word and reading
             word_text = ""
             reading = ""
 
@@ -538,7 +81,6 @@ def lookup_japanese_exact(word: str) -> list[DictionaryEntry]:
                 if not word_text:
                     word_text = reading
 
-            # Get meanings and parts of speech
             meanings = []
             parts_of_speech = set()
 
@@ -565,6 +107,254 @@ def lookup_japanese_exact(word: str) -> list[DictionaryEntry]:
         return []
 
 
+def search_japanese(query: str, limit: int) -> list[DictionaryEntry]:
+    """Search Japanese dictionary using jamdict's efficient lookup."""
+    jmd = get_jamdict()
+    if jmd is None:
+        return []
+
+    # Convert romaji to hiragana if needed
+    search_query = query
+    if is_romaji(query):
+        search_query = convert_romaji_to_hiragana(query)
+
+    try:
+        # Use jamdict's lookup with wildcards for prefix search
+        result = jmd.lookup(f"{search_query}%")
+
+        entries = []
+        seen = set()
+
+        for entry in result.entries:
+            if len(entries) >= limit:
+                break
+
+            word_text = ""
+            reading = ""
+
+            if entry.kanji_forms:
+                word_text = entry.kanji_forms[0].text
+            if entry.kana_forms:
+                reading = entry.kana_forms[0].text
+                if not word_text:
+                    word_text = reading
+
+            # Skip duplicates
+            if word_text in seen:
+                continue
+            seen.add(word_text)
+
+            meanings = []
+            parts_of_speech = set()
+
+            for sense in entry.senses[:2]:
+                if sense.gloss:
+                    gloss_texts = [g.text for g in sense.gloss if g.text]
+                    if gloss_texts:
+                        meanings.append(", ".join(gloss_texts[:2]))
+                if sense.pos:
+                    parts_of_speech.update(sense.pos)
+
+            if meanings:
+                entries.append(DictionaryEntry(
+                    word=word_text,
+                    reading=reading,
+                    meanings=meanings,
+                    partOfSpeech=", ".join(list(parts_of_speech)[:2]) if parts_of_speech else None,
+                ))
+
+        return entries
+
+    except Exception as e:
+        print(f"Japanese search error: {e}")
+        return []
+
+
+def get_wn_db_path() -> Path | None:
+    """Get the path to the wn SQLite database.
+
+    Checks for bundled database first (with pre-computed frequencies),
+    then falls back to user's wn_data directory.
+    """
+    try:
+        # Check for bundled database first (includes frequency data)
+        bundled = Path(__file__).parent.parent / "data" / "wn.db"
+        if bundled.exists():
+            return bundled
+
+        # Fall back to user's wn_data
+        wn_data = Path.home() / ".wn_data" / "wn.db"
+        if wn_data.exists():
+            return wn_data
+    except Exception:
+        pass
+    return None
+
+
+def ensure_wn_data():
+    """Ensure WordNet data is available.
+
+    If using bundled database, no download needed.
+    Only downloads if using user's wn_data directory and it's empty.
+    """
+    # Check if we're using bundled database (already has all data)
+    bundled = Path(__file__).parent.parent / "data" / "wn.db"
+    if bundled.exists():
+        return  # Bundled database has everything
+
+    # Only download if no database exists
+    try:
+        import wn
+        if not wn.lexicons():
+            wn.download('ewn:2020')
+        if not wn.lexicons(lang='fr'):
+            try:
+                wn.download('omw-fr:1.4')
+            except Exception:
+                pass
+    except Exception as e:
+        print(f"Failed to ensure wn data: {e}")
+
+
+def search_english_sqlite(query: str, limit: int) -> list[DictionaryEntry]:
+    """Search English dictionary using direct SQLite query with frequency sorting."""
+    ensure_wn_data()
+    db_path = get_wn_db_path()
+    if not db_path:
+        return []
+
+    try:
+        conn = sqlite3.connect(str(db_path))
+        cursor = conn.cursor()
+
+        query_lower = query.lower()
+
+        # Query with LEFT JOIN to word_frequencies for sorting by frequency
+        cursor.execute("""
+            SELECT f.form,
+                   GROUP_CONCAT(d.definition, '|||'),
+                   GROUP_CONCAT(e.pos, ','),
+                   COALESCE(wf.frequency, 0) as freq
+            FROM forms f
+            JOIN entries e ON f.entry_rowid = e.rowid
+            JOIN senses s ON s.entry_rowid = e.rowid
+            JOIN definitions d ON d.synset_rowid = s.synset_rowid
+            JOIN lexicons l ON f.lexicon_rowid = l.rowid
+            LEFT JOIN word_frequencies wf ON LOWER(f.form) = wf.word AND wf.lang = 'en'
+            WHERE f.form LIKE ?
+              AND l.language = 'en'
+              AND f.form NOT LIKE '% %'
+            GROUP BY f.form
+            ORDER BY freq DESC, LENGTH(f.form)
+            LIMIT ?
+        """, (f"{query_lower}%", limit))
+
+        pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
+        entries = []
+
+        for row in cursor.fetchall():
+            word, definitions_str, pos_str, _ = row
+            if not definitions_str:
+                continue
+
+            meanings = definitions_str.split('|||')[:2]
+            pos_tags = set(pos_str.split(',')) if pos_str else set()
+            pos = ", ".join(pos_map.get(p, p) for p in pos_tags if p and p in pos_map)
+
+            entries.append(DictionaryEntry(
+                word=word,
+                reading="",
+                meanings=meanings,
+                partOfSpeech=pos if pos else None,
+            ))
+
+        conn.close()
+        return entries
+
+    except Exception as e:
+        print(f"English SQLite search error: {e}")
+        return []
+
+
+def search_french_sqlite(query: str, limit: int) -> list[DictionaryEntry]:
+    """Search French dictionary using direct SQLite query with frequency sorting."""
+    ensure_wn_data()
+    db_path = get_wn_db_path()
+    if not db_path:
+        return []
+
+    try:
+        conn = sqlite3.connect(str(db_path))
+        cursor = conn.cursor()
+
+        query_lower = query.lower()
+
+        # For French, get definitions from English via ILI, sort by frequency
+        cursor.execute("""
+            SELECT f.form,
+                   GROUP_CONCAT(en_d.definition, '|||'),
+                   GROUP_CONCAT(e.pos, ','),
+                   COALESCE(wf.frequency, 0) as freq
+            FROM forms f
+            JOIN entries e ON f.entry_rowid = e.rowid
+            JOIN senses s ON s.entry_rowid = e.rowid
+            JOIN synsets syn ON s.synset_rowid = syn.rowid
+            JOIN lexicons l ON f.lexicon_rowid = l.rowid
+            LEFT JOIN ilis i ON syn.ili = i.ili
+            LEFT JOIN synsets en_syn ON en_syn.ili = i.ili
+            LEFT JOIN lexicons en_l ON en_syn.lexicon_rowid = en_l.rowid AND en_l.language = 'en'
+            LEFT JOIN definitions en_d ON en_d.synset_rowid = en_syn.rowid
+            LEFT JOIN word_frequencies wf ON LOWER(f.form) = wf.word AND wf.lang = 'fr'
+            WHERE f.form LIKE ?
+              AND l.language = 'fr'
+              AND f.form NOT LIKE '% %'
+            GROUP BY f.form
+            ORDER BY freq DESC, LENGTH(f.form)
+            LIMIT ?
+        """, (f"{query_lower}%", limit))
+
+        pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
+        entries = []
+
+        for row in cursor.fetchall():
+            word, definitions_str, pos_str, _ = row
+            if not definitions_str:
+                continue
+
+            meanings = [m for m in definitions_str.split('|||')[:2] if m]
+            if not meanings:
+                continue
+
+            pos_tags = set(pos_str.split(',')) if pos_str else set()
+            pos = ", ".join(pos_map.get(p, p) for p in pos_tags if p and p in pos_map)
+
+            entries.append(DictionaryEntry(
+                word=word,
+                reading="",
+                meanings=meanings,
+                partOfSpeech=pos if pos else None,
+            ))
+
+        conn.close()
+        return entries
+
+    except Exception as e:
+        print(f"French SQLite search error: {e}")
+        return []
+
+
+def lookup_english_exact(word: str) -> list[DictionaryEntry]:
+    """Look up English word (exact match)."""
+    entries = search_english_sqlite(word, 5)
+    return [e for e in entries if e.word.lower() == word.lower()][:1]
+
+
+def lookup_french_exact(word: str) -> list[DictionaryEntry]:
+    """Look up French word (exact match)."""
+    entries = search_french_sqlite(word, 5)
+    return [e for e in entries if e.word.lower() == word.lower()][:1]
+
+
 @router.get("/dictionary/{word}", response_model=DictionaryResponse)
 async def lookup_word(
     word: str,
@@ -575,14 +365,9 @@ async def lookup_word(
         if language == "japanese":
             entries = lookup_japanese_exact(word)
         elif language == "english":
-            # For English, use exact match from WordNet
-            entries = search_english(word, 1)
-            # Filter to exact matches only
-            entries = [e for e in entries if e.word.lower() == word.lower()]
+            entries = lookup_english_exact(word)
         elif language == "french":
-            # For French, use exact match from WordNet
-            entries = search_french(word, 1)
-            entries = [e for e in entries if e.word.lower() == word.lower()]
+            entries = lookup_french_exact(word)
         else:
             entries = []
 
@@ -598,14 +383,14 @@ async def search_dictionary(
     language: Literal["japanese", "english", "french"] = Query(default="japanese"),
     limit: int = Query(default=10, le=50),
 ):
-    """Search dictionary by language. Uses local dictionaries where possible."""
+    """Search dictionary by language. Uses local dictionaries with efficient SQLite queries."""
     try:
         if language == "japanese":
             entries = search_japanese(query, limit)
         elif language == "english":
-            entries = search_english(query, limit)
+            entries = search_english_sqlite(query, limit)
         elif language == "french":
-            entries = search_french(query, limit)
+            entries = search_french_sqlite(query, limit)
         else:
             entries = []
 

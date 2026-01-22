@@ -36,6 +36,8 @@ export function PracticePage() {
     usageScore: number;
     naturalnessScore: number;
     overallScore: number;
+    difficultyLevel: string;
+    difficultyExplanation: string;
     corrections: Array<{
       original: string;
       corrected: string;
@@ -301,24 +303,31 @@ export function PracticePage() {
               <div className="space-y-6 animate-fade-in-up">
                 {/* Score summary */}
                 <div className="bg-surface rounded-2xl border border-border p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    {result.isCorrect ? (
-                      <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                        <Check className="w-5 h-5 text-green-500" />
-                      </div>
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 text-amber-500" />
-                      </div>
-                    )}
-                    <div>
-                      <div className="font-semibold text-foreground">
-                        {result.isCorrect ? "Great job!" : "Good effort!"}
-                      </div>
-                      <div className="text-sm text-foreground-muted">
-                        Overall score: {result.overallScore}/100
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-3">
+                      {result.isCorrect ? (
+                        <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                          <Check className="w-5 h-5 text-green-500" />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                          <Sparkles className="w-5 h-5 text-amber-500" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-semibold text-foreground">
+                          {result.isCorrect ? "Great job!" : "Good effort!"}
+                        </div>
+                        <div className="text-sm text-foreground-muted">
+                          Overall score: {result.overallScore}/100
+                        </div>
                       </div>
                     </div>
+                    {/* Difficulty badge */}
+                    <DifficultyBadge
+                      level={result.difficultyLevel}
+                      explanation={result.difficultyExplanation}
+                    />
                   </div>
 
                   {/* Score bars */}
@@ -363,9 +372,11 @@ export function PracticePage() {
                 <div className="bg-surface rounded-2xl border border-border p-6">
                   <div className="text-sm font-medium text-foreground-muted mb-2">Feedback</div>
                   <div className="text-foreground mb-4">{result.feedback}</div>
-                  {result.improvedSentence && result.improvedSentence !== sentence && (
+                  {result.improvedSentence && (
                     <div>
-                      <div className="text-sm font-medium text-foreground-muted mb-2">Suggested improvement</div>
+                      <div className="text-sm font-medium text-foreground-muted mb-2">
+                        {result.improvedSentence === sentence ? "Alternative expression" : "Suggested improvement"}
+                      </div>
                       <div
                         className="text-lg text-green-600 bg-green-500/5 p-3 rounded-lg border border-green-500/20"
                         style={{ fontFamily: selectedWord.language === "japanese" ? "var(--font-japanese)" : "inherit" }}
@@ -422,6 +433,29 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
           className={`h-full ${getColor(score)} rounded-full transition-all duration-500`}
           style={{ width: `${score}%` }}
         />
+      </div>
+    </div>
+  );
+}
+
+// Difficulty badge component
+function DifficultyBadge({ level, explanation }: { level: string; explanation: string }) {
+  const config: Record<string, { color: string; label: string }> = {
+    beginner: { color: "bg-green-500/10 text-green-600 border-green-500/20", label: "Beginner" },
+    intermediate: { color: "bg-amber-500/10 text-amber-600 border-amber-500/20", label: "Intermediate" },
+    advanced: { color: "bg-purple-500/10 text-purple-600 border-purple-500/20", label: "Advanced" },
+  };
+
+  const { color, label } = config[level.toLowerCase()] || config.beginner;
+
+  return (
+    <div className="group relative">
+      <div className={`px-3 py-1.5 rounded-lg text-sm font-medium border ${color}`}>
+        {label}
+      </div>
+      {/* Tooltip */}
+      <div className="absolute right-0 top-full mt-2 w-64 p-3 rounded-lg bg-surface border border-border shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+        <div className="text-xs text-foreground-muted">{explanation}</div>
       </div>
     </div>
   );

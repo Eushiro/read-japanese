@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, ChevronsUpDown } from "lucide-react";
+import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, ChevronsUpDown, Volume2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { searchDictionary, type DictionaryEntry } from "@/api/dictionary";
 import { cn } from "@/lib/utils";
@@ -491,6 +491,7 @@ interface VocabularyCardProps {
     masteryState: string;
     examLevel?: string | null;
     sourceStoryTitle?: string | null;
+    sourceContext?: string | null;
   };
   onRemove: (id: string) => void;
   showMastery?: boolean;
@@ -502,6 +503,7 @@ interface VocabularyCardProps {
 function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremiumUser = false, onShowPaywall }: VocabularyCardProps) {
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [generated, setGenerated] = useState(false);
 
   // Check if flashcard already exists
@@ -509,7 +511,8 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
     vocabularyId: item._id as GenericId<"vocabulary">,
   });
 
-  const generateFlashcard = useAction(api.ai.generateFlashcard);
+  const generateFlashcardWithAudio = useAction(api.ai.generateFlashcardWithAudio);
+  const generateFlashcardAudio = useAction(api.ai.generateFlashcardAudio);
 
   const handleGenerateFlashcard = async () => {
     if (!isPremiumUser) {
@@ -519,8 +522,9 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
 
     setIsGenerating(true);
     try {
-      await generateFlashcard({
+      await generateFlashcardWithAudio({
         vocabularyId: item._id as GenericId<"vocabulary">,
+        includeAudio: true,
       });
       setGenerated(true);
     } catch (error) {
@@ -530,7 +534,28 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
     }
   };
 
+  const handleGenerateAudio = async () => {
+    if (!isPremiumUser) {
+      onShowPaywall?.();
+      return;
+    }
+
+    if (!existingFlashcard?._id) return;
+
+    setIsGeneratingAudio(true);
+    try {
+      await generateFlashcardAudio({
+        flashcardId: existingFlashcard._id,
+      });
+    } catch (error) {
+      console.error("Failed to generate audio:", error);
+    } finally {
+      setIsGeneratingAudio(false);
+    }
+  };
+
   const hasFlashcard = existingFlashcard !== undefined && existingFlashcard !== null;
+  const hasAudio = hasFlashcard && !!existingFlashcard?.audioUrl;
 
   return (
     <div
@@ -553,6 +578,48 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
           <div className="text-foreground">
             {item.definitions.join("; ")}
           </div>
+          {/* Example sentences */}
+          {(item.sourceContext || existingFlashcard?.sentence) && (
+            <div className="mt-3 space-y-2">
+              {item.sourceContext && (
+                <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
+                  <p
+                    className="text-sm text-foreground"
+                    style={{ fontFamily: languageFont }}
+                  >
+                    {item.sourceContext}
+                  </p>
+                  <p className="text-xs text-foreground-muted mt-1">Source context</p>
+                </div>
+              )}
+              {existingFlashcard?.sentence && existingFlashcard.sentence !== item.sourceContext && (
+                <div className="p-2.5 rounded-lg bg-accent/5 border border-accent/20">
+                  <div className="flex items-start justify-between gap-2">
+                    <p
+                      className="text-sm text-foreground flex-1"
+                      style={{ fontFamily: languageFont }}
+                    >
+                      {existingFlashcard.sentence}
+                    </p>
+                    {existingFlashcard.audioUrl && (
+                      <button
+                        onClick={() => new Audio(existingFlashcard.audioUrl!).play()}
+                        className="p-1.5 rounded-lg text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors shrink-0"
+                        title="Play audio"
+                      >
+                        <Volume2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  {existingFlashcard.sentenceTranslation && (
+                    <p className="text-xs text-foreground-muted mt-1">
+                      {existingFlashcard.sentenceTranslation}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex items-center gap-2 mt-3">
             <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-foreground-muted capitalize">
               {item.language}
@@ -578,10 +645,29 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
           )}
           {/* Flashcard generation button */}
           {hasFlashcard || generated ? (
-            <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-600 flex items-center gap-1">
-              <Check className="w-3 h-3" />
-              Flashcard
-            </span>
+            <>
+              <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-600 flex items-center gap-1">
+                <Check className="w-3 h-3" />
+                Flashcard
+              </span>
+              {/* Audio generation button if flashcard exists but no audio */}
+              {hasFlashcard && !hasAudio && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleGenerateAudio}
+                  disabled={isGeneratingAudio}
+                  className="text-foreground-muted hover:text-accent hover:bg-accent/10"
+                  title="Generate audio narration"
+                >
+                  {isGeneratingAudio ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Volume2 className="w-4 h-4" />
+                  )}
+                </Button>
+              )}
+            </>
           ) : (
             <Button
               variant="ghost"
@@ -589,7 +675,7 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
               onClick={handleGenerateFlashcard}
               disabled={isGenerating}
               className="text-foreground-muted hover:text-accent hover:bg-accent/10"
-              title="Generate AI flashcard"
+              title="Generate flashcard"
             >
               {isGenerating ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

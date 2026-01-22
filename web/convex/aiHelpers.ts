@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery, internalMutation } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 
 // ============================================
 // INTERNAL QUERIES
@@ -84,6 +84,30 @@ export const upsertFlashcard = internalMutation({
     });
 
     return flashcardId;
+  },
+});
+
+// Update flashcard with audio URL
+export const updateFlashcardAudio = internalMutation({
+  args: {
+    flashcardId: v.id("flashcards"),
+    audioUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.flashcardId, {
+      audioUrl: args.audioUrl,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Get flashcard by ID
+export const getFlashcard = internalQuery({
+  args: {
+    flashcardId: v.id("flashcards"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.flashcardId);
   },
 });
 

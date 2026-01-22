@@ -5,6 +5,105 @@ import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 // ============================================
+// GEMINI TTS CONFIGURATION
+// ============================================
+
+const GEMINI_TTS_MODEL = "gemini-2.0-flash-preview-tts";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
+
+// Voices optimized for language learning narration
+const VOICES_BY_LANGUAGE: Record<string, string[]> = {
+  japanese: ["Aoede", "Leda", "Alnilam"],
+  english: ["Puck", "Charon", "Kore"],
+  french: ["Aoede", "Leda", "Puck"],
+};
+
+function selectVoice(language: string): string {
+  const voices = VOICES_BY_LANGUAGE[language] || VOICES_BY_LANGUAGE.english;
+  return voices[Math.floor(Math.random() * voices.length)];
+}
+
+/**
+ * Generate audio for a sentence using Gemini TTS
+ * Returns base64 encoded PCM audio data
+ */
+async function generateTTSAudio(
+  text: string,
+  language: string,
+  voice?: string
+): Promise<{ audioData: Uint8Array; mimeType: string } | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("GEMINI_API_KEY not configured");
+    return null;
+  }
+
+  const selectedVoice = voice || selectVoice(language);
+
+  // Prepare narration prompt for language learners
+  const narrationPrompt = `Read aloud clearly and slowly for language learners:\n\n${text}`;
+
+  try {
+    const response = await fetch(
+      `${GEMINI_API_URL}/models/${GEMINI_TTS_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: narrationPrompt }],
+            },
+          ],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: {
+                  voiceName: selectedVoice,
+                },
+              },
+            },
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Gemini TTS error: ${response.status} - ${errorText}`);
+      return null;
+    }
+
+    const result = await response.json();
+
+    // Extract audio data from response
+    const audioData = result.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+    if (!audioData?.data) {
+      console.error("No audio data in Gemini response");
+      return null;
+    }
+
+    // Decode base64 audio
+    const binaryString = atob(audioData.data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    return {
+      audioData: bytes,
+      mimeType: audioData.mimeType || "audio/wav",
+    };
+  } catch (error) {
+    console.error("TTS generation failed:", error);
+    return null;
+  }
+}
+
+// ============================================
 // OPENROUTER CONFIGURATION
 // ============================================
 
@@ -277,6 +376,8 @@ interface VerificationResult {
   usageScore: number;
   naturalnessScore: number;
   overallScore: number;
+  difficultyLevel: string; // "beginner" | "intermediate" | "advanced"
+  difficultyExplanation: string; // Why this difficulty level
   corrections: Array<{
     original: string;
     corrected: string;
@@ -316,6 +417,8 @@ Respond ONLY with valid JSON in this exact format:
   "usageScore": number (0-100, how well the target word is used),
   "naturalnessScore": number (0-100, how natural the sentence sounds to a native speaker),
   "overallScore": number (0-100),
+  "difficultyLevel": "beginner" | "intermediate" | "advanced",
+  "difficultyExplanation": "Brief explanation of why this difficulty level (e.g., grammar structures used, vocabulary complexity, sentence length)",
   "corrections": [
     {
       "original": "the part that needs correction",
@@ -324,8 +427,19 @@ Respond ONLY with valid JSON in this exact format:
     }
   ],
   "feedback": "overall feedback for the student",
-  "improvedSentence": "a more natural version of the sentence"
-}`;
+  "improvedSentence": "ALWAYS provide an enhanced version - if the original is good, show a more sophisticated, varied, or native-like alternative that teaches something new"
+}
+
+DIFFICULTY LEVELS:
+- "beginner": Simple grammar, basic vocabulary, short sentences, common patterns
+- "intermediate": Compound sentences, varied vocabulary, some idioms, moderate complexity
+- "advanced": Complex grammar, sophisticated vocabulary, nuanced expressions, native-like constructions
+
+IMPORTANT: The "improvedSentence" field must ALWAYS contain a different sentence from the original. Even if the student's sentence is perfect, provide an alternative that:
+- Uses more advanced vocabulary or grammar structures
+- Shows a more idiomatic or native-like expression
+- Demonstrates a different but valid way to express the same idea
+This helps learners see multiple ways to express themselves and expands their language skills.`;
 
     const prompt = `Please evaluate this ${languageName} sentence written by a language learner:
 
@@ -354,10 +468,139 @@ Provide detailed feedback and corrections if needed.`;
         usageScore: 0,
         naturalnessScore: 0,
         overallScore: 0,
+        difficultyLevel: "beginner",
+        difficultyExplanation: "Unable to assess difficulty.",
         corrections: [],
         feedback: "Unable to verify sentence. Please try again.",
         improvedSentence: args.sentence,
       };
     }
+  },
+});
+
+// ============================================
+// AUDIO GENERATION (TTS)
+// ============================================
+
+// Generate audio for a flashcard sentence
+export const generateFlashcardAudio = action({
+  args: {
+    flashcardId: v.id("flashcards"),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; audioUrl?: string }> => {
+    // Get the flashcard
+    const flashcard = await ctx.runQuery(internal.aiHelpers.getFlashcard, {
+      flashcardId: args.flashcardId,
+    });
+
+    if (!flashcard) {
+      throw new Error("Flashcard not found");
+    }
+
+    // Get vocabulary for language info
+    const vocab = await ctx.runQuery(internal.aiHelpers.getVocabulary, {
+      vocabularyId: flashcard.vocabularyId,
+    });
+
+    if (!vocab) {
+      throw new Error("Vocabulary not found");
+    }
+
+    // Generate audio using Gemini TTS
+    const audioResult = await generateTTSAudio(
+      flashcard.sentence,
+      vocab.language
+    );
+
+    if (!audioResult) {
+      console.error("Failed to generate audio");
+      return { success: false };
+    }
+
+    // Store audio in Convex file storage
+    const blob = new Blob([audioResult.audioData], { type: audioResult.mimeType });
+    const storageId = await ctx.storage.store(blob);
+
+    // Get the public URL
+    const audioUrl = await ctx.storage.getUrl(storageId);
+
+    if (!audioUrl) {
+      console.error("Failed to get audio URL");
+      return { success: false };
+    }
+
+    // Update flashcard with audio URL
+    await ctx.runMutation(internal.aiHelpers.updateFlashcardAudio, {
+      flashcardId: args.flashcardId,
+      audioUrl,
+    });
+
+    return { success: true, audioUrl };
+  },
+});
+
+// Generate flashcard with audio
+export const generateFlashcardWithAudio = action({
+  args: {
+    vocabularyId: v.id("vocabulary"),
+    includeAudio: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; flashcardId?: string; audioUrl?: string }> => {
+    // Get the vocabulary item
+    const vocab = await ctx.runQuery(internal.aiHelpers.getVocabulary, {
+      vocabularyId: args.vocabularyId,
+    });
+
+    if (!vocab) {
+      throw new Error("Vocabulary item not found");
+    }
+
+    // Generate the sentence using the helper function
+    const generated = await generateSentenceHelper({
+      word: vocab.word,
+      reading: vocab.reading ?? undefined,
+      definitions: vocab.definitions,
+      language: vocab.language,
+      examLevel: vocab.examLevel ?? undefined,
+    });
+
+    // Create or update the flashcard
+    const flashcardId = await ctx.runMutation(internal.aiHelpers.upsertFlashcard, {
+      vocabularyId: args.vocabularyId,
+      userId: vocab.userId,
+      sentence: generated.sentence,
+      sentenceTranslation: generated.translation,
+    });
+
+    let audioUrl: string | undefined;
+
+    // Generate audio if requested
+    if (args.includeAudio !== false) {
+      try {
+        const audioResult = await generateTTSAudio(
+          generated.sentence,
+          vocab.language
+        );
+
+        if (audioResult) {
+          // Store audio in Convex file storage
+          const blob = new Blob([audioResult.audioData], { type: audioResult.mimeType });
+          const storageId = await ctx.storage.store(blob);
+          audioUrl = await ctx.storage.getUrl(storageId) ?? undefined;
+
+          if (audioUrl) {
+            await ctx.runMutation(internal.aiHelpers.updateFlashcardAudio, {
+              flashcardId: flashcardId as any,
+              audioUrl,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Audio generation failed:", error);
+        // Continue without audio - flashcard is still created
+      }
+    }
+
+    return { success: true, flashcardId, audioUrl };
   },
 });

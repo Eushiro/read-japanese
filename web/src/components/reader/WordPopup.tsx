@@ -4,8 +4,25 @@ import { api } from "../../../convex/_generated/api";
 import { lookupWord, type DictionaryEntry } from "@/api/dictionary";
 import type { Token } from "@/types/story";
 import { getTokenReading } from "@/types/story";
-import { Plus, Check, Minus, ExternalLink } from "lucide-react";
+import { Plus, Check, Minus } from "lucide-react";
 import { getCurrentUserId } from "@/hooks/useSettings";
+
+// Clean up verbose part of speech strings from dictionary
+function cleanPartOfSpeech(pos: string): string {
+  // Remove Japanese terms in parentheses like (futsuumeishi), (fukushi), etc.
+  let cleaned = pos.replace(/\s*\([^)]*meishi[^)]*\)/gi, "");
+  cleaned = cleaned.replace(/\s*\(fukushi\)/gi, "");
+  cleaned = cleaned.replace(/\s*\(keiyoushi\)/gi, "");
+  cleaned = cleaned.replace(/\s*\(keiyoudoushi\)/gi, "");
+  cleaned = cleaned.replace(/\s*\(doushi\)/gi, "");
+  cleaned = cleaned.replace(/\s*\(rentaishi\)/gi, "");
+  cleaned = cleaned.replace(/\s*\(kandoushi\)/gi, "");
+  cleaned = cleaned.replace(/\s*\(setsuzokushi\)/gi, "");
+  cleaned = cleaned.replace(/\s*\(jodoushi\)/gi, "");
+  // Clean up multiple spaces and trailing commas
+  cleaned = cleaned.replace(/,\s*,/g, ",").replace(/,\s*$/g, "").trim();
+  return cleaned;
+}
 
 interface WordPopupProps {
   token: Token;
@@ -229,13 +246,6 @@ export function WordPopup({
           )}
         </div>
 
-        {/* Part of speech */}
-        {displayPos && (
-          <div className="mt-1.5 text-xs text-foreground-muted">
-            {displayPos}
-          </div>
-        )}
-
         {/* Meaning */}
         {displayMeaning && (
           <div className="mt-2 text-sm text-foreground line-clamp-2">
@@ -243,17 +253,12 @@ export function WordPopup({
           </div>
         )}
 
-        {/* Jisho link */}
-        <a
-          href={`https://jisho.org/search/${encodeURIComponent(word)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1 mt-2 text-xs text-accent hover:underline"
-        >
-          More on Jisho
-          <ExternalLink className="w-3 h-3" />
-        </a>
+        {/* Part of speech */}
+        {displayPos && (
+          <div className="mt-1.5 text-xs text-foreground-muted">
+            {cleanPartOfSpeech(displayPos)}
+          </div>
+        )}
       </div>
     </div>
   );
