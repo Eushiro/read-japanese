@@ -338,6 +338,7 @@ Usage limits (example):
 | Language selection (UI) | ✅ Complete | Settings page with language/exam picker |
 | Exam-specific vocabulary (schema) | ✅ Complete | `examTypeValidator` with all exams |
 | Exam-specific vocabulary (data) | ❌ Not Started | Need to import word lists |
+| Auto-detect exam level for words | ❌ Not Started | Use word lists to determine N5-N1, B1-C2, etc. |
 | Language-specific tokenization | ❌ Not Started | Japanese exists in legacy backend |
 | Separate content tracks (backend) | ✅ Complete | `language` field on all models |
 | Separate content tracks (UI) | ✅ Complete | Vocabulary page filters by language |
@@ -351,6 +352,7 @@ Usage limits (example):
 - Abstract tokenization behind interface
 - Language field on all content models
 - Separate vocabulary list sources per language
+- **Exam level auto-detection:** Import official word lists (JLPT N5-N1, CEFR A1-C2, etc.) and use them to automatically determine a word's difficulty level when added to vocabulary. User doesn't need to manually specify exam level.
 
 ---
 

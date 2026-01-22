@@ -589,7 +589,6 @@ function AddWordModal({ userId, onClose, isPremiumUser }: AddWordModalProps) {
   const [reading, setReading] = useState("");
   const [definitions, setDefinitions] = useState("");
   const [language, setLanguage] = useState<Language>("japanese");
-  const [examLevel, setExamLevel] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<DictionaryEntry[]>([]);
@@ -657,7 +656,6 @@ function AddWordModal({ userId, onClose, isPremiumUser }: AddWordModalProps) {
         reading: reading.trim() || undefined,
         definitions: definitions.split(/[,;]/).map((d) => d.trim()).filter(Boolean),
         sourceType: "manual",
-        examLevel: examLevel.trim() || undefined,
       });
 
       // Close modal immediately for better UX
@@ -814,20 +812,6 @@ function AddWordModal({ userId, onClose, isPremiumUser }: AddWordModalProps) {
             <p className="text-xs text-foreground-muted mt-1">
               Separate multiple definitions with commas
             </p>
-          </div>
-
-          {/* Exam Level */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">
-              Exam Level (optional)
-            </label>
-            <input
-              type="text"
-              value={examLevel}
-              onChange={(e) => setExamLevel(e.target.value)}
-              placeholder={language === "japanese" ? "N5" : "B2"}
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-            />
           </div>
 
           {/* Submit */}
