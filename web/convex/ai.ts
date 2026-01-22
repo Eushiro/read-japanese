@@ -284,16 +284,13 @@ interface OpenRouterResponse {
   }>;
 }
 
-// Models to try in order of preference (first is free, fallback is paid but cheap)
-const FREE_MODELS = [
-  "qwen/qwen3-next-80b-a3b-instruct:free",
-  "google/gemini-3-flash-preview",
-];
+// Primary model for text generation
+const DEFAULT_MODEL = "google/gemini-3-flash-preview";
 
 async function callOpenRouter(
   prompt: string,
   systemPrompt: string,
-  model: string = FREE_MODELS[0],
+  model: string = DEFAULT_MODEL,
   maxTokens: number = 500
 ): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -301,63 +298,32 @@ async function callOpenRouter(
     throw new Error("OPENROUTER_API_KEY environment variable is not set");
   }
 
-  // Get list of models to try - start with specified model, then fallbacks
-  const modelsToTry = model === FREE_MODELS[0]
-    ? FREE_MODELS
-    : [model, ...FREE_MODELS.filter(m => m !== model)];
+  const response = await fetch(OPENROUTER_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "HTTP-Referer": "https://sanlang.app",
+      "X-Title": "SanLang",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.7,
+      max_tokens: maxTokens,
+    }),
+  });
 
-  let lastError: Error | null = null;
-
-  for (const currentModel of modelsToTry) {
-    console.log(`Trying model: ${currentModel}`);
-    try {
-      const response = await fetch(OPENROUTER_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-          "HTTP-Referer": "https://sanlang.app",
-          "X-Title": "SanLang",
-        },
-        body: JSON.stringify({
-          model: currentModel,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.7,
-          max_tokens: maxTokens,
-        }),
-      });
-
-      if (response.status === 429) {
-        // Rate limited - try next model
-        const errorText = await response.text();
-        console.log(`Model ${currentModel} rate limited (429), trying next model...`);
-        lastError = new Error(`All models rate limited. Last error (${currentModel}): 429 - ${errorText}`);
-        continue;
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log(`Model ${currentModel} failed with status ${response.status}: ${errorText}`);
-        // For non-429 errors, still try fallback
-        lastError = new Error(`OpenRouter API error (${currentModel}): ${response.status} - ${errorText}`);
-        continue;
-      }
-
-      const data = (await response.json()) as OpenRouterResponse;
-      return data.choices[0]?.message?.content ?? "";
-    } catch (error) {
-      // Network or other errors - try next model
-      console.log(`Model ${currentModel} threw error:`, error);
-      lastError = error instanceof Error ? error : new Error(String(error));
-      continue;
-    }
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
   }
 
-  // All models failed
-  throw lastError || new Error("All models rate limited");
+  const data = (await response.json()) as OpenRouterResponse;
+  return data.choices[0]?.message?.content ?? "";
 }
 
 // ============================================
@@ -979,7 +945,7 @@ ${args.storyContent}
 ---
 Create comprehension questions for the story above, aiming for a total of ${workBudget} work units.`;
 
-    const response = await callOpenRouter(prompt, systemPrompt, "qwen/qwen3-next-80b-a3b-instruct:free");
+    const response = await callOpenRouter(prompt, systemPrompt);
 
     try {
       const parsed = JSON.parse(response) as { questions: Omit<ComprehensionQuestion, "questionId">[] };
@@ -1196,7 +1162,7 @@ IMPORTANT:
 
     const prompt = `Generate a ${args.questionType} question for a ${languageName} placement test at ${level} level (difficulty: ${args.targetDifficulty.toFixed(1)}).`;
 
-    const response = await callOpenRouter(prompt, systemPrompt, "qwen/qwen3-next-80b-a3b-instruct:free");
+    const response = await callOpenRouter(prompt, systemPrompt);
 
     try {
       const parsed = JSON.parse(response) as {
