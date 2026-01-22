@@ -57,6 +57,9 @@ export function PlacementTestPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false);
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([]);
+  // Pre-generated next question for instant transitions
+  const [nextQuestionReady, setNextQuestionReady] = useState(false);
+  const [isPreGenerating, setIsPreGenerating] = useState(false);
 
   // Queries
   const existingTest = useQuery(
@@ -93,6 +96,20 @@ export function PlacementTestPage() {
     }
   }, [existingTest]);
 
+  // Pre-generate next question when current question is displayed
+  useEffect(() => {
+    if (
+      testId &&
+      currentQuestionIndex >= 0 &&
+      currentTest?.questions[currentQuestionIndex] &&
+      !nextQuestionReady &&
+      !isPreGenerating &&
+      !showFeedback
+    ) {
+      preGenerateNextQuestion(testId, currentQuestionIndex + 1);
+    }
+  }, [testId, currentQuestionIndex, currentTest, nextQuestionReady, isPreGenerating, showFeedback]);
+
   // Start a new test
   const handleStartTest = async () => {
     if (!user) return;
@@ -113,9 +130,14 @@ export function PlacementTestPage() {
   // Generate the next question
   const generateNextQuestion = async (
     tid: Id<"placementTests">,
-    afterIndex: number
+    afterIndex: number,
+    isPreGeneration: boolean = false
   ) => {
-    setIsGeneratingQuestion(true);
+    if (isPreGeneration) {
+      setIsPreGenerating(true);
+    } else {
+      setIsGeneratingQuestion(true);
+    }
 
     try {
       // Get optimal difficulty for next question
@@ -123,7 +145,9 @@ export function PlacementTestPage() {
 
       if (!nextInfo.shouldContinue) {
         // Test is complete
-        await handleCompleteTest(tid);
+        if (!isPreGeneration) {
+          await handleCompleteTest(tid);
+        }
         return;
       }
 
@@ -137,12 +161,35 @@ export function PlacementTestPage() {
       });
 
       setPreviousQuestions((prev) => [...prev, question.question]);
-      setCurrentQuestionIndex(afterIndex);
+
+      if (isPreGeneration) {
+        setNextQuestionReady(true);
+      } else {
+        setCurrentQuestionIndex(afterIndex);
+        setNextQuestionReady(false);
+        // Start pre-generating the next question in background
+        preGenerateNextQuestion(tid, afterIndex + 1);
+      }
     } catch (error) {
       console.error("Failed to generate question:", error);
     } finally {
-      setIsGeneratingQuestion(false);
+      if (isPreGeneration) {
+        setIsPreGenerating(false);
+      } else {
+        setIsGeneratingQuestion(false);
+      }
     }
+  };
+
+  // Pre-generate the next question while user is answering current one
+  const preGenerateNextQuestion = async (
+    tid: Id<"placementTests">,
+    forIndex: number
+  ) => {
+    // Don't pre-generate if already doing so or if next question is ready
+    if (isPreGenerating || nextQuestionReady) return;
+
+    await generateNextQuestion(tid, forIndex, true);
   };
 
   // Submit answer
@@ -152,7 +199,7 @@ export function PlacementTestPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await submitAnswer({
+      await submitAnswer({
         testId,
         questionIndex: currentQuestionIndex,
         answer: selectedAnswer,
@@ -170,8 +217,14 @@ export function PlacementTestPage() {
 
         if (!nextInfo.shouldContinue) {
           await handleCompleteTest(testId);
+        } else if (nextQuestionReady) {
+          // Use pre-generated question - just advance the index
+          setCurrentQuestionIndex(currentQuestionIndex + 1);
+          setNextQuestionReady(false);
+          // Start pre-generating the next question in background
+          preGenerateNextQuestion(testId, currentQuestionIndex + 2);
         } else {
-          // Generate next question
+          // Fall back to generating if pre-generation didn't complete
           await generateNextQuestion(testId, currentQuestionIndex + 1);
         }
       }, 1500);
@@ -438,10 +491,13 @@ export function PlacementTestPage() {
           <div className="mb-6">
             <div className="flex justify-between text-sm text-foreground-muted mb-2">
               <span>
-                {currentTest.correctAnswers} / {currentTest.questionsAnswered}{" "}
-                correct
+                {currentTest.questionsAnswered > 0
+                  ? `${currentTest.correctAnswers} / ${currentTest.questionsAnswered} correct`
+                  : `Question ${currentQuestionIndex + 1}`}
               </span>
-              <span>Estimating level...</span>
+              <span>
+                {currentTest.questionsAnswered > 0 ? "Estimating level..." : ""}
+              </span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
@@ -449,7 +505,7 @@ export function PlacementTestPage() {
                 style={{
                   width: `${Math.min(
                     100,
-                    (currentTest.questionsAnswered / 20) * 100
+                    ((currentQuestionIndex + 1) / 20) * 100
                   )}%`,
                 }}
               />

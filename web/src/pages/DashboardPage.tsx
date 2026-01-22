@@ -3,8 +3,8 @@ import { api } from "../../convex/_generated/api";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
 import { LearningLoopViz } from "@/components/dashboard/LearningLoopViz";
 import { Button } from "@/components/ui/button";
-import { Loader2, Home, BookOpen, Brain, PenLine, Sparkles, ChevronRight, ArrowRight } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Loader2, Home, BookOpen, Brain, PenLine, Sparkles, ChevronRight, ArrowRight, Target } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 // Sample data for preview mode (logged-out users)
 const SAMPLE_STATS = {
@@ -25,6 +25,7 @@ const SAMPLE_ACTIVITIES = {
 export function DashboardPage() {
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id ?? "anonymous";
+  const navigate = useNavigate();
 
   // Fetch flashcard stats (only when authenticated)
   const flashcardStats = useQuery(
@@ -36,6 +37,12 @@ export function DashboardPage() {
   const vocabulary = useQuery(
     api.vocabulary.list,
     isAuthenticated ? { userId } : "skip"
+  );
+
+  // Fetch user profile for proficiency levels
+  const userProfile = useQuery(
+    api.users.getByClerkId,
+    isAuthenticated && user ? { clerkId: user.id } : "skip"
   );
 
   // Calculate stats - use real data for authenticated, sample for preview
@@ -151,6 +158,14 @@ export function DashboardPage() {
       {/* Main Content */}
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
         <div className="space-y-6">
+          {/* Placement Test Section - Only for authenticated users */}
+          {!isPreviewMode && (
+            <PlacementTestSection
+              userProfile={userProfile}
+              onTakeTest={(lang) => navigate({ to: "/placement-test", search: { language: lang } })}
+            />
+          )}
+
           {/* Daily Activities - Different for preview vs authenticated */}
           {isPreviewMode ? (
             <PreviewActivities dueCards={dueCards} wordsToPractice={wordsToPractice} />
@@ -522,5 +537,136 @@ function PreviewActionCard({
         <span className="text-xs text-accent mt-1">Try it Free</span>
       </button>
     </SignInButton>
+  );
+}
+
+// Placement Test Section
+const LANGUAGE_CONFIG = {
+  japanese: { flag: "\u{1F1EF}\u{1F1F5}", name: "Japanese", levels: ["N5", "N4", "N3", "N2", "N1"] },
+  english: { flag: "\u{1F1EC}\u{1F1E7}", name: "English", levels: ["A1", "A2", "B1", "B2", "C1", "C2"] },
+  french: { flag: "\u{1F1EB}\u{1F1F7}", name: "French", levels: ["A1", "A2", "B1", "B2", "C1", "C2"] },
+} as const;
+
+type Language = keyof typeof LANGUAGE_CONFIG;
+
+interface UserProfile {
+  languages?: string[];
+  proficiencyLevels?: {
+    japanese?: { level: string; assessedAt: number };
+    english?: { level: string; assessedAt: number };
+    french?: { level: string; assessedAt: number };
+  };
+}
+
+function PlacementTestSection({
+  userProfile,
+  onTakeTest,
+}: {
+  userProfile: UserProfile | null | undefined;
+  onTakeTest: (language: Language) => void;
+}) {
+  // Get user's languages, default to japanese if none set
+  const userLanguages = (userProfile?.languages ?? ["japanese"]) as Language[];
+  const proficiencyLevels = userProfile?.proficiencyLevels;
+
+  // Check if any language needs a test
+  const languagesWithoutLevel = userLanguages.filter(
+    (lang) => !proficiencyLevels?.[lang]?.level
+  );
+
+  // If all languages have levels, show compact view
+  if (languagesWithoutLevel.length === 0 && proficiencyLevels) {
+    return (
+      <div className="bg-surface rounded-2xl border border-border p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2
+            className="text-lg font-semibold text-foreground flex items-center gap-2"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            <Target className="w-5 h-5 text-accent" />
+            Your Levels
+          </h2>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {userLanguages.map((lang) => {
+            const config = LANGUAGE_CONFIG[lang];
+            const level = proficiencyLevels[lang]?.level;
+            if (!level) return null;
+
+            return (
+              <button
+                key={lang}
+                onClick={() => onTakeTest(lang)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-colors"
+              >
+                <span>{config.flag}</span>
+                <span className="font-medium text-foreground">{config.name}</span>
+                <span className="text-lg font-bold text-accent">{level}</span>
+                <span className="text-xs text-foreground-muted ml-1">Retake</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Show prompt to take placement test
+  return (
+    <div className="bg-gradient-to-br from-accent/10 to-accent/5 rounded-2xl border border-accent/20 p-6">
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+          <Target className="w-6 h-6 text-accent" />
+        </div>
+        <div className="flex-1">
+          <h2
+            className="text-lg font-semibold text-foreground mb-1"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Know Your Level
+          </h2>
+          <p className="text-sm text-foreground-muted mb-4">
+            Take an adaptive placement test to personalize your learning experience.
+            Questions adjust to your level for accurate assessment.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {languagesWithoutLevel.map((lang) => {
+              const config = LANGUAGE_CONFIG[lang];
+              return (
+                <Button
+                  key={lang}
+                  size="sm"
+                  onClick={() => onTakeTest(lang)}
+                  className="gap-2"
+                >
+                  <span>{config.flag}</span>
+                  Take {config.name} Test
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              );
+            })}
+            {userLanguages
+              .filter((lang) => proficiencyLevels?.[lang]?.level)
+              .map((lang) => {
+                const config = LANGUAGE_CONFIG[lang];
+                const level = proficiencyLevels?.[lang]?.level;
+                return (
+                  <Button
+                    key={lang}
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onTakeTest(lang)}
+                    className="gap-2"
+                  >
+                    <span>{config.flag}</span>
+                    {level}
+                    <span className="text-xs text-foreground-muted">Retake</span>
+                  </Button>
+                );
+              })}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
