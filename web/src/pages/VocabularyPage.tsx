@@ -5,22 +5,9 @@ import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Paywall } from "@/components/Paywall";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, ChevronsUpDown, Volume2 } from "lucide-react";
+import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, Volume2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { searchDictionary, type DictionaryEntry } from "@/api/dictionary";
-import { cn } from "@/lib/utils";
 
 // Sort options
 type SortOption = "newest" | "oldest" | "alphabetical" | "alphabetical-reverse" | "by-mastery";
@@ -711,8 +698,7 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
   const [language, setLanguage] = useState<Language>("japanese");
   const [examLevel, setExamLevel] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [comboboxOpen, setComboboxOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Debounced search term
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -721,7 +707,7 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
 
   // Debounce the search input
   useEffect(() => {
-    const trimmed = searchValue.trim();
+    const trimmed = word.trim();
     if (trimmed.length < 1) {
       setDebouncedSearch("");
       return;
@@ -732,7 +718,7 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
     }, 150);
 
     return () => clearTimeout(timeoutId);
-  }, [searchValue]);
+  }, [word]);
 
   // TanStack Query handles race conditions automatically
   const { data: suggestions = [] } = useTanstackQuery({
@@ -746,7 +732,6 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
   // Clear form when language changes
   useEffect(() => {
     setWord("");
-    setSearchValue("");
     setDebouncedSearch("");
     setReading("");
     setDefinitions("");
@@ -754,11 +739,9 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
 
   const handleSelectSuggestion = (entry: DictionaryEntry) => {
     setWord(entry.word);
-    setSearchValue("");
-    setDebouncedSearch("");
     setReading(entry.reading || "");
     setDefinitions(entry.meanings.join("; "));
-    setComboboxOpen(false);
+    setShowSuggestions(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -821,79 +804,69 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
             </div>
           </div>
 
-          {/* Word with Autocomplete Combobox */}
-          <div>
+          {/* Word with Autocomplete */}
+          <div className="relative">
             <label className="block text-sm font-medium text-foreground mb-1.5">
               Word <span className="text-destructive">*</span>
             </label>
-            <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  role="combobox"
-                  aria-expanded={comboboxOpen}
-                  className={cn(
-                    "w-full flex items-center justify-between px-4 py-2.5 rounded-lg border border-border bg-background text-left focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all",
-                    !word && "text-foreground-muted"
-                  )}
-                  style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
-                >
-                  {word || (language === "japanese" ? "Search for a word..." : "Search for a word...")}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                <Command shouldFilter={false}>
-                  <div className="flex items-center border-b px-3">
-                    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                    <input
-                      value={searchValue}
-                      onChange={(e) => setSearchValue(e.target.value)}
-                      placeholder={language === "japanese" ? "食べる, taberu..." : "Type to search..."}
-                      className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
-                      style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
-                    />
-                  </div>
-                  <CommandList>
-                    {searchValue.trim().length > 0 && debouncedSearch.length > 0 && suggestions.length === 0 && (
-                      <CommandEmpty>No results found.</CommandEmpty>
-                    )}
-                    {searchValue.trim().length > 0 && suggestions.length > 0 && (
-                      <CommandGroup>
-                        {suggestions.map((entry, index) => (
-                          <CommandItem
-                            key={`${entry.word}-${index}`}
-                            value={entry.word}
-                            onSelect={() => handleSelectSuggestion(entry)}
-                            className="flex flex-col items-start gap-1 py-3"
-                          >
-                            <div className="flex items-baseline gap-2">
-                              <span
-                                className="font-medium"
-                                style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
-                              >
-                                {entry.word}
-                              </span>
-                              {entry.reading && entry.reading !== entry.word && (
-                                <span
-                                  className="text-sm text-muted-foreground"
-                                  style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
-                                >
-                                  ({entry.reading})
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-sm text-muted-foreground line-clamp-1">
-                              {entry.meanings[0]}
-                            </span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
+              <input
+                type="text"
+                value={word}
+                onChange={(e) => {
+                  setWord(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => {
+                  // Delay hiding to allow click on suggestion
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+                placeholder={language === "japanese" ? "食べる, taberu..." : "Type to search..."}
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                required
+              />
+            </div>
+            {/* Suggestions dropdown */}
+            {showSuggestions && word.trim().length > 0 && suggestions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                {suggestions.map((entry, index) => (
+                  <button
+                    key={`${entry.word}-${index}`}
+                    type="button"
+                    onClick={() => handleSelectSuggestion(entry)}
+                    className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border last:border-b-0"
+                  >
+                    <div className="flex items-baseline gap-2">
+                      <span
+                        className="font-medium text-foreground"
+                        style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                      >
+                        {entry.word}
+                      </span>
+                      {entry.reading && entry.reading !== entry.word && (
+                        <span
+                          className="text-sm text-foreground-muted"
+                          style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                        >
+                          ({entry.reading})
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-sm text-foreground-muted line-clamp-1">
+                      {entry.meanings[0]}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {showSuggestions && word.trim().length > 0 && debouncedSearch.length > 0 && suggestions.length === 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg p-4 text-sm text-foreground-muted">
+                No results found
+              </div>
+            )}
           </div>
 
           {/* Reading (for Japanese) */}
