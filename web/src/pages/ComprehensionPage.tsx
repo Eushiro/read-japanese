@@ -6,19 +6,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStory } from "@/hooks/useStory";
 import { Button } from "@/components/ui/button";
 import {
+  QuestionDisplay,
+  QuestionNavigation,
+  QuestionProgress,
+  type QuestionType,
+} from "@/components/quiz";
+import {
   ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
   CheckCircle2,
-  XCircle,
   BookOpen,
   HelpCircle,
   Sparkles,
 } from "lucide-react";
-import type { Id } from "../../convex/_generated/dataModel";
-
-type QuestionType = "multiple_choice" | "short_answer" | "essay";
 
 interface Question {
   questionId: string;
@@ -225,7 +225,7 @@ export function ComprehensionPage() {
             expectedAnswer: question.correctAnswer,
             rubric: question.rubric,
             storyContext: getStoryContent().slice(0, 2000), // Limit context size
-            language: story?.metadata.language as "japanese" | "english" | "french",
+            language: getLanguage(),
           });
 
           // Update local state with grading
@@ -487,156 +487,50 @@ export function ComprehensionPage() {
               </div>
             </div>
             {/* Progress indicator - clickable to jump to question */}
-            <div className="flex items-center gap-1">
-              {localQuestions.map((q, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentQuestionIndex(i)}
-                  className={`h-2 rounded-full transition-all hover:opacity-80 ${
-                    i === currentQuestionIndex
-                      ? "bg-accent w-4"
-                      : q.userAnswer !== undefined
-                      ? "bg-green-500 w-2"
-                      : "bg-border w-2"
-                  }`}
-                  title={`Question ${i + 1}${q.userAnswer !== undefined ? " (answered)" : ""}`}
-                />
-              ))}
-            </div>
+            <QuestionProgress
+              questions={localQuestions}
+              currentIndex={currentQuestionIndex}
+              onNavigate={setCurrentQuestionIndex}
+            />
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
-        <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
-          {/* Question Type Badge */}
-          <div className="flex items-center gap-2 mb-4">
-            <span className={`text-xs px-2 py-1 rounded-full ${
-              currentQuestion.type === "multiple_choice"
-                ? "bg-blue-500/10 text-blue-600"
-                : currentQuestion.type === "short_answer"
-                ? "bg-amber-500/10 text-amber-600"
-                : "bg-purple-500/10 text-purple-600"
-            }`}>
-              {currentQuestion.type === "multiple_choice"
-                ? "Multiple Choice"
-                : currentQuestion.type === "short_answer"
-                ? "Short Answer"
-                : "Essay"}
-            </span>
-            <span className="text-xs text-foreground-muted">
-              {currentQuestion.points} points
-            </span>
-          </div>
+        <QuestionDisplay
+          question={currentQuestion.question}
+          questionTranslation={currentQuestion.questionTranslation}
+          type={currentQuestion.type}
+          options={currentQuestion.options}
+          points={currentQuestion.points}
+          selectedAnswer={selectedAnswer}
+          onSelectAnswer={setSelectedAnswer}
+          isAnswered={hasAnswered}
+          showFeedback={hasAnswered}
+          correctAnswer={currentQuestion.correctAnswer}
+          isCorrect={currentQuestion.isCorrect}
+          aiFeedback={currentQuestion.aiFeedback}
+          aiScore={currentQuestion.aiScore}
+          language="japanese"
+        />
 
-          {/* Question */}
-          <h2 className="text-lg font-semibold text-foreground mb-2" style={{ fontFamily: 'var(--font-japanese)' }}>
-            {currentQuestion.question}
-          </h2>
-          {currentQuestion.questionTranslation && (
-            <p className="text-foreground-muted mb-6">{currentQuestion.questionTranslation}</p>
-          )}
-
-          {/* Answer Input */}
-          {currentQuestion.type === "multiple_choice" && currentQuestion.options ? (
-            <div className="space-y-3">
-              {currentQuestion.options.map((option, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedAnswer(option)}
-                  disabled={hasAnswered}
-                  className={`w-full text-left p-4 rounded-xl border transition-all ${
-                    selectedAnswer === option
-                      ? "border-accent bg-accent/5"
-                      : "border-border hover:border-foreground-muted/50"
-                  } ${hasAnswered ? "cursor-not-allowed opacity-60" : ""}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      selectedAnswer === option ? "border-accent" : "border-border"
-                    }`}>
-                      {selectedAnswer === option && (
-                        <div className="w-3 h-3 rounded-full bg-accent" />
-                      )}
-                    </div>
-                    <span className="text-foreground">{option}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <textarea
-              value={selectedAnswer}
-              onChange={(e) => setSelectedAnswer(e.target.value)}
-              disabled={hasAnswered}
-              placeholder={
-                currentQuestion.type === "short_answer"
-                  ? "Type your answer..."
-                  : "Write your response..."
-              }
-              rows={currentQuestion.type === "essay" ? 6 : 3}
-              className="w-full p-4 rounded-xl border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent resize-none"
-            />
-          )}
-
-          {/* Feedback (shown after answering) */}
-          {hasAnswered && currentQuestion.aiFeedback && (
-            <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border">
-              <p className="text-sm font-medium text-foreground mb-1">Feedback:</p>
-              <p className="text-sm text-foreground-muted">{currentQuestion.aiFeedback}</p>
-            </div>
-          )}
-
-          {/* Navigation Buttons */}
-          <div className="flex justify-between mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentQuestionIndex(currentQuestionIndex - 1)}
-              disabled={currentQuestionIndex === 0}
-              className="gap-2"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
-            </Button>
-            {/* Show Submit if not answered, Next/Finish if answered */}
-            {!hasAnswered ? (
-              <Button
-                onClick={handleSubmitAnswer}
-                disabled={!selectedAnswer || isSubmitting || isGrading}
-                className="gap-2"
-              >
-                {isSubmitting || isGrading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {isGrading ? "Grading..." : "Submitting..."}
-                  </>
-                ) : (
-                  "Submit Answer"
-                )}
-              </Button>
-            ) : currentQuestionIndex === localQuestions.length - 1 ? (
-              <Button
-                onClick={async () => {
-                  if (existingComprehension) {
-                    await completeQuiz({ comprehensionId: existingComprehension._id });
-                    setShowResults(true);
-                  }
-                }}
-                className="gap-2"
-              >
-                Finish Quiz
-              </Button>
-            ) : (
-              <Button
-                onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
-                className="gap-2"
-              >
-                Next Question
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-        </div>
+        <QuestionNavigation
+          currentIndex={currentQuestionIndex}
+          totalQuestions={localQuestions.length}
+          isAnswered={hasAnswered}
+          onPrevious={() => setCurrentQuestionIndex(currentQuestionIndex - 1)}
+          onNext={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
+          onSubmit={handleSubmitAnswer}
+          onFinish={async () => {
+            if (existingComprehension) {
+              await completeQuiz({ comprehensionId: existingComprehension._id });
+              setShowResults(true);
+            }
+          }}
+          isSubmitting={isSubmitting}
+          isGrading={isGrading}
+          canSubmit={!!selectedAnswer}
+        />
       </main>
     </div>
   );
