@@ -663,24 +663,26 @@ export function PlacementTestPage() {
         {/* Question Card */}
         {isGeneratingQuestion ? (
           <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
-            {/* Loading message */}
-            <div className="flex items-center justify-center gap-3 mb-6 py-2">
-              <Loader2 className="w-5 h-5 animate-spin text-accent" />
-              <span className="text-foreground-muted">
-                {currentQuestionIndex === 0
-                  ? "Creating your first question..."
-                  : "Generating your next question..."}
-              </span>
-            </div>
-            {/* Skeleton for question type badges - staggered animation */}
-            <div className="flex items-center gap-2 mb-4 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
-              <Skeleton className="h-5 w-20 rounded-full" />
-              <Skeleton className="h-4 w-16" />
+            {/* Skeleton for question type badges with loading indicator */}
+            <div className="flex items-center justify-between mb-4 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-5 w-20 rounded-full" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+              <div className="flex items-center gap-2 text-sm text-foreground-muted">
+                <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                <span>
+                  {currentQuestionIndex === 0
+                    ? "Creating question..."
+                    : "Generating..."}
+                </span>
+              </div>
             </div>
             {/* Skeleton for question text */}
             <div className="mb-6 space-y-2 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
               <Skeleton className="h-6 w-full" />
               <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-5 w-1/2" />
             </div>
             {/* Skeleton for options - staggered */}
             <div className="space-y-3">
