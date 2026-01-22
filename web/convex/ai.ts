@@ -383,7 +383,20 @@ The word means: ${definitionList}
 
 Generate a natural, memorable sentence that clearly shows how to use this word. The sentence should be appropriate for language learners${levelInfo}.`;
 
-  const response = await callOpenRouter(prompt, systemPrompt);
+  const sentenceSchema: JsonSchema = {
+    name: "example_sentence",
+    schema: {
+      type: "object",
+      properties: {
+        sentence: { type: "string", description: "The example sentence in the target language" },
+        translation: { type: "string", description: "English translation of the sentence" },
+      },
+      required: ["sentence", "translation"],
+      additionalProperties: false,
+    },
+  };
+
+  const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500, sentenceSchema);
 
   try {
     // Parse the JSON response
@@ -636,7 +649,40 @@ Evaluate the sentence for:
 
 Provide detailed feedback and corrections if needed.`;
 
-    const response = await callOpenRouter(prompt, systemPrompt);
+    const verificationSchema: JsonSchema = {
+      name: "sentence_verification",
+      schema: {
+        type: "object",
+        properties: {
+          isCorrect: { type: "boolean" },
+          grammarScore: { type: "number", minimum: 0, maximum: 100 },
+          usageScore: { type: "number", minimum: 0, maximum: 100 },
+          naturalnessScore: { type: "number", minimum: 0, maximum: 100 },
+          overallScore: { type: "number", minimum: 0, maximum: 100 },
+          difficultyLevel: { type: "string", enum: ["beginner", "intermediate", "advanced"] },
+          difficultyExplanation: { type: "string" },
+          corrections: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                original: { type: "string" },
+                corrected: { type: "string" },
+                explanation: { type: "string" },
+              },
+              required: ["original", "corrected", "explanation"],
+              additionalProperties: false,
+            },
+          },
+          feedback: { type: "string" },
+          improvedSentence: { type: "string" },
+        },
+        required: ["isCorrect", "grammarScore", "usageScore", "naturalnessScore", "overallScore", "difficultyLevel", "difficultyExplanation", "corrections", "feedback", "improvedSentence"],
+        additionalProperties: false,
+      },
+    };
+
+    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 1000, verificationSchema);
 
     try {
       const parsed = JSON.parse(response) as VerificationResult;
@@ -1075,7 +1121,21 @@ ${args.storyContext}
 
 Provide a score (0-100) and detailed feedback.`;
 
-    const response = await callOpenRouter(prompt, systemPrompt);
+    const gradingSchema: JsonSchema = {
+      name: "comprehension_grading",
+      schema: {
+        type: "object",
+        properties: {
+          aiScore: { type: "number", minimum: 0, maximum: 100 },
+          aiFeedback: { type: "string", description: "Detailed feedback for the student" },
+          isCorrect: { type: "boolean", description: "True if score >= 70" },
+        },
+        required: ["aiScore", "aiFeedback", "isCorrect"],
+        additionalProperties: false,
+      },
+    };
+
+    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500, gradingSchema);
 
     try {
       const parsed = JSON.parse(response) as { aiScore: number; aiFeedback: string; isCorrect: boolean };
