@@ -683,6 +683,7 @@ function AddWordModal({ userId, onClose, isPremiumUser }: AddWordModalProps) {
         reading: reading.trim() || undefined,
         definitions: definitions.split(/[,;]/).map((d) => d.trim()).filter(Boolean),
         sourceType: "manual",
+        flashcardPending: isPremiumUser, // Show generating state for premium users
       });
 
       // Close modal immediately for better UX
