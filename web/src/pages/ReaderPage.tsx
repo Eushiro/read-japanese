@@ -1,11 +1,14 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
+import { useQuery, useAction } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { ChapterView } from "@/components/reader/ChapterView";
 import { WordPopup } from "@/components/reader/WordPopup";
 import { AudioPlayer } from "@/components/reader/AudioPlayer";
 import { FuriganaText } from "@/components/reader/FuriganaText";
 import { useStory } from "@/hooks/useStory";
 import { useSettings } from "@/hooks/useSettings";
+import { useAuth } from "@/contexts/AuthContext";
 import { getAudioUrl } from "@/api/stories";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +41,8 @@ export function ReaderPage() {
   const { storyId } = useParams({ from: "/read/$storyId" });
   const navigate = useNavigate();
   const { story, isLoading, error } = useStory(storyId);
+  const { user, isAuthenticated } = useAuth();
+  const userId = user?.id ?? "anonymous";
 
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
@@ -45,6 +50,16 @@ export function ReaderPage() {
   const [selectedSegmentText, setSelectedSegmentText] = useState<string | undefined>(undefined);
   const [audioTime, setAudioTime] = useState(0);
   const [manualNavigation, setManualNavigation] = useState(false);
+
+  // Check for existing comprehension quiz (to avoid re-generating)
+  const existingComprehension = useQuery(
+    api.storyComprehension.getForStory,
+    isAuthenticated ? { userId, storyId } : "skip"
+  );
+
+  // Action to generate comprehension questions
+  const generateQuestions = useAction(api.ai.generateComprehensionQuestions);
+  const hasStartedGeneration = useRef(false);
 
   // Reset scroll position when entering the reader or changing story
   useEffect(() => {
@@ -57,6 +72,60 @@ export function ReaderPage() {
 
   const chapters = story?.chapters || [];
   const currentChapter = chapters[currentChapterIndex];
+  const isOnLastChapter = currentChapterIndex === chapters.length - 1 && chapters.length > 0;
+
+  // Pre-generate comprehension questions when reaching the last chapter
+  useEffect(() => {
+    // Only generate once per story visit
+    if (hasStartedGeneration.current) return;
+    // Must be on last chapter
+    if (!isOnLastChapter) return;
+    // Need story data and auth
+    if (!story || !isAuthenticated) return;
+    // Don't generate if quiz already exists
+    if (existingComprehension !== undefined && existingComprehension !== null) return;
+    // Wait for existingComprehension query to load
+    if (existingComprehension === undefined) return;
+
+    hasStartedGeneration.current = true;
+
+    // Get story content
+    const getStoryContent = () => {
+      const chaptersData = story.chapters || [];
+      return chaptersData
+        .map((chapter) => {
+          const segments = chapter.segments || chapter.content || [];
+          return segments.map((s) => {
+            if (s.tokens && s.tokens.length > 0) {
+              return s.tokens.map((t) => t.surface).join("");
+            }
+            return s.text || "";
+          }).join(" ");
+        })
+        .join("\n\n");
+    };
+
+    // Derive language from story level
+    const getLanguage = (): "japanese" | "english" | "french" => {
+      const level = story.metadata.level;
+      if (level.startsWith("N")) return "japanese";
+      if (story.id.includes("french") || story.id.includes("fr_")) return "french";
+      if (story.id.includes("english") || story.id.includes("en_")) return "english";
+      return "english";
+    };
+
+    // Start generation in background (no await, fire and forget)
+    generateQuestions({
+      storyId,
+      storyTitle: story.metadata.title,
+      storyContent: getStoryContent(),
+      language: getLanguage(),
+      userId,
+      questionCount: 5,
+    }).catch((err) => {
+      console.error("Background comprehension question generation failed:", err);
+    });
+  }, [isOnLastChapter, story, isAuthenticated, existingComprehension, storyId, userId, generateQuestions]);
 
   // Auto-advance chapters based on audio time (skip if user manually navigated)
   useEffect(() => {

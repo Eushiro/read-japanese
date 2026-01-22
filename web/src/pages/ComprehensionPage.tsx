@@ -76,6 +76,51 @@ export function ComprehensionPage() {
     }
   }, [existingComprehension]);
 
+  // Auto-generate questions when page loads if no existing quiz
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
+
+  useEffect(() => {
+    // Only auto-start once
+    if (hasAutoStarted) return;
+    // Wait for all data to load
+    if (storyLoading || existingComprehension === undefined) return;
+    // Don't generate if already have questions
+    if (localQuestions.length > 0) return;
+    // Don't generate if no story or not authenticated
+    if (!story || !isAuthenticated) return;
+    // Don't generate if there's an existing quiz
+    if (existingComprehension !== null) return;
+
+    // Mark as started and trigger generation
+    setHasAutoStarted(true);
+  }, [storyLoading, existingComprehension, story, isAuthenticated, localQuestions.length, hasAutoStarted]);
+
+  // Separate effect to actually generate when hasAutoStarted becomes true
+  useEffect(() => {
+    if (hasAutoStarted && !isGenerating && localQuestions.length === 0 && story && isAuthenticated) {
+      const doGenerate = async () => {
+        setIsGenerating(true);
+        try {
+          const storyContent = getStoryContent();
+          const result = await generateQuestions({
+            storyId,
+            storyTitle: story.metadata.title,
+            storyContent,
+            language: getLanguage(),
+            userId,
+            questionCount: 5,
+          });
+          setLocalQuestions(result.questions as Question[]);
+        } catch (error) {
+          console.error("Failed to generate questions:", error);
+        } finally {
+          setIsGenerating(false);
+        }
+      };
+      doGenerate();
+    }
+  }, [hasAutoStarted]);
+
   // Get the full story content for AI
   const getStoryContent = () => {
     if (!story) return "";
