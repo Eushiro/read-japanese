@@ -70,7 +70,8 @@
   }
 
   html {
-    scroll-behavior: smooth;
+    /* Removed scroll-behavior: smooth to prevent scroll position persistence issues
+       during navigation and in-page state changes */
   }
 
   body {

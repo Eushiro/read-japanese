@@ -266,6 +266,11 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultPreload: "intent",
+  // Always scroll to top on navigation - prevents scroll position from persisting
+  scrollRestoration: true,
+  defaultOnScrollRestoration: () => {
+    window.scrollTo(0, 0);
+  },
 });
 
 // Type registration
