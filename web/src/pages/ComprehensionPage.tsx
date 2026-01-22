@@ -77,6 +77,16 @@ export function ComprehensionPage() {
     }
   }, [existingComprehension]);
 
+  // Sync selectedAnswer with current question's saved answer when navigating
+  useEffect(() => {
+    const currentQuestion = localQuestions[currentQuestionIndex];
+    if (currentQuestion?.userAnswer) {
+      setSelectedAnswer(currentQuestion.userAnswer);
+    } else {
+      setSelectedAnswer("");
+    }
+  }, [currentQuestionIndex, localQuestions]);
+
   // Auto-generate questions when page loads if no existing quiz
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
 
@@ -234,15 +244,7 @@ export function ComprehensionPage() {
         }
       }
 
-      // Move to next question or show results
-      if (currentQuestionIndex < localQuestions.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setSelectedAnswer("");
-      } else {
-        // Complete the quiz
-        await completeQuiz({ comprehensionId: existingComprehension._id });
-        setShowResults(true);
-      }
+      // Don't auto-progress - let user see feedback first
     } catch (error) {
       console.error("Failed to submit answer:", error);
     } finally {
@@ -596,25 +598,43 @@ export function ComprehensionPage() {
               <ChevronLeft className="w-4 h-4" />
               Previous
             </Button>
-            <Button
-              onClick={handleSubmitAnswer}
-              disabled={!selectedAnswer || isSubmitting || isGrading}
-              className="gap-2"
-            >
-              {isSubmitting || isGrading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {isGrading ? "Grading..." : "Submitting..."}
-                </>
-              ) : currentQuestionIndex === localQuestions.length - 1 ? (
-                "Finish Quiz"
-              ) : (
-                <>
-                  Next Question
-                  <ChevronRight className="w-4 h-4" />
-                </>
-              )}
-            </Button>
+            {/* Show Submit if not answered, Next/Finish if answered */}
+            {!hasAnswered ? (
+              <Button
+                onClick={handleSubmitAnswer}
+                disabled={!selectedAnswer || isSubmitting || isGrading}
+                className="gap-2"
+              >
+                {isSubmitting || isGrading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {isGrading ? "Grading..." : "Submitting..."}
+                  </>
+                ) : (
+                  "Submit Answer"
+                )}
+              </Button>
+            ) : currentQuestionIndex === localQuestions.length - 1 ? (
+              <Button
+                onClick={async () => {
+                  if (existingComprehension) {
+                    await completeQuiz({ comprehensionId: existingComprehension._id });
+                    setShowResults(true);
+                  }
+                }}
+                className="gap-2"
+              >
+                Finish Quiz
+              </Button>
+            ) : (
+              <Button
+                onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
+                className="gap-2"
+              >
+                Next Question
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </main>
