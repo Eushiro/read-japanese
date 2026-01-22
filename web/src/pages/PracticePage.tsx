@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
+import { useSearch } from "@tanstack/react-router";
 import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { useAuth, SignInButton } from "@/contexts/AuthContext";
 export function PracticePage() {
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id ?? "anonymous";
+  const search = useSearch({ strict: false }) as { vocabularyId?: string };
 
   // Get vocabulary for practice (prioritize words that need practice)
   const vocabulary = useQuery(
@@ -27,6 +29,16 @@ export function PracticePage() {
   );
 
   const [selectedWord, setSelectedWord] = useState<typeof vocabulary extends (infer T)[] ? T : never | null>(null);
+
+  // Pre-select word from URL parameter
+  useEffect(() => {
+    if (search.vocabularyId && vocabulary && !selectedWord) {
+      const word = vocabulary.find((v) => v._id === search.vocabularyId);
+      if (word) {
+        setSelectedWord(word);
+      }
+    }
+  }, [search.vocabularyId, vocabulary, selectedWord]);
   const [sentence, setSentence] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);

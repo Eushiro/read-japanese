@@ -226,6 +226,9 @@ const practiceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/practice",
   component: PracticePage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    vocabularyId: search.vocabularyId as string | undefined,
+  }),
 });
 
 const generateRoute = createRoute({
