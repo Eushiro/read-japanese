@@ -44,6 +44,8 @@ export function VocabularyPage() {
   const [masteryFilter, setMasteryFilter] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  // Track vocabulary IDs that are being enhanced in the background
+  const [enhancingIds, setEnhancingIds] = useState<Set<string>>(new Set());
 
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id ?? "anonymous";
@@ -371,6 +373,7 @@ export function VocabularyPage() {
                       delay={Math.min(index * 30, 150)}
                       isPremiumUser={isPremiumUser}
                       onShowPaywall={() => setShowPaywall(true)}
+                      isEnhancing={enhancingIds.has(item._id)}
                     />
                   ))}
                 </div>
@@ -389,6 +392,7 @@ export function VocabularyPage() {
                 delay={Math.min(index * 30, 150)}
                 isPremiumUser={isPremiumUser}
                 onShowPaywall={() => setShowPaywall(true)}
+                isEnhancing={enhancingIds.has(item._id)}
               />
             ))}
           </div>
@@ -400,6 +404,12 @@ export function VocabularyPage() {
         <AddWordModal
           userId={userId}
           onClose={() => setShowAddModal(false)}
+          onEnhanceStart={(id) => setEnhancingIds((prev) => new Set(prev).add(id))}
+          onEnhanceComplete={(id) => setEnhancingIds((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          })}
         />
       )}
 
@@ -431,9 +441,10 @@ interface VocabularyCardProps {
   delay?: number;
   isPremiumUser?: boolean;
   onShowPaywall?: () => void;
+  isEnhancing?: boolean;
 }
 
-function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremiumUser = false, onShowPaywall }: VocabularyCardProps) {
+function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremiumUser = false, onShowPaywall, isEnhancing = false }: VocabularyCardProps) {
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -592,6 +603,11 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
                 <Check className="w-3 h-3" />
                 Flashcard
               </span>
+            ) : isEnhancing || isGenerating ? (
+              <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent flex items-center gap-1.5 animate-pulse">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Generating...
+              </span>
             ) : (
               <Button
                 variant="ghost"
@@ -601,11 +617,7 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
                 className="text-foreground-muted hover:text-accent hover:bg-accent/10"
                 title="Generate flashcard"
               >
-                {isGenerating ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4" />
-                )}
+                <Sparkles className="w-4 h-4" />
               </Button>
             )
           )}
@@ -627,9 +639,11 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, isPremi
 interface AddWordModalProps {
   userId: string;
   onClose: () => void;
+  onEnhanceStart?: (vocabId: string) => void;
+  onEnhanceComplete?: (vocabId: string) => void;
 }
 
-function AddWordModal({ userId, onClose }: AddWordModalProps) {
+function AddWordModal({ userId, onClose, onEnhanceStart, onEnhanceComplete }: AddWordModalProps) {
   const [word, setWord] = useState("");
   const [reading, setReading] = useState("");
   const [definitions, setDefinitions] = useState("");
@@ -711,13 +725,20 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
       // Trigger AI enhancement in background (sentence + audio + image)
       // This runs after modal closes - the VocabularyCard will show loading state
       if (vocabId) {
+        const vocabIdString = vocabId as string;
+        onEnhanceStart?.(vocabIdString);
         generateFlashcardWithAudio({
           vocabularyId: vocabId,
           includeAudio: true,
           includeImage: true,
-        }).catch((err) => {
-          console.error("Background AI enhancement failed:", err);
-        });
+        })
+          .then(() => {
+            onEnhanceComplete?.(vocabIdString);
+          })
+          .catch((err) => {
+            console.error("Background AI enhancement failed:", err);
+            onEnhanceComplete?.(vocabIdString);
+          });
       }
     } catch (error) {
       console.error("Failed to add word:", error);
