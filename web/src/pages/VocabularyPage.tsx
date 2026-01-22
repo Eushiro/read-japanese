@@ -9,6 +9,7 @@ import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filt
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { searchClientDictionary, preloadDictionary, type DictionaryEntry } from "@/lib/clientDictionary";
+import { useFlashcard } from "@/hooks/useFlashcard";
 
 // Sort options
 type SortOption = "newest" | "oldest" | "alphabetical" | "alphabetical-reverse" | "by-mastery";
@@ -456,41 +457,14 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Check if flashcard already exists (for audio/sentence display)
-  const existingFlashcard = useQuery(api.flashcards.getByVocabulary, {
-    vocabularyId: item._id as GenericId<"vocabulary">,
-  });
+  // Check if flashcard already exists (with automatic asset preloading)
+  const existingFlashcard = useFlashcard(item._id);
 
   const generateFlashcardWithAudio = useAction(api.ai.generateFlashcardWithAudio);
 
   // Query states: undefined = loading
   const isLoadingFlashcard = existingFlashcard === undefined;
   const hasFlashcard = existingFlashcard !== undefined && existingFlashcard !== null;
-
-  // Preload audio and images when flashcard data loads or URLs are added after generation
-  useEffect(() => {
-    if (!existingFlashcard) return;
-
-    // Preload word audio
-    if (existingFlashcard.wordAudioUrl) {
-      const audio = new Audio();
-      audio.preload = "auto";
-      audio.src = existingFlashcard.wordAudioUrl;
-    }
-
-    // Preload sentence audio
-    if (existingFlashcard.audioUrl) {
-      const audio = new Audio();
-      audio.preload = "auto";
-      audio.src = existingFlashcard.audioUrl;
-    }
-
-    // Preload image
-    if (existingFlashcard.imageUrl) {
-      const img = new Image();
-      img.src = existingFlashcard.imageUrl;
-    }
-  }, [existingFlashcard?.wordAudioUrl, existingFlashcard?.audioUrl, existingFlashcard?.imageUrl]);
 
   const handleGenerateFlashcard = async () => {
     // Show paywall - user needs premium to generate
@@ -658,39 +632,12 @@ function VocabularyDetailModal({ item, onClose }: VocabularyDetailModalProps) {
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
   const isJapanese = item.language === "japanese";
 
-  // Fetch the flashcard data for this vocabulary item
-  const flashcard = useQuery(api.flashcards.getByVocabulary, {
-    vocabularyId: item._id as GenericId<"vocabulary">,
-  });
+  // Fetch the flashcard data with automatic preloading
+  const flashcard = useFlashcard(item._id);
 
   const playAudio = (url: string) => {
     new Audio(url).play();
   };
-
-  // Preload audio and images when flashcard data loads
-  useEffect(() => {
-    if (!flashcard) return;
-
-    // Preload word audio
-    if (flashcard.wordAudioUrl) {
-      const audio = new Audio();
-      audio.preload = "auto";
-      audio.src = flashcard.wordAudioUrl;
-    }
-
-    // Preload sentence audio
-    if (flashcard.audioUrl) {
-      const audio = new Audio();
-      audio.preload = "auto";
-      audio.src = flashcard.audioUrl;
-    }
-
-    // Preload image
-    if (flashcard.imageUrl) {
-      const img = new Image();
-      img.src = flashcard.imageUrl;
-    }
-  }, [flashcard]);
 
   // Handle escape key
   useEffect(() => {

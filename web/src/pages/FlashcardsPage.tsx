@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import type { Id } from "../../convex/_generated/dataModel";
 import { api } from "../../convex/_generated/api";
+import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
 import { Button } from "@/components/ui/button";
 import {
   Brain,
@@ -365,25 +366,7 @@ function FlashcardDisplay({ card, showAnswer, onShowAnswer }: FlashcardDisplayPr
 
   // Preload audio and images when card changes (before user clicks "Show Answer")
   useEffect(() => {
-    // Preload word audio
-    if (card.wordAudioUrl) {
-      const audio = new Audio();
-      audio.preload = "auto";
-      audio.src = card.wordAudioUrl;
-    }
-
-    // Preload sentence audio
-    if (card.audioUrl) {
-      const audio = new Audio();
-      audio.preload = "auto";
-      audio.src = card.audioUrl;
-    }
-
-    // Preload image
-    if (card.imageUrl) {
-      const img = new Image();
-      img.src = card.imageUrl;
-    }
+    preloadFlashcardAssets(card);
   }, [card._id, card.wordAudioUrl, card.audioUrl, card.imageUrl]);
 
   const playAudio = (url: string) => {

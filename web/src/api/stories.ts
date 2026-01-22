@@ -62,6 +62,45 @@ export function getAudioUrl(audioURL: string | undefined): string {
 const storyCache = new Map<string, { story: Story; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+/**
+ * Preload story assets (images and audio) for instant display/playback.
+ * Called automatically by prefetchStory after fetching story data.
+ */
+export function preloadStoryAssets(story: Story): void {
+  // Preload cover image
+  if (story.metadata.coverImageURL) {
+    const img = new Image();
+    img.src = getAssetUrl(story.metadata.coverImageURL);
+  }
+
+  // Preload story-level audio
+  if (story.metadata.audioURL) {
+    const audio = new Audio();
+    audio.preload = "auto";
+    audio.src = getAssetUrl(story.metadata.audioURL);
+  }
+
+  // Preload chapter images and audio
+  if (story.chapters) {
+    story.chapters.forEach((chapter) => {
+      if (chapter.imageURL) {
+        const img = new Image();
+        img.src = getAssetUrl(chapter.imageURL);
+      }
+      if (chapter.audioURL) {
+        const audio = new Audio();
+        audio.preload = "auto";
+        audio.src = getAssetUrl(chapter.audioURL);
+      }
+    });
+  }
+}
+
+// Helper to get asset URL (reusing the client method)
+function getAssetUrl(path: string): string {
+  return apiClient.getAssetUrl(path);
+}
+
 // Prefetch a story (for hover preloading)
 export function prefetchStory(storyId: string): void {
   // Skip if already cached and fresh
@@ -74,6 +113,8 @@ export function prefetchStory(storyId: string): void {
   getStory(storyId)
     .then((story) => {
       storyCache.set(storyId, { story, timestamp: Date.now() });
+      // Preload assets after caching story data
+      preloadStoryAssets(story);
     })
     .catch(() => {
       // Silently fail - it's just a prefetch
