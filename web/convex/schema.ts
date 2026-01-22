@@ -89,6 +89,24 @@ export default defineSchema({
     languages: v.array(languageValidator), // Languages user is learning
     targetExams: v.array(examTypeValidator), // Exams user is preparing for
     primaryLanguage: v.optional(languageValidator), // Currently active language
+    // Proficiency levels determined by placement tests
+    proficiencyLevels: v.optional(v.object({
+      japanese: v.optional(v.object({
+        level: v.string(), // "N5", "N4", "N3", "N2", "N1"
+        assessedAt: v.number(),
+        testId: v.optional(v.id("placementTests")),
+      })),
+      english: v.optional(v.object({
+        level: v.string(), // "A1", "A2", "B1", "B2", "C1", "C2"
+        assessedAt: v.number(),
+        testId: v.optional(v.id("placementTests")),
+      })),
+      french: v.optional(v.object({
+        level: v.string(), // "A1", "A2", "B1", "B2", "C1", "C2"
+        assessedAt: v.number(),
+        testId: v.optional(v.id("placementTests")),
+      })),
+    })),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -398,6 +416,86 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_and_story", ["userId", "storyId"])
     .index("by_user_and_language", ["userId", "language"]),
+
+  // ============================================
+  // PLACEMENT TESTS (CAT-style adaptive testing)
+  // ============================================
+  placementTests: defineTable({
+    userId: v.string(),
+    language: languageValidator,
+
+    // Test status
+    status: v.union(
+      v.literal("in_progress"),
+      v.literal("completed"),
+      v.literal("abandoned")
+    ),
+
+    // Questions answered (CAT selects dynamically)
+    questions: v.array(v.object({
+      questionId: v.string(),
+      level: v.string(), // "N5", "A1", etc.
+      type: v.union(
+        v.literal("vocabulary"),
+        v.literal("grammar"),
+        v.literal("reading"),
+        v.literal("listening")
+      ),
+      question: v.string(),
+      questionTranslation: v.optional(v.string()),
+      options: v.array(v.string()),
+      correctAnswer: v.string(),
+      userAnswer: v.optional(v.string()),
+      isCorrect: v.optional(v.boolean()),
+      answeredAt: v.optional(v.number()),
+      difficulty: v.number(), // Item difficulty parameter (IRT)
+    })),
+
+    // CAT algorithm state
+    currentAbilityEstimate: v.number(), // Theta (ability) estimate
+    abilityStandardError: v.number(), // Confidence in estimate
+    questionsAnswered: v.number(),
+    correctAnswers: v.number(),
+
+    // Results
+    determinedLevel: v.optional(v.string()), // Final level (N3, B2, etc.)
+    confidence: v.optional(v.number()), // 0-100 confidence score
+    scoresBySection: v.optional(v.object({
+      vocabulary: v.optional(v.number()),
+      grammar: v.optional(v.number()),
+      reading: v.optional(v.number()),
+      listening: v.optional(v.number()),
+    })),
+
+    // Timestamps
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_language", ["userId", "language"])
+    .index("by_status", ["status"]),
+
+  // ============================================
+  // GRADING PROFILES (level-specific thresholds)
+  // ============================================
+  gradingProfiles: defineTable({
+    language: languageValidator,
+    level: v.string(), // "N5", "A1", etc.
+
+    // Thresholds for sentence verification (0-100)
+    grammarPassThreshold: v.number(),
+    usagePassThreshold: v.number(),
+    naturalnessPassThreshold: v.number(),
+
+    // Description for users
+    levelDescription: v.string(),
+
+    // Story difficulty range this level can comfortably read
+    storyDifficultyMin: v.optional(v.string()),
+    storyDifficultyMax: v.optional(v.string()),
+  })
+    .index("by_language", ["language"])
+    .index("by_language_and_level", ["language", "level"]),
 
   // ============================================
   // YOUTUBE CONTENT (Future)

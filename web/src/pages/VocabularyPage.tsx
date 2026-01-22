@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
-import { useQuery as useTanstackQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery as useTanstackQuery } from "@tanstack/react-query";
 import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -660,12 +660,12 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
   }, [word]);
 
   // TanStack Query handles race conditions automatically
+  // Note: Removed keepPreviousData to prevent showing wrong language suggestions
   const { data: suggestions = [] } = useTanstackQuery({
     queryKey: ["dictionary-search", debouncedSearch, language],
     queryFn: () => searchDictionary(debouncedSearch, language, 8),
     enabled: debouncedSearch.length > 0,
     staleTime: 1000 * 60 * 5,
-    placeholderData: keepPreviousData,
   });
 
   // Clear form when language changes

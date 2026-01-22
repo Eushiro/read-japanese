@@ -139,6 +139,16 @@ export const getFlashcard = internalQuery({
   },
 });
 
+// Get placement test by ID
+export const getPlacementTest = internalQuery({
+  args: {
+    testId: v.id("placementTests"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.testId);
+  },
+});
+
 // Save user sentence verification result
 export const saveUserSentenceVerification = internalMutation({
   args: {

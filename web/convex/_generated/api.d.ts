@@ -14,6 +14,7 @@ import type * as crons from "../crons.js";
 import type * as flashcards from "../flashcards.js";
 import type * as http from "../http.js";
 import type * as mockTests from "../mockTests.js";
+import type * as placementTest from "../placementTest.js";
 import type * as progress from "../progress.js";
 import type * as scheduledJobs from "../scheduledJobs.js";
 import type * as settings from "../settings.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   flashcards: typeof flashcards;
   http: typeof http;
   mockTests: typeof mockTests;
+  placementTest: typeof placementTest;
   progress: typeof progress;
   scheduledJobs: typeof scheduledJobs;
   settings: typeof settings;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Settings, Crown, Code, Users, LogOut, Loader2, CreditCard, Zap, Check, Globe, GraduationCap, Sparkles } from "lucide-react";
+import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Settings, Crown, Code, Users, LogOut, Loader2, CreditCard, Zap, Check, Globe, GraduationCap, Sparkles, Brain, ChevronRight } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { useSettings, isDevUserEnabled, setDevUserEnabled } from "@/hooks/useSettings";
 import { useAuth, SignInButton, UserButton } from "@/contexts/AuthContext";
 import { useQuery, useAction, useMutation } from "convex/react";
@@ -42,6 +43,8 @@ type Language = typeof LANGUAGES[number]["value"];
 type Theme = "light" | "dark" | "system";
 
 export function SettingsPage() {
+  const navigate = useNavigate();
+
   const {
     settings,
     isLoading: settingsLoading,
@@ -454,6 +457,61 @@ export function SettingsPage() {
                   )}
                 </>
               )}
+            </section>
+          )}
+
+          {/* Placement Test */}
+          {isAuthenticated && user && userProfile && (
+            <section className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <Brain className="w-5 h-5 text-accent" />
+                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                  Proficiency Level
+                </h2>
+              </div>
+
+              <p className="text-sm text-foreground-muted mb-4">
+                Take an adaptive placement test to assess your level and get personalized content.
+              </p>
+
+              <div className="space-y-3">
+                {userProfile.languages?.map((lang) => {
+                  const langInfo = LANGUAGES.find((l) => l.value === lang);
+                  const proficiency = userProfile.proficiencyLevels?.[lang as keyof typeof userProfile.proficiencyLevels];
+
+                  return (
+                    <div
+                      key={lang}
+                      className="flex items-center justify-between p-4 rounded-xl bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{langInfo?.flag}</span>
+                        <div>
+                          <div className="font-medium text-foreground">{langInfo?.label}</div>
+                          {proficiency ? (
+                            <div className="text-sm text-foreground-muted">
+                              Level: <span className="font-semibold text-accent">{proficiency.level}</span>
+                              <span className="text-xs ml-2">
+                                (tested {new Date(proficiency.assessedAt).toLocaleDateString()})
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-foreground-muted">Not assessed yet</div>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate({ to: "/placement-test", search: { language: lang } })}
+                      >
+                        {proficiency ? "Retake" : "Take Test"}
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           )}
 

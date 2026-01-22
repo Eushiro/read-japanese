@@ -1031,3 +1031,225 @@ Provide a score (0-100) and detailed feedback.`;
     }
   },
 });
+
+// ============================================
+// PLACEMENT TEST QUESTION GENERATION
+// ============================================
+
+interface PlacementQuestion {
+  questionId: string;
+  level: string;
+  type: "vocabulary" | "grammar" | "reading" | "listening";
+  question: string;
+  questionTranslation: string;
+  options: string[];
+  correctAnswer: string;
+  difficulty: number;
+}
+
+// Map difficulty (-3 to +3) to level names
+function difficultyToLevel(difficulty: number, language: string): string {
+  if (language === "japanese") {
+    if (difficulty < -1.5) return "N5";
+    if (difficulty < -0.5) return "N4";
+    if (difficulty < 0.5) return "N3";
+    if (difficulty < 1.5) return "N2";
+    return "N1";
+  } else {
+    // CEFR for English/French
+    if (difficulty < -2.0) return "A1";
+    if (difficulty < -1.0) return "A2";
+    if (difficulty < 0.0) return "B1";
+    if (difficulty < 1.0) return "B2";
+    if (difficulty < 2.0) return "C1";
+    return "C2";
+  }
+}
+
+/**
+ * Generate a placement test question at a specific difficulty level
+ */
+export const generatePlacementQuestion = action({
+  args: {
+    testId: v.id("placementTests"),
+    language: v.union(
+      v.literal("japanese"),
+      v.literal("english"),
+      v.literal("french")
+    ),
+    targetDifficulty: v.number(), // -3 to +3 scale
+    questionType: v.union(
+      v.literal("vocabulary"),
+      v.literal("grammar"),
+      v.literal("reading"),
+      v.literal("listening")
+    ),
+    previousQuestions: v.optional(v.array(v.string())), // To avoid duplicates
+  },
+  handler: async (ctx, args): Promise<PlacementQuestion> => {
+    const languageName = languageNames[args.language];
+    const level = difficultyToLevel(args.targetDifficulty, args.language);
+
+    const previousQuestionsNote = args.previousQuestions?.length
+      ? `\n\nIMPORTANT: Do NOT generate questions similar to these (already asked):\n${args.previousQuestions.slice(-5).join("\n")}`
+      : "";
+
+    const systemPrompt = `You are a ${languageName} language proficiency test creator. Generate a ${args.questionType} question appropriate for ${level} level learners.
+
+The question should test ${args.questionType} at ${level} level difficulty.
+
+${args.questionType === "vocabulary" ? `
+For VOCABULARY questions:
+- Test recognition/meaning of words at ${level} level
+- Use words that are commonly tested at this level
+- Include context clues when appropriate` : ""}
+
+${args.questionType === "grammar" ? `
+For GRAMMAR questions:
+- Test grammar patterns appropriate for ${level} level
+- Use conjugations, particles, or sentence structures at this level
+- Provide clear context for the grammar point` : ""}
+
+${args.questionType === "reading" ? `
+For READING questions:
+- Provide a short passage (2-3 sentences) at ${level} level
+- Ask a comprehension question about the passage
+- Test understanding of main ideas or details` : ""}
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "question": "the question text in ${languageName}",
+  "questionTranslation": "English translation of the question",
+  "options": ["option A", "option B", "option C", "option D"],
+  "correctAnswer": "the exact text of the correct option",
+  "explanation": "brief explanation of why this is the correct answer"
+}
+
+IMPORTANT:
+- All options must be plausible distractors
+- The correct answer must EXACTLY match one of the options
+- Questions should clearly test ${level} level knowledge${previousQuestionsNote}`;
+
+    const prompt = `Generate a ${args.questionType} question for a ${languageName} placement test at ${level} level (difficulty: ${args.targetDifficulty.toFixed(1)}).`;
+
+    const response = await callOpenRouter(prompt, systemPrompt, "qwen/qwen3-next-80b-a3b-instruct:free");
+
+    try {
+      const parsed = JSON.parse(response) as {
+        question: string;
+        questionTranslation: string;
+        options: string[];
+        correctAnswer: string;
+      };
+
+      // Validate that correctAnswer is in options
+      if (!parsed.options.includes(parsed.correctAnswer)) {
+        // Try to find a close match
+        const match = parsed.options.find(o =>
+          o.toLowerCase().includes(parsed.correctAnswer.toLowerCase()) ||
+          parsed.correctAnswer.toLowerCase().includes(o.toLowerCase())
+        );
+        if (match) {
+          parsed.correctAnswer = match;
+        } else {
+          // Replace first option with correct answer as fallback
+          parsed.options[0] = parsed.correctAnswer;
+        }
+      }
+
+      const questionData: PlacementQuestion = {
+        questionId: `pq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        level,
+        type: args.questionType,
+        question: parsed.question,
+        questionTranslation: parsed.questionTranslation,
+        options: parsed.options,
+        correctAnswer: parsed.correctAnswer,
+        difficulty: args.targetDifficulty,
+      };
+
+      // Add the question to the test
+      await ctx.runMutation(internal.placementTest.addQuestionFromAI, {
+        testId: args.testId,
+        question: questionData,
+      });
+
+      return questionData;
+    } catch (error) {
+      console.error("Failed to parse placement question:", response);
+      throw new Error("Failed to generate placement question: Invalid AI response format");
+    }
+  },
+});
+
+/**
+ * Calculate the next optimal difficulty for CAT
+ * Based on current ability estimate
+ */
+export const getNextQuestionDifficulty = action({
+  args: {
+    testId: v.id("placementTests"),
+  },
+  handler: async (ctx, args): Promise<{
+    targetDifficulty: number;
+    suggestedType: "vocabulary" | "grammar" | "reading";
+    shouldContinue: boolean;
+    reason?: string;
+  }> => {
+    // Get the current test state
+    const test = await ctx.runQuery(internal.aiHelpers.getPlacementTest, {
+      testId: args.testId,
+    });
+
+    if (!test || test.status !== "in_progress") {
+      return {
+        targetDifficulty: 0,
+        suggestedType: "vocabulary",
+        shouldContinue: false,
+        reason: "Test not found or not in progress",
+      };
+    }
+
+    // Check stopping conditions
+    const MAX_QUESTIONS = 20;
+    const MIN_QUESTIONS = 8;
+    const SE_THRESHOLD = 0.4; // Standard error threshold for confidence
+
+    if (test.questionsAnswered >= MAX_QUESTIONS) {
+      return {
+        targetDifficulty: 0,
+        suggestedType: "vocabulary",
+        shouldContinue: false,
+        reason: "Maximum questions reached",
+      };
+    }
+
+    if (
+      test.questionsAnswered >= MIN_QUESTIONS &&
+      test.abilityStandardError < SE_THRESHOLD
+    ) {
+      return {
+        targetDifficulty: 0,
+        suggestedType: "vocabulary",
+        shouldContinue: false,
+        reason: "Sufficient confidence reached",
+      };
+    }
+
+    // Calculate optimal difficulty (slightly above current ability for best information)
+    const targetDifficulty = test.currentAbilityEstimate + 0.3 + (Math.random() * 0.4 - 0.2);
+    const clampedDifficulty = Math.max(-3, Math.min(3, targetDifficulty));
+
+    // Cycle through question types
+    const typeCycle: Array<"vocabulary" | "grammar" | "reading"> = [
+      "vocabulary", "grammar", "reading", "vocabulary", "grammar",
+    ];
+    const suggestedType = typeCycle[test.questionsAnswered % typeCycle.length];
+
+    return {
+      targetDifficulty: clampedDifficulty,
+      suggestedType,
+      shouldContinue: true,
+    };
+  },
+});

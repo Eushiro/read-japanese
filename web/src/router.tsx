@@ -22,6 +22,7 @@ import { GeneratePage } from "@/pages/GeneratePage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { LearnPage } from "@/pages/LearnPage";
+import { PlacementTestPage } from "@/pages/PlacementTestPage";
 import { BookOpen, GraduationCap, Settings, Home } from "lucide-react";
 
 // Root layout
@@ -239,6 +240,12 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
+const placementTestRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/placement-test",
+  component: PlacementTestPage,
+});
+
 // Route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -252,6 +259,7 @@ const routeTree = rootRoute.addChildren([
   practiceRoute,
   generateRoute,
   settingsRoute,
+  placementTestRoute,
 ]);
 
 // Router
