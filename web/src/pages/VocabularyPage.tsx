@@ -467,7 +467,7 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
   const isLoadingFlashcard = existingFlashcard === undefined;
   const hasFlashcard = existingFlashcard !== undefined && existingFlashcard !== null;
 
-  // Preload audio and images when flashcard data loads
+  // Preload audio and images when flashcard data loads or URLs are added after generation
   useEffect(() => {
     if (!existingFlashcard) return;
 
@@ -490,7 +490,7 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
       const img = new Image();
       img.src = existingFlashcard.imageUrl;
     }
-  }, [existingFlashcard]);
+  }, [existingFlashcard?.wordAudioUrl, existingFlashcard?.audioUrl, existingFlashcard?.imageUrl]);
 
   const handleGenerateFlashcard = async () => {
     // Show paywall - user needs premium to generate
