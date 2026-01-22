@@ -330,33 +330,45 @@ export function ComprehensionPage() {
 
         <main className="container mx-auto px-4 sm:px-6 py-12 max-w-2xl">
           {isGenerating ? (
-            // Show skeleton question cards while generating
+            // Show single skeleton question card while generating
             <div className="space-y-6">
-              <p className="text-center text-foreground-muted mb-6">
-                <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-                Generating questions...
-              </p>
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
-                  {/* Skeleton for question type badges */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <Skeleton className="h-5 w-24 rounded-full" />
-                    <Skeleton className="h-4 w-16" />
+              <div className="flex items-center justify-center gap-2 text-foreground-muted mb-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Generating questions...</span>
+              </div>
+              <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm animate-pulse">
+                {/* Type badge and points */}
+                <div className="flex items-center gap-2 mb-4">
+                  <Skeleton className="h-6 w-28 rounded-full" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                {/* Question text */}
+                <div className="mb-2">
+                  <Skeleton className="h-6 w-full mb-2" />
+                  <Skeleton className="h-6 w-4/5" />
+                </div>
+                {/* Translation hint */}
+                <Skeleton className="h-4 w-3/4 mb-6" />
+                {/* Multiple choice options */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-border">
+                    <Skeleton className="w-6 h-6 rounded-full shrink-0" />
+                    <Skeleton className="h-5 w-3/4" />
                   </div>
-                  {/* Skeleton for question text */}
-                  <div className="mb-6 space-y-2">
-                    <Skeleton className="h-6 w-full" />
-                    <Skeleton className="h-6 w-2/3" />
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-border">
+                    <Skeleton className="w-6 h-6 rounded-full shrink-0" />
+                    <Skeleton className="h-5 w-2/3" />
                   </div>
-                  {/* Skeleton for options */}
-                  <div className="space-y-3">
-                    <Skeleton className="h-14 w-full rounded-xl" />
-                    <Skeleton className="h-14 w-full rounded-xl" />
-                    <Skeleton className="h-14 w-full rounded-xl" />
-                    <Skeleton className="h-14 w-full rounded-xl" />
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-border">
+                    <Skeleton className="w-6 h-6 rounded-full shrink-0" />
+                    <Skeleton className="h-5 w-4/5" />
+                  </div>
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-border">
+                    <Skeleton className="w-6 h-6 rounded-full shrink-0" />
+                    <Skeleton className="h-5 w-1/2" />
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
           ) : (
             <div className="text-center">
