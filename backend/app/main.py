@@ -83,22 +83,23 @@ if static_path.exists():
 
 @app.on_event("startup")
 async def startup_event():
-    """Pre-warm dictionary indexes on startup for fast autocomplete."""
+    """Pre-warm dictionary caches on startup for fast autocomplete."""
     import asyncio
 
     async def warm_dictionaries():
         try:
-            from app.routers.dictionary import build_japanese_index, build_english_index, build_french_index
+            from app.routers.dictionary import preload_caches, get_jamdict
 
-            logger.info("Pre-warming dictionary indexes...")
-            build_japanese_index()
-            logger.info("Japanese dictionary index ready")
+            logger.info("Pre-warming dictionary caches...")
 
-            build_english_index()
-            logger.info("English dictionary index ready")
+            # Load English and French in-memory caches
+            preload_caches()
 
-            build_french_index()
-            logger.info("French dictionary index ready")
+            # Warm up Japanese jamdict (lazy loaded)
+            get_jamdict()
+            logger.info("Japanese dictionary ready")
+
+            logger.info("Dictionary caches loaded")
         except Exception as e:
             logger.warning(f"Failed to pre-warm dictionaries: {e}")
 

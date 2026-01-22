@@ -10,7 +10,7 @@ services:
     plan: free      # Options: free, starter ($7/mo), standard ($25/mo)
 
     # Build settings
-    buildCommand: pip install -r requirements.txt
+    buildCommand: git lfs install && git lfs pull && pip install -r requirements.txt
     startCommand: gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers 2
 
     # Health check
