@@ -12,7 +12,7 @@ import sys
 
 # Output directory
 OUTPUT_DIR = Path(__file__).parent.parent.parent / "web" / "public" / "dictionaries"
-CACHE_SIZE = 12000  # Words per language
+CACHE_SIZE = 20000  # Words per language
 
 
 def get_wn_db_path() -> Path | None:
@@ -171,17 +171,31 @@ def export_japanese():
     # This is much faster than doing prefix searches
     db_path = None
     try:
-        # Find jamdict database path
+        # Find jamdict database path - check multiple locations
         import jamdict
         from pathlib import Path
-        jamdict_data = Path(jamdict.__file__).parent / "data"
-        if (jamdict_data / "jamdict.db").exists():
-            db_path = jamdict_data / "jamdict.db"
-        else:
-            # Try user data directory
-            user_data = Path.home() / ".jamdict" / "data" / "jamdict.db"
-            if user_data.exists():
-                db_path = user_data
+
+        possible_paths = [
+            Path(jamdict.__file__).parent / "data" / "jamdict.db",
+            Path.home() / ".jamdict" / "data" / "jamdict.db",
+            # jamdict_data package installs here
+            Path(jamdict.__file__).parent.parent / "jamdict_data" / "jamdict.db",
+        ]
+
+        # Also try to find jamdict_data package directly
+        try:
+            import jamdict_data
+            possible_paths.insert(0, Path(jamdict_data.__file__).parent / "jamdict.db")
+        except ImportError:
+            pass
+
+        for p in possible_paths:
+            if p.exists():
+                db_path = p
+                break
+
+        if not db_path:
+            print(f"Searched paths: {possible_paths}")
     except Exception as e:
         print(f"Could not find jamdict database: {e}")
 
@@ -195,20 +209,31 @@ def export_japanese():
         cursor = conn.cursor()
 
         # Get entries with kanji and kana forms, prioritizing common words
-        # JMdict entries have "news1" and "ichi1" markers for common words
+        # JMdict uses priority markers: ichi1 (top 10k), news1 (newspaper common), nfXX (frequency rank)
+        # KJP = Kanji Priority, KNP = Kana Priority
         cursor.execute("""
             SELECT DISTINCT
                 k.text as kanji,
                 r.text as reading,
-                GROUP_CONCAT(DISTINCT g.text, '|||') as glosses
+                GROUP_CONCAT(DISTINCT g.text, '|||') as glosses,
+                MAX(CASE
+                    WHEN COALESCE(kp.text, knp.text) = 'ichi1' THEN 100
+                    WHEN COALESCE(kp.text, knp.text) = 'news1' THEN 90
+                    WHEN COALESCE(kp.text, knp.text) LIKE 'nf%' THEN 80 - CAST(SUBSTR(COALESCE(kp.text, knp.text), 3) AS INTEGER)
+                    WHEN COALESCE(kp.text, knp.text) = 'ichi2' THEN 50
+                    WHEN COALESCE(kp.text, knp.text) = 'news2' THEN 40
+                    ELSE 0
+                END) as priority
             FROM Entry e
             LEFT JOIN Kanji k ON k.entry_id = e.id
             LEFT JOIN Kana r ON r.entry_id = e.id
+            LEFT JOIN KJP kp ON kp.kid = k.ID
+            LEFT JOIN KNP knp ON knp.kid = r.ID
             JOIN Sense s ON s.entry_id = e.id
             JOIN SenseGloss g ON g.sense_id = s.id AND g.lang = 'eng'
             WHERE (k.text IS NOT NULL OR r.text IS NOT NULL)
             GROUP BY COALESCE(k.text, r.text), r.text
-            ORDER BY LENGTH(COALESCE(k.text, r.text))
+            ORDER BY priority DESC, LENGTH(COALESCE(k.text, r.text))
             LIMIT ?
         """, (CACHE_SIZE,))
 
