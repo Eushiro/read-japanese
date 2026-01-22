@@ -541,11 +541,6 @@ export function PlacementTestPage() {
                 >
                   {currentQuestion.question}
                 </p>
-                {currentQuestion.questionTranslation && (
-                  <p className="text-sm text-foreground-muted">
-                    {currentQuestion.questionTranslation}
-                  </p>
-                )}
               </div>
 
               {/* Options */}
