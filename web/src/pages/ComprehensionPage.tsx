@@ -7,6 +7,7 @@ import { useStory } from "@/hooks/useStory";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
+  ChevronLeft,
   ChevronRight,
   Loader2,
   CheckCircle2,
@@ -483,18 +484,20 @@ export function ComprehensionPage() {
                 </p>
               </div>
             </div>
-            {/* Progress indicator */}
+            {/* Progress indicator - clickable to jump to question */}
             <div className="flex items-center gap-1">
-              {localQuestions.map((_, i) => (
-                <div
+              {localQuestions.map((q, i) => (
+                <button
                   key={i}
-                  className={`w-2 h-2 rounded-full transition-all ${
+                  onClick={() => setCurrentQuestionIndex(i)}
+                  className={`h-2 rounded-full transition-all hover:opacity-80 ${
                     i === currentQuestionIndex
                       ? "bg-accent w-4"
-                      : i < currentQuestionIndex
-                      ? "bg-green-500"
-                      : "bg-border"
+                      : q.userAnswer !== undefined
+                      ? "bg-green-500 w-2"
+                      : "bg-border w-2"
                   }`}
+                  title={`Question ${i + 1}${q.userAnswer !== undefined ? " (answered)" : ""}`}
                 />
               ))}
             </div>
@@ -582,8 +585,17 @@ export function ComprehensionPage() {
             </div>
           )}
 
-          {/* Submit Button */}
-          <div className="flex justify-end mt-6">
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentQuestionIndex(currentQuestionIndex - 1)}
+              disabled={currentQuestionIndex === 0}
+              className="gap-2"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </Button>
             <Button
               onClick={handleSubmitAnswer}
               disabled={!selectedAnswer || isSubmitting || isGrading}
