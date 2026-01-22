@@ -241,6 +241,7 @@ Usage limits (example):
 | Feature | Status | Notes |
 |---------|--------|-------|
 | PostHog integration | ❌ Not Started | Event tracking, funnels, session replay, feature flags |
+| AI failure metrics | ❌ Not Started | Track AI generation failures, retries, model fallbacks |
 | Save sentence with word | ✅ Complete | Moved to Phase 0.25 |
 | Manual vocab + AI enhance | ❌ Not Started | User types word, AI fills reading, definitions, example sentence |
 | Add word autocomplete | ❌ Not Started | Autocomplete when adding words manually |
@@ -250,6 +251,7 @@ Usage limits (example):
 - PostHog: Use `posthog-js` for web, initialize in `main.tsx`
 - Sentence context: Add `sourceContext` field to vocabulary schema
 - AI enhance: Extend OpenRouter integration to enrich manual word entries
+- AI failure metrics: Track when AI outputs corrupted responses (e.g., reasoning dumped into fields), which model failed, retry success rates, latency per model. Helps identify unreliable models and optimize fallback strategies.
 
 **Why this phase:**
 - PostHog gives us data to measure feature impact
