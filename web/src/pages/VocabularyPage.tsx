@@ -769,10 +769,10 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
                     />
                   </div>
                   <CommandList>
-                    {debouncedSearch.length > 0 && suggestions.length === 0 && (
+                    {searchValue.trim().length > 0 && debouncedSearch.length > 0 && suggestions.length === 0 && (
                       <CommandEmpty>No results found.</CommandEmpty>
                     )}
-                    {suggestions.length > 0 && (
+                    {searchValue.trim().length > 0 && suggestions.length > 0 && (
                       <CommandGroup>
                         {suggestions.map((entry, index) => (
                           <CommandItem

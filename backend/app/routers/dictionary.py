@@ -515,54 +515,81 @@ def search_french(query: str, limit: int) -> list[DictionaryEntry]:
     return entries
 
 
-@router.get("/dictionary/{word}", response_model=DictionaryResponse)
-async def lookup_word(word: str):
-    """Look up a Japanese word using Jisho API (legacy endpoint)."""
+def lookup_japanese_exact(word: str) -> list[DictionaryEntry]:
+    """Look up a Japanese word using local jamdict database (exact match)."""
+    jmd = get_jamdict()
+    if jmd is None:
+        return []
+
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(
-                f"https://jisho.org/api/v1/search/words",
-                params={"keyword": word},
-            )
-            response.raise_for_status()
-            data = response.json()
+        # Use jamdict's lookup for exact match
+        result = jmd.lookup(word)
 
         entries = []
-        for item in data.get("data", [])[:3]:
-            japanese = item.get("japanese", [{}])[0]
-            word_text = japanese.get("word", japanese.get("reading", ""))
-            reading = japanese.get("reading", word_text)
+        for entry in result.entries[:3]:
+            # Get the word and reading
+            word_text = ""
+            reading = ""
 
-            senses = item.get("senses", [])
+            if entry.kanji_forms:
+                word_text = entry.kanji_forms[0].text
+            if entry.kana_forms:
+                reading = entry.kana_forms[0].text
+                if not word_text:
+                    word_text = reading
+
+            # Get meanings and parts of speech
             meanings = []
-            parts_of_speech = []
+            parts_of_speech = set()
 
-            for sense in senses[:3]:
-                english_defs = sense.get("english_definitions", [])
-                if english_defs:
-                    meanings.append(", ".join(english_defs[:3]))
-                pos = sense.get("parts_of_speech", [])
-                if pos:
-                    parts_of_speech.extend(pos)
-
-            parts_of_speech = list(dict.fromkeys(parts_of_speech))[:2]
+            for sense in entry.senses[:3]:
+                if sense.gloss:
+                    gloss_texts = [g.text for g in sense.gloss if g.text]
+                    if gloss_texts:
+                        meanings.append(", ".join(gloss_texts[:3]))
+                if sense.pos:
+                    parts_of_speech.update(sense.pos)
 
             if meanings:
                 entries.append(DictionaryEntry(
                     word=word_text,
                     reading=reading,
                     meanings=meanings,
-                    partOfSpeech=", ".join(parts_of_speech) if parts_of_speech else None,
+                    partOfSpeech=", ".join(list(parts_of_speech)[:2]) if parts_of_speech else None,
                 ))
+
+        return entries
+
+    except Exception as e:
+        print(f"Japanese lookup error: {e}")
+        return []
+
+
+@router.get("/dictionary/{word}", response_model=DictionaryResponse)
+async def lookup_word(
+    word: str,
+    language: Literal["japanese", "english", "french"] = Query(default="japanese"),
+):
+    """Look up a word using local dictionaries (exact match)."""
+    try:
+        if language == "japanese":
+            entries = lookup_japanese_exact(word)
+        elif language == "english":
+            # For English, use exact match from WordNet
+            entries = search_english(word, 1)
+            # Filter to exact matches only
+            entries = [e for e in entries if e.word.lower() == word.lower()]
+        elif language == "french":
+            # For French, use exact match from WordNet
+            entries = search_french(word, 1)
+            entries = [e for e in entries if e.word.lower() == word.lower()]
+        else:
+            entries = []
 
         return DictionaryResponse(entries=entries)
 
-    except httpx.TimeoutException:
-        raise HTTPException(status_code=504, detail="Dictionary lookup timed out")
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=f"Dictionary lookup failed: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Dictionary lookup failed: {str(e)}")
 
 
 @router.get("/dictionary/search/{query}", response_model=DictionaryResponse)

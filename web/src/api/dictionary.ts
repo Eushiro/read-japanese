@@ -12,11 +12,14 @@ interface DictionaryResponse {
   entries: DictionaryEntry[];
 }
 
-// Look up a word using our backend proxy (avoids CORS issues)
-export async function lookupWord(word: string): Promise<DictionaryEntry | null> {
+// Look up a word using our local dictionaries (exact match)
+export async function lookupWord(
+  word: string,
+  language: "japanese" | "english" | "french" = "japanese"
+): Promise<DictionaryEntry | null> {
   try {
     const response = await apiClient.get<DictionaryResponse>(
-      `/api/dictionary/${encodeURIComponent(word)}`
+      `/api/dictionary/${encodeURIComponent(word)}?language=${language}`
     );
 
     if (!response.entries || response.entries.length === 0) {
