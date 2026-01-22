@@ -823,3 +823,211 @@ export const generateFlashcardWithAudio = action({
     return { success: true, flashcardId, audioUrl, wordAudioUrl, imageUrl };
   },
 });
+
+// ============================================
+// STORY COMPREHENSION QUESTIONS
+// ============================================
+
+interface ComprehensionQuestion {
+  questionId: string;
+  type: "multiple_choice" | "short_answer" | "essay";
+  question: string;
+  questionTranslation: string;
+  options?: string[];
+  correctAnswer?: string;
+  rubric?: string;
+  relatedChapter?: number;
+  points: number;
+}
+
+/**
+ * Generate comprehension questions for a story
+ */
+export const generateComprehensionQuestions = action({
+  args: {
+    storyId: v.string(),
+    storyTitle: v.string(),
+    storyContent: v.string(), // Full story text
+    language: v.union(
+      v.literal("japanese"),
+      v.literal("english"),
+      v.literal("french")
+    ),
+    userId: v.string(),
+    questionCount: v.optional(v.number()), // Default 5
+    userLevel: v.optional(v.string()), // User's proficiency level (N3, B2, etc.)
+  },
+  handler: async (ctx, args): Promise<{ comprehensionId: string; questions: ComprehensionQuestion[] }> => {
+    const count = args.questionCount ?? 5;
+    const languageName = languageNames[args.language];
+    const levelInfo = args.userLevel ? ` The learner is at ${args.userLevel} level.` : "";
+
+    const systemPrompt = `You are a language learning assistant creating comprehension questions for a ${languageName} reading passage.${levelInfo}
+
+Create ${count} questions that test understanding at different levels:
+- 2-3 multiple choice questions (test basic comprehension of facts and details)
+- 1-2 short answer questions (test understanding of meaning and context)
+- 1 essay/discussion question (test deeper analysis and critical thinking)
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "questions": [
+    {
+      "type": "multiple_choice",
+      "question": "the question in ${languageName}",
+      "questionTranslation": "English translation of the question",
+      "options": ["option A", "option B", "option C", "option D"],
+      "correctAnswer": "the correct option text",
+      "relatedChapter": 1,
+      "points": 10
+    },
+    {
+      "type": "short_answer",
+      "question": "the question in ${languageName}",
+      "questionTranslation": "English translation",
+      "correctAnswer": "expected answer format or key points",
+      "relatedChapter": 2,
+      "points": 15
+    },
+    {
+      "type": "essay",
+      "question": "the question in ${languageName}",
+      "questionTranslation": "English translation",
+      "rubric": "Grading criteria: 1) addresses main point (30pts), 2) uses evidence (30pts), 3) language quality (40pts)",
+      "points": 25
+    }
+  ]
+}
+
+IMPORTANT:
+- Questions should progress from literal comprehension to analytical
+- Multiple choice should have exactly 4 options with one clearly correct answer
+- Short answer should have a brief expected answer for grading reference
+- Essay rubric should outline grading criteria
+- Points should reflect question difficulty (MC: 10, Short: 15-20, Essay: 20-25)`;
+
+    const prompt = `Create ${count} comprehension questions for this ${languageName} story:
+
+Title: ${args.storyTitle}
+
+Story Content:
+${args.storyContent}
+
+Generate questions that test the reader's understanding of the story.`;
+
+    const response = await callOpenRouter(prompt, systemPrompt, "qwen/qwen3-next-80b-a3b-instruct:free");
+
+    try {
+      const parsed = JSON.parse(response) as { questions: Omit<ComprehensionQuestion, "questionId">[] };
+
+      // Add unique IDs to each question
+      const questionsWithIds: ComprehensionQuestion[] = parsed.questions.map((q, index) => ({
+        ...q,
+        questionId: `q_${Date.now()}_${index}`,
+      }));
+
+      // Create the comprehension quiz in the database
+      const comprehensionId = await ctx.runMutation(internal.storyComprehension.createFromAI, {
+        userId: args.userId,
+        storyId: args.storyId,
+        storyTitle: args.storyTitle,
+        language: args.language,
+        questions: questionsWithIds,
+      });
+
+      return { comprehensionId: comprehensionId as string, questions: questionsWithIds };
+    } catch (error) {
+      console.error("Failed to parse comprehension questions:", response);
+      throw new Error("Failed to generate comprehension questions: Invalid AI response format");
+    }
+  },
+});
+
+/**
+ * Grade a free-form comprehension answer (short answer or essay)
+ */
+export const gradeComprehensionAnswer = action({
+  args: {
+    comprehensionId: v.id("storyComprehension"),
+    questionIndex: v.number(),
+    userAnswer: v.string(),
+    question: v.string(),
+    questionType: v.union(v.literal("short_answer"), v.literal("essay")),
+    expectedAnswer: v.optional(v.string()), // For short answer
+    rubric: v.optional(v.string()), // For essay
+    storyContext: v.string(), // Relevant story content for context
+    language: v.union(
+      v.literal("japanese"),
+      v.literal("english"),
+      v.literal("french")
+    ),
+    userLevel: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ aiScore: number; aiFeedback: string; isCorrect: boolean }> => {
+    const languageName = languageNames[args.language];
+    const levelInfo = args.userLevel ? ` The student is at ${args.userLevel} level.` : "";
+
+    let gradingInstructions = "";
+    if (args.questionType === "short_answer" && args.expectedAnswer) {
+      gradingInstructions = `Expected answer (or key points): ${args.expectedAnswer}
+
+Grade based on:
+- Accuracy of content (does it match the expected answer?)
+- Completeness (are all key points addressed?)
+- Language quality (for the student's level)`;
+    } else if (args.questionType === "essay" && args.rubric) {
+      gradingInstructions = `Grading rubric: ${args.rubric}`;
+    }
+
+    const systemPrompt = `You are a ${languageName} language teacher grading a student's comprehension answer.${levelInfo}
+
+${gradingInstructions}
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "aiScore": number (0-100),
+  "aiFeedback": "detailed feedback for the student including what they did well and how to improve",
+  "isCorrect": boolean (true if score >= 70)
+}
+
+Be encouraging but accurate. Consider:
+1. Content accuracy - does the answer demonstrate understanding?
+2. Completeness - are key points addressed?
+3. Language quality - appropriate for the student's level`;
+
+    const prompt = `Grade this ${args.questionType} answer:
+
+Question: ${args.question}
+
+Student's answer: "${args.userAnswer}"
+
+Story context (for reference):
+${args.storyContext}
+
+Provide a score (0-100) and detailed feedback.`;
+
+    const response = await callOpenRouter(prompt, systemPrompt);
+
+    try {
+      const parsed = JSON.parse(response) as { aiScore: number; aiFeedback: string; isCorrect: boolean };
+
+      // Update the comprehension quiz with the grading
+      await ctx.runMutation(internal.storyComprehension.updateGradingFromAI, {
+        comprehensionId: args.comprehensionId,
+        questionIndex: args.questionIndex,
+        aiScore: parsed.aiScore,
+        aiFeedback: parsed.aiFeedback,
+        isCorrect: parsed.isCorrect,
+      });
+
+      return parsed;
+    } catch (error) {
+      console.error("Failed to parse grading response:", response);
+      return {
+        aiScore: 0,
+        aiFeedback: "Unable to grade answer. Please try again.",
+        isCorrect: false,
+      };
+    }
+  },
+});

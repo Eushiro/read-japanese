@@ -356,6 +356,50 @@ export default defineSchema({
     .index("by_user_and_language", ["userId", "language"]),
 
   // ============================================
+  // STORY COMPREHENSION
+  // ============================================
+  storyComprehension: defineTable({
+    userId: v.string(),
+    storyId: v.string(),
+    storyTitle: v.string(),
+    language: languageValidator,
+
+    // Questions generated for this story
+    questions: v.array(v.object({
+      questionId: v.string(),
+      type: v.union(
+        v.literal("multiple_choice"),
+        v.literal("short_answer"),
+        v.literal("essay")
+      ),
+      question: v.string(),
+      questionTranslation: v.optional(v.string()), // English translation for learners
+      options: v.optional(v.array(v.string())), // For multiple choice
+      correctAnswer: v.optional(v.string()), // For MC and short answer
+      rubric: v.optional(v.string()), // AI grading guidelines for essays
+      userAnswer: v.optional(v.string()),
+      isCorrect: v.optional(v.boolean()),
+      aiScore: v.optional(v.number()), // 0-100 for essay/short answer
+      aiFeedback: v.optional(v.string()),
+      relatedChapter: v.optional(v.number()), // Which chapter this question is about
+      points: v.number(), // Points for this question
+      earnedPoints: v.optional(v.number()),
+    })),
+
+    // Overall results
+    totalScore: v.number(), // Max possible score
+    earnedScore: v.optional(v.number()),
+    percentScore: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_story", ["userId", "storyId"])
+    .index("by_user_and_language", ["userId", "language"]),
+
+  // ============================================
   // YOUTUBE CONTENT (Future)
   // ============================================
   youtubeContent: defineTable({
