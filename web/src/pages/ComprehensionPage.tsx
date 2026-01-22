@@ -5,6 +5,7 @@ import { api } from "../../convex/_generated/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStory } from "@/hooks/useStory";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   QuestionDisplay,
   QuestionNavigation,
@@ -18,6 +19,7 @@ import {
   BookOpen,
   HelpCircle,
   Sparkles,
+  RotateCcw,
 } from "lucide-react";
 
 interface Question {
@@ -65,6 +67,10 @@ export function ComprehensionPage() {
   const gradeAnswer = useAction(api.ai.gradeComprehensionAnswer);
   const submitAnswer = useMutation(api.storyComprehension.submitAnswer);
   const completeQuiz = useMutation(api.storyComprehension.complete);
+  const resetQuiz = useMutation(api.storyComprehension.reset);
+
+  // Admin check
+  const isAdmin = user?.email === "hiro.ayettey@gmail.com";
 
   // Initialize local questions from existing comprehension
   useEffect(() => {
@@ -188,6 +194,26 @@ export function ComprehensionPage() {
     }
   };
 
+  // Admin: Reset quiz
+  const handleResetQuiz = async () => {
+    if (!existingComprehension || !isAdmin || !user?.email) return;
+
+    try {
+      await resetQuiz({
+        comprehensionId: existingComprehension._id,
+        adminEmail: user.email,
+      });
+
+      // Reset local state
+      setLocalQuestions([]);
+      setCurrentQuestionIndex(0);
+      setSelectedAnswer("");
+      setShowResults(false);
+    } catch (error) {
+      console.error("Failed to reset quiz:", error);
+    }
+  };
+
   // Submit answer
   const handleSubmitAnswer = async () => {
     if (!selectedAnswer || !existingComprehension) return;
@@ -304,41 +330,63 @@ export function ComprehensionPage() {
         </header>
 
         <main className="container mx-auto px-4 sm:px-6 py-12 max-w-2xl">
-          <div className="text-center">
-            <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
-              <HelpCircle className="w-10 h-10 text-accent" />
-            </div>
-            <h2 className="text-2xl font-bold text-foreground mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-              Test Your Understanding
-            </h2>
-            <p className="text-foreground-muted mb-8 max-w-md mx-auto">
-              Generate AI-powered comprehension questions based on the story you just read.
-              Questions will test your understanding at different levels.
-            </p>
-            <Button
-              onClick={handleGenerateQuestions}
-              disabled={isGenerating || !isAuthenticated}
-              className="gap-2"
-              size="lg"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Generating Questions...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Generate Questions
-                </>
-              )}
-            </Button>
-            {!isAuthenticated && (
-              <p className="text-sm text-foreground-muted mt-4">
-                Please sign in to generate questions.
+          {isGenerating ? (
+            // Show skeleton question cards while generating
+            <div className="space-y-6">
+              <p className="text-center text-foreground-muted mb-6">
+                <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                Generating questions...
               </p>
-            )}
-          </div>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
+                  {/* Skeleton for question type badges */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <Skeleton className="h-5 w-24 rounded-full" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                  {/* Skeleton for question text */}
+                  <div className="mb-6 space-y-2">
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-6 w-2/3" />
+                  </div>
+                  {/* Skeleton for options */}
+                  <div className="space-y-3">
+                    <Skeleton className="h-14 w-full rounded-xl" />
+                    <Skeleton className="h-14 w-full rounded-xl" />
+                    <Skeleton className="h-14 w-full rounded-xl" />
+                    <Skeleton className="h-14 w-full rounded-xl" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
+                <HelpCircle className="w-10 h-10 text-accent" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+                Test Your Understanding
+              </h2>
+              <p className="text-foreground-muted mb-8 max-w-md mx-auto">
+                Generate AI-powered comprehension questions based on the story you just read.
+                Questions will test your understanding at different levels.
+              </p>
+              <Button
+                onClick={handleGenerateQuestions}
+                disabled={!isAuthenticated}
+                className="gap-2"
+                size="lg"
+              >
+                <Sparkles className="w-4 h-4" />
+                Generate Questions
+              </Button>
+              {!isAuthenticated && (
+                <p className="text-sm text-foreground-muted mt-4">
+                  Please sign in to generate questions.
+                </p>
+              )}
+            </div>
+          )}
         </main>
       </div>
     );
@@ -354,18 +402,30 @@ export function ComprehensionPage() {
       <div className="min-h-screen bg-background">
         <header className="sticky top-16 z-40 border-b border-border bg-surface/95 backdrop-blur-md">
           <div className="container mx-auto px-4 sm:px-6 py-3 max-w-3xl">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate({ to: "/read/$storyId", params: { storyId } })}
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <div>
-                <h1 className="font-semibold text-foreground">{story.metadata.title}</h1>
-                <p className="text-sm text-foreground-muted">Quiz Results</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate({ to: "/read/$storyId", params: { storyId } })}
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                <div>
+                  <h1 className="font-semibold text-foreground">{story.metadata.title}</h1>
+                  <p className="text-sm text-foreground-muted">Quiz Results</p>
+                </div>
               </div>
+              {isAdmin && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleResetQuiz}
+                  title="Reset Quiz (Admin)"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
         </header>
@@ -487,12 +547,24 @@ export function ComprehensionPage() {
                 </p>
               </div>
             </div>
-            {/* Progress indicator - clickable to jump to question */}
-            <QuestionProgress
-              questions={localQuestions}
-              currentIndex={currentQuestionIndex}
-              onNavigate={setCurrentQuestionIndex}
-            />
+            <div className="flex items-center gap-2">
+              {/* Progress indicator - clickable to jump to question */}
+              <QuestionProgress
+                questions={localQuestions}
+                currentIndex={currentQuestionIndex}
+                onNavigate={setCurrentQuestionIndex}
+              />
+              {isAdmin && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleResetQuiz}
+                  title="Reset Quiz (Admin)"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </header>

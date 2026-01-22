@@ -185,6 +185,7 @@ export const add = mutation({
     sourceYoutubeId: v.optional(v.string()),
     sourceContext: v.optional(v.string()), // The sentence where the word was found
     examLevel: v.optional(v.string()),
+    flashcardPending: v.optional(v.boolean()), // Set to true if AI flashcard generation is starting
   },
   handler: async (ctx, args) => {
     // Check if word already exists for this user
@@ -214,6 +215,7 @@ export const add = mutation({
       sourceYoutubeId: args.sourceYoutubeId,
       sourceContext: args.sourceContext,
       examLevel: args.examLevel,
+      flashcardPending: args.flashcardPending,
       timesReviewed: 0,
       timesCorrect: 0,
       createdAt: now,

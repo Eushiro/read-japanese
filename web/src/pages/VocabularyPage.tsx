@@ -3,6 +3,7 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Paywall } from "@/components/Paywall";
 import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, Volume2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -424,6 +425,7 @@ interface VocabularyCardProps {
     examLevel?: string | null;
     sourceStoryTitle?: string | null;
     sourceContext?: string | null;
+    flashcardPending?: boolean | null;
   };
   onRemove: (id: string) => void;
   showMastery?: boolean;
@@ -484,8 +486,8 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
           <div className="text-foreground">
             {item.definitions.join("; ")}
           </div>
-          {/* Example sentence - show source context OR generated sentence (not both) */}
-          {(item.sourceContext || existingFlashcard?.sentence) && (
+          {/* Example sentence - show source context, generated sentence, or skeleton while generating */}
+          {(item.sourceContext || existingFlashcard?.sentence || item.flashcardPending) && (
             <div className="mt-3">
               {item.sourceContext ? (
                 <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
@@ -496,6 +498,14 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
                     {item.sourceContext}
                   </p>
                   <p className="text-xs text-foreground-muted mt-1">Original context</p>
+                </div>
+              ) : item.flashcardPending && !existingFlashcard?.sentence ? (
+                <div className="p-2.5 rounded-lg bg-accent/5 border border-accent/20">
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                  <p className="text-xs text-foreground-muted mt-2">Generating example sentence...</p>
                 </div>
               ) : existingFlashcard?.sentence && (
                 <div className="p-2.5 rounded-lg bg-accent/5 border border-accent/20">
@@ -544,8 +554,8 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
               {MASTERY_LABELS[item.masteryState]?.label ?? item.masteryState}
             </span>
           )}
-          {/* Generate flashcard button - only show if no flashcard exists yet */}
-          {!isLoadingFlashcard && !hasFlashcard && (
+          {/* Generate flashcard button - only show if no flashcard exists yet and not pending */}
+          {!isLoadingFlashcard && !hasFlashcard && !item.flashcardPending && (
             isGenerating ? (
               <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent flex items-center gap-1.5 animate-pulse">
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -562,6 +572,13 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
                 <Sparkles className="w-4 h-4" />
               </Button>
             )
+          )}
+          {/* Show generating indicator when flashcard is pending */}
+          {item.flashcardPending && (
+            <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent flex items-center gap-1.5">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Generating...
+            </span>
           )}
           <Button
             variant="ghost"

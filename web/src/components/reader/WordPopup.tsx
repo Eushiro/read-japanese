@@ -138,6 +138,7 @@ export function WordPopup({
         sourceStoryId: storyId,
         sourceStoryTitle: storyTitle,
         sourceContext: sourceContext, // The sentence where the word was found
+        flashcardPending: isPremiumUser ? true : undefined, // Mark as pending if premium user will generate flashcard
       });
       setJustSaved(true);
       setJustRemoved(false);

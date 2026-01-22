@@ -129,6 +129,19 @@ export const updateFlashcardWordAudio = internalMutation({
   },
 });
 
+// Clear flashcard pending flag on vocabulary item
+export const clearFlashcardPending = internalMutation({
+  args: {
+    vocabularyId: v.id("vocabulary"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.vocabularyId, {
+      flashcardPending: false,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 // Get flashcard by ID
 export const getFlashcard = internalQuery({
   args: {

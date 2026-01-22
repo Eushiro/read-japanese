@@ -405,6 +405,7 @@ export const updateGradingFromAI = internalMutation({
     aiScore: v.number(),
     aiFeedback: v.string(),
     isCorrect: v.boolean(),
+    possibleAnswer: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const comprehension = await ctx.db.get(args.comprehensionId);
@@ -423,11 +424,39 @@ export const updateGradingFromAI = internalMutation({
       aiFeedback: args.aiFeedback,
       isCorrect: args.isCorrect,
       earnedPoints,
+      // Update correctAnswer with the AI-generated possible answer for text-based questions
+      ...(args.possibleAnswer ? { correctAnswer: args.possibleAnswer } : {}),
     };
 
     await ctx.db.patch(args.comprehensionId, {
       questions,
       updatedAt: Date.now(),
     });
+  },
+});
+
+/**
+ * Admin: Reset a comprehension quiz (delete it so a new one can be generated)
+ */
+export const reset = mutation({
+  args: {
+    comprehensionId: v.id("storyComprehension"),
+    adminEmail: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Only allow admin to reset
+    if (args.adminEmail !== "hiro.ayettey@gmail.com") {
+      throw new Error("Unauthorized: Admin access required");
+    }
+
+    const comprehension = await ctx.db.get(args.comprehensionId);
+    if (!comprehension) {
+      throw new Error("Comprehension quiz not found");
+    }
+
+    // Delete the comprehension quiz
+    await ctx.db.delete(args.comprehensionId);
+
+    return { success: true };
   },
 });

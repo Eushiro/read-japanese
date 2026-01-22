@@ -137,6 +137,9 @@ export default defineSchema({
     // Exam association
     examLevel: v.optional(v.string()), // e.g., "N3", "B2", etc.
 
+    // AI flashcard generation in progress
+    flashcardPending: v.optional(v.boolean()),
+
     // Stats
     timesReviewed: v.number(),
     timesCorrect: v.number(),

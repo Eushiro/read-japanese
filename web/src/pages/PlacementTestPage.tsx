@@ -5,6 +5,7 @@ import { api } from "../../convex/_generated/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   QuestionDisplay,
   QuestionNavigation,
@@ -630,10 +631,27 @@ export function PlacementTestPage() {
 
         {/* Question Card */}
         {isGeneratingQuestion ? (
-          <div className="bg-surface rounded-2xl border border-border p-6">
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
-              <p className="text-foreground-muted">Generating question...</p>
+          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
+            {/* Skeleton for question type badges */}
+            <div className="flex items-center gap-2 mb-4">
+              <Skeleton className="h-5 w-20 rounded-full" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            {/* Skeleton for question text */}
+            <div className="mb-6 space-y-2">
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-3/4" />
+            </div>
+            {/* Skeleton for options */}
+            <div className="space-y-3">
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+            </div>
+            {/* Skeleton for button */}
+            <div className="mt-6">
+              <Skeleton className="h-10 w-full rounded-lg" />
             </div>
           </div>
         ) : viewingQuestion ? (
