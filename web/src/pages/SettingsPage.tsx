@@ -537,7 +537,8 @@ export function SettingsPage() {
                       {subscription?.tier || "Free"}
                     </div>
                   </div>
-                  {subscription?.tier && subscription.tier !== "free" && (
+                  {/* Only show Manage button if subscription was created through Stripe */}
+                  {subscription?.stripeCustomerId && (
                     <Button variant="outline" size="sm" onClick={handleManageSubscription}>
                       Manage
                     </Button>

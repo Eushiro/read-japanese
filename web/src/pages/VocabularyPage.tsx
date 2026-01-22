@@ -5,9 +5,22 @@ import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Paywall } from "@/components/Paywall";
-import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, ChevronsUpDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { searchDictionary, type DictionaryEntry } from "@/api/dictionary";
+import { cn } from "@/lib/utils";
 
 // Sort options
 type SortOption = "newest" | "oldest" | "alphabetical" | "alphabetical-reverse" | "by-mastery";
@@ -612,88 +625,54 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
   const [language, setLanguage] = useState<Language>("japanese");
   const [examLevel, setExamLevel] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isInputFocused, setIsInputFocused] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [comboboxOpen, setComboboxOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   // Debounced search term
-  const [debouncedWord, setDebouncedWord] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const addWord = useMutation(api.vocabulary.add);
 
-  // Debounce the word input
+  // Debounce the search input
   useEffect(() => {
-    const trimmed = word.trim();
+    const trimmed = searchValue.trim();
     if (trimmed.length < 1) {
-      setDebouncedWord("");
+      setDebouncedSearch("");
       return;
     }
 
     const timeoutId = setTimeout(() => {
-      setDebouncedWord(trimmed);
+      setDebouncedSearch(trimmed);
     }, 150);
 
     return () => clearTimeout(timeoutId);
-  }, [word]);
+  }, [searchValue]);
 
   // TanStack Query handles race conditions automatically
-  // keepPreviousData prevents jumpiness by showing old results while loading
   const { data: suggestions = [] } = useTanstackQuery({
-    queryKey: ["dictionary-search", debouncedWord, language],
-    queryFn: () => searchDictionary(debouncedWord, language, 5),
-    enabled: debouncedWord.length > 0,
-    staleTime: 1000 * 60 * 5, // Cache results for 5 minutes
+    queryKey: ["dictionary-search", debouncedSearch, language],
+    queryFn: () => searchDictionary(debouncedSearch, language, 8),
+    enabled: debouncedSearch.length > 0,
+    staleTime: 1000 * 60 * 5,
     placeholderData: keepPreviousData,
   });
-
-  // Show suggestions when input focused and we have results
-  const showSuggestions = isInputFocused && debouncedWord.length > 0 && suggestions.length > 0;
-
-  // Reset selected index when suggestions change
-  useEffect(() => {
-    setSelectedIndex(-1);
-  }, [suggestions]);
 
   // Clear form when language changes
   useEffect(() => {
     setWord("");
-    setDebouncedWord("");
+    setSearchValue("");
+    setDebouncedSearch("");
     setReading("");
     setDefinitions("");
   }, [language]);
 
   const handleSelectSuggestion = (entry: DictionaryEntry) => {
     setWord(entry.word);
-    setDebouncedWord(""); // Clear debounced word to stop showing suggestions
+    setSearchValue("");
+    setDebouncedSearch("");
     setReading(entry.reading || "");
     setDefinitions(entry.meanings.join("; "));
-    setIsInputFocused(false);
-    setSelectedIndex(-1);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showSuggestions) return;
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
-        break;
-      case "Enter":
-        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-          e.preventDefault();
-          handleSelectSuggestion(suggestions[selectedIndex]);
-        }
-        break;
-      case "Escape":
-        e.preventDefault();
-        setIsInputFocused(false);
-        setSelectedIndex(-1);
-        break;
-    }
+    setComboboxOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -756,60 +735,79 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
             </div>
           </div>
 
-          {/* Word with Autocomplete */}
+          {/* Word with Autocomplete Combobox */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
               Word <span className="text-destructive">*</span>
             </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={word}
-                onChange={(e) => setWord(e.target.value)}
-                onFocus={() => setIsInputFocused(true)}
-                onBlur={() => setTimeout(() => setIsInputFocused(false), 150)}
-                onKeyDown={handleKeyDown}
-                placeholder={language === "japanese" ? "食べる" : "Enter word"}
-                className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-                style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
-                autoComplete="off"
-                required
-              />
-
-              {/* Suggestions dropdown */}
-              {showSuggestions && (
-                <div className="absolute z-50 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {suggestions.map((entry, index) => (
-                    <button
-                      key={`${entry.word}-${index}`}
-                      type="button"
-                      onMouseDown={() => handleSelectSuggestion(entry)}
-                      className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border last:border-b-0"
-                    >
-                      <div className="flex items-baseline gap-2">
-                        <span
-                          className="font-medium text-foreground"
-                          style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
-                        >
-                          {entry.word}
-                        </span>
-                        {entry.reading && entry.reading !== entry.word && (
-                          <span
-                            className="text-sm text-foreground-muted"
-                            style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+            <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  role="combobox"
+                  aria-expanded={comboboxOpen}
+                  className={cn(
+                    "w-full flex items-center justify-between px-4 py-2.5 rounded-lg border border-border bg-background text-left focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all",
+                    !word && "text-foreground-muted"
+                  )}
+                  style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                >
+                  {word || (language === "japanese" ? "Search for a word..." : "Search for a word...")}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command shouldFilter={false}>
+                  <div className="flex items-center border-b px-3">
+                    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                    <input
+                      value={searchValue}
+                      onChange={(e) => setSearchValue(e.target.value)}
+                      placeholder={language === "japanese" ? "食べる, taberu..." : "Type to search..."}
+                      className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                      style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                    />
+                  </div>
+                  <CommandList>
+                    {debouncedSearch.length > 0 && suggestions.length === 0 && (
+                      <CommandEmpty>No results found.</CommandEmpty>
+                    )}
+                    {suggestions.length > 0 && (
+                      <CommandGroup>
+                        {suggestions.map((entry, index) => (
+                          <CommandItem
+                            key={`${entry.word}-${index}`}
+                            value={entry.word}
+                            onSelect={() => handleSelectSuggestion(entry)}
+                            className="flex flex-col items-start gap-1 py-3"
                           >
-                            ({entry.reading})
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-foreground-muted truncate mt-0.5">
-                        {entry.meanings[0]}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                            <div className="flex items-baseline gap-2">
+                              <span
+                                className="font-medium"
+                                style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                              >
+                                {entry.word}
+                              </span>
+                              {entry.reading && entry.reading !== entry.word && (
+                                <span
+                                  className="text-sm text-muted-foreground"
+                                  style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                                >
+                                  ({entry.reading})
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-sm text-muted-foreground line-clamp-1">
+                              {entry.meanings[0]}
+                            </span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Reading (for Japanese) */}
