@@ -1,13 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
-import { useQuery as useTanstackQuery } from "@tanstack/react-query";
 import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Paywall } from "@/components/Paywall";
 import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, Volume2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { searchDictionary, type DictionaryEntry } from "@/api/dictionary";
+import { searchClientDictionary, preloadDictionary, type DictionaryEntry } from "@/lib/clientDictionary";
 
 // Sort options
 type SortOption = "newest" | "oldest" | "alphabetical" | "alphabetical-reverse" | "by-mastery";
@@ -638,42 +637,48 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
   const [examLevel, setExamLevel] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-
-  // Debounced search term
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [suggestions, setSuggestions] = useState<DictionaryEntry[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const addWord = useMutation(api.vocabulary.add);
+  const generateFlashcardWithAudio = useAction(api.ai.generateFlashcardWithAudio);
 
-  // Debounce the search input
+  // Preload dictionary when modal opens
+  useEffect(() => {
+    preloadDictionary(language);
+  }, [language]);
+
+  // Search dictionary on input change (client-side, instant)
   useEffect(() => {
     const trimmed = word.trim();
     if (trimmed.length < 1) {
-      setDebouncedSearch("");
+      setSuggestions([]);
       return;
     }
 
-    const timeoutId = setTimeout(() => {
-      setDebouncedSearch(trimmed);
-    }, 150);
+    // Small debounce for typing smoothness
+    const timeoutId = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchClientDictionary(trimmed, language, 8);
+        setSuggestions(results);
+      } catch (err) {
+        console.error("Search error:", err);
+        setSuggestions([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 50);
 
     return () => clearTimeout(timeoutId);
-  }, [word]);
-
-  // TanStack Query handles race conditions automatically
-  // Note: Removed keepPreviousData to prevent showing wrong language suggestions
-  const { data: suggestions = [] } = useTanstackQuery({
-    queryKey: ["dictionary-search", debouncedSearch, language],
-    queryFn: () => searchDictionary(debouncedSearch, language, 8),
-    enabled: debouncedSearch.length > 0,
-    staleTime: 1000 * 60 * 5,
-  });
+  }, [word, language]);
 
   // Clear form when language changes
   useEffect(() => {
     setWord("");
-    setDebouncedSearch("");
     setReading("");
     setDefinitions("");
+    setSuggestions([]);
     setShowSuggestions(false);
   }, [language]);
 
@@ -690,7 +695,7 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
 
     setIsSubmitting(true);
     try {
-      await addWord({
+      const vocabId = await addWord({
         userId,
         language,
         word: word.trim(),
@@ -699,10 +704,23 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
         sourceType: "manual",
         examLevel: examLevel.trim() || undefined,
       });
+
+      // Close modal immediately for better UX
       onClose();
+
+      // Trigger AI enhancement in background (sentence + audio + image)
+      // This runs after modal closes - the VocabularyCard will show loading state
+      if (vocabId) {
+        generateFlashcardWithAudio({
+          vocabularyId: vocabId,
+          includeAudio: true,
+          includeImage: true,
+        }).catch((err) => {
+          console.error("Background AI enhancement failed:", err);
+        });
+      }
     } catch (error) {
       console.error("Failed to add word:", error);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -802,7 +820,7 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
                 ))}
               </div>
             )}
-            {showSuggestions && word.trim().length > 0 && debouncedSearch.length > 0 && suggestions.length === 0 && (
+            {showSuggestions && word.trim().length > 0 && suggestions.length === 0 && !isSearching && (
               <div className="absolute z-10 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg p-4 text-sm text-foreground-muted">
                 No results found
               </div>
