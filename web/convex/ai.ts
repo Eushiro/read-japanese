@@ -965,11 +965,13 @@ Question type details:
 6. grammar: How does a grammar pattern affect meaning?${grammarExamples}
 7. opinion: Learner's opinion about character decision or theme
 
-CRITICAL RULES:
-1. Output ONLY valid JSON - no extra text, no thinking, no explanations
-2. The "rubric" field must be SHORT (under 100 characters) - just list 2-3 grading criteria
-3. Do NOT put your reasoning or thoughts anywhere in the JSON
-4. Vary question types - don't use all multiple choice
+CRITICAL RULES - FOLLOW EXACTLY:
+1. Output ONLY the JSON object - nothing else
+2. For multiple_choice: Do NOT include rubric field at all
+3. For opinion/short_answer: rubric must be under 50 characters (e.g. "clear opinion, evidence")
+4. correctAnswer must be under 100 characters
+5. NEVER put explanations, reasoning, or thoughts in ANY field
+6. Vary question types
 
 JSON format:
 {
@@ -979,14 +981,14 @@ JSON format:
       "question": "question in ${languageName}",
       "questionTranslation": "English translation",
       "options": ["A", "B", "C", "D"],
-      "correctAnswer": "the correct option",
+      "correctAnswer": "B",
       "points": 10
     },
     {
       "type": "opinion",
-      "question": "What do you think about [topic]?",
+      "question": "What do you think?",
       "questionTranslation": "English translation",
-      "rubric": "clear opinion, text evidence, language quality",
+      "rubric": "opinion, evidence, clarity",
       "points": 25
     }
   ]
@@ -1027,35 +1029,59 @@ Create comprehension questions for the story above, aiming for a total of ${work
       },
     };
 
-    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 1500, comprehensionSchema);
+    // Helper to check if response has corrupted fields (AI dumping chain of thought)
+    const isCorrupted = (parsed: { questions: Array<{ rubric?: string; correctAnswer?: string }> }) => {
+      return parsed.questions.some(q =>
+        (q.rubric && q.rubric.length > 200) ||
+        (q.correctAnswer && q.correctAnswer.length > 300)
+      );
+    };
 
-    try {
-      const parsed = JSON.parse(response) as { questions: Omit<ComprehensionQuestion, "questionId">[] };
-
-      // Sanitize and add unique IDs to each question
-      const questionsWithIds: ComprehensionQuestion[] = parsed.questions.map((q, index) => ({
+    // Helper to sanitize and process questions
+    const processQuestions = (parsed: { questions: Omit<ComprehensionQuestion, "questionId">[] }): ComprehensionQuestion[] => {
+      return parsed.questions.map((q, index) => ({
         ...q,
         questionId: `q_${Date.now()}_${index}`,
-        // Truncate rubric if AI went off the rails (max 200 chars)
-        rubric: q.rubric ? q.rubric.slice(0, 200) : undefined,
-        // Truncate other text fields as safety measure
-        correctAnswer: q.correctAnswer ? q.correctAnswer.slice(0, 500) : undefined,
+        // For multiple_choice, rubric is not needed - remove it entirely
+        // For other types, keep it short
+        rubric: q.type === "multiple_choice" ? undefined : (q.rubric ? q.rubric.slice(0, 150) : undefined),
+        // Truncate answer fields
+        correctAnswer: q.correctAnswer ? q.correctAnswer.slice(0, 300) : undefined,
       }));
+    };
 
-      // Create the comprehension quiz in the database
-      const comprehensionId = await ctx.runMutation(internal.storyComprehension.createFromAI, {
-        userId: args.userId,
-        storyId: args.storyId,
-        storyTitle: args.storyTitle,
-        language: args.language,
-        questions: questionsWithIds,
-      });
+    // Try up to 2 times
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 1500, comprehensionSchema);
+        const parsed = JSON.parse(response) as { questions: Omit<ComprehensionQuestion, "questionId">[] };
 
-      return { comprehensionId: comprehensionId as string, questions: questionsWithIds };
-    } catch (error) {
-      console.error("Failed to parse comprehension questions:", response);
-      throw new Error("Failed to generate comprehension questions: Invalid AI response format");
+        // Check for corrupted response on first attempt
+        if (attempt === 0 && isCorrupted(parsed)) {
+          console.warn("Comprehension questions response corrupted (attempt 1), retrying...");
+          continue;
+        }
+
+        const questionsWithIds = processQuestions(parsed);
+
+        // Create the comprehension quiz in the database
+        const comprehensionId = await ctx.runMutation(internal.storyComprehension.createFromAI, {
+          userId: args.userId,
+          storyId: args.storyId,
+          storyTitle: args.storyTitle,
+          language: args.language,
+          questions: questionsWithIds,
+        });
+
+        return { comprehensionId: comprehensionId as string, questions: questionsWithIds };
+      } catch (error) {
+        console.error(`Failed to parse comprehension questions (attempt ${attempt + 1}):`, error);
+        lastError = error as Error;
+      }
     }
+
+    throw new Error(`Failed to generate comprehension questions after 2 attempts: ${lastError?.message || "Invalid AI response format"}`);
   },
 });
 
