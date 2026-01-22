@@ -23,6 +23,16 @@ import type { Id } from "../../convex/_generated/dataModel";
 
 type Language = "japanese" | "english" | "french";
 
+// Loading phrases that cycle during question generation
+const LOADING_PHRASES = [
+  "Creating your question...",
+  "Calibrating difficulty...",
+  "Selecting the best format...",
+  "Preparing answer choices...",
+  "Verifying accuracy...",
+  "Almost ready...",
+];
+
 const languageNames: Record<Language, string> = {
   japanese: "Japanese",
   english: "English",
@@ -69,6 +79,22 @@ export function PlacementTestPage() {
   const hasInitializedFromExisting = useRef(false);
   // Track max confidence so progress bar never moves backwards
   const [maxConfidence, setMaxConfidence] = useState(0);
+  // Cycling loading phrases
+  const [loadingPhraseIndex, setLoadingPhraseIndex] = useState(0);
+
+  // Cycle through loading phrases while generating
+  useEffect(() => {
+    if (!isGeneratingQuestion) {
+      setLoadingPhraseIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setLoadingPhraseIndex((prev) => (prev + 1) % LOADING_PHRASES.length);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [isGeneratingQuestion]);
 
   // Queries
   const existingTest = useQuery(
@@ -671,10 +697,8 @@ export function PlacementTestPage() {
               </div>
               <div className="flex items-center gap-2 text-sm text-foreground-muted">
                 <Loader2 className="w-4 h-4 animate-spin text-accent" />
-                <span>
-                  {currentQuestionIndex === 0
-                    ? "Creating question..."
-                    : "Generating..."}
+                <span className="transition-opacity duration-300">
+                  {LOADING_PHRASES[loadingPhraseIndex]}
                 </span>
               </div>
             </div>
