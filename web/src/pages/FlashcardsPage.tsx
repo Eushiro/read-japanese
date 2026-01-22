@@ -363,6 +363,29 @@ function FlashcardDisplay({ card, showAnswer, onShowAnswer }: FlashcardDisplayPr
   const isJapanese = vocab?.language === "japanese";
   const languageFont = isJapanese ? "var(--font-japanese)" : "inherit";
 
+  // Preload audio and images when card changes (before user clicks "Show Answer")
+  useEffect(() => {
+    // Preload word audio
+    if (card.wordAudioUrl) {
+      const audio = new Audio();
+      audio.preload = "auto";
+      audio.src = card.wordAudioUrl;
+    }
+
+    // Preload sentence audio
+    if (card.audioUrl) {
+      const audio = new Audio();
+      audio.preload = "auto";
+      audio.src = card.audioUrl;
+    }
+
+    // Preload image
+    if (card.imageUrl) {
+      const img = new Image();
+      img.src = card.imageUrl;
+    }
+  }, [card._id, card.wordAudioUrl, card.audioUrl, card.imageUrl]);
+
   const playAudio = (url: string) => {
     new Audio(url).play();
   };
