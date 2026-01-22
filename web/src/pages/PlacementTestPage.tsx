@@ -6,10 +6,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  QuestionDisplay,
+  QuestionNavigation,
+} from "@/components/quiz";
+import {
   ArrowLeft,
   Loader2,
-  CheckCircle2,
-  XCircle,
   Trophy,
   Brain,
   Target,
@@ -128,6 +130,11 @@ export function PlacementTestPage() {
       preGenerateNextQuestion(testId, currentQuestionIndex + 1);
     }
   }, [testId, currentQuestionIndex, currentTest, nextQuestionReady, isPreGenerating, showFeedback]);
+
+  // Reset scroll position when viewing a different question
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [viewingIndex]);
 
   // Start a new test
   const handleStartTest = async () => {
@@ -622,140 +629,64 @@ export function PlacementTestPage() {
         )}
 
         {/* Question Card */}
-        <div className="bg-surface rounded-2xl border border-border p-6">
-          {isGeneratingQuestion ? (
+        {isGeneratingQuestion ? (
+          <div className="bg-surface rounded-2xl border border-border p-6">
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
               <p className="text-foreground-muted">Generating question...</p>
             </div>
-          ) : viewingQuestion ? (
-            <>
-              {/* Question type badge */}
-              <div className="flex items-center gap-2 mb-4">
-                <Badge variant="outline" className="capitalize">
-                  {viewingQuestion.type}
-                </Badge>
-                <Badge variant="outline">{viewingQuestion.level}</Badge>
-                {isViewingPastQuestion && (
-                  <Badge variant="outline" className="bg-muted">
-                    Reviewing
-                  </Badge>
-                )}
-              </div>
+          </div>
+        ) : viewingQuestion ? (
+          <>
+            <QuestionDisplay
+              question={viewingQuestion.question}
+              type="multiple_choice"
+              options={viewingQuestion.options}
+              selectedAnswer={
+                isViewingPastQuestion
+                  ? viewingQuestion.userAnswer || ""
+                  : selectedAnswer || ""
+              }
+              onSelectAnswer={(answer) => {
+                if (!isViewingPastQuestion && !showFeedback && !isSubmitting) {
+                  setSelectedAnswer(answer);
+                }
+              }}
+              isAnswered={isViewingPastQuestion || showFeedback}
+              showFeedback={isViewingPastQuestion || showFeedback}
+              correctAnswer={viewingQuestion.correctAnswer}
+              isCorrect={viewingQuestion.isCorrect}
+              isDisabled={isViewingPastQuestion || showFeedback || isSubmitting}
+              metadata={{
+                type: viewingQuestion.type.charAt(0).toUpperCase() + viewingQuestion.type.slice(1),
+                level: viewingQuestion.level,
+                badge: isViewingPastQuestion ? "Reviewing" : undefined,
+              }}
+              language={language}
+            />
 
-              {/* Question */}
-              <div className="mb-6">
-                <p
-                  className="text-lg font-medium mb-2"
-                  style={{ fontFamily: "var(--font-japanese)" }}
-                >
-                  {viewingQuestion.question}
-                </p>
-              </div>
-
-              {/* Options */}
-              <div className="space-y-3 mb-6">
-                {viewingQuestion.options.map((option, index) => {
-                  // For past questions, show the user's answer and correct answer
-                  const userAnswer = isViewingPastQuestion ? viewingQuestion.userAnswer : selectedAnswer;
-                  const isSelected = userAnswer === option;
-                  const isCorrect = option === viewingQuestion.correctAnswer;
-                  // Show correctness for past questions or when feedback is shown
-                  const showCorrectness = isViewingPastQuestion || showFeedback;
-
-                  return (
-                    <button
-                      key={index}
-                      onClick={() =>
-                        !isViewingPastQuestion && !showFeedback && !isSubmitting && setSelectedAnswer(option)
-                      }
-                      disabled={isViewingPastQuestion || showFeedback || isSubmitting}
-                      className={`w-full text-left p-4 rounded-xl border transition-all ${
-                        showCorrectness
-                          ? isCorrect
-                            ? "border-green-500 bg-green-500/10"
-                            : isSelected
-                            ? "border-red-500 bg-red-500/10"
-                            : "border-border"
-                          : isSelected
-                          ? "border-accent bg-accent/10"
-                          : "border-border hover:border-foreground-muted"
-                      }`}
-                      style={{ fontFamily: "var(--font-japanese)" }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{option}</span>
-                        {showCorrectness && isCorrect && (
-                          <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        )}
-                        {showCorrectness && isSelected && !isCorrect && (
-                          <XCircle className="w-5 h-5 text-red-500" />
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Navigation buttons */}
-              <div className="flex gap-3">
-                {/* Previous button - show if not on first question */}
-                {viewingIndex > 0 && (
-                  <Button
-                    variant="outline"
-                    onClick={handlePreviousQuestion}
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Previous
-                  </Button>
-                )}
-
-                {/* Main action button */}
-                <div className="flex-1">
-                  {isViewingPastQuestion ? (
-                    // Viewing a past question - show "Next" or "Return to Current"
-                    <Button
-                      className="w-full"
-                      onClick={handleViewNextQuestion}
-                    >
-                      {viewingIndex === currentQuestionIndex - 1 ? "Return to Current" : "Next"}
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  ) : showFeedback ? (
-                    // Just answered current question - show "Next Question"
-                    <Button
-                      className="w-full"
-                      onClick={handleNextQuestion}
-                    >
-                      Next Question
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  ) : (
-                    // On current question, not yet answered - show "Submit"
-                    <Button
-                      className="w-full"
-                      onClick={handleSubmitAnswer}
-                      disabled={selectedAnswer === null || isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Submitting...
-                        </>
-                      ) : (
-                        "Submit Answer"
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </>
-          ) : (
+            <QuestionNavigation
+              currentIndex={viewingIndex}
+              totalQuestions={currentQuestionIndex + 1}
+              isAnswered={isViewingPastQuestion || showFeedback}
+              onPrevious={viewingIndex > 0 ? handlePreviousQuestion : undefined}
+              onNext={isViewingPastQuestion ? handleViewNextQuestion : undefined}
+              onSubmit={!isViewingPastQuestion && !showFeedback ? handleSubmitAnswer : undefined}
+              onFinish={!isViewingPastQuestion && showFeedback ? handleNextQuestion : undefined}
+              isSubmitting={isSubmitting}
+              canSubmit={selectedAnswer !== null}
+              nextLabel={viewingIndex === currentQuestionIndex - 1 ? "Return to Current" : "Next"}
+              finishLabel="Next Question"
+              variant="stacked"
+            />
+          </>
+        ) : (
+          <div className="bg-surface rounded-2xl border border-border p-6">
             <div className="text-center py-12 text-foreground-muted">
               Loading question...
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
