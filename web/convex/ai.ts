@@ -284,11 +284,10 @@ interface OpenRouterResponse {
   }>;
 }
 
-// Free models to try in order of preference
+// Models to try in order of preference (first is free, fallback is paid but cheap)
 const FREE_MODELS = [
   "qwen/qwen3-next-80b-a3b-instruct:free",
-  "google/gemini-2.0-flash-exp:free",
-  "meta-llama/llama-3.3-70b-instruct:free",
+  "google/gemini-3-flash-preview",
 ];
 
 async function callOpenRouter(
