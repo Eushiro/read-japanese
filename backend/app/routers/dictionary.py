@@ -300,8 +300,8 @@ def search_french_sqlite(query: str, limit: int) -> list[DictionaryEntry]:
             JOIN senses s ON s.entry_rowid = e.rowid
             JOIN synsets syn ON s.synset_rowid = syn.rowid
             JOIN lexicons l ON f.lexicon_rowid = l.rowid
-            LEFT JOIN ilis i ON syn.ili = i.ili
-            LEFT JOIN synsets en_syn ON en_syn.ili = i.ili
+            LEFT JOIN ilis i ON syn.ili_rowid = i.rowid
+            LEFT JOIN synsets en_syn ON en_syn.ili_rowid = i.rowid
             LEFT JOIN lexicons en_l ON en_syn.lexicon_rowid = en_l.rowid AND en_l.language = 'en'
             LEFT JOIN definitions en_d ON en_d.synset_rowid = en_syn.rowid
             LEFT JOIN word_frequencies wf ON LOWER(f.form) = wf.word AND wf.lang = 'fr'
