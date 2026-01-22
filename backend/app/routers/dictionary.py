@@ -23,6 +23,8 @@ class DictionaryResponse(BaseModel):
 _jamdict_instance = None
 _wordnet_initialized = False
 _japanese_word_index: list[tuple[str, str, list[str], str | None, int]] | None = None  # (reading, word, meanings, pos, priority)
+_english_word_index: list[tuple[str, list[str], str | None]] | None = None  # (word, meanings, pos)
+_french_word_index: list[tuple[str, list[str], str | None]] | None = None  # (word, meanings, pos)
 
 
 def convert_romaji_to_hiragana(text: str) -> str:
@@ -263,41 +265,36 @@ def search_japanese(query: str, limit: int) -> list[DictionaryEntry]:
     return entries
 
 
-def search_english(query: str, limit: int) -> list[DictionaryEntry]:
-    """Search English dictionary using WordNet."""
+def build_english_index() -> list[tuple[str, list[str], str | None]]:
+    """Build in-memory index of English words for fast prefix search."""
+    global _english_word_index
+    if _english_word_index is not None:
+        return _english_word_index
+
     if not init_wordnet():
         return []
+
+    print("Building English word index (one-time operation)...")
+    import time
+    start = time.time()
 
     try:
         import wn
 
-        entries = []
-        seen_words = set()
-        query_lower = query.lower()
+        index: list[tuple[str, list[str], str | None]] = []
+        seen = set()
+        pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
 
-        # First, try exact match
-        exact_matches = list(wn.words(query_lower))
-
-        # Then collect prefix matches, prioritizing single words
-        all_matches = []
         for word in wn.words():
             lemma = word.lemma()
-            if lemma.lower().startswith(query_lower) and word not in exact_matches:
-                # Prioritize single words (no spaces)
-                has_space = ' ' in lemma
-                all_matches.append((has_space, lemma, word))
+            lemma_lower = lemma.lower()
 
-        # Sort: exact matches first, then single words, then multi-word
-        all_matches.sort(key=lambda x: (x[0], x[1]))
-
-        # Combine exact matches + sorted prefix matches
-        words_to_process = exact_matches + [m[2] for m in all_matches]
-
-        for word in words_to_process[:limit * 3]:
-            lemma = word.lemma()
-            if lemma in seen_words:
+            if lemma_lower in seen:
                 continue
-            seen_words.add(lemma)
+            # Skip multi-word entries for autocomplete
+            if ' ' in lemma:
+                continue
+            seen.add(lemma_lower)
 
             synsets = word.synsets()
             if not synsets:
@@ -310,32 +307,69 @@ def search_english(query: str, limit: int) -> list[DictionaryEntry]:
                 definition = synset.definition()
                 if definition:
                     meanings.append(definition)
-                pos_tags.add(synset.pos)  # pos is a property, not a method
+                pos_tags.add(synset.pos)
 
-            pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
+            if not meanings:
+                continue
+
             pos = ", ".join(pos_map.get(p, p) for p in pos_tags if p)
+            index.append((lemma_lower, meanings[:3], pos if pos else None))
 
-            if meanings:
-                entries.append(DictionaryEntry(
-                    word=lemma,
-                    reading="",
-                    meanings=meanings[:3],
-                    partOfSpeech=pos if pos else None,
-                ))
-
-            if len(entries) >= limit:
-                break
+        # Sort alphabetically for binary search
+        index.sort(key=lambda x: x[0])
+        _english_word_index = index
+        print(f"English word index built: {len(index)} entries in {time.time() - start:.1f}s")
 
     except Exception as e:
-        print(f"English search error: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Failed to build English index: {e}")
+        _english_word_index = []
+
+    return _english_word_index
+
+
+def search_english(query: str, limit: int) -> list[DictionaryEntry]:
+    """Search English dictionary using in-memory index."""
+    import bisect
+
+    index = build_english_index()
+    if not index:
+        return []
+
+    query_lower = query.lower()
+    entries = []
+
+    # Binary search for prefix matches
+    left = bisect.bisect_left(index, (query_lower,))
+
+    for i in range(left, min(left + limit * 2, len(index))):
+        word, meanings, pos = index[i]
+
+        if not word.startswith(query_lower):
+            break
+
+        entries.append(DictionaryEntry(
+            word=word,
+            reading="",
+            meanings=meanings,
+            partOfSpeech=pos,
+        ))
+
+        if len(entries) >= limit:
+            break
 
     return entries
 
 
-def search_french(query: str, limit: int) -> list[DictionaryEntry]:
-    """Search French dictionary using WordNet (Open Multilingual Wordnet - French)."""
+def build_french_index() -> list[tuple[str, list[str], str | None]]:
+    """Build in-memory index of French words for fast prefix search."""
+    global _french_word_index
+    if _french_word_index is not None:
+        return _french_word_index
+
+    print("Building French word index (one-time operation)...")
+    import time
+    start = time.time()
+
     try:
         import wn
 
@@ -344,37 +378,29 @@ def search_french(query: str, limit: int) -> list[DictionaryEntry]:
             try:
                 wn.download('omw-fr:1.4')
             except Exception:
+                _french_word_index = []
                 return []
 
-        # Get English WordNet for definitions (French OMW links to English via ILI)
+        # Get English WordNet for definitions
         try:
             en_wordnet = wn.Wordnet(lang='en', lexicon='ewn:2020')
         except Exception:
             en_wordnet = None
 
-        entries = []
-        seen_words = set()
-        query_lower = query.lower()
+        index: list[tuple[str, list[str], str | None]] = []
+        seen = set()
+        pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
 
-        # First, try exact match
-        exact_matches = list(wn.words(query_lower, lang='fr'))
-
-        # Then collect prefix matches
-        all_matches = []
         for word in wn.words(lang='fr'):
             lemma = word.lemma()
-            if lemma.lower().startswith(query_lower) and word not in exact_matches:
-                has_space = ' ' in lemma
-                all_matches.append((has_space, lemma, word))
+            lemma_lower = lemma.lower()
 
-        all_matches.sort(key=lambda x: (x[0], x[1]))
-        words_to_process = exact_matches + [m[2] for m in all_matches]
-
-        for word in words_to_process[:limit * 3]:
-            lemma = word.lemma()
-            if lemma in seen_words:
+            if lemma_lower in seen:
                 continue
-            seen_words.add(lemma)
+            # Skip multi-word entries for autocomplete
+            if ' ' in lemma:
+                continue
+            seen.add(lemma_lower)
 
             synsets = word.synsets()
             if not synsets:
@@ -395,24 +421,53 @@ def search_french(query: str, limit: int) -> list[DictionaryEntry]:
                     meanings.append(definition)
                 pos_tags.add(synset.pos)
 
-            pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
+            if not meanings:
+                continue
+
             pos = ", ".join(pos_map.get(p, p) for p in pos_tags if p)
+            index.append((lemma_lower, meanings[:3], pos if pos else None))
 
-            if meanings:
-                entries.append(DictionaryEntry(
-                    word=lemma,
-                    reading="",
-                    meanings=meanings[:3],
-                    partOfSpeech=pos if pos else None,
-                ))
-
-            if len(entries) >= limit:
-                break
+        # Sort alphabetically for binary search
+        index.sort(key=lambda x: x[0])
+        _french_word_index = index
+        print(f"French word index built: {len(index)} entries in {time.time() - start:.1f}s")
 
     except Exception as e:
-        print(f"French search error: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Failed to build French index: {e}")
+        _french_word_index = []
+
+    return _french_word_index
+
+
+def search_french(query: str, limit: int) -> list[DictionaryEntry]:
+    """Search French dictionary using in-memory index."""
+    import bisect
+
+    index = build_french_index()
+    if not index:
+        return []
+
+    query_lower = query.lower()
+    entries = []
+
+    # Binary search for prefix matches
+    left = bisect.bisect_left(index, (query_lower,))
+
+    for i in range(left, min(left + limit * 2, len(index))):
+        word, meanings, pos = index[i]
+
+        if not word.startswith(query_lower):
+            break
+
+        entries.append(DictionaryEntry(
+            word=word,
+            reading="",
+            meanings=meanings,
+            partOfSpeech=pos,
+        ))
+
+        if len(entries) >= limit:
+            break
 
     return entries
 

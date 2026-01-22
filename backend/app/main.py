@@ -88,13 +88,19 @@ async def startup_event():
 
     async def warm_dictionaries():
         try:
-            # Import and build Japanese index in background
-            from app.routers.dictionary import build_japanese_index
-            logger.info("Pre-warming Japanese dictionary index...")
+            from app.routers.dictionary import build_japanese_index, build_english_index, build_french_index
+
+            logger.info("Pre-warming dictionary indexes...")
             build_japanese_index()
             logger.info("Japanese dictionary index ready")
+
+            build_english_index()
+            logger.info("English dictionary index ready")
+
+            build_french_index()
+            logger.info("French dictionary index ready")
         except Exception as e:
-            logger.warning(f"Failed to pre-warm dictionary: {e}")
+            logger.warning(f"Failed to pre-warm dictionaries: {e}")
 
     # Run in background so startup isn't blocked
     asyncio.create_task(warm_dictionaries())
