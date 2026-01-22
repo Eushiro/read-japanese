@@ -67,6 +67,8 @@ export function PlacementTestPage() {
   const [isPreGenerating, setIsPreGenerating] = useState(false);
   // Track if we've initialized from an existing test (to avoid re-running on every query update)
   const hasInitializedFromExisting = useRef(false);
+  // Track max confidence so progress bar never moves backwards
+  const [maxConfidence, setMaxConfidence] = useState(0);
 
   // Queries
   const existingTest = useQuery(
@@ -78,6 +80,28 @@ export function PlacementTestPage() {
     api.placementTest.get,
     testId ? { id: testId } : "skip"
   );
+
+  // Calculate confidence from standard error
+  // SE starts at 1.5 (low confidence) and decreases toward 0.4 threshold
+  const currentConfidence = currentTest
+    ? Math.min(100, Math.max(0, Math.round(
+        ((1.5 - currentTest.abilityStandardError) / (1.5 - 0.4)) * 100
+      )))
+    : 0;
+
+  // Update max confidence when current exceeds it (so bar never goes backwards)
+  useEffect(() => {
+    if (currentConfidence > maxConfidence) {
+      setMaxConfidence(currentConfidence);
+    }
+  }, [currentConfidence, maxConfidence]);
+
+  // Reset max confidence when starting a new test
+  useEffect(() => {
+    if (!testId) {
+      setMaxConfidence(0);
+    }
+  }, [testId]);
 
   // Mutations and actions
   const createTest = useMutation(api.placementTest.create);
@@ -512,21 +536,21 @@ export function PlacementTestPage() {
               </p>
             </div>
 
+            {/* How it works explanation */}
+            <div className="bg-muted/50 rounded-xl p-4 mb-6 text-sm">
+              <h4 className="font-medium text-foreground mb-2">How it works</h4>
+              <ul className="space-y-1.5 text-foreground-muted">
+                <li>• This adaptive test has <strong className="text-foreground">8-20 questions</strong></li>
+                <li>• Questions adjust to your skill level as you answer</li>
+                <li>• The test ends when we're confident we've assessed your level</li>
+                <li>• Most people finish in about <strong className="text-foreground">10-15 questions</strong></li>
+              </ul>
+            </div>
+
             <div className="space-y-4 mb-8">
               <div className="flex items-start gap-3 text-sm">
                 <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
                   <span className="text-accent font-medium">1</span>
-                </div>
-                <div>
-                  <div className="font-medium">8-20 questions</div>
-                  <div className="text-foreground-muted">
-                    The test adapts and stops when confident in your level
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 text-sm">
-                <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-accent font-medium">2</span>
                 </div>
                 <div>
                   <div className="font-medium">Vocabulary, Grammar & Reading</div>
@@ -537,7 +561,7 @@ export function PlacementTestPage() {
               </div>
               <div className="flex items-start gap-3 text-sm">
                 <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-accent font-medium">3</span>
+                  <span className="text-accent font-medium">2</span>
                 </div>
                 <div>
                   <div className="font-medium">Personalized learning path</div>
@@ -588,7 +612,9 @@ export function PlacementTestPage() {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline">
-              Question {(viewingIndex ?? 0) + 1}{isViewingPastQuestion ? ` of ${currentQuestionIndex + 1}` : ""}
+              Q{(viewingIndex ?? 0) + 1}
+              {isViewingPastQuestion ? ` of ${currentQuestionIndex + 1}` : ""}
+              {currentTest && !isViewingPastQuestion && ` • ${maxConfidence}%`}
             </Badge>
             {isAdmin && (
               <Button
@@ -602,29 +628,34 @@ export function PlacementTestPage() {
           </div>
         </div>
 
-        {/* Progress */}
+        {/* Confidence-based Progress */}
         {currentTest && (
           <div className="mb-6">
-            <div className="flex justify-between text-sm text-foreground-muted mb-2">
-              <span>
-                {currentTest.questionsAnswered > 0
-                  ? `${currentTest.correctAnswers} / ${currentTest.questionsAnswered} correct`
-                  : `Question ${currentQuestionIndex + 1}`}
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-foreground-muted">
+                Question {currentQuestionIndex + 1}
               </span>
-              <span>
-                {currentTest.questionsAnswered > 0 ? "Estimating level..." : ""}
+              <span className="text-foreground">
+                {maxConfidence >= 70
+                  ? "Almost there!"
+                  : maxConfidence >= 50
+                  ? "Getting clearer..."
+                  : "Assessing your level..."}
               </span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full bg-accent transition-all duration-500"
-                style={{
-                  width: `${Math.min(
-                    100,
-                    ((currentQuestionIndex + 1) / 20) * 100
-                  )}%`,
-                }}
+                style={{ width: `${maxConfidence}%` }}
               />
+            </div>
+            <div className="flex justify-between text-xs text-foreground-muted mt-1">
+              <span>
+                {currentTest.questionsAnswered > 0
+                  ? `${currentTest.correctAnswers} / ${currentTest.questionsAnswered} correct`
+                  : ""}
+              </span>
+              <span>{maxConfidence}% confident</span>
             </div>
           </div>
         )}
