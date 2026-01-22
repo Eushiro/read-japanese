@@ -58,6 +58,40 @@ export function getAudioUrl(audioURL: string | undefined): string {
   return apiClient.getAssetUrl(audioURL || "");
 }
 
+// Simple in-memory cache for prefetched stories
+const storyCache = new Map<string, { story: Story; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Prefetch a story (for hover preloading)
+export function prefetchStory(storyId: string): void {
+  // Skip if already cached and fresh
+  const cached = storyCache.get(storyId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return;
+  }
+
+  // Fetch in background (don't await)
+  getStory(storyId)
+    .then((story) => {
+      storyCache.set(storyId, { story, timestamp: Date.now() });
+    })
+    .catch(() => {
+      // Silently fail - it's just a prefetch
+    });
+}
+
+// Get story from cache or fetch
+export async function getStoryWithCache(storyId: string): Promise<Story> {
+  const cached = storyCache.get(storyId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.story;
+  }
+
+  const story = await getStory(storyId);
+  storyCache.set(storyId, { story, timestamp: Date.now() });
+  return story;
+}
+
 // Generic CDN URL helper
 export function getCdnUrl(path: string | undefined): string {
   return apiClient.getAssetUrl(path || "");

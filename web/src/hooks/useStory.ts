@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getStory } from "@/api/stories";
+import { getStoryWithCache } from "@/api/stories";
 import type { Story } from "@/types/story";
 
 interface UseStoryResult {
@@ -24,7 +24,7 @@ export function useStory(storyId: string | undefined): UseStoryResult {
     setError(null);
 
     try {
-      const data = await getStory(storyId);
+      const data = await getStoryWithCache(storyId);
       setStory(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Failed to fetch story"));

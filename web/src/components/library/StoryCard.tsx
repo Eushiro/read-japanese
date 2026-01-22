@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { getCoverImageUrl } from "@/api/stories";
+import { getCoverImageUrl, prefetchStory } from "@/api/stories";
 import type { StoryListItem, ProficiencyLevel } from "@/types/story";
 import { Crown, BookOpen } from "lucide-react";
+import { useCallback } from "react";
 
 interface StoryCardProps {
   story: StoryListItem;
@@ -37,10 +38,15 @@ export function StoryCard({
   const isLocked = story.isPremium && !isPremiumUser;
   const coverUrl = getCoverImageUrl(story.coverImageURL);
 
+  const handleMouseEnter = useCallback(() => {
+    prefetchStory(story.id);
+  }, [story.id]);
+
   return (
     <article
       className="group cursor-pointer card-elevated overflow-hidden"
       onClick={onClick}
+      onMouseEnter={handleMouseEnter}
       style={style}
     >
       {/* Cover Image */}

@@ -96,4 +96,3 @@ yarn.lock
 # Build artifacts
 dist/
 .vite/
-backend/app/data/*.db
