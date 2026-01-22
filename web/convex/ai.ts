@@ -53,17 +53,8 @@ function pcmToWav(pcmData: Uint8Array): Uint8Array {
   return wav;
 }
 
-// Voices optimized for language learning narration
-const VOICES_BY_LANGUAGE: Record<string, string[]> = {
-  japanese: ["Aoede", "Leda", "Kore"],
-  english: ["Puck", "Charon", "Kore"],
-  french: ["Aoede", "Leda", "Puck"],
-};
-
-function selectVoice(language: string): string {
-  const voices = VOICES_BY_LANGUAGE[language] || VOICES_BY_LANGUAGE.english;
-  return voices[Math.floor(Math.random() * voices.length)];
-}
+// Consistent voice for all languages
+const TTS_VOICE = "Aoede";
 
 /**
  * Generate audio for a sentence using Gemini 2.5 Flash TTS
@@ -79,7 +70,7 @@ async function generateTTSAudio(
     return null;
   }
 
-  const voice = selectVoice(language);
+  const voice = TTS_VOICE;
 
   // Language-specific pronunciation hints
   const languageHints: Record<string, string> = {
