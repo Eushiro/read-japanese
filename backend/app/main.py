@@ -81,6 +81,25 @@ if static_path.exists():
     logger.info("Static files mounted at /cdn")
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Pre-warm dictionary indexes on startup for fast autocomplete."""
+    import asyncio
+
+    async def warm_dictionaries():
+        try:
+            # Import and build Japanese index in background
+            from app.routers.dictionary import build_japanese_index
+            logger.info("Pre-warming Japanese dictionary index...")
+            build_japanese_index()
+            logger.info("Japanese dictionary index ready")
+        except Exception as e:
+            logger.warning(f"Failed to pre-warm dictionary: {e}")
+
+    # Run in background so startup isn't blocked
+    asyncio.create_task(warm_dictionaries())
+
+
 @app.get("/")
 @limiter.limit(RATE_LIMIT)
 async def root(request: Request):

@@ -22,6 +22,7 @@ class DictionaryResponse(BaseModel):
 # Singleton instances for dictionaries
 _jamdict_instance = None
 _wordnet_initialized = False
+_japanese_word_index: list[tuple[str, str, list[str], str | None, int]] | None = None  # (reading, word, meanings, pos, priority)
 
 
 def convert_romaji_to_hiragana(text: str) -> str:
@@ -75,62 +76,189 @@ def init_wordnet():
     return _wordnet_initialized
 
 
-def search_japanese(query: str, limit: int) -> list[DictionaryEntry]:
-    """Search Japanese dictionary using jamdict. Supports romaji input."""
+def build_japanese_index() -> list[tuple[str, str, list[str], str | None, int]]:
+    """Build in-memory index of Japanese words for fast prefix search.
+
+    Returns list of (reading, word, meanings, pos, priority_score) tuples.
+    Lower priority_score = more common word.
+    """
+    global _japanese_word_index
+    if _japanese_word_index is not None:
+        return _japanese_word_index
+
     jmd = get_jamdict()
     if jmd is None:
         return []
 
-    entries = []
-    seen_words = set()
+    print("Building Japanese word index (one-time operation)...")
+    import time
+    from collections import defaultdict
+    start = time.time()
 
-    # Convert romaji to hiragana if input appears to be romaji
+    db = jmd.jmdict
+
+    try:
+        # Load all data at once (much faster than individual lookups)
+        all_kana = list(db.Kana.select())
+        all_kanji = list(db.Kanji.select())
+        all_senses = list(db.Sense.select())
+        all_glosses = list(db.SenseGloss.select())
+        all_knp = list(db.KNP.select())  # Kana priorities
+        all_kjp = list(db.KJP.select())  # Kanji priorities
+
+        # Build lookup dictionaries
+        kana_by_id = defaultdict(list)
+        for k in all_kana:
+            kana_by_id[k.idseq].append(k)
+
+        kanji_by_id = defaultdict(list)
+        for k in all_kanji:
+            kanji_by_id[k.idseq].append(k.text)
+
+        # Gloss lookup by sense ID
+        gloss_by_sid = defaultdict(list)
+        for g in all_glosses:
+            if g.lang == 'eng' or not g.lang:  # English glosses
+                gloss_by_sid[g.sid].append(g.text)
+
+        # Sense lookup by entry idseq
+        sense_by_idseq = defaultdict(list)
+        for s in all_senses:
+            sense_by_idseq[s.idseq].append(s)
+
+        # Priority lookup by kana ID
+        # Priority scoring: ichi1=1, news1=2, nf01=3, nf02=4, ..., spec1=50, no priority=100
+        priority_by_kid = {}
+        for knp in all_knp:
+            tag = knp.text
+            score = 100
+            if tag == 'ichi1':
+                score = 1
+            elif tag == 'news1':
+                score = 2
+            elif tag == 'ichi2':
+                score = 10
+            elif tag == 'news2':
+                score = 11
+            elif tag.startswith('nf'):
+                try:
+                    score = 2 + int(tag[2:])
+                except ValueError:
+                    score = 50
+            elif tag in ('spec1', 'gai1'):
+                score = 50
+            elif tag in ('spec2', 'gai2'):
+                score = 60
+
+            if knp.kid not in priority_by_kid or score < priority_by_kid[knp.kid]:
+                priority_by_kid[knp.kid] = score
+
+        # Build the index
+        index: list[tuple[str, str, list[str], str | None, int]] = []
+        seen = set()
+
+        for idseq, kana_list in kana_by_id.items():
+            if not kana_list:
+                continue
+
+            # Get first kana reading
+            first_kana = kana_list[0]
+            reading = first_kana.text
+
+            # Get word (kanji if available, else kana)
+            kanji_list = kanji_by_id.get(idseq, [])
+            word = kanji_list[0] if kanji_list else reading
+
+            key = (word, reading)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            # Get meanings from senses
+            meanings = []
+            senses = sense_by_idseq.get(idseq, [])
+            for sense in senses[:3]:
+                glosses = gloss_by_sid.get(sense.ID, [])
+                if glosses:
+                    meanings.append(", ".join(glosses[:3]))
+
+            if not meanings:
+                continue
+
+            # Get priority score (lower = more common)
+            priority = priority_by_kid.get(first_kana.ID, 100)
+
+            index.append((reading, word, meanings, None, priority))
+
+        # Sort by reading (primary) for binary search, priority preserved per-entry
+        index.sort(key=lambda x: x[0])
+        _japanese_word_index = index
+        print(f"Japanese word index built: {len(index)} entries in {time.time() - start:.1f}s")
+
+    except Exception as e:
+        print(f"Failed to build Japanese index: {e}")
+        import traceback
+        traceback.print_exc()
+        _japanese_word_index = []
+
+    return _japanese_word_index
+
+
+def search_japanese(query: str, limit: int) -> list[DictionaryEntry]:
+    """Search Japanese dictionary using in-memory index. Supports romaji input.
+
+    Results are sorted by word frequency (most common words first).
+    """
+    import bisect
+
+    # Convert romaji to hiragana if needed
     search_query = query
     if is_romaji(query):
         search_query = convert_romaji_to_hiragana(query)
 
-    try:
-        results = jmd.lookup(f'{search_query}%', strict_lookup=False)
+    index = build_japanese_index()
+    if not index:
+        return []
 
-        for entry in results.entries[:limit * 2]:
-            # Use kanji_forms and kana_forms (jamdict API)
-            if entry.kanji_forms:
-                word = str(entry.kanji_forms[0])
-            elif entry.kana_forms:
-                word = str(entry.kana_forms[0])
-            else:
-                continue
+    matches: list[tuple[int, str, str, list[str], str | None]] = []  # (priority, reading, word, meanings, pos)
+    seen_words = set()
 
-            if word in seen_words:
-                continue
-            seen_words.add(word)
+    # Binary search for prefix matches on reading
+    left = bisect.bisect_left(index, (search_query,))
 
-            reading = str(entry.kana_forms[0]) if entry.kana_forms else ""
+    for i in range(left, min(left + limit * 10, len(index))):
+        reading, word, meanings, pos, priority = index[i]
 
-            meanings = []
-            for sense in entry.senses[:3]:
-                gloss_texts = [g.text for g in sense.gloss if hasattr(g, 'text') and g.text]
-                if gloss_texts:
-                    meanings.append(", ".join(gloss_texts[:3]))
+        # Stop if we've passed the prefix
+        if not reading.startswith(search_query):
+            break
 
-            pos = None
-            if entry.senses and entry.senses[0].pos:
-                pos = ", ".join(str(p) for p in entry.senses[0].pos[:2])
+        if word in seen_words:
+            continue
+        seen_words.add(word)
 
-            if meanings:
-                entries.append(DictionaryEntry(
-                    word=word,
-                    reading=reading,
-                    meanings=meanings,
-                    partOfSpeech=pos,
-                ))
+        matches.append((priority, reading, word, meanings, pos))
 
-            if len(entries) >= limit:
-                break
-    except Exception as e:
-        print(f"Japanese search error: {e}")
-        import traceback
-        traceback.print_exc()
+    # Also search by kanji/word if query might contain kanji
+    if not search_query.isascii():
+        for reading, word, meanings, pos, priority in index:
+            if word.startswith(query) and word not in seen_words:
+                seen_words.add(word)
+                matches.append((priority, reading, word, meanings, pos))
+                if len(matches) >= limit * 10:
+                    break
+
+    # Sort by priority (lower = more common) and take top results
+    matches.sort(key=lambda x: x[0])
+
+    entries = []
+    for priority, reading, word, meanings, pos in matches[:limit]:
+        entries.append(DictionaryEntry(
+            word=word,
+            reading=reading,
+            meanings=meanings,
+            partOfSpeech=pos,
+        ))
 
     return entries
 

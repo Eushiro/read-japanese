@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery as useTanstackQuery } from "@tanstack/react-query";
 import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -611,48 +612,51 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
   const [language, setLanguage] = useState<Language>("japanese");
   const [examLevel, setExamLevel] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Autocomplete state
-  const [suggestions, setSuggestions] = useState<DictionaryEntry[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
+
+  // Debounced search term
+  const [debouncedWord, setDebouncedWord] = useState("");
 
   const addWord = useMutation(api.vocabulary.add);
 
-  // Debounced dictionary search
+  // Debounce the word input
   useEffect(() => {
-    if (word.trim().length < 1) {
-      setSuggestions([]);
-      setShowSuggestions(false);
+    const trimmed = word.trim();
+    if (trimmed.length < 1) {
+      setDebouncedWord("");
       return;
     }
 
-    const timeoutId = setTimeout(async () => {
-      setIsSearching(true);
-      const results = await searchDictionary(word.trim(), language, 5);
-      setSuggestions(results);
-      setShowSuggestions(results.length > 0);
-      setIsSearching(false);
-    }, 300);
+    const timeoutId = setTimeout(() => {
+      setDebouncedWord(trimmed);
+    }, 150);
 
     return () => clearTimeout(timeoutId);
-  }, [word, language]);
+  }, [word]);
 
-  // Clear suggestions when language changes
+  // TanStack Query handles race conditions automatically
+  const { data: suggestions = [], isFetching: isSearching } = useTanstackQuery({
+    queryKey: ["dictionary-search", debouncedWord, language],
+    queryFn: () => searchDictionary(debouncedWord, language, 5),
+    enabled: debouncedWord.length > 0,
+    staleTime: 1000 * 60 * 5, // Cache results for 5 minutes
+  });
+
+  // Clear form when language changes
   useEffect(() => {
-    setSuggestions([]);
     setShowSuggestions(false);
     setWord("");
+    setDebouncedWord("");
     setReading("");
     setDefinitions("");
   }, [language]);
 
   const handleSelectSuggestion = (entry: DictionaryEntry) => {
     setWord(entry.word);
+    setDebouncedWord(""); // Clear debounced word to stop showing suggestions
     setReading(entry.reading || "");
     setDefinitions(entry.meanings.join("; "));
     setShowSuggestions(false);
-    setSuggestions([]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
