@@ -14,6 +14,7 @@ import { OnboardingModal } from "@/components/OnboardingModal";
 import { LandingPage } from "@/pages/LandingPage";
 import { LibraryPage } from "@/pages/LibraryPage";
 import { ReaderPage } from "@/pages/ReaderPage";
+import { ComprehensionPage } from "@/pages/ComprehensionPage";
 import { VocabularyPage } from "@/pages/VocabularyPage";
 import { FlashcardsPage } from "@/pages/FlashcardsPage";
 import { PracticePage } from "@/pages/PracticePage";
@@ -201,6 +202,12 @@ const readerRoute = createRoute({
   component: ReaderPage,
 });
 
+const comprehensionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/comprehension/$storyId",
+  component: ComprehensionPage,
+});
+
 // Legacy routes - redirect to /learn with appropriate tab
 const vocabularyRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -239,6 +246,7 @@ const routeTree = rootRoute.addChildren([
   learnRoute,
   libraryRoute,
   readerRoute,
+  comprehensionRoute,
   vocabularyRoute,
   flashcardsRoute,
   practiceRoute,

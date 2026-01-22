@@ -14,6 +14,8 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
+  BookOpen,
+  CheckCircle2,
 } from "lucide-react";
 
 type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
@@ -292,6 +294,30 @@ export function ReaderPage() {
             </div>
           )}
         </div>
+
+        {/* Story Completion Section - Show on last chapter */}
+        {currentChapterIndex === chapters.length - 1 && chapters.length > 0 && (
+          <div className="mt-8 bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-8 h-8 text-green-500" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+                You've reached the end!
+              </h2>
+              <p className="text-foreground-muted mb-6">
+                Test your comprehension with a quick quiz about this story.
+              </p>
+              <Button
+                onClick={() => navigate({ to: "/comprehension/$storyId", params: { storyId: story.id } })}
+                className="gap-2"
+              >
+                <BookOpen className="w-4 h-4" />
+                Take Comprehension Quiz
+              </Button>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Chapter Navigation */}
