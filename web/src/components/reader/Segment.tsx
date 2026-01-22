@@ -7,6 +7,7 @@ interface SegmentProps {
   showFurigana?: boolean;
   onTokenClick?: (token: Token, event: React.MouseEvent, segmentText: string) => void;
   currentAudioTime?: number;
+  selectedToken?: Token | null;
 }
 
 export function Segment({
@@ -14,6 +15,7 @@ export function Segment({
   showFurigana = true,
   onTokenClick,
   currentAudioTime,
+  selectedToken,
 }: SegmentProps) {
   const baseClasses = "leading-loose text-foreground";
 
@@ -48,6 +50,7 @@ export function Segment({
           showFurigana={showFurigana}
           onClick={(event) => onTokenClick?.(token, event, segmentText)}
           isHighlighted={isSegmentActive}
+          isSelected={selectedToken?.surface === token.surface && selectedToken?.baseForm === token.baseForm}
         />
       ))}
     </p>

@@ -6,6 +6,7 @@ interface FuriganaTextProps {
   showFurigana?: boolean;
   onClick?: (event: React.MouseEvent) => void;
   isHighlighted?: boolean;
+  isSelected?: boolean;
 }
 
 export function FuriganaText({
@@ -13,6 +14,7 @@ export function FuriganaText({
   showFurigana = true,
   onClick,
   isHighlighted = false,
+  isSelected = false,
 }: FuriganaTextProps) {
   const hasFurigana = showFurigana && tokenHasFurigana(token);
   const isPunctuation = isTokenPunctuation(token);
@@ -21,12 +23,17 @@ export function FuriganaText({
     return <span className="text-foreground">{token.surface}</span>;
   }
 
+  const selectedClasses = isSelected
+    ? "bg-accent/25 text-accent rounded-sm px-0.5 -mx-0.5"
+    : "";
+  const highlightClasses = isHighlighted && !isSelected
+    ? "underline decoration-accent decoration-2 underline-offset-4"
+    : "";
+
   if (!hasFurigana || !token.parts) {
     return (
       <span
-        className={`cursor-pointer hover:bg-accent/10 rounded transition-colors ${
-          isHighlighted ? "underline decoration-accent decoration-2 underline-offset-4" : ""
-        }`}
+        className={`cursor-pointer hover:bg-accent/10 rounded transition-colors ${selectedClasses} ${highlightClasses}`}
         onClick={onClick}
       >
         {token.surface}
@@ -36,9 +43,7 @@ export function FuriganaText({
 
   return (
     <ruby
-      className={`cursor-pointer hover:bg-accent/10 rounded transition-colors ${
-        isHighlighted ? "underline decoration-accent decoration-2 underline-offset-4" : ""
-      }`}
+      className={`cursor-pointer hover:bg-accent/10 rounded transition-colors ${selectedClasses} ${highlightClasses}`}
       onClick={onClick}
     >
       {token.parts.map((part, i) => (

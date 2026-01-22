@@ -284,6 +284,7 @@ export function ReaderPage() {
               showFurigana={showFurigana}
               onTokenClick={handleTokenClick}
               currentAudioTime={story.metadata.audioURL ? audioTime : undefined}
+              selectedToken={selectedToken}
             />
           ) : (
             <div className="text-center text-foreground-muted py-12">

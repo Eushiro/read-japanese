@@ -11,6 +11,7 @@ interface ChapterViewProps {
   showFurigana?: boolean;
   onTokenClick?: (token: Token, event: React.MouseEvent, segmentText?: string) => void;
   currentAudioTime?: number;
+  selectedToken?: Token | null;
 }
 
 export function ChapterView({
@@ -20,6 +21,7 @@ export function ChapterView({
   showFurigana = true,
   onTokenClick,
   currentAudioTime,
+  selectedToken,
 }: ChapterViewProps) {
   const segments = chapter.segments || chapter.content || [];
   const imageUrl = chapter.imageURL ? getCdnUrl(chapter.imageURL) : null;
@@ -73,6 +75,7 @@ export function ChapterView({
             showFurigana={showFurigana}
             onTokenClick={onTokenClick}
             currentAudioTime={currentAudioTime}
+            selectedToken={selectedToken}
           />
         ))}
       </div>
