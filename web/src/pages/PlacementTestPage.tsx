@@ -14,6 +14,7 @@ import {
   Brain,
   Target,
   ChevronRight,
+  RotateCcw,
 } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -79,8 +80,12 @@ export function PlacementTestPage() {
   const createTest = useMutation(api.placementTest.create);
   const submitAnswer = useMutation(api.placementTest.submitAnswer);
   const completeTest = useMutation(api.placementTest.complete);
+  const resetTest = useMutation(api.placementTest.reset);
   const generateQuestion = useAction(api.ai.generatePlacementQuestion);
   const getNextDifficulty = useAction(api.ai.getNextQuestionDifficulty);
+
+  // Admin check
+  const isAdmin = user?.email === "hiro.ayettey@gmail.com";
 
   // Reset initialization flag when language changes
   useEffect(() => {
@@ -275,6 +280,31 @@ export function PlacementTestPage() {
       await completeTest({ testId: tid });
     } catch (error) {
       console.error("Failed to complete test:", error);
+    }
+  };
+
+  // Reset the test (admin only)
+  const handleResetTest = async () => {
+    if (!user || !isAdmin) return;
+
+    try {
+      await resetTest({
+        userId: user.id,
+        language,
+        adminEmail: user.email || "",
+      });
+
+      // Reset local state
+      setTestId(null);
+      setCurrentQuestionIndex(-1);
+      setViewingIndex(-1);
+      setSelectedAnswer(null);
+      setShowFeedback(false);
+      setPreviousQuestions([]);
+      setNextQuestionReady(false);
+      hasInitializedFromExisting.current = false;
+    } catch (error) {
+      console.error("Failed to reset test:", error);
     }
   };
 
