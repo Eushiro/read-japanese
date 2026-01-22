@@ -965,7 +965,13 @@ Question type details:
 6. grammar: How does a grammar pattern affect meaning?${grammarExamples}
 7. opinion: Learner's opinion about character decision or theme
 
-Respond ONLY with valid JSON:
+CRITICAL RULES:
+1. Output ONLY valid JSON - no extra text, no thinking, no explanations
+2. The "rubric" field must be SHORT (under 100 characters) - just list 2-3 grading criteria
+3. Do NOT put your reasoning or thoughts anywhere in the JSON
+4. Vary question types - don't use all multiple choice
+
+JSON format:
 {
   "questions": [
     {
@@ -977,23 +983,14 @@ Respond ONLY with valid JSON:
       "points": 10
     },
     {
-      "type": "translation",
-      "question": "Translate: [sentence from story]",
-      "questionTranslation": "Translate this sentence to English",
-      "correctAnswer": "expected translation",
-      "points": 15
-    },
-    {
       "type": "opinion",
-      "question": "What do you think about [topic]? Why?",
+      "question": "What do you think about [topic]?",
       "questionTranslation": "English translation",
-      "rubric": "Award points for: clear opinion, supporting evidence, language quality",
+      "rubric": "clear opinion, text evidence, language quality",
       "points": 25
     }
   ]
-}
-
-IMPORTANT: Vary the question types! Don't use all multiple choice.`;
+}`;
 
     const prompt = `Story Title: ${args.storyTitle}
 
@@ -1013,11 +1010,11 @@ Create comprehension questions for the story above, aiming for a total of ${work
               type: "object",
               properties: {
                 type: { type: "string", enum: ["multiple_choice", "translation", "short_answer", "inference", "prediction", "grammar", "opinion"] },
-                question: { type: "string" },
-                questionTranslation: { type: "string" },
-                options: { type: "array", items: { type: "string" } },
-                correctAnswer: { type: "string" },
-                rubric: { type: "string" },
+                question: { type: "string", maxLength: 500 },
+                questionTranslation: { type: "string", maxLength: 500 },
+                options: { type: "array", items: { type: "string", maxLength: 100 } },
+                correctAnswer: { type: "string", maxLength: 500 },
+                rubric: { type: "string", maxLength: 150 },
                 points: { type: "number" },
               },
               required: ["type", "question", "points"],
@@ -1035,10 +1032,14 @@ Create comprehension questions for the story above, aiming for a total of ${work
     try {
       const parsed = JSON.parse(response) as { questions: Omit<ComprehensionQuestion, "questionId">[] };
 
-      // Add unique IDs to each question
+      // Sanitize and add unique IDs to each question
       const questionsWithIds: ComprehensionQuestion[] = parsed.questions.map((q, index) => ({
         ...q,
         questionId: `q_${Date.now()}_${index}`,
+        // Truncate rubric if AI went off the rails (max 200 chars)
+        rubric: q.rubric ? q.rubric.slice(0, 200) : undefined,
+        // Truncate other text fields as safety measure
+        correctAnswer: q.correctAnswer ? q.correctAnswer.slice(0, 500) : undefined,
       }));
 
       // Create the comprehension quiz in the database
