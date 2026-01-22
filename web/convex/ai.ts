@@ -885,6 +885,11 @@ export const generateFlashcardWithAudio = action({
       }
     }
 
+    // Clear the pending flag on the vocabulary item
+    await ctx.runMutation(internal.aiHelpers.clearFlashcardPending, {
+      vocabularyId: args.vocabularyId,
+    });
+
     return { success: true, flashcardId, audioUrl, wordAudioUrl, imageUrl };
   },
 });
@@ -1051,7 +1056,7 @@ Create comprehension questions for the story above, aiming for a total of ${work
     };
 
     // Try up to 2 times - fall back to Claude Haiku on retry
-    const FALLBACK_MODEL = "anthropic/claude-haiku-4-5-20241022";
+    const FALLBACK_MODEL = "anthropic/claude-haiku-4.5";
     let lastError: Error | null = null;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
@@ -1088,7 +1093,7 @@ Create comprehension questions for the story above, aiming for a total of ${work
 });
 
 /**
- * Grade a free-form comprehension answer (short answer or essay)
+ * Grade a free-form comprehension answer (short answer, essay, translation, inference, etc.)
  */
 export const gradeComprehensionAnswer = action({
   args: {
@@ -1096,9 +1101,17 @@ export const gradeComprehensionAnswer = action({
     questionIndex: v.number(),
     userAnswer: v.string(),
     question: v.string(),
-    questionType: v.union(v.literal("short_answer"), v.literal("essay")),
-    expectedAnswer: v.optional(v.string()), // For short answer
-    rubric: v.optional(v.string()), // For essay
+    questionType: v.union(
+      v.literal("short_answer"),
+      v.literal("essay"),
+      v.literal("translation"),
+      v.literal("inference"),
+      v.literal("prediction"),
+      v.literal("grammar"),
+      v.literal("opinion")
+    ),
+    expectedAnswer: v.optional(v.string()), // For short answer, translation, grammar
+    rubric: v.optional(v.string()), // For essay, inference, prediction, opinion
     storyContext: v.string(), // Relevant story content for context
     language: v.union(
       v.literal("japanese"),
@@ -1107,19 +1120,34 @@ export const gradeComprehensionAnswer = action({
     ),
     userLevel: v.optional(v.string()),
   },
-  handler: async (ctx, args): Promise<{ aiScore: number; aiFeedback: string; isCorrect: boolean }> => {
+  handler: async (ctx, args): Promise<{ aiScore: number; aiFeedback: string; isCorrect: boolean; possibleAnswer: string }> => {
     const languageName = languageNames[args.language];
     const levelInfo = args.userLevel ? ` The student is at ${args.userLevel} level.` : "";
 
     let gradingInstructions = "";
-    if (args.questionType === "short_answer" && args.expectedAnswer) {
+    const questionTypeLabels: Record<string, string> = {
+      short_answer: "short answer",
+      essay: "essay",
+      translation: "translation",
+      inference: "inference",
+      prediction: "prediction",
+      grammar: "grammar",
+      opinion: "opinion",
+    };
+    const typeLabel = questionTypeLabels[args.questionType] || args.questionType;
+
+    if ((args.questionType === "short_answer" || args.questionType === "translation" || args.questionType === "grammar") && args.expectedAnswer) {
       gradingInstructions = `Expected answer (or key points): ${args.expectedAnswer}
 
 Grade based on:
 - Accuracy of content (does it match the expected answer?)
 - Completeness (are all key points addressed?)
 - Language quality (for the student's level)`;
-    } else if (args.questionType === "essay" && args.rubric) {
+    } else if ((args.questionType === "essay" || args.questionType === "inference" || args.questionType === "prediction" || args.questionType === "opinion") && args.rubric) {
+      gradingInstructions = `Grading rubric: ${args.rubric}`;
+    } else if (args.expectedAnswer) {
+      gradingInstructions = `Expected answer (or key points): ${args.expectedAnswer}`;
+    } else if (args.rubric) {
       gradingInstructions = `Grading rubric: ${args.rubric}`;
     }
 
@@ -1127,19 +1155,26 @@ Grade based on:
 
 ${gradingInstructions}
 
+IMPORTANT LANGUAGE REQUIREMENT:
+- Students MUST respond in ${languageName}
+- If the student answers in a different language (e.g., English instead of ${languageName}), deduct 20-30 points from their score
+- In your feedback, remind them to answer in ${languageName} next time
+
 Respond ONLY with valid JSON in this exact format:
 {
   "aiScore": number (0-100),
-  "aiFeedback": "detailed feedback for the student including what they did well and how to improve",
-  "isCorrect": boolean (true if score >= 70)
+  "aiFeedback": "detailed feedback IN ENGLISH for the student including what they did well and how to improve",
+  "isCorrect": boolean (true if score >= 70),
+  "possibleAnswer": "a sample correct answer written IN ${languageName.toUpperCase()} at the student's level"
 }
 
 Be encouraging but accurate. Consider:
-1. Content accuracy - does the answer demonstrate understanding?
-2. Completeness - are key points addressed?
-3. Language quality - appropriate for the student's level`;
+1. Language used - did they respond in ${languageName}? (Major penalty if not)
+2. Content accuracy - does the answer demonstrate understanding?
+3. Completeness - are key points addressed?
+4. Language quality - grammar, vocabulary appropriate for the student's level`;
 
-    const prompt = `Grade this ${args.questionType} answer:
+    const prompt = `Grade this ${typeLabel} answer:
 
 Question: ${args.question}
 
@@ -1148,7 +1183,7 @@ Student's answer: "${args.userAnswer}"
 Story context (for reference):
 ${args.storyContext}
 
-Provide a score (0-100) and detailed feedback.`;
+Provide a score (0-100), detailed feedback in English, and a possible answer in ${languageName}.`;
 
     const gradingSchema: JsonSchema = {
       name: "comprehension_grading",
@@ -1156,10 +1191,11 @@ Provide a score (0-100) and detailed feedback.`;
         type: "object",
         properties: {
           aiScore: { type: "number", minimum: 0, maximum: 100 },
-          aiFeedback: { type: "string", description: "Detailed feedback for the student" },
+          aiFeedback: { type: "string", description: "Detailed feedback for the student in English" },
           isCorrect: { type: "boolean", description: "True if score >= 70" },
+          possibleAnswer: { type: "string", description: `A sample correct answer written in ${languageName}` },
         },
-        required: ["aiScore", "aiFeedback", "isCorrect"],
+        required: ["aiScore", "aiFeedback", "isCorrect", "possibleAnswer"],
         additionalProperties: false,
       },
     };
@@ -1167,7 +1203,7 @@ Provide a score (0-100) and detailed feedback.`;
     const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500, gradingSchema);
 
     try {
-      const parsed = JSON.parse(response) as { aiScore: number; aiFeedback: string; isCorrect: boolean };
+      const parsed = JSON.parse(response) as { aiScore: number; aiFeedback: string; isCorrect: boolean; possibleAnswer: string };
 
       // Update the comprehension quiz with the grading
       await ctx.runMutation(internal.storyComprehension.updateGradingFromAI, {
@@ -1176,6 +1212,7 @@ Provide a score (0-100) and detailed feedback.`;
         aiScore: parsed.aiScore,
         aiFeedback: parsed.aiFeedback,
         isCorrect: parsed.isCorrect,
+        possibleAnswer: parsed.possibleAnswer,
       });
 
       return parsed;
@@ -1185,6 +1222,7 @@ Provide a score (0-100) and detailed feedback.`;
         aiScore: 0,
         aiFeedback: "Unable to grade answer. Please try again.",
         isCorrect: false,
+        possibleAnswer: "",
       };
     }
   },
