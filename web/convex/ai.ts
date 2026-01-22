@@ -205,6 +205,10 @@ The image should:
           },
         ],
         modalities: ["image", "text"],
+        // Square aspect ratio for flashcards
+        image_generation_config: {
+          aspect_ratio: "1:1",
+        },
       }),
     });
 
