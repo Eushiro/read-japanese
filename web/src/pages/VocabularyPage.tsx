@@ -372,6 +372,7 @@ export function VocabularyPage() {
                       showMastery={false}
                       delay={Math.min(index * 30, 150)}
                       onShowPaywall={() => setShowPaywall(true)}
+                      isPremiumUser={subscription === undefined ? undefined : !!isPremiumUser}
                     />
                   ))}
                 </div>
@@ -389,6 +390,7 @@ export function VocabularyPage() {
                 showMastery={true}
                 delay={Math.min(index * 30, 150)}
                 onShowPaywall={() => setShowPaywall(true)}
+                isPremiumUser={subscription === undefined ? undefined : !!isPremiumUser}
               />
             ))}
           </div>
@@ -400,7 +402,7 @@ export function VocabularyPage() {
         <AddWordModal
           userId={userId}
           onClose={() => setShowAddModal(false)}
-          isPremiumUser={!!isPremiumUser}
+          isPremiumUser={subscription === undefined ? undefined : !!isPremiumUser}
         />
       )}
 
@@ -432,9 +434,10 @@ interface VocabularyCardProps {
   showMastery?: boolean;
   delay?: number;
   onShowPaywall?: () => void;
+  isPremiumUser?: boolean;
 }
 
-function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowPaywall }: VocabularyCardProps) {
+function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowPaywall, isPremiumUser }: VocabularyCardProps) {
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -555,8 +558,8 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
               {MASTERY_LABELS[item.masteryState]?.label ?? item.masteryState}
             </span>
           )}
-          {/* Generate flashcard button - only show if no flashcard exists yet and not pending */}
-          {!isLoadingFlashcard && !hasFlashcard && !item.flashcardPending && (
+          {/* Generate flashcard button - only show for non-premium users if no flashcard exists */}
+          {!isLoadingFlashcard && !hasFlashcard && !item.flashcardPending && isPremiumUser === false && (
             isGenerating ? (
               <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent flex items-center gap-1.5 animate-pulse">
                 <Loader2 className="w-3 h-3 animate-spin" />
