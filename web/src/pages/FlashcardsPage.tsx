@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
+import type { Id } from "../../convex/_generated/dataModel";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,19 @@ import { useAuth, SignInButton } from "@/contexts/AuthContext";
 
 type Rating = "again" | "hard" | "good" | "easy";
 
+type CardType = {
+  _id: Id<"flashcards">;
+  sentence: string;
+  sentenceTranslation: string;
+  audioUrl?: string | null;
+  vocabulary?: {
+    word: string;
+    reading?: string | null;
+    definitions: string[];
+    language: string;
+  } | null;
+};
+
 export function FlashcardsPage() {
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id ?? "anonymous";
@@ -37,19 +51,31 @@ export function FlashcardsPage() {
     isAuthenticated ? { userId, limit: 20 } : "skip"
   );
 
-  // Combine due and new cards for review session
-  const allCards = [...(dueCards ?? []), ...(newCards ?? [])];
-
+  // Session queue - includes original cards plus requeued "Again" cards
+  const [sessionQueue, setSessionQueue] = useState<CardType[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const reviewCard = useMutation(api.flashcards.review);
 
-  const currentCard = allCards[currentIndex];
+  // Initialize session queue when cards load
+  const initialCards = useMemo(() => {
+    return [...(dueCards ?? []), ...(newCards ?? [])] as CardType[];
+  }, [dueCards, newCards]);
 
-  const handleRating = async (rating: Rating) => {
+  useEffect(() => {
+    if (initialCards.length > 0 && !isInitialized) {
+      setSessionQueue(initialCards);
+      setIsInitialized(true);
+    }
+  }, [initialCards, isInitialized]);
+
+  const currentCard = sessionQueue[currentIndex];
+
+  const handleRating = useCallback(async (rating: Rating) => {
     if (!currentCard) return;
 
     try {
@@ -61,22 +87,71 @@ export function FlashcardsPage() {
       setReviewedCount((prev) => prev + 1);
       setShowAnswer(false);
 
-      if (currentIndex + 1 >= allCards.length) {
-        setSessionComplete(true);
+      // If "Again", requeue the card at the end of the session
+      if (rating === "again") {
+        setSessionQueue((prev) => [...prev, currentCard]);
+      }
+
+      if (currentIndex + 1 >= sessionQueue.length) {
+        // Check if there are requeued cards after current position
+        if (rating === "again") {
+          // Card was just added, continue to it
+          setCurrentIndex((prev) => prev + 1);
+        } else {
+          setSessionComplete(true);
+        }
       } else {
         setCurrentIndex((prev) => prev + 1);
       }
     } catch (error) {
       console.error("Failed to review card:", error);
     }
-  };
+  }, [currentCard, currentIndex, sessionQueue.length, reviewCard]);
 
   const restartSession = () => {
+    setSessionQueue(initialCards);
     setCurrentIndex(0);
     setShowAnswer(false);
     setSessionComplete(false);
     setReviewedCount(0);
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (!currentCard || sessionComplete) return;
+
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (!showAnswer) {
+          setShowAnswer(true);
+        }
+      } else if (showAnswer) {
+        switch (e.key) {
+          case "1":
+            handleRating("again");
+            break;
+          case "2":
+            handleRating("hard");
+            break;
+          case "3":
+            handleRating("good");
+            break;
+          case "4":
+            handleRating("easy");
+            break;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentCard, showAnswer, sessionComplete, handleRating]);
 
   if (!isAuthenticated) {
     return (
@@ -157,7 +232,7 @@ export function FlashcardsPage() {
 
       {/* Review Area */}
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
-        {allCards.length === 0 ? (
+        {sessionQueue.length === 0 && isInitialized ? (
           // No cards to review
           <div className="text-center py-20">
             <div className="w-20 h-20 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-6">
@@ -201,7 +276,7 @@ export function FlashcardsPage() {
           <div className="space-y-6">
             {/* Progress */}
             <div className="flex items-center justify-between text-sm text-foreground-muted">
-              <span>Card {currentIndex + 1} of {allCards.length}</span>
+              <span>Card {currentIndex + 1} of {sessionQueue.length}</span>
               <span>{reviewedCount} reviewed</span>
             </div>
 
