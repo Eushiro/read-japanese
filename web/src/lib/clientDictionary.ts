@@ -175,47 +175,7 @@ export async function searchClientDictionary(
     }
   }
 
-  // For Japanese, if we have few results, try API fallback
-  // This provides better coverage while local dictionary is small
-  if (language === "japanese" && results.length < 3 && query.length >= 1) {
-    try {
-      // Use hiragana conversion for API if romaji was entered
-      const apiQuery = wanakana.isRomaji(query) ? wanakana.toHiragana(query) : query;
-      const apiResults = await fetchFromAPI(apiQuery, language, limit);
-      // Merge results, avoiding duplicates
-      for (const entry of apiResults) {
-        if (!seen.has(entry.word)) {
-          results.push(entry);
-          seen.add(entry.word);
-        }
-        if (results.length >= limit) break;
-      }
-    } catch (err) {
-      // API fallback failed, use local results only
-      console.debug("API fallback failed:", err);
-    }
-  }
-
   return results;
-}
-
-/**
- * Fallback to API for languages with limited local data
- */
-async function fetchFromAPI(
-  query: string,
-  language: Language,
-  limit: number
-): Promise<DictionaryEntry[]> {
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://read-japanese.onrender.com";
-  const response = await fetch(
-    `${API_BASE}/api/dictionary/search/${encodeURIComponent(query)}?language=${language}&limit=${limit}`
-  );
-
-  if (!response.ok) return [];
-
-  const data = await response.json();
-  return (data.entries || []) as DictionaryEntry[];
 }
 
 /**
