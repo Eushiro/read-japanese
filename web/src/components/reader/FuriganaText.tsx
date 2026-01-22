@@ -42,14 +42,14 @@ export function FuriganaText({
   }
 
   return (
-    <ruby
+    <span
       className={`cursor-pointer hover:bg-accent/10 rounded transition-colors ${selectedClasses} ${highlightClasses}`}
       onClick={onClick}
     >
       {token.parts.map((part, i) => (
         <FuriganaPart key={i} part={part} showReading={showFurigana} />
       ))}
-    </ruby>
+    </span>
   );
 }
 
@@ -64,11 +64,11 @@ function FuriganaPart({ part, showReading }: FuriganaPartProps) {
   }
 
   return (
-    <>
+    <ruby>
       {part.text}
       <rp>(</rp>
       <rt className="text-[0.5em] text-muted-foreground">{part.reading}</rt>
       <rp>)</rp>
-    </>
+    </ruby>
   );
 }
