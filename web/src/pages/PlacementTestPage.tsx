@@ -663,6 +663,15 @@ export function PlacementTestPage() {
         {/* Question Card */}
         {isGeneratingQuestion ? (
           <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
+            {/* Loading message */}
+            <div className="flex items-center justify-center gap-3 mb-6 py-2">
+              <Loader2 className="w-5 h-5 animate-spin text-accent" />
+              <span className="text-foreground-muted">
+                {currentQuestionIndex === 0
+                  ? "Creating your first question..."
+                  : "Generating your next question..."}
+              </span>
+            </div>
             {/* Skeleton for question type badges */}
             <div className="flex items-center gap-2 mb-4">
               <Skeleton className="h-5 w-20 rounded-full" />
@@ -730,9 +739,10 @@ export function PlacementTestPage() {
             />
           </>
         ) : (
-          <div className="bg-surface rounded-2xl border border-border p-6">
-            <div className="text-center py-12 text-foreground-muted">
-              Loading question...
+          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
+            <div className="flex flex-col items-center justify-center py-8 gap-3">
+              <Loader2 className="w-6 h-6 animate-spin text-accent" />
+              <span className="text-foreground-muted">Loading question...</span>
             </div>
           </div>
         )}
