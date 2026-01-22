@@ -447,6 +447,18 @@ export function ComprehensionPage() {
     );
   }
 
+  // Guard: wait for questions to load
+  if (localQuestions.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-accent mx-auto mb-4" />
+          <p className="text-foreground-muted">Loading questions...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Quiz in progress
   const currentQuestion = localQuestions[currentQuestionIndex];
   const hasAnswered = currentQuestion?.userAnswer !== undefined;
