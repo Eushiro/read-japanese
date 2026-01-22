@@ -613,6 +613,7 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
   const [examLevel, setExamLevel] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   // Debounced search term
   const [debouncedWord, setDebouncedWord] = useState("");
@@ -647,6 +648,11 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
   // Show suggestions when input focused and we have results
   const showSuggestions = isInputFocused && debouncedWord.length > 0 && suggestions.length > 0;
 
+  // Reset selected index when suggestions change
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [suggestions]);
+
   // Clear form when language changes
   useEffect(() => {
     setWord("");
@@ -661,6 +667,33 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
     setReading(entry.reading || "");
     setDefinitions(entry.meanings.join("; "));
     setIsInputFocused(false);
+    setSelectedIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+          e.preventDefault();
+          handleSelectSuggestion(suggestions[selectedIndex]);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsInputFocused(false);
+        setSelectedIndex(-1);
+        break;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -735,6 +768,7 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
                 onChange={(e) => setWord(e.target.value)}
                 onFocus={() => setIsInputFocused(true)}
                 onBlur={() => setTimeout(() => setIsInputFocused(false), 150)}
+                onKeyDown={handleKeyDown}
                 placeholder={language === "japanese" ? "食べる" : "Enter word"}
                 className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                 style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}

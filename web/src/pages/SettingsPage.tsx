@@ -168,20 +168,6 @@ export function SettingsPage() {
   const autoplayAudio = settings.autoplayAudio;
   const fontSize = settings.fontSize;
 
-  // Apply theme
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === "system") {
-      const systemDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-      root.classList.toggle("dark", systemDark);
-    } else {
-      root.classList.toggle("dark", theme === "dark");
-    }
-  }, [theme]);
-
-
   const setTheme = (value: Theme) => updateTheme(value);
   const setFontSize = (value: string) => updateFontSize(value);
   const setAutoplayAudio = (value: boolean) => updateAutoplayAudio(value);
@@ -656,6 +642,52 @@ export function SettingsPage() {
             </section>
           )}
 
+          {/* Admin Settings - for specific users */}
+          {user?.email === "hiro.ayettey@gmail.com" && (
+            <section className="bg-surface rounded-2xl border border-amber-500/30 p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <Crown className="w-4 h-4 text-amber-500" />
+                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                  Admin
+                </h2>
+              </div>
+
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-amber-500/10">
+                      <Crown className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground">Premium Access</div>
+                      <div className="text-sm text-foreground-muted">
+                        Toggle Pro subscription for testing
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!user) return;
+                      await upsertSubscription({
+                        userId: user.id,
+                        tier: isPremiumUser ? "free" : "pro",
+                      });
+                    }}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      isPremiumUser ? "bg-amber-500" : "bg-muted"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                        isPremiumUser ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Developer Settings - only visible in development */}
           {isDev && (
             <section className="bg-surface rounded-2xl border border-amber-500/30 p-6 shadow-sm">
@@ -692,40 +724,6 @@ export function SettingsPage() {
                     Show
                   </Button>
                 </div>
-
-                {user?.email === "hiro.ayettey@gmail.com" && (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-amber-500/10">
-                        <Crown className="w-4 h-4 text-amber-500" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-foreground">Premium Access</div>
-                        <div className="text-sm text-foreground-muted">
-                          Toggle Pro subscription for testing
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        if (!user) return;
-                        await upsertSubscription({
-                          userId: user.id,
-                          tier: isPremiumUser ? "free" : "pro",
-                        });
-                      }}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        isPremiumUser ? "bg-amber-500" : "bg-muted"
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                          isPremiumUser ? "translate-x-6" : "translate-x-1"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                )}
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">

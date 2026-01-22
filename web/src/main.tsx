@@ -6,6 +6,7 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ConvexReactClient } from "convex/react";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "./components/ThemeProvider";
 import { router } from "./router.tsx";
 import "./index.css";
 
@@ -35,7 +36,9 @@ createRoot(document.getElementById("root")!).render(
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         <AuthProvider>
           <QueryClientProvider client={queryClient}>
-            <RouterProvider router={router} />
+            <ThemeProvider>
+              <RouterProvider router={router} />
+            </ThemeProvider>
           </QueryClientProvider>
         </AuthProvider>
       </ConvexProviderWithClerk>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearch } from "@tanstack/react-router";
+import { useSearch, Link } from "@tanstack/react-router";
 import { BookmarkCheck, Brain, PenLine, GraduationCap } from "lucide-react";
 
 // Import content from existing pages (we'll extract the content components)
@@ -54,14 +54,17 @@ export function LearnPage() {
       <div className="sticky top-16 z-40 border-b border-border bg-surface/95 backdrop-blur-md">
         <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
           <div className="flex items-center gap-1 py-2">
-            <div className="flex items-center gap-2 mr-4">
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-2 mr-4 hover:opacity-80 transition-opacity"
+            >
               <div className="p-1.5 rounded-lg bg-accent/10">
                 <GraduationCap className="w-4 h-4 text-accent" />
               </div>
               <span className="text-sm font-semibold text-foreground hidden sm:inline">
                 Learn
               </span>
-            </div>
+            </Link>
 
             {/* Tab Buttons */}
             <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
