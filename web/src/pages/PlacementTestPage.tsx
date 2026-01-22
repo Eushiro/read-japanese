@@ -206,32 +206,35 @@ export function PlacementTestPage() {
       });
 
       setShowFeedback(true);
-
-      // Wait for feedback, then proceed
-      setTimeout(async () => {
-        setShowFeedback(false);
-        setSelectedAnswer(null);
-
-        // Check if we should continue
-        const nextInfo = await getNextDifficulty({ testId });
-
-        if (!nextInfo.shouldContinue) {
-          await handleCompleteTest(testId);
-        } else if (nextQuestionReady) {
-          // Use pre-generated question - just advance the index
-          setCurrentQuestionIndex(currentQuestionIndex + 1);
-          setNextQuestionReady(false);
-          // Start pre-generating the next question in background
-          preGenerateNextQuestion(testId, currentQuestionIndex + 2);
-        } else {
-          // Fall back to generating if pre-generation didn't complete
-          await generateNextQuestion(testId, currentQuestionIndex + 1);
-        }
-      }, 1500);
+      // Don't auto-progress - wait for user to click "Next Question"
     } catch (error) {
       console.error("Failed to submit answer:", error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Proceed to next question (called when user clicks "Next Question")
+  const handleNextQuestion = async () => {
+    if (!testId) return;
+
+    setShowFeedback(false);
+    setSelectedAnswer(null);
+
+    // Check if we should continue
+    const nextInfo = await getNextDifficulty({ testId });
+
+    if (!nextInfo.shouldContinue) {
+      await handleCompleteTest(testId);
+    } else if (nextQuestionReady) {
+      // Use pre-generated question - just advance the index
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setNextQuestionReady(false);
+      // Start pre-generating the next question in background
+      preGenerateNextQuestion(testId, currentQuestionIndex + 2);
+    } else {
+      // Fall back to generating if pre-generation didn't complete
+      await generateNextQuestion(testId, currentQuestionIndex + 1);
     }
   };
 
@@ -586,23 +589,31 @@ export function PlacementTestPage() {
                 })}
               </div>
 
-              {/* Submit button */}
-              <Button
-                className="w-full"
-                onClick={handleSubmitAnswer}
-                disabled={selectedAnswer === null || isSubmitting || showFeedback}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Submitting...
-                  </>
-                ) : showFeedback ? (
-                  "Next question..."
-                ) : (
-                  "Submit Answer"
-                )}
-              </Button>
+              {/* Submit / Next button */}
+              {showFeedback ? (
+                <Button
+                  className="w-full"
+                  onClick={handleNextQuestion}
+                >
+                  Next Question
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
+              ) : (
+                <Button
+                  className="w-full"
+                  onClick={handleSubmitAnswer}
+                  disabled={selectedAnswer === null || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Answer"
+                  )}
+                </Button>
+              )}
             </>
           ) : (
             <div className="text-center py-12 text-foreground-muted">
