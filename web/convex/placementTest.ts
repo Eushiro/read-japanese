@@ -452,6 +452,55 @@ export const abandon = mutation({
   },
 });
 
+/**
+ * Reset placement test for a user (admin only - deletes all tests for a language)
+ */
+export const reset = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    adminEmail: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Only allow admin to reset
+    if (args.adminEmail !== "hiro.ayettey@gmail.com") {
+      throw new Error("Unauthorized: Only admin can reset placement tests");
+    }
+
+    // Find all tests for this user and language
+    const tests = await ctx.db
+      .query("placementTests")
+      .withIndex("by_user_and_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .collect();
+
+    // Delete all tests
+    for (const test of tests) {
+      await ctx.db.delete(test._id);
+    }
+
+    // Also clear the user's proficiency level for this language
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.userId))
+      .first();
+
+    if (user?.proficiencyLevels) {
+      const langKey = args.language as "japanese" | "english" | "french";
+      const updatedLevels = { ...user.proficiencyLevels };
+      delete updatedLevels[langKey];
+
+      await ctx.db.patch(user._id, {
+        proficiencyLevels: updatedLevels,
+        updatedAt: Date.now(),
+      });
+    }
+
+    return { deleted: tests.length };
+  },
+});
+
 // ============================================
 // INTERNAL MUTATIONS (for AI actions)
 // ============================================
