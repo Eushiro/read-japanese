@@ -5,6 +5,8 @@
  * Much faster than server round-trips.
  */
 
+import * as wanakana from "wanakana";
+
 export interface DictionaryEntry {
   word: string;
   reading: string;
@@ -111,6 +113,31 @@ export function preloadDictionary(language: Language): void {
 }
 
 /**
+ * Convert romaji to hiragana for Japanese search
+ * Returns array of search terms to try (original + conversions)
+ */
+function getJapaneseSearchTerms(query: string): string[] {
+  const terms = [query.toLowerCase()];
+
+  // If input looks like romaji, convert to hiragana and katakana
+  if (wanakana.isRomaji(query)) {
+    const hiragana = wanakana.toHiragana(query);
+    const katakana = wanakana.toKatakana(query);
+    if (hiragana !== query) terms.push(hiragana);
+    if (katakana !== query && katakana !== hiragana) terms.push(katakana);
+  }
+  // If input is mixed or already kana, also try conversions
+  else if (wanakana.isMixed(query) || wanakana.isKana(query)) {
+    const hiragana = wanakana.toHiragana(query);
+    const katakana = wanakana.toKatakana(query);
+    if (hiragana !== query) terms.push(hiragana);
+    if (katakana !== query && katakana !== hiragana) terms.push(katakana);
+  }
+
+  return terms;
+}
+
+/**
  * Search dictionary for prefix matches
  * Falls back to API for Japanese if local results are insufficient
  */
@@ -122,17 +149,28 @@ export async function searchClientDictionary(
   if (!query.trim()) return [];
 
   const entries = await loadDictionary(language);
-  const queryLower = query.toLowerCase();
+
+  // For Japanese, get multiple search terms (romaji -> hiragana/katakana)
+  const searchTerms = language === "japanese"
+    ? getJapaneseSearchTerms(query)
+    : [query.toLowerCase()];
 
   const results: DictionaryEntry[] = [];
+  const seen = new Set<string>();
 
   for (const entry of entries) {
     // Match word or reading (for Japanese)
     const wordLower = entry.word.toLowerCase();
     const readingLower = entry.reading?.toLowerCase() || "";
 
-    if (wordLower.startsWith(queryLower) || readingLower.startsWith(queryLower)) {
+    // Check if any search term matches
+    const matches = searchTerms.some(term =>
+      wordLower.startsWith(term) || readingLower.startsWith(term)
+    );
+
+    if (matches && !seen.has(entry.word)) {
       results.push(entry);
+      seen.add(entry.word);
       if (results.length >= limit) break;
     }
   }
@@ -141,9 +179,10 @@ export async function searchClientDictionary(
   // This provides better coverage while local dictionary is small
   if (language === "japanese" && results.length < 3 && query.length >= 1) {
     try {
-      const apiResults = await fetchFromAPI(query, language, limit);
+      // Use hiragana conversion for API if romaji was entered
+      const apiQuery = wanakana.isRomaji(query) ? wanakana.toHiragana(query) : query;
+      const apiResults = await fetchFromAPI(apiQuery, language, limit);
       // Merge results, avoiding duplicates
-      const seen = new Set(results.map(r => r.word));
       for (const entry of apiResults) {
         if (!seen.has(entry.word)) {
           results.push(entry);
