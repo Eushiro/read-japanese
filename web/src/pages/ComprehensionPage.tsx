@@ -108,7 +108,7 @@ export function ComprehensionPage() {
             storyContent,
             language: getLanguage(),
             userId,
-            questionCount: 5,
+            questionCount: 3,
           });
           setLocalQuestions(result.questions as Question[]);
         } catch (error) {
@@ -166,7 +166,7 @@ export function ComprehensionPage() {
         storyContent,
         language: getLanguage(),
         userId,
-        questionCount: 5,
+        questionCount: 3,
       });
 
       setLocalQuestions(result.questions as Question[]);
