@@ -278,12 +278,17 @@ interface OpenRouterResponse {
 // Primary model for text generation
 const DEFAULT_MODEL = "google/gemini-3-flash-preview";
 
+interface JsonSchema {
+  name: string;
+  schema: Record<string, unknown>;
+}
+
 async function callOpenRouter(
   prompt: string,
   systemPrompt: string,
   model: string = DEFAULT_MODEL,
   maxTokens: number = 500,
-  jsonMode: boolean = false
+  jsonSchema?: JsonSchema
 ): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
@@ -300,9 +305,16 @@ async function callOpenRouter(
     max_tokens: maxTokens,
   };
 
-  // Enable structured JSON output when needed
-  if (jsonMode) {
-    body.response_format = { type: "json_object" };
+  // Enable structured JSON output with schema for Gemini
+  if (jsonSchema) {
+    body.response_format = {
+      type: "json_schema",
+      json_schema: {
+        name: jsonSchema.name,
+        strict: true,
+        schema: jsonSchema.schema,
+      },
+    };
   }
 
   const response = await fetch(OPENROUTER_API_URL, {
@@ -944,7 +956,35 @@ ${args.storyContent}
 ---
 Create comprehension questions for the story above, aiming for a total of ${workBudget} work units.`;
 
-    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 1500, true);
+    const comprehensionSchema: JsonSchema = {
+      name: "comprehension_questions",
+      schema: {
+        type: "object",
+        properties: {
+          questions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                type: { type: "string", enum: ["multiple_choice", "translation", "short_answer", "inference", "prediction", "grammar", "opinion"] },
+                question: { type: "string" },
+                questionTranslation: { type: "string" },
+                options: { type: "array", items: { type: "string" } },
+                correctAnswer: { type: "string" },
+                rubric: { type: "string" },
+                points: { type: "number" },
+              },
+              required: ["type", "question", "points"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["questions"],
+        additionalProperties: false,
+      },
+    };
+
+    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 1500, comprehensionSchema);
 
     try {
       const parsed = JSON.parse(response) as { questions: Omit<ComprehensionQuestion, "questionId">[] };
@@ -1161,7 +1201,23 @@ IMPORTANT:
 
     const prompt = `Generate a ${args.questionType} question for a ${languageName} placement test at ${level} level (difficulty: ${args.targetDifficulty.toFixed(1)}).`;
 
-    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500, true);
+    const placementSchema: JsonSchema = {
+      name: "placement_question",
+      schema: {
+        type: "object",
+        properties: {
+          question: { type: "string", description: "The question text in the target language" },
+          questionTranslation: { type: "string", description: "English translation of the question" },
+          options: { type: "array", items: { type: "string" }, minItems: 4, maxItems: 4 },
+          correctAnswer: { type: "string", description: "Must exactly match one of the options" },
+          explanation: { type: "string", description: "Brief explanation of the correct answer" },
+        },
+        required: ["question", "questionTranslation", "options", "correctAnswer"],
+        additionalProperties: false,
+      },
+    };
+
+    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500, placementSchema);
 
     try {
       const parsed = JSON.parse(response) as {
