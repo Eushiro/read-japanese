@@ -518,7 +518,7 @@ export const generateFlashcardAudio = action({
     }
 
     // Store audio in Convex file storage
-    const blob = new Blob([audioResult.audioData], { type: audioResult.mimeType });
+    const blob = new Blob([new Uint8Array(audioResult.audioData)], { type: audioResult.mimeType });
     const storageId = await ctx.storage.store(blob);
 
     // Get the public URL
@@ -584,7 +584,7 @@ export const generateFlashcardWithAudio = action({
 
         if (audioResult) {
           // Store audio in Convex file storage
-          const blob = new Blob([audioResult.audioData], { type: audioResult.mimeType });
+          const blob = new Blob([new Uint8Array(audioResult.audioData)], { type: audioResult.mimeType });
           const storageId = await ctx.storage.store(blob);
           audioUrl = await ctx.storage.getUrl(storageId) ?? undefined;
 
