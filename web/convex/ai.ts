@@ -343,6 +343,28 @@ async function callOpenRouter(
   return data.choices[0]?.message?.content ?? "";
 }
 
+/**
+ * Clean JSON response - strips markdown code blocks and whitespace
+ */
+function cleanJsonResponse(response: string): string {
+  let cleaned = response.trim();
+  // Remove markdown code blocks
+  if (cleaned.startsWith("```json")) {
+    cleaned = cleaned.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+  } else if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```\n?/, "").replace(/\n?```$/, "");
+  }
+  return cleaned.trim();
+}
+
+/**
+ * Parse JSON response with automatic cleanup
+ */
+function parseJson<T>(response: string): T {
+  const cleaned = cleanJsonResponse(response);
+  return JSON.parse(cleaned) as T;
+}
+
 interface CallWithRetryOptions<T> {
   prompt: string;
   systemPrompt: string;
@@ -470,7 +492,7 @@ Generate a natural, memorable sentence that clearly shows how to use this word. 
     maxTokens: 500,
     jsonSchema: sentenceSchema,
     parse: (response) => {
-      const parsed = JSON.parse(response) as GeneratedSentence;
+      const parsed = parseJson<GeneratedSentence>(response);
       return {
         sentence: parsed.sentence,
         translation: parsed.translation,
@@ -761,7 +783,7 @@ Provide detailed feedback and corrections if needed.`;
         systemPrompt,
         maxTokens: 1000,
         jsonSchema: verificationSchema,
-        parse: (response) => JSON.parse(response) as VerificationResult,
+        parse: (response) => parseJson<VerificationResult>(response),
         validate: (parsed) => {
           if (typeof parsed.overallScore !== "number") {
             return "Missing overallScore";
@@ -1133,7 +1155,7 @@ Create comprehension questions for the story above, aiming for a total of ${work
       systemPrompt,
       maxTokens: 1500,
       jsonSchema: comprehensionSchema,
-      parse: (response) => JSON.parse(response),
+      parse: (response) => parseJson(response),
       validate: (parsed) => {
         if (!parsed.questions || parsed.questions.length === 0) {
           return "No questions generated";
@@ -1279,7 +1301,7 @@ Provide a score (0-100), detailed feedback in English, and a possible answer in 
         systemPrompt,
         maxTokens: 500,
         jsonSchema: gradingSchema,
-        parse: (response) => JSON.parse(response),
+        parse: (response) => parseJson(response),
         validate: (parsed) => {
           if (typeof parsed.aiScore !== "number") {
             return "Missing aiScore";
@@ -1427,26 +1449,18 @@ IMPORTANT:
       },
     };
 
-    // Helper to clean and parse response
+    // Helper to parse and fix response
     const parseResponse = (response: string) => {
       if (!response || response.trim() === "") {
         throw new Error("Empty response from AI");
       }
 
-      // Clean up response - remove markdown code blocks if present
-      let cleanedResponse = response.trim();
-      if (cleanedResponse.startsWith("```json")) {
-        cleanedResponse = cleanedResponse.replace(/^```json\n?/, "").replace(/\n?```$/, "");
-      } else if (cleanedResponse.startsWith("```")) {
-        cleanedResponse = cleanedResponse.replace(/^```\n?/, "").replace(/\n?```$/, "");
-      }
-
-      const parsed = JSON.parse(cleanedResponse) as {
+      const parsed = parseJson<{
         question: string;
         questionTranslation: string;
         options: string[];
         correctAnswer: string;
-      };
+      }>(response);
 
       // Fix correctAnswer if not in options
       if (!parsed.options.includes(parsed.correctAnswer)) {
