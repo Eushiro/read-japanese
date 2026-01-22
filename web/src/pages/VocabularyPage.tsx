@@ -5,7 +5,7 @@ import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Paywall } from "@/components/Paywall";
-import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, Volume2, PenLine } from "lucide-react";
+import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, Volume2, GraduationCap } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { searchClientDictionary, preloadDictionary, type DictionaryEntry } from "@/lib/clientDictionary";
@@ -588,7 +588,7 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
             className="p-2 rounded-lg text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors"
             title="Practice writing sentences"
           >
-            <PenLine className="w-4 h-4" />
+            <GraduationCap className="w-4 h-4" />
           </Link>
           <Button
             variant="ghost"
