@@ -39,6 +39,20 @@ const LANGUAGES = [
 
 type Language = typeof LANGUAGES[number]["value"];
 
+// Type for vocabulary item used in detail modal
+type VocabularyItem = {
+  _id: string;
+  word: string;
+  reading?: string | null;
+  definitions: string[];
+  language: string;
+  masteryState: string;
+  examLevel?: string | null;
+  sourceStoryTitle?: string | null;
+  sourceContext?: string | null;
+  flashcardPending?: boolean | null;
+};
+
 export function VocabularyPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -46,6 +60,7 @@ export function VocabularyPage() {
   const [masteryFilter, setMasteryFilter] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [selectedVocab, setSelectedVocab] = useState<VocabularyItem | null>(null);
 
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id ?? "anonymous";
@@ -373,6 +388,7 @@ export function VocabularyPage() {
                       delay={Math.min(index * 30, 150)}
                       onShowPaywall={() => setShowPaywall(true)}
                       isPremiumUser={subscription === undefined ? undefined : !!isPremiumUser}
+                      onClick={() => setSelectedVocab(item)}
                     />
                   ))}
                 </div>
@@ -391,6 +407,7 @@ export function VocabularyPage() {
                 delay={Math.min(index * 30, 150)}
                 onShowPaywall={() => setShowPaywall(true)}
                 isPremiumUser={subscription === undefined ? undefined : !!isPremiumUser}
+                onClick={() => setSelectedVocab(item)}
               />
             ))}
           </div>
@@ -412,32 +429,30 @@ export function VocabularyPage() {
         onClose={() => setShowPaywall(false)}
         feature="flashcards"
       />
+
+      {/* Vocabulary Detail Modal */}
+      {selectedVocab && (
+        <VocabularyDetailModal
+          item={selectedVocab}
+          onClose={() => setSelectedVocab(null)}
+        />
+      )}
     </div>
   );
 }
 
 // Vocabulary card component
 interface VocabularyCardProps {
-  item: {
-    _id: string;
-    word: string;
-    reading?: string | null;
-    definitions: string[];
-    language: string;
-    masteryState: string;
-    examLevel?: string | null;
-    sourceStoryTitle?: string | null;
-    sourceContext?: string | null;
-    flashcardPending?: boolean | null;
-  };
+  item: VocabularyItem;
   onRemove: (id: string) => void;
   showMastery?: boolean;
   delay?: number;
   onShowPaywall?: () => void;
   isPremiumUser?: boolean;
+  onClick?: () => void;
 }
 
-function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowPaywall, isPremiumUser }: VocabularyCardProps) {
+function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowPaywall, isPremiumUser, onClick }: VocabularyCardProps) {
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -459,8 +474,9 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
 
   return (
     <div
-      className="p-5 rounded-xl bg-surface border border-border hover:border-foreground-muted/30 transition-all duration-200 animate-fade-in-up"
+      className="p-5 rounded-xl bg-surface border border-border hover:border-foreground-muted/30 transition-all duration-200 animate-fade-in-up cursor-pointer"
       style={{ animationDelay: `${delay}ms` }}
+      onClick={onClick}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
@@ -474,7 +490,7 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
             {/* Word audio button - only show after query loads */}
             {!isLoadingFlashcard && existingFlashcard?.wordAudioUrl && (
               <button
-                onClick={() => new Audio(existingFlashcard.wordAudioUrl!).play()}
+                onClick={(e) => { e.stopPropagation(); new Audio(existingFlashcard.wordAudioUrl!).play(); }}
                 className="p-1.5 rounded-lg text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors"
                 title="Play word pronunciation"
               >
@@ -522,7 +538,7 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
                     </p>
                     {existingFlashcard.audioUrl && (
                       <button
-                        onClick={() => new Audio(existingFlashcard.audioUrl!).play()}
+                        onClick={(e) => { e.stopPropagation(); new Audio(existingFlashcard.audioUrl!).play(); }}
                         className="p-1.5 rounded-lg text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors shrink-0"
                         title="Play audio"
                       >
@@ -552,7 +568,7 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
           {showMastery && (
             <span className={`text-xs px-2 py-1 rounded-full ${MASTERY_LABELS[item.masteryState]?.color ?? "bg-muted text-foreground-muted"}`}>
               {MASTERY_LABELS[item.masteryState]?.label ?? item.masteryState}
@@ -601,6 +617,188 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
           >
             <Trash2 className="w-4 h-4" />
           </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Vocabulary Detail Modal - styled like flashcard answer view
+interface VocabularyDetailModalProps {
+  item: VocabularyItem;
+  onClose: () => void;
+}
+
+function VocabularyDetailModal({ item, onClose }: VocabularyDetailModalProps) {
+  const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
+  const isJapanese = item.language === "japanese";
+
+  // Fetch the flashcard data for this vocabulary item
+  const flashcard = useQuery(api.flashcards.getByVocabulary, {
+    vocabularyId: item._id as GenericId<"vocabulary">,
+  });
+
+  const playAudio = (url: string) => {
+    new Audio(url).play();
+  };
+
+  // Preload audio and images when flashcard data loads
+  useEffect(() => {
+    if (!flashcard) return;
+
+    // Preload word audio
+    if (flashcard.wordAudioUrl) {
+      const audio = new Audio();
+      audio.preload = "auto";
+      audio.src = flashcard.wordAudioUrl;
+    }
+
+    // Preload sentence audio
+    if (flashcard.audioUrl) {
+      const audio = new Audio();
+      audio.preload = "auto";
+      audio.src = flashcard.audioUrl;
+    }
+
+    // Preload image
+    if (flashcard.imageUrl) {
+      const img = new Image();
+      img.src = flashcard.imageUrl;
+    }
+  }, [flashcard]);
+
+  // Handle escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-lg mx-4 animate-fade-in-up max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <div className="flex justify-end p-4 pb-0">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 pt-2">
+          {/* Image */}
+          {flashcard?.imageUrl && (
+            <div className="mb-6 flex justify-center">
+              <img
+                src={flashcard.imageUrl}
+                alt={item.word}
+                className="max-w-full h-auto max-h-48 rounded-xl object-contain"
+              />
+            </div>
+          )}
+
+          {/* Word */}
+          <div className="text-center mb-6">
+            <div
+              className="text-4xl sm:text-5xl font-bold text-foreground mb-2"
+              style={{ fontFamily: languageFont }}
+            >
+              {item.word}
+            </div>
+            {/* Word Audio Button */}
+            {flashcard?.wordAudioUrl && (
+              <div className="mt-2">
+                <button
+                  onClick={() => playAudio(flashcard.wordAudioUrl!)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  Play Word
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Example Sentence */}
+          {(flashcard?.sentence || item.sourceContext) && (
+            <div className="bg-muted/50 rounded-xl p-4 mb-6">
+              <p
+                className="text-lg text-foreground leading-relaxed text-center"
+                style={{ fontFamily: languageFont }}
+              >
+                {flashcard?.sentence || item.sourceContext}
+              </p>
+              {/* Sentence Translation */}
+              {flashcard?.sentenceTranslation && (
+                <p className="text-sm text-foreground-muted text-center mt-2 italic">
+                  {flashcard.sentenceTranslation}
+                </p>
+              )}
+              {/* Sentence Audio Button */}
+              {flashcard?.audioUrl && (
+                <div className="flex justify-center mt-3">
+                  <button
+                    onClick={() => playAudio(flashcard.audioUrl!)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    Play Sentence
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Reading (for Japanese) */}
+          {isJapanese && item.reading && (
+            <div className="text-center mb-4">
+              <div className="text-sm text-foreground-muted mb-1">Reading</div>
+              <div className="text-2xl text-foreground" style={{ fontFamily: languageFont }}>
+                {item.reading}
+              </div>
+            </div>
+          )}
+
+          {/* Definition */}
+          <div className="text-center mb-4">
+            <div className="text-sm text-foreground-muted mb-1">Definition</div>
+            <div className="text-xl font-medium text-foreground">
+              {item.definitions.join("; ")}
+            </div>
+          </div>
+
+          {/* Metadata tags */}
+          <div className="flex items-center justify-center gap-2 mt-6 flex-wrap">
+            <span className={`text-xs px-2 py-1 rounded-full ${MASTERY_LABELS[item.masteryState]?.color ?? "bg-muted text-foreground-muted"}`}>
+              {MASTERY_LABELS[item.masteryState]?.label ?? item.masteryState}
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-foreground-muted capitalize">
+              {item.language}
+            </span>
+            {item.examLevel && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                {item.examLevel}
+              </span>
+            )}
+            {item.sourceStoryTitle && (
+              <span className="text-xs text-foreground-muted flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                {item.sourceStoryTitle}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
