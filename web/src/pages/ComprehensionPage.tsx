@@ -79,12 +79,33 @@ export function ComprehensionPage() {
   // Get the full story content for AI
   const getStoryContent = () => {
     if (!story) return "";
-    return story.chapters
+    const chapters = story.chapters || [];
+    return chapters
       .map((chapter) => {
         const segments = chapter.segments || chapter.content || [];
-        return segments.map((s) => s.text).join(" ");
+        return segments.map((s) => {
+          // Try tokens first, then text field
+          if (s.tokens && s.tokens.length > 0) {
+            return s.tokens.map((t) => t.surface).join("");
+          }
+          return s.text || "";
+        }).join(" ");
       })
       .join("\n\n");
+  };
+
+  // Derive language from story level
+  const getLanguage = (): "japanese" | "english" | "french" => {
+    if (!story) return "japanese";
+    const level = story.metadata.level;
+    // JLPT levels (N5-N1) are Japanese
+    if (level.startsWith("N")) return "japanese";
+    // CEFR levels - check story ID or default based on context
+    // For now, default to English for CEFR (can be enhanced later)
+    if (story.id.includes("french") || story.id.includes("fr_")) return "french";
+    if (story.id.includes("english") || story.id.includes("en_")) return "english";
+    // Default: if CEFR level, assume English
+    return "english";
   };
 
   // Generate questions
@@ -98,7 +119,7 @@ export function ComprehensionPage() {
         storyId,
         storyTitle: story.metadata.title,
         storyContent,
-        language: story.metadata.language as "japanese" | "english" | "french",
+        language: getLanguage(),
         userId,
         questionCount: 5,
       });
