@@ -509,7 +509,7 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
                   </div>
-                  <p className="text-xs text-foreground-muted mt-2">Generating example sentence...</p>
+                  <p className="text-xs text-foreground-muted mt-2">Generating sentence, audio & image...</p>
                 </div>
               ) : existingFlashcard?.sentence && (
                 <div className="p-2.5 rounded-lg bg-accent/5 border border-accent/20">
@@ -581,7 +581,7 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
           {item.flashcardPending && (
             <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent flex items-center gap-1.5">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Generating...
+              Generating content...
             </span>
           )}
           {/* Study button - navigate to practice with this word */}
