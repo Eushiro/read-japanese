@@ -490,8 +490,8 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
           <div className="text-foreground">
             {item.definitions.join("; ")}
           </div>
-          {/* Example sentence - show source context, generated sentence, or skeleton while generating */}
-          {(item.sourceContext || existingFlashcard?.sentence || item.flashcardPending) && (
+          {/* Example sentence - show source context or generated sentence (no loading state) */}
+          {(item.sourceContext || existingFlashcard?.sentence) && (
             <div className="mt-3">
               {item.sourceContext ? (
                 <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
@@ -502,14 +502,6 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
                     {item.sourceContext}
                   </p>
                   <p className="text-xs text-foreground-muted mt-1">Original context</p>
-                </div>
-              ) : item.flashcardPending && !existingFlashcard?.sentence ? (
-                <div className="p-2.5 rounded-lg bg-accent/5 border border-accent/20">
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                  <p className="text-xs text-foreground-muted mt-2">Generating sentence, audio & image...</p>
                 </div>
               ) : existingFlashcard?.sentence && (
                 <div className="p-2.5 rounded-lg bg-accent/5 border border-accent/20">
@@ -576,13 +568,6 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
                 <Sparkles className="w-4 h-4" />
               </Button>
             )
-          )}
-          {/* Show generating indicator when flashcard is pending */}
-          {item.flashcardPending && (
-            <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent flex items-center gap-1.5">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              Generating content...
-            </span>
           )}
           {/* Study button - navigate to practice with this word */}
           <Link
