@@ -309,6 +309,7 @@ async function callOpenRouter(
   let lastError: Error | null = null;
 
   for (const currentModel of modelsToTry) {
+    console.log(`Trying model: ${currentModel}`);
     try {
       const response = await fetch(OPENROUTER_API_URL, {
         method: "POST",
@@ -332,24 +333,26 @@ async function callOpenRouter(
       if (response.status === 429) {
         // Rate limited - try next model
         const errorText = await response.text();
-        console.log(`Model ${currentModel} rate limited, trying next...`);
-        lastError = new Error(`OpenRouter API error: 429 - ${errorText}`);
+        console.log(`Model ${currentModel} rate limited (429), trying next model...`);
+        lastError = new Error(`All models rate limited. Last error (${currentModel}): 429 - ${errorText}`);
         continue;
       }
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+        console.log(`Model ${currentModel} failed with status ${response.status}: ${errorText}`);
+        // For non-429 errors, still try fallback
+        lastError = new Error(`OpenRouter API error (${currentModel}): ${response.status} - ${errorText}`);
+        continue;
       }
 
       const data = (await response.json()) as OpenRouterResponse;
       return data.choices[0]?.message?.content ?? "";
     } catch (error) {
-      if (error instanceof Error && error.message.includes("429")) {
-        lastError = error;
-        continue;
-      }
-      throw error;
+      // Network or other errors - try next model
+      console.log(`Model ${currentModel} threw error:`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      continue;
     }
   }
 

@@ -170,15 +170,27 @@ CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-domain.clerk.accounts.dev
 
 ## Common Tasks
 
+### Deploying Convex Changes
+
+**IMPORTANT: Always deploy to BOTH dev and prod when making Convex changes.**
+
+```bash
+# Deploy to dev
+cd web && npx convex dev --once
+
+# Deploy to prod
+cd web && npx convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --yes
+```
+
 ### Adding a new Convex function
 1. Add to appropriate file in `web/convex/`
 2. Export as `query` or `mutation`
-3. Run `npx convex dev` to sync
+3. Deploy to both dev and prod (see above)
 
 ### Adding a new table
 1. Add table definition in `web/convex/schema.ts`
 2. Create corresponding functions file
-3. Run `npx convex dev` to deploy schema
+3. Deploy to both dev and prod (see above)
 
 ### Testing Convex functions
 Use the Convex dashboard at https://dashboard.convex.dev to:
