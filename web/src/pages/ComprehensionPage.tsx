@@ -79,6 +79,7 @@ export function ComprehensionPage() {
 
   // Sync selectedAnswer with current question's saved answer when navigating
   useEffect(() => {
+    window.scrollTo(0, 0);
     const currentQuestion = localQuestions[currentQuestionIndex];
     if (currentQuestion?.userAnswer) {
       setSelectedAnswer(currentQuestion.userAnswer);
