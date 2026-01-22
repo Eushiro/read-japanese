@@ -275,8 +275,14 @@ interface OpenRouterResponse {
   }>;
 }
 
-// Primary model for text generation
-const DEFAULT_MODEL = "google/gemini-3-flash-preview";
+// Model configuration - ordered by preference (primary first, then fallbacks)
+const MODEL_CHAIN = [
+  "google/gemini-3-flash-preview",  // Primary: fast and cheap
+  "anthropic/claude-haiku-4.5",      // Fallback: reliable structured output
+];
+
+// For backward compatibility
+const DEFAULT_MODEL = MODEL_CHAIN[0];
 
 interface JsonSchema {
   name: string;
@@ -335,6 +341,68 @@ async function callOpenRouter(
 
   const data = (await response.json()) as OpenRouterResponse;
   return data.choices[0]?.message?.content ?? "";
+}
+
+interface CallWithRetryOptions<T> {
+  prompt: string;
+  systemPrompt: string;
+  maxTokens?: number;
+  jsonSchema?: JsonSchema;
+  /** Parse the response string into the expected type */
+  parse: (response: string) => T;
+  /** Optional validation - return error message if invalid, null if valid */
+  validate?: (parsed: T) => string | null;
+  /** Model chain to try (defaults to MODEL_CHAIN) */
+  models?: string[];
+}
+
+/**
+ * Call OpenRouter with automatic retry through model chain
+ * Retries on API errors AND validation failures
+ */
+async function callWithRetry<T>(options: CallWithRetryOptions<T>): Promise<T> {
+  const {
+    prompt,
+    systemPrompt,
+    maxTokens = 500,
+    jsonSchema,
+    parse,
+    validate,
+    models = MODEL_CHAIN,
+  } = options;
+
+  let lastError: Error | null = null;
+
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    const isRetry = i > 0;
+
+    if (isRetry) {
+      console.log(`Retrying with model: ${model}`);
+    }
+
+    try {
+      const response = await callOpenRouter(prompt, systemPrompt, model, maxTokens, jsonSchema);
+      const parsed = parse(response);
+
+      // Run validation if provided
+      if (validate) {
+        const validationError = validate(parsed);
+        if (validationError) {
+          console.warn(`Validation failed for model ${model}: ${validationError}`);
+          lastError = new Error(validationError);
+          continue; // Try next model
+        }
+      }
+
+      return parsed;
+    } catch (error) {
+      console.error(`Model ${model} failed:`, error);
+      lastError = error as Error;
+    }
+  }
+
+  throw lastError || new Error(`Failed after trying ${models.length} models`);
 }
 
 // ============================================
@@ -396,20 +464,25 @@ Generate a natural, memorable sentence that clearly shows how to use this word. 
     },
   };
 
-  const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500, sentenceSchema);
-
-  try {
-    // Parse the JSON response
-    const parsed = JSON.parse(response) as GeneratedSentence;
-    return {
-      sentence: parsed.sentence,
-      translation: parsed.translation,
-    };
-  } catch {
-    // If parsing fails, try to extract from the response
-    console.error("Failed to parse AI response:", response);
-    throw new Error("Failed to generate sentence: Invalid AI response format");
-  }
+  return callWithRetry<GeneratedSentence>({
+    prompt,
+    systemPrompt,
+    maxTokens: 500,
+    jsonSchema: sentenceSchema,
+    parse: (response) => {
+      const parsed = JSON.parse(response) as GeneratedSentence;
+      return {
+        sentence: parsed.sentence,
+        translation: parsed.translation,
+      };
+    },
+    validate: (parsed) => {
+      if (!parsed.sentence || !parsed.translation) {
+        return "Missing sentence or translation";
+      }
+      return null;
+    },
+  });
 }
 
 // Generate an example sentence for a vocabulary word (public action)
@@ -682,14 +755,22 @@ Provide detailed feedback and corrections if needed.`;
       },
     };
 
-    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 1000, verificationSchema);
-
     try {
-      const parsed = JSON.parse(response) as VerificationResult;
-      return parsed;
+      return await callWithRetry<VerificationResult>({
+        prompt,
+        systemPrompt,
+        maxTokens: 1000,
+        jsonSchema: verificationSchema,
+        parse: (response) => JSON.parse(response) as VerificationResult,
+        validate: (parsed) => {
+          if (typeof parsed.overallScore !== "number") {
+            return "Missing overallScore";
+          }
+          return null;
+        },
+      });
     } catch {
-      console.error("Failed to parse verification response:", response);
-      // Return a default response on parse failure
+      // Return a default response if all retries fail
       return {
         isCorrect: false,
         grammarScore: 0,
@@ -1034,14 +1115,6 @@ Create comprehension questions for the story above, aiming for a total of ${work
       },
     };
 
-    // Helper to check if response has corrupted fields (AI dumping chain of thought)
-    const isCorrupted = (parsed: { questions: Array<{ rubric?: string; correctAnswer?: string }> }) => {
-      return parsed.questions.some(q =>
-        (q.rubric && q.rubric.length > 200) ||
-        (q.correctAnswer && q.correctAnswer.length > 300)
-      );
-    };
-
     // Helper to sanitize and process questions
     const processQuestions = (parsed: { questions: Omit<ComprehensionQuestion, "questionId">[] }): ComprehensionQuestion[] => {
       return parsed.questions.map((q, index) => ({
@@ -1055,40 +1128,40 @@ Create comprehension questions for the story above, aiming for a total of ${work
       }));
     };
 
-    // Try up to 2 times - fall back to Claude Haiku on retry
-    const FALLBACK_MODEL = "anthropic/claude-haiku-4.5";
-    let lastError: Error | null = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const model = attempt === 0 ? DEFAULT_MODEL : FALLBACK_MODEL;
-        const response = await callOpenRouter(prompt, systemPrompt, model, 1500, comprehensionSchema);
-        const parsed = JSON.parse(response) as { questions: Omit<ComprehensionQuestion, "questionId">[] };
-
-        // Check for corrupted response on first attempt - retry with Claude Haiku
-        if (attempt === 0 && isCorrupted(parsed)) {
-          console.warn("Comprehension questions response corrupted (Gemini), retrying with Claude Haiku...");
-          continue;
+    const parsed = await callWithRetry<{ questions: Omit<ComprehensionQuestion, "questionId">[] }>({
+      prompt,
+      systemPrompt,
+      maxTokens: 1500,
+      jsonSchema: comprehensionSchema,
+      parse: (response) => JSON.parse(response),
+      validate: (parsed) => {
+        if (!parsed.questions || parsed.questions.length === 0) {
+          return "No questions generated";
         }
+        // Check for corrupted fields (AI dumping chain of thought)
+        const corrupted = parsed.questions.some(q =>
+          (q.rubric && q.rubric.length > 200) ||
+          (q.correctAnswer && q.correctAnswer.length > 300)
+        );
+        if (corrupted) {
+          return "Response contains corrupted fields (overly long rubric or correctAnswer)";
+        }
+        return null;
+      },
+    });
 
-        const questionsWithIds = processQuestions(parsed);
+    const questionsWithIds = processQuestions(parsed);
 
-        // Create the comprehension quiz in the database
-        const comprehensionId = await ctx.runMutation(internal.storyComprehension.createFromAI, {
-          userId: args.userId,
-          storyId: args.storyId,
-          storyTitle: args.storyTitle,
-          language: args.language,
-          questions: questionsWithIds,
-        });
+    // Create the comprehension quiz in the database
+    const comprehensionId = await ctx.runMutation(internal.storyComprehension.createFromAI, {
+      userId: args.userId,
+      storyId: args.storyId,
+      storyTitle: args.storyTitle,
+      language: args.language,
+      questions: questionsWithIds,
+    });
 
-        return { comprehensionId: comprehensionId as string, questions: questionsWithIds };
-      } catch (error) {
-        console.error(`Failed to parse comprehension questions (attempt ${attempt + 1}):`, error);
-        lastError = error as Error;
-      }
-    }
-
-    throw new Error(`Failed to generate comprehension questions after 2 attempts: ${lastError?.message || "Invalid AI response format"}`);
+    return { comprehensionId: comprehensionId as string, questions: questionsWithIds };
   },
 });
 
@@ -1200,10 +1273,20 @@ Provide a score (0-100), detailed feedback in English, and a possible answer in 
       },
     };
 
-    const response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500, gradingSchema);
-
     try {
-      const parsed = JSON.parse(response) as { aiScore: number; aiFeedback: string; isCorrect: boolean; possibleAnswer: string };
+      const parsed = await callWithRetry<{ aiScore: number; aiFeedback: string; isCorrect: boolean; possibleAnswer: string }>({
+        prompt,
+        systemPrompt,
+        maxTokens: 500,
+        jsonSchema: gradingSchema,
+        parse: (response) => JSON.parse(response),
+        validate: (parsed) => {
+          if (typeof parsed.aiScore !== "number") {
+            return "Missing aiScore";
+          }
+          return null;
+        },
+      });
 
       // Update the comprehension quiz with the grading
       await ctx.runMutation(internal.storyComprehension.updateGradingFromAI, {
@@ -1217,7 +1300,7 @@ Provide a score (0-100), detailed feedback in English, and a possible answer in 
 
       return parsed;
     } catch (error) {
-      console.error("Failed to parse grading response:", response);
+      console.error("Failed to grade answer after retries:", error);
       return {
         aiScore: 0,
         aiFeedback: "Unable to grade answer. Please try again.",
@@ -1344,31 +1427,20 @@ IMPORTANT:
       },
     };
 
-    let response: string;
-    try {
-      response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500, placementSchema);
-    } catch (apiError) {
-      // If structured output fails, try without schema
-      console.log("Schema-enforced call failed, trying without schema:", apiError);
-      response = await callOpenRouter(prompt, systemPrompt, DEFAULT_MODEL, 500);
-    }
+    // Helper to clean and parse response
+    const parseResponse = (response: string) => {
+      if (!response || response.trim() === "") {
+        throw new Error("Empty response from AI");
+      }
 
-    // Log the response for debugging
-    console.log("AI Response for placement question:", response);
+      // Clean up response - remove markdown code blocks if present
+      let cleanedResponse = response.trim();
+      if (cleanedResponse.startsWith("```json")) {
+        cleanedResponse = cleanedResponse.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+      } else if (cleanedResponse.startsWith("```")) {
+        cleanedResponse = cleanedResponse.replace(/^```\n?/, "").replace(/\n?```$/, "");
+      }
 
-    if (!response || response.trim() === "") {
-      throw new Error("Empty response from AI");
-    }
-
-    // Clean up response - remove markdown code blocks if present
-    let cleanedResponse = response.trim();
-    if (cleanedResponse.startsWith("```json")) {
-      cleanedResponse = cleanedResponse.replace(/^```json\n?/, "").replace(/\n?```$/, "");
-    } else if (cleanedResponse.startsWith("```")) {
-      cleanedResponse = cleanedResponse.replace(/^```\n?/, "").replace(/\n?```$/, "");
-    }
-
-    try {
       const parsed = JSON.parse(cleanedResponse) as {
         question: string;
         questionTranslation: string;
@@ -1376,9 +1448,8 @@ IMPORTANT:
         correctAnswer: string;
       };
 
-      // Validate that correctAnswer is in options
+      // Fix correctAnswer if not in options
       if (!parsed.options.includes(parsed.correctAnswer)) {
-        // Try to find a close match
         const match = parsed.options.find(o =>
           o.toLowerCase().includes(parsed.correctAnswer.toLowerCase()) ||
           parsed.correctAnswer.toLowerCase().includes(o.toLowerCase())
@@ -1386,33 +1457,45 @@ IMPORTANT:
         if (match) {
           parsed.correctAnswer = match;
         } else {
-          // Replace first option with correct answer as fallback
           parsed.options[0] = parsed.correctAnswer;
         }
       }
 
-      const questionData: PlacementQuestion = {
-        questionId: `pq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        level,
-        type: args.questionType,
-        question: parsed.question,
-        questionTranslation: parsed.questionTranslation,
-        options: parsed.options,
-        correctAnswer: parsed.correctAnswer,
-        difficulty: args.targetDifficulty,
-      };
+      return parsed;
+    };
 
-      // Add the question to the test
-      await ctx.runMutation(internal.placementTest.addQuestionFromAI, {
-        testId: args.testId,
-        question: questionData,
-      });
+    const parsed = await callWithRetry({
+      prompt,
+      systemPrompt,
+      maxTokens: 500,
+      jsonSchema: placementSchema,
+      parse: parseResponse,
+      validate: (parsed) => {
+        if (!parsed.question || !parsed.options || parsed.options.length !== 4) {
+          return "Invalid question format";
+        }
+        return null;
+      },
+    });
 
-      return questionData;
-    } catch (error) {
-      console.error("Failed to parse placement question. Response:", response, "Error:", error);
-      throw new Error(`Failed to generate placement question: ${error instanceof Error ? error.message : "Invalid AI response format"}`);
-    }
+    const questionData: PlacementQuestion = {
+      questionId: `pq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      level,
+      type: args.questionType,
+      question: parsed.question,
+      questionTranslation: parsed.questionTranslation,
+      options: parsed.options,
+      correctAnswer: parsed.correctAnswer,
+      difficulty: args.targetDifficulty,
+    };
+
+    // Add the question to the test
+    await ctx.runMutation(internal.placementTest.addQuestionFromAI, {
+      testId: args.testId,
+      question: questionData,
+    });
+
+    return questionData;
   },
 });
 
