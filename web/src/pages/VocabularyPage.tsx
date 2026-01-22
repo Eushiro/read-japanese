@@ -735,6 +735,7 @@ function AddWordModal({ userId, onClose }: AddWordModalProps) {
     setDebouncedSearch("");
     setReading("");
     setDefinitions("");
+    setShowSuggestions(false);
   }, [language]);
 
   const handleSelectSuggestion = (entry: DictionaryEntry) => {
