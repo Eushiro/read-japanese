@@ -8,6 +8,7 @@ import { ConvexReactClient } from "convex/react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AnalyticsProvider } from "./contexts/AnalyticsContext";
 import { ReviewSessionProvider } from "./contexts/ReviewSessionContext";
+import { StudySessionProvider } from "./contexts/StudySessionContext";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { router } from "./router.tsx";
 import "./index.css";
@@ -39,11 +40,13 @@ createRoot(document.getElementById("root")!).render(
         <AuthProvider>
           <AnalyticsProvider>
             <ReviewSessionProvider>
-              <QueryClientProvider client={queryClient}>
-                <ThemeProvider>
-                  <RouterProvider router={router} />
-                </ThemeProvider>
-              </QueryClientProvider>
+              <StudySessionProvider>
+                <QueryClientProvider client={queryClient}>
+                  <ThemeProvider>
+                    <RouterProvider router={router} />
+                  </ThemeProvider>
+                </QueryClientProvider>
+              </StudySessionProvider>
             </ReviewSessionProvider>
           </AnalyticsProvider>
         </AuthProvider>

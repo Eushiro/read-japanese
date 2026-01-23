@@ -107,6 +107,10 @@ export default defineSchema({
         testId: v.optional(v.id("placementTests")),
       })),
     })),
+    // Streak tracking
+    currentStreak: v.optional(v.number()), // Current consecutive days of activity
+    longestStreak: v.optional(v.number()), // Personal best streak
+    lastActivityDate: v.optional(v.string()), // YYYY-MM-DD format
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -133,6 +137,7 @@ export default defineSchema({
     sourceStoryTitle: v.optional(v.string()),
     sourceYoutubeId: v.optional(v.string()),
     sourceContext: v.optional(v.string()), // The sentence where the word was found
+    sourceDeckId: v.optional(v.string()), // Track which premade deck word came from
 
     // Exam association
     examLevel: v.optional(v.string()), // e.g., "N3", "B2", etc.
@@ -151,7 +156,8 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_and_language", ["userId", "language"])
     .index("by_user_and_word", ["userId", "word"])
-    .index("by_user_language_mastery", ["userId", "language", "masteryState"]),
+    .index("by_user_language_mastery", ["userId", "language", "masteryState"])
+    .index("by_user_and_deck", ["userId", "sourceDeckId"]),
 
   // ============================================
   // FLASHCARD SYSTEM (SRS)
@@ -537,6 +543,150 @@ export default defineSchema({
   })
     .index("by_language", ["language"])
     .index("by_language_and_level", ["language", "level"]),
+
+  // ============================================
+  // PREMADE VOCABULARY (Shared decks)
+  // ============================================
+  // Pre-generated vocabulary with sentences/audio, shared across all users
+  premadeVocabulary: defineTable({
+    // Deck identification
+    deckId: v.string(), // e.g., "jlpt_n5", "cefr_a1_french"
+    language: languageValidator,
+    level: v.string(), // "N5", "A1", etc.
+
+    // Word data
+    word: v.string(),
+    reading: v.optional(v.string()), // Furigana/pronunciation
+    definitions: v.array(v.string()),
+    partOfSpeech: v.optional(v.string()),
+
+    // Pre-generated content
+    sentence: v.optional(v.string()),
+    sentenceTranslation: v.optional(v.string()),
+    audioUrl: v.optional(v.string()), // Sentence audio
+    wordAudioUrl: v.optional(v.string()), // Word-only audio
+    imageUrl: v.optional(v.string()),
+
+    // Generation status
+    generationStatus: v.union(
+      v.literal("pending"), // Not yet generated
+      v.literal("generating"), // In batch job
+      v.literal("complete"), // All content generated
+      v.literal("failed") // Generation failed
+    ),
+    batchJobId: v.optional(v.id("batchJobs")), // Current batch job
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_deck", ["deckId"])
+    .index("by_deck_and_level", ["deckId", "level"])
+    .index("by_language", ["language"])
+    .index("by_language_and_level", ["language", "level"])
+    .index("by_generation_status", ["generationStatus"])
+    .index("by_batch_job", ["batchJobId"]),
+
+  // Premade deck metadata
+  premadeDecks: defineTable({
+    deckId: v.string(), // Unique identifier
+    name: v.string(), // Display name: "JLPT N5"
+    description: v.string(),
+    language: languageValidator,
+    level: v.string(), // "N5", "A1", etc.
+
+    // Stats
+    totalWords: v.number(),
+    wordsWithSentences: v.number(),
+    wordsWithAudio: v.number(),
+    wordsWithImages: v.number(),
+
+    // Status
+    isPublished: v.boolean(), // Visible to users
+    lastUpdated: v.number(),
+
+    // Auto-progression to next deck when completed
+    nextDeckId: v.optional(v.string()), // e.g., jlpt_n5 → jlpt_n4
+
+    // Personal deck fields
+    isPersonal: v.optional(v.boolean()), // True for user's personal deck
+    ownerUserId: v.optional(v.string()), // User who owns this personal deck
+  })
+    .index("by_deck_id", ["deckId"])
+    .index("by_language", ["language"])
+    .index("by_language_and_published", ["language", "isPublished"])
+    .index("by_owner", ["ownerUserId"]),
+
+  // ============================================
+  // USER DECK SUBSCRIPTIONS
+  // ============================================
+  // Tracks user subscriptions to premade decks with drip-feed progress
+  userDeckSubscriptions: defineTable({
+    userId: v.string(),
+    deckId: v.string(),
+    totalWordsInDeck: v.number(),
+    wordsAdded: v.number(), // Words added to user's vocabulary
+    wordsStudied: v.number(), // Words user has reviewed at least once
+    dailyNewCards: v.number(), // Cards to add per day (default: 10)
+    lastDripDate: v.optional(v.string()), // "YYYY-MM-DD" - last day cards were dripped
+    cardsAddedToday: v.number(), // Cards added on lastDripDate
+    skippedWords: v.optional(v.array(v.string())), // Words user deleted (don't re-add)
+    status: v.union(
+      v.literal("active"), // Currently receiving daily cards
+      v.literal("paused"), // Paused by user or when another deck is active
+      v.literal("completed") // All words added
+    ),
+    subscribedAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_deck", ["userId", "deckId"])
+    .index("by_user_and_status", ["userId", "status"]),
+
+  // ============================================
+  // BATCH JOBS (for AI generation tracking)
+  // ============================================
+  batchJobs: defineTable({
+    // Job identification
+    jobType: v.union(
+      v.literal("sentences"), // Generate sentences
+      v.literal("audio"), // Generate audio
+      v.literal("images") // Generate images
+    ),
+    deckId: v.optional(v.string()), // If deck-specific
+
+    // Google Batch API tracking
+    googleBatchJobName: v.optional(v.string()), // e.g., "batches/abc123"
+    inputFileUri: v.optional(v.string()), // Uploaded JSONL file URI
+    outputFileUri: v.optional(v.string()), // Results file URI
+
+    // Job parameters
+    model: v.string(), // e.g., "gemini-2.0-flash"
+    itemCount: v.number(), // How many items in this batch
+    processedCount: v.number(), // How many processed so far
+
+    // Status
+    status: v.union(
+      v.literal("pending"), // Created, not yet submitted
+      v.literal("submitted"), // Sent to Google
+      v.literal("running"), // Processing
+      v.literal("succeeded"), // Complete
+      v.literal("failed"), // Error
+      v.literal("cancelled") // User cancelled
+    ),
+    errorMessage: v.optional(v.string()),
+
+    // Cost tracking
+    estimatedCost: v.optional(v.number()), // In dollars
+    actualCost: v.optional(v.number()),
+
+    // Timestamps
+    createdAt: v.number(),
+    submittedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status"])
+    .index("by_deck", ["deckId"])
+    .index("by_google_job", ["googleBatchJobName"]),
 
   // ============================================
   // YOUTUBE CONTENT (Future)

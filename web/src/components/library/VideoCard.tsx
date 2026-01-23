@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import type { ProficiencyLevel } from "@/types/story";
-import { Play, Clock, Video } from "lucide-react";
+import { Clock, Video } from "lucide-react";
 import { useState } from "react";
+import { getLevelVariant } from "@/lib/levels";
 
 // Language-specific placeholder colors
 const LANGUAGE_COLORS: Record<string, { bg: string; text: string }> = {
@@ -32,21 +33,6 @@ interface VideoCardProps {
   style?: React.CSSProperties;
 }
 
-type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
-
-const levelVariantMap: Record<string, BadgeVariant> = {
-  N5: "n5",
-  N4: "n4",
-  N3: "n3",
-  N2: "n2",
-  N1: "n1",
-  A1: "a1",
-  A2: "a2",
-  B1: "b1",
-  B2: "b2",
-  C1: "c1",
-  C2: "c2",
-};
 
 function formatDuration(seconds?: number): string {
   if (!seconds) return "";
@@ -99,20 +85,13 @@ export function VideoCard({ video, onClick, style }: VideoCardProps) {
           </>
         )}
 
-        {/* Play icon overlay */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="w-14 h-14 rounded-full bg-accent/90 flex items-center justify-center shadow-lg">
-            <Play className="w-6 h-6 text-white ml-1" fill="white" />
-          </div>
-        </div>
-
         {/* Gradient overlay for badges */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
         {/* Level Badge */}
-        {video.level && levelVariantMap[video.level] && (
+        {getLevelVariant(video.level) && (
           <Badge
-            variant={levelVariantMap[video.level]}
+            variant={getLevelVariant(video.level)}
             className="absolute top-3 left-3 shadow-sm"
           >
             {video.level}

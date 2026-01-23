@@ -1,0 +1,1502 @@
+[
+  {
+    "id": "csv_0",
+    "word": "eat",
+    "reading": null,
+    "definitions": [
+      "to consume food"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I eat an apple every day.",
+    "sentence_translation": "私は毎日リンゴを食べます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_1",
+    "word": "drink",
+    "reading": null,
+    "definitions": [
+      "to consume liquid"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "They drink water in the morning.",
+    "sentence_translation": "彼らは朝に水を飲みます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_2",
+    "word": "go",
+    "reading": null,
+    "definitions": [
+      "to move; to travel"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I go to school by bus.",
+    "sentence_translation": "私はバスで学校へ行きます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_3",
+    "word": "come",
+    "reading": null,
+    "definitions": [
+      "to arrive; to approach"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "Please come to the party tonight.",
+    "sentence_translation": "今夜のパーティーに来てください。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_4",
+    "word": "see",
+    "reading": null,
+    "definitions": [
+      "to perceive with eyes"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I see a big blue bird.",
+    "sentence_translation": "私は大きな青い鳥が見えます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_5",
+    "word": "watch",
+    "reading": null,
+    "definitions": [
+      "to observe; to look at"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "We watch a movie every Friday.",
+    "sentence_translation": "私たちは毎週金曜日に映画を見ます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_6",
+    "word": "listen",
+    "reading": null,
+    "definitions": [
+      "to hear attentively"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "Do you listen to the music?",
+    "sentence_translation": "あなたは音楽を聴きますか？",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_7",
+    "word": "speak",
+    "reading": null,
+    "definitions": [
+      "to talk; to communicate"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I speak English and Japanese well.",
+    "sentence_translation": "私は英語と日本語を上手に話します。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_8",
+    "word": "read",
+    "reading": null,
+    "definitions": [
+      "to interpret written words"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "She reads a book every night.",
+    "sentence_translation": "彼女は毎晩本を読みます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_9",
+    "word": "write",
+    "reading": null,
+    "definitions": [
+      "to form letters or words"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I write a letter to my friend.",
+    "sentence_translation": "私は友達に手紙を書きます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_10",
+    "word": "buy",
+    "reading": null,
+    "definitions": [
+      "to purchase"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "They buy some milk and bread.",
+    "sentence_translation": "彼らは牛乳とパンを買います。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_11",
+    "word": "sleep",
+    "reading": null,
+    "definitions": [
+      "to rest; to slumber"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I sleep for eight hours daily.",
+    "sentence_translation": "私は毎日8時間眠ります。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_12",
+    "word": "work",
+    "reading": null,
+    "definitions": [
+      "to labor; to be employed"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "My father works at a bank.",
+    "sentence_translation": "私の父は銀行で働いています。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_13",
+    "word": "play",
+    "reading": null,
+    "definitions": [
+      "to engage in activity for fun"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The children play soccer in the park.",
+    "sentence_translation": "子供たちは公園でサッカーをします。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_14",
+    "word": "wait",
+    "reading": null,
+    "definitions": [
+      "to stay in place"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "Please wait for me at the station.",
+    "sentence_translation": "駅で私を待ってください。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_15",
+    "word": "meet",
+    "reading": null,
+    "definitions": [
+      "to encounter; to come together"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I meet my friends on Sunday.",
+    "sentence_translation": "私は日曜日に友達に会います。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_16",
+    "word": "make",
+    "reading": null,
+    "definitions": [
+      "to create; to produce"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "My mother makes a delicious cake.",
+    "sentence_translation": "私の母はおいしいケーキを作ります。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_17",
+    "word": "use",
+    "reading": null,
+    "definitions": [
+      "to employ; to utilize"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I use a computer at school.",
+    "sentence_translation": "私は学校でコンピュータを使います。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_18",
+    "word": "think",
+    "reading": null,
+    "definitions": [
+      "to consider; to reflect"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I think this book is very good.",
+    "sentence_translation": "私はこの本はとても良いと思います。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_19",
+    "word": "know",
+    "reading": null,
+    "definitions": [
+      "to be aware of; to understand"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I know the name of that boy.",
+    "sentence_translation": "私はあの男の子の名前を知っています。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_20",
+    "word": "learn",
+    "reading": null,
+    "definitions": [
+      "to acquire knowledge"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I learn English every day.",
+    "sentence_translation": "I learn English every day.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_21",
+    "word": "teach",
+    "reading": null,
+    "definitions": [
+      "to instruct; to educate"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "My mother teaches English at home.",
+    "sentence_translation": "My mother teaches English at home.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_22",
+    "word": "help",
+    "reading": null,
+    "definitions": [
+      "to assist; to aid"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I help my friend every day.",
+    "sentence_translation": "I help my friend every day.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_23",
+    "word": "give",
+    "reading": null,
+    "definitions": [
+      "to present; to provide"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "Please give me a blue pen.",
+    "sentence_translation": "Please give me a blue pen.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_24",
+    "word": "take",
+    "reading": null,
+    "definitions": [
+      "to grab; to accept"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I take the bus to school.",
+    "sentence_translation": "I take the bus to school.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_25",
+    "word": "put",
+    "reading": null,
+    "definitions": [
+      "to place; to set"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "Put the glass on the table.",
+    "sentence_translation": "Put the glass on the table.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_26",
+    "word": "open",
+    "reading": null,
+    "definitions": [
+      "to make accessible"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "Can you open the door, please?",
+    "sentence_translation": "Can you open the door, please?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_27",
+    "word": "close",
+    "reading": null,
+    "definitions": [
+      "to shut; to end"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I close the window at night.",
+    "sentence_translation": "I close the window at night.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_28",
+    "word": "start",
+    "reading": null,
+    "definitions": [
+      "to begin; to commence"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "We start the game right now.",
+    "sentence_translation": "We start the game right now.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_29",
+    "word": "finish",
+    "reading": null,
+    "definitions": [
+      "to complete; to end"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I finish my homework at six.",
+    "sentence_translation": "I finish my homework at six.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_30",
+    "word": "live",
+    "reading": null,
+    "definitions": [
+      "to reside; to exist"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I live in a big city.",
+    "sentence_translation": "I live in a big city.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_31",
+    "word": "love",
+    "reading": null,
+    "definitions": [
+      "to feel deep affection"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I love my mother and father.",
+    "sentence_translation": "I love my mother and father.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_32",
+    "word": "like",
+    "reading": null,
+    "definitions": [
+      "to enjoy; to prefer"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I like to drink hot coffee.",
+    "sentence_translation": "I like to drink hot coffee.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_33",
+    "word": "want",
+    "reading": null,
+    "definitions": [
+      "to desire; to wish for"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I want a new red car.",
+    "sentence_translation": "I want a new red car.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_34",
+    "word": "need",
+    "reading": null,
+    "definitions": [
+      "to require; to must have"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I need a glass of water.",
+    "sentence_translation": "I need a glass of water.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_35",
+    "word": "time",
+    "reading": null,
+    "definitions": [
+      "duration; occasion"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "What time do you have lunch?",
+    "sentence_translation": "What time do you have lunch?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_36",
+    "word": "day",
+    "reading": null,
+    "definitions": [
+      "24-hour period"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "It is a very sunny day.",
+    "sentence_translation": "It is a very sunny day.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_37",
+    "word": "week",
+    "reading": null,
+    "definitions": [
+      "seven days"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I work five days a week.",
+    "sentence_translation": "I work five days a week.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_38",
+    "word": "month",
+    "reading": null,
+    "definitions": [
+      "30-day period approximately"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "My birthday is this month.",
+    "sentence_translation": "My birthday is this month.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_39",
+    "word": "year",
+    "reading": null,
+    "definitions": [
+      "365 days; 12 months"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I am a student this year.",
+    "sentence_translation": "I am a student this year.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_40",
+    "word": "morning",
+    "reading": null,
+    "definitions": [
+      "early part of day"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I drink coffee in the morning.",
+    "sentence_translation": "私は朝にコーヒーを飲みます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_41",
+    "word": "evening",
+    "reading": null,
+    "definitions": [
+      "late part of day"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "We watch television in the evening.",
+    "sentence_translation": "私たちは夕方にテレビを見ます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_42",
+    "word": "night",
+    "reading": null,
+    "definitions": [
+      "dark hours; nighttime"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "It is very dark at night.",
+    "sentence_translation": "夜はとても暗いです。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_43",
+    "word": "today",
+    "reading": null,
+    "definitions": [
+      "this current day"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The weather is very good today.",
+    "sentence_translation": "今日はとても天気が良いです。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_44",
+    "word": "tomorrow",
+    "reading": null,
+    "definitions": [
+      "the next day"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I go to school tomorrow.",
+    "sentence_translation": "私は明日学校に行きます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_45",
+    "word": "yesterday",
+    "reading": null,
+    "definitions": [
+      "the previous day"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The food yesterday was good.",
+    "sentence_translation": "昨日の食べ物は良かったです。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_46",
+    "word": "now",
+    "reading": null,
+    "definitions": [
+      "at this moment"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I am a student now.",
+    "sentence_translation": "私は今、学生です。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_47",
+    "word": "water",
+    "reading": null,
+    "definitions": [
+      "liquid for drinking"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I want a glass of water.",
+    "sentence_translation": "コップ1杯の水が欲しいです。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_48",
+    "word": "food",
+    "reading": null,
+    "definitions": [
+      "things to eat"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "This food is very good.",
+    "sentence_translation": "この食べ物はとても良いです。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_49",
+    "word": "bread",
+    "reading": null,
+    "definitions": [
+      "baked wheat product"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "Do you like this bread?",
+    "sentence_translation": "あなたはこのパンが好きですか？",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_50",
+    "word": "meat",
+    "reading": null,
+    "definitions": [
+      "animal flesh for eating"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I do not eat meat.",
+    "sentence_translation": "私は肉を食べません。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_51",
+    "word": "fish",
+    "reading": null,
+    "definitions": [
+      "aquatic animal; seafood"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The cat likes to eat fish.",
+    "sentence_translation": "その猫は魚を食べるのが好きです。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_52",
+    "word": "fruit",
+    "reading": null,
+    "definitions": [
+      "sweet plant product"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "An apple is a sweet fruit.",
+    "sentence_translation": "リンゴは甘い果物です。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_53",
+    "word": "friend",
+    "reading": null,
+    "definitions": [
+      "close companion"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "He is my good friend.",
+    "sentence_translation": "彼は私の良い友達です。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_54",
+    "word": "family",
+    "reading": null,
+    "definitions": [
+      "relatives; household"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I love my big family.",
+    "sentence_translation": "私は私の大家族を愛しています。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_55",
+    "word": "father",
+    "reading": null,
+    "definitions": [
+      "male parent"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "My father is a tall man.",
+    "sentence_translation": "私の父は背の高い男性です。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_56",
+    "word": "mother",
+    "reading": null,
+    "definitions": [
+      "female parent"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "My mother works in a school.",
+    "sentence_translation": "私の母は学校で働いています。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_57",
+    "word": "brother",
+    "reading": null,
+    "definitions": [
+      "male sibling"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "Do you have a brother?",
+    "sentence_translation": "あなたに兄弟はいますか？",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_58",
+    "word": "sister",
+    "reading": null,
+    "definitions": [
+      "female sibling"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "My sister is a happy girl.",
+    "sentence_translation": "私の姉妹は幸せな女の子です。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_59",
+    "word": "child",
+    "reading": null,
+    "definitions": [
+      "young person"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The child plays with a ball.",
+    "sentence_translation": "その子供はボールで遊びます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_60",
+    "word": "man",
+    "reading": null,
+    "definitions": [
+      "adult male"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The man walks to the park.",
+    "sentence_translation": "あの男性は公園へ歩きます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_61",
+    "word": "woman",
+    "reading": null,
+    "definitions": [
+      "adult female"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The woman has a red dress.",
+    "sentence_translation": "その女性は赤いドレスを持っています。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_62",
+    "word": "school",
+    "reading": null,
+    "definitions": [
+      "place of learning"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I go to school every morning.",
+    "sentence_translation": "私は毎朝学校へ行きます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_63",
+    "word": "teacher",
+    "reading": null,
+    "definitions": [
+      "instructor; educator"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "My teacher is very kind today.",
+    "sentence_translation": "私の先生は今日とても親切です。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_64",
+    "word": "student",
+    "reading": null,
+    "definitions": [
+      "learner; pupil"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "He is a student at university.",
+    "sentence_translation": "彼は大学生です。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_65",
+    "word": "job",
+    "reading": null,
+    "definitions": [
+      "employment; work position"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "Do you like your new job?",
+    "sentence_translation": "あなたは新しい仕事が好きですか？",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_66",
+    "word": "office",
+    "reading": null,
+    "definitions": [
+      "workplace; business room"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The office is in a building.",
+    "sentence_translation": "事務所はビルの中にあります。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_67",
+    "word": "house",
+    "reading": null,
+    "definitions": [
+      "dwelling; residence"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "We live in a small house.",
+    "sentence_translation": "私たちは小さな家に住んでいます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_68",
+    "word": "room",
+    "reading": null,
+    "definitions": [
+      "space within building"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "My room has a blue bed.",
+    "sentence_translation": "私の部屋には青いベッドがあります。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_69",
+    "word": "street",
+    "reading": null,
+    "definitions": [
+      "road in town"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "Is this a busy street?",
+    "sentence_translation": "ここはにぎやかな通りですか？",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_70",
+    "word": "city",
+    "reading": null,
+    "definitions": [
+      "large urban area"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "London is a very big city.",
+    "sentence_translation": "ロンドンはとても大きな都市です。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_71",
+    "word": "country",
+    "reading": null,
+    "definitions": [
+      "nation; rural area"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "France is a very beautiful country.",
+    "sentence_translation": "フランスはとても美しい国です。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_72",
+    "word": "car",
+    "reading": null,
+    "definitions": [
+      "automobile; vehicle"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "She drives a small white car.",
+    "sentence_translation": "彼女は小さな白い車を運転します。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_73",
+    "word": "train",
+    "reading": null,
+    "definitions": [
+      "railway vehicle"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The train is late today.",
+    "sentence_translation": "今日、電車は遅れています。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_74",
+    "word": "bus",
+    "reading": null,
+    "definitions": [
+      "large passenger vehicle"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I wait for the bus here.",
+    "sentence_translation": "私はここでバスを待ちます。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_75",
+    "word": "store",
+    "reading": null,
+    "definitions": [
+      "shop; retail place"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The store sells milk and bread.",
+    "sentence_translation": "その店は牛乳とパンを売っています。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_76",
+    "word": "restaurant",
+    "reading": null,
+    "definitions": [
+      "eating establishment"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "We eat at a nice restaurant.",
+    "sentence_translation": "私たちは素敵なレストランで食事をします。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_77",
+    "word": "hospital",
+    "reading": null,
+    "definitions": [
+      "medical facility"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "Where is the nearest hospital?",
+    "sentence_translation": "一番近い病院はどこですか？",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_78",
+    "word": "big",
+    "reading": null,
+    "definitions": [
+      "large in size"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "This apple is very big.",
+    "sentence_translation": "このりんごはとても大きいです。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_79",
+    "word": "small",
+    "reading": null,
+    "definitions": [
+      "little in size"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I have a small black cat.",
+    "sentence_translation": "私は小さな黒い猫を飼っています。",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_80",
+    "word": "new",
+    "reading": null,
+    "definitions": [
+      "recently made; fresh"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I have a new car.",
+    "sentence_translation": "Tengo un coche nuevo.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_81",
+    "word": "old",
+    "reading": null,
+    "definitions": [
+      "not new; aged"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "This is an old book.",
+    "sentence_translation": "Este es un libro viejo.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_82",
+    "word": "expensive",
+    "reading": null,
+    "definitions": [
+      "costly; high-priced"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "That car is very expensive.",
+    "sentence_translation": "Ese coche es muy caro.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_83",
+    "word": "good",
+    "reading": null,
+    "definitions": [
+      "positive; satisfactory"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "You are a good friend.",
+    "sentence_translation": "Eres un buen amigo.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_84",
+    "word": "bad",
+    "reading": null,
+    "definitions": [
+      "negative; poor quality"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "This is a bad movie.",
+    "sentence_translation": "Esta es una mala película.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_85",
+    "word": "long",
+    "reading": null,
+    "definitions": [
+      "extended in length"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The street is very long.",
+    "sentence_translation": "La calle es muy larga.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_86",
+    "word": "short",
+    "reading": null,
+    "definitions": [
+      "not long; brief"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "He has very short hair.",
+    "sentence_translation": "Él tiene el pelo muy corto.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_87",
+    "word": "hot",
+    "reading": null,
+    "definitions": [
+      "high temperature"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The coffee is very hot.",
+    "sentence_translation": "El café está muy caliente.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_88",
+    "word": "cold",
+    "reading": null,
+    "definitions": [
+      "low temperature"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "The water is very cold.",
+    "sentence_translation": "El agua está muy fría.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_89",
+    "word": "easy",
+    "reading": null,
+    "definitions": [
+      "not difficult; simple"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "This test is very easy.",
+    "sentence_translation": "Este examen es muy fácil.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_90",
+    "word": "difficult",
+    "reading": null,
+    "definitions": [
+      "hard; challenging"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "This is a difficult test.",
+    "sentence_translation": "Este es un examen difícil.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_91",
+    "word": "happy",
+    "reading": null,
+    "definitions": [
+      "feeling joy"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "She is a happy girl.",
+    "sentence_translation": "Ella es una niña feliz.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_92",
+    "word": "sad",
+    "reading": null,
+    "definitions": [
+      "feeling sorrow"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "He is a sad boy.",
+    "sentence_translation": "Él es un niño triste.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_93",
+    "word": "tired",
+    "reading": null,
+    "definitions": [
+      "needing rest"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I am very tired today.",
+    "sentence_translation": "Estoy muy cansado hoy.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_94",
+    "word": "busy",
+    "reading": null,
+    "definitions": [
+      "occupied; active"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "My dad is busy now.",
+    "sentence_translation": "Mi papá está ocupado ahora.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_95",
+    "word": "book",
+    "reading": null,
+    "definitions": [
+      "written publication"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I read a good book.",
+    "sentence_translation": "Leo un buen libro.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_96",
+    "word": "movie",
+    "reading": null,
+    "definitions": [
+      "film; motion picture"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "We watch a fun movie.",
+    "sentence_translation": "Vemos una película divertida.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_97",
+    "word": "music",
+    "reading": null,
+    "definitions": [
+      "sounds arranged melodically"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I listen to good music.",
+    "sentence_translation": "Escucho buena música.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_98",
+    "word": "money",
+    "reading": null,
+    "definitions": [
+      "currency; funds"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "I have no money now.",
+    "sentence_translation": "No tengo dinero ahora.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_99",
+    "word": "problem",
+    "reading": null,
+    "definitions": [
+      "difficulty; issue"
+    ],
+    "language": "english",
+    "level": "A1",
+    "sentence": "It is a small problem.",
+    "sentence_translation": "Es un problema pequeño.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  }
+]

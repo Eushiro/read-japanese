@@ -73,13 +73,24 @@ async function generateTTSAudio(
 
   const voice = TTS_VOICE;
 
-  // Language-specific pronunciation hints
-  const languageHints: Record<string, string> = {
-    japanese: "Read this Japanese text clearly and naturally for language learners:",
-    english: "Read this English text clearly and naturally for language learners:",
-    french: "Read this French text clearly and naturally for language learners:",
-  };
-  const hint = languageHints[language] || languageHints.english;
+  // For short text (single words), just pass the text directly
+  // For longer text (sentences), add a pronunciation hint
+  const isShortText = text.length <= 10 || !text.includes(" ");
+
+  let promptText: string;
+  if (isShortText) {
+    // For single words, just say the word
+    promptText = text;
+  } else {
+    // For sentences, add pronunciation hints
+    const languageHints: Record<string, string> = {
+      japanese: "Read this Japanese text clearly and naturally for language learners:",
+      english: "Read this English text clearly and naturally for language learners:",
+      french: "Read this French text clearly and naturally for language learners:",
+    };
+    const hint = languageHints[language] || languageHints.english;
+    promptText = `${hint}\n\n${text}`;
+  }
 
   try {
     const response = await fetch(
@@ -92,7 +103,7 @@ async function generateTTSAudio(
         body: JSON.stringify({
           contents: [
             {
-              parts: [{ text: `${hint}\n\n${text}` }],
+              parts: [{ text: promptText }],
             },
           ],
           generationConfig: {
@@ -1712,6 +1723,82 @@ export const fetchYoutubeTranscript = action({
         error: error instanceof Error ? error.message : "Failed to fetch transcript",
       };
     }
+  },
+});
+
+// ============================================
+// FLASHCARD SENTENCE REFRESH
+// ============================================
+
+/**
+ * Refresh a flashcard's sentence and audio with newly generated content
+ */
+export const refreshFlashcardSentence = action({
+  args: {
+    flashcardId: v.id("flashcards"),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; sentence?: string; translation?: string; audioUrl?: string }> => {
+    // Get the flashcard
+    const flashcard = await ctx.runQuery(internal.aiHelpers.getFlashcard, {
+      flashcardId: args.flashcardId,
+    });
+
+    if (!flashcard) {
+      throw new Error("Flashcard not found");
+    }
+
+    // Get vocabulary for language info and word details
+    const vocab = await ctx.runQuery(internal.aiHelpers.getVocabulary, {
+      vocabularyId: flashcard.vocabularyId,
+    });
+
+    if (!vocab) {
+      throw new Error("Vocabulary not found");
+    }
+
+    // Generate a new sentence using the helper function
+    const generated = await generateSentenceHelper({
+      word: vocab.word,
+      reading: vocab.reading ?? undefined,
+      definitions: vocab.definitions,
+      language: vocab.language,
+      examLevel: vocab.examLevel ?? undefined,
+    });
+
+    let audioUrl: string | undefined;
+
+    // Generate new audio for the sentence
+    try {
+      const audioResult = await generateTTSAudio(
+        generated.sentence,
+        vocab.language
+      );
+
+      if (audioResult) {
+        // Store audio in Convex file storage
+        const blob = new Blob([new Uint8Array(audioResult.audioData)], { type: audioResult.mimeType });
+        const storageId = await ctx.storage.store(blob);
+        audioUrl = await ctx.storage.getUrl(storageId) ?? undefined;
+      }
+    } catch (error) {
+      console.error("Audio generation failed during refresh:", error);
+      // Continue without audio - sentence refresh is still valuable
+    }
+
+    // Update the flashcard with new sentence and audio
+    await ctx.runMutation(internal.flashcards.updateSentenceInternal, {
+      flashcardId: args.flashcardId,
+      sentence: generated.sentence,
+      sentenceTranslation: generated.translation,
+      audioUrl,
+    });
+
+    return {
+      success: true,
+      sentence: generated.sentence,
+      translation: generated.translation,
+      audioUrl,
+    };
   },
 });
 

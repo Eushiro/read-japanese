@@ -11,16 +11,107 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Theme initialization - runs before React to prevent flash -->
+    <!-- Critical theme styles - must load before anything else -->
+    <style>
+      /* Hide until theme is determined */
+      html:not(.theme-ready) body { opacity: 0; }
+      html.theme-ready body { opacity: 1; }
+
+      /* Light mode CSS variables */
+      :root {
+        --background: #FAF7F2;
+        --foreground: #1C1917;
+        --card: #FFFFFF;
+        --card-foreground: #1C1917;
+        --popover: #FFFFFF;
+        --popover-foreground: #1C1917;
+        --primary: #C2410C;
+        --primary-foreground: #FFFFFF;
+        --secondary: #334155;
+        --secondary-foreground: #FFFFFF;
+        --muted: #F5F0E8;
+        --muted-foreground: #78716C;
+        --accent: #C2410C;
+        --accent-foreground: #FFFFFF;
+        --destructive: #DC2626;
+        --border: #E7E0D5;
+        --input: #E7E0D5;
+        --ring: #C2410C;
+        --color-background: #FAF7F2;
+        --color-background-subtle: #F5F0E8;
+        --color-surface: #FFFFFF;
+        --color-surface-elevated: #FFFFFF;
+        --color-foreground: #1C1917;
+        --color-foreground-muted: #78716C;
+        --color-border: #E7E0D5;
+        --color-border-subtle: #F0EBE3;
+        --color-accent: #C2410C;
+        --color-muted: #F5F0E8;
+      }
+
+      /* Dark mode CSS variables */
+      .dark {
+        --background: #0F0F14;
+        --foreground: #F5F5F4;
+        --card: #1C1C24;
+        --card-foreground: #F5F5F4;
+        --popover: #1C1C24;
+        --popover-foreground: #F5F5F4;
+        --primary: #EA580C;
+        --primary-foreground: #FFFFFF;
+        --secondary: #24242E;
+        --secondary-foreground: #F5F5F4;
+        --muted: #1C1C24;
+        --muted-foreground: #A8A29E;
+        --accent: #EA580C;
+        --accent-foreground: #FFFFFF;
+        --destructive: #DC2626;
+        --border: #2A2A35;
+        --input: #2A2A35;
+        --ring: #EA580C;
+        --color-background: #0F0F14;
+        --color-background-subtle: #18181F;
+        --color-surface: #1C1C24;
+        --color-surface-elevated: #24242E;
+        --color-foreground: #F5F5F4;
+        --color-foreground-muted: #A8A29E;
+        --color-border: #2A2A35;
+        --color-border-subtle: #1F1F28;
+        --color-accent: #EA580C;
+        --color-muted: #1C1C24;
+      }
+
+      html { background-color: var(--background); color: var(--foreground); }
+      body { background-color: var(--background); }
+    </style>
+
+    <!-- Theme initialization - runs synchronously before anything renders -->
     <script>
       (function() {
-        try {
-          var cached = localStorage.getItem('settingsCache');
-          var theme = cached ? JSON.parse(cached).theme : 'system';
-          var isDark = theme === 'dark' ||
-            (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          if (isDark) document.documentElement.classList.add('dark');
-        } catch (e) {}
+        var storageKey = 'sanlang-theme';
+        var theme = localStorage.getItem(storageKey);
+
+        // Migrate from old storage if needed
+        if (!theme) {
+          try {
+            var oldCache = localStorage.getItem('settingsCache');
+            if (oldCache) {
+              var oldTheme = JSON.parse(oldCache).theme;
+              if (oldTheme) {
+                theme = oldTheme;
+                localStorage.setItem(storageKey, theme);
+              }
+            }
+          } catch (e) {}
+        }
+
+        theme = theme || 'system';
+        var isDark = theme === 'dark' ||
+          (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+        document.documentElement.classList.remove('light', 'dark');
+        document.documentElement.classList.add(isDark ? 'dark' : 'light');
+        document.documentElement.classList.add('theme-ready');
       })();
     </script>
   </head>

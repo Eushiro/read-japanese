@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { cardStateValidator, ratingValidator } from "./schema";
 
 // ============================================
@@ -474,5 +474,29 @@ export const unreview = mutation({
     }
 
     return { success: true };
+  },
+});
+
+// ============================================
+// INTERNAL MUTATIONS (for actions)
+// ============================================
+
+// Update flashcard sentence (internal, for refresh action)
+export const updateSentenceInternal = internalMutation({
+  args: {
+    flashcardId: v.id("flashcards"),
+    sentence: v.string(),
+    sentenceTranslation: v.string(),
+    audioUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    await ctx.db.patch(args.flashcardId, {
+      sentence: args.sentence,
+      sentenceTranslation: args.sentenceTranslation,
+      audioUrl: args.audioUrl,
+      sentenceGeneratedAt: now,
+      updatedAt: now,
+    });
   },
 });

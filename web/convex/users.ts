@@ -182,6 +182,100 @@ export const updateProficiencyLevel = mutation({
   },
 });
 
+// Update streak on session completion
+export const updateStreak = mutation({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!user) throw new Error("User not found");
+
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
+    const lastActivity = user.lastActivityDate;
+    const currentStreak = user.currentStreak ?? 0;
+    const longestStreak = user.longestStreak ?? 0;
+
+    let newStreak = 1;
+
+    if (lastActivity) {
+      // Check if already active today (no streak change)
+      if (lastActivity === todayStr) {
+        return {
+          currentStreak,
+          longestStreak,
+          streakUpdated: false,
+        };
+      }
+
+      // Check if yesterday (streak continues)
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+      if (lastActivity === yesterdayStr) {
+        newStreak = currentStreak + 1;
+      }
+      // Otherwise streak resets to 1
+    }
+
+    const newLongestStreak = Math.max(longestStreak, newStreak);
+
+    await ctx.db.patch(user._id, {
+      currentStreak: newStreak,
+      longestStreak: newLongestStreak,
+      lastActivityDate: todayStr,
+      updatedAt: Date.now(),
+    });
+
+    return {
+      currentStreak: newStreak,
+      longestStreak: newLongestStreak,
+      streakUpdated: true,
+      isNewRecord: newStreak > longestStreak,
+    };
+  },
+});
+
+// Get streak info
+export const getStreak = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!user) return null;
+
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+    const lastActivity = user.lastActivityDate;
+    const currentStreak = user.currentStreak ?? 0;
+
+    // Check if streak is still active
+    let isStreakActive = false;
+    if (lastActivity === todayStr) {
+      isStreakActive = true;
+    } else if (lastActivity) {
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split("T")[0];
+      isStreakActive = lastActivity === yesterdayStr;
+    }
+
+    return {
+      currentStreak: isStreakActive ? currentStreak : 0,
+      longestStreak: user.longestStreak ?? 0,
+      lastActivityDate: lastActivity,
+      hasActivityToday: lastActivity === todayStr,
+    };
+  },
+});
+
 // Delete user and all associated data
 export const deleteUser = mutation({
   args: { clerkId: v.string() },

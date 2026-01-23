@@ -1,0 +1,1502 @@
+[
+  {
+    "id": "csv_0",
+    "word": "食べる",
+    "reading": "たべる",
+    "definitions": [
+      "to eat"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "毎日りんごを食べます。",
+    "sentence_translation": "I eat an apple every day.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_1",
+    "word": "飲む",
+    "reading": "のむ",
+    "definitions": [
+      "to drink"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "冷たい水を飲みます。",
+    "sentence_translation": "I drink cold water.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_2",
+    "word": "行く",
+    "reading": "いく",
+    "definitions": [
+      "to go"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "明日学校へ行きます。",
+    "sentence_translation": "I will go to school tomorrow.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_3",
+    "word": "来る",
+    "reading": "くる",
+    "definitions": [
+      "to come"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "友達が日本に来ます。",
+    "sentence_translation": "A friend is coming to Japan.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_4",
+    "word": "見る",
+    "reading": "みる",
+    "definitions": [
+      "to see; to watch"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "夜に映画を見ます。",
+    "sentence_translation": "I watch movies at night.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_5",
+    "word": "聞く",
+    "reading": "きく",
+    "definitions": [
+      "to listen; to hear; to ask"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "ラジオを聞きます。",
+    "sentence_translation": "I listen to the radio.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_6",
+    "word": "話す",
+    "reading": "はなす",
+    "definitions": [
+      "to speak; to talk"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "先生と日本語で話します。",
+    "sentence_translation": "I speak with my teacher in Japanese.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_7",
+    "word": "読む",
+    "reading": "よむ",
+    "definitions": [
+      "to read"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "図書館で本を読みます。",
+    "sentence_translation": "I read books at the library.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_8",
+    "word": "書く",
+    "reading": "かく",
+    "definitions": [
+      "to write"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "鉛筆で名前を書きます。",
+    "sentence_translation": "I write my name with a pencil.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_9",
+    "word": "買う",
+    "reading": "かう",
+    "definitions": [
+      "to buy"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "スーパーで卵を買いました。",
+    "sentence_translation": "I bought eggs at the supermarket.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_10",
+    "word": "寝る",
+    "reading": "ねる",
+    "definitions": [
+      "to sleep"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "昨日は早く寝ました。",
+    "sentence_translation": "I went to bed early yesterday.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_11",
+    "word": "起きる",
+    "reading": "おきる",
+    "definitions": [
+      "to wake up; to get up"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "毎朝七時に起きます。",
+    "sentence_translation": "I get up at seven every morning.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_12",
+    "word": "歩く",
+    "reading": "あるく",
+    "definitions": [
+      "to walk"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "駅まで歩きます。",
+    "sentence_translation": "I walk to the station.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_13",
+    "word": "走る",
+    "reading": "はしる",
+    "definitions": [
+      "to run"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "公園で走ります。",
+    "sentence_translation": "I run in the park.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_14",
+    "word": "待つ",
+    "reading": "まつ",
+    "definitions": [
+      "to wait"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "ここでバスを待ちます。",
+    "sentence_translation": "I wait for the bus here.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_15",
+    "word": "会う",
+    "reading": "あう",
+    "definitions": [
+      "to meet"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "日曜日に友達に会います。",
+    "sentence_translation": "I will meet a friend on Sunday.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_16",
+    "word": "作る",
+    "reading": "つくる",
+    "definitions": [
+      "to make; to create"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "母は晩ごはんを作ります。",
+    "sentence_translation": "My mother makes dinner.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_17",
+    "word": "使う",
+    "reading": "つかう",
+    "definitions": [
+      "to use"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "辞書を使います。",
+    "sentence_translation": "I use a dictionary.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_18",
+    "word": "思う",
+    "reading": "おもう",
+    "definitions": [
+      "to think"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "この本はいいと思います。",
+    "sentence_translation": "I think this book is good.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_19",
+    "word": "知る",
+    "reading": "しる",
+    "definitions": [
+      "to know"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "私はその人を知っています。",
+    "sentence_translation": "I know that person.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_20",
+    "word": "分かる",
+    "reading": "わかる",
+    "definitions": [
+      "to understand"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "日本語が少し分かります。",
+    "sentence_translation": "I understand Japanese a little.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_21",
+    "word": "教える",
+    "reading": "おしえる",
+    "definitions": [
+      "to teach; to tell"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "山田先生は英語を教えます。",
+    "sentence_translation": "Mr. Yamada teaches English.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_22",
+    "word": "習う",
+    "reading": "ならう",
+    "definitions": [
+      "to learn"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "私は日本料理を習います。",
+    "sentence_translation": "I learn Japanese cooking.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_23",
+    "word": "働く",
+    "reading": "はたらく",
+    "definitions": [
+      "to work"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "父は病院で働きます。",
+    "sentence_translation": "My father works at a hospital.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_24",
+    "word": "遊ぶ",
+    "reading": "あそぶ",
+    "definitions": [
+      "to play"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "週末に友達と遊びます。",
+    "sentence_translation": "I play with my friends on the weekend.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_25",
+    "word": "入る",
+    "reading": "はいる",
+    "definitions": [
+      "to enter"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "部屋に入ります。",
+    "sentence_translation": "I enter the room.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_26",
+    "word": "出る",
+    "reading": "でる",
+    "definitions": [
+      "to exit; to leave"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "朝8時に家を出ます。",
+    "sentence_translation": "I leave home at 8 in the morning.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_27",
+    "word": "開ける",
+    "reading": "あける",
+    "definitions": [
+      "to open"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "暑いですから、窓を開けます。",
+    "sentence_translation": "It is hot, so I will open the window.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_28",
+    "word": "閉める",
+    "reading": "しめる",
+    "definitions": [
+      "to close"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "寒いので、ドアを閉めます。",
+    "sentence_translation": "It is cold, so I will close the door.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_29",
+    "word": "立つ",
+    "reading": "たつ",
+    "definitions": [
+      "to stand"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "椅子から立ちます。",
+    "sentence_translation": "I stand up from the chair.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_30",
+    "word": "座る",
+    "reading": "すわる",
+    "definitions": [
+      "to sit"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "椅子に座ります。",
+    "sentence_translation": "I sit on the chair.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_31",
+    "word": "持つ",
+    "reading": "もつ",
+    "definitions": [
+      "to hold; to have"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "重い荷物を持ちます。",
+    "sentence_translation": "I will carry heavy luggage.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_32",
+    "word": "置く",
+    "reading": "おく",
+    "definitions": [
+      "to put; to place"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "本を机の上に置きます。",
+    "sentence_translation": "I put the book on the desk.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_33",
+    "word": "取る",
+    "reading": "とる",
+    "definitions": [
+      "to take"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "カバンからペンを取ります。",
+    "sentence_translation": "I take a pen from the bag.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_34",
+    "word": "始まる",
+    "reading": "はじまる",
+    "definitions": [
+      "to begin"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "学校は9時に始まります。",
+    "sentence_translation": "School starts at 9 o'clock.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_35",
+    "word": "終わる",
+    "reading": "おわる",
+    "definitions": [
+      "to end"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "授業は3時に終わります。",
+    "sentence_translation": "The class ends at 3 o'clock.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_36",
+    "word": "住む",
+    "reading": "すむ",
+    "definitions": [
+      "to live; to reside"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "私は東京に住んでいます。",
+    "sentence_translation": "I live in Tokyo.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_37",
+    "word": "洗う",
+    "reading": "あらう",
+    "definitions": [
+      "to wash"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "ご飯の前に手を洗います。",
+    "sentence_translation": "I wash my hands before the meal.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_38",
+    "word": "着る",
+    "reading": "きる",
+    "definitions": [
+      "to wear"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "白いシャツを着ます。",
+    "sentence_translation": "I wear a white shirt.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_39",
+    "word": "脱ぐ",
+    "reading": "ぬぐ",
+    "definitions": [
+      "to take off clothes"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "ここで靴を脱ぎます。",
+    "sentence_translation": "I take off my shoes here.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_40",
+    "word": "時間",
+    "reading": "じかん",
+    "definitions": [
+      "time"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "じかんがありません。",
+    "sentence_translation": "I do not have time.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_41",
+    "word": "今日",
+    "reading": "きょう",
+    "definitions": [
+      "today"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "きょうはあついです。",
+    "sentence_translation": "Today is hot.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_42",
+    "word": "明日",
+    "reading": "あした",
+    "definitions": [
+      "tomorrow"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "あした、がっこうへいきます。",
+    "sentence_translation": "I will go to school tomorrow.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_43",
+    "word": "昨日",
+    "reading": "きのう",
+    "definitions": [
+      "yesterday"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "きのう、デパートへいきました。",
+    "sentence_translation": "Yesterday, I went to the department store.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_44",
+    "word": "朝",
+    "reading": "あさ",
+    "definitions": [
+      "morning"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "あさ、おんがくをききます。",
+    "sentence_translation": "I listen to music in the morning.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_45",
+    "word": "夜",
+    "reading": "よる",
+    "definitions": [
+      "night; evening"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "よる、しゅくだいをします。",
+    "sentence_translation": "I do my homework at night.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_46",
+    "word": "午前",
+    "reading": "ごぜん",
+    "definitions": [
+      "morning; AM"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "ごぜん、しごとをします。",
+    "sentence_translation": "I work in the morning.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_47",
+    "word": "午後",
+    "reading": "ごご",
+    "definitions": [
+      "afternoon; PM"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "ごご、えいがをみます。",
+    "sentence_translation": "I will watch a movie in the afternoon.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_48",
+    "word": "毎日",
+    "reading": "まいにち",
+    "definitions": [
+      "every day"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "まいにちにほんごをべんきょうします。",
+    "sentence_translation": "I study Japanese every day.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_49",
+    "word": "今週",
+    "reading": "こんしゅう",
+    "definitions": [
+      "this week"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "こんしゅうはとてもいそがしいです。",
+    "sentence_translation": "I am very busy this week.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_50",
+    "word": "水",
+    "reading": "みず",
+    "definitions": [
+      "water"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "つめたいみずをのみます。",
+    "sentence_translation": "I drink cold water.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_51",
+    "word": "お茶",
+    "reading": "おちゃ",
+    "definitions": [
+      "tea"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "あついおちゃがすきです。",
+    "sentence_translation": "I like hot tea.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_52",
+    "word": "ご飯",
+    "reading": "ごはん",
+    "definitions": [
+      "rice; meal"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "あさごはんをたべましたか。",
+    "sentence_translation": "Did you eat breakfast?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_53",
+    "word": "パン",
+    "reading": "ぱん",
+    "definitions": [
+      "bread"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "パンをふたつかいました。",
+    "sentence_translation": "I bought two pieces of bread.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_54",
+    "word": "肉",
+    "reading": "にく",
+    "definitions": [
+      "meat"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "にくとやさいをたべます。",
+    "sentence_translation": "I eat meat and vegetables.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_55",
+    "word": "魚",
+    "reading": "さかな",
+    "definitions": [
+      "fish"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "このさかなはおいしいです。",
+    "sentence_translation": "This fish is delicious.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_56",
+    "word": "野菜",
+    "reading": "やさい",
+    "definitions": [
+      "vegetables"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "スーパーでやさいをかいます。",
+    "sentence_translation": "I buy vegetables at the supermarket.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_57",
+    "word": "果物",
+    "reading": "くだもの",
+    "definitions": [
+      "fruit"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "くだものがだいすきです。",
+    "sentence_translation": "I love fruit.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_58",
+    "word": "友達",
+    "reading": "ともだち",
+    "definitions": [
+      "friend"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "ともだちとてにすをします。",
+    "sentence_translation": "I play tennis with my friend.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_59",
+    "word": "家族",
+    "reading": "かぞく",
+    "definitions": [
+      "family"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "かぞくとレストランへいきました。",
+    "sentence_translation": "I went to a restaurant with my family.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_60",
+    "word": "父",
+    "reading": "ちち",
+    "definitions": [
+      "father"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "父は会社員です。",
+    "sentence_translation": "My father is a company employee.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_61",
+    "word": "母",
+    "reading": "はは",
+    "definitions": [
+      "mother"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "母は料理が上手です。",
+    "sentence_translation": "My mother is good at cooking.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_62",
+    "word": "兄",
+    "reading": "あに",
+    "definitions": [
+      "older brother"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "兄は大学生です。",
+    "sentence_translation": "My older brother is a university student.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_63",
+    "word": "姉",
+    "reading": "あね",
+    "definitions": [
+      "older sister"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "姉は先生です。",
+    "sentence_translation": "My older sister is a teacher.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_64",
+    "word": "弟",
+    "reading": "おとうと",
+    "definitions": [
+      "younger brother"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "弟はアイスクリームが好きです。",
+    "sentence_translation": "My younger brother likes ice cream.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_65",
+    "word": "妹",
+    "reading": "いもうと",
+    "definitions": [
+      "younger sister"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "妹は十歳です。",
+    "sentence_translation": "My younger sister is ten years old.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_66",
+    "word": "学校",
+    "reading": "がっこう",
+    "definitions": [
+      "school"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "毎日学校へ行きます。",
+    "sentence_translation": "I go to school every day.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_67",
+    "word": "先生",
+    "reading": "せんせい",
+    "definitions": [
+      "teacher"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "あの先生はとても親切です。",
+    "sentence_translation": "That teacher is very kind.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_68",
+    "word": "学生",
+    "reading": "がくせい",
+    "definitions": [
+      "student"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "私は日本語の学生です。",
+    "sentence_translation": "I am a student of Japanese.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_69",
+    "word": "仕事",
+    "reading": "しごと",
+    "definitions": [
+      "work; job"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "私の仕事は忙しいです。",
+    "sentence_translation": "My job is busy.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_70",
+    "word": "会社",
+    "reading": "かいしゃ",
+    "definitions": [
+      "company"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "会社は九時に始まります。",
+    "sentence_translation": "The company starts at nine o'clock.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_71",
+    "word": "電車",
+    "reading": "でんしゃ",
+    "definitions": [
+      "train"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "電車で学校に行きます。",
+    "sentence_translation": "I go to school by train.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_72",
+    "word": "車",
+    "reading": "くるま",
+    "definitions": [
+      "car"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "父は新しい車を買いました。",
+    "sentence_translation": "My father bought a new car.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_73",
+    "word": "駅",
+    "reading": "えき",
+    "definitions": [
+      "station"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "駅の前に郵便局があります。",
+    "sentence_translation": "There is a post office in front of the station.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_74",
+    "word": "道",
+    "reading": "みち",
+    "definitions": [
+      "road; way"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "この道はとても狭いです。",
+    "sentence_translation": "This road is very narrow.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_75",
+    "word": "部屋",
+    "reading": "へや",
+    "definitions": [
+      "room"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "私の部屋はきれいです。",
+    "sentence_translation": "My room is clean.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_76",
+    "word": "家",
+    "reading": "いえ",
+    "definitions": [
+      "house; home"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "私の家は駅から近いです。",
+    "sentence_translation": "My house is close to the station.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_77",
+    "word": "店",
+    "reading": "みせ",
+    "definitions": [
+      "shop; store"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "あの店でりんごを買いました。",
+    "sentence_translation": "I bought apples at that shop.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_78",
+    "word": "病院",
+    "reading": "びょういん",
+    "definitions": [
+      "hospital"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "昨日、病院へ行きました。",
+    "sentence_translation": "I went to the hospital yesterday.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_79",
+    "word": "大きい",
+    "reading": "おおきい",
+    "definitions": [
+      "big; large"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "このテレビはとても大きいです。",
+    "sentence_translation": "This TV is very big.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_80",
+    "word": "小さい",
+    "reading": "ちいさい",
+    "definitions": [
+      "small; little"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "私のバッグは小さいです。",
+    "sentence_translation": "My bag is small.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_81",
+    "word": "新しい",
+    "reading": "あたらしい",
+    "definitions": [
+      "new"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "新しいテレビを買いました。",
+    "sentence_translation": "I bought a new TV.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_82",
+    "word": "古い",
+    "reading": "ふるい",
+    "definitions": [
+      "old"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "この本は古いです。",
+    "sentence_translation": "This book is old.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_83",
+    "word": "高い",
+    "reading": "たかい",
+    "definitions": [
+      "expensive; tall; high"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "あの時計はとても高いです。",
+    "sentence_translation": "That watch is very expensive.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_84",
+    "word": "安い",
+    "reading": "やすい",
+    "definitions": [
+      "cheap; inexpensive"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "このパンは安いです。",
+    "sentence_translation": "This bread is cheap.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_85",
+    "word": "良い",
+    "reading": "いい",
+    "definitions": [
+      "good"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "今日は天気がいいです。",
+    "sentence_translation": "The weather is good today.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_86",
+    "word": "悪い",
+    "reading": "わるい",
+    "definitions": [
+      "bad"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "昨日は気分が悪かったです。",
+    "sentence_translation": "I felt bad yesterday.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_87",
+    "word": "長い",
+    "reading": "ながい",
+    "definitions": [
+      "long"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "彼女の髪はとても長いです。",
+    "sentence_translation": "Her hair is very long.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_88",
+    "word": "短い",
+    "reading": "みじかい",
+    "definitions": [
+      "short"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "夏休みは短いです。",
+    "sentence_translation": "Summer vacation is short.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_89",
+    "word": "暑い",
+    "reading": "あつい",
+    "definitions": [
+      "hot (weather)"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "今日はとても暑いですね。",
+    "sentence_translation": "It is very hot today, isn't it?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_90",
+    "word": "寒い",
+    "reading": "さむい",
+    "definitions": [
+      "cold (weather)"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "冬はとても寒いです。",
+    "sentence_translation": "Winter is very cold.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_91",
+    "word": "難しい",
+    "reading": "むずかしい",
+    "definitions": [
+      "difficult"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "日本語の漢字は難しいです。",
+    "sentence_translation": "Japanese kanji are difficult.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_92",
+    "word": "簡単",
+    "reading": "かんたん",
+    "definitions": [
+      "easy; simple"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "この問題はとても簡単です。",
+    "sentence_translation": "This problem is very easy.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_93",
+    "word": "元気",
+    "reading": "げんき",
+    "definitions": [
+      "healthy; energetic"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "お父さんは元気ですか。",
+    "sentence_translation": "Is your father well?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_94",
+    "word": "忙しい",
+    "reading": "いそがしい",
+    "definitions": [
+      "busy"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "今日はとても忙しいです。",
+    "sentence_translation": "I am very busy today.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_95",
+    "word": "楽しい",
+    "reading": "たのしい",
+    "definitions": [
+      "fun; enjoyable"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "パーティーは楽しかったです。",
+    "sentence_translation": "The party was fun.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_96",
+    "word": "嬉しい",
+    "reading": "うれしい",
+    "definitions": [
+      "happy; glad"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "あなたに会えて嬉しいです。",
+    "sentence_translation": "I am happy to meet you.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_97",
+    "word": "本",
+    "reading": "ほん",
+    "definitions": [
+      "book"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "図書館で本を借りました。",
+    "sentence_translation": "I borrowed a book from the library.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_98",
+    "word": "映画",
+    "reading": "えいが",
+    "definitions": [
+      "movie; film"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "明日友達と映画を見ます。",
+    "sentence_translation": "I will watch a movie with my friend tomorrow.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_99",
+    "word": "音楽",
+    "reading": "おんがく",
+    "definitions": [
+      "music"
+    ],
+    "language": "japanese",
+    "level": "N5",
+    "sentence": "家で音楽を聞きます。",
+    "sentence_translation": "I listen to music at home.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  }
+]

@@ -118,8 +118,8 @@ export function ComprehensionPage() {
   useEffect(() => {
     // Only auto-start once
     if (hasAutoStarted) return;
-    // Wait for all data to load
-    if (storyLoading || existingComprehension === undefined) return;
+    // Wait for all data to load (including subscription)
+    if (storyLoading || existingComprehension === undefined || subscription === undefined) return;
     // Don't generate if already have questions
     if (localQuestions.length > 0) return;
     // Don't generate if no story or not authenticated
@@ -129,14 +129,18 @@ export function ComprehensionPage() {
 
     // Mark as started and trigger generation
     setHasAutoStarted(true);
-  }, [storyLoading, existingComprehension, story, isAuthenticated, localQuestions.length, hasAutoStarted]);
+  }, [storyLoading, existingComprehension, story, isAuthenticated, localQuestions.length, hasAutoStarted, subscription]);
 
   // Separate effect to actually generate when hasAutoStarted becomes true
   useEffect(() => {
     if (hasAutoStarted && !isGenerating && localQuestions.length === 0 && story && isAuthenticated) {
+      // Wait for subscription to load
+      if (subscription === undefined) return;
+
       // Check if premium user before auto-generating
-      if (!isPremiumUser && subscription !== undefined) {
-        // Not premium - don't auto-generate, user will see the generate button with paywall
+      if (!isPremiumUser) {
+        // Not premium - show paywall instead of generating
+        setShowPaywall(true);
         return;
       }
 
@@ -163,7 +167,7 @@ export function ComprehensionPage() {
       };
       doGenerate();
     }
-  }, [hasAutoStarted]);
+  }, [hasAutoStarted, subscription, isPremiumUser]);
 
   // Get the full story content for AI
   const getStoryContent = () => {

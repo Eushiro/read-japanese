@@ -1,0 +1,1502 @@
+[
+  {
+    "id": "csv_0",
+    "word": "manger",
+    "reading": null,
+    "definitions": [
+      "to eat"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je mange une pomme rouge.",
+    "sentence_translation": "I eat a red apple.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_1",
+    "word": "boire",
+    "reading": null,
+    "definitions": [
+      "to drink"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Tu bois un café chaud.",
+    "sentence_translation": "You drink a hot coffee.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_2",
+    "word": "aller",
+    "reading": null,
+    "definitions": [
+      "to go"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Nous allons au parc maintenant.",
+    "sentence_translation": "We are going to the park now.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_3",
+    "word": "venir",
+    "reading": null,
+    "definitions": [
+      "to come"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Est-ce que tu viens demain ?",
+    "sentence_translation": "Are you coming tomorrow?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_4",
+    "word": "voir",
+    "reading": null,
+    "definitions": [
+      "to see"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je vois un petit chat.",
+    "sentence_translation": "I see a small cat.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_5",
+    "word": "regarder",
+    "reading": null,
+    "definitions": [
+      "to watch; to look at"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Elle regarde un film français.",
+    "sentence_translation": "She is watching a French movie.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_6",
+    "word": "écouter",
+    "reading": null,
+    "definitions": [
+      "to listen"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "J'écoute la radio le matin.",
+    "sentence_translation": "I listen to the radio in the morning.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_7",
+    "word": "parler",
+    "reading": null,
+    "definitions": [
+      "to speak; to talk"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Vous parlez français très bien.",
+    "sentence_translation": "You speak French very well.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_8",
+    "word": "lire",
+    "reading": null,
+    "definitions": [
+      "to read"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Mon frère lit un livre.",
+    "sentence_translation": "My brother is reading a book.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_9",
+    "word": "écrire",
+    "reading": null,
+    "definitions": [
+      "to write"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "J'écris une lettre à maman.",
+    "sentence_translation": "I am writing a letter to mom.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_10",
+    "word": "acheter",
+    "reading": null,
+    "definitions": [
+      "to buy"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Il achète du pain frais.",
+    "sentence_translation": "He buys some fresh bread.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_11",
+    "word": "dormir",
+    "reading": null,
+    "definitions": [
+      "to sleep"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Le bébé dort dans le lit.",
+    "sentence_translation": "The baby sleeps in the bed.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_12",
+    "word": "travailler",
+    "reading": null,
+    "definitions": [
+      "to work"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je travaille dans un bureau.",
+    "sentence_translation": "I work in an office.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_13",
+    "word": "jouer",
+    "reading": null,
+    "definitions": [
+      "to play"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Les enfants jouent au football.",
+    "sentence_translation": "The children are playing football.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_14",
+    "word": "attendre",
+    "reading": null,
+    "definitions": [
+      "to wait"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Nous attendons le bus ici.",
+    "sentence_translation": "We are waiting for the bus here.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_15",
+    "word": "rencontrer",
+    "reading": null,
+    "definitions": [
+      "to meet"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je rencontre un ami aujourd'hui.",
+    "sentence_translation": "I am meeting a friend today.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_16",
+    "word": "faire",
+    "reading": null,
+    "definitions": [
+      "to do; to make"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Tu fais tes devoirs maintenant.",
+    "sentence_translation": "You are doing your homework now.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_17",
+    "word": "utiliser",
+    "reading": null,
+    "definitions": [
+      "to use"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "J'utilise mon téléphone portable souvent.",
+    "sentence_translation": "I use my mobile phone often.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_18",
+    "word": "penser",
+    "reading": null,
+    "definitions": [
+      "to think"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je pense à ma famille.",
+    "sentence_translation": "I am thinking about my family.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_19",
+    "word": "savoir",
+    "reading": null,
+    "definitions": [
+      "to know (facts)"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je sais parler un peu français.",
+    "sentence_translation": "I know how to speak a little French.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_20",
+    "word": "connaître",
+    "reading": null,
+    "definitions": [
+      "to know (people/places)"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je connais bien cette ville.",
+    "sentence_translation": "I know this city well.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_21",
+    "word": "apprendre",
+    "reading": null,
+    "definitions": [
+      "to learn"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "J'apprends le français à l'école.",
+    "sentence_translation": "I learn French at school.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_22",
+    "word": "enseigner",
+    "reading": null,
+    "definitions": [
+      "to teach"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Le professeur enseigne les mathématiques.",
+    "sentence_translation": "The teacher teaches mathematics.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_23",
+    "word": "aider",
+    "reading": null,
+    "definitions": [
+      "to help"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Est-ce que tu peux m'aider ?",
+    "sentence_translation": "Can you help me?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_24",
+    "word": "donner",
+    "reading": null,
+    "definitions": [
+      "to give"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je donne un cadeau à Marie.",
+    "sentence_translation": "I give a gift to Marie.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_25",
+    "word": "prendre",
+    "reading": null,
+    "definitions": [
+      "to take"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Il prend le bus le matin.",
+    "sentence_translation": "He takes the bus in the morning.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_26",
+    "word": "mettre",
+    "reading": null,
+    "definitions": [
+      "to put; to wear"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je mets mon manteau rouge.",
+    "sentence_translation": "I put on my red coat.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_27",
+    "word": "ouvrir",
+    "reading": null,
+    "definitions": [
+      "to open"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Elle ouvre la fenêtre du salon.",
+    "sentence_translation": "She opens the living room window.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_28",
+    "word": "fermer",
+    "reading": null,
+    "definitions": [
+      "to close"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je ferme la porte de la chambre.",
+    "sentence_translation": "I close the bedroom door.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_29",
+    "word": "commencer",
+    "reading": null,
+    "definitions": [
+      "to begin; to start"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Le cours commence à neuf heures.",
+    "sentence_translation": "The class starts at nine.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_30",
+    "word": "finir",
+    "reading": null,
+    "definitions": [
+      "to finish"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je finis mes devoirs ce soir.",
+    "sentence_translation": "I finish my homework tonight.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_31",
+    "word": "habiter",
+    "reading": null,
+    "definitions": [
+      "to live; to reside"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "J'habite dans une petite maison.",
+    "sentence_translation": "I live in a small house.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_32",
+    "word": "aimer",
+    "reading": null,
+    "definitions": [
+      "to love; to like"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "J'aime manger des pommes rouges.",
+    "sentence_translation": "I like to eat red apples.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_33",
+    "word": "détester",
+    "reading": null,
+    "definitions": [
+      "to hate"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Il déteste le café sans sucre.",
+    "sentence_translation": "He hates coffee without sugar.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_34",
+    "word": "vouloir",
+    "reading": null,
+    "definitions": [
+      "to want"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je veux un verre d'eau.",
+    "sentence_translation": "I want a glass of water.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_35",
+    "word": "pouvoir",
+    "reading": null,
+    "definitions": [
+      "to be able to; can"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Est-ce que je peux entrer ?",
+    "sentence_translation": "Can I come in?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_36",
+    "word": "devoir",
+    "reading": null,
+    "definitions": [
+      "to have to; must"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Tu dois manger tes légumes.",
+    "sentence_translation": "You must eat your vegetables.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_37",
+    "word": "temps",
+    "reading": null,
+    "definitions": [
+      "time; weather"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Quel temps fait-il aujourd'hui ?",
+    "sentence_translation": "What is the weather like today?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_38",
+    "word": "jour",
+    "reading": null,
+    "definitions": [
+      "day"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "C'est un beau jour aujourd'hui.",
+    "sentence_translation": "It is a beautiful day today.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_39",
+    "word": "semaine",
+    "reading": null,
+    "definitions": [
+      "week"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je travaille cinq jours par semaine.",
+    "sentence_translation": "I work five days a week.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_40",
+    "word": "mois",
+    "reading": null,
+    "definitions": [
+      "month"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Quel est le mois de ton anniversaire ?",
+    "sentence_translation": "What is the month of your birthday?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_41",
+    "word": "année",
+    "reading": null,
+    "definitions": [
+      "year"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "C'est la fin de l'année scolaire.",
+    "sentence_translation": "It is the end of the school year.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_42",
+    "word": "matin",
+    "reading": null,
+    "definitions": [
+      "morning"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je bois un café le matin.",
+    "sentence_translation": "I drink a coffee in the morning.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_43",
+    "word": "soir",
+    "reading": null,
+    "definitions": [
+      "evening"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Il regarde la télé le soir.",
+    "sentence_translation": "He watches TV in the evening.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_44",
+    "word": "nuit",
+    "reading": null,
+    "definitions": [
+      "night"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Il fait froid pendant la nuit.",
+    "sentence_translation": "It is cold during the night.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_45",
+    "word": "aujourd'hui",
+    "reading": null,
+    "definitions": [
+      "today"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Quel jour sommes-nous aujourd'hui ?",
+    "sentence_translation": "What day is it today?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_46",
+    "word": "demain",
+    "reading": null,
+    "definitions": [
+      "tomorrow"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Est-ce que tu étudies demain ?",
+    "sentence_translation": "Are you studying tomorrow?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_47",
+    "word": "hier",
+    "reading": null,
+    "definitions": [
+      "yesterday"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Hier, c'était un beau dimanche.",
+    "sentence_translation": "Yesterday was a beautiful Sunday.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_48",
+    "word": "maintenant",
+    "reading": null,
+    "definitions": [
+      "now"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je veux manger une pizza maintenant.",
+    "sentence_translation": "I want to eat a pizza now.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_49",
+    "word": "eau",
+    "reading": null,
+    "definitions": [
+      "water"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je bois un grand verre d'eau.",
+    "sentence_translation": "I drink a large glass of water.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_50",
+    "word": "café",
+    "reading": null,
+    "definitions": [
+      "coffee"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Tu aimes boire du café chaud ?",
+    "sentence_translation": "Do you like drinking hot coffee?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_51",
+    "word": "pain",
+    "reading": null,
+    "definitions": [
+      "bread"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "J'achète du pain chaque matin.",
+    "sentence_translation": "I buy bread every morning.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_52",
+    "word": "viande",
+    "reading": null,
+    "definitions": [
+      "meat"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Elle ne mange pas de viande.",
+    "sentence_translation": "She does not eat meat.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_53",
+    "word": "poisson",
+    "reading": null,
+    "definitions": [
+      "fish"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Le chat mange du poisson frais.",
+    "sentence_translation": "The cat eats fresh fish.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_54",
+    "word": "légumes",
+    "reading": null,
+    "definitions": [
+      "vegetables"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je mange des légumes au dîner.",
+    "sentence_translation": "I eat vegetables at dinner.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_55",
+    "word": "fruit",
+    "reading": null,
+    "definitions": [
+      "fruit"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "La pomme est mon fruit préféré.",
+    "sentence_translation": "The apple is my favorite fruit.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_56",
+    "word": "repas",
+    "reading": null,
+    "definitions": [
+      "meal"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "C'est l'heure du repas du soir.",
+    "sentence_translation": "It is time for the evening meal.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_57",
+    "word": "ami",
+    "reading": null,
+    "definitions": [
+      "friend"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Mon ami habite dans une maison.",
+    "sentence_translation": "My friend lives in a house.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_58",
+    "word": "famille",
+    "reading": null,
+    "definitions": [
+      "family"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "J'aime passer du temps en famille.",
+    "sentence_translation": "I love spending time with family.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_59",
+    "word": "père",
+    "reading": null,
+    "definitions": [
+      "father"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Mon père travaille dans une banque.",
+    "sentence_translation": "My father works in a bank.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_60",
+    "word": "mère",
+    "reading": null,
+    "definitions": [
+      "mother"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Ma mère est très gentille.",
+    "sentence_translation": "My mother is very kind.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_61",
+    "word": "frère",
+    "reading": null,
+    "definitions": [
+      "brother"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "J'ai un frère et une sœur.",
+    "sentence_translation": "I have a brother and a sister.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_62",
+    "word": "soeur",
+    "reading": null,
+    "definitions": [
+      "sister"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Est-ce que tu as une sœur ?",
+    "sentence_translation": "Do you have a sister?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_63",
+    "word": "enfant",
+    "reading": null,
+    "definitions": [
+      "child"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "L'enfant joue dans le petit jardin.",
+    "sentence_translation": "The child plays in the small garden.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_64",
+    "word": "homme",
+    "reading": null,
+    "definitions": [
+      "man"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "C'est un homme très intelligent.",
+    "sentence_translation": "He is a very intelligent man.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_65",
+    "word": "femme",
+    "reading": null,
+    "definitions": [
+      "woman"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "La femme regarde un film français.",
+    "sentence_translation": "The woman is watching a French movie.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_66",
+    "word": "école",
+    "reading": null,
+    "definitions": [
+      "school"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Nous allons à l'école le matin.",
+    "sentence_translation": "We go to school in the morning.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_67",
+    "word": "professeur",
+    "reading": null,
+    "definitions": [
+      "teacher"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Le professeur explique la leçon.",
+    "sentence_translation": "The teacher explains the lesson.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_68",
+    "word": "étudiant",
+    "reading": null,
+    "definitions": [
+      "student"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je suis un étudiant à Paris.",
+    "sentence_translation": "I am a student in Paris.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_69",
+    "word": "travail",
+    "reading": null,
+    "definitions": [
+      "work; job"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Mon travail est très intéressant.",
+    "sentence_translation": "My work is very interesting.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_70",
+    "word": "bureau",
+    "reading": null,
+    "definitions": [
+      "office"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Tu travailles dans un grand bureau.",
+    "sentence_translation": "You work in a big office.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_71",
+    "word": "maison",
+    "reading": null,
+    "definitions": [
+      "house; home"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Ma maison est bleue et blanche.",
+    "sentence_translation": "My house is blue and white.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_72",
+    "word": "appartement",
+    "reading": null,
+    "definitions": [
+      "apartment"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "J'habite dans un petit appartement.",
+    "sentence_translation": "I live in a small apartment.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_73",
+    "word": "rue",
+    "reading": null,
+    "definitions": [
+      "street"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "La rue est calme la nuit.",
+    "sentence_translation": "The street is quiet at night.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_74",
+    "word": "ville",
+    "reading": null,
+    "definitions": [
+      "city"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Nous habitons dans une grande ville.",
+    "sentence_translation": "We live in a big city.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_75",
+    "word": "pays",
+    "reading": null,
+    "definitions": [
+      "country"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "C'est un très beau pays.",
+    "sentence_translation": "It is a very beautiful country.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_76",
+    "word": "voiture",
+    "reading": null,
+    "definitions": [
+      "car"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Il a une voiture rouge.",
+    "sentence_translation": "He has a red car.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_77",
+    "word": "train",
+    "reading": null,
+    "definitions": [
+      "train"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je prends le train pour Lyon.",
+    "sentence_translation": "I take the train to Lyon.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_78",
+    "word": "avion",
+    "reading": null,
+    "definitions": [
+      "airplane"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "L'avion part à dix heures.",
+    "sentence_translation": "The airplane leaves at ten o'clock.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_79",
+    "word": "magasin",
+    "reading": null,
+    "definitions": [
+      "store; shop"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Le magasin est ouvert le samedi.",
+    "sentence_translation": "The store is open on Saturdays.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_80",
+    "word": "restaurant",
+    "reading": null,
+    "definitions": [
+      "restaurant"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Nous mangeons dans un restaurant.",
+    "sentence_translation": "We are eating in a restaurant.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_81",
+    "word": "hôpital",
+    "reading": null,
+    "definitions": [
+      "hospital"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Où est le grand hôpital ?",
+    "sentence_translation": "Where is the big hospital?",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_82",
+    "word": "grand",
+    "reading": null,
+    "definitions": [
+      "big; tall"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Mon frère est un grand homme.",
+    "sentence_translation": "My brother is a tall man.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_83",
+    "word": "petit",
+    "reading": null,
+    "definitions": [
+      "small; little"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Il a un petit chat noir.",
+    "sentence_translation": "He has a small black cat.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_84",
+    "word": "nouveau",
+    "reading": null,
+    "definitions": [
+      "new"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "J'ai un nouveau sac bleu.",
+    "sentence_translation": "I have a new blue bag.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_85",
+    "word": "vieux",
+    "reading": null,
+    "definitions": [
+      "old"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "C'est un vieux livre d'école.",
+    "sentence_translation": "It is an old school book.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_86",
+    "word": "cher",
+    "reading": null,
+    "definitions": [
+      "expensive"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Ce café est trop cher ici.",
+    "sentence_translation": "This coffee is too expensive here.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_87",
+    "word": "bon",
+    "reading": null,
+    "definitions": [
+      "good"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Le gâteau est très bon.",
+    "sentence_translation": "The cake is very good.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_88",
+    "word": "mauvais",
+    "reading": null,
+    "definitions": [
+      "bad"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Le film est très mauvais.",
+    "sentence_translation": "The movie is very bad.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_89",
+    "word": "long",
+    "reading": null,
+    "definitions": [
+      "long"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "C'est un long voyage en train.",
+    "sentence_translation": "It is a long train trip.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_90",
+    "word": "court",
+    "reading": null,
+    "definitions": [
+      "short"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Le film est très court.",
+    "sentence_translation": "The movie is very short.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_91",
+    "word": "chaud",
+    "reading": null,
+    "definitions": [
+      "hot"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Il fait très chaud aujourd'hui.",
+    "sentence_translation": "It is very hot today.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_92",
+    "word": "froid",
+    "reading": null,
+    "definitions": [
+      "cold"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "L'eau est très froide maintenant.",
+    "sentence_translation": "The water is very cold now.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_93",
+    "word": "facile",
+    "reading": null,
+    "definitions": [
+      "easy"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Le cours est facile pour moi.",
+    "sentence_translation": "The class is easy for me.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_94",
+    "word": "difficile",
+    "reading": null,
+    "definitions": [
+      "difficult"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "L'examen est très difficile aujourd'hui.",
+    "sentence_translation": "The exam is very difficult today.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_95",
+    "word": "heureux",
+    "reading": null,
+    "definitions": [
+      "happy"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je suis très heureux avec toi.",
+    "sentence_translation": "I am very happy with you.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_96",
+    "word": "triste",
+    "reading": null,
+    "definitions": [
+      "sad"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Il est triste sans ses amis.",
+    "sentence_translation": "He is sad without his friends.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_97",
+    "word": "fatigué",
+    "reading": null,
+    "definitions": [
+      "tired"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je suis très fatigué ce soir.",
+    "sentence_translation": "I am very tired tonight.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_98",
+    "word": "occupé",
+    "reading": null,
+    "definitions": [
+      "busy"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Mon professeur est très occupé.",
+    "sentence_translation": "My teacher is very busy.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  },
+  {
+    "id": "csv_99",
+    "word": "livre",
+    "reading": null,
+    "definitions": [
+      "book"
+    ],
+    "language": "french",
+    "level": "A1",
+    "sentence": "Je lis un livre de français.",
+    "sentence_translation": "I read a French book.",
+    "audio_path": null,
+    "word_audio_path": null,
+    "image_path": null
+  }
+]

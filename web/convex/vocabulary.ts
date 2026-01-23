@@ -166,6 +166,23 @@ export const getById = query({
   },
 });
 
+// List vocabulary by source deck
+export const listByDeck = query({
+  args: {
+    userId: v.string(),
+    sourceDeckId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("vocabulary")
+      .withIndex("by_user_and_deck", (q) =>
+        q.eq("userId", args.userId).eq("sourceDeckId", args.sourceDeckId)
+      )
+      .order("desc")
+      .collect();
+  },
+});
+
 // ============================================
 // MUTATIONS
 // ============================================
@@ -184,6 +201,7 @@ export const add = mutation({
     sourceStoryTitle: v.optional(v.string()),
     sourceYoutubeId: v.optional(v.string()),
     sourceContext: v.optional(v.string()), // The sentence where the word was found
+    sourceDeckId: v.optional(v.string()), // Track which deck word came from
     examLevel: v.optional(v.string()),
     flashcardPending: v.optional(v.boolean()), // Set to true if AI flashcard generation is starting
   },
@@ -201,7 +219,7 @@ export const add = mutation({
     }
 
     const now = Date.now();
-    return await ctx.db.insert("vocabulary", {
+    const vocabId = await ctx.db.insert("vocabulary", {
       userId: args.userId,
       language: args.language,
       word: args.word,
@@ -214,6 +232,7 @@ export const add = mutation({
       sourceStoryTitle: args.sourceStoryTitle,
       sourceYoutubeId: args.sourceYoutubeId,
       sourceContext: args.sourceContext,
+      sourceDeckId: args.sourceDeckId,
       examLevel: args.examLevel,
       flashcardPending: args.flashcardPending,
       timesReviewed: 0,
@@ -221,6 +240,23 @@ export const add = mutation({
       createdAt: now,
       updatedAt: now,
     });
+
+    // Update personal deck stats if this word belongs to one
+    if (args.sourceDeckId) {
+      const deck = await ctx.db
+        .query("premadeDecks")
+        .withIndex("by_deck_id", (q) => q.eq("deckId", args.sourceDeckId!))
+        .first();
+
+      if (deck && deck.isPersonal) {
+        await ctx.db.patch(deck._id, {
+          totalWords: deck.totalWords + 1,
+          lastUpdated: now,
+        });
+      }
+    }
+
+    return vocabId;
   },
 });
 
@@ -299,6 +335,7 @@ export const update = mutation({
     definitions: v.optional(v.array(v.string())),
     partOfSpeech: v.optional(v.string()),
     examLevel: v.optional(v.string()),
+    flashcardPending: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
@@ -317,6 +354,9 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("vocabulary") },
   handler: async (ctx, args) => {
+    const vocab = await ctx.db.get(args.id);
+    if (!vocab) return;
+
     // Also delete associated flashcard
     const flashcard = await ctx.db
       .query("flashcards")
@@ -325,6 +365,42 @@ export const remove = mutation({
 
     if (flashcard) {
       await ctx.db.delete(flashcard._id);
+    }
+
+    // Handle deck-related cleanup
+    if (vocab.sourceDeckId) {
+      const deck = await ctx.db
+        .query("premadeDecks")
+        .withIndex("by_deck_id", (q) => q.eq("deckId", vocab.sourceDeckId!))
+        .first();
+
+      if (deck) {
+        if (deck.isPersonal) {
+          // For personal decks, just decrement the count
+          await ctx.db.patch(deck._id, {
+            totalWords: Math.max(0, deck.totalWords - 1),
+            lastUpdated: Date.now(),
+          });
+        } else {
+          // For premade decks, mark as skipped so it doesn't get re-added
+          const sub = await ctx.db
+            .query("userDeckSubscriptions")
+            .withIndex("by_user_and_deck", (q) =>
+              q.eq("userId", vocab.userId).eq("deckId", vocab.sourceDeckId!)
+            )
+            .first();
+
+          if (sub) {
+            const skippedWords = sub.skippedWords ?? [];
+            if (!skippedWords.includes(vocab.word)) {
+              await ctx.db.patch(sub._id, {
+                skippedWords: [...skippedWords, vocab.word],
+                updatedAt: Date.now(),
+              });
+            }
+          }
+        }
+      }
     }
 
     await ctx.db.delete(args.id);

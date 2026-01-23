@@ -216,6 +216,59 @@ export const remove = mutation({
 });
 
 /**
+ * Remove a video by its videoId string
+ */
+export const removeByVideoId = mutation({
+  args: {
+    videoId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const video = await ctx.db
+      .query("youtubeContent")
+      .withIndex("by_video_id", (q) => q.eq("videoId", args.videoId))
+      .first();
+
+    if (!video) {
+      return { deleted: false, message: `Video not found: ${args.videoId}` };
+    }
+
+    await ctx.db.delete(video._id);
+    return { deleted: true, videoId: args.videoId, title: video.title };
+  },
+});
+
+/**
+ * Remove multiple videos by their videoId strings (batch delete)
+ */
+export const removeByVideoIds = mutation({
+  args: {
+    videoIds: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const results = [];
+
+    for (const videoId of args.videoIds) {
+      const video = await ctx.db
+        .query("youtubeContent")
+        .withIndex("by_video_id", (q) => q.eq("videoId", videoId))
+        .first();
+
+      if (video) {
+        await ctx.db.delete(video._id);
+        results.push({ videoId, deleted: true, title: video.title });
+      } else {
+        results.push({ videoId, deleted: false, message: "Not found" });
+      }
+    }
+
+    return {
+      results,
+      deletedCount: results.filter((r) => r.deleted).length,
+    };
+  },
+});
+
+/**
  * Remove all videos without transcripts
  */
 export const removeVideosWithoutTranscripts = mutation({

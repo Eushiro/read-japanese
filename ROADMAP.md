@@ -169,6 +169,7 @@ Usage limits (example):
 |-------|------|--------|----------|
 | 0 | Infrastructure | ✅ Complete | Clerk auth, Convex deployed |
 | 0.25 | Onboarding & Learning Loop | ✅ Complete | Dashboard, simplified nav, improved onboarding |
+| 0.3 | Guided Study Sessions | ✅ Complete | Start Studying CTA, session flow, streaks, 3-tab nav |
 | 0.5 | Analytics & Quick Wins | 🚧 In Progress | Save sentence context done, PostHog pending |
 | 1 | Flashcard Foundation | 🚧 In Progress | UI complete, Stripe setup + audio pending |
 | 2 | Active Output Verification | ✅ UI Complete | Practice page with AI feedback |
@@ -230,6 +231,44 @@ Usage limits (example):
 - `web/src/components/reader/WordPopup.tsx` - Saves sourceContext
 - `web/convex/schema.ts` - Added sourceContext field
 - `web/convex/vocabulary.ts` - Accepts sourceContext
+
+---
+
+### Phase 0.3: Guided Study Sessions
+**Goal:** Simplify UX by putting users into guided sessions following the learning loop automatically
+
+**Status:** ✅ Complete
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Session infrastructure | ✅ Complete | StudySessionContext, sessionPlanner.ts |
+| Session page with activity flow | ✅ Complete | StudySessionPage with Review → Input → Output |
+| Embedded review component | ✅ Complete | SessionReview in session mode |
+| Embedded input component | ✅ Complete | SessionInput for story/video |
+| Embedded output component | ✅ Complete | SessionOutput for sentence practice |
+| Session completion screen | ✅ Complete | SessionComplete with celebration |
+| Streak tracking (backend) | ✅ Complete | currentStreak, longestStreak in users schema |
+| Streak tracking (UI) | ✅ Complete | Dashboard shows streak, session updates it |
+| Dashboard redesign | ✅ Complete | Start Studying CTA, quick stats, time selection |
+| Navigation simplification | ✅ Complete | 3 tabs (Home, Library, Profile) |
+| Hide nav during session | ✅ Complete | Clean session UI without main nav |
+
+**Files created:**
+- `web/src/contexts/StudySessionContext.tsx` - Session state management
+- `web/src/lib/sessionPlanner.ts` - Session planning logic
+- `web/src/pages/StudySessionPage.tsx` - Main session orchestrator
+- `web/src/components/session/SessionProgress.tsx` - Progress indicator
+- `web/src/components/session/SessionComplete.tsx` - Completion screen
+- `web/src/components/session/SessionReview.tsx` - Flashcard review in session
+- `web/src/components/session/SessionInput.tsx` - Content consumption in session
+- `web/src/components/session/SessionOutput.tsx` - Sentence practice in session
+
+**Files modified:**
+- `web/convex/schema.ts` - Added streak fields to users
+- `web/convex/users.ts` - Added updateStreak, getStreak
+- `web/src/pages/DashboardPage.tsx` - Redesigned with Start Studying CTA
+- `web/src/router.tsx` - Added /study-session route, 3-tab nav
+- `web/src/main.tsx` - Added StudySessionProvider
 
 ---
 

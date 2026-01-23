@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useRef,
   type ReactNode,
 } from "react";
 import {
@@ -36,6 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { signOut: clerkSignOut } = useClerk();
   const { isLoaded: authLoaded } = useClerkAuth();
 
+  // Cache whether auth has ever been loaded to prevent flicker during navigation
+  const hasLoadedOnce = useRef(false);
+  if (isLoaded && authLoaded) {
+    hasLoadedOnce.current = true;
+  }
+
   const user: User | null = clerkUser
     ? {
         id: clerkUser.id,
@@ -64,7 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        isLoading: !isLoaded || !authLoaded,
+        // Only show loading on initial load, not during navigation
+        isLoading: !hasLoadedOnce.current && (!isLoaded || !authLoaded),
         isAuthenticated: !!isSignedIn,
         error: null,
         signIn,

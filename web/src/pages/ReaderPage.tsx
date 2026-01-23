@@ -10,9 +10,11 @@ import { useStory } from "@/hooks/useStory";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { testLevelToDifficultyLevel, difficultyLevelToTestLevel } from "@/types/story";
 import { getAudioUrl } from "@/api/stories";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Paywall } from "@/components/Paywall";
 import type { Token, ProficiencyLevel } from "@/types/story";
 import {
   ArrowLeft,
@@ -52,11 +54,25 @@ export function ReaderPage() {
   const [selectedSegmentText, setSelectedSegmentText] = useState<string | undefined>(undefined);
   const [audioTime, setAudioTime] = useState(0);
   const [manualNavigation, setManualNavigation] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   // Check for existing comprehension quiz (to avoid re-generating)
   const existingComprehension = useQuery(
     api.storyComprehension.getForStory,
     isAuthenticated ? { userId, storyId } : "skip"
+  );
+
+  // Check subscription for AI features
+  const subscription = useQuery(
+    api.subscriptions.get,
+    isAuthenticated ? { userId } : "skip"
+  );
+  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
+
+  // Get user profile for proficiency level (needed for difficulty)
+  const userProfile = useQuery(
+    api.users.getByClerkId,
+    isAuthenticated && user ? { clerkId: user.id } : "skip"
   );
 
   // Action to generate comprehension questions
@@ -100,6 +116,10 @@ export function ReaderPage() {
     if (existingComprehension !== undefined && existingComprehension !== null) return;
     // Wait for existingComprehension query to load
     if (existingComprehension === undefined) return;
+    // Wait for subscription to load
+    if (subscription === undefined) return;
+    // Only pre-generate for premium users (AI features are paywalled)
+    if (!isPremiumUser) return;
 
     hasStartedGeneration.current = true;
 
@@ -128,6 +148,27 @@ export function ReaderPage() {
       return "english";
     };
 
+    // Get user's difficulty level for the story's language
+    const getUserDifficulty = (): number => {
+      const language = getLanguage();
+      const proficiency = userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
+      if (proficiency?.level) {
+        return testLevelToDifficultyLevel(proficiency.level);
+      }
+      // Default to intermediate (3) if no level set
+      return 3;
+    };
+
+    // Get user's display level
+    const getUserDisplayLevel = (): string => {
+      const language = getLanguage();
+      const proficiency = userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
+      if (proficiency?.level) {
+        return proficiency.level;
+      }
+      return difficultyLevelToTestLevel(3, language);
+    };
+
     // Start generation in background (no await, fire and forget)
     generateQuestions({
       storyId,
@@ -135,10 +176,12 @@ export function ReaderPage() {
       storyContent: getStoryContent(),
       language: getLanguage(),
       userId,
+      difficulty: getUserDifficulty(),
+      userLevel: getUserDisplayLevel(),
     }).catch((err) => {
       console.error("Background comprehension question generation failed:", err);
     });
-  }, [isOnLastChapter, story, isAuthenticated, existingComprehension, storyId, userId, generateQuestions]);
+  }, [isOnLastChapter, story, isAuthenticated, existingComprehension, storyId, userId, generateQuestions, subscription, isPremiumUser, userProfile]);
 
   // Auto-advance chapters based on audio time (skip if user manually navigated)
   useEffect(() => {
@@ -214,6 +257,14 @@ export function ReaderPage() {
       });
     }
   }, [currentChapterIndex, chapters.length, storyId, trackEvent, events]);
+
+  const handleTakeQuiz = useCallback(() => {
+    if (!isPremiumUser) {
+      setShowPaywall(true);
+      return;
+    }
+    navigate({ to: "/comprehension/$storyId", params: { storyId: story?.id ?? storyId } });
+  }, [isPremiumUser, navigate, story?.id, storyId]);
 
   const handleTokenClick = useCallback(
     (token: Token, event: React.MouseEvent, segmentText?: string) => {
@@ -389,7 +440,7 @@ export function ReaderPage() {
               headerAction={
                 currentChapterIndex === chapters.length - 1 && chapters.length > 0 ? (
                   <Button
-                    onClick={() => navigate({ to: "/comprehension/$storyId", params: { storyId: story.id } })}
+                    onClick={handleTakeQuiz}
                     className="gap-2"
                     size="sm"
                   >
@@ -442,7 +493,7 @@ export function ReaderPage() {
 
               {currentChapterIndex === chapters.length - 1 ? (
                 <Button
-                  onClick={() => navigate({ to: "/comprehension/$storyId", params: { storyId: story.id } })}
+                  onClick={handleTakeQuiz}
                   className="gap-1"
                 >
                   <BookOpen className="w-4 h-4" />
@@ -473,6 +524,15 @@ export function ReaderPage() {
           onClose={handleClosePopup}
         />
       )}
+
+      {/* Paywall for AI features */}
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="sentences"
+        title="Upgrade for Comprehension Quizzes"
+        description="Get AI-generated comprehension questions to test your understanding of each story."
+      />
     </div>
   );
 }

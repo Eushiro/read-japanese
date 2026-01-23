@@ -10,11 +10,13 @@
 
 import type * as ai from "../ai.js";
 import type * as aiHelpers from "../aiHelpers.js";
+import type * as batchJobs from "../batchJobs.js";
 import type * as crons from "../crons.js";
 import type * as flashcards from "../flashcards.js";
 import type * as http from "../http.js";
 import type * as mockTests from "../mockTests.js";
 import type * as placementTest from "../placementTest.js";
+import type * as premadeDecks from "../premadeDecks.js";
 import type * as progress from "../progress.js";
 import type * as scheduledJobs from "../scheduledJobs.js";
 import type * as settings from "../settings.js";
@@ -23,6 +25,7 @@ import type * as storyQuestions from "../storyQuestions.js";
 import type * as stripe from "../stripe.js";
 import type * as stripeHelpers from "../stripeHelpers.js";
 import type * as subscriptions from "../subscriptions.js";
+import type * as userDeckSubscriptions from "../userDeckSubscriptions.js";
 import type * as userSentences from "../userSentences.js";
 import type * as users from "../users.js";
 import type * as videoData from "../videoData.js";
@@ -38,11 +41,13 @@ import type {
 declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   aiHelpers: typeof aiHelpers;
+  batchJobs: typeof batchJobs;
   crons: typeof crons;
   flashcards: typeof flashcards;
   http: typeof http;
   mockTests: typeof mockTests;
   placementTest: typeof placementTest;
+  premadeDecks: typeof premadeDecks;
   progress: typeof progress;
   scheduledJobs: typeof scheduledJobs;
   settings: typeof settings;
@@ -51,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   stripe: typeof stripe;
   stripeHelpers: typeof stripeHelpers;
   subscriptions: typeof subscriptions;
+  userDeckSubscriptions: typeof userDeckSubscriptions;
   userSentences: typeof userSentences;
   users: typeof users;
   videoData: typeof videoData;
