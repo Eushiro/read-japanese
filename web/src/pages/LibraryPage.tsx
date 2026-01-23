@@ -63,13 +63,8 @@ export function LibraryPage() {
     isAuthenticated && user ? { clerkId: user.id } : "skip"
   );
 
-  // Set default language when profile loads
-  useEffect(() => {
-    if (userProfile?.languages && userProfile.languages.length > 0 && !selectedLanguage) {
-      // Use primary language if set, otherwise use first language
-      setSelectedLanguage((userProfile.primaryLanguage as Language) || userProfile.languages[0] as Language);
-    }
-  }, [userProfile, selectedLanguage]);
+  // Don't auto-select language - show all content by default
+  // Users can filter by language if they want
 
   // Reset level filter when language changes
   useEffect(() => {
@@ -217,13 +212,14 @@ export function LibraryPage() {
             {/* Language Filter */}
             {hasMultipleLanguages && userLanguages && (
               <Select
-                value={selectedLanguage ?? userLanguages[0]}
-                onValueChange={(value) => setSelectedLanguage(value as Language)}
+                value={selectedLanguage ?? "all"}
+                onValueChange={(value) => setSelectedLanguage(value === "all" ? null : value as Language)}
               >
                 <SelectTrigger className="w-[130px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Languages</SelectItem>
                   {userLanguages.map((lang) => (
                     <SelectItem key={lang} value={lang}>
                       {LANGUAGE_INFO[lang].flag} {LANGUAGE_INFO[lang].label}
