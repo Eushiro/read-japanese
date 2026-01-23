@@ -38,7 +38,7 @@ const LOADING_PHRASES = [
   "Selecting relevant vocabulary...",
   "Optimizing for your progress...",
   "Fine-tuning difficulty...",
-  "Almost ready...",
+  "Adding the finishing touches...",
 ];
 
 const languageNames: Record<Language, string> = {

@@ -17,7 +17,7 @@ const PROCESSING_MESSAGES = [
   "Fine-tuning the analysis...",
   "Reviewing syllable timing...",
   "Assessing natural flow...",
-  "Almost there...",
+  "Polishing the final details...",
 ];
 
 interface AudioRecorderProps {
