@@ -15,11 +15,7 @@ import {
   Loader2,
   Video,
 } from "lucide-react";
-
-// Check if a string is a valid YouTube video ID (11 characters, alphanumeric + dash/underscore)
-function isValidYoutubeId(id: string): boolean {
-  return /^[a-zA-Z0-9_-]{11}$/.test(id);
-}
+import { isValidYoutubeId } from "@/lib/youtube";
 
 type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
 
