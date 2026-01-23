@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { getCoverImageUrl, prefetchStory } from "@/api/stories";
 import type { StoryListItem, ProficiencyLevel } from "@/types/story";
 import { Crown, BookOpen } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 interface StoryCardProps {
   story: StoryListItem;
@@ -37,6 +37,7 @@ export function StoryCard({
 }: StoryCardProps) {
   const isLocked = story.isPremium && !isPremiumUser;
   const coverUrl = getCoverImageUrl(story.coverImageURL);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const handleMouseEnter = useCallback(() => {
     prefetchStory(story.id);
@@ -52,12 +53,21 @@ export function StoryCard({
       {/* Cover Image */}
       <div className="aspect-[3/4] relative bg-background-subtle overflow-hidden">
         {coverUrl ? (
-          <img
-            src={coverUrl}
-            alt={story.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-          />
+          <>
+            {/* Skeleton while image loads */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-border animate-pulse" />
+            )}
+            <img
+              src={coverUrl}
+              alt={story.title}
+              className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+                imageLoaded ? "opacity-100" : "opacity-0"
+              }`}
+              loading="lazy"
+              onLoad={() => setImageLoaded(true)}
+            />
+          </>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-foreground-muted bg-gradient-to-br from-background-subtle to-muted">
             <BookOpen className="w-12 h-12 mb-2 opacity-30" />
