@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Settings, Crown, Code, Users, LogOut, Loader2, CreditCard, Zap, Check, Globe, GraduationCap, Sparkles, Brain, ChevronRight } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
-import { useSettings, isDevUserEnabled, setDevUserEnabled } from "@/hooks/useSettings";
+import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Crown, User, LogOut, Loader2, CreditCard, Zap, Check, Globe, GraduationCap, Sparkles, Brain, ChevronRight, BookOpen, Layers, PenLine, Compass } from "lucide-react";
+import { useNavigate, Link } from "@tanstack/react-router";
+import { useSettings } from "@/hooks/useSettings";
+import { useTheme } from "@/components/ThemeProvider";
 import { useAuth, SignInButton, UserButton } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useQuery, useAction, useMutation } from "convex/react";
@@ -41,8 +42,6 @@ const EXAMS_BY_LANGUAGE = {
 
 type Language = typeof LANGUAGES[number]["value"];
 
-type Theme = "light" | "dark" | "system";
-
 export function SettingsPage() {
   const navigate = useNavigate();
   const { trackEvent, events } = useAnalytics();
@@ -51,11 +50,12 @@ export function SettingsPage() {
     settings,
     isLoading: settingsLoading,
     setShowFurigana,
-    setTheme: updateTheme,
     setFontSize: updateFontSize,
     setAutoplayAudio: updateAutoplayAudio,
     userId,
   } = useSettings();
+
+  const { theme, setTheme } = useTheme();
 
   const { user, isAuthenticated, isLoading: authLoading, signOut } = useAuth();
 
@@ -184,35 +184,35 @@ export function SettingsPage() {
 
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
-  const [devUserToggle, setDevUserToggle] = useState(() => isDevUserEnabled());
-
-  const isDev = import.meta.env.DEV;
-  const theme = settings.theme as Theme;
   const showFurigana = settings.showFurigana;
   const autoplayAudio = settings.autoplayAudio;
   const fontSize = settings.fontSize;
 
-  const setTheme = (value: Theme) => updateTheme(value);
   const setFontSize = (value: string) => updateFontSize(value);
   const setAutoplayAudio = (value: boolean) => updateAutoplayAudio(value);
+
+  // Show skeleton while auth is loading
+  if (authLoading) {
+    return <SettingsSkeleton />;
+  }
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-2xl">
+      <div className="border-b border-border relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-background to-accent/5" />
+        <div className="absolute top-0 left-1/4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-2xl relative">
           <div className="animate-fade-in-up">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-accent/10">
-                <Settings className="w-5 h-5 text-accent" />
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-accent/20">
+                <User className="w-5 h-5 text-purple-400" />
               </div>
-              <span className="text-sm font-medium text-accent uppercase tracking-wider">
-                Preferences
-              </span>
+              <h1 className="text-3xl sm:text-4xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                Profile
+              </h1>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-              Settings
-            </h1>
           </div>
         </div>
       </div>
@@ -221,10 +221,15 @@ export function SettingsPage() {
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
         <div className="space-y-6">
           {/* Theme */}
-          <section className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Appearance
-            </h2>
+          <section className="bg-gradient-to-br from-amber-500/5 to-surface rounded-2xl border border-amber-500/20 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-1.5 rounded-lg bg-amber-500/15">
+                <Sun className="w-4 h-4 text-amber-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                Appearance
+              </h2>
+            </div>
             {settingsLoading ? (
               <div className="flex gap-2 animate-pulse">
                 <div className="flex-1 h-10 bg-muted rounded-lg" />
@@ -261,11 +266,83 @@ export function SettingsPage() {
             )}
           </section>
 
+          {/* Learning Tools */}
+          {isAuthenticated && (
+            <section className="bg-gradient-to-br from-accent/5 to-surface rounded-2xl border border-accent/20 p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 rounded-lg bg-accent/15">
+                  <Compass className="w-4 h-4 text-accent" />
+                </div>
+                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                  Learning Tools
+                </h2>
+              </div>
+              <p className="text-sm text-foreground-muted mb-4">
+                Quick access to all learning features
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  to="/learn"
+                  className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/5 transition-all"
+                >
+                  <div className="p-2 rounded-lg bg-accent/10">
+                    <BookOpen className="w-4 h-4 text-accent" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-foreground text-sm">Learn Hub</div>
+                    <div className="text-xs text-foreground-muted">All tools in one place</div>
+                  </div>
+                </Link>
+                <Link
+                  to="/flashcards"
+                  className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/5 transition-all"
+                >
+                  <div className="p-2 rounded-lg bg-blue-500/10">
+                    <Layers className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-foreground text-sm">Flashcards</div>
+                    <div className="text-xs text-foreground-muted">Spaced repetition</div>
+                  </div>
+                </Link>
+                <Link
+                  to="/vocabulary"
+                  className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/5 transition-all"
+                >
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <BookOpen className="w-4 h-4 text-green-500" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-foreground text-sm">Vocabulary</div>
+                    <div className="text-xs text-foreground-muted">Word list</div>
+                  </div>
+                </Link>
+                <Link
+                  to="/practice"
+                  className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/5 transition-all"
+                >
+                  <div className="p-2 rounded-lg bg-purple-500/10">
+                    <PenLine className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-foreground text-sm">Practice</div>
+                    <div className="text-xs text-foreground-muted">Sentence writing</div>
+                  </div>
+                </Link>
+              </div>
+            </section>
+          )}
+
           {/* Reading */}
-          <section className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Reading
-            </h2>
+          <section className="bg-gradient-to-br from-emerald-500/5 to-surface rounded-2xl border border-emerald-500/20 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-1.5 rounded-lg bg-emerald-500/15">
+                <BookOpen className="w-4 h-4 text-emerald-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                Reading
+              </h2>
+            </div>
 
             {settingsLoading ? (
               // Loading state to avoid flickering defaults
@@ -375,9 +452,11 @@ export function SettingsPage() {
 
           {/* Languages & Exams */}
           {isAuthenticated && user && (
-            <section className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
+            <section className="bg-gradient-to-br from-blue-500/5 to-surface rounded-2xl border border-blue-500/20 p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
-                <Globe className="w-5 h-5 text-accent" />
+                <div className="p-1.5 rounded-lg bg-blue-500/15">
+                  <Globe className="w-4 h-4 text-blue-400" />
+                </div>
                 <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
                   Languages & Exams
                 </h2>
@@ -483,9 +562,11 @@ export function SettingsPage() {
 
           {/* Placement Test */}
           {isAuthenticated && user && userProfile && (
-            <section className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
+            <section className="bg-gradient-to-br from-purple-500/5 to-surface rounded-2xl border border-purple-500/20 p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
-                <Brain className="w-5 h-5 text-accent" />
+                <div className="p-1.5 rounded-lg bg-purple-500/15">
+                  <Brain className="w-4 h-4 text-purple-400" />
+                </div>
                 <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
                   Proficiency Level
                 </h2>
@@ -537,10 +618,15 @@ export function SettingsPage() {
           )}
 
           {/* Account */}
-          <section className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Account
-            </h2>
+          <section className="bg-gradient-to-br from-rose-500/5 to-surface rounded-2xl border border-rose-500/20 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-1.5 rounded-lg bg-rose-500/15">
+                <User className="w-4 h-4 text-rose-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                Account
+              </h2>
+            </div>
             {authLoading ? (
               <div className="space-y-4 animate-pulse">
                 <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
@@ -599,9 +685,11 @@ export function SettingsPage() {
 
           {/* Subscription */}
           {isAuthenticated && user && (
-            <section className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
+            <section className="bg-gradient-to-br from-cyan-500/5 to-surface rounded-2xl border border-cyan-500/20 p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
-                <CreditCard className="w-5 h-5 text-accent" />
+                <div className="p-1.5 rounded-lg bg-cyan-500/15">
+                  <CreditCard className="w-4 h-4 text-cyan-400" />
+                </div>
                 <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
                   Subscription
                 </h2>
@@ -609,7 +697,7 @@ export function SettingsPage() {
 
               {/* Current Plan */}
               <div className="p-4 rounded-xl bg-muted/50 mb-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-3">
                   <div>
                     <div className="text-sm text-foreground-muted">Current Plan</div>
                     <div className="text-lg font-semibold text-foreground capitalize">
@@ -623,6 +711,32 @@ export function SettingsPage() {
                     </Button>
                   )}
                 </div>
+
+                {/* Show benefits for paid subscribers */}
+                {subscription?.tier === "basic" && (
+                  <ul className="text-sm text-foreground-muted space-y-1.5 pt-3 border-t border-border">
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-blue-500" /> 5 AI stories/month</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-blue-500" /> 200 AI checks/month</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-blue-500" /> 500 flashcards/month</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-blue-500" /> 2 mock tests/month</li>
+                  </ul>
+                )}
+                {subscription?.tier === "pro" && (
+                  <ul className="text-sm text-foreground-muted space-y-1.5 pt-3 border-t border-border">
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 20 AI stories/month</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 1,000 AI checks/month</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> Unlimited flashcards</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 10 mock tests/month</li>
+                  </ul>
+                )}
+                {subscription?.tier === "unlimited" && (
+                  <ul className="text-sm text-foreground-muted space-y-1.5 pt-3 border-t border-border">
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited AI stories</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited AI checks</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited flashcards</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited mock tests</li>
+                  </ul>
+                )}
               </div>
 
               {/* Upgrade Options */}
@@ -811,90 +925,118 @@ export function SettingsPage() {
                     })}
                   </div>
                 </div>
-              </div>
-            </section>
-          )}
 
-          {/* Developer Settings - only visible in development */}
-          {isDev && (
-            <section className="bg-surface rounded-2xl border border-amber-500/30 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <Code className="w-4 h-4 text-amber-500" />
-                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                  Developer
-                </h2>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 font-medium">
-                  DEV ONLY
-                </span>
-              </div>
-
-              <div className="space-y-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-amber-500/10">
-                      <Sparkles className="w-4 h-4 text-amber-500" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground">Show Onboarding</div>
-                      <div className="text-sm text-foreground-muted">
-                        Preview the onboarding flow
+                {/* Show Onboarding */}
+                <div className="pt-4 border-t border-amber-500/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-amber-500/10">
+                        <Sparkles className="w-4 h-4 text-amber-500" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground">Show Onboarding</div>
+                        <div className="text-sm text-foreground-muted">
+                          Preview the onboarding flow
+                        </div>
                       </div>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        window.location.href = "/settings?onboarding=true";
+                      }}
+                    >
+                      Show
+                    </Button>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      window.location.href = "/settings?onboarding=true";
-                    }}
-                  >
-                    Show
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-amber-500/10">
-                      <Users className="w-4 h-4 text-amber-500" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground">Shared Dev User</div>
-                      <div className="text-sm text-foreground-muted">
-                        Use shared user for Convex sync testing
-                      </div>
-                      <div className="text-xs text-amber-600 mt-1">
-                        User ID: {userId}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setDevUserToggle(!devUserToggle);
-                      setDevUserEnabled(!devUserToggle);
-                    }}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      devUserToggle ? "bg-amber-500" : "bg-muted"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                        devUserToggle ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
                 </div>
               </div>
             </section>
           )}
 
           {/* About */}
-          <section className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              About
-            </h2>
+          <section className="bg-gradient-to-br from-slate-500/5 to-surface rounded-2xl border border-slate-500/20 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-1.5 rounded-lg bg-slate-500/15">
+                <Sparkles className="w-4 h-4 text-slate-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                About
+              </h2>
+            </div>
             <div className="text-sm text-foreground-muted space-y-1">
               <p className="font-medium text-foreground">SanLang v1.0.0</p>
               <p>Personalized exam prep powered by AI</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Skeleton loading state
+function SettingsSkeleton() {
+  return (
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-2xl">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-border w-9 h-9 animate-pulse" />
+            <div className="h-9 bg-border rounded-lg w-24 animate-pulse" />
+          </div>
+        </div>
+      </div>
+
+      {/* Settings Content Skeleton */}
+      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
+        <div className="space-y-6">
+          {/* Appearance Section */}
+          <section className="bg-surface rounded-2xl border border-border p-6">
+            <div className="h-6 bg-border rounded w-28 mb-4 animate-pulse" />
+            <div className="flex gap-2">
+              <div className="flex-1 h-10 bg-border rounded-lg animate-pulse" />
+              <div className="flex-1 h-10 bg-border rounded-lg animate-pulse" />
+              <div className="flex-1 h-10 bg-border rounded-lg animate-pulse" />
+            </div>
+          </section>
+
+          {/* Account Section */}
+          <section className="bg-surface rounded-2xl border border-border p-6">
+            <div className="h-6 bg-border rounded w-20 mb-4 animate-pulse" />
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-border animate-pulse" />
+              <div className="space-y-2">
+                <div className="h-5 bg-border rounded w-32 animate-pulse" />
+                <div className="h-4 bg-border rounded w-48 animate-pulse" />
+              </div>
+            </div>
+          </section>
+
+          {/* Languages Section */}
+          <section className="bg-surface rounded-2xl border border-border p-6">
+            <div className="h-6 bg-border rounded w-24 mb-4 animate-pulse" />
+            <div className="flex gap-2">
+              <div className="h-10 bg-border rounded-lg w-28 animate-pulse" />
+              <div className="h-10 bg-border rounded-lg w-24 animate-pulse" />
+              <div className="h-10 bg-border rounded-lg w-24 animate-pulse" />
+            </div>
+          </section>
+
+          {/* Reading Settings Section */}
+          <section className="bg-surface rounded-2xl border border-border p-6">
+            <div className="h-6 bg-border rounded w-36 mb-4 animate-pulse" />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="h-5 bg-border rounded w-32 animate-pulse" />
+                <div className="h-6 w-11 bg-border rounded-full animate-pulse" />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="h-5 bg-border rounded w-28 animate-pulse" />
+                <div className="h-6 w-11 bg-border rounded-full animate-pulse" />
+              </div>
             </div>
           </section>
         </div>

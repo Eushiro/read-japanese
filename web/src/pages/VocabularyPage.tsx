@@ -1,16 +1,27 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import type { GenericId } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SearchBox, matchesSearch } from "@/components/ui/search-box";
 import { Paywall } from "@/components/Paywall";
-import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, Volume2, Book } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, Volume2, Book, Layers } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { searchClientDictionary, preloadDictionary, type DictionaryEntry } from "@/lib/clientDictionary";
 import { useFlashcard } from "@/hooks/useFlashcard";
+import { DeckPanel } from "@/components/vocabulary/DeckPanel";
+import { DeckPickerModal } from "@/components/vocabulary/DeckPickerModal";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 // Sort options
 type SortOption = "newest" | "oldest" | "alphabetical" | "alphabetical-reverse" | "by-mastery";
@@ -64,9 +75,30 @@ export function VocabularyPage() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [selectedVocab, setSelectedVocab] = useState<VocabularyItem | null>(null);
 
+  // Deck panel state
+  const [showDeckPicker, setShowDeckPicker] = useState(false);
+  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
+
+  // Virtual scrolling ref
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   const { user, isAuthenticated } = useAuth();
   const { trackEvent, events } = useAnalytics();
   const userId = user?.id ?? "anonymous";
+  const isAdmin = user?.email === "hiro.ayettey@gmail.com";
+
+  // Add daily cards mutation
+  const addDailyCards = useMutation(api.userDeckSubscriptions.addDailyCards);
+
+  // Trigger daily card drip on page load
+  useEffect(() => {
+    if (isAuthenticated && userId !== "anonymous") {
+      addDailyCards({ userId }).catch((err) => {
+        // Silently fail - user might not have any active decks
+        console.debug("Daily cards drip:", err);
+      });
+    }
+  }, [isAuthenticated, userId]);
 
   // Track page view
   useEffect(() => {
@@ -78,9 +110,14 @@ export function VocabularyPage() {
     }
   }, [isAuthenticated]); // Only track on initial load
 
+  // Query for vocabulary - either all or filtered by deck
   const vocabulary = useQuery(
-    api.vocabulary.list,
-    isAuthenticated ? { userId, language: languageFilter ?? undefined } : "skip"
+    selectedDeckId ? api.vocabulary.listByDeck : api.vocabulary.list,
+    isAuthenticated
+      ? selectedDeckId
+        ? { userId, sourceDeckId: selectedDeckId }
+        : { userId, language: languageFilter ?? undefined }
+      : "skip"
   );
   const removeWord = useMutation(api.vocabulary.remove);
 
@@ -91,19 +128,18 @@ export function VocabularyPage() {
   );
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
-  // Filter vocabulary
+  // Filter vocabulary (with romaji support)
   const filteredVocabulary = useMemo(() => {
     if (!vocabulary) return [];
 
     return vocabulary.filter((item) => {
       // Search filter
       if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        const matchesSearch =
-          item.word.toLowerCase().includes(term) ||
-          (item.reading?.toLowerCase().includes(term) ?? false) ||
-          item.definitions.some((def) => def.toLowerCase().includes(term));
-        if (!matchesSearch) return false;
+        const matches =
+          matchesSearch(item.word, searchTerm) ||
+          matchesSearch(item.reading || "", searchTerm) ||
+          item.definitions.some((def) => matchesSearch(def, searchTerm));
+        if (!matches) return false;
       }
 
       // Mastery filter
@@ -161,6 +197,16 @@ export function VocabularyPage() {
       }));
   }, [sortedVocabulary, sortBy]);
 
+  // Virtual scrolling setup for flat list - only when list is large enough
+  const shouldUseVirtualScrolling = sortedVocabulary.length > 50 && sortBy !== "by-mastery";
+  const rowVirtualizer = useVirtualizer({
+    count: sortedVocabulary.length,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: useCallback(() => 120, []), // Estimated row height in px
+    overscan: 5,
+    enabled: shouldUseVirtualScrolling,
+  });
+
   // Track search with debounce
   useEffect(() => {
     if (!searchTerm.trim()) return;
@@ -182,7 +228,9 @@ export function VocabularyPage() {
     }
   };
 
+  // Only show filter chips for language/mastery, not deck (deck panel shows that)
   const hasActiveFilters = languageFilter !== null || masteryFilter !== null;
+  const hasAnyFilter = hasActiveFilters || selectedDeckId !== null;
 
   if (!isAuthenticated) {
     return (
@@ -236,78 +284,84 @@ export function VocabularyPage() {
         <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search vocabulary..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-surface text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-              />
-            </div>
+            <SearchBox
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search vocabulary..."
+              className="w-80"
+            />
 
             {/* Sort Dropdown */}
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="appearance-none pl-9 pr-9 py-2.5 rounded-lg border border-border bg-surface text-foreground text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent cursor-pointer transition-all"
-              >
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+              <SelectTrigger className="gap-2">
+                <ArrowUpDown className="w-4 h-4 text-foreground-muted" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
                 {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
+                  <SelectItem key={option.value} value={option.value}>
                     {option.label}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-              <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted pointer-events-none" />
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted pointer-events-none" />
-            </div>
+              </SelectContent>
+            </Select>
 
-            {/* Language Filter */}
-            <div className="relative">
-              <select
-                value={languageFilter ?? ""}
-                onChange={(e) => setLanguageFilter((e.target.value || null) as Language | null)}
-                className={`appearance-none pl-9 pr-9 py-2.5 rounded-lg border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent cursor-pointer transition-all ${
-                  languageFilter ? "border-accent bg-accent/5 text-accent" : "border-border bg-surface text-foreground"
-                }`}
-              >
-                <option value="">All Languages</option>
+            {/* Language Filter - disabled when deck is selected */}
+            <Select
+              value={languageFilter ?? "all"}
+              onValueChange={(value) => setLanguageFilter(value === "all" ? null : value as Language)}
+              disabled={!!selectedDeckId}
+            >
+              <SelectTrigger className={`gap-2 ${selectedDeckId ? "opacity-60" : ""}`}>
+                <Filter className={`w-4 h-4 ${languageFilter && !selectedDeckId ? "text-accent" : "text-foreground-muted"}`} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Languages</SelectItem>
                 {LANGUAGES.map((lang) => (
-                  <option key={lang.value} value={lang.value}>
+                  <SelectItem key={lang.value} value={lang.value}>
                     {lang.label}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-              <Filter className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${languageFilter ? "text-accent" : "text-foreground-muted"}`} />
-              <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${languageFilter ? "text-accent" : "text-foreground-muted"}`} />
-            </div>
+              </SelectContent>
+            </Select>
 
             {/* Mastery Filter */}
-            <div className="relative">
-              <select
-                value={masteryFilter ?? ""}
-                onChange={(e) => setMasteryFilter(e.target.value || null)}
-                className={`appearance-none pl-9 pr-9 py-2.5 rounded-lg border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent cursor-pointer transition-all ${
-                  masteryFilter ? "border-accent bg-accent/5 text-accent" : "border-border bg-surface text-foreground"
-                }`}
-              >
-                <option value="">All Mastery</option>
+            <Select
+              value={masteryFilter ?? "all"}
+              onValueChange={(value) => setMasteryFilter(value === "all" ? null : value)}
+            >
+              <SelectTrigger className="gap-2">
+                <BookmarkCheck className={`w-4 h-4 ${masteryFilter ? "text-accent" : "text-foreground-muted"}`} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Mastery</SelectItem>
                 {MASTERY_ORDER.map((mastery) => (
-                  <option key={mastery} value={mastery}>
+                  <SelectItem key={mastery} value={mastery}>
                     {MASTERY_LABELS[mastery].label}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-              <BookmarkCheck className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${masteryFilter ? "text-accent" : "text-foreground-muted"}`} />
-              <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${masteryFilter ? "text-accent" : "text-foreground-muted"}`} />
-            </div>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Active filters summary */}
+          {/* Mobile deck button */}
+          <div className="lg:hidden mt-3">
+            <Button
+              onClick={() => setShowDeckPicker(true)}
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+            >
+              <Layers className="w-4 h-4" />
+              Browse Decks
+            </Button>
+          </div>
+
+          {/* Active filters summary - only for language/mastery, not deck */}
           {hasActiveFilters && (
-            <div className="flex items-center gap-2 mt-3">
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
               <span className="text-xs text-foreground-muted">Filters:</span>
               {languageFilter && (
                 <button
@@ -341,23 +395,32 @@ export function VocabularyPage() {
         </div>
       </div>
 
-      {/* Results count */}
-      <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
-        <p className="text-sm text-foreground-muted">
-          {vocabulary === undefined ? (
-            "Loading..."
-          ) : (
-            <>
-              <span className="font-medium text-foreground">{sortedVocabulary.length}</span>
-              {" "}{sortedVocabulary.length === 1 ? "word" : "words"}
-              {sortedVocabulary.length !== vocabulary.length && ` (of ${vocabulary.length} total)`}
-            </>
-          )}
-        </p>
-      </div>
+      {/* Main content area */}
+      <div className="container mx-auto px-4 sm:px-6 py-6 max-w-6xl">
+        <div className="flex gap-6">
+          {/* Deck Panel - sticky, positioned below the search bar */}
+          <div className="hidden lg:block sticky top-40 self-start">
+            <DeckPanel
+              userId={userId}
+              onBrowseDecks={() => setShowDeckPicker(true)}
+              selectedDeckId={selectedDeckId}
+              onSelectDeck={setSelectedDeckId}
+            />
+          </div>
 
-      {/* Vocabulary List */}
-      <div className="container mx-auto px-4 sm:px-6 pb-12 max-w-4xl">
+          {/* Vocabulary content */}
+          <div className="flex-1 min-w-0">
+            {/* Results count - fade in to avoid flicker */}
+            <div className="mb-4 h-5">
+              <p className={`text-sm text-foreground-muted transition-opacity duration-200 ${vocabulary === undefined ? "opacity-0" : "opacity-100"}`}>
+                <span className="font-medium text-foreground">{sortedVocabulary.length}</span>
+                {" "}{sortedVocabulary.length === 1 ? "word" : "words"}
+                {vocabulary && sortedVocabulary.length !== vocabulary.length && ` (of ${vocabulary.length} total)`}
+              </p>
+            </div>
+
+            {/* Vocabulary List */}
+            <div className="pb-12">
         {vocabulary === undefined ? (
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -377,14 +440,14 @@ export function VocabularyPage() {
               <BookOpen className="w-8 h-8 opacity-40" />
             </div>
             <p className="text-lg font-medium text-foreground mb-1">
-              {searchTerm || hasActiveFilters ? "No matching words found" : "No vocabulary saved yet"}
+              {searchTerm || hasAnyFilter ? "No matching words found" : "No vocabulary saved yet"}
             </p>
             <p className="text-sm text-center max-w-sm mb-4">
-              {searchTerm || hasActiveFilters
+              {searchTerm || hasAnyFilter
                 ? "Try adjusting your search or filters"
                 : "Add words manually or save them while reading"}
             </p>
-            {!searchTerm && !hasActiveFilters && (
+            {!searchTerm && !hasAnyFilter && (
               <Button onClick={() => setShowAddModal(true)} variant="outline" className="gap-2">
                 <Plus className="w-4 h-4" />
                 Add Your First Word
@@ -414,6 +477,7 @@ export function VocabularyPage() {
                       delay={Math.min(index * 30, 150)}
                       onShowPaywall={() => setShowPaywall(true)}
                       isPremiumUser={subscription === undefined ? undefined : !!isPremiumUser}
+                      isAdmin={isAdmin}
                       onClick={() => setSelectedVocab(item)}
                     />
                   ))}
@@ -421,8 +485,52 @@ export function VocabularyPage() {
               </section>
             ))}
           </div>
+        ) : shouldUseVirtualScrolling ? (
+          // Virtual scrolling for large lists
+          <div
+            ref={scrollContainerRef}
+            className="h-[calc(100vh-320px)] overflow-auto"
+          >
+            <div
+              style={{
+                height: `${rowVirtualizer.getTotalSize()}px`,
+                width: "100%",
+                position: "relative",
+              }}
+            >
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                const item = sortedVocabulary[virtualRow.index];
+                return (
+                  <div
+                    key={item._id}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <div className="pb-3">
+                      <VocabularyCard
+                        item={item}
+                        onRemove={handleRemove}
+                        showMastery={true}
+                        delay={0}
+                        onShowPaywall={() => setShowPaywall(true)}
+                        isPremiumUser={subscription === undefined ? undefined : !!isPremiumUser}
+                        isAdmin={isAdmin}
+                        onClick={() => setSelectedVocab(item)}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         ) : (
-          // Flat list view
+          // Regular flat list for smaller lists
           <div className="space-y-3">
             {sortedVocabulary.map((item, index) => (
               <VocabularyCard
@@ -433,11 +541,15 @@ export function VocabularyPage() {
                 delay={Math.min(index * 30, 150)}
                 onShowPaywall={() => setShowPaywall(true)}
                 isPremiumUser={subscription === undefined ? undefined : !!isPremiumUser}
+                isAdmin={isAdmin}
                 onClick={() => setSelectedVocab(item)}
               />
             ))}
           </div>
         )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Add Word Modal */}
@@ -463,6 +575,14 @@ export function VocabularyPage() {
           onClose={() => setSelectedVocab(null)}
         />
       )}
+
+      {/* Deck Picker Modal */}
+      <DeckPickerModal
+        userId={userId}
+        isOpen={showDeckPicker}
+        onClose={() => setShowDeckPicker(false)}
+        defaultLanguage={languageFilter ?? "japanese"}
+      />
     </div>
   );
 }
@@ -475,25 +595,46 @@ interface VocabularyCardProps {
   delay?: number;
   onShowPaywall?: () => void;
   isPremiumUser?: boolean;
+  isAdmin?: boolean;
   onClick?: () => void;
 }
 
-function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowPaywall, isPremiumUser, onClick }: VocabularyCardProps) {
+function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowPaywall, isPremiumUser, isAdmin, onClick }: VocabularyCardProps) {
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
-  const [isGenerating, setIsGenerating] = useState(false);
 
   // Check if flashcard already exists (with automatic asset preloading)
   const existingFlashcard = useFlashcard(item._id);
 
   const generateFlashcardWithAudio = useAction(api.ai.generateFlashcardWithAudio);
+  const updateVocabulary = useMutation(api.vocabulary.update);
 
   // Query states: undefined = loading
   const isLoadingFlashcard = existingFlashcard === undefined;
   const hasFlashcard = existingFlashcard !== undefined && existingFlashcard !== null;
 
   const handleGenerateFlashcard = async () => {
-    // Show paywall - user needs premium to generate
-    onShowPaywall?.();
+    if (isAdmin) {
+      // Admin can generate directly - set pending state first
+      try {
+        await updateVocabulary({
+          id: item._id as any,
+          flashcardPending: true,
+        });
+        // Fire and forget - the action will clear flashcardPending when done
+        generateFlashcardWithAudio({
+          vocabularyId: item._id as any,
+          includeAudio: true,
+          includeImage: true,
+        }).catch((err) => {
+          console.error("Failed to generate flashcard:", err);
+        });
+      } catch (err) {
+        console.error("Failed to set pending state:", err);
+      }
+    } else {
+      // Show paywall for non-admin users
+      onShowPaywall?.();
+    }
   };
 
   return (
@@ -511,8 +652,10 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
             >
               {item.word}
             </span>
-            {/* Word audio button - only show after query loads */}
-            {!isLoadingFlashcard && existingFlashcard?.wordAudioUrl && (
+            {/* Word audio button - show skeleton while pending, button when ready */}
+            {item.flashcardPending && !existingFlashcard?.wordAudioUrl ? (
+              <Skeleton className="w-7 h-7 rounded-lg" />
+            ) : !isLoadingFlashcard && existingFlashcard?.wordAudioUrl && (
               <button
                 onClick={(e) => { e.stopPropagation(); new Audio(existingFlashcard.wordAudioUrl!).play(); }}
                 className="p-1.5 rounded-lg text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors"
@@ -530,92 +673,24 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
           <div className="text-foreground">
             {item.definitions.join("; ")}
           </div>
-          {/* Example sentence - show source context, generated sentence, or skeleton while generating */}
-          {(item.sourceContext || existingFlashcard?.sentence || item.flashcardPending) && (
-            <div className="mt-3">
-              {item.sourceContext ? (
-                <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
-                  <p
-                    className="text-sm text-foreground"
-                    style={{ fontFamily: languageFont }}
-                  >
-                    {item.sourceContext}
-                  </p>
-                  <p className="text-xs text-foreground-muted mt-1">Original context</p>
-                </div>
-              ) : item.flashcardPending && !existingFlashcard?.sentence ? (
-                <div className="p-2.5 rounded-lg bg-accent/5 border border-accent/20">
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                  <p className="text-xs text-foreground-muted mt-2">Generating sentence, audio & image...</p>
-                </div>
-              ) : existingFlashcard?.sentence && (
-                <div className="p-2.5 rounded-lg bg-accent/5 border border-accent/20">
-                  <div className="flex items-start justify-between gap-2">
-                    <p
-                      className="text-sm text-foreground flex-1"
-                      style={{ fontFamily: languageFont }}
-                    >
-                      {existingFlashcard.sentence}
-                    </p>
-                    {existingFlashcard.audioUrl && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); new Audio(existingFlashcard.audioUrl!).play(); }}
-                        className="p-1.5 rounded-lg text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors shrink-0"
-                        title="Play audio"
-                      >
-                        <Volume2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-xs text-foreground-muted mt-1">Example sentence</p>
-                </div>
-              )}
-            </div>
-          )}
-          <div className="flex items-center gap-2 mt-3">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-foreground-muted capitalize">
-              {item.language}
-            </span>
-            {item.examLevel && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent">
-                {item.examLevel}
-              </span>
-            )}
-            {item.sourceStoryTitle && (
-              <span className="text-xs text-foreground-muted flex items-center gap-1">
-                <BookOpen className="w-3 h-3" />
-                {item.sourceStoryTitle}
-              </span>
-            )}
-          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-          {showMastery && (
+          {showMastery && item.masteryState !== "new" && (
             <span className={`text-xs px-2 py-1 rounded-full ${MASTERY_LABELS[item.masteryState]?.color ?? "bg-muted text-foreground-muted"}`}>
               {MASTERY_LABELS[item.masteryState]?.label ?? item.masteryState}
             </span>
           )}
-          {/* Generate flashcard button - only show for non-premium users if no flashcard exists */}
-          {!isLoadingFlashcard && !hasFlashcard && !item.flashcardPending && isPremiumUser === false && (
-            isGenerating ? (
-              <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent flex items-center gap-1.5 animate-pulse">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Generating...
-              </span>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleGenerateFlashcard}
-                className="text-foreground-muted hover:text-accent hover:bg-accent/10"
-                title="Generate AI flashcard"
-              >
-                <Sparkles className="w-4 h-4" />
-              </Button>
-            )
+          {/* Generate flashcard button - show for admin or non-premium users if no flashcard exists */}
+          {!isLoadingFlashcard && !hasFlashcard && !item.flashcardPending && (isAdmin || isPremiumUser === false) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleGenerateFlashcard}
+              className="text-foreground-muted hover:text-accent hover:bg-accent/10"
+              title="Generate AI flashcard"
+            >
+              <Sparkles className="w-4 h-4" />
+            </Button>
           )}
           {/* Show generating indicator when flashcard is pending */}
           {item.flashcardPending && (
@@ -642,6 +717,70 @@ function VocabularyCard({ item, onRemove, showMastery = true, delay = 0, onShowP
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
+      </div>
+      {/* Example sentence - show source context, generated sentence, or skeleton while generating */}
+      {(item.sourceContext || existingFlashcard?.sentence || item.flashcardPending) && (
+        <div className="mt-3">
+          {item.sourceContext ? (
+            <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
+              <p
+                className="text-sm text-foreground"
+                style={{ fontFamily: languageFont }}
+              >
+                {item.sourceContext}
+              </p>
+              <p className="text-xs text-foreground-muted mt-1">Original context</p>
+            </div>
+          ) : item.flashcardPending && !existingFlashcard?.sentence ? (
+            <div className="p-2.5 rounded-lg bg-accent/5 border border-accent/20">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+                <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
+              </div>
+              <p className="text-xs text-foreground-muted mt-2">Generating sentence, audio & image...</p>
+            </div>
+          ) : existingFlashcard?.sentence && (
+            <div className="p-2.5 rounded-lg bg-accent/5 border border-accent/20">
+              <div className="flex items-start justify-between gap-2">
+                <p
+                  className="text-sm text-foreground flex-1"
+                  style={{ fontFamily: languageFont }}
+                >
+                  {existingFlashcard.sentence}
+                </p>
+                {existingFlashcard.audioUrl && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); new Audio(existingFlashcard.audioUrl!).play(); }}
+                    className="p-1.5 rounded-lg text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors shrink-0"
+                    title="Play audio"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-foreground-muted mt-1">Example sentence</p>
+            </div>
+          )}
+        </div>
+      )}
+      <div className="flex items-center gap-2 mt-3">
+        <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-foreground-muted capitalize">
+          {item.language}
+        </span>
+        {item.examLevel && (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+            {item.examLevel}
+          </span>
+        )}
+        {item.sourceStoryTitle && (
+          <span className="text-xs text-foreground-muted flex items-center gap-1">
+            <BookOpen className="w-3 h-3" />
+            {item.sourceStoryTitle}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -822,6 +961,7 @@ function AddWordModal({ userId, onClose, isPremiumUser }: AddWordModalProps) {
   const { trackEvent, events } = useAnalytics();
   const addWord = useMutation(api.vocabulary.add);
   const generateFlashcardWithAudio = useAction(api.ai.generateFlashcardWithAudio);
+  const getOrCreatePersonalDeck = useMutation(api.premadeDecks.getOrCreatePersonalDeck);
 
   // Preload dictionary when modal opens
   useEffect(() => {
@@ -875,6 +1015,9 @@ function AddWordModal({ userId, onClose, isPremiumUser }: AddWordModalProps) {
 
     setIsSubmitting(true);
     try {
+      // Get or create personal deck for this user
+      const personalDeck = await getOrCreatePersonalDeck({ userId, language });
+
       const vocabId = await addWord({
         userId,
         language,
@@ -882,6 +1025,7 @@ function AddWordModal({ userId, onClose, isPremiumUser }: AddWordModalProps) {
         reading: reading.trim() || undefined,
         definitions: definitions.split(/[,;]/).map((d) => d.trim()).filter(Boolean),
         sourceType: "manual",
+        sourceDeckId: personalDeck?.deckId, // Add to personal deck
         flashcardPending: isPremiumUser, // Show generating state for premium users
       });
 

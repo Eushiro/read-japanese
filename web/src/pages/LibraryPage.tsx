@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { StoryCard } from "@/components/library/StoryCard";
-import { SearchBar } from "@/components/library/SearchBar";
+import { SearchBar, matchesSearch } from "@/components/library/SearchBar";
 import { LevelFilter } from "@/components/library/LevelFilter";
 import { Paywall } from "@/components/Paywall";
 import { GenerateStoryModal } from "@/components/GenerateStoryModal";
@@ -14,10 +14,17 @@ import {
   type SortOption,
 } from "@/hooks/useStories";
 import type { ProficiencyLevel, StoryListItem } from "@/types/story";
-import { ChevronDown, Library, BookOpen, Sparkles, Play, Film } from "lucide-react";
+import { Library, BookOpen, Sparkles, Film } from "lucide-react";
 import { VideoCard, VideoCardSkeleton, type VideoItem } from "@/components/library/VideoCard";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Language = "japanese" | "english" | "french";
 
@@ -31,7 +38,7 @@ type ContentFilter = "all" | "stories" | "videos";
 
 export function LibraryPage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<ProficiencyLevel | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("level-asc");
@@ -86,14 +93,13 @@ export function LibraryPage() {
   ) as VideoItem[] | undefined;
   const isLoadingVideos = videos === undefined;
 
-  // Filter videos by search term
+  // Filter videos by search term (with romaji support)
   const filteredVideos = useMemo(() => {
     if (!videos) return [];
     if (!searchTerm.trim()) return videos;
-    const term = searchTerm.toLowerCase();
     return videos.filter((v) =>
-      v.title.toLowerCase().includes(term) ||
-      v.description?.toLowerCase().includes(term)
+      matchesSearch(v.title, searchTerm) ||
+      matchesSearch(v.description || "", searchTerm)
     );
   }, [videos, searchTerm]);
 
@@ -101,8 +107,13 @@ export function LibraryPage() {
     ? (isLoadingStories || isLoadingVideos)
     : contentFilter === "stories" ? isLoadingStories : isLoadingVideos;
 
-  const showStories = contentFilter === "all" || contentFilter === "stories";
-  const showVideos = contentFilter === "all" || contentFilter === "videos";
+  // Check if content exists (after loading)
+  const hasStories = !isLoadingStories && sortedStories.length > 0;
+  const hasVideos = !isLoadingVideos && filteredVideos.length > 0;
+
+  // Show sections based on filter AND content availability
+  const showStories = (contentFilter === "all" || contentFilter === "stories") && (isLoadingStories || hasStories);
+  const showVideos = (contentFilter === "all" || contentFilter === "videos") && (isLoadingVideos || hasVideos);
 
   const handleStoryClick = (story: StoryListItem) => {
     // Show paywall for premium stories if user doesn't have premium
@@ -117,6 +128,11 @@ export function LibraryPage() {
     navigate({ to: "/video/$videoId", params: { videoId: video._id } });
   };
 
+  // Show skeleton while auth is loading
+  if (authLoading) {
+    return <LibrarySkeleton />;
+  }
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-destructive">
@@ -129,14 +145,17 @@ export function LibraryPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <div className="border-b border-border relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-background to-purple-500/5" />
+        <div className="absolute top-0 right-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 relative">
           <div className="max-w-2xl animate-fade-in-up">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-accent/10">
-                <Library className="w-5 h-5 text-accent" />
+              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20">
+                <Library className="w-5 h-5 text-blue-400" />
               </div>
-              <span className="text-sm font-medium text-accent uppercase tracking-wider">
+              <span className="text-sm font-semibold text-blue-400 uppercase tracking-wider">
                 Your Library
               </span>
             </div>
@@ -150,13 +169,13 @@ export function LibraryPage() {
             {/* Generate Story CTA */}
             <div className="mt-6">
               {isAuthenticated ? (
-                <Button className="gap-2" onClick={() => setShowGenerateModal(true)}>
+                <Button className="gap-2 shadow-lg shadow-accent/25" onClick={() => setShowGenerateModal(true)}>
                   <Sparkles className="w-4 h-4" />
                   Generate Custom Story
                 </Button>
               ) : (
                 <SignInButton mode="modal">
-                  <Button className="gap-2">
+                  <Button className="gap-2 shadow-lg shadow-accent/25">
                     <Sparkles className="w-4 h-4" />
                     Generate Custom Story
                   </Button>
@@ -168,85 +187,61 @@ export function LibraryPage() {
       </div>
 
       {/* Filters Section */}
-      <div className="sticky top-16 z-40 border-b border-border bg-surface/95 backdrop-blur-md">
-        <div className="container mx-auto px-4 sm:px-6 py-4">
-          <div className="flex flex-col gap-4">
-            {/* Content Filter Toggle */}
-            <div className="flex items-center gap-4">
-              <div className="flex gap-0.5 p-1 rounded-lg bg-muted border border-border">
-                <button
-                  onClick={() => setContentFilter("all")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    contentFilter === "all"
-                      ? "bg-accent text-white shadow-sm"
-                      : "text-foreground-muted hover:text-foreground hover:bg-surface/50"
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setContentFilter("stories")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    contentFilter === "stories"
-                      ? "bg-accent text-white shadow-sm"
-                      : "text-foreground-muted hover:text-foreground hover:bg-surface/50"
-                  }`}
-                >
-                  <BookOpen className="w-4 h-4" />
-                  Stories
-                </button>
-                <button
-                  onClick={() => setContentFilter("videos")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    contentFilter === "videos"
-                      ? "bg-accent text-white shadow-sm"
-                      : "text-foreground-muted hover:text-foreground hover:bg-surface/50"
-                  }`}
-                >
-                  <Film className="w-4 h-4" />
-                  Videos
-                </button>
-              </div>
+      <div className="sticky top-16 z-40 border-b border-border bg-background/95 backdrop-blur-md">
+        <div className="container mx-auto px-4 sm:px-6 py-3">
+          <div className="flex gap-3">
+            {/* Search */}
+            <div className="flex-1">
+              <SearchBar
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Search..."
+              />
+            </div>
 
-              {/* Language Toggle - only show if user has multiple languages */}
-              {hasMultipleLanguages && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-foreground-muted">Language:</span>
-                  <div className="flex gap-1">
-                    {userLanguages.map((lang) => (
-                      <button
-                        key={lang}
-                        onClick={() => setSelectedLanguage(lang)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                          selectedLanguage === lang
-                            ? "bg-accent text-white shadow-sm"
-                            : "bg-surface text-foreground-muted hover:bg-muted hover:text-foreground border border-border"
-                        }`}
-                      >
-                        {LANGUAGE_INFO[lang].flag} {LANGUAGE_INFO[lang].label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <SearchBar
-                  value={searchTerm}
-                  onChange={setSearchTerm}
-                  placeholder="Search stories..."
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <LevelFilter
-                  selectedLevel={selectedLevel}
-                  onSelectLevel={setSelectedLevel}
-                  languages={selectedLanguage ? [selectedLanguage] : userLanguages}
-                />
-                <SortDropdown value={sortBy} onChange={setSortBy} />
-              </div>
-            </div>
+            {/* Content Type Filter */}
+            <Select
+              value={contentFilter}
+              onValueChange={(value) => setContentFilter(value as ContentFilter)}
+            >
+              <SelectTrigger className="w-[110px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="stories">Stories</SelectItem>
+                <SelectItem value="videos">Videos</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Language Filter */}
+            {hasMultipleLanguages && userLanguages && (
+              <Select
+                value={selectedLanguage ?? userLanguages[0]}
+                onValueChange={(value) => setSelectedLanguage(value as Language)}
+              >
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {userLanguages.map((lang) => (
+                    <SelectItem key={lang} value={lang}>
+                      {LANGUAGE_INFO[lang].flag} {LANGUAGE_INFO[lang].label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Level Filter */}
+            <LevelFilter
+              selectedLevel={selectedLevel}
+              onSelectLevel={setSelectedLevel}
+              languages={selectedLanguage ? [selectedLanguage] : userLanguages}
+            />
+
+            {/* Sort */}
+            <SortDropdown value={sortBy} onChange={setSortBy} />
           </div>
         </div>
       </div>
@@ -257,8 +252,8 @@ export function LibraryPage() {
         {showStories && (
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <BookOpen className="w-5 h-5 text-accent" />
-              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+              <BookOpen className="w-5 h-5 text-foreground-muted" />
+              <h2 className="text-base font-medium text-foreground">
                 Stories
               </h2>
               <span className="text-sm text-foreground-muted">
@@ -271,14 +266,6 @@ export function LibraryPage() {
                 {Array.from({ length: 12 }).map((_, i) => (
                   <StoryCardSkeleton key={i} delay={i * 50} />
                 ))}
-              </div>
-            ) : sortedStories.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-foreground-muted bg-surface rounded-xl border border-border">
-                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-3">
-                  <BookOpen className="w-6 h-6 opacity-40" />
-                </div>
-                <p className="font-medium text-foreground mb-1">No stories found</p>
-                <p className="text-sm">Try adjusting your filters</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
@@ -302,8 +289,8 @@ export function LibraryPage() {
         {showVideos && (
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <Play className="w-5 h-5 text-accent" />
-              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+              <Film className="w-5 h-5 text-foreground-muted" />
+              <h2 className="text-base font-medium text-foreground">
                 Videos
               </h2>
               <span className="text-sm text-foreground-muted">
@@ -316,18 +303,6 @@ export function LibraryPage() {
                 {Array.from({ length: 8 }).map((_, i) => (
                   <VideoCardSkeleton key={i} delay={i * 50} />
                 ))}
-              </div>
-            ) : filteredVideos.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-foreground-muted bg-surface rounded-xl border border-border">
-                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-3">
-                  <Film className="w-6 h-6 opacity-40" />
-                </div>
-                <p className="font-medium text-foreground mb-1">No videos found</p>
-                <p className="text-sm">
-                  {selectedLanguage
-                    ? `No videos available for ${LANGUAGE_INFO[selectedLanguage].label} yet`
-                    : "Select a language to browse videos"}
-                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -377,20 +352,18 @@ function SortDropdown({ value, onChange }: SortDropdownProps) {
   ];
 
   return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as SortOption)}
-        className="appearance-none pl-3 pr-9 py-2 rounded-lg border border-border bg-surface text-foreground text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent cursor-pointer transition-all"
-      >
+    <Select value={value} onValueChange={(v) => onChange(v as SortOption)}>
+      <SelectTrigger className="w-[130px]">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <SelectItem key={option.value} value={option.value}>
             {option.label}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted pointer-events-none" />
-    </div>
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -411,6 +384,66 @@ function StoryCardSkeleton({ delay = 0 }: { delay?: number }) {
           <div className="h-5 bg-border rounded-full w-16" />
           <div className="h-5 bg-border rounded w-12" />
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Full page skeleton for initial load
+function LibrarySkeleton() {
+  return (
+    <div className="min-h-screen">
+      {/* Hero Section Skeleton */}
+      <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-border w-9 h-9 animate-pulse" />
+              <div className="h-4 bg-border rounded w-24 animate-pulse" />
+            </div>
+            <div className="h-10 bg-border rounded w-48 mb-3 animate-pulse" />
+            <div className="h-5 bg-border rounded w-80 mb-6 animate-pulse" />
+            <div className="h-10 bg-border rounded w-44 animate-pulse" />
+          </div>
+        </div>
+      </div>
+
+      {/* Filters Section Skeleton */}
+      <div className="sticky top-16 z-40 border-b border-border bg-surface/95">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex gap-0.5 p-1 rounded-lg bg-muted border border-border">
+                <div className="h-9 bg-border rounded-md w-12 animate-pulse" />
+                <div className="h-9 bg-border rounded-md w-20 animate-pulse" />
+                <div className="h-9 bg-border rounded-md w-20 animate-pulse" />
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 h-10 bg-border rounded-lg animate-pulse" />
+              <div className="flex items-center gap-3">
+                <div className="h-10 bg-border rounded-lg w-24 animate-pulse" />
+                <div className="h-10 bg-border rounded-lg w-28 animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Skeleton */}
+      <div className="container mx-auto px-4 sm:px-6 pt-6 pb-12 space-y-10">
+        {/* Stories Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-5 h-5 bg-border rounded animate-pulse" />
+            <div className="h-5 bg-border rounded w-16 animate-pulse" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <StoryCardSkeleton key={i} delay={i * 50} />
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );
