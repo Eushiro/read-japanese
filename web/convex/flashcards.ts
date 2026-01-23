@@ -411,3 +411,68 @@ export const getNeedingRefresh = query({
       .slice(0, args.limit ?? 10);
   },
 });
+
+// Undo a flashcard review (restore previous state)
+export const unreview = mutation({
+  args: {
+    flashcardId: v.id("flashcards"),
+    previousFlashcardState: v.object({
+      state: cardStateValidator,
+      due: v.number(),
+      stability: v.number(),
+      difficulty: v.number(),
+      elapsedDays: v.number(),
+      scheduledDays: v.number(),
+      reps: v.number(),
+      lapses: v.number(),
+      lastReview: v.optional(v.number()),
+    }),
+    previousVocabStats: v.object({
+      timesReviewed: v.number(),
+      timesCorrect: v.number(),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db.get(args.flashcardId);
+    if (!card) throw new Error("Flashcard not found");
+
+    const now = Date.now();
+
+    // Restore flashcard state
+    await ctx.db.patch(args.flashcardId, {
+      state: args.previousFlashcardState.state,
+      due: args.previousFlashcardState.due,
+      stability: args.previousFlashcardState.stability,
+      difficulty: args.previousFlashcardState.difficulty,
+      elapsedDays: args.previousFlashcardState.elapsedDays,
+      scheduledDays: args.previousFlashcardState.scheduledDays,
+      reps: args.previousFlashcardState.reps,
+      lapses: args.previousFlashcardState.lapses,
+      lastReview: args.previousFlashcardState.lastReview,
+      updatedAt: now,
+    });
+
+    // Restore vocabulary stats
+    const vocab = await ctx.db.get(card.vocabularyId);
+    if (vocab) {
+      await ctx.db.patch(card.vocabularyId, {
+        timesReviewed: args.previousVocabStats.timesReviewed,
+        timesCorrect: args.previousVocabStats.timesCorrect,
+        updatedAt: now,
+      });
+    }
+
+    // Delete the most recent review record for this flashcard
+    const recentReview = await ctx.db
+      .query("flashcardReviews")
+      .withIndex("by_flashcard", (q) => q.eq("flashcardId", args.flashcardId))
+      .order("desc")
+      .first();
+
+    if (recentReview) {
+      await ctx.db.delete(recentReview._id);
+    }
+
+    return { success: true };
+  },
+});

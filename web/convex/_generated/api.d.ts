@@ -19,12 +19,15 @@ import type * as progress from "../progress.js";
 import type * as scheduledJobs from "../scheduledJobs.js";
 import type * as settings from "../settings.js";
 import type * as storyComprehension from "../storyComprehension.js";
+import type * as storyQuestions from "../storyQuestions.js";
 import type * as stripe from "../stripe.js";
 import type * as stripeHelpers from "../stripeHelpers.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as userSentences from "../userSentences.js";
 import type * as users from "../users.js";
+import type * as videoData from "../videoData.js";
 import type * as vocabulary from "../vocabulary.js";
+import type * as youtubeContent from "../youtubeContent.js";
 
 import type {
   ApiFromModules,
@@ -44,12 +47,15 @@ declare const fullApi: ApiFromModules<{
   scheduledJobs: typeof scheduledJobs;
   settings: typeof settings;
   storyComprehension: typeof storyComprehension;
+  storyQuestions: typeof storyQuestions;
   stripe: typeof stripe;
   stripeHelpers: typeof stripeHelpers;
   subscriptions: typeof subscriptions;
   userSentences: typeof userSentences;
   users: typeof users;
+  videoData: typeof videoData;
   vocabulary: typeof vocabulary;
+  youtubeContent: typeof youtubeContent;
 }>;
 
 /**

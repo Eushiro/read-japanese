@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import type { Id } from "../../convex/_generated/dataModel";
 import { api } from "../../convex/_generated/api";
@@ -13,12 +13,17 @@ import {
   Loader2,
   BookOpen,
   Volume2,
-  Sparkles
+  Sparkles,
+  Undo2,
+  Redo2
 } from "lucide-react";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { useReviewSession } from "@/contexts/ReviewSessionContext";
 
 type Rating = "again" | "hard" | "good" | "easy";
 
+// Extended card type including SRS fields for undo
 type CardType = {
   _id: Id<"flashcards">;
   sentence: string;
@@ -26,16 +31,57 @@ type CardType = {
   audioUrl?: string | null;
   wordAudioUrl?: string | null;
   imageUrl?: string | null;
+  // SRS fields for undo
+  state?: "new" | "learning" | "review" | "relearning";
+  due?: number;
+  stability?: number;
+  difficulty?: number;
+  elapsedDays?: number;
+  scheduledDays?: number;
+  reps?: number;
+  lapses?: number;
+  lastReview?: number;
   vocabulary?: {
     word: string;
     reading?: string | null;
     definitions: string[];
     language: string;
+    timesReviewed?: number;
+    timesCorrect?: number;
   } | null;
+};
+
+// History entry for undo/redo
+type HistoryEntry = {
+  cardId: Id<"flashcards">;
+  card: CardType;
+  rating: Rating;
+  previousState: {
+    sessionQueue: CardType[];
+    currentIndex: number;
+    reviewedCount: number;
+    flashcardState: {
+      state: "new" | "learning" | "review" | "relearning";
+      due: number;
+      stability: number;
+      difficulty: number;
+      elapsedDays: number;
+      scheduledDays: number;
+      reps: number;
+      lapses: number;
+      lastReview?: number;
+    };
+    vocabStats: {
+      timesReviewed: number;
+      timesCorrect: number;
+    };
+  };
 };
 
 export function FlashcardsPage() {
   const { user, isAuthenticated } = useAuth();
+  const { trackEvent, events } = useAnalytics();
+  const { setCardsLeft } = useReviewSession();
   const userId = user?.id ?? "anonymous";
 
   // Fetch due cards and stats
@@ -59,8 +105,19 @@ export function FlashcardsPage() {
   const [sessionComplete, setSessionComplete] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const originalSessionSize = useRef(0);
+
+  // Visual feedback state
+  const [lastSelectedRating, setLastSelectedRating] = useState<Rating | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const advanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Undo/redo history
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [undoneHistory, setUndoneHistory] = useState<HistoryEntry[]>([]);
 
   const reviewCard = useMutation(api.flashcards.review);
+  const unreviewCard = useMutation(api.flashcards.unreview);
 
   // Initialize session queue when cards load
   const initialCards = useMemo(() => {
@@ -71,13 +128,70 @@ export function FlashcardsPage() {
     if (initialCards.length > 0 && !isInitialized) {
       setSessionQueue(initialCards);
       setIsInitialized(true);
+      originalSessionSize.current = initialCards.length;
+      // Track session started
+      trackEvent(events.FLASHCARD_SESSION_STARTED, {
+        cards_due: dueCards?.length ?? 0,
+        cards_new: newCards?.length ?? 0,
+        total_cards: initialCards.length,
+      });
     }
   }, [initialCards, isInitialized]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (advanceTimeoutRef.current) {
+        clearTimeout(advanceTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Sync cards left with review session context for header badge
+  useEffect(() => {
+    if (isInitialized && !sessionComplete) {
+      setCardsLeft(sessionQueue.length - currentIndex);
+    } else {
+      setCardsLeft(null);
+    }
+    return () => setCardsLeft(null);
+  }, [sessionQueue.length, currentIndex, isInitialized, sessionComplete, setCardsLeft]);
 
   const currentCard = sessionQueue[currentIndex];
 
   const handleRating = useCallback(async (rating: Rating) => {
-    if (!currentCard) return;
+    if (!currentCard || isTransitioning) return;
+
+    // Show visual feedback immediately and start transition
+    setLastSelectedRating(rating);
+    setIsTransitioning(true);
+
+    // Capture current state BEFORE mutation for undo
+    const historyEntry: HistoryEntry = {
+      cardId: currentCard._id,
+      card: currentCard,
+      rating,
+      previousState: {
+        sessionQueue: [...sessionQueue],
+        currentIndex,
+        reviewedCount,
+        flashcardState: {
+          state: currentCard.state ?? "new",
+          due: currentCard.due ?? Date.now(),
+          stability: currentCard.stability ?? 0,
+          difficulty: currentCard.difficulty ?? 0,
+          elapsedDays: currentCard.elapsedDays ?? 0,
+          scheduledDays: currentCard.scheduledDays ?? 0,
+          reps: currentCard.reps ?? 0,
+          lapses: currentCard.lapses ?? 0,
+          lastReview: currentCard.lastReview,
+        },
+        vocabStats: {
+          timesReviewed: currentCard.vocabulary?.timesReviewed ?? 0,
+          timesCorrect: currentCard.vocabulary?.timesCorrect ?? 0,
+        },
+      },
+    };
 
     try {
       await reviewCard({
@@ -85,29 +199,47 @@ export function FlashcardsPage() {
         rating,
       });
 
-      setReviewedCount((prev) => prev + 1);
-      setShowAnswer(false);
+      // Save to history after successful mutation
+      setHistory(prev => [...prev, historyEntry]);
+      setUndoneHistory([]); // Clear redo stack on new action
 
-      // If "Again", requeue the card at the end of the session
-      if (rating === "again") {
-        setSessionQueue((prev) => [...prev, currentCard]);
-      }
+      // Track card rated
+      trackEvent(events.FLASHCARD_RATED, {
+        rating,
+        card_state: currentCard.state ?? "new",
+        word: currentCard.vocabulary?.word,
+      });
 
-      if (currentIndex + 1 >= sessionQueue.length) {
-        // Check if there are requeued cards after current position
-        if (rating === "again") {
-          // Card was just added, continue to it
-          setCurrentIndex((prev) => prev + 1);
-        } else {
+      // Wait 200ms to show the highlight before advancing
+      advanceTimeoutRef.current = setTimeout(() => {
+        setReviewedCount((prev) => prev + 1);
+        setShowAnswer(false);
+        setLastSelectedRating(null);
+        setIsTransitioning(false);
+
+        // Advance index first, then requeue if "Again" - this keeps the count stable
+        const isLastCard = currentIndex + 1 >= sessionQueue.length;
+
+        if (isLastCard && rating !== "again") {
           setSessionComplete(true);
+          trackEvent(events.FLASHCARD_SESSION_COMPLETED, {
+            cards_reviewed: reviewedCount + 1,
+            total_cards: sessionQueue.length,
+          });
+        } else {
+          // Advance and optionally requeue together
+          setCurrentIndex((prev) => prev + 1);
+          if (rating === "again") {
+            setSessionQueue((prev) => [...prev, currentCard]);
+          }
         }
-      } else {
-        setCurrentIndex((prev) => prev + 1);
-      }
+      }, 200);
     } catch (error) {
       console.error("Failed to review card:", error);
+      setLastSelectedRating(null);
+      setIsTransitioning(false);
     }
-  }, [currentCard, currentIndex, sessionQueue.length, reviewCard]);
+  }, [currentCard, currentIndex, sessionQueue, reviewedCount, reviewCard, isTransitioning]);
 
   const restartSession = () => {
     setSessionQueue(initialCards);
@@ -115,7 +247,81 @@ export function FlashcardsPage() {
     setShowAnswer(false);
     setSessionComplete(false);
     setReviewedCount(0);
+    setHistory([]);
+    setUndoneHistory([]);
   };
+
+  // Undo last review
+  const handleUndo = useCallback(async () => {
+    if (history.length === 0) return;
+
+    const lastEntry = history[history.length - 1];
+
+    try {
+      // Revert database state
+      await unreviewCard({
+        flashcardId: lastEntry.cardId,
+        previousFlashcardState: lastEntry.previousState.flashcardState,
+        previousVocabStats: lastEntry.previousState.vocabStats,
+      });
+
+      // Revert UI state
+      setSessionQueue(lastEntry.previousState.sessionQueue);
+      setCurrentIndex(lastEntry.previousState.currentIndex);
+      setReviewedCount(lastEntry.previousState.reviewedCount);
+      setShowAnswer(false);
+      setSessionComplete(false);
+
+      // Move to undone history for redo
+      setHistory(prev => prev.slice(0, -1));
+      setUndoneHistory(prev => [...prev, lastEntry]);
+    } catch (error) {
+      console.error("Failed to undo:", error);
+    }
+  }, [history, unreviewCard]);
+
+  // Redo last undone review
+  const handleRedo = useCallback(async () => {
+    if (undoneHistory.length === 0) return;
+
+    const entryToRedo = undoneHistory[undoneHistory.length - 1];
+
+    try {
+      // Re-apply the review
+      await reviewCard({
+        flashcardId: entryToRedo.cardId,
+        rating: entryToRedo.rating,
+      });
+
+      // Re-apply UI state changes
+      setReviewedCount(prev => prev + 1);
+      setShowAnswer(false);
+
+      // Handle session queue and index based on original rating
+      if (entryToRedo.rating === "again") {
+        setSessionQueue(prev => [...prev, entryToRedo.card]);
+      }
+
+      const prevQueue = entryToRedo.previousState.sessionQueue;
+      const prevIndex = entryToRedo.previousState.currentIndex;
+
+      if (prevIndex + 1 >= prevQueue.length) {
+        if (entryToRedo.rating === "again") {
+          setCurrentIndex(prevIndex + 1);
+        } else {
+          setSessionComplete(true);
+        }
+      } else {
+        setCurrentIndex(prevIndex + 1);
+      }
+
+      // Move back to history
+      setUndoneHistory(prev => prev.slice(0, -1));
+      setHistory(prev => [...prev, entryToRedo]);
+    } catch (error) {
+      console.error("Failed to redo:", error);
+    }
+  }, [undoneHistory, reviewCard]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -125,7 +331,23 @@ export function FlashcardsPage() {
         return;
       }
 
-      if (!currentCard || sessionComplete) return;
+      // Undo: Cmd/Ctrl + Z (without Shift)
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleUndo();
+        return;
+      }
+
+      // Redo: Cmd/Ctrl + Shift + Z or Cmd/Ctrl + Y
+      if ((e.metaKey || e.ctrlKey) && ((e.shiftKey && e.key.toLowerCase() === "z") || e.key.toLowerCase() === "y")) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleRedo();
+        return;
+      }
+
+      if (!currentCard || sessionComplete || isTransitioning) return;
 
       if (e.code === "Space") {
         e.preventDefault();
@@ -150,9 +372,10 @@ export function FlashcardsPage() {
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentCard, showAnswer, sessionComplete, handleRating]);
+    // Use capture phase to intercept before browser
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [currentCard, showAnswer, sessionComplete, isTransitioning, handleRating, handleUndo, handleRedo]);
 
   if (!isAuthenticated) {
     return (
@@ -206,27 +429,11 @@ export function FlashcardsPage() {
       {/* Stats Bar */}
       <div className="border-b border-border bg-surface">
         <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
-          <div className="flex flex-wrap gap-4 sm:gap-8">
-            <div>
-              <div className="text-2xl font-bold text-foreground">{stats.total}</div>
-              <div className="text-xs text-foreground-muted uppercase tracking-wide">Total Cards</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-500">{stats.new}</div>
-              <div className="text-xs text-foreground-muted uppercase tracking-wide">New</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-amber-500">{stats.learning + stats.relearning}</div>
-              <div className="text-xs text-foreground-muted uppercase tracking-wide">Learning</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-green-500">{stats.review}</div>
-              <div className="text-xs text-foreground-muted uppercase tracking-wide">Review</div>
-            </div>
-            <div className="ml-auto">
-              <div className="text-2xl font-bold text-accent">{stats.dueNow}</div>
-              <div className="text-xs text-foreground-muted uppercase tracking-wide">Due Now</div>
-            </div>
+          <div className="text-center">
+            <span className="text-3xl font-bold text-green-500">
+              {sessionQueue.length - currentIndex}
+            </span>
+            <span className="text-lg text-foreground-muted ml-2">cards left</span>
           </div>
         </div>
       </div>
@@ -275,10 +482,24 @@ export function FlashcardsPage() {
         ) : currentCard ? (
           // Review card
           <div className="space-y-6">
-            {/* Progress */}
-            <div className="flex items-center justify-between text-sm text-foreground-muted">
-              <span>Card {currentIndex + 1} of {sessionQueue.length}</span>
-              <span>{reviewedCount} reviewed</span>
+            {/* Undo/Redo */}
+            <div className="flex items-center justify-end gap-2 text-sm text-foreground-muted">
+              <button
+                onClick={handleUndo}
+                disabled={history.length === 0 || isTransitioning}
+                className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Undo (Cmd+Z)"
+              >
+                <Undo2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleRedo}
+                disabled={undoneHistory.length === 0 || isTransitioning}
+                className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Redo (Cmd+Shift+Z)"
+              >
+                <Redo2 className="w-4 h-4" />
+              </button>
             </div>
 
             {/* Card */}
@@ -296,7 +517,10 @@ export function FlashcardsPage() {
                   <Button
                     variant="outline"
                     onClick={() => handleRating("again")}
-                    className="flex-col h-auto py-3 border-red-500/30 hover:bg-red-500/10 hover:border-red-500"
+                    disabled={isTransitioning}
+                    className={`flex-col h-auto py-3 border-red-500/30 hover:bg-red-500/10 hover:border-red-500 transition-all ${
+                      lastSelectedRating === "again" ? "ring-2 ring-red-500 bg-red-500/20 scale-95" : ""
+                    }`}
                   >
                     <X className="w-5 h-5 text-red-500 mb-1" />
                     <span className="text-xs font-medium">Again</span>
@@ -305,7 +529,10 @@ export function FlashcardsPage() {
                   <Button
                     variant="outline"
                     onClick={() => handleRating("hard")}
-                    className="flex-col h-auto py-3 border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500"
+                    disabled={isTransitioning}
+                    className={`flex-col h-auto py-3 border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500 transition-all ${
+                      lastSelectedRating === "hard" ? "ring-2 ring-amber-500 bg-amber-500/20 scale-95" : ""
+                    }`}
                   >
                     <span className="text-amber-500 font-bold mb-1">~</span>
                     <span className="text-xs font-medium">Hard</span>
@@ -314,7 +541,10 @@ export function FlashcardsPage() {
                   <Button
                     variant="outline"
                     onClick={() => handleRating("good")}
-                    className="flex-col h-auto py-3 border-green-500/30 hover:bg-green-500/10 hover:border-green-500"
+                    disabled={isTransitioning}
+                    className={`flex-col h-auto py-3 border-green-500/30 hover:bg-green-500/10 hover:border-green-500 transition-all ${
+                      lastSelectedRating === "good" ? "ring-2 ring-green-500 bg-green-500/20 scale-95" : ""
+                    }`}
                   >
                     <Check className="w-5 h-5 text-green-500 mb-1" />
                     <span className="text-xs font-medium">Good</span>
@@ -323,7 +553,10 @@ export function FlashcardsPage() {
                   <Button
                     variant="outline"
                     onClick={() => handleRating("easy")}
-                    className="flex-col h-auto py-3 border-blue-500/30 hover:bg-blue-500/10 hover:border-blue-500"
+                    disabled={isTransitioning}
+                    className={`flex-col h-auto py-3 border-blue-500/30 hover:bg-blue-500/10 hover:border-blue-500 transition-all ${
+                      lastSelectedRating === "easy" ? "ring-2 ring-blue-500 bg-blue-500/20 scale-95" : ""
+                    }`}
                   >
                     <ChevronRight className="w-5 h-5 text-blue-500 mb-1" />
                     <span className="text-xs font-medium">Easy</span>

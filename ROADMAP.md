@@ -176,7 +176,7 @@ Usage limits (example):
 | 4 | Multi-Language Foundation | ✅ UI Complete | Language/exam settings in UI |
 | 5 | Mock Test Generation | ✅ Backend Ready | Schema + functions done |
 | 5.5 | Listening & Speaking Practice | ❌ Not Started | Shadowing, dictation |
-| 6 | YouTube Integration | ❌ Not Started | Schema placeholder only |
+| 6 | YouTube Integration | 🚧 In Progress | Videos in library, player, transcript, quiz |
 | 7 | Image-Based Learning | ❌ Not Started | - |
 | 8 | Email Marketing | ❌ Not Started | - |
 | 9 | Exam Digitization & Q&A | ❌ Not Started | Blocked on sourcing exam content |
@@ -240,8 +240,8 @@ Usage limits (example):
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| PostHog integration | ❌ Not Started | Event tracking, funnels, session replay, feature flags |
-| AI failure metrics | ❌ Not Started | Track AI generation failures, retries, model fallbacks |
+| PostHog integration | ✅ Complete | Event tracking, page views, user identification, feature flags |
+| AI failure metrics | ✅ Complete | Tracking helpers added to analytics.ts (ai_request_failed, ai_response_corrupted, etc.) |
 | Save sentence with word | ✅ Complete | Moved to Phase 0.25 |
 | Manual vocab + AI enhance | ❌ Not Started | User types word, AI fills reading, definitions, example sentence |
 | Add word autocomplete | ❌ Not Started | Autocomplete when adding words manually |
@@ -406,14 +406,20 @@ Usage limits (example):
 ### Phase 6: YouTube Integration
 **Goal:** Learn from real video content
 
-**Status:** ❌ Not Started (schema placeholder only)
+**Status:** 🚧 In Progress
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| YouTube embeds | ❌ Not Started | `youtubeContent` table exists |
-| Transcript extraction | ❌ Not Started | Need YouTube API integration |
-| Comprehension layer | ❌ Not Started | Need AI question generation |
-| Listening practice | ❌ Not Started | Need UI components |
+| Dashboard recommended stories | ✅ Complete | Based on placement test/target exam level |
+| YouTube schema with level field | ✅ Complete | youtubeContent table with level, transcript, questions |
+| Convex functions for videos | ✅ Complete | list, get, seed, updateTranscript, updateQuestions |
+| Stories/Videos toggle in Library | ✅ Complete | Tab-based switching in LibraryPage |
+| VideoCard component | ✅ Complete | Thumbnail, duration, level badge |
+| VideoPage with player | ✅ Complete | YouTube embed + synced transcript scroll |
+| VideoQuizPage | ✅ Complete | Multiple choice quiz with results |
+| Transcript fetch action | ✅ Complete | youtube-transcript npm package |
+| Video question generation | ✅ Complete | AI generates questions from transcript |
+| Seed starter videos | ❌ Not Started | Need to add curated educational videos |
 
 ---
 
@@ -684,8 +690,8 @@ UsageLimits (per tier)
 ### Immediate (Phase 0.5 - Analytics & Quick Wins)
 | Task | Status | Blocked By |
 |------|--------|------------|
-| Add PostHog integration | ❌ Not Started | - |
-| Save sentence context with vocabulary | ❌ Not Started | - |
+| Add PostHog integration | ✅ Complete | - |
+| Save sentence context with vocabulary | ✅ Complete | - |
 | Manual vocab entry + AI enhancement | ❌ Not Started | - |
 
 ### Short-term (Phase 1 - Audio & Polish)
@@ -712,6 +718,6 @@ UsageLimits (per tier)
 
 ## Document Control
 
-**Version**: 2.4
-**Last Updated**: 2026-01-21
+**Version**: 2.5
+**Last Updated**: 2026-01-22
 **Status**: Active development - Phase 0.5 (Analytics & Quick Wins)

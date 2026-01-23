@@ -149,6 +149,39 @@ export const setPrimaryLanguage = mutation({
   },
 });
 
+// Update proficiency level (admin override or placement test result)
+export const updateProficiencyLevel = mutation({
+  args: {
+    clerkId: v.string(),
+    language: languageValidator,
+    level: v.string(), // "N5", "N4", etc. or "A1", "B2", etc.
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!user) throw new Error("User not found");
+
+    // Build the proficiency levels object
+    const currentLevels = user.proficiencyLevels ?? {};
+    const updatedLevels = {
+      ...currentLevels,
+      [args.language]: {
+        level: args.level,
+        assessedAt: Date.now(),
+        // No testId since this is a manual override
+      },
+    };
+
+    await ctx.db.patch(user._id, {
+      proficiencyLevels: updatedLevels,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 // Delete user and all associated data
 export const deleteUser = mutation({
   args: { clerkId: v.string() },

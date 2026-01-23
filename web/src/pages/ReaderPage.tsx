@@ -9,6 +9,7 @@ import { FuriganaText } from "@/components/reader/FuriganaText";
 import { useStory } from "@/hooks/useStory";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { getAudioUrl } from "@/api/stories";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ export function ReaderPage() {
   const navigate = useNavigate();
   const { story, isLoading, error } = useStory(storyId);
   const { user, isAuthenticated } = useAuth();
+  const { trackEvent, events } = useAnalytics();
   const userId = user?.id ?? "anonymous";
 
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
@@ -65,6 +67,18 @@ export function ReaderPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [storyId]);
+
+  // Track reader opened when story loads
+  useEffect(() => {
+    if (story) {
+      trackEvent(events.READER_OPENED, {
+        story_id: storyId,
+        story_title: story.metadata.title,
+        level: story.metadata.level,
+        chapter_count: story.chapters?.length ?? 1,
+      });
+    }
+  }, [story?._id]); // Only track once per story
 
   // Get settings from Convex
   const { settings, setShowFurigana } = useSettings();
@@ -180,16 +194,26 @@ export function ReaderPage() {
       setManualNavigation(true);
       setCurrentChapterIndex((prev) => prev - 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
+      trackEvent(events.CHAPTER_CHANGED, {
+        story_id: storyId,
+        chapter_index: currentChapterIndex - 1,
+        navigation_type: "manual",
+      });
     }
-  }, [currentChapterIndex]);
+  }, [currentChapterIndex, storyId, trackEvent, events]);
 
   const handleNextChapter = useCallback(() => {
     if (currentChapterIndex < chapters.length - 1) {
       setManualNavigation(true);
       setCurrentChapterIndex((prev) => prev + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
+      trackEvent(events.CHAPTER_CHANGED, {
+        story_id: storyId,
+        chapter_index: currentChapterIndex + 1,
+        navigation_type: "manual",
+      });
     }
-  }, [currentChapterIndex, chapters.length]);
+  }, [currentChapterIndex, chapters.length, storyId, trackEvent, events]);
 
   const handleTokenClick = useCallback(
     (token: Token, event: React.MouseEvent, segmentText?: string) => {
@@ -205,8 +229,15 @@ export function ReaderPage() {
       });
       setSelectedToken(token);
       setSelectedSegmentText(segmentText);
+
+      // Track word tap
+      trackEvent(events.WORD_TAPPED, {
+        word: token.surface,
+        story_id: storyId,
+        proficiency_level: token.proficiencyLevel,
+      });
     },
-    []
+    [storyId, trackEvent, events]
   );
 
   const handleClosePopup = useCallback(() => {
@@ -355,6 +386,18 @@ export function ReaderPage() {
               onTokenClick={handleTokenClick}
               currentAudioTime={story.metadata.audioURL ? audioTime : undefined}
               selectedToken={selectedToken}
+              headerAction={
+                currentChapterIndex === chapters.length - 1 && chapters.length > 0 ? (
+                  <Button
+                    onClick={() => navigate({ to: "/comprehension/$storyId", params: { storyId: story.id } })}
+                    className="gap-2"
+                    size="sm"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    Take Quiz
+                  </Button>
+                ) : undefined
+              }
             />
           ) : (
             <div className="text-center text-foreground-muted py-12">
@@ -362,19 +405,6 @@ export function ReaderPage() {
             </div>
           )}
         </div>
-
-        {/* Story Completion Section - Show on last chapter */}
-        {currentChapterIndex === chapters.length - 1 && chapters.length > 0 && (
-          <div className="mt-8 flex justify-center">
-            <Button
-              onClick={() => navigate({ to: "/comprehension/$storyId", params: { storyId: story.id } })}
-              className="gap-2"
-            >
-              <BookOpen className="w-4 h-4" />
-              Take Comprehension Quiz
-            </Button>
-          </div>
-        )}
       </main>
 
       {/* Chapter Navigation */}
@@ -410,14 +440,23 @@ export function ReaderPage() {
                 ))}
               </div>
 
-              <Button
-                variant="outline"
-                onClick={handleNextChapter}
-                disabled={currentChapterIndex === chapters.length - 1}
-              >
-                Next
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+              {currentChapterIndex === chapters.length - 1 ? (
+                <Button
+                  onClick={() => navigate({ to: "/comprehension/$storyId", params: { storyId: story.id } })}
+                  className="gap-1"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Take Quiz
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={handleNextChapter}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              )}
             </div>
           </div>
         </nav>

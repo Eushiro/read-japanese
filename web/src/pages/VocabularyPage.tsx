@@ -8,6 +8,7 @@ import { Paywall } from "@/components/Paywall";
 import { Search, Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, Volume2, Book } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { searchClientDictionary, preloadDictionary, type DictionaryEntry } from "@/lib/clientDictionary";
 import { useFlashcard } from "@/hooks/useFlashcard";
 
@@ -64,7 +65,18 @@ export function VocabularyPage() {
   const [selectedVocab, setSelectedVocab] = useState<VocabularyItem | null>(null);
 
   const { user, isAuthenticated } = useAuth();
+  const { trackEvent, events } = useAnalytics();
   const userId = user?.id ?? "anonymous";
+
+  // Track page view
+  useEffect(() => {
+    if (isAuthenticated) {
+      trackEvent(events.VOCABULARY_VIEWED, {
+        word_count: vocabulary?.length ?? 0,
+        language_filter: languageFilter,
+      });
+    }
+  }, [isAuthenticated]); // Only track on initial load
 
   const vocabulary = useQuery(
     api.vocabulary.list,
@@ -149,9 +161,22 @@ export function VocabularyPage() {
       }));
   }, [sortedVocabulary, sortBy]);
 
+  // Track search with debounce
+  useEffect(() => {
+    if (!searchTerm.trim()) return;
+    const timeout = setTimeout(() => {
+      trackEvent(events.VOCABULARY_SEARCHED, {
+        search_term: searchTerm,
+        result_count: sortedVocabulary.length,
+      });
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [searchTerm]);
+
   const handleRemove = async (id: string) => {
     try {
       await removeWord({ id: id as GenericId<"vocabulary"> });
+      trackEvent(events.WORD_REMOVED_FROM_VOCABULARY, { word_id: id });
     } catch (err) {
       console.error("Failed to remove word:", err);
     }
@@ -794,6 +819,7 @@ function AddWordModal({ userId, onClose, isPremiumUser }: AddWordModalProps) {
   const [suggestions, setSuggestions] = useState<DictionaryEntry[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  const { trackEvent, events } = useAnalytics();
   const addWord = useMutation(api.vocabulary.add);
   const generateFlashcardWithAudio = useAction(api.ai.generateFlashcardWithAudio);
 
@@ -857,6 +883,13 @@ function AddWordModal({ userId, onClose, isPremiumUser }: AddWordModalProps) {
         definitions: definitions.split(/[,;]/).map((d) => d.trim()).filter(Boolean),
         sourceType: "manual",
         flashcardPending: isPremiumUser, // Show generating state for premium users
+      });
+
+      // Track word added
+      trackEvent(events.WORD_ADDED_TO_VOCABULARY, {
+        word: word.trim(),
+        language,
+        source: "manual",
       });
 
       // Close modal immediately for better UX

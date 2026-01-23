@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   createRouter,
   createRoute,
@@ -23,7 +23,11 @@ import { SettingsPage } from "@/pages/SettingsPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { LearnPage } from "@/pages/LearnPage";
 import { PlacementTestPage } from "@/pages/PlacementTestPage";
+import { VideoPage } from "@/pages/VideoPage";
+import { VideoQuizPage } from "@/pages/VideoQuizPage";
 import { BookOpen, GraduationCap, Settings, Home } from "lucide-react";
+import { trackPageView } from "@/lib/analytics";
+import { useReviewSession } from "@/contexts/ReviewSessionContext";
 
 // Root layout
 const rootRoute = createRootRoute({
@@ -49,6 +53,11 @@ function RootLayout() {
       window.history.replaceState({}, "", newUrl);
     }
   });
+
+  // Track page views on navigation
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
 
   // Check if user has completed onboarding
   const userProfile = useQuery(
@@ -93,7 +102,18 @@ function RootLayout() {
 
 function Navigation() {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { cardsLeft } = useReviewSession();
+
+  // Get flashcard stats for due count badge (fallback when no active session)
+  const flashcardStats = useQuery(
+    api.flashcards.getStats,
+    isAuthenticated && user ? { userId: user.id } : "skip"
+  );
+  const dbDueCount = (flashcardStats?.dueNow ?? 0) + (flashcardStats?.new ?? 0);
+
+  // Use session count when active, otherwise database count
+  const dueCount = cardsLeft !== null ? cardsLeft : dbDueCount;
 
   // Links visible to everyone (logged-out users see preview dashboard)
   const publicLinks = [
@@ -104,8 +124,8 @@ function Navigation() {
   // Links only visible when signed in - simplified to 4 tabs
   const authLinks = [
     { to: "/dashboard", label: "Home", icon: Home },
-    { to: "/learn", label: "Learn", icon: GraduationCap },
     { to: "/library", label: "Library", icon: BookOpen },
+    { to: "/learn", label: "Learn", icon: GraduationCap },
     { to: "/settings", label: "Settings", icon: Settings },
   ] as const;
 
@@ -138,6 +158,7 @@ function Navigation() {
           <div className="flex items-center gap-1">
             {links.map((link) => {
               const active = isActive(link.to);
+              const showBadge = link.to === "/learn" && dueCount > 0;
               return (
                 <Link
                   key={link.to}
@@ -150,6 +171,11 @@ function Navigation() {
                 >
                   <link.icon className={`w-4 h-4 ${active ? "text-accent" : ""}`} />
                   <span className="hidden sm:inline">{link.label}</span>
+                  {showBadge && (
+                    <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-green-500 text-white text-xs font-medium flex items-center justify-center">
+                      {dueCount > 99 ? "99+" : dueCount}
+                    </span>
+                  )}
                   {active && (
                     <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-accent rounded-full" />
                   )}
@@ -249,6 +275,18 @@ const placementTestRoute = createRoute({
   component: PlacementTestPage,
 });
 
+const videoRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/video/$videoId",
+  component: VideoPage,
+});
+
+const videoQuizRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/video-quiz/$videoId",
+  component: VideoQuizPage,
+});
+
 // Route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -257,6 +295,8 @@ const routeTree = rootRoute.addChildren([
   libraryRoute,
   readerRoute,
   comprehensionRoute,
+  videoRoute,
+  videoQuizRoute,
   vocabularyRoute,
   flashcardsRoute,
   practiceRoute,

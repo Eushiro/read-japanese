@@ -198,6 +198,62 @@ Use the Convex dashboard at https://dashboard.convex.dev to:
 - Run functions manually
 - Check logs
 
+### Adding YouTube Videos
+
+Videos are stored in Convex with transcripts and comprehension questions. To add new videos:
+
+1. **Edit the video data file**: `web/convex/videoData.ts`
+
+2. **Add a new entry to the `VIDEOS` array**:
+```typescript
+{
+  videoId: "your_video_id",     // YouTube ID (11 chars) or custom ID for demo content
+  language: "japanese",          // "japanese" | "english" | "french"
+  level: "N5",                   // JLPT (N5-N1) or CEFR (A1-C2)
+  title: "Video Title",
+  description: "Brief description.",
+  duration: 180,                 // Seconds
+  transcript: [
+    { text: "First line", start: 0, duration: 3 },
+    { text: "Second line", start: 3, duration: 4 },
+    // ... more segments
+  ],
+  questions: [
+    {
+      question: "What is discussed?",
+      type: "multiple_choice",
+      options: ["Option A", "Option B", "Option C", "Option D"],
+      correctAnswer: "Option A",
+      timestamp: 0,              // Optional: seconds into video
+    },
+    // ... at least 3 questions per video
+  ],
+}
+```
+
+3. **Run the seed command**:
+```bash
+cd web && npx convex run youtubeContent:seedAllVideos
+```
+
+4. **Deploy to production**:
+```bash
+cd web && npx convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --yes
+```
+
+**Video ID Types:**
+- **Real YouTube videos**: Use the 11-character ID from the URL (e.g., `arj7oStGLkU`)
+- **Demo content**: Use descriptive IDs (e.g., `jp_n5_intro`, `en_a1_greetings`)
+  - Demo videos show a language-colored placeholder instead of embedded player
+  - Good for testing or when you don't have actual YouTube content
+
+**Validation:** The seed command validates all videos before saving. Common errors:
+- Missing required fields (videoId, title, description, language, level, duration)
+- Wrong level format (Japanese: N5-N1, others: A1-C2)
+- Fewer than 3 questions
+- correctAnswer not matching any option
+- Empty transcript
+
 ---
 
 ## Legacy Systems (Reference Only)

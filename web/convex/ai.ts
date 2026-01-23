@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { YoutubeTranscript } from "youtube-transcript";
 
 // ============================================
 // GEMINI TTS CONFIGURATION (Generative Language API)
@@ -1005,7 +1006,7 @@ interface ComprehensionQuestion {
   questionId: string;
   type: "multiple_choice" | "translation" | "short_answer" | "inference" | "prediction" | "grammar" | "opinion";
   question: string;
-  questionTranslation: string;
+  questionTranslation?: string;
   options?: string[];
   correctAnswer?: string;
   rubric?: string;
@@ -1015,6 +1016,7 @@ interface ComprehensionQuestion {
 
 /**
  * Generate comprehension questions for a story
+ * Questions are cached per story/difficulty in storyQuestions table
  */
 export const generateComprehensionQuestions = action({
   args: {
@@ -1027,9 +1029,35 @@ export const generateComprehensionQuestions = action({
       v.literal("french")
     ),
     userId: v.string(),
-    userLevel: v.optional(v.string()), // User's proficiency level (N3, B2, etc.)
+    difficulty: v.number(), // 1-6 scale (required for caching)
+    userLevel: v.optional(v.string()), // User's proficiency level (N3, B2, etc.) for display
   },
   handler: async (ctx, args): Promise<{ comprehensionId: string; questions: ComprehensionQuestion[] }> => {
+    // First, check if questions are cached for this story/difficulty
+    const cachedQuestions = await ctx.runQuery(internal.storyQuestions.getForStoryInternal, {
+      storyId: args.storyId,
+      difficulty: args.difficulty,
+    });
+
+    if (cachedQuestions) {
+      // Questions exist - create user's comprehension quiz from cached questions
+      const questionsWithIds = cachedQuestions.questions.map((q, index) => ({
+        ...q,
+        questionId: `q_${Date.now()}_${index}`,
+      }));
+
+      const comprehensionId = await ctx.runMutation(internal.storyComprehension.createFromAI, {
+        userId: args.userId,
+        storyId: args.storyId,
+        storyTitle: args.storyTitle,
+        language: args.language,
+        questions: questionsWithIds,
+      });
+
+      return { comprehensionId: comprehensionId as string, questions: questionsWithIds };
+    }
+
+    // No cached questions - generate new ones
     const languageName = languageNames[args.language];
     const levelInfo = args.userLevel ? ` The learner is at ${args.userLevel} level.` : "";
 
@@ -1075,11 +1103,12 @@ Question type details:
 
 CRITICAL RULES - FOLLOW EXACTLY:
 1. Output ONLY the JSON object - nothing else
-2. For multiple_choice: Do NOT include rubric field at all
-3. For opinion/short_answer: rubric must be under 50 characters (e.g. "clear opinion, evidence")
-4. correctAnswer must be under 100 characters
-5. NEVER put explanations, reasoning, or thoughts in ANY field
-6. Vary question types
+2. For multiple_choice: MUST include correctAnswer (the exact text of one option), and options array with 4 choices
+3. For multiple_choice: Do NOT include rubric field at all
+4. For opinion/short_answer: rubric must be under 50 characters (e.g. "clear opinion, evidence")
+5. correctAnswer must be under 100 characters
+6. NEVER put explanations, reasoning, or thoughts in ANY field
+7. Vary question types
 
 JSON format:
 {
@@ -1168,13 +1197,33 @@ Create comprehension questions for the story above, aiming for a total of ${work
         if (corrupted) {
           return "Response contains corrupted fields (overly long rubric or correctAnswer)";
         }
+        // Validate multiple_choice questions have required fields
+        const invalidMC = parsed.questions.some(q =>
+          q.type === "multiple_choice" && (
+            !q.correctAnswer ||
+            q.correctAnswer.trim() === "" ||
+            !q.options ||
+            q.options.length < 2
+          )
+        );
+        if (invalidMC) {
+          return "Multiple choice questions must have correctAnswer and options";
+        }
         return null;
       },
     });
 
     const questionsWithIds = processQuestions(parsed);
 
-    // Create the comprehension quiz in the database
+    // Save questions to cache (storyQuestions table)
+    await ctx.runMutation(internal.storyQuestions.createFromAI, {
+      storyId: args.storyId,
+      difficulty: args.difficulty,
+      language: args.language,
+      questions: questionsWithIds,
+    });
+
+    // Create the comprehension quiz for this user
     const comprehensionId = await ctx.runMutation(internal.storyComprehension.createFromAI, {
       userId: args.userId,
       storyId: args.storyId,
@@ -1593,5 +1642,211 @@ export const getNextQuestionDifficulty = action({
       suggestedType,
       shouldContinue: true,
     };
+  },
+});
+
+// ============================================
+// YOUTUBE VIDEO TRANSCRIPT & QUESTIONS
+// ============================================
+
+interface TranscriptSegment {
+  text: string;
+  start: number;
+  duration: number;
+}
+
+interface VideoQuestion {
+  question: string;
+  type: string;
+  options?: string[];
+  correctAnswer?: string;
+  timestamp?: number;
+}
+
+/**
+ * Fetch YouTube video transcript
+ * Uses youtube-transcript library to get subtitles/captions
+ */
+export const fetchYoutubeTranscript = action({
+  args: {
+    videoId: v.string(),
+    youtubeContentId: v.optional(v.id("youtubeContent")),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; segmentCount: number; error?: string }> => {
+    try {
+      // Fetch transcript from YouTube
+      const transcriptItems = await YoutubeTranscript.fetchTranscript(args.videoId);
+
+      if (!transcriptItems || transcriptItems.length === 0) {
+        return {
+          success: false,
+          segmentCount: 0,
+          error: "No transcript available for this video",
+        };
+      }
+
+      // Convert to our format
+      const transcript: TranscriptSegment[] = transcriptItems.map((item) => ({
+        text: item.text,
+        start: item.offset / 1000, // Convert ms to seconds
+        duration: item.duration / 1000,
+      }));
+
+      // Update the video with transcript if ID provided
+      if (args.youtubeContentId) {
+        await ctx.runMutation(internal.youtubeContent.updateTranscriptInternal, {
+          id: args.youtubeContentId,
+          transcript,
+        });
+      }
+
+      return {
+        success: true,
+        segmentCount: transcript.length,
+      };
+    } catch (error) {
+      console.error("Error fetching YouTube transcript:", error);
+      return {
+        success: false,
+        segmentCount: 0,
+        error: error instanceof Error ? error.message : "Failed to fetch transcript",
+      };
+    }
+  },
+});
+
+/**
+ * Generate comprehension questions for a YouTube video based on its transcript
+ */
+export const generateVideoQuestions = action({
+  args: {
+    youtubeContentId: v.id("youtubeContent"),
+    transcriptText: v.string(), // Full transcript text
+    language: v.union(
+      v.literal("japanese"),
+      v.literal("english"),
+      v.literal("french")
+    ),
+    videoTitle: v.string(),
+    userLevel: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; questionCount: number; error?: string }> => {
+    const languageName = languageNames[args.language];
+    const levelInfo = args.userLevel ? ` The learner is at ${args.userLevel} level.` : "";
+
+    // Work budget system for video questions (slightly smaller than stories since videos are shorter)
+    const workBudget = 4;
+
+    const systemPrompt = `You are a language learning assistant creating comprehension questions for a ${languageName} video transcript.${levelInfo}
+
+This is a listening comprehension exercise. Create questions that test understanding of the video content.
+
+Each question type has a "work cost":
+- multiple_choice: 1 work (quick to answer)
+- short_answer: 2 work (requires brief written response)
+- inference: 2 work (requires thinking about what was said)
+
+Your TOTAL work must equal approximately ${workBudget}. Examples:
+- 4 multiple choice (4 work)
+- 2 multiple choice + 1 short_answer (4 work)
+- 2 short_answer (4 work)
+
+CRITICAL RULES:
+1. Output ONLY valid JSON
+2. For multiple_choice: MUST include correctAnswer and options array with 4 choices
+3. Base questions on specific parts of the transcript
+4. Include timestamp (in seconds) for relevant video section
+
+JSON format:
+{
+  "questions": [
+    {
+      "type": "multiple_choice",
+      "question": "question in ${languageName}",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "B",
+      "timestamp": 30
+    }
+  ]
+}`;
+
+    const prompt = `Video Title: ${args.videoTitle}
+
+Transcript:
+${args.transcriptText}
+
+---
+Create comprehension questions for the video above, aiming for ${workBudget} work units total.`;
+
+    const videoQuestionSchema: JsonSchema = {
+      name: "video_questions",
+      schema: {
+        type: "object",
+        properties: {
+          questions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                type: { type: "string", enum: ["multiple_choice", "short_answer", "inference"] },
+                question: { type: "string", maxLength: 500 },
+                options: { type: "array", items: { type: "string", maxLength: 100 } },
+                correctAnswer: { type: "string", maxLength: 200 },
+                timestamp: { type: "number" },
+              },
+              required: ["type", "question"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["questions"],
+        additionalProperties: false,
+      },
+    };
+
+    try {
+      const parsed = await callWithRetry<{ questions: VideoQuestion[] }>({
+        prompt,
+        systemPrompt,
+        maxTokens: 1000,
+        jsonSchema: videoQuestionSchema,
+        parse: (response) => parseJson(response),
+        validate: (parsed) => {
+          if (!parsed.questions || parsed.questions.length === 0) {
+            return "No questions generated";
+          }
+          // Validate multiple_choice questions
+          const invalidMC = parsed.questions.some(q =>
+            q.type === "multiple_choice" && (
+              !q.correctAnswer ||
+              !q.options ||
+              q.options.length < 2
+            )
+          );
+          if (invalidMC) {
+            return "Multiple choice questions must have correctAnswer and options";
+          }
+          return null;
+        },
+      });
+
+      // Update the video with questions
+      await ctx.runMutation(internal.youtubeContent.updateQuestionsInternal, {
+        id: args.youtubeContentId,
+        questions: parsed.questions,
+      });
+
+      return {
+        success: true,
+        questionCount: parsed.questions.length,
+      };
+    } catch (error) {
+      console.error("Error generating video questions:", error);
+      return {
+        success: false,
+        questionCount: 0,
+        error: error instanceof Error ? error.message : "Failed to generate questions",
+      };
+    }
   },
 });

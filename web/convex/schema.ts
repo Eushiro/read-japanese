@@ -425,6 +425,40 @@ export default defineSchema({
     .index("by_user_and_language", ["userId", "language"]),
 
   // ============================================
+  // STORY QUESTIONS (cached per difficulty)
+  // ============================================
+  // Questions are generated once per story/difficulty and reused for all users
+  storyQuestions: defineTable({
+    storyId: v.string(),
+    difficulty: v.number(), // 1-6 scale (maps to N5-N1 / A1-C2)
+    language: languageValidator,
+
+    // Questions (without user-specific fields)
+    questions: v.array(v.object({
+      questionId: v.string(),
+      type: v.union(
+        v.literal("multiple_choice"),
+        v.literal("translation"),
+        v.literal("short_answer"),
+        v.literal("inference"),
+        v.literal("prediction"),
+        v.literal("grammar"),
+        v.literal("opinion")
+      ),
+      question: v.string(),
+      questionTranslation: v.optional(v.string()),
+      options: v.optional(v.array(v.string())),
+      correctAnswer: v.optional(v.string()),
+      rubric: v.optional(v.string()),
+      relatedChapter: v.optional(v.number()),
+      points: v.number(),
+    })),
+
+    generatedAt: v.number(),
+  })
+    .index("by_story_and_difficulty", ["storyId", "difficulty"]),
+
+  // ============================================
   // PLACEMENT TESTS (CAT-style adaptive testing)
   // ============================================
   placementTests: defineTable({
@@ -511,6 +545,7 @@ export default defineSchema({
     userId: v.optional(v.string()), // Optional for shared content
     videoId: v.string(),
     language: languageValidator,
+    level: v.optional(v.string()), // "N5", "A1", etc. for filtering
 
     title: v.string(),
     description: v.optional(v.string()),
@@ -540,5 +575,6 @@ export default defineSchema({
   })
     .index("by_video_id", ["videoId"])
     .index("by_user", ["userId"])
-    .index("by_language", ["language"]),
+    .index("by_language", ["language"])
+    .index("by_language_and_level", ["language", "level"]),
 });

@@ -12,6 +12,7 @@ interface ChapterViewProps {
   onTokenClick?: (token: Token, event: React.MouseEvent, segmentText?: string) => void;
   currentAudioTime?: number;
   selectedToken?: Token | null;
+  headerAction?: React.ReactNode;
 }
 
 export function ChapterView({
@@ -22,6 +23,7 @@ export function ChapterView({
   onTokenClick,
   currentAudioTime,
   selectedToken,
+  headerAction,
 }: ChapterViewProps) {
   const segments = chapter.segments || chapter.content || [];
   const imageUrl = chapter.imageURL ? getCdnUrl(chapter.imageURL) : null;
@@ -30,8 +32,11 @@ export function ChapterView({
     <article className="space-y-6">
       {/* Chapter Header */}
       <header className="space-y-2">
-        <div className="text-sm text-muted-foreground">
-          Chapter {chapterIndex + 1} of {totalChapters}
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Chapter {chapterIndex + 1} of {totalChapters}
+          </div>
+          {headerAction}
         </div>
         <h2 className="text-2xl font-bold text-foreground">
           {chapter.titleTokens ? (

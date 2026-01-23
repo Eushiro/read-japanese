@@ -25,13 +25,23 @@ if (PRICE_IDS.unlimited) TIER_FROM_PRICE[PRICE_IDS.unlimited] = "unlimited";
 function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {
-    throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+    console.error("[Stripe] STRIPE_SECRET_KEY environment variable is not set in Convex dashboard");
+    throw new Error("Payment system is not configured. Please contact support.");
   }
   return new Stripe(key);
 }
 
 function getTierFromPriceId(priceId: string): "basic" | "pro" | "unlimited" | null {
   return TIER_FROM_PRICE[priceId] || null;
+}
+
+// Helper to check which env vars are missing
+function getMissingPriceIds(): string[] {
+  const missing: string[] = [];
+  if (!PRICE_IDS.basic) missing.push("STRIPE_PRICE_BASIC");
+  if (!PRICE_IDS.pro) missing.push("STRIPE_PRICE_PRO");
+  if (!PRICE_IDS.unlimited) missing.push("STRIPE_PRICE_UNLIMITED");
+  return missing;
 }
 
 // ============================================
@@ -47,12 +57,20 @@ export const createCheckoutSession = action({
     cancelUrl: v.string(),
   },
   handler: async (ctx, args): Promise<{ sessionId: string; url: string | null }> => {
-    const stripe = getStripe();
+    // Log missing configuration for debugging
+    const missingPrices = getMissingPriceIds();
+    if (missingPrices.length > 0) {
+      console.error(`[Stripe] Missing price IDs in Convex env vars: ${missingPrices.join(", ")}`);
+    }
 
     const priceId = PRICE_IDS[args.tier];
     if (!priceId) {
-      throw new Error(`No price configured for tier: ${args.tier}`);
+      console.error(`[Stripe] STRIPE_PRICE_${args.tier.toUpperCase()} is not set in Convex dashboard`);
+      throw new Error(`Subscription for ${args.tier} tier is not available. Please contact support.`);
     }
+
+    // Initialize Stripe (will throw user-friendly error if key is missing)
+    const stripe = getStripe();
 
     // Check if user already has a Stripe customer ID
     const existingSub = await ctx.runQuery(internal.stripeHelpers.getSubscriptionByUserId, {

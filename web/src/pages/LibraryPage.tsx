@@ -14,7 +14,8 @@ import {
   type SortOption,
 } from "@/hooks/useStories";
 import type { ProficiencyLevel, StoryListItem } from "@/types/story";
-import { ChevronDown, Library, BookOpen, Sparkles } from "lucide-react";
+import { ChevronDown, Library, BookOpen, Sparkles, Play, Film } from "lucide-react";
+import { VideoCard, VideoCardSkeleton, type VideoItem } from "@/components/library/VideoCard";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
@@ -26,6 +27,8 @@ const LANGUAGE_INFO: Record<Language, { label: string; flag: string }> = {
   french: { label: "French", flag: "🇫🇷" },
 };
 
+type ContentFilter = "all" | "stories" | "videos";
+
 export function LibraryPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
@@ -35,6 +38,7 @@ export function LibraryPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [contentFilter, setContentFilter] = useState<ContentFilter>("all");
 
   // Check subscription from Convex (with dev override fallback)
   const subscription = useQuery(
@@ -68,12 +72,37 @@ export function LibraryPage() {
   const userLanguages = userProfile?.languages as Language[] | undefined;
   const hasMultipleLanguages = userLanguages && userLanguages.length > 1;
 
-  const { data: stories, isLoading, error } = useStories();
+  const { data: stories, isLoading: isLoadingStories, error } = useStories();
   const filteredStories = useFilteredStories(stories, searchTerm, selectedLevel, selectedLanguage);
   const sortedStories = useMemo(
     () => sortStories(filteredStories, sortBy),
     [filteredStories, sortBy]
   );
+
+  // Fetch videos from Convex
+  const videos = useQuery(
+    api.youtubeContent.list,
+    selectedLanguage ? { language: selectedLanguage, level: selectedLevel ?? undefined } : {}
+  ) as VideoItem[] | undefined;
+  const isLoadingVideos = videos === undefined;
+
+  // Filter videos by search term
+  const filteredVideos = useMemo(() => {
+    if (!videos) return [];
+    if (!searchTerm.trim()) return videos;
+    const term = searchTerm.toLowerCase();
+    return videos.filter((v) =>
+      v.title.toLowerCase().includes(term) ||
+      v.description?.toLowerCase().includes(term)
+    );
+  }, [videos, searchTerm]);
+
+  const isLoading = contentFilter === "all"
+    ? (isLoadingStories || isLoadingVideos)
+    : contentFilter === "stories" ? isLoadingStories : isLoadingVideos;
+
+  const showStories = contentFilter === "all" || contentFilter === "stories";
+  const showVideos = contentFilter === "all" || contentFilter === "videos";
 
   const handleStoryClick = (story: StoryListItem) => {
     // Show paywall for premium stories if user doesn't have premium
@@ -82,6 +111,10 @@ export function LibraryPage() {
       return;
     }
     navigate({ to: "/read/$storyId", params: { storyId: story.id } });
+  };
+
+  const handleVideoClick = (video: VideoItem) => {
+    navigate({ to: "/video/$videoId", params: { videoId: video._id } });
   };
 
   if (error) {
@@ -138,27 +171,65 @@ export function LibraryPage() {
       <div className="sticky top-16 z-40 border-b border-border bg-surface/95 backdrop-blur-md">
         <div className="container mx-auto px-4 sm:px-6 py-4">
           <div className="flex flex-col gap-4">
-            {/* Language Toggle - only show if user has multiple languages */}
-            {hasMultipleLanguages && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-foreground-muted">Language:</span>
-                <div className="flex gap-1">
-                  {userLanguages.map((lang) => (
-                    <button
-                      key={lang}
-                      onClick={() => setSelectedLanguage(lang)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        selectedLanguage === lang
-                          ? "bg-accent text-white shadow-sm"
-                          : "bg-surface text-foreground-muted hover:bg-muted hover:text-foreground border border-border"
-                      }`}
-                    >
-                      {LANGUAGE_INFO[lang].flag} {LANGUAGE_INFO[lang].label}
-                    </button>
-                  ))}
-                </div>
+            {/* Content Filter Toggle */}
+            <div className="flex items-center gap-4">
+              <div className="flex gap-0.5 p-1 rounded-lg bg-muted border border-border">
+                <button
+                  onClick={() => setContentFilter("all")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    contentFilter === "all"
+                      ? "bg-accent text-white shadow-sm"
+                      : "text-foreground-muted hover:text-foreground hover:bg-surface/50"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setContentFilter("stories")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    contentFilter === "stories"
+                      ? "bg-accent text-white shadow-sm"
+                      : "text-foreground-muted hover:text-foreground hover:bg-surface/50"
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Stories
+                </button>
+                <button
+                  onClick={() => setContentFilter("videos")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    contentFilter === "videos"
+                      ? "bg-accent text-white shadow-sm"
+                      : "text-foreground-muted hover:text-foreground hover:bg-surface/50"
+                  }`}
+                >
+                  <Film className="w-4 h-4" />
+                  Videos
+                </button>
               </div>
-            )}
+
+              {/* Language Toggle - only show if user has multiple languages */}
+              {hasMultipleLanguages && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-foreground-muted">Language:</span>
+                  <div className="flex gap-1">
+                    {userLanguages.map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => setSelectedLanguage(lang)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          selectedLanguage === lang
+                            ? "bg-accent text-white shadow-sm"
+                            : "bg-surface text-foreground-muted hover:bg-muted hover:text-foreground border border-border"
+                        }`}
+                      >
+                        {LANGUAGE_INFO[lang].flag} {LANGUAGE_INFO[lang].label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <SearchBar
@@ -180,50 +251,99 @@ export function LibraryPage() {
         </div>
       </div>
 
-      {/* Results Count */}
-      <div className="container mx-auto px-4 sm:px-6 py-4">
-        <p className="text-sm text-foreground-muted">
-          {isLoading ? (
-            "Loading stories..."
-          ) : (
-            <>
-              <span className="font-medium text-foreground">{sortedStories.length}</span>
-              {" "}{sortedStories.length === 1 ? "story" : "stories"} available
-            </>
-          )}
-        </p>
-      </div>
-
-      {/* Story Grid */}
-      <div className="container mx-auto px-4 sm:px-6 pb-12">
-        {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <StoryCardSkeleton key={i} delay={i * 50} />
-            ))}
-          </div>
-        ) : sortedStories.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-foreground-muted">
-            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-              <BookOpen className="w-8 h-8 opacity-40" />
+      {/* Content Sections */}
+      <div className="container mx-auto px-4 sm:px-6 pt-6 pb-12 space-y-10">
+        {/* Stories Section */}
+        {showStories && (
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <BookOpen className="w-5 h-5 text-accent" />
+              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                Stories
+              </h2>
+              <span className="text-sm text-foreground-muted">
+                ({isLoadingStories ? "..." : sortedStories.length})
+              </span>
             </div>
-            <p className="text-lg font-medium text-foreground mb-1">No stories found</p>
-            <p className="text-sm">Try adjusting your filters</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-            {sortedStories.map((story, index) => (
-              <StoryCard
-                key={story.id}
-                story={story}
-                isPremiumUser={isPremiumUser}
-                onClick={() => handleStoryClick(story)}
-                style={{
-                  animationDelay: `${Math.min(index * 50, 300)}ms`,
-                }}
-              />
-            ))}
-          </div>
+
+            {isLoadingStories ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <StoryCardSkeleton key={i} delay={i * 50} />
+                ))}
+              </div>
+            ) : sortedStories.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-foreground-muted bg-surface rounded-xl border border-border">
+                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-3">
+                  <BookOpen className="w-6 h-6 opacity-40" />
+                </div>
+                <p className="font-medium text-foreground mb-1">No stories found</p>
+                <p className="text-sm">Try adjusting your filters</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+                {sortedStories.map((story, index) => (
+                  <StoryCard
+                    key={story.id}
+                    story={story}
+                    isPremiumUser={isPremiumUser}
+                    onClick={() => handleStoryClick(story)}
+                    style={{
+                      animationDelay: `${Math.min(index * 50, 300)}ms`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Videos Section */}
+        {showVideos && (
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Play className="w-5 h-5 text-accent" />
+              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                Videos
+              </h2>
+              <span className="text-sm text-foreground-muted">
+                ({isLoadingVideos ? "..." : filteredVideos.length})
+              </span>
+            </div>
+
+            {isLoadingVideos ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <VideoCardSkeleton key={i} delay={i * 50} />
+                ))}
+              </div>
+            ) : filteredVideos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-foreground-muted bg-surface rounded-xl border border-border">
+                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-3">
+                  <Film className="w-6 h-6 opacity-40" />
+                </div>
+                <p className="font-medium text-foreground mb-1">No videos found</p>
+                <p className="text-sm">
+                  {selectedLanguage
+                    ? `No videos available for ${LANGUAGE_INFO[selectedLanguage].label} yet`
+                    : "Select a language to browse videos"}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                {filteredVideos.map((video, index) => (
+                  <VideoCard
+                    key={video._id}
+                    video={video}
+                    onClick={() => handleVideoClick(video)}
+                    style={{
+                      animationDelay: `${Math.min(index * 50, 300)}ms`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
         )}
       </div>
 

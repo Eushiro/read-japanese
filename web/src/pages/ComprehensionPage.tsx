@@ -16,11 +16,13 @@ import {
   ArrowLeft,
   Loader2,
   CheckCircle2,
+  XCircle,
   BookOpen,
   HelpCircle,
   Sparkles,
   RotateCcw,
 } from "lucide-react";
+import { testLevelToDifficultyLevel, difficultyLevelToTestLevel } from "@/types/story";
 
 interface Question {
   questionId: string;
@@ -47,6 +49,12 @@ export function ComprehensionPage() {
 
   const { story, isLoading: storyLoading, error: storyError } = useStory(storyId);
 
+  // Get user profile for proficiency level
+  const userProfile = useQuery(
+    api.users.getByClerkId,
+    isAuthenticated && user ? { clerkId: user.id } : "skip"
+  );
+
   // Check for existing comprehension quiz
   const existingComprehension = useQuery(
     api.storyComprehension.getForStory,
@@ -68,6 +76,7 @@ export function ComprehensionPage() {
   const submitAnswer = useMutation(api.storyComprehension.submitAnswer);
   const completeQuiz = useMutation(api.storyComprehension.complete);
   const resetQuiz = useMutation(api.storyComprehension.reset);
+  const removeStoryQuestions = useMutation(api.storyQuestions.remove);
 
   // Admin check
   const isAdmin = user?.email === "hiro.ayettey@gmail.com";
@@ -120,12 +129,15 @@ export function ComprehensionPage() {
         setIsGenerating(true);
         try {
           const storyContent = getStoryContent();
+          const difficulty = getUserDifficulty();
           const result = await generateQuestions({
             storyId,
             storyTitle: story.metadata.title,
             storyContent,
             language: getLanguage(),
             userId,
+            difficulty,
+            userLevel: getUserDisplayLevel(),
           });
           setLocalQuestions(result.questions as Question[]);
         } catch (error) {
@@ -170,6 +182,28 @@ export function ComprehensionPage() {
     return "english";
   };
 
+  // Get user's difficulty level for the story's language
+  const getUserDifficulty = (): number => {
+    const language = getLanguage();
+    const proficiency = userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
+    if (proficiency?.level) {
+      return testLevelToDifficultyLevel(proficiency.level);
+    }
+    // Default to intermediate (3) if no level set
+    return 3;
+  };
+
+  // Get user's display level for the refresh button
+  const getUserDisplayLevel = (): string => {
+    const language = getLanguage();
+    const proficiency = userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
+    if (proficiency?.level) {
+      return proficiency.level;
+    }
+    // Return default level based on language
+    return difficultyLevelToTestLevel(3, language);
+  };
+
   // Generate questions
   const handleGenerateQuestions = async () => {
     if (!story || !isAuthenticated) return;
@@ -177,12 +211,15 @@ export function ComprehensionPage() {
     setIsGenerating(true);
     try {
       const storyContent = getStoryContent();
+      const difficulty = getUserDifficulty();
       const result = await generateQuestions({
         storyId,
         storyTitle: story.metadata.title,
         storyContent,
         language: getLanguage(),
         userId,
+        difficulty,
+        userLevel: getUserDisplayLevel(),
       });
 
       setLocalQuestions(result.questions as Question[]);
@@ -193,11 +230,20 @@ export function ComprehensionPage() {
     }
   };
 
-  // Admin: Reset quiz
+  // Admin: Reset quiz and clear cached questions for this difficulty
   const handleResetQuiz = async () => {
     if (!existingComprehension || !isAdmin || !user?.email) return;
 
     try {
+      // First, delete cached questions for this story/difficulty so they regenerate
+      const difficulty = getUserDifficulty();
+      await removeStoryQuestions({
+        storyId,
+        difficulty,
+        adminEmail: user.email,
+      });
+
+      // Then delete the user's quiz
       await resetQuiz({
         comprehensionId: existingComprehension._id,
         adminEmail: user.email,
@@ -432,9 +478,10 @@ export function ComprehensionPage() {
                   variant="destructive"
                   size="sm"
                   onClick={handleResetQuiz}
-                  title="Reset Quiz (Admin)"
+                  title={`Refresh (${getUserDisplayLevel()})`}
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <RotateCcw className="w-4 h-4 mr-1" />
+                  <span className="text-xs">{getUserDisplayLevel()}</span>
                 </Button>
               )}
             </div>
@@ -443,7 +490,7 @@ export function ComprehensionPage() {
 
         <main className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
           {/* Score Summary */}
-          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm mb-8 text-center">
+          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm mb-6 text-center">
             <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 ${
               percentScore >= 70 ? "bg-green-500/10" : percentScore >= 50 ? "bg-amber-500/10" : "bg-red-500/10"
             }`}>
@@ -456,9 +503,22 @@ export function ComprehensionPage() {
             <h2 className="text-xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
               {percentScore >= 70 ? "Great job!" : percentScore >= 50 ? "Good effort!" : "Keep practicing!"}
             </h2>
-            <p className="text-foreground-muted">
+            <p className="text-foreground-muted mb-6">
               You scored {totalEarned} out of {totalPossible} points
             </p>
+            {/* Actions - moved up for visibility */}
+            <div className="flex gap-4 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => navigate({ to: "/read/$storyId", params: { storyId } })}
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                Back to Story
+              </Button>
+              <Button onClick={() => navigate({ to: "/library" })}>
+                Browse More Stories
+              </Button>
+            </div>
           </div>
 
           {/* Question Review */}
@@ -504,19 +564,6 @@ export function ComprehensionPage() {
             ))}
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-4 mt-8 justify-center">
-            <Button
-              variant="outline"
-              onClick={() => navigate({ to: "/read/$storyId", params: { storyId } })}
-            >
-              <BookOpen className="w-4 h-4 mr-2" />
-              Back to Story
-            </Button>
-            <Button onClick={() => navigate({ to: "/library" })}>
-              Browse More Stories
-            </Button>
-          </div>
         </main>
       </div>
     );
@@ -570,9 +617,10 @@ export function ComprehensionPage() {
                   variant="destructive"
                   size="sm"
                   onClick={handleResetQuiz}
-                  title="Reset Quiz (Admin)"
+                  title={`Refresh (${getUserDisplayLevel()})`}
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <RotateCcw className="w-4 h-4 mr-1" />
+                  <span className="text-xs">{getUserDisplayLevel()}</span>
                 </Button>
               )}
             </div>

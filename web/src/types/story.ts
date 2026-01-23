@@ -179,3 +179,36 @@ export function estimateReadingTime(story: Story): number {
   // Average reading speed: ~300 characters per minute for learners
   return Math.max(1, Math.floor(totalChars / 300));
 }
+
+/**
+ * Convert test-specific levels (JLPT N5-N1, CEFR A1-C2) to unified 1-6 difficulty scale.
+ * This allows comprehension questions to be shared across different test frameworks.
+ *
+ * Mapping:
+ *   JLPT: N5=1, N4=2, N3=3, N2=4, N1=5
+ *   CEFR: A1=1, A2=2, B1=3, B2=4, C1=5, C2=6
+ */
+export function testLevelToDifficultyLevel(testLevel: string): number {
+  const mapping: Record<string, number> = {
+    // JLPT (Japanese)
+    N5: 1, N4: 2, N3: 3, N2: 4, N1: 5,
+    // CEFR (English, French)
+    A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6,
+  };
+  return mapping[testLevel] ?? 3; // default to intermediate if unknown
+}
+
+/**
+ * Convert difficulty level (1-6) back to display label for a given language.
+ */
+export function difficultyLevelToTestLevel(
+  difficulty: number,
+  language: "japanese" | "english" | "french"
+): string {
+  if (language === "japanese") {
+    const jlpt = ["N5", "N4", "N3", "N2", "N1"];
+    return jlpt[Math.min(Math.max(difficulty - 1, 0), 4)] ?? "N3";
+  }
+  const cefr = ["A1", "A2", "B1", "B2", "C1", "C2"];
+  return cefr[Math.min(Math.max(difficulty - 1, 0), 5)] ?? "B1";
+}

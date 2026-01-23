@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronRight, Globe, GraduationCap, Sparkles, BookOpen, BookmarkCheck, Brain, PenLine } from "lucide-react";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 // Language options
 const LANGUAGES = [
@@ -73,8 +74,17 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
   const [selectedLanguages, setSelectedLanguages] = useState<Language[]>([]);
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const startTime = useRef(Date.now());
 
   const upsertUser = useMutation(api.users.upsert);
+  const { trackEvent, events } = useAnalytics();
+
+  // Track onboarding started
+  useEffect(() => {
+    trackEvent(events.ONBOARDING_STARTED, {
+      user_id: userId,
+    });
+  }, []);
 
   // Pre-select detected language on mount
   useEffect(() => {
@@ -83,15 +93,23 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
   }, []);
 
   const handleLanguageToggle = (lang: Language) => {
+    const isRemoving = selectedLanguages.includes(lang);
     setSelectedLanguages((prev) =>
-      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+      isRemoving ? prev.filter((l) => l !== lang) : [...prev, lang]
     );
+    if (!isRemoving) {
+      trackEvent(events.ONBOARDING_LANGUAGE_SELECTED, { language: lang });
+    }
   };
 
   const handleExamToggle = (exam: string) => {
+    const isRemoving = selectedExams.includes(exam);
     setSelectedExams((prev) =>
-      prev.includes(exam) ? prev.filter((e) => e !== exam) : [...prev, exam]
+      isRemoving ? prev.filter((e) => e !== exam) : [...prev, exam]
     );
+    if (!isRemoving) {
+      trackEvent(events.ONBOARDING_EXAM_SELECTED, { exam });
+    }
   };
 
   const handleComplete = async () => {
@@ -107,6 +125,13 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         targetExams: selectedExams as any[],
         primaryLanguage: selectedLanguages[0],
       });
+
+      trackEvent(events.ONBOARDING_COMPLETED, {
+        selected_languages: selectedLanguages,
+        selected_exams: selectedExams,
+        duration_seconds: Math.round((Date.now() - startTime.current) / 1000),
+      });
+
       onComplete();
     } catch (error) {
       console.error("Failed to save preferences:", error);

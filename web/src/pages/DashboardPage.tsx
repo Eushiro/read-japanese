@@ -3,8 +3,12 @@ import { api } from "../../convex/_generated/api";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
 import { LearningLoopViz } from "@/components/dashboard/LearningLoopViz";
 import { Button } from "@/components/ui/button";
-import { Loader2, Home, BookOpen, Brain, PenLine, Sparkles, ChevronRight, ArrowRight, Target } from "lucide-react";
+import { Loader2, Home, BookOpen, Brain, PenLine, Sparkles, ChevronRight, ArrowRight, Target, Library, Play } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useStories } from "@/hooks/useStories";
+import { useRecommendedStories } from "@/hooks/useRecommendedStories";
+import { StoryCard } from "@/components/library/StoryCard";
+import { VideoCard, type VideoItem } from "@/components/library/VideoCard";
 
 // Sample data for preview mode (logged-out users)
 const SAMPLE_STATS = {
@@ -44,6 +48,30 @@ export function DashboardPage() {
     api.users.getByClerkId,
     isAuthenticated && user ? { clerkId: user.id } : "skip"
   );
+
+  // Fetch stories for recommendations
+  const { data: allStories } = useStories();
+  const primaryLanguage = (userProfile?.primaryLanguage ?? "japanese") as "japanese" | "english" | "french";
+  const { stories: recommendedStories, reason: recommendationReason } = useRecommendedStories(
+    allStories,
+    userProfile,
+    primaryLanguage
+  );
+
+  // Fetch videos for recommendations
+  const videos = useQuery(
+    api.youtubeContent.list,
+    { language: primaryLanguage }
+  ) as VideoItem[] | undefined;
+  const recommendedVideos = (videos ?? []).slice(0, 4);
+
+  // Check subscription for premium status
+  const subscription = useQuery(
+    api.subscriptions.get,
+    isAuthenticated && user ? { userId: user.id } : "skip"
+  );
+  const devPremiumOverride = typeof window !== "undefined" && localStorage.getItem("isPremiumUser") === "true";
+  const isPremiumUser = devPremiumOverride || (subscription?.tier && subscription.tier !== "free");
 
   // Calculate stats - use real data for authenticated, sample for preview
   const isPreviewMode = !isAuthenticated;
@@ -93,14 +121,29 @@ export function DashboardPage() {
               className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {isPreviewMode ? "Your Learning Dashboard" : "Welcome back"}
+              {isPreviewMode ? "Your Learning Dashboard" : `Welcome back, ${user?.displayName?.split(" ")[0] || "learner"}`}
             </h1>
-            <p className="text-foreground-muted text-lg">
+            <p className="text-foreground-muted text-lg mb-3">
               {isPreviewMode
                 ? "See how SanLang helps you master vocabulary through a proven learning loop"
                 : "Continue your learning journey"
               }
             </p>
+
+            {/* Inline Stats */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              <span><strong className="text-foreground">{totalWords}</strong> <span className="text-foreground-muted">words</span></span>
+              <span className="text-foreground-muted">·</span>
+              <span><strong className="text-green-500">{masteredWords}</strong> <span className="text-foreground-muted">mastered</span></span>
+              <span className="text-foreground-muted">·</span>
+              <span><strong className="text-accent">{dueCards}</strong> <span className="text-foreground-muted">due</span></span>
+              {isPreviewMode && (
+                <>
+                  <span className="text-foreground-muted">·</span>
+                  <span className="text-foreground-muted text-xs">Sample data</span>
+                </>
+              )}
+            </div>
 
             {/* CTA for preview mode */}
             {isPreviewMode && (
@@ -118,43 +161,6 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Stats Bar */}
-      <div className="border-b border-border bg-surface">
-        <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
-          <div className="flex flex-wrap gap-6 sm:gap-10">
-            <div>
-              <div className="text-2xl font-bold text-foreground">{totalWords}</div>
-              <div className="text-xs text-foreground-muted uppercase tracking-wide">
-                Words Saved
-              </div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-green-500">{masteredWords}</div>
-              <div className="text-xs text-foreground-muted uppercase tracking-wide">
-                Mastered
-              </div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-purple-500">{totalFlashcards}</div>
-              <div className="text-xs text-foreground-muted uppercase tracking-wide">
-                Flashcards
-              </div>
-            </div>
-            <div className="ml-auto">
-              <div className="text-2xl font-bold text-accent">{dueCards}</div>
-              <div className="text-xs text-foreground-muted uppercase tracking-wide">
-                Due Now
-              </div>
-            </div>
-          </div>
-          {isPreviewMode && (
-            <div className="mt-2 text-xs text-foreground-muted">
-              Sample data shown • Sign up to track your own progress
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
         <div className="space-y-6">
@@ -166,7 +172,7 @@ export function DashboardPage() {
             />
           )}
 
-          {/* Daily Activities - Different for preview vs authenticated */}
+          {/* Today's Activities */}
           {isPreviewMode ? (
             <PreviewActivities dueCards={dueCards} wordsToPractice={wordsToPractice} />
           ) : (
@@ -174,6 +180,18 @@ export function DashboardPage() {
               dueCards={dueCards}
               wordsToPractice={wordsToPractice}
               totalWords={totalWords}
+            />
+          )}
+
+          {/* Recommended Content */}
+          {(recommendedStories.length > 0 || recommendedVideos.length > 0) && (
+            <RecommendedContentSection
+              stories={recommendedStories}
+              videos={recommendedVideos}
+              reason={recommendationReason}
+              isPremiumUser={!!isPremiumUser}
+              onStoryClick={(storyId) => navigate({ to: "/read/$storyId", params: { storyId } })}
+              onVideoClick={(videoId) => navigate({ to: "/video/$videoId", params: { videoId } })}
             />
           )}
 
@@ -186,68 +204,6 @@ export function DashboardPage() {
           ) : totalWords === 0 ? (
             <GettingStarted />
           ) : null}
-
-          {/* Quick Actions */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            {isPreviewMode ? (
-              <>
-                <PreviewActionCard
-                  icon={BookOpen}
-                  iconColor="text-amber-500"
-                  bgColor="bg-amber-500/10"
-                  title="Vocabulary"
-                  subtitle={`${totalWords} words`}
-                />
-                <PreviewActionCard
-                  icon={Brain}
-                  iconColor="text-purple-500"
-                  bgColor="bg-purple-500/10"
-                  title="Review"
-                  subtitle={`${dueCards} due`}
-                />
-                <PreviewActionCard
-                  icon={PenLine}
-                  iconColor="text-green-500"
-                  bgColor="bg-green-500/10"
-                  title="Practice"
-                  subtitle={`${wordsToPractice} to practice`}
-                />
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/learn?tab=words"
-                  className="flex flex-col items-center gap-2 p-6 rounded-xl bg-surface border border-border hover:border-accent/30 transition-colors text-center"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                    <BookOpen className="w-6 h-6 text-amber-500" />
-                  </div>
-                  <span className="font-medium text-foreground">Vocabulary</span>
-                  <span className="text-sm text-foreground-muted">{totalWords} words</span>
-                </Link>
-                <Link
-                  to="/learn?tab=review"
-                  className="flex flex-col items-center gap-2 p-6 rounded-xl bg-surface border border-border hover:border-accent/30 transition-colors text-center"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                    <Brain className="w-6 h-6 text-purple-500" />
-                  </div>
-                  <span className="font-medium text-foreground">Review</span>
-                  <span className="text-sm text-foreground-muted">{dueCards} due</span>
-                </Link>
-                <Link
-                  to="/learn?tab=practice"
-                  className="flex flex-col items-center gap-2 p-6 rounded-xl bg-surface border border-border hover:border-accent/30 transition-colors text-center"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-                    <PenLine className="w-6 h-6 text-green-500" />
-                  </div>
-                  <span className="font-medium text-foreground">Practice</span>
-                  <span className="text-sm text-foreground-muted">{wordsToPractice} to practice</span>
-                </Link>
-              </>
-            )}
-          </div>
         </div>
       </div>
     </div>
@@ -512,34 +468,6 @@ function GettingStarted() {
   );
 }
 
-// Preview Action Card (non-clickable, with sign-up CTA)
-function PreviewActionCard({
-  icon: Icon,
-  iconColor,
-  bgColor,
-  title,
-  subtitle
-}: {
-  icon: typeof BookOpen;
-  iconColor: string;
-  bgColor: string;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <SignInButton mode="modal">
-      <button className="flex flex-col items-center gap-2 p-6 rounded-xl bg-surface border border-border hover:border-accent/30 transition-colors text-center w-full">
-        <div className={`w-12 h-12 rounded-xl ${bgColor} flex items-center justify-center`}>
-          <Icon className={`w-6 h-6 ${iconColor}`} />
-        </div>
-        <span className="font-medium text-foreground">{title}</span>
-        <span className="text-sm text-foreground-muted">{subtitle}</span>
-        <span className="text-xs text-accent mt-1">Try it Free</span>
-      </button>
-    </SignInButton>
-  );
-}
-
 // Placement Test Section
 const LANGUAGE_CONFIG = {
   japanese: { flag: "\u{1F1EF}\u{1F1F5}", name: "Japanese", levels: ["N5", "N4", "N3", "N2", "N1"] },
@@ -667,6 +595,89 @@ function PlacementTestSection({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Recommended Content Section (Stories + Videos)
+function RecommendedContentSection({
+  stories,
+  videos,
+  reason,
+  isPremiumUser,
+  onStoryClick,
+  onVideoClick,
+}: {
+  stories: import("@/types/story").StoryListItem[];
+  videos: VideoItem[];
+  reason: string;
+  isPremiumUser: boolean;
+  onStoryClick: (storyId: string) => void;
+  onVideoClick: (videoId: string) => void;
+}) {
+  return (
+    <div className="bg-surface rounded-2xl border border-border p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2
+            className="text-lg font-semibold text-foreground flex items-center gap-2"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            <Library className="w-5 h-5 text-accent" />
+            Suggested for You
+          </h2>
+          {reason && (
+            <p className="text-sm text-foreground-muted mt-0.5">{reason}</p>
+          )}
+        </div>
+        <Link to="/library">
+          <Button variant="ghost" size="sm" className="gap-1">
+            See all
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </Link>
+      </div>
+
+      {/* Stories */}
+      {stories.length > 0 && (
+        <>
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="w-4 h-4 text-foreground-muted" />
+            <span className="text-sm font-medium text-foreground-muted">Stories</span>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 sm:overflow-visible scrollbar-hide">
+            {stories.map((story) => (
+              <div key={story.id} className="flex-shrink-0 w-40 sm:w-auto">
+                <StoryCard
+                  story={story}
+                  isPremiumUser={isPremiumUser}
+                  onClick={() => onStoryClick(story.id)}
+                />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Videos */}
+      {videos.length > 0 && (
+        <>
+          <div className={`flex items-center gap-2 mb-3 ${stories.length > 0 ? "mt-6" : ""}`}>
+            <Play className="w-4 h-4 text-foreground-muted" />
+            <span className="text-sm font-medium text-foreground-muted">Videos</span>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 sm:overflow-visible scrollbar-hide">
+            {videos.map((video) => (
+              <div key={video._id} className="flex-shrink-0 w-56 sm:w-auto">
+                <VideoCard
+                  video={video}
+                  onClick={() => onVideoClick(video._id)}
+                />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

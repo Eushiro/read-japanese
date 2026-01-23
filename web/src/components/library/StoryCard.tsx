@@ -126,9 +126,9 @@ export function StoryCard({
 
         {/* Meta Info */}
         <div className="flex items-center gap-2 mt-3 text-xs text-foreground-muted">
-          <span className="px-2 py-0.5 rounded-full bg-muted">{story.genre}</span>
-          <span>•</span>
-          <span>
+          <span className="px-2 py-0.5 rounded-full bg-muted truncate max-w-[80px]">{story.genre}</span>
+          <span className="shrink-0">•</span>
+          <span className="shrink-0">
             {story.chapterCount} {story.chapterCount === 1 ? "chapter" : "chapters"}
           </span>
         </div>

@@ -1,0 +1,94 @@
+import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useAuth } from "./AuthContext";
+import {
+  initAnalytics,
+  identifyUser,
+  resetAnalytics,
+  trackEvent,
+  trackPageView,
+  AnalyticsEvents,
+} from "@/lib/analytics";
+
+interface AnalyticsContextType {
+  trackEvent: typeof trackEvent;
+  trackPageView: typeof trackPageView;
+  events: typeof AnalyticsEvents;
+}
+
+const AnalyticsContext = createContext<AnalyticsContextType | null>(null);
+
+export function AnalyticsProvider({ children }: { children: ReactNode }) {
+  const { user, isAuthenticated } = useAuth();
+  const initialized = useRef(false);
+  const lastIdentifiedUserId = useRef<string | null>(null);
+
+  // Get user profile for additional properties
+  const userProfile = useQuery(
+    api.users.getByClerkId,
+    isAuthenticated && user ? { clerkId: user.id } : "skip"
+  );
+
+  // Get subscription for tier info
+  const subscription = useQuery(
+    api.subscriptions.get,
+    isAuthenticated && user ? { userId: user.id } : "skip"
+  );
+
+  // Initialize PostHog once
+  useEffect(() => {
+    if (!initialized.current) {
+      initAnalytics();
+      initialized.current = true;
+    }
+  }, []);
+
+  // Identify user when authenticated
+  useEffect(() => {
+    if (isAuthenticated && user && user.id !== lastIdentifiedUserId.current) {
+      identifyUser(user.id, {
+        email: user.email,
+        name: user.displayName,
+        subscription_tier: subscription?.tier ?? "free",
+        languages_learning: userProfile?.languages ?? [],
+        target_exams: userProfile?.targetExams ?? [],
+      });
+      lastIdentifiedUserId.current = user.id;
+
+      // Track login if this is a new identification
+      trackEvent(AnalyticsEvents.LOGIN_COMPLETED, {
+        method: "clerk",
+      });
+    }
+  }, [isAuthenticated, user, userProfile, subscription]);
+
+  // Reset on logout
+  useEffect(() => {
+    if (!isAuthenticated && lastIdentifiedUserId.current) {
+      trackEvent(AnalyticsEvents.LOGOUT_COMPLETED);
+      resetAnalytics();
+      lastIdentifiedUserId.current = null;
+    }
+  }, [isAuthenticated]);
+
+  return (
+    <AnalyticsContext.Provider
+      value={{
+        trackEvent,
+        trackPageView,
+        events: AnalyticsEvents,
+      }}
+    >
+      {children}
+    </AnalyticsContext.Provider>
+  );
+}
+
+export function useAnalytics() {
+  const context = useContext(AnalyticsContext);
+  if (!context) {
+    throw new Error("useAnalytics must be used within an AnalyticsProvider");
+  }
+  return context;
+}

@@ -4,6 +4,7 @@ import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Settings, Crown, Code, Users,
 import { useNavigate } from "@tanstack/react-router";
 import { useSettings, isDevUserEnabled, setDevUserEnabled } from "@/hooks/useSettings";
 import { useAuth, SignInButton, UserButton } from "@/contexts/AuthContext";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -44,6 +45,7 @@ type Theme = "light" | "dark" | "system";
 
 export function SettingsPage() {
   const navigate = useNavigate();
+  const { trackEvent, events } = useAnalytics();
 
   const {
     settings,
@@ -73,6 +75,7 @@ export function SettingsPage() {
   );
   const updateLanguages = useMutation(api.users.updateLanguages);
   const updateTargetExams = useMutation(api.users.updateTargetExams);
+  const updateProficiencyLevel = useMutation(api.users.updateProficiencyLevel);
   const upsertUser = useMutation(api.users.upsert);
   const upsertSubscription = useMutation(api.subscriptions.upsert);
 
@@ -102,6 +105,12 @@ export function SettingsPage() {
       clerkId: user.id,
       languages: newLanguages as ("japanese" | "english" | "french")[],
     });
+
+    trackEvent(events.SETTING_CHANGED, {
+      setting: "languages",
+      value: newLanguages,
+      action: currentLanguages.includes(lang) ? "remove" : "add",
+    });
   };
 
   const handleExamToggle = async (exam: string) => {
@@ -116,10 +125,22 @@ export function SettingsPage() {
       clerkId: user.id,
       targetExams: newExams as any[],
     });
+
+    trackEvent(events.SETTING_CHANGED, {
+      setting: "target_exams",
+      value: newExams,
+      action: currentExams.includes(exam as any) ? "remove" : "add",
+    });
   };
 
   const handleUpgrade = async (tier: "basic" | "pro" | "unlimited") => {
     if (!user) return;
+
+    trackEvent(events.UPGRADE_CLICKED, {
+      tier,
+      current_tier: subscription?.tier ?? "free",
+    });
+
     setCheckoutLoading(tier);
     try {
       const result = await createCheckout({
@@ -742,6 +763,53 @@ export function SettingsPage() {
                       }`}
                     />
                   </button>
+                </div>
+
+                {/* Level Override */}
+                <div className="pt-4 border-t border-amber-500/20">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 rounded-lg bg-amber-500/10">
+                      <GraduationCap className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground">Level Override</div>
+                      <div className="text-sm text-foreground-muted">
+                        Manually set proficiency level for testing questions
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3 ml-11">
+                    {userProfile?.languages?.map((lang) => {
+                      const langInfo = LANGUAGES.find((l) => l.value === lang);
+                      const currentLevel = userProfile.proficiencyLevels?.[lang as keyof typeof userProfile.proficiencyLevels]?.level;
+                      const levels = lang === "japanese"
+                        ? ["N5", "N4", "N3", "N2", "N1"]
+                        : ["A1", "A2", "B1", "B2", "C1", "C2"];
+
+                      return (
+                        <div key={lang} className="flex items-center gap-3">
+                          <span className="text-sm w-20">{langInfo?.flag} {langInfo?.label}</span>
+                          <select
+                            value={currentLevel ?? ""}
+                            onChange={async (e) => {
+                              if (!user) return;
+                              await updateProficiencyLevel({
+                                clerkId: user.id,
+                                language: lang as "japanese" | "english" | "french",
+                                level: e.target.value,
+                              });
+                            }}
+                            className="flex-1 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                          >
+                            <option value="">Not set</option>
+                            {levels.map((level) => (
+                              <option key={level} value={level}>{level}</option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </section>

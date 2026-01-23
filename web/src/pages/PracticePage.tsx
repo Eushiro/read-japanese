@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { useSearch } from "@tanstack/react-router";
 import type { GenericId } from "convex/values";
@@ -16,9 +16,11 @@ import {
   BookOpen,
 } from "lucide-react";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 export function PracticePage() {
   const { user, isAuthenticated } = useAuth();
+  const { trackEvent, events } = useAnalytics();
   const userId = user?.id ?? "anonymous";
   const search = useSearch({ strict: false }) as { vocabularyId?: string };
 
@@ -30,12 +32,27 @@ export function PracticePage() {
 
   const [selectedWord, setSelectedWord] = useState<typeof vocabulary extends (infer T)[] ? T : never | null>(null);
 
+  // Language filter state
+  type LanguageFilter = "all" | "japanese" | "english" | "french";
+  const [languageFilter, setLanguageFilter] = useState<LanguageFilter>("all");
+
+  // Compute available languages from vocabulary
+  const availableLanguages = useMemo(() => {
+    if (!vocabulary) return [];
+    const languages = new Set(vocabulary.map(v => v.language));
+    return Array.from(languages) as ("japanese" | "english" | "french")[];
+  }, [vocabulary]);
+
+  const showLanguageFilter = availableLanguages.length > 1;
+
   // Pre-select word from URL parameter
   useEffect(() => {
     if (search.vocabularyId && vocabulary && !selectedWord) {
       const word = vocabulary.find((v) => v._id === search.vocabularyId);
       if (word) {
         setSelectedWord(word);
+        // Auto-set filter to match the word's language
+        setLanguageFilter(word.language as LanguageFilter);
       }
     }
   }, [search.vocabularyId, vocabulary, selectedWord]);
@@ -69,15 +86,25 @@ export function PracticePage() {
   );
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
-  // Filter vocabulary for practice (prefer new/learning words)
-  const practiceWords = vocabulary?.filter(
-    (v) => v.masteryState === "new" || v.masteryState === "learning"
-  ) ?? [];
+  // Filter vocabulary for practice (prefer new/learning words, respect language filter)
+  const practiceWords = useMemo(() => {
+    if (!vocabulary) return [];
+    return vocabulary.filter(v => {
+      const isMasteryMatch = v.masteryState === "new" || v.masteryState === "learning";
+      const isLanguageMatch = languageFilter === "all" || v.language === languageFilter;
+      return isMasteryMatch && isLanguageMatch;
+    });
+  }, [vocabulary, languageFilter]);
 
   const handleSelectWord = (word: typeof vocabulary extends (infer T)[] ? T : never) => {
     setSelectedWord(word);
     setSentence("");
     setResult(null);
+    trackEvent(events.PRACTICE_WORD_SELECTED, {
+      word: word.word,
+      language: word.language,
+      mastery_state: word.masteryState,
+    });
   };
 
   const handleSubmit = async () => {
@@ -91,6 +118,13 @@ export function PracticePage() {
     setIsSubmitting(true);
     setResult(null);
 
+    // Track sentence submitted
+    trackEvent(events.SENTENCE_SUBMITTED, {
+      word: selectedWord.word,
+      language: selectedWord.language,
+      sentence_length: sentence.trim().length,
+    });
+
     try {
       // Verify the sentence with AI
       const verification = await verifySentence({
@@ -101,6 +135,15 @@ export function PracticePage() {
       });
 
       setResult(verification);
+
+      // Track sentence verified
+      trackEvent(events.SENTENCE_VERIFIED, {
+        word: selectedWord.word,
+        language: selectedWord.language,
+        is_correct: verification.isCorrect,
+        overall_score: verification.overallScore,
+        difficulty_level: verification.difficultyLevel,
+      });
 
       // Save the result to the database
       await submitSentence({
@@ -125,10 +168,15 @@ export function PracticePage() {
   };
 
   const handleNextWord = () => {
-    if (!practiceWords.length) return;
-    const currentIndex = practiceWords.findIndex((w) => w._id === selectedWord?._id);
-    const nextIndex = (currentIndex + 1) % practiceWords.length;
-    handleSelectWord(practiceWords[nextIndex]);
+    if (!practiceWords.length || !selectedWord) return;
+
+    // Filter to only words of the same language as the current word
+    const sameLanguageWords = practiceWords.filter(w => w.language === selectedWord.language);
+    if (sameLanguageWords.length === 0) return;
+
+    const currentIndex = sameLanguageWords.findIndex((w) => w._id === selectedWord._id);
+    const nextIndex = (currentIndex + 1) % sameLanguageWords.length;
+    handleSelectWord(sameLanguageWords[nextIndex]);
   };
 
   const handleTryAgain = () => {
@@ -206,9 +254,62 @@ export function PracticePage() {
         ) : !selectedWord ? (
           // Word selection
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-4">
-              Select a word to practice
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <h2 className="text-lg font-semibold text-foreground">
+                Select a word to practice
+              </h2>
+              {/* Language Filter - only show if multiple languages */}
+              {showLanguageFilter && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setLanguageFilter("all")}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      languageFilter === "all"
+                        ? "bg-accent text-white"
+                        : "bg-muted text-foreground-muted hover:text-foreground"
+                    }`}
+                  >
+                    All
+                  </button>
+                  {availableLanguages.includes("japanese") && (
+                    <button
+                      onClick={() => setLanguageFilter("japanese")}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        languageFilter === "japanese"
+                          ? "bg-accent text-white"
+                          : "bg-muted text-foreground-muted hover:text-foreground"
+                      }`}
+                    >
+                      Japanese
+                    </button>
+                  )}
+                  {availableLanguages.includes("english") && (
+                    <button
+                      onClick={() => setLanguageFilter("english")}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        languageFilter === "english"
+                          ? "bg-accent text-white"
+                          : "bg-muted text-foreground-muted hover:text-foreground"
+                      }`}
+                    >
+                      English
+                    </button>
+                  )}
+                  {availableLanguages.includes("french") && (
+                    <button
+                      onClick={() => setLanguageFilter("french")}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        languageFilter === "french"
+                          ? "bg-accent text-white"
+                          : "bg-muted text-foreground-muted hover:text-foreground"
+                      }`}
+                    >
+                      French
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {practiceWords.slice(0, 10).map((word) => (
                 <button

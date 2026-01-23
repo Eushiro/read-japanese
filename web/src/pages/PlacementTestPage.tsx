@@ -648,7 +648,6 @@ export function PlacementTestPage() {
             <Badge variant="outline">
               Q{(viewingIndex ?? 0) + 1}
               {isViewingPastQuestion ? ` of ${currentQuestionIndex + 1}` : ""}
-              {currentTest && !isViewingPastQuestion && ` • ${maxConfidence}%`}
             </Badge>
             {isAdmin && (
               <Button
