@@ -5,7 +5,6 @@ import { api } from "../../convex/_generated/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   QuestionDisplay,
   QuestionNavigation,
@@ -702,24 +701,24 @@ export function PlacementTestPage() {
             <div>
               {/* Skeleton for type badge */}
               <div className="flex items-center gap-2 mb-4">
-                <Skeleton className="h-6 w-28 rounded-full" />
+                <div className="h-6 w-28 rounded-full bg-border animate-pulse" />
               </div>
               {/* Skeleton for question text */}
               <div className="mb-6 space-y-2">
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-5 w-4/5" />
+                <div className="h-5 w-full rounded-md bg-border animate-pulse" />
+                <div className="h-5 w-4/5 rounded-md bg-border animate-pulse" />
               </div>
               {/* Skeleton for 4 options */}
               <div className="space-y-3">
-                <Skeleton className="h-14 w-full rounded-xl" />
-                <Skeleton className="h-14 w-full rounded-xl" />
-                <Skeleton className="h-14 w-full rounded-xl" />
-                <Skeleton className="h-14 w-full rounded-xl" />
+                <div className="h-14 w-full rounded-xl bg-border animate-pulse" />
+                <div className="h-14 w-full rounded-xl bg-border animate-pulse" />
+                <div className="h-14 w-full rounded-xl bg-border animate-pulse" />
+                <div className="h-14 w-full rounded-xl bg-border animate-pulse" />
               </div>
             </div>
 
             {/* Centered overlay with shimmering text */}
-            <div className="absolute inset-0 flex items-center justify-center bg-surface/80 backdrop-blur-[2px]">
+            <div className="absolute inset-0 flex items-center justify-center bg-surface/60">
               <p
                 key={loadingPhraseIndex}
                 className="text-2xl sm:text-3xl font-bold text-center px-4"
