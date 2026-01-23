@@ -697,25 +697,41 @@ export function PlacementTestPage() {
 
         {/* Question Card */}
         {isGeneratingQuestion ? (
-          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm min-h-[400px] flex flex-col items-center justify-center">
-            {/* Centered shimmering loading text */}
-            <div className="flex flex-col items-center gap-6">
-              <Loader2 className="w-8 h-8 animate-spin text-accent" />
+          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm relative">
+            {/* Skeleton structure matching multiple choice layout */}
+            <div className="opacity-30">
+              {/* Skeleton for type badge */}
+              <div className="flex items-center gap-2 mb-4">
+                <Skeleton className="h-6 w-28 rounded-full" />
+              </div>
+              {/* Skeleton for question text */}
+              <div className="mb-6 space-y-2">
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-4/5" />
+              </div>
+              {/* Skeleton for 4 options */}
+              <div className="space-y-3">
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
+              </div>
+            </div>
+
+            {/* Centered overlay with shimmering text */}
+            <div className="absolute inset-0 flex items-center justify-center">
               <p
                 key={loadingPhraseIndex}
-                className="text-xl sm:text-2xl font-medium text-foreground text-center animate-fade-in-up"
+                className="text-2xl sm:text-3xl font-bold text-center px-4"
                 style={{
                   background: 'linear-gradient(90deg, var(--foreground) 0%, var(--accent) 50%, var(--foreground) 100%)',
                   backgroundSize: '200% 100%',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  animation: 'shimmer 2s ease-in-out infinite, fade-in-up 0.3s ease-out',
+                  animation: 'shimmer 2s ease-in-out infinite',
                 }}
               >
                 {LOADING_PHRASES[loadingPhraseIndex]}
-              </p>
-              <p className="text-sm text-foreground-muted">
-                Question {currentQuestionIndex + 1}
               </p>
             </div>
           </div>
