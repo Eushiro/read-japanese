@@ -9,6 +9,14 @@ const PROCESSING_MESSAGES = [
   "Comparing with native speech patterns...",
   "Checking pitch and rhythm...",
   "Preparing personalized feedback...",
+  "Evaluating your accent...",
+  "Measuring speech clarity...",
+  "Detecting subtle nuances...",
+  "Processing audio waveforms...",
+  "Consulting our language experts...",
+  "Fine-tuning the analysis...",
+  "Reviewing syllable timing...",
+  "Assessing natural flow...",
   "Almost there...",
 ];
 

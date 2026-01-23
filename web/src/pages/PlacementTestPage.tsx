@@ -30,6 +30,14 @@ const LOADING_PHRASES = [
   "Selecting the best format...",
   "Preparing answer choices...",
   "Verifying accuracy...",
+  "Analyzing your level...",
+  "Consulting the question bank...",
+  "Balancing challenge and learning...",
+  "Crafting the perfect question...",
+  "Double-checking grammar points...",
+  "Selecting relevant vocabulary...",
+  "Optimizing for your progress...",
+  "Fine-tuning difficulty...",
   "Almost ready...",
 ];
 
