@@ -3,6 +3,7 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRotatingMessages } from "@/hooks/useRotatingMessages";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -79,21 +80,7 @@ export function PlacementTestPage() {
   // Track max confidence so progress bar never moves backwards
   const [maxConfidence, setMaxConfidence] = useState(0);
   // Cycling loading phrases
-  const [loadingPhraseIndex, setLoadingPhraseIndex] = useState(0);
-
-  // Cycle through loading phrases while generating
-  useEffect(() => {
-    if (!isGeneratingQuestion) {
-      setLoadingPhraseIndex(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setLoadingPhraseIndex((prev) => (prev + 1) % LOADING_PHRASES.length);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [isGeneratingQuestion]);
+  const loadingPhrase = useRotatingMessages(LOADING_PHRASES, isGeneratingQuestion, 2000);
 
   // Queries
   const existingTest = useQuery(
@@ -719,7 +706,7 @@ export function PlacementTestPage() {
             {/* Centered overlay with shimmering text */}
             <div className="absolute inset-0 flex items-center justify-center bg-surface/60">
               <p
-                key={loadingPhraseIndex}
+                key={loadingPhrase}
                 className="text-2xl sm:text-3xl font-bold text-center px-4"
                 style={{
                   background: 'linear-gradient(90deg, var(--foreground) 0%, var(--accent) 50%, var(--foreground) 100%)',
@@ -729,7 +716,7 @@ export function PlacementTestPage() {
                   animation: 'shimmer 2s ease-in-out infinite',
                 }}
               >
-                {LOADING_PHRASES[loadingPhraseIndex]}
+                {loadingPhrase}
               </p>
             </div>
           </div>

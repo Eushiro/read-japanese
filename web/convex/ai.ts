@@ -1010,6 +1010,164 @@ export const generateFlashcardWithAudio = action({
 });
 
 // ============================================
+// ENHANCE PREMADE VOCABULARY
+// ============================================
+
+/**
+ * Enhance a premade vocabulary item by generating missing content
+ * Only generates what's missing (sentence, audio, wordAudio, image)
+ */
+export const enhancePremadeVocabulary = action({
+  args: {
+    premadeVocabularyId: v.id("premadeVocabulary"),
+    generateSentence: v.optional(v.boolean()),
+    generateAudio: v.optional(v.boolean()),
+    generateImage: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; generated: string[] }> => {
+    // Get the premade vocabulary item
+    const vocab = await ctx.runQuery(internal.aiHelpers.getPremadeVocabulary, {
+      premadeVocabularyId: args.premadeVocabularyId,
+    });
+
+    if (!vocab) {
+      throw new Error("Premade vocabulary item not found");
+    }
+
+    const generated: string[] = [];
+    const wasAlreadyComplete = vocab.generationStatus === "complete";
+
+    // Only set status to generating if not already complete
+    // (to avoid item disappearing from filtered queries during enhancement)
+    if (!wasAlreadyComplete) {
+      await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+        premadeVocabularyId: args.premadeVocabularyId,
+        generationStatus: "generating",
+      });
+    }
+
+    try {
+      let sentence = vocab.sentence;
+      let sentenceTranslation = vocab.sentenceTranslation;
+
+      // Generate sentence if missing and requested (default: true if missing)
+      // Generate sentence if explicitly requested (true) or if missing and not explicitly disabled
+      const shouldGenerateSentence = args.generateSentence === true || (args.generateSentence !== false && !vocab.sentence);
+      if (shouldGenerateSentence) {
+        const sentenceResult = await generateSentenceHelper({
+          word: vocab.word,
+          reading: vocab.reading ?? undefined,
+          definitions: vocab.definitions,
+          language: vocab.language,
+          examLevel: vocab.level ?? undefined,
+        });
+
+        sentence = sentenceResult.sentence;
+        sentenceTranslation = sentenceResult.translation;
+
+        await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+          premadeVocabularyId: args.premadeVocabularyId,
+          sentence,
+          sentenceTranslation,
+        });
+
+        generated.push("sentence");
+      }
+
+      // Generate audio if explicitly requested (true) or if missing and not explicitly disabled
+      const shouldGenerateAudio = args.generateAudio === true || args.generateAudio !== false;
+      // For sentence audio: regenerate if explicitly requested OR if missing
+      const shouldRegenerateSentenceAudio = args.generateAudio === true || !vocab.audioUrl;
+
+      // Generate sentence audio if we have a sentence
+      if (shouldGenerateAudio && sentence && shouldRegenerateSentenceAudio) {
+        try {
+          const audioResult = await generateTTSAudio(sentence, vocab.language);
+          if (audioResult) {
+            const blob = new Blob([new Uint8Array(audioResult.audioData)], { type: audioResult.mimeType });
+            const storageId = await ctx.storage.store(blob);
+            const audioUrl = await ctx.storage.getUrl(storageId);
+
+            if (audioUrl) {
+              await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+                premadeVocabularyId: args.premadeVocabularyId,
+                audioUrl,
+              });
+              generated.push("sentenceAudio");
+            }
+          }
+        } catch (error) {
+          console.error("Sentence audio generation failed:", error);
+        }
+      }
+
+      // Generate word audio if missing
+      if (shouldGenerateAudio && !vocab.wordAudioUrl) {
+        try {
+          const wordAudioResult = await generateTTSAudio(vocab.word, vocab.language);
+          if (wordAudioResult) {
+            const blob = new Blob([new Uint8Array(wordAudioResult.audioData)], { type: wordAudioResult.mimeType });
+            const storageId = await ctx.storage.store(blob);
+            const wordAudioUrl = await ctx.storage.getUrl(storageId);
+
+            if (wordAudioUrl) {
+              await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+                premadeVocabularyId: args.premadeVocabularyId,
+                wordAudioUrl,
+              });
+              generated.push("wordAudio");
+            }
+          }
+        } catch (error) {
+          console.error("Word audio generation failed:", error);
+        }
+      }
+
+      // Generate image if missing and requested
+      if (args.generateImage && sentence && !vocab.imageUrl) {
+        try {
+          const imageResult = await generateFlashcardImage(vocab.word, sentence, vocab.language);
+          if (imageResult) {
+            const blob = new Blob([new Uint8Array(imageResult.imageData)], { type: imageResult.mimeType });
+            const storageId = await ctx.storage.store(blob);
+            const imageUrl = await ctx.storage.getUrl(storageId);
+
+            if (imageUrl) {
+              await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+                premadeVocabularyId: args.premadeVocabularyId,
+                imageUrl,
+              });
+              generated.push("image");
+            }
+          }
+        } catch (error) {
+          console.error("Image generation failed:", error);
+        }
+      }
+
+      // Mark as complete (only if we changed it to generating earlier)
+      if (!wasAlreadyComplete) {
+        await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+          premadeVocabularyId: args.premadeVocabularyId,
+          generationStatus: "complete",
+        });
+      }
+
+      return { success: true, generated };
+    } catch (error) {
+      // Mark as failed (only if we changed it to generating earlier)
+      if (!wasAlreadyComplete) {
+        await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+          premadeVocabularyId: args.premadeVocabularyId,
+          generationStatus: "failed",
+        });
+      }
+      throw error;
+    }
+  },
+});
+
+// ============================================
 // STORY COMPREHENSION QUESTIONS
 // ============================================
 
@@ -1933,6 +2091,208 @@ Create comprehension questions for the video above, aiming for ${workBudget} wor
         success: false,
         questionCount: 0,
         error: error instanceof Error ? error.message : "Failed to generate questions",
+      };
+    }
+  },
+});
+
+// ============================================
+// SHADOWING PRACTICE (Audio-to-Audio Evaluation)
+// ============================================
+
+interface ShadowingFeedback {
+  accuracyScore: number; // 0-100
+  feedbackText: string;
+  feedbackAudioBase64?: string;
+}
+
+/**
+ * Parse SSE stream and accumulate audio + text chunks
+ */
+async function parseAudioStream(
+  response: Response
+): Promise<{ textContent: string; audioData: string }> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error("No response body");
+  }
+
+  const decoder = new TextDecoder();
+  let textContent = "";
+  let audioData = "";
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    // Process complete SSE events
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        const data = line.slice(6);
+        if (data === "[DONE]") continue;
+
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed.choices?.[0]?.delta;
+
+          // Accumulate text content
+          if (delta?.content) {
+            textContent += delta.content;
+          }
+
+          // Accumulate audio data
+          if (delta?.audio?.data) {
+            audioData += delta.audio.data;
+          }
+        } catch {
+          // Skip malformed JSON
+        }
+      }
+    }
+  }
+
+  return { textContent, audioData };
+}
+
+/**
+ * Evaluate a user's shadowing attempt using gpt-audio-mini
+ * Takes the target sentence and user's recorded audio, returns spoken + text feedback
+ */
+export const evaluateShadowing = action({
+  args: {
+    targetText: v.string(),
+    targetLanguage: v.union(
+      v.literal("japanese"),
+      v.literal("english"),
+      v.literal("french")
+    ),
+    userAudioBase64: v.string(), // Base64 encoded audio (webm or wav)
+  },
+  handler: async (ctx, args): Promise<ShadowingFeedback> => {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      throw new Error("OPENROUTER_API_KEY environment variable is not set");
+    }
+
+    const languageName = languageNames[args.targetLanguage];
+
+    // System prompt for the audio model
+    const systemPrompt = `You are a friendly ${languageName} language teacher evaluating a student's pronunciation practice (shadowing).
+
+The student is trying to repeat: "${args.targetText}"
+
+Listen to their attempt and:
+1. Rate their pronunciation accuracy from 0-100
+2. Identify any mispronounced words or sounds
+3. Give encouraging, specific feedback on how to improve
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "accuracyScore": <number 0-100>,
+  "feedbackText": "<brief feedback summary in English>",
+  "spokenFeedback": "<encouraging feedback in ${languageName} that will be spoken to the student, 1-2 sentences>"
+}`;
+
+    try {
+      const response = await fetch(OPENROUTER_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://sanlang.app",
+          "X-Title": "SanLang",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt,
+            },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: "Here is my attempt at saying the sentence. Please evaluate my pronunciation.",
+                },
+                {
+                  type: "input_audio",
+                  input_audio: {
+                    data: args.userAudioBase64,
+                    format: "wav",
+                  },
+                },
+              ],
+            },
+          ],
+          // Text output only - use Gemini TTS for spoken feedback
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Shadowing evaluation error: ${response.status} - ${errorText}`);
+        throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log("Shadowing evaluation response:", JSON.stringify(result, null, 2));
+
+      // Extract text content
+      const textContent = result.choices?.[0]?.message?.content ?? "";
+      let feedbackText = "Great effort! Keep practicing.";
+      let spokenFeedback = "";
+      let accuracyScore = 70;
+
+      // Try to extract JSON from the response
+      const jsonMatch = textContent.match(/\{[\s\S]*"accuracyScore"[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          accuracyScore = parsed.accuracyScore ?? 70;
+          feedbackText = parsed.feedbackText ?? feedbackText;
+          spokenFeedback = parsed.spokenFeedback ?? "";
+        } catch {
+          // Use defaults if JSON parsing fails
+        }
+      }
+
+      // Generate audio feedback using Gemini TTS
+      let feedbackAudioBase64: string | undefined;
+      if (spokenFeedback) {
+        try {
+          const audioResult = await generateTTSAudio(spokenFeedback, args.targetLanguage);
+          if (audioResult) {
+            // Convert Uint8Array to base64
+            let binaryString = "";
+            for (let i = 0; i < audioResult.audioData.length; i++) {
+              binaryString += String.fromCharCode(audioResult.audioData[i]);
+            }
+            feedbackAudioBase64 = btoa(binaryString);
+          }
+        } catch (ttsError) {
+          console.error("TTS generation failed:", ttsError);
+        }
+      }
+
+      return {
+        accuracyScore,
+        feedbackText,
+        feedbackAudioBase64,
+      };
+    } catch (error) {
+      console.error("Shadowing evaluation failed:", error);
+      // Return a graceful fallback
+      return {
+        accuracyScore: 0,
+        feedbackText: "Unable to evaluate your recording. Please try again.",
       };
     }
   },
