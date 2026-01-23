@@ -283,13 +283,13 @@ function StoryCardSkeleton({ delay = 0 }: { delay?: number }) {
         animationDelay: `${delay}ms`,
       }}
     >
-      <div className="aspect-[3/4] bg-muted" />
+      <div className="aspect-[3/4] bg-border" />
       <div className="p-4 space-y-3">
-        <div className="h-4 bg-muted rounded w-4/5" />
-        <div className="h-3 bg-muted rounded w-2/3" />
+        <div className="h-4 bg-border rounded w-4/5" />
+        <div className="h-3 bg-border rounded w-2/3" />
         <div className="flex gap-2 mt-3">
-          <div className="h-5 bg-muted rounded-full w-16" />
-          <div className="h-5 bg-muted rounded w-12" />
+          <div className="h-5 bg-border rounded-full w-16" />
+          <div className="h-5 bg-border rounded w-12" />
         </div>
       </div>
     </div>
