@@ -273,6 +273,19 @@
   }
 }
 
+@keyframes pulseSubtle {
+  0%, 100% {
+    box-shadow: 0 4px 14px -3px var(--color-accent);
+  }
+  50% {
+    box-shadow: 0 8px 20px -3px var(--color-accent);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 2s ease-in-out infinite;
+}
+
 .animate-fade-in-up {
   animation: fadeInUp 0.4s ease-out forwards;
   opacity: 0;

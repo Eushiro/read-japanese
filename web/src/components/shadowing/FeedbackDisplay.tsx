@@ -201,14 +201,20 @@ export function FeedbackDisplay({
 
         {feedbackAudioUrl && (
           <Button
-            variant="outline"
             onClick={playFeedbackAudio}
-            className="flex-1 gap-2"
+            className={`flex-1 gap-2 ${
+              isPlayingFeedback
+                ? "bg-accent/80"
+                : "bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 shadow-lg shadow-accent/25 animate-pulse-subtle"
+            }`}
           >
             {isPlayingFeedback ? (
               <VolumeX className="w-4 h-4" />
             ) : (
-              <Volume2 className="w-4 h-4" />
+              <>
+                <Sparkles className="w-4 h-4" />
+                <Volume2 className="w-4 h-4" />
+              </>
             )}
             {isPlayingFeedback ? "Stop" : "Play AI Feedback"}
           </Button>
