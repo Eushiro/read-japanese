@@ -25,9 +25,10 @@ import { LearnPage } from "@/pages/LearnPage";
 import { PlacementTestPage } from "@/pages/PlacementTestPage";
 import { VideoPage } from "@/pages/VideoPage";
 import { VideoQuizPage } from "@/pages/VideoQuizPage";
-import { BookOpen, GraduationCap, Settings, Home } from "lucide-react";
+import { StudySessionPage } from "@/pages/StudySessionPage";
+import { PricingPage } from "@/pages/PricingPage";
+import { BookOpen, User, Home, CreditCard } from "lucide-react";
 import { trackPageView } from "@/lib/analytics";
-import { useReviewSession } from "@/contexts/ReviewSessionContext";
 
 // Root layout
 const rootRoute = createRootRoute({
@@ -82,9 +83,12 @@ function RootLayout() {
     }
   };
 
+  // Hide navigation during study session
+  const isStudySession = location.pathname === "/study-session";
+
   return (
     <div className="min-h-screen bg-background paper-texture">
-      <Navigation />
+      {!isStudySession && <Navigation />}
       <main className="animate-fade-in">
         <Outlet />
       </main>
@@ -102,31 +106,20 @@ function RootLayout() {
 
 function Navigation() {
   const location = useLocation();
-  const { user, isAuthenticated } = useAuth();
-  const { cardsLeft } = useReviewSession();
-
-  // Get flashcard stats for due count badge (fallback when no active session)
-  const flashcardStats = useQuery(
-    api.flashcards.getStats,
-    isAuthenticated && user ? { userId: user.id } : "skip"
-  );
-  const dbDueCount = (flashcardStats?.dueNow ?? 0) + (flashcardStats?.new ?? 0);
-
-  // Use session count when active, otherwise database count
-  const dueCount = cardsLeft !== null ? cardsLeft : dbDueCount;
+  const { isAuthenticated } = useAuth();
 
   // Links visible to everyone (logged-out users see preview dashboard)
   const publicLinks = [
     { to: "/dashboard", label: "Home", icon: Home },
     { to: "/library", label: "Library", icon: BookOpen },
+    { to: "/pricing", label: "Pricing", icon: CreditCard },
   ] as const;
 
-  // Links only visible when signed in - simplified to 4 tabs
+  // Links only visible when signed in - simplified to 3 tabs
   const authLinks = [
     { to: "/dashboard", label: "Home", icon: Home },
     { to: "/library", label: "Library", icon: BookOpen },
-    { to: "/learn", label: "Learn", icon: GraduationCap },
-    { to: "/settings", label: "Settings", icon: Settings },
+    { to: "/settings", label: "Profile", icon: User },
   ] as const;
 
   // When authenticated, use full authLinks
@@ -158,7 +151,6 @@ function Navigation() {
           <div className="flex items-center gap-1">
             {links.map((link) => {
               const active = isActive(link.to);
-              const showBadge = link.to === "/learn" && dueCount > 0;
               return (
                 <Link
                   key={link.to}
@@ -171,11 +163,6 @@ function Navigation() {
                 >
                   <link.icon className={`w-4 h-4 ${active ? "text-accent" : ""}`} />
                   <span className="hidden sm:inline">{link.label}</span>
-                  {showBadge && (
-                    <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-green-500 text-white text-xs font-medium flex items-center justify-center">
-                      {dueCount > 99 ? "99+" : dueCount}
-                    </span>
-                  )}
                   {active && (
                     <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-accent rounded-full" />
                   )}
@@ -287,6 +274,18 @@ const videoQuizRoute = createRoute({
   component: VideoQuizPage,
 });
 
+const studySessionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/study-session",
+  component: StudySessionPage,
+});
+
+const pricingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/pricing",
+  component: PricingPage,
+});
+
 // Route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -303,6 +302,8 @@ const routeTree = rootRoute.addChildren([
   generateRoute,
   settingsRoute,
   placementTestRoute,
+  studySessionRoute,
+  pricingRoute,
 ]);
 
 // Router

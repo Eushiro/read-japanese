@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, SignInButton } from "@/contexts/AuthContext";
 import { useStory } from "@/hooks/useStory";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Paywall } from "@/components/Paywall";
 import {
   QuestionDisplay,
   QuestionNavigation,
@@ -55,6 +56,13 @@ export function ComprehensionPage() {
     isAuthenticated && user ? { clerkId: user.id } : "skip"
   );
 
+  // Check subscription for AI features
+  const subscription = useQuery(
+    api.subscriptions.get,
+    isAuthenticated ? { userId } : "skip"
+  );
+  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
+
   // Check for existing comprehension quiz
   const existingComprehension = useQuery(
     api.storyComprehension.getForStory,
@@ -69,6 +77,7 @@ export function ComprehensionPage() {
   const [isGrading, setIsGrading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [localQuestions, setLocalQuestions] = useState<Question[]>([]);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   // Actions and mutations
   const generateQuestions = useAction(api.ai.generateComprehensionQuestions);
@@ -125,6 +134,12 @@ export function ComprehensionPage() {
   // Separate effect to actually generate when hasAutoStarted becomes true
   useEffect(() => {
     if (hasAutoStarted && !isGenerating && localQuestions.length === 0 && story && isAuthenticated) {
+      // Check if premium user before auto-generating
+      if (!isPremiumUser && subscription !== undefined) {
+        // Not premium - don't auto-generate, user will see the generate button with paywall
+        return;
+      }
+
       const doGenerate = async () => {
         setIsGenerating(true);
         try {
@@ -208,6 +223,11 @@ export function ComprehensionPage() {
   const handleGenerateQuestions = async () => {
     if (!story || !isAuthenticated) return;
 
+    if (!isPremiumUser) {
+      setShowPaywall(true);
+      return;
+    }
+
     setIsGenerating(true);
     try {
       const storyContent = getStoryContent();
@@ -284,8 +304,21 @@ export function ComprehensionPage() {
       };
       setLocalQuestions(updatedQuestions);
 
-      // For short answer and essay, grade with AI
+      // For short answer and essay, grade with AI (premium only)
       if (question.type !== "multiple_choice") {
+        if (!isPremiumUser) {
+          // For free users, skip AI grading and mark as pending review
+          updatedQuestions[currentQuestionIndex] = {
+            ...updatedQuestions[currentQuestionIndex],
+            aiFeedback: "Upgrade to a paid plan to get AI feedback on your answers.",
+            isCorrect: false,
+            earnedPoints: 0,
+          };
+          setLocalQuestions(updatedQuestions);
+          setShowPaywall(true);
+          return;
+        }
+
         setIsGrading(true);
         try {
           const gradeResult = await gradeAnswer({
@@ -664,6 +697,15 @@ export function ComprehensionPage() {
           canSubmit={!!selectedAnswer}
         />
       </main>
+
+      {/* Paywall for AI features */}
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="sentences"
+        title="Upgrade for AI Comprehension"
+        description="Get AI-generated questions and detailed feedback on your answers."
+      />
     </div>
   );
 }

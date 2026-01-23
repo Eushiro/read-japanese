@@ -1,0 +1,361 @@
+import { useState } from "react";
+import { useAction } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Button } from "@/components/ui/button";
+import { Loader2, Crown, Zap, Sparkles, Check, X } from "lucide-react";
+import { useAuth, SignInButton } from "@/contexts/AuthContext";
+
+export function PricingPage() {
+  const { user, isAuthenticated } = useAuth();
+  const createCheckout = useAction(api.stripe.createCheckoutSession);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleUpgrade = async (tier: "basic" | "pro" | "unlimited") => {
+    if (!user) return;
+    setCheckoutLoading(tier);
+    try {
+      const result = await createCheckout({
+        userId: user.id,
+        tier,
+        successUrl: `${window.location.origin}/settings?success=true`,
+        cancelUrl: window.location.href,
+      });
+      if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
+        <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 max-w-6xl">
+          <div className="text-center animate-fade-in-up">
+            <h1
+              className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Simple, transparent pricing
+            </h1>
+            <p className="text-lg text-foreground-muted max-w-2xl mx-auto">
+              Choose the plan that fits your learning goals. Upgrade or downgrade anytime.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing Grid */}
+      <div className="container mx-auto px-4 sm:px-6 py-12 max-w-6xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Free Tier */}
+          <div className="p-6 rounded-2xl border border-border bg-surface flex flex-col">
+            <div className="text-center mb-6">
+              <span className="text-sm font-medium text-foreground-muted uppercase tracking-wider">
+                Free
+              </span>
+              <div className="mt-2">
+                <span className="text-4xl font-bold text-foreground">$0</span>
+                <span className="text-foreground-muted">/mo</span>
+              </div>
+              <p className="text-sm text-foreground-muted mt-2">
+                Get started with the basics
+              </p>
+            </div>
+            <ul className="text-sm space-y-3 flex-1">
+              <li className="flex items-start gap-2">
+                <X className="w-4 h-4 text-foreground-muted mt-0.5 shrink-0" />
+                <span className="text-foreground-muted">No AI story generation</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                <span className="text-foreground">5 stories/month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                <span className="text-foreground">50 AI checks/month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                <span className="text-foreground">100 flashcards/month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <X className="w-4 h-4 text-foreground-muted mt-0.5 shrink-0" />
+                <span className="text-foreground-muted">No mock tests</span>
+              </li>
+            </ul>
+            <div className="mt-6">
+              {isAuthenticated ? (
+                <div className="text-center text-sm text-foreground-muted py-2">
+                  Current plan
+                </div>
+              ) : (
+                <SignInButton mode="modal">
+                  <Button variant="outline" className="w-full">
+                    Get Started
+                  </Button>
+                </SignInButton>
+              )}
+            </div>
+          </div>
+
+          {/* Basic Tier */}
+          <div className="p-6 rounded-2xl border border-border bg-surface flex flex-col">
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center gap-2">
+                <Zap className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-medium text-foreground uppercase tracking-wider">
+                  Basic
+                </span>
+              </div>
+              <div className="mt-2">
+                <span className="text-4xl font-bold text-foreground">$5</span>
+                <span className="text-foreground-muted">/mo</span>
+              </div>
+              <p className="text-sm text-foreground-muted mt-2">
+                For regular learners
+              </p>
+            </div>
+            <ul className="text-sm space-y-3 flex-1">
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>5</strong> AI stories/month
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                <span className="text-foreground">20 stories/month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                <span className="text-foreground">200 AI checks/month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                <span className="text-foreground">500 flashcards/month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                <span className="text-foreground">2 mock tests/month</span>
+              </li>
+            </ul>
+            <div className="mt-6">
+              {isAuthenticated ? (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleUpgrade("basic")}
+                  disabled={checkoutLoading === "basic"}
+                >
+                  {checkoutLoading === "basic" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Get Basic"
+                  )}
+                </Button>
+              ) : (
+                <SignInButton mode="modal">
+                  <Button variant="outline" className="w-full">
+                    Get Basic
+                  </Button>
+                </SignInButton>
+              )}
+            </div>
+          </div>
+
+          {/* Pro Tier - Recommended */}
+          <div className="p-6 pt-10 rounded-2xl border-2 border-accent bg-accent/5 relative flex flex-col">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap">
+              <span className="text-xs px-3 py-1 rounded-full bg-accent text-white font-medium">
+                Most Popular
+              </span>
+            </div>
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center gap-2">
+                <Crown className="w-4 h-4 text-accent" />
+                <span className="text-sm font-medium text-accent uppercase tracking-wider">
+                  Pro
+                </span>
+              </div>
+              <div className="mt-2">
+                <span className="text-4xl font-bold text-foreground">$15</span>
+                <span className="text-foreground-muted">/mo</span>
+              </div>
+              <p className="text-sm text-foreground-muted mt-2">
+                For serious learners
+              </p>
+            </div>
+            <ul className="text-sm space-y-3 flex-1">
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>20</strong> AI stories/month
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>Unlimited</strong> reading
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                <span className="text-foreground">1,000 AI checks/month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>Unlimited</strong> flashcards
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                <span className="text-foreground">10 mock tests/month</span>
+              </li>
+            </ul>
+            <div className="mt-6">
+              {isAuthenticated ? (
+                <Button
+                  className="w-full"
+                  onClick={() => handleUpgrade("pro")}
+                  disabled={checkoutLoading === "pro"}
+                >
+                  {checkoutLoading === "pro" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Get Pro"
+                  )}
+                </Button>
+              ) : (
+                <SignInButton mode="modal">
+                  <Button className="w-full">Get Pro</Button>
+                </SignInButton>
+              )}
+            </div>
+          </div>
+
+          {/* Unlimited Tier */}
+          <div className="p-6 rounded-2xl border border-border bg-gradient-to-b from-purple-500/5 to-transparent flex flex-col">
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-500" />
+                <span className="text-sm font-medium text-foreground uppercase tracking-wider">
+                  Unlimited
+                </span>
+              </div>
+              <div className="mt-2">
+                <span className="text-4xl font-bold text-foreground">$45</span>
+                <span className="text-foreground-muted">/mo</span>
+              </div>
+              <p className="text-sm text-foreground-muted mt-2">
+                No limits, ever
+              </p>
+            </div>
+            <ul className="text-sm space-y-3 flex-1">
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>Unlimited</strong> AI stories
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>Unlimited</strong> reading
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>Unlimited</strong> AI checks
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>Unlimited</strong> flashcards
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>Unlimited</strong> mock tests
+                </span>
+              </li>
+            </ul>
+            <div className="mt-6">
+              {isAuthenticated ? (
+                <Button
+                  variant="outline"
+                  className="w-full border-purple-500/30 hover:bg-purple-500/10"
+                  onClick={() => handleUpgrade("unlimited")}
+                  disabled={checkoutLoading === "unlimited"}
+                >
+                  {checkoutLoading === "unlimited" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Get Unlimited"
+                  )}
+                </Button>
+              ) : (
+                <SignInButton mode="modal">
+                  <Button
+                    variant="outline"
+                    className="w-full border-purple-500/30 hover:bg-purple-500/10"
+                  >
+                    Get Unlimited
+                  </Button>
+                </SignInButton>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mt-16 max-w-3xl mx-auto">
+          <h2
+            className="text-2xl font-bold text-foreground text-center mb-8"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-6">
+            <div className="bg-surface rounded-xl border border-border p-5">
+              <h3 className="font-semibold text-foreground mb-2">
+                What are AI checks?
+              </h3>
+              <p className="text-sm text-foreground-muted">
+                AI checks include sentence verification, comprehension quiz grading, and flashcard
+                sentence generation. Each time you submit a sentence for feedback or generate new
+                content, it counts as one AI check.
+              </p>
+            </div>
+            <div className="bg-surface rounded-xl border border-border p-5">
+              <h3 className="font-semibold text-foreground mb-2">
+                Can I change plans anytime?
+              </h3>
+              <p className="text-sm text-foreground-muted">
+                Yes! You can upgrade or downgrade your plan at any time. Changes take effect
+                immediately, and we'll prorate any differences.
+              </p>
+            </div>
+            <div className="bg-surface rounded-xl border border-border p-5">
+              <h3 className="font-semibold text-foreground mb-2">
+                What payment methods do you accept?
+              </h3>
+              <p className="text-sm text-foreground-muted">
+                We accept all major credit cards, debit cards, and Apple Pay through our secure
+                payment processor, Stripe.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

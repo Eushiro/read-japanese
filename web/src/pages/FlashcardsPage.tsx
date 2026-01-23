@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import type { Id } from "../../convex/_generated/dataModel";
 import { api } from "../../convex/_generated/api";
 import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
 import { Button } from "@/components/ui/button";
+import { Paywall } from "@/components/Paywall";
 import {
   Brain,
   RotateCcw,
@@ -15,7 +16,8 @@ import {
   Volume2,
   Sparkles,
   Undo2,
-  Redo2
+  Redo2,
+  RefreshCw
 } from "lucide-react";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
@@ -83,6 +85,13 @@ export function FlashcardsPage() {
   const { trackEvent, events } = useAnalytics();
   const { setCardsLeft } = useReviewSession();
   const userId = user?.id ?? "anonymous";
+
+  // Check subscription for AI features
+  const subscription = useQuery(
+    api.subscriptions.get,
+    isAuthenticated ? { userId } : "skip"
+  );
+  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
   // Fetch due cards and stats
   const stats = useQuery(
@@ -507,6 +516,17 @@ export function FlashcardsPage() {
               card={currentCard}
               showAnswer={showAnswer}
               onShowAnswer={() => setShowAnswer(true)}
+              isPremiumUser={!!isPremiumUser}
+              onSentenceRefreshed={(newSentence, newTranslation, newAudioUrl) => {
+                // Update the card in the session queue so the change persists
+                setSessionQueue((prev) =>
+                  prev.map((card) =>
+                    card._id === currentCard._id
+                      ? { ...card, sentence: newSentence, sentenceTranslation: newTranslation, audioUrl: newAudioUrl ?? card.audioUrl }
+                      : card
+                  )
+                );
+              }}
             />
 
             {/* Rating Buttons */}
@@ -590,17 +610,60 @@ interface FlashcardDisplayProps {
   };
   showAnswer: boolean;
   onShowAnswer: () => void;
+  isPremiumUser: boolean;
+  onSentenceRefreshed?: (newSentence: string, newTranslation: string, newAudioUrl?: string) => void;
 }
 
-function FlashcardDisplay({ card, showAnswer, onShowAnswer }: FlashcardDisplayProps) {
+function FlashcardDisplay({ card, showAnswer, onShowAnswer, isPremiumUser, onSentenceRefreshed }: FlashcardDisplayProps) {
   const vocab = card.vocabulary;
   const isJapanese = vocab?.language === "japanese";
   const languageFont = isJapanese ? "var(--font-japanese)" : "inherit";
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [localSentence, setLocalSentence] = useState(card.sentence);
+  const [localTranslation, setLocalTranslation] = useState(card.sentenceTranslation);
+  const [localAudioUrl, setLocalAudioUrl] = useState(card.audioUrl);
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  const refreshSentence = useAction(api.ai.refreshFlashcardSentence);
 
   // Preload audio and images when card changes (before user clicks "Show Answer")
   useEffect(() => {
     preloadFlashcardAssets(card);
   }, [card._id, card.wordAudioUrl, card.audioUrl, card.imageUrl]);
+
+  // Reset local state when card changes
+  useEffect(() => {
+    setLocalSentence(card.sentence);
+    setLocalTranslation(card.sentenceTranslation);
+    setLocalAudioUrl(card.audioUrl);
+  }, [card._id, card.sentence, card.sentenceTranslation, card.audioUrl]);
+
+  const handleRefresh = async () => {
+    if (!isPremiumUser) {
+      setShowPaywall(true);
+      return;
+    }
+
+    setIsRefreshing(true);
+    try {
+      const result = await refreshSentence({
+        flashcardId: card._id as Id<"flashcards">,
+      });
+      if (result.success && result.sentence && result.translation) {
+        setLocalSentence(result.sentence);
+        setLocalTranslation(result.translation);
+        if (result.audioUrl) {
+          setLocalAudioUrl(result.audioUrl);
+        }
+        onSentenceRefreshed?.(result.sentence, result.translation, result.audioUrl);
+      }
+    } catch (error) {
+      console.error("Failed to refresh sentence:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const playAudio = (url: string) => {
     new Audio(url).play();
@@ -647,23 +710,34 @@ function FlashcardDisplay({ card, showAnswer, onShowAnswer }: FlashcardDisplayPr
           className="text-lg text-foreground leading-relaxed text-center"
           style={{ fontFamily: languageFont }}
         >
-          {card.sentence}
+          {localSentence}
         </p>
         {/* Sentence Translation - shown directly below sentence */}
         {showAnswer && (
           <p className="text-sm text-foreground-muted text-center mt-2 italic">
-            {card.sentenceTranslation}
+            {localTranslation}
           </p>
         )}
-        {/* Sentence Audio Button - only show after answer */}
-        {showAnswer && card.audioUrl && (
-          <div className="flex justify-center mt-3">
+        {/* Sentence Audio & Refresh Buttons - only show after answer */}
+        {showAnswer && (
+          <div className="flex justify-center items-center gap-2 mt-3">
+            {localAudioUrl && (
+              <button
+                onClick={() => playAudio(localAudioUrl!)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <Volume2 className="w-4 h-4" />
+                Play Sentence
+              </button>
+            )}
             <button
-              onClick={() => playAudio(card.audioUrl!)}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              title="Generate a new example sentence"
             >
-              <Volume2 className="w-4 h-4" />
-              Play Sentence
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+              {isRefreshing ? "Refreshing..." : "New Sentence"}
             </button>
           </div>
         )}
@@ -695,6 +769,13 @@ function FlashcardDisplay({ card, showAnswer, onShowAnswer }: FlashcardDisplayPr
           </div>
         </div>
       )}
+
+      {/* Paywall for sentence refresh */}
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="flashcards"
+      />
     </div>
   );
 }

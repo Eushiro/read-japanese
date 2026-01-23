@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, SignInButton } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -126,6 +126,28 @@ export function VideoQuizPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  // Require authentication for quiz
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <HelpCircle className="w-12 h-12 text-foreground-muted mb-4" />
+        <p className="text-lg font-medium text-foreground mb-2">Sign in to take the quiz</p>
+        <p className="text-sm text-foreground-muted mb-6 text-center max-w-sm">
+          Create an account to track your progress and save your quiz results.
+        </p>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => navigate({ to: "/video/$videoId", params: { videoId } })}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Video
+          </Button>
+          <SignInButton mode="modal">
+            <Button>Sign In</Button>
+          </SignInButton>
+        </div>
       </div>
     );
   }
