@@ -275,10 +275,10 @@
 
 @keyframes pulseSubtle {
   0%, 100% {
-    box-shadow: 0 0 4px 0 oklch(0.75 0.18 50);
+    box-shadow: 0 0 6px 0 oklch(0.75 0.18 50);
   }
   50% {
-    box-shadow: 0 0 8px 1px oklch(0.8 0.2 50);
+    box-shadow: 0 0 10px 2px oklch(0.8 0.2 50);
   }
 }
 
