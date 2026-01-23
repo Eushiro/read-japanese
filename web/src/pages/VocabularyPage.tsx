@@ -1162,6 +1162,15 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
