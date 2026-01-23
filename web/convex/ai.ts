@@ -73,14 +73,19 @@ async function generateTTSAudio(
 
   const voice = TTS_VOICE;
 
-  // For short text (single words), just pass the text directly
+  // For short text (single words), add language context for correct pronunciation
   // For longer text (sentences), add a pronunciation hint
   const isShortText = text.length <= 10 || !text.includes(" ");
 
   let promptText: string;
   if (isShortText) {
-    // For single words, just say the word
-    promptText = text;
+    // Add language context for single words
+    const wordHints: Record<string, string> = {
+      japanese: `Pronounce this Japanese word: ${text}`,
+      english: `Pronounce this English word: ${text}`,
+      french: `Pronounce this French word: ${text}`,
+    };
+    promptText = wordHints[language] || text;
   } else {
     // For sentences, add pronunciation hints
     const languageHints: Record<string, string> = {
