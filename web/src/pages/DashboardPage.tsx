@@ -214,40 +214,78 @@ export function DashboardPage() {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-3">
-            <Link
-              to="/flashcards"
-              className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 rounded-xl border border-purple-500/20 p-4 text-center hover:border-purple-500/40 hover:from-purple-500/15 transition-all"
-            >
-              <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
-                <Brain className="w-5 h-5 text-purple-400" />
-              </div>
-              <div className="text-2xl font-bold text-foreground">{dueCards}</div>
-              <div className="text-xs text-foreground/80">due cards</div>
-            </Link>
+            {isPreviewMode ? (
+              <SignInButton mode="modal">
+                <button className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 rounded-xl border border-purple-500/20 p-4 text-center hover:border-purple-500/40 hover:from-purple-500/15 transition-all w-full">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
+                    <Brain className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">{dueCards}</div>
+                  <div className="text-xs text-foreground/80">due cards</div>
+                </button>
+              </SignInButton>
+            ) : (
+              <Link
+                to="/flashcards"
+                className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 rounded-xl border border-purple-500/20 p-4 text-center hover:border-purple-500/40 hover:from-purple-500/15 transition-all"
+              >
+                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
+                  <Brain className="w-5 h-5 text-purple-400" />
+                </div>
+                <div className="text-2xl font-bold text-foreground">{dueCards}</div>
+                <div className="text-xs text-foreground/80">due cards</div>
+              </Link>
+            )}
 
-            <Link
-              to="/vocabulary"
-              className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 rounded-xl border border-blue-500/20 p-4 text-center hover:border-blue-500/40 hover:from-blue-500/15 transition-all"
-            >
-              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
-                <BookmarkCheck className="w-5 h-5 text-blue-400" />
-              </div>
-              <div className="text-2xl font-bold text-foreground">{totalWords}</div>
-              <div className="text-xs text-foreground/80">words</div>
-            </Link>
+            {isPreviewMode ? (
+              <SignInButton mode="modal">
+                <button className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 rounded-xl border border-blue-500/20 p-4 text-center hover:border-blue-500/40 hover:from-blue-500/15 transition-all w-full">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
+                    <BookmarkCheck className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">{totalWords}</div>
+                  <div className="text-xs text-foreground/80">words</div>
+                </button>
+              </SignInButton>
+            ) : (
+              <Link
+                to="/vocabulary"
+                className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 rounded-xl border border-blue-500/20 p-4 text-center hover:border-blue-500/40 hover:from-blue-500/15 transition-all"
+              >
+                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
+                  <BookmarkCheck className="w-5 h-5 text-blue-400" />
+                </div>
+                <div className="text-2xl font-bold text-foreground">{totalWords}</div>
+                <div className="text-xs text-foreground/80">words</div>
+              </Link>
+            )}
 
-            <button
-              onClick={handleStreakClick}
-              className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 p-4 text-center hover:border-orange-500/40 hover:from-orange-500/15 transition-all cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center mx-auto mb-2">
-                <Flame className={`w-5 h-5 text-orange-400 ${streakAnimating ? 'animate-flame-shake text-orange-300' : ''}`} />
-              </div>
-              <div className="text-2xl font-bold text-foreground">{currentStreak}</div>
-              <div className="text-xs text-foreground/80">
-                {currentStreak === 1 ? "day" : "days"} streak
-              </div>
-            </button>
+            {isPreviewMode ? (
+              <SignInButton mode="modal">
+                <button className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 p-4 text-center hover:border-orange-500/40 hover:from-orange-500/15 transition-all cursor-pointer w-full">
+                  <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center mx-auto mb-2">
+                    <Flame className="w-5 h-5 text-orange-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">{currentStreak}</div>
+                  <div className="text-xs text-foreground/80">
+                    {currentStreak === 1 ? "day" : "days"} streak
+                  </div>
+                </button>
+              </SignInButton>
+            ) : (
+              <button
+                onClick={handleStreakClick}
+                className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 p-4 text-center hover:border-orange-500/40 hover:from-orange-500/15 transition-all cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center mx-auto mb-2">
+                  <Flame className={`w-5 h-5 text-orange-400 ${streakAnimating ? 'animate-flame-shake text-orange-300' : ''}`} />
+                </div>
+                <div className="text-2xl font-bold text-foreground">{currentStreak}</div>
+                <div className="text-xs text-foreground/80">
+                  {currentStreak === 1 ? "day" : "days"} streak
+                </div>
+              </button>
+            )}
           </div>
 
           {/* Suggested for You */}

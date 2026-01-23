@@ -252,13 +252,10 @@ export function LibraryPage() {
         {showStories && (
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <BookOpen className="w-5 h-5 text-foreground-muted" />
-              <h2 className="text-base font-medium text-foreground">
+              <BookOpen className="w-5 h-5 text-accent" />
+              <h2 className="text-lg font-semibold text-foreground">
                 Stories
               </h2>
-              <span className="text-sm text-foreground-muted">
-                ({isLoadingStories ? "..." : sortedStories.length})
-              </span>
             </div>
 
             {isLoadingStories ? (
@@ -289,13 +286,10 @@ export function LibraryPage() {
         {showVideos && (
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <Film className="w-5 h-5 text-foreground-muted" />
-              <h2 className="text-base font-medium text-foreground">
+              <Film className="w-5 h-5 text-accent" />
+              <h2 className="text-lg font-semibold text-foreground">
                 Videos
               </h2>
-              <span className="text-sm text-foreground-muted">
-                ({isLoadingVideos ? "..." : filteredVideos.length})
-              </span>
             </div>
 
             {isLoadingVideos ? (

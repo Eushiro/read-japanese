@@ -61,7 +61,7 @@ export function StoryCard({
             <img
               src={coverUrl}
               alt={story.title}
-              className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+              className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${
                 imageLoaded ? "opacity-100" : "opacity-0"
               }`}
               loading="lazy"
@@ -75,13 +75,13 @@ export function StoryCard({
           </div>
         )}
 
-        {/* Gradient overlay for better badge visibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/20 opacity-60 group-hover:opacity-40 transition-opacity duration-300" />
 
         {/* Level Badge */}
         <Badge
           variant={levelVariantMap[story.level]}
-          className="absolute top-3 left-3 shadow-sm"
+          className="absolute top-3 left-3 shadow-lg ring-2 ring-white/20"
         >
           {story.level}
         </Badge>

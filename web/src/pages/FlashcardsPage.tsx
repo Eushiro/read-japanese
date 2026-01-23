@@ -412,14 +412,17 @@ export function FlashcardsPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-4xl">
+      <div className="border-b border-border relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-background to-violet-500/5" />
+        <div className="absolute top-0 right-1/4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl" />
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-4xl relative">
           <div className="animate-fade-in-up">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-accent/10">
-                <Brain className="w-5 h-5 text-accent" />
+              <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-violet-500/20">
+                <Brain className="w-5 h-5 text-purple-400" />
               </div>
-              <span className="text-sm font-medium text-accent uppercase tracking-wider">
+              <span className="text-sm font-semibold text-purple-400 uppercase tracking-wider">
                 Spaced Repetition
               </span>
             </div>

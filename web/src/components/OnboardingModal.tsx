@@ -101,64 +101,75 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
 
         {/* Step 0: Welcome */}
         {step === 0 && (
-          <div className="p-8 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
-              <Sparkles className="w-8 h-8 text-accent" />
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-blue-500/20" />
+            <div className="absolute top-0 left-1/4 w-40 h-40 bg-purple-500/25 rounded-full blur-3xl" />
+            <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/25 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-green-500/20 rounded-full blur-3xl" />
+            <div className="relative p-8 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center mx-auto mb-6">
+                <Sparkles className="w-8 h-8 text-purple-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+                Welcome to SanLang
+              </h2>
+              <p className="text-foreground mb-8">
+                Let's set up your personalized exam prep
+              </p>
+              <Button onClick={() => setStep(1)} className="w-full gap-2" size="lg">
+                Get Started
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Welcome to SanLang
-            </h2>
-            <p className="text-foreground-muted mb-8">
-              Let's set up your personalized exam prep
-            </p>
-            <Button onClick={() => setStep(1)} className="w-full gap-2">
-              Get Started
-              <ChevronRight className="w-4 h-4" />
-            </Button>
           </div>
         )}
 
         {/* Step 1: How It Works - The Learning Loop */}
         {step === 1 && (
-          <div className="p-8">
-            <h2 className="text-xl font-bold text-foreground mb-2 text-center" style={{ fontFamily: 'var(--font-display)' }}>
-              How SanLang Works
-            </h2>
-            <p className="text-foreground-muted mb-6 text-center">
-              Master vocabulary through our proven learning loop
-            </p>
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-blue-500/20" />
+            <div className="absolute top-0 left-1/4 w-40 h-40 bg-purple-500/25 rounded-full blur-3xl" />
+            <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/25 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-green-500/20 rounded-full blur-3xl" />
+            <div className="relative p-8">
+              <h2 className="text-xl font-bold text-foreground mb-2 text-center" style={{ fontFamily: 'var(--font-display)' }}>
+                How SanLang Works
+              </h2>
+              <p className="text-foreground mb-6 text-center">
+                Master vocabulary through our proven learning loop
+              </p>
 
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="flex flex-col items-center text-center p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center mb-2">
-                  <BookOpen className="w-5 h-5 text-blue-500" />
+            <div className="grid grid-cols-2 gap-3 mb-8">
+              <div className="bg-gradient-to-br from-blue-500/15 to-blue-500/5 rounded-xl border border-blue-500/20 p-4 text-center">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
+                  <BookOpen className="w-5 h-5 text-blue-400" />
                 </div>
-                <div className="text-sm font-medium text-foreground">1. Read</div>
-                <div className="text-xs text-foreground-muted">Stories at your level</div>
+                <div className="text-sm font-semibold text-foreground">1. Read</div>
+                <div className="text-xs text-foreground/80">Stories at your level</div>
               </div>
 
-              <div className="flex flex-col items-center text-center p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
-                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center mb-2">
-                  <BookmarkCheck className="w-5 h-5 text-amber-500" />
+              <div className="bg-gradient-to-br from-amber-500/15 to-amber-500/5 rounded-xl border border-amber-500/20 p-4 text-center">
+                <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center mx-auto mb-2">
+                  <BookmarkCheck className="w-5 h-5 text-amber-400" />
                 </div>
-                <div className="text-sm font-medium text-foreground">2. Save</div>
-                <div className="text-xs text-foreground-muted">Words you want to learn</div>
+                <div className="text-sm font-semibold text-foreground">2. Save</div>
+                <div className="text-xs text-foreground/80">Words you want to learn</div>
               </div>
 
-              <div className="flex flex-col items-center text-center p-4 rounded-xl bg-purple-500/5 border border-purple-500/20">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center mb-2">
-                  <Brain className="w-5 h-5 text-purple-500" />
+              <div className="bg-gradient-to-br from-purple-500/15 to-purple-500/5 rounded-xl border border-purple-500/20 p-4 text-center">
+                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
+                  <Brain className="w-5 h-5 text-purple-400" />
                 </div>
-                <div className="text-sm font-medium text-foreground">3. Review</div>
-                <div className="text-xs text-foreground-muted">AI-powered flashcards</div>
+                <div className="text-sm font-semibold text-foreground">3. Review</div>
+                <div className="text-xs text-foreground/80">AI-powered flashcards</div>
               </div>
 
-              <div className="flex flex-col items-center text-center p-4 rounded-xl bg-green-500/5 border border-green-500/20">
-                <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center mb-2">
-                  <PenLine className="w-5 h-5 text-green-500" />
+              <div className="bg-gradient-to-br from-green-500/15 to-green-500/5 rounded-xl border border-green-500/20 p-4 text-center">
+                <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mx-auto mb-2">
+                  <PenLine className="w-5 h-5 text-green-400" />
                 </div>
-                <div className="text-sm font-medium text-foreground">4. Practice</div>
-                <div className="text-xs text-foreground-muted">Write sentences, get feedback</div>
+                <div className="text-sm font-semibold text-foreground">4. Practice</div>
+                <div className="text-xs text-foreground/80">Write sentences, get feedback</div>
               </div>
             </div>
 
@@ -171,21 +182,26 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
+            </div>
           </div>
         )}
 
         {/* Step 2: Language Selection */}
         {step === 2 && (
-          <div className="p-8">
-            <div className="flex items-center gap-3 mb-2">
-              <Globe className="w-5 h-5 text-accent" />
-              <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                Which languages are you studying?
-              </h2>
-            </div>
-            <p className="text-foreground-muted mb-6">
-              Select all that apply
-            </p>
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-green-500/10" />
+            <div className="absolute top-0 right-1/4 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-1/4 w-24 h-24 bg-green-500/10 rounded-full blur-3xl" />
+            <div className="relative p-8">
+              <div className="flex items-center gap-3 mb-2">
+                <Globe className="w-5 h-5 text-accent" />
+                <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                  Which languages are you studying?
+                </h2>
+              </div>
+              <p className="text-foreground mb-6">
+                Select all that apply
+              </p>
 
             <div className="space-y-3 mb-8">
               {LANGUAGES.map((lang) => {
@@ -232,21 +248,26 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
+            </div>
           </div>
         )}
 
         {/* Step 3: Exam Selection */}
         {step === 3 && (
-          <div className="p-8">
-            <div className="flex items-center gap-3 mb-2">
-              <GraduationCap className="w-5 h-5 text-accent" />
-              <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                Any exams coming up?
-              </h2>
-            </div>
-            <p className="text-foreground-muted mb-6">
-              We'll tailor content to your target exams (optional)
-            </p>
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-orange-500/10" />
+            <div className="absolute top-0 left-1/4 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-orange-500/10 rounded-full blur-3xl" />
+            <div className="relative p-8">
+              <div className="flex items-center gap-3 mb-2">
+                <GraduationCap className="w-5 h-5 text-accent" />
+                <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                  Any exams coming up?
+                </h2>
+              </div>
+              <p className="text-foreground mb-6">
+                We'll tailor content to your target exams (optional)
+              </p>
 
             <div className="space-y-6 mb-8 max-h-96 overflow-y-auto">
               {selectedLanguages.map((lang) => {
@@ -307,6 +328,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                 Skip for now
               </button>
             )}
+            </div>
           </div>
         )}
       </div>

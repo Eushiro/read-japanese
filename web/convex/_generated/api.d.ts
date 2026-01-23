@@ -23,6 +23,7 @@ import type * as premadeDecks from "../premadeDecks.js";
 import type * as progress from "../progress.js";
 import type * as scheduledJobs from "../scheduledJobs.js";
 import type * as settings from "../settings.js";
+import type * as shadowing from "../shadowing.js";
 import type * as storyComprehension from "../storyComprehension.js";
 import type * as storyQuestions from "../storyQuestions.js";
 import type * as stripe from "../stripe.js";
@@ -57,6 +58,7 @@ declare const fullApi: ApiFromModules<{
   progress: typeof progress;
   scheduledJobs: typeof scheduledJobs;
   settings: typeof settings;
+  shadowing: typeof shadowing;
   storyComprehension: typeof storyComprehension;
   storyQuestions: typeof storyQuestions;
   stripe: typeof stripe;

@@ -206,3 +206,48 @@ export const saveUserSentenceVerification = internalMutation({
     return sentenceId;
   },
 });
+
+// ============================================
+// PREMADE VOCABULARY HELPERS
+// ============================================
+
+// Get premade vocabulary item for AI enhancement
+export const getPremadeVocabulary = internalQuery({
+  args: {
+    premadeVocabularyId: v.id("premadeVocabulary"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.premadeVocabularyId);
+  },
+});
+
+// Update premade vocabulary with generated content
+export const updatePremadeVocabularyContent = internalMutation({
+  args: {
+    premadeVocabularyId: v.id("premadeVocabulary"),
+    sentence: v.optional(v.string()),
+    sentenceTranslation: v.optional(v.string()),
+    audioUrl: v.optional(v.string()),
+    wordAudioUrl: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+    generationStatus: v.optional(v.union(
+      v.literal("pending"),
+      v.literal("generating"),
+      v.literal("complete"),
+      v.literal("failed")
+    )),
+  },
+  handler: async (ctx, args) => {
+    const { premadeVocabularyId, ...updates } = args;
+
+    // Filter out undefined values
+    const cleanUpdates: Record<string, any> = { updatedAt: Date.now() };
+    for (const [key, value] of Object.entries(updates)) {
+      if (value !== undefined) {
+        cleanUpdates[key] = value;
+      }
+    }
+
+    await ctx.db.patch(premadeVocabularyId, cleanUpdates);
+  },
+});

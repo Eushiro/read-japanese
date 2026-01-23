@@ -58,7 +58,7 @@ export function VideoCard({ video, onClick, style }: VideoCardProps) {
             <img
               src={thumbnailUrl}
               alt={video.title}
-              className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+              className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${
                 imageLoaded ? "opacity-100" : "opacity-0"
               }`}
               loading="lazy"
@@ -69,13 +69,13 @@ export function VideoCard({ video, onClick, style }: VideoCardProps) {
         )}
 
         {/* Gradient overlay for badges */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/30 opacity-70 group-hover:opacity-50 transition-opacity duration-300" />
 
         {/* Level Badge */}
         {getLevelVariant(video.level) && (
           <Badge
             variant={getLevelVariant(video.level)}
-            className="absolute top-3 left-3 shadow-sm"
+            className="absolute top-3 left-3 shadow-lg ring-2 ring-white/20"
           >
             {video.level}
           </Badge>

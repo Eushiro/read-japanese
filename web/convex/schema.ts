@@ -295,6 +295,31 @@ export default defineSchema({
     .index("by_user_and_vocabulary", ["userId", "vocabularyId"]),
 
   // ============================================
+  // SHADOWING PRACTICE
+  // ============================================
+  shadowingPractices: defineTable({
+    userId: v.string(),
+    flashcardId: v.optional(v.id("flashcards")),
+    vocabularyId: v.optional(v.id("vocabulary")),
+
+    // Target
+    targetText: v.string(),
+    targetLanguage: languageValidator,
+
+    // User attempt
+    userAudioStorageId: v.optional(v.id("_storage")),
+
+    // AI Feedback
+    feedbackAudioUrl: v.optional(v.string()),
+    feedbackText: v.string(),
+    accuracyScore: v.number(), // 0-100
+
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_date", ["userId", "createdAt"]),
+
+  // ============================================
   // READING PROGRESS (existing, enhanced)
   // ============================================
   readingProgress: defineTable({

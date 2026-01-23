@@ -40,10 +40,11 @@ export function preloadFlashcardAssets(flashcard: {
  * When the flashcard data loads or URLs are updated (e.g., after generation),
  * images and audio are automatically preloaded.
  */
-export function useFlashcard(vocabularyId: Id<"vocabulary"> | string) {
-  const flashcard = useQuery(api.flashcards.getByVocabulary, {
-    vocabularyId: vocabularyId as Id<"vocabulary">,
-  });
+export function useFlashcard(vocabularyId: Id<"vocabulary"> | string | undefined) {
+  const flashcard = useQuery(
+    api.flashcards.getByVocabulary,
+    vocabularyId ? { vocabularyId: vocabularyId as Id<"vocabulary"> } : "skip"
+  );
 
   // Preload assets when URLs change (initial load or after generation)
   useEffect(() => {

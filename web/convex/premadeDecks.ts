@@ -132,6 +132,39 @@ export const getVocabularyForDeck = query({
   },
 });
 
+// Get all vocabulary from user's subscribed decks
+export const getAllSubscribedVocabulary = query({
+  args: {
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Get user's subscriptions
+    const subscriptions = await ctx.db
+      .query("userDeckSubscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    if (subscriptions.length === 0) {
+      return [];
+    }
+
+    // Get vocabulary for each subscribed deck
+    const deckIds = subscriptions.map((s) => s.deckId);
+    const allVocab = await Promise.all(
+      deckIds.map(async (deckId) => {
+        const items = await ctx.db
+          .query("premadeVocabulary")
+          .withIndex("by_deck", (q) => q.eq("deckId", deckId))
+          .collect();
+        return items;
+      })
+    );
+
+    // Flatten and return
+    return allVocab.flat();
+  },
+});
+
 // Find existing generated content for a word (across all decks)
 export const findExistingWordContent = query({
   args: {
