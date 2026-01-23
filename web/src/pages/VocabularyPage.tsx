@@ -1168,11 +1168,11 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
       onClick={onClose}
     >
       <div
-        className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-lg mx-4 animate-fade-in-up max-h-[90vh] overflow-y-auto"
+        className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-lg mx-4 animate-fade-in-up max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button */}
-        <div className="flex justify-end p-4 pb-0">
+        {/* Close button - fixed at top */}
+        <div className="flex justify-end p-4 pb-0 flex-shrink-0">
           <button
             onClick={onClose}
             className="p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
@@ -1181,7 +1181,8 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
           </button>
         </div>
 
-        <div className="p-6 pt-2">
+        {/* Scrollable content */}
+        <div className="p-6 pt-2 overflow-y-auto flex-1">
           {/* Image */}
           {flashcard?.imageUrl && (
             <div className="mb-6 flex justify-center">
