@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { Loader2, Crown, Zap, Sparkles, Check, X } from "lucide-react";
+import { Loader2, Crown, Zap, Sparkles, Check, X, Brain, PenLine, BookOpen, Mic } from "lucide-react";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
 
 export function PricingPage() {
@@ -51,6 +51,34 @@ export function PricingPage() {
 
       {/* Pricing Grid */}
       <div className="container mx-auto px-4 sm:px-6 py-12 max-w-6xl">
+        {/* Feature highlights */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10 max-w-2xl mx-auto">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+              <Brain className="w-5 h-5 text-accent" />
+            </div>
+            <span className="text-sm text-foreground">SRS Flashcards</span>
+          </div>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+              <PenLine className="w-5 h-5 text-accent" />
+            </div>
+            <span className="text-sm text-foreground">Writing Feedback</span>
+          </div>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-accent" />
+            </div>
+            <span className="text-sm text-foreground">Comprehension</span>
+          </div>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+              <Mic className="w-5 h-5 text-accent" />
+            </div>
+            <span className="text-sm text-foreground">Audio Support</span>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Free Tier */}
           <div className="p-6 rounded-2xl border border-border bg-surface flex flex-col">
@@ -68,24 +96,24 @@ export function PricingPage() {
             </div>
             <ul className="text-sm space-y-3 flex-1">
               <li className="flex items-start gap-2">
-                <X className="w-4 h-4 text-foreground-muted mt-0.5 shrink-0" />
-                <span className="text-foreground-muted">No AI story generation</span>
+                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                <span className="text-foreground">Premade vocabulary decks</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span className="text-foreground">5 stories/month</span>
+                <span className="text-foreground">Basic flashcard reviews</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span className="text-foreground">50 AI checks/month</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span className="text-foreground">100 flashcards/month</span>
+                <span className="text-foreground">5 reading sessions/month</span>
               </li>
               <li className="flex items-start gap-2">
                 <X className="w-4 h-4 text-foreground-muted mt-0.5 shrink-0" />
-                <span className="text-foreground-muted">No mock tests</span>
+                <span className="text-foreground-muted">No AI feedback</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <X className="w-4 h-4 text-foreground-muted mt-0.5 shrink-0" />
+                <span className="text-foreground-muted">No AI sentence generation</span>
               </li>
             </ul>
             <div className="mt-6">
@@ -122,26 +150,28 @@ export function PricingPage() {
             </div>
             <ul className="text-sm space-y-3 flex-1">
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                <span className="text-foreground">Everything in Free</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                 <span className="text-foreground">
-                  <strong>5</strong> AI stories/month
+                  <strong>200</strong> AI feedback/month
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span className="text-foreground">20 stories/month</span>
+                <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>100</strong> audio generations
+                </span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span className="text-foreground">200 AI checks/month</span>
+                <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                <span className="text-foreground">20 reading sessions/month</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span className="text-foreground">500 flashcards/month</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <span className="text-foreground">2 mock tests/month</span>
+                <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                <span className="text-foreground">AI comprehension quizzes</span>
               </li>
             </ul>
             <div className="mt-6">
@@ -193,8 +223,18 @@ export function PricingPage() {
             <ul className="text-sm space-y-3 flex-1">
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                <span className="text-foreground">Everything in Basic</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
                 <span className="text-foreground">
-                  <strong>20</strong> AI stories/month
+                  <strong>1,000</strong> AI feedback/month
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>500</strong> audio generations
                 </span>
               </li>
               <li className="flex items-start gap-2">
@@ -205,17 +245,9 @@ export function PricingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                <span className="text-foreground">1,000 AI checks/month</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
                 <span className="text-foreground">
                   <strong>Unlimited</strong> flashcards
                 </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                <span className="text-foreground">10 mock tests/month</span>
               </li>
             </ul>
             <div className="mt-6">
@@ -259,33 +291,27 @@ export function PricingPage() {
             <ul className="text-sm space-y-3 flex-1">
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                <span className="text-foreground">Everything in Pro</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
                 <span className="text-foreground">
-                  <strong>Unlimited</strong> AI stories
+                  <strong>Unlimited</strong> AI feedback
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
                 <span className="text-foreground">
-                  <strong>Unlimited</strong> reading
+                  <strong>Unlimited</strong> audio
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                <span className="text-foreground">
-                  <strong>Unlimited</strong> AI checks
-                </span>
+                <span className="text-foreground">Priority support</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                <span className="text-foreground">
-                  <strong>Unlimited</strong> flashcards
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                <span className="text-foreground">
-                  <strong>Unlimited</strong> mock tests
-                </span>
+                <span className="text-foreground">Early access to new features</span>
               </li>
             </ul>
             <div className="mt-6">
@@ -327,12 +353,22 @@ export function PricingPage() {
           <div className="space-y-6">
             <div className="bg-surface rounded-xl border border-border p-5">
               <h3 className="font-semibold text-foreground mb-2">
-                What are AI checks?
+                What is AI feedback?
               </h3>
               <p className="text-sm text-foreground-muted">
-                AI checks include sentence verification, comprehension quiz grading, and flashcard
-                sentence generation. Each time you submit a sentence for feedback or generate new
-                content, it counts as one AI check.
+                AI feedback includes writing corrections, comprehension quiz grading, and sentence
+                generation for flashcards. Each time you get feedback on your writing or generate
+                new example sentences, it uses one AI credit.
+              </p>
+            </div>
+            <div className="bg-surface rounded-xl border border-border p-5">
+              <h3 className="font-semibold text-foreground mb-2">
+                Are the premade vocabulary decks free?
+              </h3>
+              <p className="text-sm text-foreground-muted">
+                Yes! All premade vocabulary decks (JLPT N5-N1, etc.) are free to use with basic
+                flashcard reviews. Premium features like AI sentence generation and writing feedback
+                require a paid plan.
               </p>
             </div>
             <div className="bg-surface rounded-xl border border-border p-5">

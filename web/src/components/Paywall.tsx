@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { X, Loader2, Crown, Zap, Sparkles, Check } from "lucide-react";
+import { X, Loader2, Crown, Zap, Sparkles, Check, BookOpen, Brain, Mic, PenLine } from "lucide-react";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
 
 interface PaywallProps {
@@ -10,16 +10,14 @@ interface PaywallProps {
   onClose: () => void;
   title?: string;
   description?: string;
-  icon?: React.ReactNode;
-  feature?: "flashcards" | "sentences" | "stories" | "general";
+  feature?: "flashcards" | "sentences" | "comprehension" | "stories" | "general";
 }
 
 export function Paywall({
   isOpen,
   onClose,
   title = "Upgrade Your Plan",
-  description = "Unlock premium features to enhance your learning.",
-  icon,
+  description = "Unlock AI-powered features to accelerate your learning.",
   feature = "general",
 }: PaywallProps) {
   const { user, isAuthenticated } = useAuth();
@@ -48,35 +46,31 @@ export function Paywall({
 
   if (!isOpen) return null;
 
-  // Feature-specific content
-  const featureContent = {
+  // Feature-specific messaging
+  const featureMessages = {
     flashcards: {
-      title: "Upgrade for AI Flashcards",
-      description: "Generate AI-powered flashcards with example sentences for your vocabulary.",
-      basicFeatures: ["500 flashcards/month", "200 AI checks/month"],
-      proFeatures: ["Unlimited flashcards", "1,000 AI checks/month"],
+      title: "Upgrade for AI Sentences",
+      description: "Generate new example sentences for your flashcards with AI.",
     },
     sentences: {
       title: "Upgrade for AI Feedback",
-      description: "Get AI-powered feedback on your sentences with grammar corrections and suggestions.",
-      basicFeatures: ["200 AI checks/month", "Basic feedback"],
-      proFeatures: ["1,000 AI checks/month", "Detailed grammar feedback"],
+      description: "Get detailed feedback on your writing with grammar corrections and suggestions.",
+    },
+    comprehension: {
+      title: "Upgrade for AI Comprehension",
+      description: "Generate comprehension questions and get AI-powered grading on your answers.",
     },
     stories: {
-      title: "Upgrade to Generate Stories",
-      description: "Create custom stories tailored to your level and interests with AI.",
-      basicFeatures: ["5 AI stories/month", "20 stories access"],
-      proFeatures: ["20 AI stories/month", "Unlimited reading"],
+      title: "Upgrade for Premium Content",
+      description: "Access premium stories and reading materials to improve your comprehension.",
     },
     general: {
-      title: title,
-      description: description,
-      basicFeatures: ["200 AI checks/month", "500 flashcards/month", "5 AI stories/month"],
-      proFeatures: ["1,000 AI checks/month", "Unlimited flashcards", "20 AI stories/month"],
+      title,
+      description,
     },
   };
 
-  const content = featureContent[feature];
+  const content = featureMessages[feature];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -113,175 +107,201 @@ export function Paywall({
             </SignInButton>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Free Tier */}
-            <div className="p-6 rounded-xl border border-border bg-muted/30 flex flex-col min-h-[380px]">
-              <div className="text-center mb-4">
-                <span className="text-sm font-medium text-foreground-muted uppercase tracking-wider">Free</span>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold text-foreground">$0</span>
-                  <span className="text-foreground-muted">/mo</span>
-                </div>
+          <>
+            {/* Feature highlights */}
+            <div className="flex flex-wrap justify-center gap-6 mb-6">
+              <div className="flex items-center gap-2 text-sm text-foreground-muted">
+                <Brain className="w-4 h-4 text-accent" />
+                <span>SRS Flashcards</span>
               </div>
-              <ul className="text-sm space-y-2 flex-1">
-                <li className="flex items-start gap-2">
-                  <X className="w-4 h-4 text-foreground-muted mt-0.5 shrink-0" />
-                  <span className="text-foreground-muted">No AI generation</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                  <span className="text-foreground">5 stories/month</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                  <span className="text-foreground">50 AI checks/month</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                  <span className="text-foreground">100 flashcards/month</span>
-                </li>
-              </ul>
-              <div className="text-center text-sm text-foreground-muted mt-5">
-                Current plan
+              <div className="flex items-center gap-2 text-sm text-foreground-muted">
+                <PenLine className="w-4 h-4 text-accent" />
+                <span>Writing Feedback</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-foreground-muted">
+                <BookOpen className="w-4 h-4 text-accent" />
+                <span>Comprehension</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-foreground-muted">
+                <Mic className="w-4 h-4 text-accent" />
+                <span>Audio Support</span>
               </div>
             </div>
 
-            {/* Basic Tier */}
-            <div className="p-6 rounded-xl border border-border flex flex-col min-h-[380px]">
-              <div className="text-center mb-4">
-                <div className="flex items-center justify-center gap-2">
-                  <Zap className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm font-medium text-foreground uppercase tracking-wider">Basic</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Free Tier */}
+              <div className="p-5 rounded-xl border border-border bg-muted/30 flex flex-col">
+                <div className="text-center mb-4">
+                  <span className="text-sm font-medium text-foreground-muted uppercase tracking-wider">Free</span>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold text-foreground">$0</span>
+                    <span className="text-foreground-muted">/mo</span>
+                  </div>
                 </div>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold text-foreground">$5</span>
-                  <span className="text-foreground-muted">/mo</span>
+                <ul className="text-sm space-y-2.5 flex-1">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                    <span className="text-foreground">Premade vocabulary decks</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                    <span className="text-foreground">Basic flashcard reviews</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                    <span className="text-foreground">5 reading sessions/month</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <X className="w-4 h-4 text-foreground-muted mt-0.5 shrink-0" />
+                    <span className="text-foreground-muted">No AI feedback</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <X className="w-4 h-4 text-foreground-muted mt-0.5 shrink-0" />
+                    <span className="text-foreground-muted">No AI sentence generation</span>
+                  </li>
+                </ul>
+                <div className="text-center text-sm text-foreground-muted mt-5">
+                  Current plan
                 </div>
               </div>
-              <ul className="text-sm space-y-2 flex-1">
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                  <span className="text-foreground"><strong>5</strong> AI stories/month</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                  <span className="text-foreground">20 stories/month</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                  <span className="text-foreground">200 AI checks/month</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                  <span className="text-foreground">500 flashcards/month</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                  <span className="text-foreground">2 mock tests/month</span>
-                </li>
-              </ul>
-              <Button
-                variant="outline"
-                className="w-full mt-5"
-                onClick={() => handleUpgrade("basic")}
-                disabled={checkoutLoading === "basic"}
-              >
-                {checkoutLoading === "basic" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Basic"}
-              </Button>
-            </div>
 
-            {/* Pro Tier - Recommended */}
-            <div className="p-6 pt-9 rounded-xl border-2 border-accent bg-accent/5 relative flex flex-col min-h-[380px]">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <span className="text-xs px-3 py-1 rounded-full bg-accent text-white font-medium">
-                  Most Popular
-                </span>
-              </div>
-              <div className="text-center mb-4">
-                <div className="flex items-center justify-center gap-2">
-                  <Crown className="w-4 h-4 text-accent" />
-                  <span className="text-sm font-medium text-accent uppercase tracking-wider">Pro</span>
+              {/* Basic Tier */}
+              <div className="p-5 rounded-xl border border-border flex flex-col">
+                <div className="text-center mb-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <Zap className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm font-medium text-foreground uppercase tracking-wider">Basic</span>
+                  </div>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold text-foreground">$5</span>
+                    <span className="text-foreground-muted">/mo</span>
+                  </div>
                 </div>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold text-foreground">$15</span>
-                  <span className="text-foreground-muted">/mo</span>
-                </div>
+                <ul className="text-sm space-y-2.5 flex-1">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                    <span className="text-foreground">Everything in Free</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                    <span className="text-foreground"><strong>200</strong> AI feedback/month</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                    <span className="text-foreground"><strong>100</strong> audio generations</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                    <span className="text-foreground">20 reading sessions/month</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                    <span className="text-foreground">AI comprehension quizzes</span>
+                  </li>
+                </ul>
+                <Button
+                  variant="outline"
+                  className="w-full mt-5"
+                  onClick={() => handleUpgrade("basic")}
+                  disabled={checkoutLoading === "basic"}
+                >
+                  {checkoutLoading === "basic" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Basic"}
+                </Button>
               </div>
-              <ul className="text-sm space-y-2 flex-1">
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                  <span className="text-foreground"><strong>20</strong> AI stories/month</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                  <span className="text-foreground"><strong>Unlimited</strong> reading</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                  <span className="text-foreground">1,000 AI checks/month</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                  <span className="text-foreground"><strong>Unlimited</strong> flashcards</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                  <span className="text-foreground">10 mock tests/month</span>
-                </li>
-              </ul>
-              <Button
-                className="w-full mt-5"
-                onClick={() => handleUpgrade("pro")}
-                disabled={checkoutLoading === "pro"}
-              >
-                {checkoutLoading === "pro" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Pro"}
-              </Button>
-            </div>
 
-            {/* Unlimited Tier */}
-            <div className="p-6 rounded-xl border border-border bg-gradient-to-b from-purple-500/5 to-transparent flex flex-col min-h-[380px]">
-              <div className="text-center mb-4">
-                <div className="flex items-center justify-center gap-2">
-                  <Sparkles className="w-4 h-4 text-purple-500" />
-                  <span className="text-sm font-medium text-foreground uppercase tracking-wider">Unlimited</span>
+              {/* Pro Tier - Recommended */}
+              <div className="p-5 pt-8 rounded-xl border-2 border-accent bg-accent/5 relative flex flex-col">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                  <span className="text-xs px-3 py-1 rounded-full bg-accent text-white font-medium">
+                    Most Popular
+                  </span>
                 </div>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold text-foreground">$45</span>
-                  <span className="text-foreground-muted">/mo</span>
+                <div className="text-center mb-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <Crown className="w-4 h-4 text-accent" />
+                    <span className="text-sm font-medium text-accent uppercase tracking-wider">Pro</span>
+                  </div>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold text-foreground">$15</span>
+                    <span className="text-foreground-muted">/mo</span>
+                  </div>
                 </div>
+                <ul className="text-sm space-y-2.5 flex-1">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                    <span className="text-foreground">Everything in Basic</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                    <span className="text-foreground"><strong>1,000</strong> AI feedback/month</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                    <span className="text-foreground"><strong>500</strong> audio generations</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                    <span className="text-foreground"><strong>Unlimited</strong> reading</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                    <span className="text-foreground"><strong>Unlimited</strong> flashcards</span>
+                  </li>
+                </ul>
+                <Button
+                  className="w-full mt-5"
+                  onClick={() => handleUpgrade("pro")}
+                  disabled={checkoutLoading === "pro"}
+                >
+                  {checkoutLoading === "pro" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Pro"}
+                </Button>
               </div>
-              <ul className="text-sm space-y-2 flex-1">
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                  <span className="text-foreground"><strong>Unlimited</strong> AI stories</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                  <span className="text-foreground"><strong>Unlimited</strong> reading</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                  <span className="text-foreground"><strong>Unlimited</strong> AI checks</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                  <span className="text-foreground"><strong>Unlimited</strong> flashcards</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                  <span className="text-foreground"><strong>Unlimited</strong> mock tests</span>
-                </li>
-              </ul>
-              <Button
-                variant="outline"
-                className="w-full mt-5 border-purple-500/30 hover:bg-purple-500/10"
-                onClick={() => handleUpgrade("unlimited")}
-                disabled={checkoutLoading === "unlimited"}
-              >
-                {checkoutLoading === "unlimited" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Unlimited"}
-              </Button>
+
+              {/* Unlimited Tier */}
+              <div className="p-5 rounded-xl border border-border bg-gradient-to-b from-purple-500/5 to-transparent flex flex-col">
+                <div className="text-center mb-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <Sparkles className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm font-medium text-foreground uppercase tracking-wider">Unlimited</span>
+                  </div>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold text-foreground">$45</span>
+                    <span className="text-foreground-muted">/mo</span>
+                  </div>
+                </div>
+                <ul className="text-sm space-y-2.5 flex-1">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                    <span className="text-foreground">Everything in Pro</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                    <span className="text-foreground"><strong>Unlimited</strong> AI feedback</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                    <span className="text-foreground"><strong>Unlimited</strong> audio</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                    <span className="text-foreground">Priority support</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                    <span className="text-foreground">Early access to new features</span>
+                  </li>
+                </ul>
+                <Button
+                  variant="outline"
+                  className="w-full mt-5 border-purple-500/30 hover:bg-purple-500/10"
+                  onClick={() => handleUpgrade("unlimited")}
+                  disabled={checkoutLoading === "unlimited"}
+                >
+                  {checkoutLoading === "unlimited" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Unlimited"}
+                </Button>
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
