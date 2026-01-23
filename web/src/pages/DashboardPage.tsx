@@ -121,9 +121,20 @@ export function DashboardPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-2xl">
+      <div className="border-b border-border relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-background to-purple-500/5" />
+        <div className="absolute top-0 right-1/4 w-72 h-72 bg-accent/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-2xl relative">
           <div className="animate-fade-in-up text-center">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-accent/20 to-purple-500/20">
+                <Sparkles className="w-5 h-5 text-accent" />
+              </div>
+              <span className="text-sm font-semibold text-accent uppercase tracking-wider">
+                Dashboard
+              </span>
+            </div>
             <h1
               className="text-2xl sm:text-3xl font-bold text-foreground mb-2"
               style={{ fontFamily: "var(--font-display)" }}
@@ -134,7 +145,7 @@ export function DashboardPage() {
               }
             </h1>
             {isPreviewMode && (
-              <p className="text-foreground-muted mb-6">
+              <p className="text-foreground mb-6">
                 See how SanLang helps you master vocabulary
               </p>
             )}
@@ -157,14 +168,15 @@ export function DashboardPage() {
               ) : (
                 <>
                   <div className="text-center mb-6">
-                    <Button
-                      size="lg"
+                    <button
                       onClick={handleStartStudying}
-                      className="w-full sm:w-auto px-8 py-6 text-lg gap-3 shadow-lg shadow-accent/25"
+                      className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                     >
-                      <Play className="w-6 h-6" />
-                      Start Studying
-                    </Button>
+                      <span className="flex items-center justify-center gap-3">
+                        <Play className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                        Start Studying
+                      </span>
+                    </button>
                   </div>
 
                   {/* Session description */}
@@ -331,17 +343,21 @@ export function DashboardPage() {
               >
                 Ready to start learning?
               </h2>
-              <p className="text-foreground-muted mb-6 max-w-md mx-auto">
+              <p className="text-foreground mb-6 max-w-md mx-auto">
                 Join for free and start building your vocabulary with AI-powered flashcards.
               </p>
               <SignInButton mode="modal">
-                <Button size="lg" className="gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  Try it Free
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+                <button
+                  className="group relative px-8 py-4 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    Try it Free
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </button>
               </SignInButton>
-              <p className="text-xs text-foreground-muted mt-3">
+              <p className="text-sm text-foreground mt-3">
                 No credit card required
               </p>
             </div>
@@ -358,16 +374,20 @@ function PreviewStartStudying() {
     <div className="text-center">
       <div className="mb-6">
         <SignInButton mode="modal">
-          <Button size="lg" className="w-full sm:w-auto px-8 py-6 text-lg gap-3">
-            <Play className="w-6 h-6" />
-            Start Studying
-          </Button>
+          <button
+            className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+          >
+            <span className="flex items-center justify-center gap-3">
+              <Play className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              Start Studying
+            </span>
+          </button>
         </SignInButton>
       </div>
-      <p className="text-foreground-muted mb-4">
+      <p className="text-foreground font-medium mb-4">
         Review cards, read a story
       </p>
-      <p className="text-sm text-foreground-muted">
+      <p className="text-sm text-foreground">
         Sign in to track your progress
       </p>
     </div>

@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import type { Id } from "../../convex/_generated/dataModel";
+import { formatDuration } from "@/lib/format";
+import { getYoutubeWatchUrl } from "@/lib/youtube";
 import {
   ArrowLeft,
   Loader2,
@@ -50,14 +51,6 @@ export function VideoQuizPage() {
   const isLoading = video === undefined;
   const questions = (video?.questions || []) as VideoQuestion[];
   const currentQuestion = questions[currentQuestionIndex];
-
-  // Format timestamp
-  const formatTime = (seconds?: number) => {
-    if (!seconds) return "";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
 
   // Handle answer selection
   const handleAnswerSelect = (answer: string) => {
@@ -333,13 +326,13 @@ export function VideoQuizPage() {
               onClick={() => {
                 // Open video at timestamp
                 window.open(
-                  `https://youtube.com/watch?v=${video.videoId}&t=${Math.floor(currentQuestion.timestamp!)}`,
+                  getYoutubeWatchUrl(video.videoId, currentQuestion.timestamp),
                   "_blank"
                 );
               }}
             >
               <Clock className="w-3.5 h-3.5" />
-              {formatTime(currentQuestion.timestamp)}
+              {formatDuration(currentQuestion.timestamp)}
               <Play className="w-3 h-3 ml-1" />
             </button>
           )}

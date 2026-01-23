@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
-import type { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,9 +12,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import type { Id, Rating } from "@/lib/convex-types";
 
-type Rating = "again" | "hard" | "good" | "easy";
-
+// CardType includes joined vocabulary data from the query
 type CardType = {
   _id: Id<"flashcards">;
   sentence: string;

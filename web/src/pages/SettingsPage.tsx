@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Crown, User, LogOut, Loader2, CreditCard, Zap, Check, Globe, GraduationCap, Sparkles, Brain, ChevronRight, BookOpen, Layers, PenLine, Compass } from "lucide-react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useSettings } from "@/hooks/useSettings";
@@ -8,39 +16,7 @@ import { useAuth, SignInButton, UserButton } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-
-// Language and exam options
-const LANGUAGES = [
-  { value: "japanese", label: "Japanese", flag: "🇯🇵" },
-  { value: "english", label: "English", flag: "🇬🇧" },
-  { value: "french", label: "French", flag: "🇫🇷" },
-] as const;
-
-const EXAMS_BY_LANGUAGE = {
-  japanese: [
-    { value: "jlpt_n5", label: "JLPT N5" },
-    { value: "jlpt_n4", label: "JLPT N4" },
-    { value: "jlpt_n3", label: "JLPT N3" },
-    { value: "jlpt_n2", label: "JLPT N2" },
-    { value: "jlpt_n1", label: "JLPT N1" },
-  ],
-  english: [
-    { value: "toefl", label: "TOEFL" },
-    { value: "sat", label: "SAT" },
-    { value: "gre", label: "GRE" },
-  ],
-  french: [
-    { value: "delf_a1", label: "DELF A1" },
-    { value: "delf_a2", label: "DELF A2" },
-    { value: "delf_b1", label: "DELF B1" },
-    { value: "delf_b2", label: "DELF B2" },
-    { value: "dalf_c1", label: "DALF C1" },
-    { value: "dalf_c2", label: "DALF C2" },
-    { value: "tcf", label: "TCF" },
-  ],
-} as const;
-
-type Language = typeof LANGUAGES[number]["value"];
+import { LANGUAGES, EXAMS_BY_LANGUAGE, type Language } from "@/lib/languages";
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -392,18 +368,10 @@ export function SettingsPage() {
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setShowFurigana(!showFurigana)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        showFurigana ? "bg-accent" : "bg-muted"
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                          showFurigana ? "translate-x-6" : "translate-x-1"
-                        }`}
-                      />
-                    </button>
+                    <Switch
+                      checked={showFurigana}
+                      onCheckedChange={setShowFurigana}
+                    />
                   </div>
                 )}
 
@@ -419,32 +387,25 @@ export function SettingsPage() {
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setAutoplayAudio(!autoplayAudio)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      autoplayAudio ? "bg-accent" : "bg-muted"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                        autoplayAudio ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
+                  <Switch
+                    checked={autoplayAudio}
+                    onCheckedChange={setAutoplayAudio}
+                  />
                 </div>
 
                 <div className="space-y-3">
                   <label className="font-medium text-foreground">Text Size</label>
-                  <select
-                    value={fontSize}
-                    onChange={(e) => setFontSize(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-                  >
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                    <option value="x-large">Extra Large</option>
-                  </select>
+                  <Select value={fontSize} onValueChange={setFontSize}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small">Small</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="large">Large</SelectItem>
+                      <SelectItem value="x-large">Extra Large</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}
@@ -859,24 +820,17 @@ export function SettingsPage() {
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={async () => {
+                  <Switch
+                    checked={isPremiumUser}
+                    onCheckedChange={async (checked) => {
                       if (!user) return;
                       await upsertSubscription({
                         userId: user.id,
-                        tier: isPremiumUser ? "free" : "pro",
+                        tier: checked ? "pro" : "free",
                       });
                     }}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      isPremiumUser ? "bg-amber-500" : "bg-muted"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                        isPremiumUser ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
+                    className="data-[state=checked]:bg-amber-500"
+                  />
                 </div>
 
                 {/* Level Override */}
@@ -903,23 +857,27 @@ export function SettingsPage() {
                       return (
                         <div key={lang} className="flex items-center gap-3">
                           <span className="text-sm w-20">{langInfo?.flag} {langInfo?.label}</span>
-                          <select
-                            value={currentLevel ?? ""}
-                            onChange={async (e) => {
-                              if (!user) return;
+                          <Select
+                            value={currentLevel ?? "not_set"}
+                            onValueChange={async (value) => {
+                              if (!user || value === "not_set") return;
                               await updateProficiencyLevel({
                                 clerkId: user.id,
                                 language: lang as "japanese" | "english" | "french",
-                                level: e.target.value,
+                                level: value,
                               });
                             }}
-                            className="flex-1 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                           >
-                            <option value="">Not set</option>
-                            {levels.map((level) => (
-                              <option key={level} value={level}>{level}</option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="flex-1 h-8 text-sm border-amber-500/30">
+                              <SelectValue placeholder="Not set" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="not_set">Not set</SelectItem>
+                              {levels.map((level) => (
+                                <SelectItem key={level} value={level}>{level}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       );
                     })}

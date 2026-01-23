@@ -11,18 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Clock, Video, Check } from "lucide-react";
-
-// Check if a string is a valid YouTube video ID (11 characters, alphanumeric + dash/underscore)
-function isValidYoutubeId(id: string): boolean {
-  return /^[a-zA-Z0-9_-]{11}$/.test(id);
-}
-
-type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
-
-const levelVariantMap: Record<string, BadgeVariant> = {
-  N5: "n5", N4: "n4", N3: "n3", N2: "n2", N1: "n1",
-  A1: "a1", A2: "a2", B1: "b1", B2: "b2", C1: "c1", C2: "c2",
-};
+import { isValidYoutubeId } from "@/lib/youtube";
+import { formatDuration } from "@/lib/format";
+import { levelVariantMap } from "@/lib/levels";
 
 interface EmbeddedVideoPlayerProps {
   videoId: string;
@@ -139,13 +130,6 @@ export function EmbeddedVideoPlayer({
     playerRef.current?.playVideo?.();
   }, []);
 
-  // Format time as MM:SS
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
   // Get current segment index
   const getCurrentSegmentIndex = () => {
     if (!video?.transcript) return -1;
@@ -188,7 +172,7 @@ export function EmbeddedVideoPlayer({
                 {video?.duration && (
                   <span className="text-sm text-foreground-muted flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" />
-                    {formatTime(video.duration)}
+                    {formatDuration(video.duration)}
                   </span>
                 )}
               </div>
@@ -247,7 +231,7 @@ export function EmbeddedVideoPlayer({
                     }`}
                   >
                     <span className="text-xs text-foreground-muted mr-2">
-                      {formatTime(segment.start)}
+                      {formatDuration(segment.start)}
                     </span>
                     <span className={
                       index === currentSegmentIndex

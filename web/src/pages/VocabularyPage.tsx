@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, Volume2, Book, Layers } from "lucide-react";
+import { Trash2, BookOpen, BookmarkCheck, ChevronDown, ArrowUpDown, Filter, Plus, X, Loader2, Sparkles, Check, Volume2, Book, Layers, Search } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
@@ -43,23 +43,17 @@ const MASTERY_LABELS: Record<string, { label: string; color: string }> = {
   mastered: { label: "Mastered", color: "bg-green-500/10 text-green-600" },
 };
 
-// Language options
-const LANGUAGES = [
-  { value: "japanese", label: "Japanese" },
-  { value: "english", label: "English" },
-  { value: "french", label: "French" },
-] as const;
+import { LANGUAGES, type Language } from "@/lib/languages";
+import type { MasteryState } from "@/lib/convex-types";
 
-type Language = typeof LANGUAGES[number]["value"];
-
-// Type for vocabulary item used in detail modal
+// Type for vocabulary item used in detail modal (subset of Doc<"vocabulary">)
 type VocabularyItem = {
   _id: string;
   word: string;
   reading?: string | null;
   definitions: string[];
   language: string;
-  masteryState: string;
+  masteryState: MasteryState;
   examLevel?: string | null;
   sourceStoryTitle?: string | null;
   sourceContext?: string | null;
@@ -1076,20 +1070,18 @@ function AddWordModal({ userId, onClose, isPremiumUser }: AddWordModalProps) {
             <label className="block text-sm font-medium text-foreground mb-1.5">
               Language
             </label>
-            <div className="relative">
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as Language)}
-                className="w-full px-4 py-2.5 pr-10 rounded-lg border border-border bg-background text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all cursor-pointer"
-              >
+            <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
                 {LANGUAGES.map((lang) => (
-                  <option key={lang.value} value={lang.value}>
+                  <SelectItem key={lang.value} value={lang.value}>
                     {lang.label}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted pointer-events-none" />
-            </div>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Word with Autocomplete */}

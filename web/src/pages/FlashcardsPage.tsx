@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
-import type { Id } from "../../convex/_generated/dataModel";
 import { api } from "../../convex/_generated/api";
 import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
 import { Button } from "@/components/ui/button";
@@ -22,8 +21,7 @@ import {
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useReviewSession } from "@/contexts/ReviewSessionContext";
-
-type Rating = "again" | "hard" | "good" | "easy";
+import type { Id, Rating, CardState } from "@/lib/convex-types";
 
 // Extended card type including SRS fields for undo
 type CardType = {
@@ -34,7 +32,7 @@ type CardType = {
   wordAudioUrl?: string | null;
   imageUrl?: string | null;
   // SRS fields for undo
-  state?: "new" | "learning" | "review" | "relearning";
+  state?: CardState;
   due?: number;
   stability?: number;
   difficulty?: number;
@@ -63,7 +61,7 @@ type HistoryEntry = {
     currentIndex: number;
     reviewedCount: number;
     flashcardState: {
-      state: "new" | "learning" | "review" | "relearning";
+      state: CardState;
       due: number;
       stability: number;
       difficulty: number;

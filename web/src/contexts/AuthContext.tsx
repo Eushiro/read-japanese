@@ -8,29 +8,16 @@ import {
   useUser,
   useClerk,
   useAuth as useClerkAuth,
-  SignInButton,
-  SignUpButton,
-  UserButton,
 } from "@clerk/clerk-react";
+import type { AuthUser, AuthContextValue } from "@/lib/auth/types";
 
-export interface User {
-  id: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-}
+// Re-export types for convenience
+export type { AuthUser as User } from "@/lib/auth/types";
 
-interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  error: string | null;
-  signIn: () => void;
-  signOut: () => Promise<void>;
-  deleteAccount: () => Promise<void>;
-}
+// Re-export abstracted auth components
+export { SignInButton, SignUpButton, UserMenu as UserButton } from "@/components/auth";
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { user: clerkUser, isLoaded, isSignedIn } = useUser();
@@ -43,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     hasLoadedOnce.current = true;
   }
 
-  const user: User | null = clerkUser
+  const user: AuthUser | null = clerkUser
     ? {
         id: clerkUser.id,
         email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
@@ -92,6 +79,3 @@ export function useAuth() {
   }
   return context;
 }
-
-// Re-export Clerk components for convenience
-export { SignInButton, SignUpButton, UserButton };

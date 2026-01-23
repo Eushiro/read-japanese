@@ -3,18 +3,9 @@ import type { ProficiencyLevel } from "@/types/story";
 import { Clock, Video } from "lucide-react";
 import { useState } from "react";
 import { getLevelVariant } from "@/lib/levels";
-
-// Language-specific placeholder colors
-const LANGUAGE_COLORS: Record<string, { bg: string; text: string }> = {
-  japanese: { bg: "bg-red-600", text: "日本語" },
-  english: { bg: "bg-blue-600", text: "English" },
-  french: { bg: "bg-violet-600", text: "Français" },
-};
-
-// Check if video ID is a real YouTube ID
-function isValidYoutubeId(id: string): boolean {
-  return /^[a-zA-Z0-9_-]{11}$/.test(id);
-}
+import { isValidYoutubeId, getYoutubeThumbnailUrl } from "@/lib/youtube";
+import { formatDuration } from "@/lib/format";
+import { LANGUAGE_COLORS } from "@/lib/languages";
 
 export interface VideoItem {
   _id: string;
@@ -33,17 +24,9 @@ interface VideoCardProps {
   style?: React.CSSProperties;
 }
 
-
-function formatDuration(seconds?: number): string {
-  if (!seconds) return "";
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-}
-
 export function VideoCard({ video, onClick, style }: VideoCardProps) {
   const isRealVideo = isValidYoutubeId(video.videoId);
-  const thumbnailUrl = video.thumbnailUrl || (isRealVideo ? `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg` : null);
+  const thumbnailUrl = video.thumbnailUrl || (isRealVideo ? getYoutubeThumbnailUrl(video.videoId) : null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const duration = formatDuration(video.duration);
@@ -122,8 +105,8 @@ export function VideoCard({ video, onClick, style }: VideoCardProps) {
         )}
 
         {/* Meta Info */}
-        <div className="flex items-center gap-2 mt-3 text-xs text-foreground-muted">
-          <span className="px-2 py-0.5 rounded-full bg-muted capitalize">
+        <div className="flex items-center gap-2 mt-3 text-xs text-foreground">
+          <span className="px-2 py-0.5 rounded-full bg-muted text-foreground capitalize">
             {video.language}
           </span>
           <span>•</span>

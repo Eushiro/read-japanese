@@ -15,6 +15,7 @@ eggs/
 .eggs/
 lib/
 !web/src/lib/
+!web/convex/lib/
 lib64/
 parts/
 sdist/

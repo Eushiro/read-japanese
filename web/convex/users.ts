@@ -1,6 +1,12 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { languageValidator, examTypeValidator } from "./schema";
+import {
+  findUserByClerkId,
+  requireUserByClerkId,
+  getTodayString,
+  getYesterdayString,
+} from "./lib/helpers";
 
 // ============================================
 // QUERIES
@@ -41,10 +47,7 @@ export const upsert = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const existing = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .first();
+    const existing = await findUserByClerkId(ctx, args.clerkId);
 
     if (existing) {
       // Update existing user
@@ -81,12 +84,7 @@ export const updateLanguages = mutation({
     primaryLanguage: v.optional(languageValidator),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .first();
-
-    if (!user) throw new Error("User not found");
+    const user = await requireUserByClerkId(ctx, args.clerkId);
 
     // If primary language is set and not in the new languages list, reset it
     let primaryLanguage = args.primaryLanguage ?? user.primaryLanguage;
@@ -109,12 +107,7 @@ export const updateTargetExams = mutation({
     targetExams: v.array(examTypeValidator),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .first();
-
-    if (!user) throw new Error("User not found");
+    const user = await requireUserByClerkId(ctx, args.clerkId);
 
     await ctx.db.patch(user._id, {
       targetExams: args.targetExams,
@@ -130,12 +123,7 @@ export const setPrimaryLanguage = mutation({
     language: languageValidator,
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .first();
-
-    if (!user) throw new Error("User not found");
+    const user = await requireUserByClerkId(ctx, args.clerkId);
 
     // Ensure language is in user's languages list
     if (!user.languages.includes(args.language)) {
@@ -157,12 +145,7 @@ export const updateProficiencyLevel = mutation({
     level: v.string(), // "N5", "N4", etc. or "A1", "B2", etc.
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .first();
-
-    if (!user) throw new Error("User not found");
+    const user = await requireUserByClerkId(ctx, args.clerkId);
 
     // Build the proficiency levels object
     const currentLevels = user.proficiencyLevels ?? {};
@@ -186,15 +169,10 @@ export const updateProficiencyLevel = mutation({
 export const updateStreak = mutation({
   args: { clerkId: v.string() },
   handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .first();
+    const user = await requireUserByClerkId(ctx, args.clerkId);
 
-    if (!user) throw new Error("User not found");
-
-    const now = new Date();
-    const todayStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
+    const todayStr = getTodayString();
+    const yesterdayStr = getYesterdayString();
     const lastActivity = user.lastActivityDate;
     const currentStreak = user.currentStreak ?? 0;
     const longestStreak = user.longestStreak ?? 0;
@@ -212,10 +190,6 @@ export const updateStreak = mutation({
       }
 
       // Check if yesterday (streak continues)
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split("T")[0];
-
       if (lastActivity === yesterdayStr) {
         newStreak = currentStreak + 1;
       }
@@ -244,15 +218,11 @@ export const updateStreak = mutation({
 export const getStreak = query({
   args: { clerkId: v.string() },
   handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .first();
-
+    const user = await findUserByClerkId(ctx, args.clerkId);
     if (!user) return null;
 
-    const now = new Date();
-    const todayStr = now.toISOString().split("T")[0];
+    const todayStr = getTodayString();
+    const yesterdayStr = getYesterdayString();
     const lastActivity = user.lastActivityDate;
     const currentStreak = user.currentStreak ?? 0;
 
@@ -261,9 +231,6 @@ export const getStreak = query({
     if (lastActivity === todayStr) {
       isStreakActive = true;
     } else if (lastActivity) {
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split("T")[0];
       isStreakActive = lastActivity === yesterdayStr;
     }
 
@@ -280,11 +247,7 @@ export const getStreak = query({
 export const deleteUser = mutation({
   args: { clerkId: v.string() },
   handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .first();
-
+    const user = await findUserByClerkId(ctx, args.clerkId);
     if (!user) return;
 
     // Delete all user's vocabulary

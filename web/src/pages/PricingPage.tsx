@@ -33,16 +33,27 @@ export function PricingPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
-        <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 max-w-6xl">
+      <div className="border-b border-border relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-background to-accent/5" />
+        <div className="absolute top-0 right-1/4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
+        <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 max-w-6xl relative">
           <div className="text-center animate-fade-in-up">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-accent/20">
+                <Crown className="w-5 h-5 text-purple-400" />
+              </div>
+              <span className="text-sm font-semibold text-purple-400 uppercase tracking-wider">
+                Pricing
+              </span>
+            </div>
             <h1
               className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4"
               style={{ fontFamily: "var(--font-display)" }}
             >
               Simple, transparent pricing
             </h1>
-            <p className="text-lg text-foreground-muted max-w-2xl mx-auto">
+            <p className="text-lg text-foreground max-w-2xl mx-auto">
               Choose the plan that fits your learning goals. Upgrade or downgrade anytime.
             </p>
           </div>

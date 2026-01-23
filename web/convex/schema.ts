@@ -1,6 +1,53 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// ============================================
+// TYPE EXPORTS (for use in frontend/backend)
+// ============================================
+
+// Supported languages
+export type Language = "japanese" | "english" | "french";
+
+// Mastery states for vocabulary items
+export type MasteryState = "new" | "learning" | "tested" | "mastered";
+
+// Source types for vocabulary
+export type SourceType = "story" | "manual" | "import" | "youtube" | "mistake";
+
+// Target exams
+export type ExamType =
+  | "jlpt_n5" | "jlpt_n4" | "jlpt_n3" | "jlpt_n2" | "jlpt_n1"  // Japanese
+  | "toefl" | "sat" | "gre"  // English
+  | "delf_a1" | "delf_a2" | "delf_b1" | "delf_b2" | "dalf_c1" | "dalf_c2" | "tcf";  // French
+
+// Subscription tiers
+export type SubscriptionTier = "free" | "basic" | "pro" | "unlimited";
+
+// Subscription status
+export type SubscriptionStatus = "active" | "cancelled" | "expired";
+
+// SRS card states (FSRS algorithm)
+export type CardState = "new" | "learning" | "review" | "relearning";
+
+// Rating for SRS reviews
+export type Rating = "again" | "hard" | "good" | "easy";
+
+// Generation status for premade content
+export type GenerationStatus = "pending" | "generating" | "complete" | "failed";
+
+// Subscription status for deck subscriptions
+export type DeckSubscriptionStatus = "active" | "paused" | "completed";
+
+// Batch job status
+export type BatchJobStatus = "pending" | "submitted" | "running" | "succeeded" | "failed" | "cancelled";
+
+// Batch job types
+export type BatchJobType = "sentences" | "audio" | "images";
+
+// ============================================
+// VALIDATORS
+// ============================================
+
 // Supported languages
 export const languageValidator = v.union(
   v.literal("japanese"),

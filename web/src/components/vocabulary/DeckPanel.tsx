@@ -20,6 +20,7 @@ import {
   PenLine,
   Trash2,
 } from "lucide-react";
+import type { DeckSubscriptionStatus, Language } from "@/lib/convex-types";
 
 interface DeckPanelProps {
   userId: string;
@@ -28,6 +29,7 @@ interface DeckPanelProps {
   onSelectDeck: (deckId: string | null) => void;
 }
 
+// Type for subscription with joined deck data from the query
 type SubscriptionWithDeck = {
   _id: string;
   deckId: string;
@@ -37,11 +39,11 @@ type SubscriptionWithDeck = {
   dailyNewCards: number;
   lastDripDate?: string;
   cardsAddedToday: number;
-  status: "active" | "paused" | "completed";
+  status: DeckSubscriptionStatus;
   deck: {
     name: string;
     description: string;
-    language: string;
+    language: Language;
     level: string;
     totalWords: number;
   } | null;

@@ -41,7 +41,7 @@ export function LandingPage() {
                 for <span className="bg-gradient-to-r from-accent to-purple-500 bg-clip-text text-transparent">Your Exam</span>
               </span>
             </h1>
-            <p className="text-lg sm:text-xl text-foreground-muted mb-8 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-foreground mb-8 max-w-2xl mx-auto">
               AI generates content from your vocabulary, verifies your writing,
               and creates mock tests tailored to your target exam. Not generic
               study materials—a learning path built for you.
@@ -94,7 +94,7 @@ export function LandingPage() {
             >
               Prep for the exams that matter
             </h2>
-            <p className="text-foreground-muted text-lg max-w-2xl mx-auto">
+            <p className="text-foreground text-lg max-w-2xl mx-auto">
               Content and tests aligned with official exam formats and vocabulary lists.
             </p>
           </div>
@@ -117,7 +117,7 @@ export function LandingPage() {
             >
               Not another flashcard app
             </h2>
-            <p className="text-foreground-muted text-lg max-w-2xl mx-auto">
+            <p className="text-foreground text-lg max-w-2xl mx-auto">
               Most apps test what you recognize. We test what you can produce.
             </p>
           </div>
@@ -157,7 +157,7 @@ export function LandingPage() {
             >
               The complete learning loop
             </h2>
-            <p className="text-foreground-muted text-lg max-w-2xl mx-auto">
+            <p className="text-foreground text-lg max-w-2xl mx-auto">
               Input, practice, output, repeat. Every feature connects to help you actually learn.
             </p>
           </div>
@@ -205,7 +205,7 @@ export function LandingPage() {
             >
               Everything you need to pass your exam
             </h2>
-            <p className="text-foreground-muted text-lg max-w-2xl mx-auto">
+            <p className="text-foreground text-lg max-w-2xl mx-auto">
               From vocabulary building to mock tests, we've got you covered.
             </p>
           </div>
@@ -263,7 +263,7 @@ export function LandingPage() {
           >
             Start learning smarter
           </h2>
-          <p className="text-foreground-muted text-lg mb-8 max-w-xl mx-auto">
+          <p className="text-foreground text-lg mb-8 max-w-xl mx-auto">
             Join learners who are preparing for their exams with AI-powered,
             personalized study materials.
           </p>
@@ -284,7 +284,7 @@ export function LandingPage() {
               </Button>
             </SignInButton>
           )}
-          <p className="text-sm text-foreground-muted mt-4">No credit card required</p>
+          <p className="text-sm text-foreground mt-4">No credit card required</p>
         </div>
       </section>
 
