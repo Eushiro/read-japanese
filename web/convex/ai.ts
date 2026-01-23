@@ -2188,21 +2188,50 @@ export const evaluateShadowing = action({
     const languageName = languageNames[args.targetLanguage];
 
     // System prompt for the audio model
-    const systemPrompt = `You are a friendly ${languageName} language teacher evaluating a student's pronunciation practice (shadowing).
+    const systemPrompt = `You are an experienced ${languageName} pronunciation coach providing detailed, constructive feedback. The student is serious about improving and needs honest, specific guidance.
 
 The student is trying to repeat: "${args.targetText}"
 
-Listen to their attempt and:
-1. Rate their pronunciation accuracy from 0-100
-2. Identify any mispronounced words or sounds
-3. Give encouraging, specific feedback on how to improve
+Listen carefully and evaluate:
+1. **Accuracy** (0-100): Be critical but fair. 90+ = near-native, 70-89 = good with minor issues, 50-69 = understandable but needs work, <50 = significant issues
+2. **Specific issues**: Identify EXACTLY which sounds, words, or syllables need work
+3. **Actionable advice**: Give concrete tips on mouth position, tongue placement, or practice techniques
 
-Respond ONLY with valid JSON in this exact format:
-{
-  "accuracyScore": <number 0-100>,
-  "feedbackText": "<brief feedback summary in English>",
-  "spokenFeedback": "<encouraging feedback in ${languageName} that will be spoken to the student, 1-2 sentences>"
-}`;
+Common issues to listen for:
+- Vowel length (long vs short)
+- Pitch accent and intonation patterns
+- Consonant clarity
+- Word boundaries and linking
+- Rhythm and timing
+- Missing or added sounds`;
+
+    // JSON schema for structured output
+    const shadowingSchema = {
+      type: "json_schema",
+      json_schema: {
+        name: "shadowing_feedback",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            accuracyScore: {
+              type: "number",
+              description: "Pronunciation accuracy score from 0-100. 90+ = near-native, 70-89 = good with minor issues, 50-69 = understandable but needs work, <50 = significant issues",
+            },
+            feedbackText: {
+              type: "string",
+              description: "Detailed feedback in English: what was good, what needs work, and specific tips to improve. Be thorough, 2-4 sentences.",
+            },
+            spokenFeedback: {
+              type: "string",
+              description: `Encouraging but specific feedback in ${languageName}, 2-3 sentences. Mention one thing done well and one thing to focus on.`,
+            },
+          },
+          required: ["accuracyScore", "feedbackText", "spokenFeedback"],
+          additionalProperties: false,
+        },
+      },
+    };
 
     try {
       const response = await fetch(OPENROUTER_API_URL, {
@@ -2237,7 +2266,7 @@ Respond ONLY with valid JSON in this exact format:
               ],
             },
           ],
-          // Text output only - use Gemini TTS for spoken feedback
+          response_format: shadowingSchema,
         }),
       });
 
@@ -2250,23 +2279,20 @@ Respond ONLY with valid JSON in this exact format:
       const result = await response.json();
       console.log("Shadowing evaluation response:", JSON.stringify(result, null, 2));
 
-      // Extract text content
+      // Parse structured output
       const textContent = result.choices?.[0]?.message?.content ?? "";
       let feedbackText = "Great effort! Keep practicing.";
       let spokenFeedback = "";
       let accuracyScore = 70;
 
-      // Try to extract JSON from the response
-      const jsonMatch = textContent.match(/\{[\s\S]*"accuracyScore"[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          const parsed = JSON.parse(jsonMatch[0]);
-          accuracyScore = parsed.accuracyScore ?? 70;
-          feedbackText = parsed.feedbackText ?? feedbackText;
-          spokenFeedback = parsed.spokenFeedback ?? "";
-        } catch {
-          // Use defaults if JSON parsing fails
-        }
+      try {
+        const parsed = JSON.parse(cleanJsonResponse(textContent));
+        accuracyScore = parsed.accuracyScore ?? 70;
+        feedbackText = parsed.feedbackText ?? feedbackText;
+        spokenFeedback = parsed.spokenFeedback ?? "";
+      } catch {
+        // Use defaults if JSON parsing fails
+        console.error("Failed to parse shadowing feedback JSON:", textContent);
       }
 
       // Generate audio feedback using Gemini TTS
