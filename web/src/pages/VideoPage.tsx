@@ -47,8 +47,10 @@ export function VideoPage() {
   // State
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [ytApiReady, setYtApiReady] = useState(false);
   const playerRef = useRef<YT.Player | null>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const timeTrackingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch video content from Convex
   const video = useQuery(api.youtubeContent.get, {
@@ -60,29 +62,50 @@ export function VideoPage() {
   // Load YouTube IFrame API
   useEffect(() => {
     // Check if already loaded
-    if (window.YT) return;
+    if (window.YT?.Player) {
+      setYtApiReady(true);
+      return;
+    }
+
+    // Define callback before loading script
+    const previousCallback = (window as any).onYouTubeIframeAPIReady;
+    (window as any).onYouTubeIframeAPIReady = () => {
+      previousCallback?.();
+      setYtApiReady(true);
+    };
+
+    // Check if script is already loading
+    if (document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+      return;
+    }
 
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
     const firstScriptTag = document.getElementsByTagName("script")[0];
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-
-    // Define callback
-    (window as any).onYouTubeIframeAPIReady = () => {
-      // API is ready
-    };
   }, []);
 
   // Check if this is a real YouTube video
   const isRealYoutubeVideo = video?.videoId ? isValidYoutubeId(video.videoId) : false;
 
-  // Initialize YouTube player when video loads (only for real YouTube videos)
+  // Initialize YouTube player when API is ready and video loads
   useEffect(() => {
-    if (!video?.videoId || !window.YT?.Player || !isRealYoutubeVideo) return;
+    if (!video?.videoId || !ytApiReady || !isRealYoutubeVideo) return;
 
     // Wait for the container to be rendered
     const container = document.getElementById("youtube-player");
     if (!container) return;
+
+    // Destroy existing player if any
+    if (playerRef.current) {
+      playerRef.current.destroy?.();
+      playerRef.current = null;
+    }
+
+    // Clear existing interval
+    if (timeTrackingIntervalRef.current) {
+      clearInterval(timeTrackingIntervalRef.current);
+    }
 
     // Create player
     playerRef.current = new window.YT.Player("youtube-player", {
@@ -98,21 +121,24 @@ export function VideoPage() {
         },
         onReady: () => {
           // Start time tracking
-          const interval = setInterval(() => {
+          timeTrackingIntervalRef.current = setInterval(() => {
             if (playerRef.current) {
               const time = playerRef.current.getCurrentTime?.() || 0;
               setCurrentTime(time);
             }
           }, 500);
-          return () => clearInterval(interval);
         },
       },
     });
 
     return () => {
+      if (timeTrackingIntervalRef.current) {
+        clearInterval(timeTrackingIntervalRef.current);
+      }
       playerRef.current?.destroy?.();
+      playerRef.current = null;
     };
-  }, [video?.videoId, isRealYoutubeVideo]);
+  }, [video?.videoId, ytApiReady, isRealYoutubeVideo]);
 
   // Auto-scroll transcript to current segment
   useEffect(() => {
