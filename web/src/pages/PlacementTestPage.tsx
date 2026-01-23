@@ -697,9 +697,9 @@ export function PlacementTestPage() {
 
         {/* Question Card */}
         {isGeneratingQuestion ? (
-          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm relative">
+          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm relative overflow-hidden">
             {/* Skeleton structure matching multiple choice layout */}
-            <div className="opacity-30">
+            <div>
               {/* Skeleton for type badge */}
               <div className="flex items-center gap-2 mb-4">
                 <Skeleton className="h-6 w-28 rounded-full" />
@@ -719,7 +719,7 @@ export function PlacementTestPage() {
             </div>
 
             {/* Centered overlay with shimmering text */}
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center bg-surface/80 backdrop-blur-[2px]">
               <p
                 key={loadingPhraseIndex}
                 className="text-2xl sm:text-3xl font-bold text-center px-4"
