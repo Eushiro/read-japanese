@@ -8,16 +8,16 @@ const PROCESSING_MESSAGES = [
   "Listening carefully to your intonation...",
   "Comparing with native speech patterns...",
   "Checking pitch and rhythm...",
-  "Preparing personalized feedback...",
   "Evaluating your accent...",
   "Measuring speech clarity...",
   "Detecting subtle nuances...",
   "Processing audio waveforms...",
-  "Consulting our language experts...",
-  "Fine-tuning the analysis...",
   "Reviewing syllable timing...",
   "Assessing natural flow...",
-  "Polishing the final details...",
+  "Examining vowel sounds...",
+  "Studying consonant placement...",
+  "Measuring pause patterns...",
+  "Analyzing stress points...",
 ];
 
 interface AudioRecorderProps {

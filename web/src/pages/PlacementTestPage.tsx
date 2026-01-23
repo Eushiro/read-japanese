@@ -33,12 +33,12 @@ const LOADING_PHRASES = [
   "Analyzing your level...",
   "Consulting the question bank...",
   "Balancing challenge and learning...",
-  "Crafting the perfect question...",
-  "Double-checking grammar points...",
+  "Crafting a unique question...",
+  "Checking grammar points...",
   "Selecting relevant vocabulary...",
   "Optimizing for your progress...",
-  "Fine-tuning difficulty...",
-  "Adding the finishing touches...",
+  "Reviewing difficulty settings...",
+  "Matching to your skill level...",
 ];
 
 const languageNames: Record<Language, string> = {
