@@ -45,6 +45,39 @@ export const CREDIT_COSTS = {
 export type CreditAction = keyof typeof CREDIT_COSTS;
 
 // ============================================
+// LEGACY TIER LIMITS (for backward compatibility)
+// ============================================
+// The app now uses a unified credit system (TIER_CREDITS + CREDIT_COSTS)
+// but some legacy code still references TIER_LIMITS. This provides
+// effectively unlimited action counts since credits are the real constraint.
+export const TIER_LIMITS = {
+  free: {
+    aiVerificationsPerMonth: 50,
+    storiesPerMonth: 50,
+    personalizedStoriesPerMonth: 5,
+    mockTestsPerMonth: 5,
+    flashcardsPerMonth: 50,
+    audioPerMonth: 25,
+  },
+  starter: {
+    aiVerificationsPerMonth: 500,
+    storiesPerMonth: 500,
+    personalizedStoriesPerMonth: 50,
+    mockTestsPerMonth: 50,
+    flashcardsPerMonth: 500,
+    audioPerMonth: 250,
+  },
+  pro: {
+    aiVerificationsPerMonth: 2000,
+    storiesPerMonth: 2000,
+    personalizedStoriesPerMonth: 200,
+    mockTestsPerMonth: 200,
+    flashcardsPerMonth: 2000,
+    audioPerMonth: 1000,
+  },
+} as const;
+
+// ============================================
 // HELPER FUNCTIONS
 // ============================================
 
