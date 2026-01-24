@@ -1,11 +1,12 @@
-import { Badge } from "@/components/ui/badge";
-import type { ProficiencyLevel } from "@/types/story";
 import { Clock, Video } from "lucide-react";
 import { useState } from "react";
-import { getLevelVariant } from "@/lib/levels";
-import { isValidYoutubeId, getYoutubeThumbnailUrl } from "@/lib/youtube";
+
+import { Badge } from "@/components/ui/badge";
 import { formatDuration } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { LANGUAGE_COLORS } from "@/lib/languages";
+import { getLevelVariant } from "@/lib/levels";
+import { getYoutubeThumbnailUrl,isValidYoutubeId } from "@/lib/youtube";
 
 export interface VideoItem {
   _id: string;
@@ -25,8 +26,10 @@ interface VideoCardProps {
 }
 
 export function VideoCard({ video, onClick, style }: VideoCardProps) {
+  const t = useT();
   const isRealVideo = isValidYoutubeId(video.videoId);
-  const thumbnailUrl = video.thumbnailUrl || (isRealVideo ? getYoutubeThumbnailUrl(video.videoId) : null);
+  const thumbnailUrl =
+    video.thumbnailUrl || (isRealVideo ? getYoutubeThumbnailUrl(video.videoId) : null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const duration = formatDuration(video.duration);
@@ -45,16 +48,16 @@ export function VideoCard({ video, onClick, style }: VideoCardProps) {
       <div className="aspect-video relative bg-background-subtle overflow-hidden">
         {showPlaceholder ? (
           /* Placeholder for demo videos */
-          <div className={`absolute inset-0 ${langColor.bg} flex flex-col items-center justify-center`}>
+          <div
+            className={`absolute inset-0 ${langColor.bg} flex flex-col items-center justify-center`}
+          >
             <Video className="w-12 h-12 text-white/60 mb-2" />
             <span className="text-white/80 font-medium text-lg">{langColor.text}</span>
           </div>
         ) : (
           <>
             {/* Skeleton while image loads */}
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-border animate-pulse" />
-            )}
+            {!imageLoaded && <div className="absolute inset-0 bg-border animate-pulse" />}
             <img
               src={thumbnailUrl}
               alt={video.title}
@@ -92,25 +95,21 @@ export function VideoCard({ video, onClick, style }: VideoCardProps) {
 
       {/* Content */}
       <div className="p-4">
-        <h3
-          className="font-semibold text-base text-foreground line-clamp-2 group-hover:text-accent transition-colors"
-        >
+        <h3 className="font-semibold text-base text-foreground line-clamp-2 group-hover:text-accent transition-colors">
           {video.title}
         </h3>
 
         {video.description && (
-          <p className="text-sm text-foreground-muted line-clamp-2 mt-1">
-            {video.description}
-          </p>
+          <p className="text-sm text-foreground-muted line-clamp-2 mt-1">{video.description}</p>
         )}
 
         {/* Meta Info */}
         <div className="flex items-center gap-2 mt-3 text-xs text-foreground">
           <span className="px-2 py-0.5 rounded-full bg-muted text-foreground capitalize">
-            {video.language}
+            {t("library.languages." + video.language)}
           </span>
           <span>•</span>
-          <span>Video</span>
+          <span>{t("library.video.badge")}</span>
         </div>
       </div>
     </article>
@@ -122,7 +121,7 @@ export function VideoCardSkeleton({ delay = 0 }: { delay?: number }) {
     <div
       className="rounded-xl overflow-hidden bg-surface animate-pulse"
       style={{
-        boxShadow: 'var(--shadow-card)',
+        boxShadow: "var(--shadow-card)",
         animationDelay: `${delay}ms`,
       }}
     >

@@ -9,10 +9,7 @@ interface UserMenuProps {
  * Abstracted user menu that wraps the auth provider's implementation
  * Currently uses Clerk's UserButton, but can be swapped to other providers
  */
-export function UserMenu({
-  afterSignOutUrl = "/",
-  showName = false,
-}: UserMenuProps) {
+export function UserMenu({ afterSignOutUrl = "/", showName = false }: UserMenuProps) {
   return (
     <ClerkUserButton
       afterSignOutUrl={afterSignOutUrl}

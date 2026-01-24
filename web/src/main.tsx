@@ -1,28 +1,31 @@
+import "./index.css";
+
+import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider } from "@tanstack/react-router";
+import { ConvexReactClient } from "convex/react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { RouterProvider } from "@tanstack/react-router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ClerkProvider, useAuth } from "@clerk/clerk-react";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { ConvexReactClient } from "convex/react";
-import { AuthProvider } from "./contexts/AuthContext";
+
+import { ThemeProvider } from "./components/ThemeProvider";
 import { AnalyticsProvider } from "./contexts/AnalyticsContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import { ReviewSessionProvider } from "./contexts/ReviewSessionContext";
 import { StudySessionProvider } from "./contexts/StudySessionContext";
-import { ThemeProvider } from "./components/ThemeProvider";
+import { TranslationProvider } from "./lib/i18n";
 import { router } from "./router.tsx";
-import "./index.css";
 
 // Register service worker for offline caching of audio/images
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/sw.js")
-      .then((registration) => {
-        console.log("SW registered:", registration.scope);
+      .then(() => {
+        // Service worker registered successfully
       })
-      .catch((error) => {
-        console.log("SW registration failed:", error);
+      .catch(() => {
+        // Service worker registration failed - non-critical
       });
   });
 }
@@ -49,22 +52,24 @@ if (!clerkPubKey) {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ClerkProvider publishableKey={clerkPubKey}>
-      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-        <AuthProvider>
-          <AnalyticsProvider>
-            <ReviewSessionProvider>
-              <StudySessionProvider>
-                <QueryClientProvider client={queryClient}>
-                  <ThemeProvider>
-                    <RouterProvider router={router} />
-                  </ThemeProvider>
-                </QueryClientProvider>
-              </StudySessionProvider>
-            </ReviewSessionProvider>
-          </AnalyticsProvider>
-        </AuthProvider>
-      </ConvexProviderWithClerk>
-    </ClerkProvider>
+    <TranslationProvider>
+      <ClerkProvider publishableKey={clerkPubKey}>
+        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+          <AuthProvider>
+            <AnalyticsProvider>
+              <ReviewSessionProvider>
+                <StudySessionProvider>
+                  <QueryClientProvider client={queryClient}>
+                    <ThemeProvider>
+                      <RouterProvider router={router} />
+                    </ThemeProvider>
+                  </QueryClientProvider>
+                </StudySessionProvider>
+              </ReviewSessionProvider>
+            </AnalyticsProvider>
+          </AuthProvider>
+        </ConvexProviderWithClerk>
+      </ClerkProvider>
+    </TranslationProvider>
   </StrictMode>
 );

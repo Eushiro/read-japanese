@@ -1,23 +1,26 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
+import { useNavigate,useParams } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { useAuth, SignInButton } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import type { Id } from "../../convex/_generated/dataModel";
-import { formatDuration } from "@/lib/format";
-import { getYoutubeWatchUrl } from "@/lib/youtube";
 import {
   ArrowLeft,
-  Loader2,
   CheckCircle2,
-  XCircle,
-  Play,
-  HelpCircle,
   ChevronLeft,
   ChevronRight,
   Clock,
+  HelpCircle,
+  Loader2,
+  Play,
+  XCircle,
 } from "lucide-react";
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { SignInButton,useAuth } from "@/contexts/AuthContext";
+import { formatDuration } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import { getYoutubeWatchUrl } from "@/lib/youtube";
+
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 
 interface VideoQuestion {
   question: string;
@@ -36,7 +39,8 @@ interface AnswerState {
 export function VideoQuizPage() {
   const { videoId } = useParams({ from: "/video-quiz/$videoId" });
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const t = useT();
 
   // State
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -128,17 +132,20 @@ export function VideoQuizPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <HelpCircle className="w-12 h-12 text-foreground-muted mb-4" />
-        <p className="text-lg font-medium text-foreground mb-2">Sign in to take the quiz</p>
+        <p className="text-lg font-medium text-foreground mb-2">{t("videoQuiz.auth.signInRequired")}</p>
         <p className="text-sm text-foreground-muted mb-6 text-center max-w-sm">
-          Create an account to track your progress and save your quiz results.
+          {t("videoQuiz.auth.signInDescription")}
         </p>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => navigate({ to: "/video/$videoId", params: { videoId } })}>
+          <Button
+            variant="outline"
+            onClick={() => navigate({ to: "/video/$videoId", params: { videoId } })}
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Video
+            {t("videoQuiz.backToVideo")}
           </Button>
           <SignInButton mode="modal">
-            <Button>Sign In</Button>
+            <Button>{t("videoQuiz.auth.signIn")}</Button>
           </SignInButton>
         </div>
       </div>
@@ -149,13 +156,13 @@ export function VideoQuizPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <HelpCircle className="w-12 h-12 text-foreground-muted mb-4" />
-        <p className="text-lg font-medium text-foreground mb-2">No quiz available</p>
+        <p className="text-lg font-medium text-foreground mb-2">{t("videoQuiz.noQuiz.title")}</p>
         <p className="text-sm text-foreground-muted mb-4">
-          Questions haven't been generated for this video yet.
+          {t("videoQuiz.noQuiz.description")}
         </p>
         <Button onClick={() => navigate({ to: "/video/$videoId", params: { videoId } })}>
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Video
+          {t("videoQuiz.backToVideo")}
         </Button>
       </div>
     );
@@ -179,7 +186,7 @@ export function VideoQuizPage() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className="text-lg font-semibold text-foreground">Quiz Results</h1>
+                <h1 className="text-lg font-semibold text-foreground">{t("videoQuiz.results.title")}</h1>
                 <p className="text-sm text-foreground-muted">{video.title}</p>
               </div>
             </div>
@@ -189,21 +196,25 @@ export function VideoQuizPage() {
         {/* Results */}
         <div className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
           <div className="bg-surface rounded-2xl border border-border p-8 text-center">
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${
-              score.percentage >= 70 ? "bg-green-500/10" : "bg-amber-500/10"
-            }`}>
-              <span className={`text-4xl font-bold ${
-                score.percentage >= 70 ? "text-green-500" : "text-amber-500"
-              }`}>
+            <div
+              className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${
+                score.percentage >= 70 ? "bg-green-500/10" : "bg-amber-500/10"
+              }`}
+            >
+              <span
+                className={`text-4xl font-bold ${
+                  score.percentage >= 70 ? "text-green-500" : "text-amber-500"
+                }`}
+              >
                 {score.percentage}%
               </span>
             </div>
 
             <h2 className="text-2xl font-bold text-foreground mb-2">
-              {score.percentage >= 70 ? "Well done!" : "Keep practicing!"}
+              {score.percentage >= 70 ? t("videoQuiz.results.wellDone") : t("videoQuiz.results.keepPracticing")}
             </h2>
             <p className="text-foreground-muted mb-6">
-              You got {score.correct} out of {score.total} questions correct.
+              {t("videoQuiz.results.score", { correct: score.correct, total: score.total })}
             </p>
 
             <div className="flex justify-center gap-4">
@@ -215,18 +226,18 @@ export function VideoQuizPage() {
                   setAnswers({});
                 }}
               >
-                Try Again
+                {t("videoQuiz.results.tryAgain")}
               </Button>
               <Button onClick={() => navigate({ to: "/video/$videoId", params: { videoId } })}>
                 <Play className="w-4 h-4 mr-2" />
-                Watch Video
+                {t("videoQuiz.results.watchVideo")}
               </Button>
             </div>
           </div>
 
           {/* Review answers */}
           <div className="mt-8 space-y-4">
-            <h3 className="font-semibold text-foreground">Review Answers</h3>
+            <h3 className="font-semibold text-foreground">{t("videoQuiz.results.reviewAnswers")}</h3>
             {questions.map((q, index) => {
               const answerState = answers[index];
               return (
@@ -253,11 +264,11 @@ export function VideoQuizPage() {
                       {answerState?.submitted && (
                         <div className="mt-2 text-sm">
                           <p className="text-foreground-muted">
-                            Your answer: <span className="font-medium">{answerState.answer}</span>
+                            {t("videoQuiz.results.yourAnswer")} <span className="font-medium">{answerState.answer}</span>
                           </p>
                           {q.correctAnswer && !answerState.isCorrect && (
                             <p className="text-green-600">
-                              Correct: <span className="font-medium">{q.correctAnswer}</span>
+                              {t("videoQuiz.results.correct")} <span className="font-medium">{q.correctAnswer}</span>
                             </p>
                           )}
                         </div>
@@ -293,7 +304,7 @@ export function VideoQuizPage() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className="text-lg font-semibold text-foreground">Video Quiz</h1>
+                <h1 className="text-lg font-semibold text-foreground">{t("videoQuiz.title")}</h1>
                 <p className="text-sm text-foreground-muted truncate max-w-[200px] sm:max-w-none">
                   {video.title}
                 </p>
@@ -325,10 +336,7 @@ export function VideoQuizPage() {
               className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/10 text-accent text-sm mb-4 hover:bg-accent/20 transition-colors"
               onClick={() => {
                 // Open video at timestamp
-                window.open(
-                  getYoutubeWatchUrl(video.videoId, currentQuestion.timestamp),
-                  "_blank"
-                );
+                window.open(getYoutubeWatchUrl(video.videoId, currentQuestion.timestamp), "_blank");
               }}
             >
               <Clock className="w-3.5 h-3.5" />
@@ -338,9 +346,7 @@ export function VideoQuizPage() {
           )}
 
           {/* Question text */}
-          <h2 className="text-xl font-semibold text-foreground mb-6">
-            {currentQuestion.question}
-          </h2>
+          <h2 className="text-xl font-semibold text-foreground mb-6">{currentQuestion.question}</h2>
 
           {/* Multiple choice options */}
           {currentQuestion.type === "multiple_choice" && currentQuestion.options && (
@@ -367,15 +373,17 @@ export function VideoQuizPage() {
                     } ${isSubmitted ? "cursor-default" : "cursor-pointer"}`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        showCorrect
-                          ? "border-green-500 bg-green-500"
-                          : showIncorrect
-                            ? "border-red-500 bg-red-500"
-                            : isSelected
-                              ? "border-accent bg-accent"
-                              : "border-foreground-muted"
-                      }`}>
+                      <div
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          showCorrect
+                            ? "border-green-500 bg-green-500"
+                            : showIncorrect
+                              ? "border-red-500 bg-red-500"
+                              : isSelected
+                                ? "border-accent bg-accent"
+                                : "border-foreground-muted"
+                        }`}
+                      >
                         {(showCorrect || (isSelected && !isSubmitted)) && (
                           <div className="w-2 h-2 rounded-full bg-white" />
                         )}
@@ -397,13 +405,13 @@ export function VideoQuizPage() {
                 value={currentAnswerState?.answer || ""}
                 onChange={(e) => handleAnswerSelect(e.target.value)}
                 disabled={isSubmitted}
-                placeholder="Type your answer..."
+                placeholder={t("videoQuiz.quiz.placeholder")}
                 className="w-full p-4 rounded-xl border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent resize-none"
                 rows={4}
               />
               {isSubmitted && currentQuestion.correctAnswer && (
                 <div className="mt-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
-                  <p className="text-sm font-medium text-green-600">Suggested answer:</p>
+                  <p className="text-sm font-medium text-green-600">{t("videoQuiz.quiz.suggestedAnswer")}</p>
                   <p className="text-foreground mt-1">{currentQuestion.correctAnswer}</p>
                 </div>
               )}
@@ -413,24 +421,20 @@ export function VideoQuizPage() {
 
         {/* Navigation */}
         <div className="flex items-center justify-between mt-6">
-          <Button
-            variant="outline"
-            onClick={goToPrevious}
-            disabled={currentQuestionIndex === 0}
-          >
+          <Button variant="outline" onClick={goToPrevious} disabled={currentQuestionIndex === 0}>
             <ChevronLeft className="w-4 h-4 mr-1" />
-            Previous
+            {t("videoQuiz.quiz.previous")}
           </Button>
 
           <div className="flex gap-3">
             {!isSubmitted && (
               <Button onClick={handleSubmit} disabled={!isAnswered}>
-                Submit
+                {t("videoQuiz.quiz.submit")}
               </Button>
             )}
             {isSubmitted && (
               <Button onClick={goToNext}>
-                {currentQuestionIndex === questions.length - 1 ? "See Results" : "Next"}
+                {currentQuestionIndex === questions.length - 1 ? t("videoQuiz.quiz.seeResults") : t("videoQuiz.quiz.next")}
                 {currentQuestionIndex < questions.length - 1 && (
                   <ChevronRight className="w-4 h-4 ml-1" />
                 )}

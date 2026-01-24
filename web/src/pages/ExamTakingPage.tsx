@@ -1,24 +1,19 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useAction } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useNavigate,useParams } from "@tanstack/react-router";
+import { useAction,useMutation, useQuery } from "convex/react";
+import { ChevronLeft, ChevronRight, Clock, Flag,Loader2 } from "lucide-react";
+import { useEffect,useState } from "react";
+
 import { useAuth } from "@/contexts/AuthContext";
-import { useParams, useNavigate } from "@tanstack/react-router";
+import { useT } from "@/lib/i18n";
+
+import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import {
-  Clock,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  X,
-  AlertCircle,
-  Loader2,
-  Flag,
-} from "lucide-react";
 
 export function ExamTakingPage() {
   const { user, isAuthenticated } = useAuth();
   const { templateId } = useParams({ from: "/exams/$templateId" });
   const navigate = useNavigate();
+  const t = useT();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -26,10 +21,9 @@ export function ExamTakingPage() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   // Get template
-  const template = useQuery(
-    api.examTemplates.get,
-    { templateId: templateId as Id<"examTemplates"> }
-  );
+  const template = useQuery(api.examTemplates.get, {
+    templateId: templateId as Id<"examTemplates">,
+  });
 
   // Check for in-progress attempt or start new
   const existingAttempt = useQuery(
@@ -50,10 +44,7 @@ export function ExamTakingPage() {
   const [attemptId, setAttemptId] = useState<Id<"examAttempts"> | null>(null);
 
   // Load attempt
-  const attempt = useQuery(
-    api.examAttempts.get,
-    attemptId ? { attemptId } : "skip"
-  );
+  const attempt = useQuery(api.examAttempts.get, attemptId ? { attemptId } : "skip");
 
   // Start or resume exam
   useEffect(() => {
@@ -150,9 +141,7 @@ export function ExamTakingPage() {
         (q, idx) =>
           answers[idx] &&
           q.questionData &&
-          ["essay", "translation", "short_answer"].includes(
-            q.questionData.questionType
-          ) &&
+          ["essay", "translation", "short_answer"].includes(q.questionData.questionType) &&
           q.isCorrect === undefined
       );
 
@@ -182,9 +171,7 @@ export function ExamTakingPage() {
               aiScore: result.score,
               aiFeedback: result.feedback,
               isCorrect: result.isCorrect,
-              earnedPoints: Math.round(
-                (result.score / 100) * q.questionData.points
-              ),
+              earnedPoints: Math.round((result.score / 100) * q.questionData.points),
             });
           } catch (error) {
             console.error("AI grading failed:", error);
@@ -193,7 +180,7 @@ export function ExamTakingPage() {
       }
 
       // Complete the exam
-      const results = await completeExam({ attemptId });
+      await completeExam({ attemptId });
 
       // Navigate to results
       navigate({
@@ -220,7 +207,7 @@ export function ExamTakingPage() {
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <p>Please sign in to take exams.</p>
+        <p>{t("examTaking.signInRequired")}</p>
       </div>
     );
   }
@@ -242,7 +229,7 @@ export function ExamTakingPage() {
             <div>
               <h1 className="font-semibold">{template.title}</h1>
               <p className="text-sm text-foreground-muted">
-                Question {currentQuestionIndex + 1} of {totalQuestions}
+                {t("examTaking.questionProgress", { current: currentQuestionIndex + 1, total: totalQuestions })}
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -268,7 +255,7 @@ export function ExamTakingPage() {
                 ) : (
                   <Flag className="w-4 h-4" />
                 )}
-                Finish Exam
+                {t("examTaking.finishExam")}
               </button>
             </div>
           </div>
@@ -283,27 +270,20 @@ export function ExamTakingPage() {
               {/* Passage if present */}
               {currentQuestion.questionData.passageText && (
                 <div className="mb-6 p-4 bg-muted/30 rounded-lg">
-                  <p className="text-sm text-foreground-muted mb-2">
-                    Read the following passage:
-                  </p>
-                  <p className="whitespace-pre-wrap">
-                    {currentQuestion.questionData.passageText}
-                  </p>
+                  <p className="text-sm text-foreground-muted mb-2">{t("examTaking.readPassage")}</p>
+                  <p className="whitespace-pre-wrap">{currentQuestion.questionData.passageText}</p>
                 </div>
               )}
 
               {/* Question text */}
-              <p className="text-lg mb-6">
-                {currentQuestion.questionData.questionText}
-              </p>
+              <p className="text-lg mb-6">{currentQuestion.questionData.questionText}</p>
 
               {/* Answer options */}
               {currentQuestion.questionData.questionType === "multiple_choice" &&
                 currentQuestion.questionData.options && (
                   <div className="space-y-3">
                     {currentQuestion.questionData.options.map((option, idx) => {
-                      const isSelected =
-                        answers[currentQuestionIndex] === option;
+                      const isSelected = answers[currentQuestionIndex] === option;
                       return (
                         <button
                           key={idx}
@@ -314,9 +294,7 @@ export function ExamTakingPage() {
                               : "border-border hover:border-accent/50"
                           }`}
                         >
-                          <span className="font-medium mr-3">
-                            {String.fromCharCode(65 + idx)}.
-                          </span>
+                          <span className="font-medium mr-3">{String.fromCharCode(65 + idx)}.</span>
                           {option}
                         </button>
                       );
@@ -331,10 +309,12 @@ export function ExamTakingPage() {
                 <div>
                   <textarea
                     value={answers[currentQuestionIndex] || ""}
-                    onChange={(e) => setAnswers(prev => ({
-                      ...prev,
-                      [currentQuestionIndex]: e.target.value,
-                    }))}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [currentQuestionIndex]: e.target.value,
+                      }))
+                    }
                     onBlur={() => {
                       if (answers[currentQuestionIndex]) {
                         handleAnswer(answers[currentQuestionIndex]);
@@ -342,8 +322,8 @@ export function ExamTakingPage() {
                     }}
                     placeholder={
                       currentQuestion.questionData.questionType === "essay"
-                        ? "Write your answer..."
-                        : "Type your answer..."
+                        ? t("examTaking.writeAnswer")
+                        : t("examTaking.typeAnswer")
                     }
                     className={`w-full p-4 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${
                       currentQuestion.questionData.questionType === "essay"
@@ -364,7 +344,7 @@ export function ExamTakingPage() {
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
-              Previous
+              {t("examTaking.previous")}
             </button>
 
             {/* Question indicators */}
@@ -395,7 +375,7 @@ export function ExamTakingPage() {
               disabled={currentQuestionIndex === totalQuestions - 1}
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              {t("examTaking.next")}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>

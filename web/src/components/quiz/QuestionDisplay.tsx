@@ -1,4 +1,5 @@
 import { CheckCircle2, XCircle } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 export type QuestionType =
   | "multiple_choice"
@@ -45,18 +46,8 @@ export interface QuestionDisplayProps {
 }
 
 // Get display label for question type
-function getTypeLabel(type: QuestionType): string {
-  const labels: Record<QuestionType, string> = {
-    multiple_choice: "Multiple Choice",
-    short_answer: "Short Answer",
-    essay: "Essay",
-    translation: "Translation",
-    inference: "Inference",
-    prediction: "Prediction",
-    grammar: "Grammar",
-    opinion: "Opinion",
-  };
-  return labels[type] || type;
+function getTypeLabel(type: QuestionType, t: ReturnType<typeof useT>): string {
+  return t(`comprehension:questionTypes.${type}`) || type;
 }
 
 // Get color for question type badge
@@ -91,13 +82,13 @@ export function QuestionDisplay({
   isAnswered,
   showFeedback = false,
   correctAnswer,
-  isCorrect,
   aiFeedback,
   aiScore,
   isDisabled = false,
   metadata,
   language = "japanese",
 }: QuestionDisplayProps) {
+  const t = useT();
   const fontFamily = language === "japanese" ? "var(--font-japanese)" : "inherit";
   const isMultipleChoice = type === "multiple_choice" && options && options.length > 0;
   const showCorrectness = showFeedback && isAnswered;
@@ -107,11 +98,11 @@ export function QuestionDisplay({
       {/* Metadata badges */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <span className={`text-xs px-2 py-1 rounded-full ${getTypeColor(type)}`}>
-          {metadata?.type || getTypeLabel(type)}
+          {metadata?.type || getTypeLabel(type, t)}
         </span>
         {points !== undefined && (
           <span className="text-xs text-foreground-muted">
-            {points} points
+            {t("comprehension:questionDisplay.points", { count: points })}
           </span>
         )}
         {metadata?.level && (
@@ -127,15 +118,10 @@ export function QuestionDisplay({
       </div>
 
       {/* Question text */}
-      <h2
-        className="text-lg font-semibold text-foreground mb-2"
-        style={{ fontFamily }}
-      >
+      <h2 className="text-lg font-semibold text-foreground mb-2" style={{ fontFamily }}>
         {question}
       </h2>
-      {questionTranslation && (
-        <p className="text-foreground-muted mb-6">{questionTranslation}</p>
-      )}
+      {questionTranslation && <p className="text-foreground-muted mb-6">{questionTranslation}</p>}
 
       {/* Answer input */}
       {isMultipleChoice ? (
@@ -154,6 +140,7 @@ export function QuestionDisplay({
           value={selectedAnswer}
           onChange={onSelectAnswer}
           isDisabled={isDisabled || isAnswered}
+          t={t}
         />
       )}
 
@@ -164,6 +151,7 @@ export function QuestionDisplay({
           aiFeedback={aiFeedback}
           aiScore={aiScore}
           type={type}
+          t={t}
         />
       )}
     </div>
@@ -256,16 +244,17 @@ interface TextAnswerInputProps {
   value: string;
   onChange: (value: string) => void;
   isDisabled: boolean;
+  t: ReturnType<typeof useT>;
 }
 
-function TextAnswerInput({ type, value, onChange, isDisabled }: TextAnswerInputProps) {
+function TextAnswerInput({ type, value, onChange, isDisabled, t }: TextAnswerInputProps) {
   const rows = type === "essay" || type === "opinion" ? 6 : 3;
   const placeholder =
     type === "essay" || type === "opinion"
-      ? "Write your response..."
+      ? t("comprehension:questionDisplay.placeholders.essay")
       : type === "translation"
-      ? "Enter your translation..."
-      : "Type your answer...";
+        ? t("comprehension:questionDisplay.placeholders.translation")
+        : t("comprehension:questionDisplay.placeholders.default");
 
   return (
     <textarea
@@ -285,14 +274,10 @@ interface FeedbackDisplayProps {
   aiFeedback?: string;
   aiScore?: number;
   type: QuestionType;
+  t: ReturnType<typeof useT>;
 }
 
-function FeedbackDisplay({
-  correctAnswer,
-  aiFeedback,
-  aiScore,
-  type,
-}: FeedbackDisplayProps) {
+function FeedbackDisplay({ correctAnswer, aiFeedback, aiScore, type, t }: FeedbackDisplayProps) {
   const isTextType = type !== "multiple_choice";
 
   // For multiple choice, answers are already highlighted - no extra feedback needed
@@ -307,14 +292,12 @@ function FeedbackDisplay({
       {isTextType && aiScore !== undefined && (
         <div className="p-3 rounded-lg bg-muted/50 border border-border">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-foreground">Score</span>
+            <span className="text-sm font-medium text-foreground">
+              {t("comprehension:questionDisplay.feedback.score")}
+            </span>
             <span
               className={`text-sm font-bold ${
-                aiScore >= 80
-                  ? "text-green-600"
-                  : aiScore >= 60
-                  ? "text-amber-600"
-                  : "text-red-600"
+                aiScore >= 80 ? "text-green-600" : aiScore >= 60 ? "text-amber-600" : "text-red-600"
               }`}
             >
               {aiScore}%
@@ -323,11 +306,7 @@ function FeedbackDisplay({
           <div className="w-full h-2 bg-border rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
-                aiScore >= 80
-                  ? "bg-green-500"
-                  : aiScore >= 60
-                  ? "bg-amber-500"
-                  : "bg-red-500"
+                aiScore >= 80 ? "bg-green-500" : aiScore >= 60 ? "bg-amber-500" : "bg-red-500"
               }`}
               style={{ width: `${aiScore}%` }}
             />
@@ -340,8 +319,8 @@ function FeedbackDisplay({
         <div className="p-3 rounded-lg bg-muted/50 border border-border">
           <p className="text-sm font-medium text-foreground mb-1">
             {type === "short_answer" || type === "translation" || type === "grammar"
-              ? "Expected answer:"
-              : "Possible answer:"}
+              ? t("comprehension:questionDisplay.feedback.expectedAnswer")
+              : t("comprehension:questionDisplay.feedback.possibleAnswer")}
           </p>
           <p className="text-sm text-foreground-muted">{correctAnswer}</p>
         </div>
@@ -350,7 +329,9 @@ function FeedbackDisplay({
       {/* AI Feedback */}
       {aiFeedback && (
         <div className="p-3 rounded-lg bg-muted/50 border border-border">
-          <p className="text-sm font-medium text-foreground mb-1">Feedback:</p>
+          <p className="text-sm font-medium text-foreground mb-1">
+            {t("comprehension:questionDisplay.feedback.feedback")}
+          </p>
           <p className="text-sm text-foreground-muted">{aiFeedback}</p>
         </div>
       )}

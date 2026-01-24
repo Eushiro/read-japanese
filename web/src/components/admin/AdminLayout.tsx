@@ -1,9 +1,11 @@
-import { useEffect } from "react";
 import { Outlet, useNavigate } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { isAdmin } from "@/lib/admin";
+
 import { AdminSidebar } from "./AdminSidebar";
-import { Loader2 } from "lucide-react";
 
 export function AdminLayout() {
   const { user, isAuthenticated, isLoading } = useAuth();

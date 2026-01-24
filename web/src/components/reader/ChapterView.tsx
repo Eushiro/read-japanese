@@ -1,8 +1,10 @@
-import { Segment } from "./Segment";
-import { FuriganaText } from "./FuriganaText";
+import { CheckCircle2 } from "lucide-react";
+
 import { getCdnUrl } from "@/api/stories";
 import type { Chapter, Token } from "@/types/story";
-import { CheckCircle2 } from "lucide-react";
+
+import { FuriganaText } from "./FuriganaText";
+import { Segment } from "./Segment";
 
 interface ChapterViewProps {
   chapter: Chapter;
@@ -93,12 +95,13 @@ export function ChapterView({
               <CheckCircle2 className="w-6 h-6 text-success" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-japanese)' }}>
+              <p
+                className="text-lg font-semibold text-foreground"
+                style={{ fontFamily: "var(--font-japanese)" }}
+              >
                 おめでとう！
               </p>
-              <p className="text-sm text-foreground-muted mt-1">
-                You've finished the story
-              </p>
+              <p className="text-sm text-foreground-muted mt-1">You've finished the story</p>
             </div>
           </div>
         </div>

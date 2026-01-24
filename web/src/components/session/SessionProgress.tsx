@@ -1,5 +1,7 @@
-import { Brain, BookOpen, PenLine, Play } from "lucide-react";
+import { BookOpen, Brain, PenLine } from "lucide-react";
+
 import type { SessionActivity } from "@/contexts/StudySessionContext";
+import { useT } from "@/lib/i18n";
 
 interface SessionProgressProps {
   activities: SessionActivity[];
@@ -7,6 +9,19 @@ interface SessionProgressProps {
 }
 
 export function SessionProgress({ activities, currentIndex }: SessionProgressProps) {
+  const t = useT();
+
+  const getActivityLabel = (activity: SessionActivity): string => {
+    switch (activity.type) {
+      case "review":
+        return t("studySession.progress.review");
+      case "input":
+        return activity.contentType === "story" ? t("studySession.progress.read") : t("studySession.progress.watch");
+      case "output":
+        return t("studySession.progress.write");
+    }
+  };
+
   return (
     <div className="flex items-center justify-center gap-2">
       {activities.map((activity, index) => {
@@ -17,9 +32,7 @@ export function SessionProgress({ activities, currentIndex }: SessionProgressPro
           <div key={index} className="flex items-center gap-2">
             {index > 0 && (
               <div
-                className={`w-8 h-0.5 ${
-                  isComplete ? "bg-accent" : "bg-border"
-                } transition-colors`}
+                className={`w-8 h-0.5 ${isComplete ? "bg-accent" : "bg-border"} transition-colors`}
               />
             )}
             <div
@@ -53,13 +66,3 @@ function ActivityIcon({ type, className }: { type: SessionActivity["type"]; clas
   }
 }
 
-function getActivityLabel(activity: SessionActivity): string {
-  switch (activity.type) {
-    case "review":
-      return "Review";
-    case "input":
-      return activity.contentType === "story" ? "Read" : "Watch";
-    case "output":
-      return "Write";
-  }
-}

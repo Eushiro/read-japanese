@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
+import { useCallback, useEffect, useRef,useState } from "react";
+import { isRomaji,toHiragana, toKatakana } from "wanakana";
+
 import { Input } from "@/components/ui/input";
-import { toHiragana, toKatakana, isRomaji } from "wanakana";
 
 export interface SearchSuggestion {
   id: string;
@@ -114,15 +115,11 @@ export function SearchBox({
         case "ArrowDown":
           e.preventDefault();
           setIsOpen(true);
-          setHighlightedIndex((prev) =>
-            prev < suggestions.length - 1 ? prev + 1 : 0
-          );
+          setHighlightedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
           break;
         case "ArrowUp":
           e.preventDefault();
-          setHighlightedIndex((prev) =>
-            prev > 0 ? prev - 1 : suggestions.length - 1
-          );
+          setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
           break;
         case "Enter":
           if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
@@ -139,8 +136,8 @@ export function SearchBox({
     [showSuggestions, suggestions, highlightedIndex, handleSelect]
   );
 
-  const filteredSuggestions = suggestions?.filter((s) =>
-    matchesSearch(s.label, inputValue) || matchesSearch(s.sublabel || "", inputValue)
+  const filteredSuggestions = suggestions?.filter(
+    (s) => matchesSearch(s.label, inputValue) || matchesSearch(s.sublabel || "", inputValue)
   );
 
   return (
@@ -178,9 +175,7 @@ export function SearchBox({
               key={suggestion.id}
               onClick={() => handleSelect(suggestion)}
               className={`w-full px-3 py-2 text-left text-sm transition-colors ${
-                index === highlightedIndex
-                  ? "bg-accent text-accent-foreground"
-                  : "hover:bg-muted"
+                index === highlightedIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted"
               }`}
               type="button"
             >

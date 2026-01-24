@@ -1,17 +1,23 @@
-import { useEffect } from "react";
 import { useQuery } from "convex/react";
-import type { Id } from "../../convex/_generated/dataModel";
+import { useEffect } from "react";
+
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 
 /**
  * Preloads audio and image assets from a flashcard.
  * Can be used standalone or is called automatically by useFlashcard hook.
  */
-export function preloadFlashcardAssets(flashcard: {
-  wordAudioUrl?: string | null;
-  audioUrl?: string | null;
-  imageUrl?: string | null;
-} | null | undefined) {
+export function preloadFlashcardAssets(
+  flashcard:
+    | {
+        wordAudioUrl?: string | null;
+        audioUrl?: string | null;
+        imageUrl?: string | null;
+      }
+    | null
+    | undefined
+) {
   if (!flashcard) return;
 
   // Preload word audio
@@ -49,6 +55,7 @@ export function useFlashcard(vocabularyId: Id<"vocabulary"> | string | undefined
   // Preload assets when URLs change (initial load or after generation)
   useEffect(() => {
     preloadFlashcardAssets(flashcard);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only preload when URLs change, not on every flashcard update
   }, [flashcard?.wordAudioUrl, flashcard?.audioUrl, flashcard?.imageUrl]);
 
   return flashcard;

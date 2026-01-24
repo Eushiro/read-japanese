@@ -1,21 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
+import { useNavigate,useParams } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { useAuth } from "@/contexts/AuthContext";
+import { ArrowLeft, Clock, FileText, HelpCircle, Loader2, Video } from "lucide-react";
+import { useCallback,useEffect, useRef, useState } from "react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Id } from "../../convex/_generated/dataModel";
-import {
-  ArrowLeft,
-  Play,
-  Clock,
-  FileText,
-  HelpCircle,
-  Loader2,
-  Video,
-} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
 import { isValidYoutubeId } from "@/lib/youtube";
+
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 
 type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
 
@@ -33,20 +28,15 @@ const levelVariantMap: Record<string, BadgeVariant> = {
   C2: "c2",
 };
 
-interface TranscriptSegment {
-  text: string;
-  start: number;
-  duration: number;
-}
-
 export function VideoPage() {
   const { videoId } = useParams({ from: "/video/$videoId" });
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  useAuth(); // Auth context is used for its side effects
+  const t = useT();
 
   // State
   const [currentTime, setCurrentTime] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [, setIsPlaying] = useState(false); // State value not read, only setter used
   const [ytApiReady, setYtApiReady] = useState(false);
   const playerRef = useRef<YT.Player | null>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
@@ -63,13 +53,14 @@ export function VideoPage() {
   useEffect(() => {
     // Check if already loaded
     if (window.YT?.Player) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: sync state with external API readiness
       setYtApiReady(true);
       return;
     }
 
     // Define callback before loading script
-    const previousCallback = (window as any).onYouTubeIframeAPIReady;
-    (window as any).onYouTubeIframeAPIReady = () => {
+    const previousCallback = (window as WindowWithYT).onYouTubeIframeAPIReady;
+    (window as WindowWithYT).onYouTubeIframeAPIReady = () => {
       previousCallback?.();
       setYtApiReady(true);
     };
@@ -188,10 +179,10 @@ export function VideoPage() {
   if (!video) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
-        <p className="text-lg font-medium text-foreground">Video not found</p>
+        <p className="text-lg font-medium text-foreground">{t("video.notFound")}</p>
         <Button variant="ghost" onClick={() => navigate({ to: "/library" })} className="mt-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Library
+          {t("video.backToLibrary")}
         </Button>
       </div>
     );
@@ -206,23 +197,15 @@ export function VideoPage() {
       <div className="border-b border-border bg-surface sticky top-0 z-40">
         <div className="container mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate({ to: "/library" })}
-            >
+            <Button variant="ghost" size="icon" onClick={() => navigate({ to: "/library" })}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-semibold text-foreground truncate">
-                {video.title}
-              </h1>
+              <h1 className="text-lg font-semibold text-foreground truncate">{video.title}</h1>
               <div className="flex items-center gap-2 text-sm text-foreground-muted">
                 {video.level && levelVariantMap[video.level] && (
-                  <Badge variant={levelVariantMap[video.level]}>
-                    {video.level}
-                  </Badge>
+                  <Badge variant={levelVariantMap[video.level]}>{video.level}</Badge>
                 )}
                 {video.duration && (
                   <span className="flex items-center gap-1">
@@ -235,10 +218,12 @@ export function VideoPage() {
 
             {hasQuiz && (
               <Button
-                onClick={() => navigate({ to: "/video-quiz/$videoId", params: { videoId: video._id } })}
+                onClick={() =>
+                  navigate({ to: "/video-quiz/$videoId", params: { videoId: video._id } })
+                }
               >
                 <HelpCircle className="w-4 h-4 mr-2" />
-                Take Quiz
+                {t("video.takeQuiz")}
               </Button>
             )}
           </div>
@@ -257,10 +242,10 @@ export function VideoPage() {
                 <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-accent/20 to-accent/5">
                   <Video className="w-16 h-16 text-accent/50 mb-4" />
                   <p className="text-foreground-muted text-sm text-center px-4">
-                    Demo content - video playback not available
+                    {t("video.demo.title")}
                   </p>
                   <p className="text-foreground-muted/60 text-xs mt-2">
-                    Read along with the transcript below
+                    {t("video.demo.subtitle")}
                   </p>
                 </div>
               )}
@@ -269,7 +254,7 @@ export function VideoPage() {
             {/* Video Info */}
             {video.description && (
               <div className="bg-surface rounded-xl border border-border p-4">
-                <h2 className="font-medium text-foreground mb-2">About this video</h2>
+                <h2 className="font-medium text-foreground mb-2">{t("video.about")}</h2>
                 <p className="text-sm text-foreground-muted">{video.description}</p>
               </div>
             )}
@@ -279,16 +264,13 @@ export function VideoPage() {
           <div className="bg-surface rounded-xl border border-border overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center gap-2">
               <FileText className="w-4 h-4 text-accent" />
-              <h2 className="font-medium text-foreground">Transcript</h2>
+              <h2 className="font-medium text-foreground">{t("video.transcript.title")}</h2>
             </div>
 
-            <div
-              ref={transcriptRef}
-              className="p-4 space-y-2 max-h-[60vh] overflow-y-auto"
-            >
+            <div ref={transcriptRef} className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
               {!hasTranscript ? (
                 <p className="text-foreground-muted text-sm">
-                  Transcript not available for this video.
+                  {t("video.transcript.notAvailable")}
                 </p>
               ) : (
                 video.transcript!.map((segment, index) => (
@@ -305,11 +287,13 @@ export function VideoPage() {
                     <span className="text-xs text-foreground-muted mr-2">
                       {formatTime(segment.start)}
                     </span>
-                    <span className={`text-sm ${
-                      index === currentSegmentIndex
-                        ? "text-foreground font-medium"
-                        : "text-foreground-muted"
-                    }`}>
+                    <span
+                      className={`text-sm ${
+                        index === currentSegmentIndex
+                          ? "text-foreground font-medium"
+                          : "text-foreground-muted"
+                      }`}
+                    >
                       {segment.text}
                     </span>
                   </button>
@@ -324,29 +308,35 @@ export function VideoPage() {
 }
 
 // YouTube IFrame API types
+interface WindowWithYT extends Window {
+  onYouTubeIframeAPIReady?: () => void;
+  YT: {
+    Player: new (
+      element: string,
+      config: {
+        videoId: string;
+        playerVars?: Record<string, number>;
+        events?: {
+          onStateChange?: (event: YT.OnStateChangeEvent) => void;
+          onReady?: () => void;
+        };
+      }
+    ) => YT.Player;
+    PlayerState: {
+      PLAYING: number;
+      PAUSED: number;
+      ENDED: number;
+    };
+  };
+}
+
 declare global {
   interface Window {
-    YT: {
-      Player: new (
-        element: string,
-        config: {
-          videoId: string;
-          playerVars?: Record<string, number>;
-          events?: {
-            onStateChange?: (event: YT.OnStateChangeEvent) => void;
-            onReady?: () => void;
-          };
-        }
-      ) => YT.Player;
-      PlayerState: {
-        PLAYING: number;
-        PAUSED: number;
-        ENDED: number;
-      };
-    };
+    YT?: WindowWithYT["YT"];
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-namespace -- Required for YouTube IFrame API global types
 declare namespace YT {
   interface Player {
     seekTo(time: number, allowSeekAhead: boolean): void;

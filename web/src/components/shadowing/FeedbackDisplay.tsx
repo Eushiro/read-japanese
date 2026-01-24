@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect } from "react";
-import { Volume2, VolumeX, Check, AlertCircle, Sparkles } from "lucide-react";
+import { AlertCircle, Check, Sparkles,Volume2, VolumeX } from "lucide-react";
+import { useEffect,useRef, useState } from "react";
+
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n";
 
 interface FeedbackDisplayProps {
   accuracyScore: number;
@@ -19,6 +21,7 @@ export function FeedbackDisplay({
   targetText,
   language,
 }: FeedbackDisplayProps) {
+  const t = useT();
   const [isPlayingFeedback, setIsPlayingFeedback] = useState(false);
   const [isPlayingUser, setIsPlayingUser] = useState(false);
   const feedbackAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -26,12 +29,14 @@ export function FeedbackDisplay({
 
   // Cleanup audio on unmount
   useEffect(() => {
+    const feedbackAudio = feedbackAudioRef.current;
+    const userAudio = userAudioRef.current;
     return () => {
-      if (feedbackAudioRef.current) {
-        feedbackAudioRef.current.pause();
+      if (feedbackAudio) {
+        feedbackAudio.pause();
       }
-      if (userAudioRef.current) {
-        userAudioRef.current.pause();
+      if (userAudio) {
+        userAudio.pause();
       }
     };
   }, []);
@@ -49,11 +54,11 @@ export function FeedbackDisplay({
   };
 
   const getScoreLabel = (score: number): string => {
-    if (score >= 90) return "Excellent!";
-    if (score >= 80) return "Great job!";
-    if (score >= 70) return "Good effort!";
-    if (score >= 60) return "Keep practicing!";
-    return "Try again!";
+    if (score >= 90) return t("shadowing.feedback.scores.excellent");
+    if (score >= 80) return t("shadowing.feedback.scores.great");
+    if (score >= 70) return t("shadowing.feedback.scores.good");
+    if (score >= 60) return t("shadowing.feedback.scores.keepPracticing");
+    return t("shadowing.feedback.scores.tryAgain");
   };
 
   const getScoreIcon = (score: number) => {
@@ -119,11 +124,7 @@ export function FeedbackDisplay({
         />
       )}
       {userRecordingUrl && (
-        <audio
-          ref={userAudioRef}
-          src={userRecordingUrl}
-          onEnded={() => setIsPlayingUser(false)}
-        />
+        <audio ref={userAudioRef} src={userRecordingUrl} onEnded={() => setIsPlayingUser(false)} />
       )}
 
       {/* Score header */}
@@ -173,7 +174,7 @@ export function FeedbackDisplay({
 
       {/* Target sentence reminder */}
       <div className="bg-surface rounded-xl border border-border p-4">
-        <p className="text-sm text-foreground-muted mb-1">Target sentence:</p>
+        <p className="text-sm text-foreground-muted mb-1">{t("shadowing.feedback.targetSentence")}</p>
         <p
           className="text-lg text-foreground"
           style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
@@ -185,17 +186,9 @@ export function FeedbackDisplay({
       {/* Audio playback buttons */}
       <div className="flex flex-col sm:flex-row gap-3">
         {userRecordingUrl && (
-          <Button
-            variant="outline"
-            onClick={playUserAudio}
-            className="flex-1 gap-2"
-          >
-            {isPlayingUser ? (
-              <VolumeX className="w-4 h-4" />
-            ) : (
-              <Volume2 className="w-4 h-4" />
-            )}
-            {isPlayingUser ? "Stop" : "Play Your Recording"}
+          <Button variant="outline" onClick={playUserAudio} className="flex-1 gap-2">
+            {isPlayingUser ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            {isPlayingUser ? t("shadowing.feedback.stop") : t("shadowing.feedback.playYourRecording")}
           </Button>
         )}
 
@@ -216,7 +209,7 @@ export function FeedbackDisplay({
                 <Volume2 className="w-4 h-4" />
               </>
             )}
-            {isPlayingFeedback ? "Stop" : "Play AI Feedback"}
+            {isPlayingFeedback ? t("shadowing.feedback.stop") : t("shadowing.feedback.playAiFeedback")}
           </Button>
         )}
       </div>
@@ -224,7 +217,7 @@ export function FeedbackDisplay({
       {/* Text feedback */}
       {feedbackText && (
         <div className="bg-accent/5 rounded-xl border border-accent/20 p-4">
-          <p className="text-sm font-medium text-accent mb-2">Feedback</p>
+          <p className="text-sm font-medium text-accent mb-2">{t("shadowing.feedback.feedbackLabel")}</p>
           <p className="text-foreground">{feedbackText}</p>
         </div>
       )}
@@ -232,10 +225,8 @@ export function FeedbackDisplay({
       {/* Progress bar */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-foreground-muted">Accuracy</span>
-          <span className={`font-medium ${getScoreColor(accuracyScore)}`}>
-            {accuracyScore}%
-          </span>
+          <span className="text-foreground-muted">{t("shadowing.feedback.accuracy")}</span>
+          <span className={`font-medium ${getScoreColor(accuracyScore)}`}>{accuracyScore}%</span>
         </div>
         <div className="h-2 bg-muted rounded-full overflow-hidden">
           <div

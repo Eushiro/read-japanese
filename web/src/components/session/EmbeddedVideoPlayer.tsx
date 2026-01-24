@@ -1,19 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Check,Clock, FileText, Video } from "lucide-react";
+import { useCallback,useEffect, useRef, useState } from "react";
+
 import { Badge } from "@/components/ui/badge";
-import { FileText, Clock, Video, Check } from "lucide-react";
-import { isValidYoutubeId } from "@/lib/youtube";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDuration } from "@/lib/format";
 import { levelVariantMap } from "@/lib/levels";
+import { isValidYoutubeId } from "@/lib/youtube";
+
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 interface EmbeddedVideoPlayerProps {
   videoId: string;
@@ -29,7 +26,6 @@ export function EmbeddedVideoPlayer({
   onComplete,
 }: EmbeddedVideoPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
   const playerRef = useRef<YT.Player | null>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const playerContainerId = `embedded-youtube-player-${videoId}`;
@@ -51,7 +47,7 @@ export function EmbeddedVideoPlayer({
     const firstScriptTag = document.getElementsByTagName("script")[0];
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
-    (window as any).onYouTubeIframeAPIReady = () => {
+    (window as unknown as { onYouTubeIframeAPIReady: () => void }).onYouTubeIframeAPIReady = () => {
       // API is ready
     };
   }, [isOpen]);
@@ -69,7 +65,7 @@ export function EmbeddedVideoPlayer({
       if (playerRef.current) {
         try {
           playerRef.current.destroy();
-        } catch (e) {
+        } catch {
           // Ignore errors
         }
       }
@@ -82,8 +78,8 @@ export function EmbeddedVideoPlayer({
           rel: 0,
         },
         events: {
-          onStateChange: (event: YT.OnStateChangeEvent) => {
-            setIsPlaying(event.data === window.YT.PlayerState.PLAYING);
+          onStateChange: (_event: YT.OnStateChangeEvent) => {
+            // Player state change handler
           },
           onReady: () => {
             const interval = setInterval(() => {
@@ -103,7 +99,7 @@ export function EmbeddedVideoPlayer({
       if (playerRef.current) {
         try {
           playerRef.current.destroy();
-        } catch (e) {
+        } catch {
           // Ignore errors
         }
         playerRef.current = null;
@@ -147,7 +143,7 @@ export function EmbeddedVideoPlayer({
     if (playerRef.current) {
       try {
         playerRef.current.pauseVideo?.();
-      } catch (e) {
+      } catch {
         // Ignore errors
       }
     }
@@ -160,14 +156,10 @@ export function EmbeddedVideoPlayer({
         <DialogHeader className="p-4 pb-0">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0 pr-8">
-              <DialogTitle className="text-lg truncate">
-                {video?.title ?? "Loading..."}
-              </DialogTitle>
+              <DialogTitle className="text-lg truncate">{video?.title ?? "Loading..."}</DialogTitle>
               <div className="flex items-center gap-2 mt-1">
                 {video?.level && levelVariantMap[video.level] && (
-                  <Badge variant={levelVariantMap[video.level]}>
-                    {video.level}
-                  </Badge>
+                  <Badge variant={levelVariantMap[video.level]}>{video.level}</Badge>
                 )}
                 {video?.duration && (
                   <span className="text-sm text-foreground-muted flex items-center gap-1">
@@ -210,14 +202,9 @@ export function EmbeddedVideoPlayer({
               <h2 className="font-medium text-foreground text-sm">Transcript</h2>
             </div>
 
-            <div
-              ref={transcriptRef}
-              className="p-3 space-y-1.5 overflow-y-auto flex-1"
-            >
+            <div ref={transcriptRef} className="p-3 space-y-1.5 overflow-y-auto flex-1">
               {!hasTranscript ? (
-                <p className="text-foreground-muted text-sm">
-                  Transcript not available.
-                </p>
+                <p className="text-foreground-muted text-sm">Transcript not available.</p>
               ) : (
                 video.transcript!.map((segment, index) => (
                   <button
@@ -233,11 +220,13 @@ export function EmbeddedVideoPlayer({
                     <span className="text-xs text-foreground-muted mr-2">
                       {formatDuration(segment.start)}
                     </span>
-                    <span className={
-                      index === currentSegmentIndex
-                        ? "text-foreground font-medium"
-                        : "text-foreground-muted"
-                    }>
+                    <span
+                      className={
+                        index === currentSegmentIndex
+                          ? "text-foreground font-medium"
+                          : "text-foreground-muted"
+                      }
+                    >
                       {segment.text}
                     </span>
                   </button>
@@ -275,6 +264,7 @@ declare global {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-namespace -- YouTube API global types
 declare namespace YT {
   interface Player {
     seekTo(time: number, allowSeekAhead: boolean): void;

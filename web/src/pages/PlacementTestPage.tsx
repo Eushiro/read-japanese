@@ -1,56 +1,24 @@
-import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { useQuery, useMutation, useAction } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useAction,useMutation, useQuery } from "convex/react";
+import { ArrowLeft, Brain, ChevronRight, Loader2, RotateCcw,Target, Trophy } from "lucide-react";
+import { useEffect, useMemo,useRef, useState } from "react";
+
+import { QuestionDisplay, QuestionNavigation } from "@/components/quiz";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  QuestionDisplay,
-  QuestionNavigation,
-} from "@/components/quiz";
-import {
-  ArrowLeft,
-  Loader2,
-  Trophy,
-  Brain,
-  Target,
-  ChevronRight,
-  RotateCcw,
-} from "lucide-react";
+import { useT } from "@/lib/i18n";
+
+import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
 type Language = "japanese" | "english" | "french";
 
-// Loading phrases that cycle during question generation
-const LOADING_PHRASES = [
-  "Creating your question...",
-  "Calibrating difficulty...",
-  "Selecting the best format...",
-  "Preparing answer choices...",
-  "Verifying accuracy...",
-  "Analyzing your level...",
-  "Consulting the question bank...",
-  "Balancing challenge and learning...",
-  "Crafting a unique question...",
-  "Checking grammar points...",
-  "Selecting relevant vocabulary...",
-  "Optimizing for your progress...",
-  "Reviewing difficulty settings...",
-  "Matching to your skill level...",
-];
-
-const languageNames: Record<Language, string> = {
-  japanese: "Japanese",
-  english: "English",
-  french: "French",
-};
-
 const languageFlags: Record<Language, string> = {
-  japanese: "🇯🇵",
-  english: "🇬🇧",
-  french: "🇫🇷",
+  japanese: "\u{1f1ef}\u{1f1f5}",
+  english: "\u{1f1ec}\u{1f1e7}",
+  french: "\u{1f1eb}\u{1f1f7}",
 };
 
 interface PlacementQuestion {
@@ -68,9 +36,34 @@ interface PlacementQuestion {
 
 export function PlacementTestPage() {
   const navigate = useNavigate();
+  const t = useT();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const search = useSearch({ strict: false }) as { language?: string };
   const language = (search.language as Language) || "japanese";
+
+  // Loading phrases that cycle during question generation (translated)
+  const loadingPhrases = useMemo(
+    () => [
+      t("placement:loadingPhrases.creating"),
+      t("placement:loadingPhrases.calibrating"),
+      t("placement:loadingPhrases.selectingFormat"),
+      t("placement:loadingPhrases.preparingChoices"),
+      t("placement:loadingPhrases.verifying"),
+      t("placement:loadingPhrases.analyzing"),
+      t("placement:loadingPhrases.consulting"),
+      t("placement:loadingPhrases.balancing"),
+      t("placement:loadingPhrases.crafting"),
+      t("placement:loadingPhrases.checkingGrammar"),
+      t("placement:loadingPhrases.selectingVocab"),
+      t("placement:loadingPhrases.optimizing"),
+      t("placement:loadingPhrases.reviewingDifficulty"),
+      t("placement:loadingPhrases.matchingSkill"),
+    ],
+    [t]
+  );
+
+  // Get language name from common translations
+  const languageName = t(`common:languages.${language}`);
 
   const [testId, setTestId] = useState<Id<"placementTests"> | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1); // The latest question (unanswered)
@@ -88,7 +81,7 @@ export function PlacementTestPage() {
   // Track max confidence so progress bar never moves backwards
   const [maxConfidence, setMaxConfidence] = useState(0);
   // Cycling loading phrases
-  const loadingPhrase = useRotatingMessages(LOADING_PHRASES, isGeneratingQuestion, 2000);
+  const loadingPhrase = useRotatingMessages(loadingPhrases, isGeneratingQuestion, 2000);
 
   // Queries
   const existingTest = useQuery(
@@ -96,17 +89,15 @@ export function PlacementTestPage() {
     user ? { userId: user.id, language } : "skip"
   );
 
-  const currentTest = useQuery(
-    api.placementTest.get,
-    testId ? { id: testId } : "skip"
-  );
+  const currentTest = useQuery(api.placementTest.get, testId ? { id: testId } : "skip");
 
   // Calculate confidence from standard error
   // SE starts at 1.5 (low confidence) and decreases toward 0.4 threshold
   const currentConfidence = currentTest
-    ? Math.min(100, Math.max(0, Math.round(
-        ((1.5 - currentTest.abilityStandardError) / (1.5 - 0.4)) * 100
-      )))
+    ? Math.min(
+        100,
+        Math.max(0, Math.round(((1.5 - currentTest.abilityStandardError) / (1.5 - 0.4)) * 100))
+      )
     : 0;
 
   // Update max confidence when current exceeds it (so bar never goes backwards)
@@ -148,9 +139,7 @@ export function PlacementTestPage() {
       hasInitializedFromExisting.current = true;
       setTestId(existingTest._id);
       // Resume at the last unanswered question
-      const lastAnswered = existingTest.questions.findIndex(
-        (q) => q.userAnswer === undefined
-      );
+      const lastAnswered = existingTest.questions.findIndex((q) => q.userAnswer === undefined);
       const idx = lastAnswered >= 0 ? lastAnswered : existingTest.questions.length;
       setCurrentQuestionIndex(idx);
       setViewingIndex(idx);
@@ -264,10 +253,7 @@ export function PlacementTestPage() {
   };
 
   // Pre-generate the next question while user is answering current one
-  const preGenerateNextQuestion = async (
-    tid: Id<"placementTests">,
-    forIndex: number
-  ) => {
+  const preGenerateNextQuestion = async (tid: Id<"placementTests">, forIndex: number) => {
     // Don't pre-generate if already doing so or if next question is ready
     if (isPreGenerating || nextQuestionReady) return;
 
@@ -388,11 +374,9 @@ export function PlacementTestPage() {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-md mx-auto text-center">
-            <h1 className="text-2xl font-bold mb-4">Sign In Required</h1>
-            <p className="text-foreground-muted mb-6">
-              Please sign in to take the placement test.
-            </p>
-            <Button onClick={() => navigate({ to: "/" })}>Go to Home</Button>
+            <h1 className="text-2xl font-bold mb-4">{t("placement:auth.signInRequired")}</h1>
+            <p className="text-foreground-muted mb-6">{t("placement:auth.signInPrompt")}</p>
+            <Button onClick={() => navigate({ to: "/" })}>{t("placement:auth.goToHome")}</Button>
           </div>
         </div>
       </div>
@@ -400,12 +384,9 @@ export function PlacementTestPage() {
   }
 
   // The question we're currently viewing (may be a past answered question)
-  const viewingQuestion =
-    currentTest?.questions[viewingIndex] as PlacementQuestion | undefined;
+  const viewingQuestion = currentTest?.questions[viewingIndex] as PlacementQuestion | undefined;
   // Whether we're viewing a past question (already answered)
   const isViewingPastQuestion = viewingIndex < currentQuestionIndex;
-  // Whether we're on the current unanswered question
-  const isOnCurrentQuestion = viewingIndex === currentQuestionIndex;
   const isTestComplete = currentTest?.status === "completed";
 
   // Results view
@@ -416,23 +397,15 @@ export function PlacementTestPage() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate({ to: "/settings" })}
-              >
+              <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/settings" })}>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              <h1 className="text-xl font-bold">Placement Test Results</h1>
+              <h1 className="text-xl font-bold">{t("placement:results.title")}</h1>
             </div>
             {isAdmin && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleResetTest}
-              >
+              <Button variant="destructive" size="sm" onClick={handleResetTest}>
                 <RotateCcw className="w-4 h-4 mr-2" />
-                Reset Test
+                {t("placement:results.resetTest")}
               </Button>
             )}
           </div>
@@ -444,73 +417,53 @@ export function PlacementTestPage() {
             </div>
 
             <h2 className="text-2xl font-bold mb-2">
-              {languageFlags[language]} Your {languageNames[language]} Level
+              {languageFlags[language]} {t("placement:results.yourLevel", { language: languageName })}
             </h2>
 
-            <div className="text-5xl font-bold text-accent my-6">
-              {currentTest.determinedLevel}
-            </div>
+            <div className="text-5xl font-bold text-accent my-6">{currentTest.determinedLevel}</div>
 
             <div className="flex items-center justify-center gap-2 text-foreground-muted mb-8">
               <Target className="w-4 h-4" />
-              <span>{currentTest.confidence}% confidence</span>
+              <span>{t("placement:results.confidence", { percent: currentTest.confidence })}</span>
             </div>
 
             {/* Section breakdown */}
             {currentTest.scoresBySection && (
               <div className="grid grid-cols-3 gap-4 mb-8">
-                {Object.entries(currentTest.scoresBySection).map(
-                  ([section, score]) => (
-                    <div
-                      key={section}
-                      className="bg-muted rounded-lg p-4"
-                    >
-                      <div className="text-sm text-foreground-muted capitalize mb-1">
-                        {section}
-                      </div>
-                      <div className="text-xl font-bold">{score}%</div>
-                    </div>
-                  )
-                )}
+                {Object.entries(currentTest.scoresBySection).map(([section, score]) => (
+                  <div key={section} className="bg-muted rounded-lg p-4">
+                    <div className="text-sm text-foreground-muted capitalize mb-1">{section}</div>
+                    <div className="text-xl font-bold">{score}%</div>
+                  </div>
+                ))}
               </div>
             )}
 
             {/* Stats */}
             <div className="flex justify-center gap-8 text-sm text-foreground-muted mb-8">
               <div>
-                <span className="font-medium text-foreground">
-                  {currentTest.questionsAnswered}
-                </span>{" "}
-                questions
+                <span className="font-medium text-foreground">{currentTest.questionsAnswered}</span>{" "}
+                {t("placement:results.questions")}
+              </div>
+              <div>
+                <span className="font-medium text-foreground">{currentTest.correctAnswers}</span>{" "}
+                {t("placement:results.correct")}
               </div>
               <div>
                 <span className="font-medium text-foreground">
-                  {currentTest.correctAnswers}
+                  {Math.round((currentTest.correctAnswers / currentTest.questionsAnswered) * 100)}%
                 </span>{" "}
-                correct
-              </div>
-              <div>
-                <span className="font-medium text-foreground">
-                  {Math.round(
-                    (currentTest.correctAnswers / currentTest.questionsAnswered) *
-                      100
-                  )}
-                  %
-                </span>{" "}
-                accuracy
+                {t("placement:results.accuracy")}
               </div>
             </div>
 
             <div className="flex flex-col gap-3">
               <Button onClick={() => navigate({ to: "/learn" })}>
-                Start Learning at {currentTest.determinedLevel}
+                {t("placement:results.startLearning", { level: currentTest.determinedLevel })}
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigate({ to: "/settings" })}
-              >
-                Back to Settings
+              <Button variant="outline" onClick={() => navigate({ to: "/settings" })}>
+                {t("placement:results.backToSettings")}
               </Button>
             </div>
           </div>
@@ -527,25 +480,17 @@ export function PlacementTestPage() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate({ to: "/settings" })}
-              >
+              <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/settings" })}>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
               <h1 className="text-xl font-bold">
-                {languageFlags[language]} {languageNames[language]} Placement Test
+                {languageFlags[language]} {t("placement:start.title", { language: languageName })}
               </h1>
             </div>
             {isAdmin && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleResetTest}
-              >
+              <Button variant="destructive" size="sm" onClick={handleResetTest}>
                 <RotateCcw className="w-4 h-4 mr-2" />
-                Reset
+                {t("placement:start.reset")}
               </Button>
             )}
           </div>
@@ -556,23 +501,28 @@ export function PlacementTestPage() {
               <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
                 <Brain className="w-8 h-8 text-accent" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">
-                Adaptive Placement Test
-              </h2>
+              <h2 className="text-2xl font-bold mb-2">{t("placement:start.adaptiveTest")}</h2>
               <p className="text-foreground-muted">
-                This test adapts to your level as you answer. Answer honestly to
-                get an accurate assessment.
+                {t("placement:start.description")}
               </p>
             </div>
 
             {/* How it works explanation */}
             <div className="bg-muted/50 rounded-xl p-4 mb-6 text-sm">
-              <h4 className="font-medium text-foreground mb-2">How it works</h4>
+              <h4 className="font-medium text-foreground mb-2">{t("placement:start.howItWorks")}</h4>
               <ul className="space-y-1.5 text-foreground-muted">
-                <li>• This adaptive test has <strong className="text-foreground">8-20 questions</strong></li>
-                <li>• Questions adjust to your skill level as you answer</li>
-                <li>• The test ends when we're confident we've assessed your level</li>
-                <li>• Most people finish in about <strong className="text-foreground">10-15 questions</strong></li>
+                <li
+                  dangerouslySetInnerHTML={{
+                    __html: `\u2022 ${t("placement:start.questionRange")}`,
+                  }}
+                />
+                <li>{`\u2022 ${t("placement:start.questionsAdjust")}`}</li>
+                <li>{`\u2022 ${t("placement:start.testEnds")}`}</li>
+                <li
+                  dangerouslySetInnerHTML={{
+                    __html: `\u2022 ${t("placement:start.typicalDuration")}`,
+                  }}
+                />
               </ul>
             </div>
 
@@ -582,10 +532,8 @@ export function PlacementTestPage() {
                   <span className="text-accent font-medium">1</span>
                 </div>
                 <div>
-                  <div className="font-medium">Vocabulary, Grammar & Reading</div>
-                  <div className="text-foreground-muted">
-                    Tests multiple language skills
-                  </div>
+                  <div className="font-medium">{t("placement:start.skillsTitle")}</div>
+                  <div className="text-foreground-muted">{t("placement:start.skillsDescription")}</div>
                 </div>
               </div>
               <div className="flex items-start gap-3 text-sm">
@@ -593,26 +541,22 @@ export function PlacementTestPage() {
                   <span className="text-accent font-medium">2</span>
                 </div>
                 <div>
-                  <div className="font-medium">Personalized learning path</div>
+                  <div className="font-medium">{t("placement:start.personalizedTitle")}</div>
                   <div className="text-foreground-muted">
-                    Results customize content difficulty for you
+                    {t("placement:start.personalizedDescription")}
                   </div>
                 </div>
               </div>
             </div>
 
-            <Button
-              className="w-full"
-              onClick={handleStartTest}
-              disabled={isGeneratingQuestion}
-            >
+            <Button className="w-full" onClick={handleStartTest} disabled={isGeneratingQuestion}>
               {isGeneratingQuestion ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Preparing test...
+                  {t("placement:start.preparingTest")}
                 </>
               ) : (
-                "Start Test"
+                t("placement:start.startTest")
               )}
             </Button>
           </div>
@@ -628,28 +572,18 @@ export function PlacementTestPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate({ to: "/settings" })}
-            >
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/settings" })}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <h1 className="text-xl font-bold">
-              {languageFlags[language]} Placement Test
-            </h1>
+            <h1 className="text-xl font-bold">{languageFlags[language]} {t("placement:question.title")}</h1>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline">
-              Q{(viewingIndex ?? 0) + 1}
-              {isViewingPastQuestion ? ` of ${currentQuestionIndex + 1}` : ""}
+              {t("placement:question.questionNumber", { number: (viewingIndex ?? 0) + 1 })}
+              {isViewingPastQuestion ? ` ${t("placement:question.ofTotal", { total: currentQuestionIndex + 1 })}` : ""}
             </Badge>
             {isAdmin && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleResetTest}
-              >
+              <Button variant="destructive" size="sm" onClick={handleResetTest}>
                 <RotateCcw className="w-4 h-4" />
               </Button>
             )}
@@ -660,15 +594,13 @@ export function PlacementTestPage() {
         {currentTest && (
           <div className="mb-6">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-foreground-muted">
-                Question {currentQuestionIndex + 1}
-              </span>
+              <span className="text-foreground-muted">{t("placement:question.questionNumber", { number: currentQuestionIndex + 1 })}</span>
               <span className="text-foreground">
                 {maxConfidence >= 70
-                  ? "Almost there!"
+                  ? t("placement:question.almostThere")
                   : maxConfidence >= 50
-                  ? "Getting clearer..."
-                  : "Assessing your level..."}
+                    ? t("placement:question.gettingClearer")
+                    : t("placement:question.assessing")}
               </span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -680,10 +612,10 @@ export function PlacementTestPage() {
             <div className="flex justify-between text-xs text-foreground-muted mt-1">
               <span>
                 {currentTest.questionsAnswered > 0
-                  ? `${currentTest.correctAnswers} / ${currentTest.questionsAnswered} correct`
+                  ? t("placement:question.correctCount", { correct: currentTest.correctAnswers, total: currentTest.questionsAnswered })
                   : ""}
               </span>
-              <span>{maxConfidence}% confident</span>
+              <span>{t("placement:question.confident", { percent: maxConfidence })}</span>
             </div>
           </div>
         )}
@@ -717,11 +649,12 @@ export function PlacementTestPage() {
                 key={loadingPhrase}
                 className="text-2xl sm:text-3xl font-bold text-center px-4"
                 style={{
-                  background: 'linear-gradient(90deg, var(--foreground) 0%, var(--accent) 50%, var(--foreground) 100%)',
-                  backgroundSize: '200% 100%',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  animation: 'shimmer 2s ease-in-out infinite',
+                  background:
+                    "linear-gradient(90deg, var(--foreground) 0%, var(--accent) 50%, var(--foreground) 100%)",
+                  backgroundSize: "200% 100%",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  animation: "shimmer 2s ease-in-out infinite",
                 }}
               >
                 {loadingPhrase}
@@ -735,9 +668,7 @@ export function PlacementTestPage() {
               type="multiple_choice"
               options={viewingQuestion.options}
               selectedAnswer={
-                isViewingPastQuestion
-                  ? viewingQuestion.userAnswer || ""
-                  : selectedAnswer || ""
+                isViewingPastQuestion ? viewingQuestion.userAnswer || "" : selectedAnswer || ""
               }
               onSelectAnswer={(answer) => {
                 if (!isViewingPastQuestion && !showFeedback && !isSubmitting) {
@@ -752,7 +683,7 @@ export function PlacementTestPage() {
               metadata={{
                 type: viewingQuestion.type.charAt(0).toUpperCase() + viewingQuestion.type.slice(1),
                 level: viewingQuestion.level,
-                badge: isViewingPastQuestion ? "Reviewing" : undefined,
+                badge: isViewingPastQuestion ? t("placement:question.reviewing") : undefined,
               }}
               language={language}
             />
@@ -767,8 +698,8 @@ export function PlacementTestPage() {
               onFinish={!isViewingPastQuestion && showFeedback ? handleNextQuestion : undefined}
               isSubmitting={isSubmitting}
               canSubmit={selectedAnswer !== null}
-              nextLabel={viewingIndex === currentQuestionIndex - 1 ? "Return to Current" : "Next"}
-              finishLabel="Next Question"
+              nextLabel={viewingIndex === currentQuestionIndex - 1 ? t("placement:question.returnToCurrent") : t("placement:question.next")}
+              finishLabel={t("placement:question.nextQuestion")}
               variant="stacked"
             />
           </>
@@ -776,7 +707,7 @@ export function PlacementTestPage() {
           <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
             <div className="flex flex-col items-center justify-center py-8 gap-3">
               <Loader2 className="w-6 h-6 animate-spin text-accent" />
-              <span className="text-foreground-muted">Loading question...</span>
+              <span className="text-foreground-muted">{t("placement:question.loadingQuestion")}</span>
             </div>
           </div>
         )}

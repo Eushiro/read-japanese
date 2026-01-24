@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
-import { examTypeValidator, languageValidator, examSectionTypeValidator } from "./schema";
+
+import { internalMutation,mutation, query } from "./_generated/server";
+import { examSectionTypeValidator,examTypeValidator, languageValidator } from "./schema";
 
 // ============================================
 // QUERIES
@@ -66,9 +67,7 @@ export const getWithStats = query({
       .withIndex("by_exam_type", (q) => q.eq("examType", args.examType))
       .collect();
 
-    const filtered = args.publishedOnly
-      ? templates.filter((t) => t.isPublished)
-      : templates;
+    const filtered = args.publishedOnly ? templates.filter((t) => t.isPublished) : templates;
 
     // Get question counts for each template
     const withStats = await Promise.all(
@@ -83,9 +82,7 @@ export const getWithStats = query({
           totalQuestions: questions.length,
           sectionBreakdown: template.sections.map((section) => ({
             ...section,
-            questionsAvailable: questions.filter(
-              (q) => q.sectionType === section.type
-            ).length,
+            questionsAvailable: questions.filter((q) => q.sectionType === section.type).length,
           })),
         };
       })
@@ -166,7 +163,7 @@ export const update = mutation({
 
     // Filter out undefined values
     const filteredUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([_, value]) => value !== undefined)
+      Object.entries(updates).filter(([, value]) => value !== undefined)
     );
 
     if (Object.keys(filteredUpdates).length > 0) {

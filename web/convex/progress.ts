@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+
 import { mutation, query } from "./_generated/server";
 import { languageValidator } from "./schema";
 
@@ -64,9 +65,10 @@ export const getStats = query({
       totalStories: progress.length,
       completedStories: progress.filter((p) => p.isCompleted).length,
       inProgressStories: progress.filter((p) => !p.isCompleted && p.percentComplete > 0).length,
-      averageProgress: progress.length > 0
-        ? Math.round(progress.reduce((sum, p) => sum + p.percentComplete, 0) / progress.length)
-        : 0,
+      averageProgress:
+        progress.length > 0
+          ? Math.round(progress.reduce((sum, p) => sum + p.percentComplete, 0) / progress.length)
+          : 0,
     };
   },
 });
@@ -181,8 +183,6 @@ export const getRecent = query({
       .collect();
 
     // Sort by lastReadAt descending and take limit
-    return progress
-      .sort((a, b) => b.lastReadAt - a.lastReadAt)
-      .slice(0, args.limit ?? 10);
+    return progress.sort((a, b) => b.lastReadAt - a.lastReadAt).slice(0, args.limit ?? 10);
   },
 });

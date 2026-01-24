@@ -1,32 +1,43 @@
-import { useState, useEffect } from "react";
-import { useSearch, Link } from "@tanstack/react-router";
-import { BookmarkCheck, Brain, PenLine, GraduationCap } from "lucide-react";
+import { Link,useSearch } from "@tanstack/react-router";
+import { BookmarkCheck, Brain, GraduationCap,PenLine } from "lucide-react";
+import { useEffect, useMemo,useState } from "react";
 
-// Import content from existing pages (we'll extract the content components)
-import { VocabularyPage } from "./VocabularyPage";
+import { useT } from "@/lib/i18n";
+
 import { FlashcardsPage } from "./FlashcardsPage";
 import { PracticePage } from "./PracticePage";
+// Import content from existing pages (we'll extract the content components)
+import { VocabularyPage } from "./VocabularyPage";
 
 type LearnTab = "words" | "review" | "practice";
 
-const TABS: { id: LearnTab; label: string; icon: typeof BookmarkCheck }[] = [
-  { id: "words", label: "Words", icon: BookmarkCheck },
-  { id: "review", label: "Review", icon: Brain },
-  { id: "practice", label: "Practice", icon: PenLine },
-];
+const TAB_IDS: LearnTab[] = ["words", "review", "practice"];
+const TAB_ICONS: Record<LearnTab, typeof BookmarkCheck> = {
+  words: BookmarkCheck,
+  review: Brain,
+  practice: PenLine,
+};
 
 export function LearnPage() {
+  const t = useT();
+
+  const TABS = useMemo(() => TAB_IDS.map((id) => ({
+    id,
+    label: t(`learn.tabs.${id}`),
+    icon: TAB_ICONS[id],
+  })), [t]);
   // Get tab from URL query param
   const search = useSearch({ strict: false }) as { tab?: string };
   const tabFromUrl = search?.tab as LearnTab | undefined;
 
   const [activeTab, setActiveTab] = useState<LearnTab>(
-    tabFromUrl && TABS.some(t => t.id === tabFromUrl) ? tabFromUrl : "words"
+    tabFromUrl && TAB_IDS.includes(tabFromUrl) ? tabFromUrl : "words"
   );
 
   // Sync tab with URL
   useEffect(() => {
-    if (tabFromUrl && TABS.some(t => t.id === tabFromUrl)) {
+    if (tabFromUrl && TAB_IDS.includes(tabFromUrl)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: sync tab state with URL
       setActiveTab(tabFromUrl);
     }
   }, [tabFromUrl]);
@@ -61,9 +72,7 @@ export function LearnPage() {
               <div className="p-1.5 rounded-lg bg-accent/10">
                 <GraduationCap className="w-4 h-4 text-accent" />
               </div>
-              <span className="text-sm font-semibold text-foreground hidden sm:inline">
-                Learn
-              </span>
+              <span className="text-sm font-semibold text-foreground hidden sm:inline">{t("learn.title")}</span>
             </Link>
 
             {/* Tab Buttons */}

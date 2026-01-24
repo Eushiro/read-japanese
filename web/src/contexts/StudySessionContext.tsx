@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, type ReactNode,useCallback, useContext, useState } from "react";
 
 // Session activity types
 export type SessionActivity =
@@ -60,7 +60,7 @@ export function StudySessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setDuration = useCallback((minutes: number | null) => {
-    setState(prev => {
+    setState((prev) => {
       if (prev.status !== "planning") return prev;
       return { ...prev, selectedDuration: minutes };
     });
@@ -82,7 +82,7 @@ export function StudySessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const advanceToNextActivity = useCallback(() => {
-    setState(prev => {
+    setState((prev) => {
       if (prev.status !== "active") return prev;
       const nextIndex = prev.currentActivityIndex + 1;
       if (nextIndex >= prev.plan.activities.length) {
@@ -94,7 +94,7 @@ export function StudySessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const completeSession = useCallback((streakInfo: SessionResults["streakInfo"]) => {
-    setState(prev => {
+    setState((prev) => {
       if (prev.status !== "active") return prev;
       return {
         status: "complete",
@@ -109,7 +109,7 @@ export function StudySessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const recordCardsReviewed = useCallback((count: number) => {
-    setState(prev => {
+    setState((prev) => {
       if (prev.status !== "active") return prev;
       return {
         ...prev,
@@ -118,18 +118,21 @@ export function StudySessionProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const recordContentConsumed = useCallback((content: { type: "story" | "video"; title: string }) => {
-    setState(prev => {
-      if (prev.status !== "active") return prev;
-      return {
-        ...prev,
-        results: { ...prev.results, contentConsumed: content },
-      };
-    });
-  }, []);
+  const recordContentConsumed = useCallback(
+    (content: { type: "story" | "video"; title: string }) => {
+      setState((prev) => {
+        if (prev.status !== "active") return prev;
+        return {
+          ...prev,
+          results: { ...prev.results, contentConsumed: content },
+        };
+      });
+    },
+    []
+  );
 
   const recordWordsAdded = useCallback((count: number) => {
-    setState(prev => {
+    setState((prev) => {
       if (prev.status !== "active") return prev;
       return {
         ...prev,
@@ -139,7 +142,7 @@ export function StudySessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const recordSentencesWritten = useCallback((count: number) => {
-    setState(prev => {
+    setState((prev) => {
       if (prev.status !== "active") return prev;
       return {
         ...prev,

@@ -1,12 +1,16 @@
-import { useState, useRef, useEffect } from "react";
-import { useAction, useMutation } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { ChevronRight, Crown,RefreshCw, Volume2, VolumeX } from "lucide-react";
+import { useEffect,useRef, useState } from "react";
+
+import { Paywall } from "@/components/Paywall";
+import { Button } from "@/components/ui/button";
+import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { useT } from "@/lib/i18n";
+
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { Volume2, VolumeX, RefreshCw, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { AudioRecorder } from "./AudioRecorder";
 import { FeedbackDisplay } from "./FeedbackDisplay";
-import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 
 /**
  * Convert audio blob (webm) to WAV format for API compatibility
@@ -54,10 +58,10 @@ function encodeWav(audioBuffer: AudioBuffer): ArrayBuffer {
   const view = new DataView(buffer);
 
   // WAV header
-  writeString(view, 0, 'RIFF');
+  writeString(view, 0, "RIFF");
   view.setUint32(4, 36 + dataLength, true);
-  writeString(view, 8, 'WAVE');
-  writeString(view, 12, 'fmt ');
+  writeString(view, 8, "WAVE");
+  writeString(view, 12, "fmt ");
   view.setUint32(16, 16, true); // fmt chunk size
   view.setUint16(20, format, true);
   view.setUint16(22, numChannels, true);
@@ -65,14 +69,14 @@ function encodeWav(audioBuffer: AudioBuffer): ArrayBuffer {
   view.setUint32(28, sampleRate * blockAlign, true);
   view.setUint16(32, blockAlign, true);
   view.setUint16(34, bitDepth, true);
-  writeString(view, 36, 'data');
+  writeString(view, 36, "data");
   view.setUint32(40, dataLength, true);
 
   // Write samples
   let offset = 44;
   for (let i = 0; i < samples.length; i++) {
     const sample = Math.max(-1, Math.min(1, samples[i]));
-    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
     offset += 2;
   }
 
@@ -109,12 +113,8 @@ interface ShadowingCardProps {
 
 type CardState = "ready" | "recording" | "processing" | "results";
 
-export function ShadowingCard({
-  flashcard,
-  userId,
-  onNext,
-  onComplete,
-}: ShadowingCardProps) {
+export function ShadowingCard({ flashcard, userId, onNext }: ShadowingCardProps) {
+  const t = useT();
   const [cardState, setCardState] = useState<CardState>("ready");
   const [isPlayingTarget, setIsPlayingTarget] = useState(false);
   const [feedbackResult, setFeedbackResult] = useState<{
@@ -122,6 +122,7 @@ export function ShadowingCard({
     feedbackText: string;
     feedbackAudioUrl?: string;
   } | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const targetAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -129,6 +130,11 @@ export function ShadowingCard({
   const evaluateShadowing = useAction(api.ai.evaluateShadowing);
   const submitShadowing = useMutation(api.shadowing.submit);
   const storeUserAudio = useMutation(api.shadowing.storeUserAudio);
+
+  // Check subscription tier - shadowing requires Pro or higher
+  const subscription = useQuery(api.subscriptions.get, { userId });
+  const tier = subscription?.tier ?? "free";
+  const hasProAccess = tier === "pro" || tier === "power";
 
   const language = flashcard.vocabulary?.language ?? "japanese";
 
@@ -158,6 +164,11 @@ export function ShadowingCard({
   };
 
   const handleStartRecording = async () => {
+    // Require Pro or higher for shadowing
+    if (!hasProAccess) {
+      setShowPaywall(true);
+      return;
+    }
     await recorder.startRecording();
     setCardState("recording");
   };
@@ -182,7 +193,7 @@ export function ShadowingCard({
         const { uploadUrl } = await storeUserAudio({ userId });
 
         // Convert WAV base64 back to blob for upload
-        const wavBytes = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0));
+        const wavBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
         const wavBlob = new Blob([wavBytes], { type: "audio/wav" });
 
         // Upload to Convex storage
@@ -237,12 +248,6 @@ export function ShadowingCard({
       if (userAudioStorageId) {
         submitData.userAudioStorageId = userAudioStorageId;
       }
-      console.log("Submitting shadowing data:", {
-        ...submitData,
-        feedbackTextLength: result.feedbackText.length,
-        targetTextLength: flashcard.sentence.length,
-        hasUserAudio: !!userAudioStorageId,
-      });
       await submitShadowing(submitData);
 
       setCardState("results");
@@ -250,7 +255,7 @@ export function ShadowingCard({
       console.error("Failed to evaluate shadowing:", error);
       setFeedbackResult({
         accuracyScore: 0,
-        feedbackText: "Failed to evaluate your recording. Please try again.",
+        feedbackText: t("shadowing.card.evaluationFailed"),
       });
       setCardState("results");
     }
@@ -282,18 +287,14 @@ export function ShadowingCard({
 
       {/* Target sentence section */}
       <div className="p-6 border-b border-border">
-        <div className="text-sm text-foreground-muted mb-2">
-          Listen and repeat:
-        </div>
+        <div className="text-sm text-foreground-muted mb-2">{t("shadowing.card.listenAndRepeat")}</div>
         <p
           className="text-2xl font-semibold text-foreground mb-2"
           style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
         >
           {flashcard.sentence}
         </p>
-        <p className="text-foreground-muted mb-4">
-          {flashcard.sentenceTranslation}
-        </p>
+        <p className="text-foreground-muted mb-4">{flashcard.sentenceTranslation}</p>
 
         {/* Play target audio button */}
         {flashcard.audioUrl && (
@@ -303,12 +304,8 @@ export function ShadowingCard({
             className="gap-2"
             disabled={cardState === "recording"}
           >
-            {isPlayingTarget ? (
-              <VolumeX className="w-4 h-4" />
-            ) : (
-              <Volume2 className="w-4 h-4" />
-            )}
-            {isPlayingTarget ? "Stop" : "Play Target Audio"}
+            {isPlayingTarget ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            {isPlayingTarget ? t("shadowing.card.stop") : t("shadowing.card.playTargetAudio")}
           </Button>
         )}
       </div>
@@ -352,22 +349,36 @@ export function ShadowingCard({
       {/* Action buttons */}
       {cardState === "results" && (
         <div className="px-6 pb-6 flex gap-3">
-          <Button
-            variant="outline"
-            onClick={handleTryAgain}
-            className="flex-1 gap-2"
-          >
+          <Button variant="outline" onClick={handleTryAgain} className="flex-1 gap-2">
             <RefreshCw className="w-4 h-4" />
-            Try Again
+            {t("shadowing.card.tryAgain")}
           </Button>
           {onNext && (
             <Button onClick={handleNext} className="flex-1 gap-2">
-              Next Sentence
+              {t("shadowing.card.nextSentence")}
               <ChevronRight className="w-4 h-4" />
             </Button>
           )}
         </div>
       )}
+
+      {/* Pro badge indicator for non-pro users */}
+      {!hasProAccess && cardState === "ready" && (
+        <div className="px-6 pb-4">
+          <div className="flex items-center gap-2 text-xs text-foreground-muted">
+            <Crown className="w-3 h-3 text-accent" />
+            <span>{t("shadowing.card.requiresPro")}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Paywall Modal */}
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="shadowing"
+        requiredTier="pro"
+      />
     </div>
   );
 }

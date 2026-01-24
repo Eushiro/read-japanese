@@ -1,4 +1,5 @@
 import { Loader2 } from "lucide-react";
+
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
 
 interface RotatingLoaderProps {
@@ -30,19 +31,26 @@ export function RotatingLoader({
   return (
     <div className="flex flex-col items-center gap-4 py-8">
       <div className="relative">
-        <div className={`${config.container} rounded-full bg-accent/10 flex items-center justify-center`}>
+        <div
+          className={`${config.container} rounded-full bg-accent/10 flex items-center justify-center`}
+        >
           <Loader2 className={`${config.icon} text-accent animate-spin`} />
         </div>
       </div>
       <p
         className={`${config.text} text-foreground-muted transition-opacity duration-300`}
-        style={shimmer ? {
-          background: 'linear-gradient(90deg, var(--foreground) 0%, var(--accent) 50%, var(--foreground) 100%)',
-          backgroundSize: '200% 100%',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          animation: 'shimmer 2s ease-in-out infinite',
-        } : undefined}
+        style={
+          shimmer
+            ? {
+                background:
+                  "linear-gradient(90deg, var(--foreground) 0%, var(--accent) 50%, var(--foreground) 100%)",
+                backgroundSize: "200% 100%",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                animation: "shimmer 2s ease-in-out infinite",
+              }
+            : undefined
+        }
       >
         {currentMessage}
       </p>

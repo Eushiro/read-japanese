@@ -1,22 +1,25 @@
 import { Link } from "@tanstack/react-router";
 import {
-  BookOpen,
-  Volume2,
-  BookmarkCheck,
-  Sparkles,
-  Languages,
-  GraduationCap,
   ArrowRight,
-  Check,
-  PenLine,
+  BookmarkCheck,
+  BookOpen,
   Brain,
+  Check,
+  GraduationCap,
+  Languages,
+  PenLine,
+  Sparkles,
   Target,
+  Volume2,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { useAuth, SignInButton } from "@/contexts/AuthContext";
+import { SignInButton,useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
 
 export function LandingPage() {
   const { isAuthenticated } = useAuth();
+  const t = useT();
 
   return (
     <div className="min-h-screen">
@@ -30,28 +33,28 @@ export function LandingPage() {
           <div className="max-w-3xl mx-auto text-center animate-fade-in-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-white text-sm font-semibold mb-6">
               <Sparkles className="w-4 h-4" />
-              AI-Powered Exam Prep
+              {t("landing.hero.tagline")}
             </div>
             <h1
               className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Personalized Learning{" "}
+              {t("landing.hero.title")}{" "}
               <span className="whitespace-nowrap">
-                for <span className="bg-gradient-to-r from-accent to-purple-500 bg-clip-text text-transparent">Your Exam</span>
+                <span className="bg-gradient-to-r from-accent to-purple-500 bg-clip-text text-transparent">
+                  {t("landing.hero.titleHighlight")}
+                </span>
               </span>
             </h1>
             <p className="text-lg sm:text-xl text-foreground mb-8 max-w-2xl mx-auto">
-              AI generates content from your vocabulary, verifies your writing,
-              and creates mock tests tailored to your target exam. Not generic
-              study materials—a learning path built for you.
+              {t("landing.hero.subtitle")}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isAuthenticated ? (
                 <Link to="/dashboard">
                   <Button size="lg" className="w-full sm:w-auto shadow-lg shadow-accent/25">
                     <BookOpen className="w-5 h-5 mr-2" />
-                    Start Learning
+                    {t("landing.hero.startLearning")}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </Link>
@@ -59,19 +62,15 @@ export function LandingPage() {
                 <SignInButton mode="modal">
                   <Button size="lg" className="w-full sm:w-auto shadow-lg shadow-accent/25">
                     <Sparkles className="w-5 h-5 mr-2" />
-                    Get Started Free
+                    {t("landing.hero.getStartedFree")}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </SignInButton>
               )}
               <Link to="/library">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                >
+                <Button size="lg" variant="outline" className="w-full sm:w-auto">
                   <BookOpen className="w-5 h-5 mr-2" />
-                  Browse Library
+                  {t("landing.hero.browseLibrary")}
                 </Button>
               </Link>
             </div>
@@ -92,17 +91,32 @@ export function LandingPage() {
               className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Prep for the exams that matter
+              {t("landing.exams.title")}
             </h2>
             <p className="text-foreground text-lg max-w-2xl mx-auto">
-              Content and tests aligned with official exam formats and vocabulary lists.
+              {t("landing.exams.subtitle")}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
-            <LanguageCard flag="🇯🇵" language="Japanese" exams={["JLPT N5", "JLPT N4", "JLPT N3", "JLPT N2", "JLPT N1"]} color="red" />
-            <LanguageCard flag="🇬🇧" language="English" exams={["TOEFL", "SAT", "GRE"]} color="blue" />
-            <LanguageCard flag="🇫🇷" language="French" exams={["DELF A1-B2", "DALF C1-C2", "TCF"]} color="purple" />
+            <LanguageCard
+              flag="🇯🇵"
+              language={t("landing.exams.japanese")}
+              exams={["JLPT N5", "JLPT N4", "JLPT N3", "JLPT N2", "JLPT N1"]}
+              color="red"
+            />
+            <LanguageCard
+              flag="🇬🇧"
+              language={t("landing.exams.english")}
+              exams={["TOEFL", "SAT", "GRE"]}
+              color="blue"
+            />
+            <LanguageCard
+              flag="🇫🇷"
+              language={t("landing.exams.french")}
+              exams={["DELF A1-B2", "DALF C1-C2", "TCF"]}
+              color="purple"
+            />
           </div>
         </div>
       </section>
@@ -115,32 +129,32 @@ export function LandingPage() {
               className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Not another flashcard app
+              {t("landing.comparison.title")}
             </h2>
             <p className="text-foreground text-lg max-w-2xl mx-auto">
-              Most apps test what you recognize. We test what you can produce.
+              {t("landing.comparison.subtitle")}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <ComparisonCard
-              title="SanLang"
+              title={t("landing.comparison.sanlang")}
               isUs={true}
               items={[
-                "Write sentences, get AI feedback",
-                "Content generated from YOUR vocabulary",
-                "Mock tests in real exam formats",
-                "Multi-modal: text, audio, images",
+                t("landing.comparison.us.item1"),
+                t("landing.comparison.us.item2"),
+                t("landing.comparison.us.item3"),
+                t("landing.comparison.us.item4"),
               ]}
             />
             <ComparisonCard
-              title="Other Apps"
+              title={t("landing.comparison.others")}
               isUs={false}
               items={[
-                "Flip cards, tap correct answer",
-                "Generic word lists for everyone",
-                "Gamified but not exam-focused",
-                "Usually single-modal",
+                t("landing.comparison.them.item1"),
+                t("landing.comparison.them.item2"),
+                t("landing.comparison.them.item3"),
+                t("landing.comparison.them.item4"),
               ]}
             />
           </div>
@@ -155,10 +169,10 @@ export function LandingPage() {
               className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              The complete learning loop
+              {t("landing.loop.title")}
             </h2>
             <p className="text-foreground text-lg max-w-2xl mx-auto">
-              Input, practice, output, repeat. Every feature connects to help you actually learn.
+              {t("landing.loop.subtitle")}
             </p>
           </div>
 
@@ -166,29 +180,29 @@ export function LandingPage() {
             <LoopCard
               icon={BookOpen}
               step={1}
-              title="Input"
-              description="Read stories, listen to audio, watch videos—all at your level"
+              title={t("landing.loop.input.title")}
+              description={t("landing.loop.input.description")}
               color="blue"
             />
             <LoopCard
               icon={BookmarkCheck}
               step={2}
-              title="Capture"
-              description="Save words automatically or manually. Build your personal vocabulary."
+              title={t("landing.loop.capture.title")}
+              description={t("landing.loop.capture.description")}
               color="green"
             />
             <LoopCard
               icon={Brain}
               step={3}
-              title="Review"
-              description="AI-generated flashcards with example sentences, refreshed to stay relevant"
+              title={t("landing.loop.review.title")}
+              description={t("landing.loop.review.description")}
               color="purple"
             />
             <LoopCard
               icon={PenLine}
               step={4}
-              title="Output"
-              description="Write sentences, get instant AI feedback on grammar and usage"
+              title={t("landing.loop.output.title")}
+              description={t("landing.loop.output.description")}
               color="orange"
             />
           </div>
@@ -203,48 +217,48 @@ export function LandingPage() {
               className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Everything you need to pass your exam
+              {t("landing.features.title")}
             </h2>
             <p className="text-foreground text-lg max-w-2xl mx-auto">
-              From vocabulary building to mock tests, we've got you covered.
+              {t("landing.features.subtitle")}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             <FeatureCard
               icon={Sparkles}
-              title="AI-Powered Flashcards"
-              description="Cards auto-generated with example sentences at your level. Sentences refresh periodically so you don't just memorize patterns."
+              title={t("landing.features.flashcards.title")}
+              description={t("landing.features.flashcards.description")}
               color="purple"
             />
             <FeatureCard
               icon={PenLine}
-              title="Writing Practice"
-              description="Create sentences using target words. AI checks grammar, word usage, and naturalness—then shows you how to improve."
+              title={t("landing.features.writing.title")}
+              description={t("landing.features.writing.description")}
               color="blue"
             />
             <FeatureCard
               icon={Target}
-              title="Personalized Content"
-              description="Stories and tests generated from YOUR vocabulary. Practice exactly what you need to learn."
+              title={t("landing.features.personalized.title")}
+              description={t("landing.features.personalized.description")}
               color="orange"
             />
             <FeatureCard
               icon={GraduationCap}
-              title="Real Exam Formats"
-              description="Mock tests that match JLPT, TOEFL, DELF, and other official exam structures and scoring."
+              title={t("landing.features.exams.title")}
+              description={t("landing.features.exams.description")}
               color="green"
             />
             <FeatureCard
               icon={Volume2}
-              title="Native Audio"
-              description="Listen to stories and flashcards with natural pronunciation. Train your ears while you learn."
+              title={t("landing.features.audio.title")}
+              description={t("landing.features.audio.description")}
               color="pink"
             />
             <FeatureCard
               icon={Languages}
-              title="Tap-to-Define"
-              description="Tap any word for instant definitions. Reading aids like furigana help you stay in flow."
+              title={t("landing.features.tapDefine.title")}
+              description={t("landing.features.tapDefine.description")}
               color="cyan"
             />
           </div>
@@ -261,17 +275,16 @@ export function LandingPage() {
             className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Start learning smarter
+            {t("landing.cta.title")}
           </h2>
           <p className="text-foreground text-lg mb-8 max-w-xl mx-auto">
-            Join learners who are preparing for their exams with AI-powered,
-            personalized study materials.
+            {t("landing.cta.subtitle")}
           </p>
           {isAuthenticated ? (
             <Link to="/library">
               <Button size="lg" className="shadow-lg shadow-accent/25">
                 <BookOpen className="w-5 h-5 mr-2" />
-                Go to Library
+                {t("landing.cta.goToLibrary")}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
@@ -279,19 +292,19 @@ export function LandingPage() {
             <SignInButton mode="modal">
               <Button size="lg" className="shadow-lg shadow-accent/25">
                 <Sparkles className="w-5 h-5 mr-2" />
-                Get Started Free
+                {t("landing.cta.getStartedFree")}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </SignInButton>
           )}
-          <p className="text-sm text-foreground mt-4">No credit card required</p>
+          <p className="text-sm text-foreground mt-4">{t("landing.cta.noCreditCard")}</p>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="py-8 border-t border-border">
         <div className="container mx-auto px-4 sm:px-6 text-center text-foreground-muted text-sm">
-          <p>SanLang - Personalized exam prep powered by AI</p>
+          <p>{t("landing.footer.tagline")}</p>
         </div>
       </footer>
     </div>
@@ -347,8 +360,12 @@ const featureColorClasses = {
 function FeatureCard({ icon: Icon, title, description, color }: FeatureCardProps) {
   const colors = featureColorClasses[color];
   return (
-    <div className={`p-6 rounded-xl bg-gradient-to-br ${colors.gradient} border ${colors.border} transition-all hover:scale-[1.02]`}>
-      <div className={`w-12 h-12 rounded-lg ${colors.iconBg} flex items-center justify-center mb-4`}>
+    <div
+      className={`p-6 rounded-xl bg-gradient-to-br ${colors.gradient} border ${colors.border} transition-all hover:scale-[1.02]`}
+    >
+      <div
+        className={`w-12 h-12 rounded-lg ${colors.iconBg} flex items-center justify-center mb-4`}
+      >
         <Icon className={`w-6 h-6 ${colors.icon}`} />
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
@@ -399,12 +416,16 @@ const loopColorClasses = {
 function LoopCard({ icon: Icon, step, title, description, color }: LoopCardProps) {
   const colors = loopColorClasses[color];
   return (
-    <div className={`text-center p-6 rounded-2xl bg-gradient-to-br ${colors.gradient} border ${colors.border}`}>
+    <div
+      className={`text-center p-6 rounded-2xl bg-gradient-to-br ${colors.gradient} border ${colors.border}`}
+    >
       <div className="relative inline-block mb-4">
         <div className={`w-16 h-16 rounded-2xl ${colors.iconBg} flex items-center justify-center`}>
           <Icon className={`w-8 h-8 ${colors.icon}`} />
         </div>
-        <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full ${colors.badge} text-white text-xs font-bold flex items-center justify-center shadow-lg`}>
+        <div
+          className={`absolute -top-2 -right-2 w-6 h-6 rounded-full ${colors.badge} text-white text-xs font-bold flex items-center justify-center shadow-lg`}
+        >
           {step}
         </div>
       </div>
@@ -422,8 +443,12 @@ interface ComparisonCardProps {
 
 function ComparisonCard({ title, isUs, items }: ComparisonCardProps) {
   return (
-    <div className={`p-6 rounded-2xl border-2 ${isUs ? "border-accent/30 bg-gradient-to-br from-accent/10 to-purple-500/5" : "border-border bg-surface"}`}>
-      <h3 className={`text-lg font-semibold mb-4 ${isUs ? "text-accent" : "text-foreground-muted"}`}>
+    <div
+      className={`p-6 rounded-2xl border-2 ${isUs ? "border-accent/30 bg-gradient-to-br from-accent/10 to-purple-500/5" : "border-border bg-surface"}`}
+    >
+      <h3
+        className={`text-lg font-semibold mb-4 ${isUs ? "text-accent" : "text-foreground-muted"}`}
+      >
         {title}
       </h3>
       <ul className="space-y-3">
@@ -438,9 +463,7 @@ function ComparisonCard({ title, isUs, items }: ComparisonCardProps) {
                 <div className="w-1.5 h-1.5 rounded-full bg-foreground-muted/50" />
               </div>
             )}
-            <span className={isUs ? "text-foreground" : "text-foreground-muted"}>
-              {item}
-            </span>
+            <span className={isUs ? "text-foreground" : "text-foreground-muted"}>{item}</span>
           </li>
         ))}
       </ul>
@@ -479,8 +502,12 @@ const colorClasses = {
 function LanguageCard({ flag, language, exams, color }: LanguageCardProps) {
   const colors = colorClasses[color];
   return (
-    <div className={`flex flex-col items-center gap-4 px-6 py-8 rounded-xl bg-gradient-to-br ${colors.gradient} border ${colors.border} transition-all hover:scale-[1.02]`}>
-      <div className={`w-16 h-16 rounded-2xl ${colors.iconBg} flex items-center justify-center text-4xl`}>
+    <div
+      className={`flex flex-col items-center gap-4 px-6 py-8 rounded-xl bg-gradient-to-br ${colors.gradient} border ${colors.border} transition-all hover:scale-[1.02]`}
+    >
+      <div
+        className={`w-16 h-16 rounded-2xl ${colors.iconBg} flex items-center justify-center text-4xl`}
+      >
         {flag}
       </div>
       <div className="text-center">

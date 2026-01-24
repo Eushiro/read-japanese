@@ -1,14 +1,15 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import {
-  LayoutDashboard,
-  Video,
   BookOpen,
-  Layers,
-  Clock,
-  Settings,
   ChevronLeft,
+  Clock,
   HardDrive,
+  Layers,
+  LayoutDashboard,
+  Settings,
+  Video,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -33,10 +34,7 @@ export function AdminSidebar() {
     <aside className="w-64 min-h-screen border-r border-border bg-surface flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border">
-        <Link
-          to="/admin"
-          className="flex items-center gap-3 text-lg font-semibold text-foreground"
-        >
+        <Link to="/admin" className="flex items-center gap-3 text-lg font-semibold text-foreground">
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
             <Settings className="w-4 h-4 text-white" />
           </div>

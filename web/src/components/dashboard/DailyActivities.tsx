@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
+import { BookOpen, Brain, ChevronRight, PenLine, Sparkles } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Brain, PenLine, BookOpen, ChevronRight, Sparkles } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface DailyActivitiesProps {
   dueCards: number;
@@ -17,6 +19,7 @@ export function DailyActivities({
   wordsToPractice,
   continueReading,
 }: DailyActivitiesProps) {
+  const t = useT();
   const hasActivities = dueCards > 0 || wordsToPractice > 0 || continueReading;
 
   if (!hasActivities) {
@@ -26,19 +29,19 @@ export function DailyActivities({
           className="text-lg font-semibold text-foreground mb-4"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Today's Activities
+          {t("dashboard.dailyActivities.title")}
         </h2>
         <div className="text-center py-8">
           <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-8 h-8 text-accent" />
           </div>
           <p className="text-foreground-muted mb-4">
-            No activities pending. Start by reading a story!
+            {t("dashboard.dailyActivities.noActivities")}
           </p>
           <Link to="/library">
             <Button>
               <BookOpen className="w-4 h-4 mr-2" />
-              Browse Library
+              {t("common.actions.browseLibrary")}
             </Button>
           </Link>
         </div>
@@ -52,7 +55,7 @@ export function DailyActivities({
         className="text-lg font-semibold text-foreground mb-4"
         style={{ fontFamily: "var(--font-display)" }}
       >
-        Today's Activities
+        {t("dashboard.dailyActivities.title")}
       </h2>
 
       <div className="space-y-3">
@@ -68,15 +71,15 @@ export function DailyActivities({
               </div>
               <div>
                 <div className="font-medium text-foreground">
-                  {dueCards} flashcard{dueCards !== 1 ? "s" : ""} due
+                  {t("dashboard.dailyActivities.flashcardsDue", { count: dueCards })}
                 </div>
                 <div className="text-sm text-foreground-muted">
-                  Review to strengthen memory
+                  {t("dashboard.dailyActivities.flashcardsSubtitle")}
                 </div>
               </div>
             </div>
             <Button size="sm" className="group-hover:bg-accent">
-              Review
+              {t("dashboard.dailyActivities.review")}
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </Link>
@@ -94,15 +97,19 @@ export function DailyActivities({
               </div>
               <div>
                 <div className="font-medium text-foreground">
-                  {wordsToPractice} word{wordsToPractice !== 1 ? "s" : ""} to practice
+                  {t("dashboard.dailyActivities.wordsToPractice", { count: wordsToPractice })}
                 </div>
                 <div className="text-sm text-foreground-muted">
-                  Write sentences to master vocabulary
+                  {t("dashboard.dailyActivities.wordsSubtitle")}
                 </div>
               </div>
             </div>
-            <Button size="sm" variant="outline" className="group-hover:border-accent group-hover:text-accent">
-              Practice
+            <Button
+              size="sm"
+              variant="outline"
+              className="group-hover:border-accent group-hover:text-accent"
+            >
+              {t("dashboard.dailyActivities.practice")}
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </Link>
@@ -120,15 +127,22 @@ export function DailyActivities({
               </div>
               <div>
                 <div className="font-medium text-foreground">
-                  Continue reading
+                  {t("dashboard.dailyActivities.continueReading")}
                 </div>
                 <div className="text-sm text-foreground-muted">
-                  {continueReading.storyTitle} ({continueReading.progress}% complete)
+                  {t("dashboard.dailyActivities.readingProgress", {
+                    title: continueReading.storyTitle,
+                    progress: continueReading.progress,
+                  })}
                 </div>
               </div>
             </div>
-            <Button size="sm" variant="outline" className="group-hover:border-accent group-hover:text-accent">
-              Continue
+            <Button
+              size="sm"
+              variant="outline"
+              className="group-hover:border-accent group-hover:text-accent"
+            >
+              {t("dashboard.dailyActivities.continue")}
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </Link>

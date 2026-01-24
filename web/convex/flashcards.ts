@@ -1,13 +1,17 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+
 import { internal } from "./_generated/api";
+import { internalMutation,mutation, query } from "./_generated/server";
 import { cardStateValidator, ratingValidator } from "./schema";
 
 // ============================================
 // FSRS-inspired SRS Constants
 // ============================================
 const FSRS_PARAMS = {
-  w: [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61],
+  w: [
+    0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29,
+    2.61,
+  ],
   requestRetention: 0.9,
   maximumInterval: 36500, // ~100 years
   // Learning steps in minutes
@@ -57,17 +61,34 @@ function calculateNextStability(
 
   if (g === 0) {
     // Again - memory lapse
-    return w[11] * Math.pow(difficulty, -w[12]) * (Math.pow(stability + 1, w[13]) - 1) * Math.exp(w[14] * (1 - retrievability));
+    return (
+      w[11] *
+      Math.pow(difficulty, -w[12]) *
+      (Math.pow(stability + 1, w[13]) - 1) *
+      Math.exp(w[14] * (1 - retrievability))
+    );
   }
 
   // Good or better
   const hardPenalty = g === 1 ? w[15] : 1;
   const easyBonus = g === 3 ? w[16] : 1;
 
-  return stability * (1 + Math.exp(w[8]) * (11 - difficulty) * Math.pow(stability, -w[9]) * (Math.exp(w[10] * (1 - retrievability)) - 1) * hardPenalty * easyBonus);
+  return (
+    stability *
+    (1 +
+      Math.exp(w[8]) *
+        (11 - difficulty) *
+        Math.pow(stability, -w[9]) *
+        (Math.exp(w[10] * (1 - retrievability)) - 1) *
+        hardPenalty *
+        easyBonus)
+  );
 }
 
-function calculateNextDifficulty(difficulty: number, rating: keyof typeof RATING_MULTIPLIERS): number {
+function calculateNextDifficulty(
+  difficulty: number,
+  rating: keyof typeof RATING_MULTIPLIERS
+): number {
   const { w } = FSRS_PARAMS;
   const g = RATING_MULTIPLIERS[rating];
   const delta = g - 3; // -3 to 0
@@ -399,12 +420,22 @@ export const review = mutation({
 
       if (rating === "again") {
         newState = "relearning";
-        newStability = calculateNextStability(card.difficulty, card.stability, retrievability, rating);
+        newStability = calculateNextStability(
+          card.difficulty,
+          card.stability,
+          retrievability,
+          rating
+        );
         scheduledDays = FSRS_PARAMS.relearningSteps[0] / (60 * 24);
         lapses++;
       } else {
         newState = "review";
-        newStability = calculateNextStability(card.difficulty, card.stability, retrievability, rating);
+        newStability = calculateNextStability(
+          card.difficulty,
+          card.stability,
+          retrievability,
+          rating
+        );
         scheduledDays = calculateNextInterval(newStability, FSRS_PARAMS.requestRetention);
       }
     }
@@ -514,9 +545,7 @@ export const getAvailableSentences = query({
 
     const sentences = await ctx.db
       .query("sentences")
-      .withIndex("by_word_language", (q) =>
-        q.eq("word", vocab.word).eq("language", vocab.language)
-      )
+      .withIndex("by_word_language", (q) => q.eq("word", vocab.word).eq("language", vocab.language))
       .collect();
 
     // Filter by difficulty if specified
@@ -546,9 +575,7 @@ export const getAvailableImages = query({
 
     const images = await ctx.db
       .query("images")
-      .withIndex("by_word_language", (q) =>
-        q.eq("word", vocab.word).eq("language", vocab.language)
-      )
+      .withIndex("by_word_language", (q) => q.eq("word", vocab.word).eq("language", vocab.language))
       .collect();
 
     // Mark current image
@@ -688,10 +715,19 @@ export const updateSentenceInternal = internalMutation({
 
     // Create new sentence in content library
     const difficultyMap: Record<string, number> = {
-      N5: 1, N4: 2, N3: 3, N2: 4, N1: 5,
-      A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6,
+      N5: 1,
+      N4: 2,
+      N3: 3,
+      N2: 4,
+      N1: 5,
+      A1: 1,
+      A2: 2,
+      B1: 3,
+      B2: 4,
+      C1: 5,
+      C2: 6,
     };
-    const difficulty = vocab.examLevel ? difficultyMap[vocab.examLevel] ?? 3 : 3;
+    const difficulty = vocab.examLevel ? (difficultyMap[vocab.examLevel] ?? 3) : 3;
 
     const sentenceId = await ctx.db.insert("sentences", {
       word: vocab.word,

@@ -1,8 +1,8 @@
 import { v } from "convex/values";
-import { query, mutation, internalMutation } from "./_generated/server";
+
 import { internal } from "./_generated/api";
+import { internalMutation,mutation, query } from "./_generated/server";
 import { languageValidator } from "./schema";
-import type { Doc, Id } from "./_generated/dataModel";
 
 // ============================================
 // QUERIES
@@ -53,9 +53,7 @@ export const getStats = query({
       const lang = args.language;
       comprehensions = await ctx.db
         .query("storyComprehension")
-        .withIndex("by_user_and_language", (q) =>
-          q.eq("userId", args.userId).eq("language", lang)
-        )
+        .withIndex("by_user_and_language", (q) => q.eq("userId", args.userId).eq("language", lang))
         .collect();
     } else {
       comprehensions = await ctx.db
@@ -98,9 +96,7 @@ export const list = query({
       const lang = args.language;
       dbQuery = ctx.db
         .query("storyComprehension")
-        .withIndex("by_user_and_language", (q) =>
-          q.eq("userId", args.userId).eq("language", lang)
-        );
+        .withIndex("by_user_and_language", (q) => q.eq("userId", args.userId).eq("language", lang));
     } else {
       dbQuery = ctx.db
         .query("storyComprehension")
@@ -286,15 +282,14 @@ export const complete = mutation({
     }
 
     // Calculate total earned score
-    const earnedScore = comprehension.questions.reduce(
-      (sum, q) => sum + (q.earnedPoints ?? 0),
-      0
-    );
+    const earnedScore = comprehension.questions.reduce((sum, q) => sum + (q.earnedPoints ?? 0), 0);
     const percentScore = Math.round((earnedScore / comprehension.totalScore) * 100);
 
     // Count correct and total questions
-    const questionsAnswered = comprehension.questions.filter(q => q.userAnswer !== undefined).length;
-    const questionsCorrect = comprehension.questions.filter(q => q.isCorrect === true).length;
+    const questionsAnswered = comprehension.questions.filter(
+      (q) => q.userAnswer !== undefined
+    ).length;
+    const questionsCorrect = comprehension.questions.filter((q) => q.isCorrect === true).length;
 
     await ctx.db.patch(args.comprehensionId, {
       earnedScore,
@@ -344,11 +339,7 @@ export const createFromAI = internalMutation({
     userId: v.string(),
     storyId: v.string(),
     storyTitle: v.string(),
-    language: v.union(
-      v.literal("japanese"),
-      v.literal("english"),
-      v.literal("french")
-    ),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     questions: v.array(
       v.object({
         questionId: v.string(),

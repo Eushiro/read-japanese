@@ -1,10 +1,14 @@
-import { useState } from "react";
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { BookOpen, Loader2,Play, SkipForward } from "lucide-react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
-import { EmbeddedVideoPlayer } from "./EmbeddedVideoPlayer";
+import { useT } from "@/lib/i18n";
+
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { EmbeddedStoryReader } from "./EmbeddedStoryReader";
-import { BookOpen, Play, SkipForward, Loader2 } from "lucide-react";
+import { EmbeddedVideoPlayer } from "./EmbeddedVideoPlayer";
 
 interface SessionInputProps {
   contentType: "story" | "video";
@@ -14,13 +18,20 @@ interface SessionInputProps {
   onSkip: () => void;
 }
 
-export function SessionInput({ contentType, contentId, title, onComplete, onSkip }: SessionInputProps) {
+export function SessionInput({
+  contentType,
+  contentId,
+  title,
+  onComplete,
+  onSkip,
+}: SessionInputProps) {
+  const t = useT();
   const [isContentOpen, setIsContentOpen] = useState(false);
 
   // Fetch video details if it's a video
   const video = useQuery(
     api.youtubeContent.getById,
-    contentType === "video" ? { id: contentId as any } : "skip"
+    contentType === "video" ? { id: contentId as Id<"youtubeContent"> } : "skip"
   );
 
   // Handle opening content in modal
@@ -50,20 +61,19 @@ export function SessionInput({ contentType, contentId, title, onComplete, onSkip
             <Play className="w-4 h-4 text-accent" />
           )}
           <span className="text-foreground-muted">
-            {contentType === "story" ? "Reading Time" : "Listening Time"}
+            {contentType === "story" ? t("studySession.input.readingTime") : t("studySession.input.listeningTime")}
           </span>
         </div>
         <h2
           className="text-2xl font-bold text-foreground"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          {contentType === "story" ? "Read a Story" : "Watch a Video"}
+          {contentType === "story" ? t("studySession.input.readAStory") : t("studySession.input.watchAVideo")}
         </h2>
         <p className="text-foreground-muted mt-2">
           {contentType === "story"
-            ? "Immerse yourself in content at your level"
-            : "Practice listening and pick up new vocabulary"
-          }
+            ? t("studySession.input.storyDescription")
+            : t("studySession.input.videoDescription")}
         </p>
       </div>
 
@@ -91,15 +101,23 @@ export function SessionInput({ contentType, contentId, title, onComplete, onSkip
             )}
             <div className="flex items-center gap-2 mt-3 text-sm text-foreground-muted">
               <span className="px-2 py-0.5 rounded-full bg-muted capitalize">{video.language}</span>
-              {video.level && <span className="px-2 py-0.5 rounded-full bg-accent/10 text-accent">{video.level}</span>}
-              {video.duration && <span>{Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, "0")}</span>}
+              {video.level && (
+                <span className="px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                  {video.level}
+                </span>
+              )}
+              {video.duration && (
+                <span>
+                  {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, "0")}
+                </span>
+              )}
             </div>
           </>
         ) : contentType === "story" ? (
           <div className="text-center py-8">
             <BookOpen className="w-12 h-12 text-foreground-muted mx-auto mb-3" />
             <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
-            <p className="text-sm text-foreground-muted">A graded story at your level</p>
+            <p className="text-sm text-foreground-muted">{t("studySession.input.gradedStory")}</p>
           </div>
         ) : (
           <div className="flex items-center justify-center py-8">
@@ -112,18 +130,18 @@ export function SessionInput({ contentType, contentId, title, onComplete, onSkip
       <div className="flex gap-3">
         <Button variant="outline" onClick={onSkip} className="flex-1 gap-2">
           <SkipForward className="w-4 h-4" />
-          Skip
+          {t("studySession.buttons.skip")}
         </Button>
         <Button onClick={handleOpenContent} className="flex-1 gap-2">
           {contentType === "story" ? (
             <>
               <BookOpen className="w-4 h-4" />
-              Start Reading
+              {t("studySession.buttons.startReading")}
             </>
           ) : (
             <>
               <Play className="w-4 h-4" />
-              Start Watching
+              {t("studySession.buttons.startWatching")}
             </>
           )}
         </Button>

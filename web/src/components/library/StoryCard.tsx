@@ -1,8 +1,9 @@
-import { Badge } from "@/components/ui/badge";
-import { getCoverImageUrl, prefetchStory } from "@/api/stories";
-import type { StoryListItem, ProficiencyLevel } from "@/types/story";
-import { Crown, BookOpen } from "lucide-react";
+import { BookOpen,Crown } from "lucide-react";
 import { useCallback, useState } from "react";
+
+import { getCoverImageUrl, prefetchStory } from "@/api/stories";
+import { Badge } from "@/components/ui/badge";
+import type { ProficiencyLevel,StoryListItem } from "@/types/story";
 
 interface StoryCardProps {
   story: StoryListItem;
@@ -55,9 +56,7 @@ export function StoryCard({
         {coverUrl ? (
           <>
             {/* Skeleton while image loads */}
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-border animate-pulse" />
-            )}
+            {!imageLoaded && <div className="absolute inset-0 bg-border animate-pulse" />}
             <img
               src={coverUrl}
               alt={story.title}
@@ -101,9 +100,7 @@ export function StoryCard({
           <div className="absolute inset-0 bg-foreground/40 backdrop-blur-[2px] flex items-end justify-center pb-6">
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-surface/95 rounded-full shadow-sm border border-border">
               <Crown className="w-3.5 h-3.5 text-accent" />
-              <span className="text-xs font-medium text-foreground">
-                Premium
-              </span>
+              <span className="text-xs font-medium text-foreground">Premium</span>
             </div>
           </div>
         )}
@@ -114,19 +111,19 @@ export function StoryCard({
         {/* Title */}
         <h3
           className="font-semibold text-base text-foreground line-clamp-1 group-hover:text-accent transition-colors"
-          style={{ fontFamily: 'var(--font-japanese)' }}
+          style={{ fontFamily: "var(--font-japanese)" }}
         >
           {story.titleJapanese || story.title}
         </h3>
         {story.titleJapanese && (
-          <p className="text-sm text-foreground-muted line-clamp-1 mt-0.5">
-            {story.title}
-          </p>
+          <p className="text-sm text-foreground-muted line-clamp-1 mt-0.5">{story.title}</p>
         )}
 
         {/* Meta Info */}
         <div className="flex items-center gap-2 mt-3 text-xs text-foreground">
-          <span className="px-2 py-0.5 rounded-full bg-muted text-foreground truncate max-w-[80px]">{story.genre}</span>
+          <span className="px-2 py-0.5 rounded-full bg-muted text-foreground truncate max-w-[80px]">
+            {story.genre}
+          </span>
           <span className="shrink-0">•</span>
           <span className="shrink-0">
             {story.chapterCount} {story.chapterCount === 1 ? "chapter" : "chapters"}

@@ -1,27 +1,21 @@
+import { useMutation,useQuery } from "convex/react";
+import { BookOpen, CheckCircle2, Layers, Pause, PenLine, Play, Plus, Zap } from "lucide-react";
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  BookOpen,
-  Layers,
-  Play,
-  Pause,
-  CheckCircle2,
-  Plus,
-  PenLine,
-  Zap,
-} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { DeckSubscriptionStatus, Language } from "@/lib/convex-types";
+import { useT } from "@/lib/i18n";
+
+import { api } from "../../../convex/_generated/api";
 
 interface DeckPanelProps {
   userId: string;
@@ -50,12 +44,8 @@ type SubscriptionWithDeck = {
   } | null;
 };
 
-export function DeckPanel({
-  userId,
-  onBrowseDecks,
-  selectedDeckId,
-  onSelectDeck,
-}: DeckPanelProps) {
+export function DeckPanel({ userId, onBrowseDecks, selectedDeckId, onSelectDeck }: DeckPanelProps) {
+  const t = useT();
   const subscriptions = useQuery(api.userDeckSubscriptions.listSubscriptions, {
     userId,
   }) as SubscriptionWithDeck[] | undefined;
@@ -96,7 +86,7 @@ export function DeckPanel({
       <div>
         <div className="flex items-center gap-2 mb-2">
           <BookOpen className="w-4 h-4 text-foreground-muted" />
-          <span className="font-medium text-foreground text-sm">View</span>
+          <span className="font-medium text-foreground text-sm">{t("vocabulary.deckPanel.view")}</span>
         </div>
 
         {isLoading ? (
@@ -113,9 +103,13 @@ export function DeckPanel({
               }`}
             >
               <div className="flex items-center gap-2">
-                <Layers className={`w-4 h-4 ${selectedDeckId === null ? "text-accent" : "text-foreground-muted"}`} />
-                <span className={`text-sm font-medium ${selectedDeckId === null ? "text-accent" : "text-foreground"}`}>
-                  All Words
+                <Layers
+                  className={`w-4 h-4 ${selectedDeckId === null ? "text-accent" : "text-foreground-muted"}`}
+                />
+                <span
+                  className={`text-sm font-medium ${selectedDeckId === null ? "text-accent" : "text-foreground"}`}
+                >
+                  {t("vocabulary.deckPanel.allWords")}
                 </span>
               </div>
             </button>
@@ -132,14 +126,16 @@ export function DeckPanel({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <PenLine className={`w-4 h-4 ${selectedDeckId === personalDeck.deckId ? "text-accent" : "text-foreground-muted"}`} />
-                    <span className={`text-sm font-medium ${selectedDeckId === personalDeck.deckId ? "text-accent" : "text-foreground"}`}>
-                      My Words
+                    <PenLine
+                      className={`w-4 h-4 ${selectedDeckId === personalDeck.deckId ? "text-accent" : "text-foreground-muted"}`}
+                    />
+                    <span
+                      className={`text-sm font-medium ${selectedDeckId === personalDeck.deckId ? "text-accent" : "text-foreground"}`}
+                    >
+                      {t("vocabulary.deckPanel.myWords")}
                     </span>
                   </div>
-                  <span className="text-xs text-foreground-muted">
-                    {personalDeck.totalWords}
-                  </span>
+                  <span className="text-xs text-foreground-muted">{personalDeck.totalWords}</span>
                 </div>
               </button>
             )}
@@ -152,21 +148,14 @@ export function DeckPanel({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-orange-500" />
-            <span className="font-medium text-foreground text-sm">Active Deck</span>
+            <span className="font-medium text-foreground text-sm">{t("vocabulary.deckPanel.activeDeck")}</span>
           </div>
-          <Button
-            onClick={onBrowseDecks}
-            variant="ghost"
-            size="sm"
-            className="gap-1 text-xs h-7"
-          >
+          <Button onClick={onBrowseDecks} variant="ghost" size="sm" className="gap-1 text-xs h-7">
             <Plus className="w-3 h-3" />
-            Add
+            {t("vocabulary.deckPanel.add")}
           </Button>
         </div>
-        <p className="text-xs text-foreground-muted mb-2">
-          New cards added daily from this deck
-        </p>
+        <p className="text-xs text-foreground-muted mb-2">{t("vocabulary.deckPanel.dailyCardsInfo")}</p>
 
         {isLoading ? (
           <Skeleton className="h-24 w-full rounded-lg" />
@@ -174,19 +163,19 @@ export function DeckPanel({
           <DeckCard
             subscription={activeSub}
             isSelected={selectedDeckId === activeSub.deckId}
-            onSelect={() => onSelectDeck(activeSub.deckId === selectedDeckId ? null : activeSub.deckId)}
+            onSelect={() =>
+              onSelectDeck(activeSub.deckId === selectedDeckId ? null : activeSub.deckId)
+            }
             onUnsubscribe={() => handleUnsubscribe(activeSub.deckId)}
             isActive
             userId={userId}
           />
         ) : (
           <div className="text-center py-4 px-3 rounded-lg bg-surface border border-dashed border-border">
-            <p className="text-xs text-foreground-muted mb-2">
-              No active deck
-            </p>
+            <p className="text-xs text-foreground-muted mb-2">{t("vocabulary.deckPanel.noActiveDeck")}</p>
             <Button onClick={onBrowseDecks} size="sm" className="gap-1.5 text-xs h-7">
               <Plus className="w-3 h-3" />
-              Choose a Deck
+              {t("vocabulary.deckPanel.chooseADeck")}
             </Button>
           </div>
         )}
@@ -196,7 +185,7 @@ export function DeckPanel({
           <div className="mt-3 space-y-1">
             <div className="text-xs text-foreground-muted px-1 py-1 flex items-center gap-1">
               <Pause className="w-3 h-3" />
-              Paused
+              {t("vocabulary.deckPanel.paused")}
             </div>
             {otherSubs.map((sub) => (
               <DeckCard
@@ -214,9 +203,14 @@ export function DeckPanel({
 
         {/* Empty state */}
         {subscriptions?.length === 0 && (
-          <Button onClick={onBrowseDecks} variant="outline" size="sm" className="w-full gap-1.5 text-xs mt-2">
+          <Button
+            onClick={onBrowseDecks}
+            variant="outline"
+            size="sm"
+            className="w-full gap-1.5 text-xs mt-2"
+          >
             <Plus className="w-3 h-3" />
-            Browse Decks
+            {t("vocabulary.browseDecks")}
           </Button>
         )}
       </div>
@@ -235,14 +229,25 @@ interface DeckCardProps {
   userId?: string;
 }
 
-function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, onUnsubscribe, compact, userId }: DeckCardProps) {
+function DeckCard({
+  subscription,
+  isSelected,
+  onSelect,
+  isActive,
+  onActivate,
+  onUnsubscribe,
+  compact,
+  userId,
+}: DeckCardProps) {
+  const t = useT();
   const [showConfirm, setShowConfirm] = useState(false);
   const [localDailyCards, setLocalDailyCards] = useState(subscription.dailyNewCards);
   const updateDailyLimit = useMutation(api.userDeckSubscriptions.updateDailyLimit);
 
-  const progress = subscription.totalWordsInDeck > 0
-    ? (subscription.wordsAdded / subscription.totalWordsInDeck) * 100
-    : 0;
+  const progress =
+    subscription.totalWordsInDeck > 0
+      ? (subscription.wordsAdded / subscription.totalWordsInDeck) * 100
+      : 0;
 
   const isCompleted = subscription.status === "completed";
 
@@ -251,9 +256,7 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
       <>
         <div
           className={`w-full p-2 rounded-lg text-left transition-colors border group ${
-            isSelected
-              ? "bg-accent/10 border-accent/30"
-              : "bg-surface border-border hover:bg-muted"
+            isSelected ? "bg-accent/10 border-accent/30" : "bg-surface border-border hover:bg-muted"
           }`}
         >
           <div className="flex items-center justify-between gap-2">
@@ -263,7 +266,9 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
                 {isCompleted ? (
                   <CheckCircle2 className="w-3.5 h-3.5 text-orange-500" />
                 ) : (
-                  <Layers className={`w-3.5 h-3.5 ${isSelected ? "text-accent" : "text-foreground-muted"}`} />
+                  <Layers
+                    className={`w-3.5 h-3.5 ${isSelected ? "text-accent" : "text-foreground-muted"}`}
+                  />
                 )}
               </div>
               <button
@@ -284,7 +289,7 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
                     onActivate();
                   }}
                   className="p-1 rounded text-orange-500 hover:bg-orange-500/10 transition-colors"
-                  title="Make this the active deck"
+                  title={t("vocabulary.deckPanel.makeActive")}
                 >
                   <Play className="w-3.5 h-3.5" />
                 </button>
@@ -297,19 +302,16 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
         <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>Remove deck?</DialogTitle>
+              <DialogTitle>{t("vocabulary.deckPanel.removeDeckTitle")}</DialogTitle>
               <DialogDescription>
-                This will remove <strong>{subscription.deck?.name}</strong> from your decks.
-                Words you've already learned will stay in your vocabulary.
+                <span dangerouslySetInnerHTML={{
+                  __html: t("vocabulary.deckPanel.removeDeckDescription", { deckName: subscription.deck?.name ?? "" })
+                }} />
               </DialogDescription>
             </DialogHeader>
             <div className="flex gap-2 mt-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowConfirm(false)}
-                className="flex-1"
-              >
-                Cancel
+              <Button variant="outline" onClick={() => setShowConfirm(false)} className="flex-1">
+                {t("vocabulary.deckPanel.cancel")}
               </Button>
               <Button
                 variant="destructive"
@@ -319,7 +321,7 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
                 }}
                 className="flex-1"
               >
-                Remove
+                {t("vocabulary.deckPanel.remove")}
               </Button>
             </div>
           </DialogContent>
@@ -334,11 +336,14 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
         onClick={onSelect}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect();
+          }
+        }}
         className={`w-full rounded-lg transition-all border group text-left cursor-pointer ${
-          isSelected
-            ? "bg-accent/10 border-accent/30"
-            : "bg-surface border-border hover:bg-muted"
+          isSelected ? "bg-accent/10 border-accent/30" : "bg-surface border-border hover:bg-muted"
         }`}
       >
         <div className="w-full p-3">
@@ -353,13 +358,13 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <span className={`text-sm font-medium truncate ${isSelected ? "text-accent" : "text-foreground"}`}>
+                <span
+                  className={`text-sm font-medium truncate ${isSelected ? "text-accent" : "text-foreground"}`}
+                >
                   {subscription.deck?.name ?? subscription.deckId}
                 </span>
               </div>
-              <span className="text-xs text-foreground-muted">
-                {subscription.deck?.level}
-              </span>
+              <span className="text-xs text-foreground-muted">{subscription.deck?.level}</span>
             </div>
           </div>
 
@@ -376,12 +381,10 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
           {/* Stats */}
           <div className="flex items-center justify-between text-xs text-foreground-muted">
             <span>
-              {subscription.wordsAdded}/{subscription.totalWordsInDeck} words
+              {t("vocabulary.deckPanel.wordsProgress", { added: subscription.wordsAdded, total: subscription.totalWordsInDeck })}
             </span>
             {isActive && subscription.cardsAddedToday > 0 && (
-              <span className="text-orange-500">
-                +{subscription.cardsAddedToday} today
-              </span>
+              <span className="text-orange-500">{t("vocabulary.deckPanel.today", { count: subscription.cardsAddedToday })}</span>
             )}
           </div>
 
@@ -389,7 +392,7 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
           {isActive && !isCompleted && userId && (
             <div className="mt-2 pt-2 border-t border-border/50">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-foreground-muted">New cards/day</span>
+                <span className="text-xs text-foreground-muted">{t("vocabulary.deckPanel.newCardsPerDay")}</span>
                 <Input
                   type="number"
                   min={1}
@@ -399,7 +402,11 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
                   onChange={(e) => {
                     const newValue = Math.max(1, Math.min(50, parseInt(e.target.value) || 1));
                     setLocalDailyCards(newValue);
-                    updateDailyLimit({ userId, deckId: subscription.deckId, dailyNewCards: newValue });
+                    updateDailyLimit({
+                      userId,
+                      deckId: subscription.deckId,
+                      dailyNewCards: newValue,
+                    });
                   }}
                   className="w-16 h-7 text-center text-sm"
                 />
@@ -413,19 +420,16 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Remove deck?</DialogTitle>
+            <DialogTitle>{t("vocabulary.deckPanel.removeDeckTitle")}</DialogTitle>
             <DialogDescription>
-              This will remove <strong>{subscription.deck?.name}</strong> from your decks.
-              Words you've already learned will stay in your vocabulary.
+              <span dangerouslySetInnerHTML={{
+                __html: t("vocabulary.deckPanel.removeDeckDescription", { deckName: subscription.deck?.name ?? "" })
+              }} />
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowConfirm(false)}
-              className="flex-1"
-            >
-              Cancel
+            <Button variant="outline" onClick={() => setShowConfirm(false)} className="flex-1">
+              {t("vocabulary.deckPanel.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -435,7 +439,7 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
               }}
               className="flex-1"
             >
-              Remove
+              {t("vocabulary.deckPanel.remove")}
             </Button>
           </div>
         </DialogContent>

@@ -8,7 +8,7 @@
  * Easy to add: AWS S3, Google Cloud Storage, Backblaze B2, etc.
  */
 
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand,S3Client } from "@aws-sdk/client-s3";
 
 // ============================================
 // STORAGE INTERFACE
@@ -91,9 +91,7 @@ class R2StorageProvider implements StorageProvider {
     );
 
     // Return public URL
-    const baseUrl = this.publicUrl.endsWith("/")
-      ? this.publicUrl.slice(0, -1)
-      : this.publicUrl;
+    const baseUrl = this.publicUrl.endsWith("/") ? this.publicUrl.slice(0, -1) : this.publicUrl;
     return `${baseUrl}/${key}`;
   }
 }
@@ -105,6 +103,7 @@ class R2StorageProvider implements StorageProvider {
 // This can be used if you want to fallback to Convex storage
 // Requires passing the ctx.storage object from the action
 export class ConvexStorageProvider implements StorageProvider {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex storage type is complex to import in shared lib
   constructor(private storage: any) {}
 
   async upload(options: UploadOptions): Promise<string> {
@@ -140,6 +139,7 @@ let r2Provider: R2StorageProvider | null = null;
  *
  * @param convexStorage - Optional Convex storage object (needed for "convex" provider)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex storage type is complex to import in shared lib
 export function getStorageProvider(convexStorage?: any): StorageProvider {
   switch (ACTIVE_PROVIDER) {
     case "r2":

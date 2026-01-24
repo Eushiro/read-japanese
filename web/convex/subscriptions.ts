@@ -1,10 +1,22 @@
 import { v } from "convex/values";
+
 import { mutation, query } from "./_generated/server";
-import { subscriptionTierValidator, subscriptionStatusValidator } from "./schema";
+import { subscriptionTierValidator } from "./schema";
 
 // ============================================
 // USAGE LIMITS PER TIER
 // ============================================
+// Scaling: Each tier gives ~4-5x value for 3x price
+// This incentivizes upgrades while maintaining cost control
+//
+// Estimated API costs per action:
+// - Sentence generation: ~$0.001
+// - AI verification: ~$0.002
+// - Audio (TTS): ~$0.002
+// - Image generation: ~$0.02
+// - Mock test generation: ~$0.05
+// - Personalized story: ~$0.10
+//
 export const TIER_LIMITS = {
   free: {
     aiVerificationsPerMonth: 50,
@@ -15,6 +27,7 @@ export const TIER_LIMITS = {
     audioPerMonth: 20,
   },
   basic: {
+    // $5/mo - 4x free value
     aiVerificationsPerMonth: 200,
     storiesPerMonth: 20,
     personalizedStoriesPerMonth: 5,
@@ -23,20 +36,23 @@ export const TIER_LIMITS = {
     audioPerMonth: 100,
   },
   pro: {
+    // $15/mo (3x basic) - 5x basic value
     aiVerificationsPerMonth: 1000,
-    storiesPerMonth: -1, // Unlimited
-    personalizedStoriesPerMonth: 20,
-    mockTestsPerMonth: 10,
-    flashcardsPerMonth: -1, // Unlimited
+    storiesPerMonth: 100,
+    personalizedStoriesPerMonth: 25,
+    mockTestsPerMonth: 15,
+    flashcardsPerMonth: 3000,
     audioPerMonth: 500,
   },
-  unlimited: {
-    aiVerificationsPerMonth: -1, // Unlimited
-    storiesPerMonth: -1,
-    personalizedStoriesPerMonth: -1,
-    mockTestsPerMonth: -1,
-    flashcardsPerMonth: -1,
-    audioPerMonth: -1,
+  power: {
+    // $45/mo (3x pro) - 5x pro value
+    // Renamed from "unlimited" - no truly unlimited tier
+    aiVerificationsPerMonth: 5000,
+    storiesPerMonth: 500,
+    personalizedStoriesPerMonth: 150,
+    mockTestsPerMonth: 100,
+    flashcardsPerMonth: 15000,
+    audioPerMonth: 2500,
   },
 } as const;
 
@@ -144,7 +160,10 @@ export const canPerformAction = query({
     const actionToLimit: Record<string, { limitKey: keyof typeof limits; usageKey: string }> = {
       aiVerification: { limitKey: "aiVerificationsPerMonth", usageKey: "aiVerifications" },
       readStory: { limitKey: "storiesPerMonth", usageKey: "storiesRead" },
-      generatePersonalizedStory: { limitKey: "personalizedStoriesPerMonth", usageKey: "personalizedStoriesGenerated" },
+      generatePersonalizedStory: {
+        limitKey: "personalizedStoriesPerMonth",
+        usageKey: "personalizedStoriesGenerated",
+      },
       generateMockTest: { limitKey: "mockTestsPerMonth", usageKey: "mockTestsGenerated" },
       generateFlashcard: { limitKey: "flashcardsPerMonth", usageKey: "flashcardsGenerated" },
       generateAudio: { limitKey: "audioPerMonth", usageKey: "audioGenerated" },
@@ -152,12 +171,7 @@ export const canPerformAction = query({
 
     const { limitKey, usageKey } = actionToLimit[args.action];
     const limit = limits[limitKey];
-    const currentUsage = usage ? (usage as unknown as Record<string, number>)[usageKey] ?? 0 : 0;
-
-    // -1 means unlimited
-    if (limit === -1) {
-      return { allowed: true, remaining: -1 };
-    }
+    const currentUsage = usage ? ((usage as unknown as Record<string, number>)[usageKey] ?? 0) : 0;
 
     const remaining = limit - currentUsage;
     return {

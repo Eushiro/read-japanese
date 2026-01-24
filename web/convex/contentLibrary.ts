@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+
 import { mutation, query } from "./_generated/server";
 import { languageValidator } from "./schema";
 
@@ -16,9 +17,7 @@ export const getSentencesForWord = query({
   handler: async (ctx, args) => {
     const sentences = await ctx.db
       .query("sentences")
-      .withIndex("by_word_language", (q) =>
-        q.eq("word", args.word).eq("language", args.language)
-      )
+      .withIndex("by_word_language", (q) => q.eq("word", args.word).eq("language", args.language))
       .collect();
 
     if (args.difficulty !== undefined) {
@@ -110,9 +109,7 @@ export const getImagesForWord = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("images")
-      .withIndex("by_word_language", (q) =>
-        q.eq("word", args.word).eq("language", args.language)
-      )
+      .withIndex("by_word_language", (q) => q.eq("word", args.word).eq("language", args.language))
       .collect();
   },
 });
@@ -158,9 +155,7 @@ export const getWordAudio = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("wordAudio")
-      .withIndex("by_word_language", (q) =>
-        q.eq("word", args.word).eq("language", args.language)
-      )
+      .withIndex("by_word_language", (q) => q.eq("word", args.word).eq("language", args.language))
       .first();
   },
 });
@@ -178,9 +173,7 @@ export const addWordAudio = mutation({
     // Check if audio already exists for this word
     const existing = await ctx.db
       .query("wordAudio")
-      .withIndex("by_word_language", (q) =>
-        q.eq("word", args.word).eq("language", args.language)
-      )
+      .withIndex("by_word_language", (q) => q.eq("word", args.word).eq("language", args.language))
       .first();
 
     if (existing) {
@@ -216,9 +209,7 @@ export const getOrCreateWordAudio = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("wordAudio")
-      .withIndex("by_word_language", (q) =>
-        q.eq("word", args.word).eq("language", args.language)
-      )
+      .withIndex("by_word_language", (q) => q.eq("word", args.word).eq("language", args.language))
       .first();
 
     if (existing) {

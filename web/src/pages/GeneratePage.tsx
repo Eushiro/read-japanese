@@ -1,32 +1,49 @@
-import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Paywall } from "@/components/Paywall";
+import { Image,Loader2, Sparkles, Volume2 } from "lucide-react";
+import { useState } from "react";
+
 import {
   generateStory,
-  pollGenerationStatus,
   type GenerateStoryRequest,
   type GenerationStatus,
+  pollGenerationStatus,
 } from "@/api/generate";
-import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
-import { Loader2, Sparkles, Volume2, Image } from "lucide-react";
+import { Paywall } from "@/components/Paywall";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
+import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
 
-const GENRES = [
-  "Daily Life",
-  "Fantasy",
-  "Mystery",
-  "Travel",
-  "School",
-  "Food",
-  "Nature",
-  "Adventure",
-  "Romance",
-  "Historical",
-];
+import { api } from "../../convex/_generated/api";
+
+const GENRE_KEYS = [
+  "dailyLife",
+  "fantasy",
+  "mystery",
+  "travel",
+  "school",
+  "food",
+  "nature",
+  "adventure",
+  "romance",
+  "historical",
+] as const;
+
+// Map genre keys to the API values
+const GENRE_API_VALUES: Record<(typeof GENRE_KEYS)[number], string> = {
+  dailyLife: "Daily Life",
+  fantasy: "Fantasy",
+  mystery: "Mystery",
+  travel: "Travel",
+  school: "School",
+  food: "Food",
+  nature: "Nature",
+  adventure: "Adventure",
+  romance: "Romance",
+  historical: "Historical",
+};
 
 const levelVariantMap: Record<JLPTLevel, "n5" | "n4" | "n3" | "n2" | "n1"> = {
   N5: "n5",
@@ -37,6 +54,7 @@ const levelVariantMap: Record<JLPTLevel, "n5" | "n4" | "n3" | "n2" | "n1"> = {
 };
 
 export function GeneratePage() {
+  const t = useT();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -45,7 +63,7 @@ export function GeneratePage() {
 
   // Form state
   const [jlptLevel, setJlptLevel] = useState<JLPTLevel>("N5");
-  const [genre, setGenre] = useState("Daily Life");
+  const [genreKey, setGenreKey] = useState<(typeof GENRE_KEYS)[number]>("dailyLife");
   const [theme, setTheme] = useState("");
   const [numChapters, setNumChapters] = useState(3);
   const [wordsPerChapter, setWordsPerChapter] = useState(150);
@@ -65,7 +83,7 @@ export function GeneratePage() {
 
   const handleGenerate = async () => {
     if (!isAuthenticated) {
-      setError("Please sign in to generate stories.");
+      setError(t("generate.errors.signInRequired"));
       return;
     }
     if (!isGenerationEnabled) {
@@ -75,12 +93,12 @@ export function GeneratePage() {
 
     setIsGenerating(true);
     setError(null);
-    setProgress("Starting generation...");
+    setProgress(t("generate.progress.starting"));
 
     try {
       const request: GenerateStoryRequest = {
         jlpt_level: jlptLevel,
-        genre,
+        genre: GENRE_API_VALUES[genreKey],
         theme: theme || undefined,
         num_chapters: numChapters,
         words_per_chapter: wordsPerChapter,
@@ -97,20 +115,17 @@ export function GeneratePage() {
       }
 
       // Poll for completion
-      const status = await pollGenerationStatus(
-        response.story_id!,
-        (status: GenerationStatus) => {
-          setProgress(status.progress || status.status);
-        }
-      );
+      const status = await pollGenerationStatus(response.story_id!, (status: GenerationStatus) => {
+        setProgress(status.progress || status.status);
+      });
 
       if (status.status === "completed" && status.story_id) {
         navigate({ to: "/read/$storyId", params: { storyId: status.story_id } });
       } else if (status.status === "failed") {
-        throw new Error(status.error || "Generation failed");
+        throw new Error(status.error || t("generate.errors.generationFailed"));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Generation failed");
+      setError(err instanceof Error ? err.message : t("generate.errors.generationFailed"));
     } finally {
       setIsGenerating(false);
       setProgress("");
@@ -128,14 +143,17 @@ export function GeneratePage() {
                 <Sparkles className="w-5 h-5 text-accent" />
               </div>
               <span className="text-sm font-medium text-accent uppercase tracking-wider">
-                AI Powered
+                {t("generate.hero.badge")}
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Generate Story
+            <h1
+              className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t("generate.hero.title")}
             </h1>
             <p className="text-foreground-muted text-lg">
-              Create a custom Japanese story tailored to your level
+              {t("generate.hero.subtitle")}
             </p>
           </div>
         </div>
@@ -146,9 +164,7 @@ export function GeneratePage() {
         <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm space-y-8">
           {/* JLPT Level */}
           <div className="space-y-3">
-            <label className="text-sm font-medium text-foreground">
-              JLPT Level
-            </label>
+            <label className="text-sm font-medium text-foreground">{t("generate.form.jlptLevel")}</label>
             <div className="flex flex-wrap gap-2">
               {JLPT_LEVELS.map((level) => (
                 <button
@@ -174,16 +190,16 @@ export function GeneratePage() {
 
           {/* Genre */}
           <div className="space-y-3">
-            <label className="text-sm font-medium text-foreground">Genre</label>
+            <label className="text-sm font-medium text-foreground">{t("generate.form.genre")}</label>
             <select
-              value={genre}
-              onChange={(e) => setGenre(e.target.value)}
+              value={genreKey}
+              onChange={(e) => setGenreKey(e.target.value as (typeof GENRE_KEYS)[number])}
               disabled={isGenerating}
               className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
             >
-              {GENRES.map((g) => (
-                <option key={g} value={g}>
-                  {g}
+              {GENRE_KEYS.map((key) => (
+                <option key={key} value={key}>
+                  {t(`generate.genres.${key}`)}
                 </option>
               ))}
             </select>
@@ -192,13 +208,13 @@ export function GeneratePage() {
           {/* Theme */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">
-              Theme <span className="text-foreground-muted font-normal">(Optional)</span>
+              {t("generate.form.theme")} <span className="text-foreground-muted font-normal">{t("generate.form.themeOptional")}</span>
             </label>
             <input
               type="text"
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
-              placeholder="e.g., cherry blossoms, summer festival..."
+              placeholder={t("generate.form.themePlaceholder")}
               disabled={isGenerating}
               className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
             />
@@ -207,9 +223,7 @@ export function GeneratePage() {
           {/* Chapters */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground">
-                Chapters
-              </label>
+              <label className="text-sm font-medium text-foreground">{t("generate.form.chapters")}</label>
               <select
                 value={numChapters}
                 onChange={(e) => setNumChapters(Number(e.target.value))}
@@ -218,16 +232,14 @@ export function GeneratePage() {
               >
                 {[2, 3, 4, 5, 6].map((n) => (
                   <option key={n} value={n}>
-                    {n} chapters
+                    {t("generate.form.chaptersCount", { count: n })}
                   </option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground">
-                Words/Chapter
-              </label>
+              <label className="text-sm font-medium text-foreground">{t("generate.form.wordsPerChapter")}</label>
               <select
                 value={wordsPerChapter}
                 onChange={(e) => setWordsPerChapter(Number(e.target.value))}
@@ -236,7 +248,7 @@ export function GeneratePage() {
               >
                 {[100, 150, 200, 250, 300].map((n) => (
                   <option key={n} value={n}>
-                    ~{n} words
+                    {t("generate.form.wordsCount", { count: n })}
                   </option>
                 ))}
               </select>
@@ -245,7 +257,7 @@ export function GeneratePage() {
 
           {/* Options */}
           <div className="space-y-4">
-            <label className="text-sm font-medium text-foreground">Options</label>
+            <label className="text-sm font-medium text-foreground">{t("generate.form.options")}</label>
             <div className="flex flex-wrap gap-6">
               <label className="flex items-center gap-3 cursor-pointer group">
                 <div className="relative">
@@ -258,7 +270,13 @@ export function GeneratePage() {
                   />
                   <div className="w-5 h-5 border-2 border-border rounded bg-background peer-checked:bg-accent peer-checked:border-accent transition-all flex items-center justify-center">
                     {generateAudio && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     )}
@@ -266,7 +284,7 @@ export function GeneratePage() {
                 </div>
                 <span className="flex items-center gap-2">
                   <Volume2 className="w-4 h-4 text-foreground-muted group-hover:text-foreground transition-colors" />
-                  <span className="text-sm text-foreground">Generate Audio</span>
+                  <span className="text-sm text-foreground">{t("generate.options.generateAudio")}</span>
                 </span>
               </label>
 
@@ -281,7 +299,13 @@ export function GeneratePage() {
                   />
                   <div className="w-5 h-5 border-2 border-border rounded bg-background peer-checked:bg-accent peer-checked:border-accent transition-all flex items-center justify-center">
                     {generateImages && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     )}
@@ -289,7 +313,7 @@ export function GeneratePage() {
                 </div>
                 <span className="flex items-center gap-2">
                   <Image className="w-4 h-4 text-foreground-muted group-hover:text-foreground transition-colors" />
-                  <span className="text-sm text-foreground">Generate Images</span>
+                  <span className="text-sm text-foreground">{t("generate.options.generateImages")}</span>
                 </span>
               </label>
             </div>
@@ -311,38 +335,29 @@ export function GeneratePage() {
           )}
 
           {/* Generate Button */}
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="w-full"
-            size="lg"
-          >
+          <Button onClick={handleGenerate} disabled={isGenerating} className="w-full" size="lg">
             {isGenerating ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Generating...
+                {t("generate.actions.generating")}
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2" />
-                Generate Story
+                {t("generate.actions.generate")}
               </>
             )}
           </Button>
 
           {/* Info */}
           <p className="text-xs text-foreground-muted text-center">
-            Story generation may take 2-5 minutes depending on options selected.
+            {t("generate.info.generationTime")}
           </p>
         </div>
       </div>
 
       {/* Paywall Modal */}
-      <Paywall
-        isOpen={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        feature="stories"
-      />
+      <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="stories" />
     </div>
   );
 }

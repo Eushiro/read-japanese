@@ -1,11 +1,17 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation, useAction } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { useAuth, SignInButton } from "@/contexts/AuthContext";
-import { useStory } from "@/hooks/useStory";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate,useParams } from "@tanstack/react-router";
+import { useAction,useMutation, useQuery } from "convex/react";
+import {
+  ArrowLeft,
+  BookOpen,
+  CheckCircle2,
+  HelpCircle,
+  Loader2,
+  RotateCcw,
+  Sparkles,
+  XCircle,
+} from "lucide-react";
+import { useEffect,useState } from "react";
+
 import { Paywall } from "@/components/Paywall";
 import {
   QuestionDisplay,
@@ -13,17 +19,14 @@ import {
   QuestionProgress,
   type QuestionType,
 } from "@/components/quiz";
-import {
-  ArrowLeft,
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  BookOpen,
-  HelpCircle,
-  Sparkles,
-  RotateCcw,
-} from "lucide-react";
-import { testLevelToDifficultyLevel, difficultyLevelToTestLevel } from "@/types/story";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
+import { useStory } from "@/hooks/useStory";
+import { useT } from "@/lib/i18n";
+import { difficultyLevelToTestLevel,testLevelToDifficultyLevel } from "@/types/story";
+
+import { api } from "../../convex/_generated/api";
 
 interface Question {
   questionId: string;
@@ -47,6 +50,7 @@ export function ComprehensionPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id ?? "anonymous";
+  const t = useT();
 
   const { story, isLoading: storyLoading, error: storyError } = useStory(storyId);
 
@@ -57,10 +61,7 @@ export function ComprehensionPage() {
   );
 
   // Check subscription for AI features
-  const subscription = useQuery(
-    api.subscriptions.get,
-    isAuthenticated ? { userId } : "skip"
-  );
+  const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
   // Check for existing comprehension quiz
@@ -129,11 +130,25 @@ export function ComprehensionPage() {
 
     // Mark as started and trigger generation
     setHasAutoStarted(true);
-  }, [storyLoading, existingComprehension, story, isAuthenticated, localQuestions.length, hasAutoStarted, subscription]);
+  }, [
+    storyLoading,
+    existingComprehension,
+    story,
+    isAuthenticated,
+    localQuestions.length,
+    hasAutoStarted,
+    subscription,
+  ]);
 
   // Separate effect to actually generate when hasAutoStarted becomes true
   useEffect(() => {
-    if (hasAutoStarted && !isGenerating && localQuestions.length === 0 && story && isAuthenticated) {
+    if (
+      hasAutoStarted &&
+      !isGenerating &&
+      localQuestions.length === 0 &&
+      story &&
+      isAuthenticated
+    ) {
       // Wait for subscription to load
       if (subscription === undefined) return;
 
@@ -176,13 +191,15 @@ export function ComprehensionPage() {
     return chapters
       .map((chapter) => {
         const segments = chapter.segments || chapter.content || [];
-        return segments.map((s) => {
-          // Try tokens first, then text field
-          if (s.tokens && s.tokens.length > 0) {
-            return s.tokens.map((t) => t.surface).join("");
-          }
-          return s.text || "";
-        }).join(" ");
+        return segments
+          .map((s) => {
+            // Try tokens first, then text field
+            if (s.tokens && s.tokens.length > 0) {
+              return s.tokens.map((t) => t.surface).join("");
+            }
+            return s.text || "";
+          })
+          .join(" ");
       })
       .join("\n\n");
   };
@@ -204,7 +221,8 @@ export function ComprehensionPage() {
   // Get user's difficulty level for the story's language
   const getUserDifficulty = (): number => {
     const language = getLanguage();
-    const proficiency = userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
+    const proficiency =
+      userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
     if (proficiency?.level) {
       return testLevelToDifficultyLevel(proficiency.level);
     }
@@ -215,7 +233,8 @@ export function ComprehensionPage() {
   // Get user's display level for the refresh button
   const getUserDisplayLevel = (): string => {
     const language = getLanguage();
-    const proficiency = userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
+    const proficiency =
+      userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
     if (proficiency?.level) {
       return proficiency.level;
     }
@@ -314,7 +333,7 @@ export function ComprehensionPage() {
           // For free users, skip AI grading and mark as pending review
           updatedQuestions[currentQuestionIndex] = {
             ...updatedQuestions[currentQuestionIndex],
-            aiFeedback: "Upgrade to a paid plan to get AI feedback on your answers.",
+            aiFeedback: t("comprehension.paywall.freeUserFeedback"),
             isCorrect: false,
             earnedPoints: 0,
           };
@@ -377,11 +396,11 @@ export function ComprehensionPage() {
         <div className="container mx-auto px-4 py-12">
           <div className="flex flex-col items-center justify-center min-h-[50vh] text-foreground-muted">
             <p className="text-lg font-medium text-destructive">
-              {storyError?.message || "Story not found"}
+              {storyError?.message || t("comprehension.errors.storyNotFound")}
             </p>
             <Button variant="outline" className="mt-4" onClick={() => navigate({ to: "/library" })}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Library
+              {t("comprehension.navigation.backToLibrary")}
             </Button>
           </div>
         </div>
@@ -405,7 +424,7 @@ export function ComprehensionPage() {
               </Button>
               <div>
                 <h1 className="font-semibold text-foreground">{story.metadata.title}</h1>
-                <p className="text-sm text-foreground-muted">Comprehension Quiz</p>
+                <p className="text-sm text-foreground-muted">{t("comprehension.header.quiz")}</p>
               </div>
             </div>
           </div>
@@ -417,7 +436,7 @@ export function ComprehensionPage() {
             <div className="space-y-6">
               <div className="flex items-center justify-center gap-2 text-foreground-muted mb-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Generating questions...</span>
+                <span>{t("comprehension.loading.generatingQuestions")}</span>
               </div>
               <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm animate-pulse">
                 {/* Type badge and points */}
@@ -458,12 +477,14 @@ export function ComprehensionPage() {
               <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
                 <HelpCircle className="w-10 h-10 text-accent" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-                Test Your Understanding
+              <h2
+                className="text-2xl font-bold text-foreground mb-3"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("comprehension.generate.title")}
               </h2>
               <p className="text-foreground-muted mb-8 max-w-md mx-auto">
-                Generate AI-powered comprehension questions based on the story you just read.
-                Questions will test your understanding at different levels.
+                {t("comprehension.generate.description")}
               </p>
               <Button
                 onClick={handleGenerateQuestions}
@@ -472,11 +493,11 @@ export function ComprehensionPage() {
                 size="lg"
               >
                 <Sparkles className="w-4 h-4" />
-                Generate Questions
+                {t("comprehension.generate.button")}
               </Button>
               {!isAuthenticated && (
                 <p className="text-sm text-foreground-muted mt-4">
-                  Please sign in to generate questions.
+                  {t("comprehension.generate.signInRequired")}
                 </p>
               )}
             </div>
@@ -507,7 +528,7 @@ export function ComprehensionPage() {
                 </Button>
                 <div>
                   <h1 className="font-semibold text-foreground">{story.metadata.title}</h1>
-                  <p className="text-sm text-foreground-muted">Quiz Results</p>
+                  <p className="text-sm text-foreground-muted">{t("comprehension.header.results")}</p>
                 </div>
               </div>
               {isAdmin && (
@@ -528,20 +549,39 @@ export function ComprehensionPage() {
         <main className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
           {/* Score Summary */}
           <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm mb-6 text-center">
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 ${
-              percentScore >= 70 ? "bg-green-500/10" : percentScore >= 50 ? "bg-amber-500/10" : "bg-red-500/10"
-            }`}>
-              <span className={`text-3xl font-bold ${
-                percentScore >= 70 ? "text-green-500" : percentScore >= 50 ? "text-amber-500" : "text-red-500"
-              }`}>
+            <div
+              className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                percentScore >= 70
+                  ? "bg-green-500/10"
+                  : percentScore >= 50
+                    ? "bg-amber-500/10"
+                    : "bg-red-500/10"
+              }`}
+            >
+              <span
+                className={`text-3xl font-bold ${
+                  percentScore >= 70
+                    ? "text-green-500"
+                    : percentScore >= 50
+                      ? "text-amber-500"
+                      : "text-red-500"
+                }`}
+              >
                 {percentScore}%
               </span>
             </div>
-            <h2 className="text-xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              {percentScore >= 70 ? "Great job!" : percentScore >= 50 ? "Good effort!" : "Keep practicing!"}
+            <h2
+              className="text-xl font-bold text-foreground mb-2"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {percentScore >= 70
+                ? t("comprehension.results.greatJob")
+                : percentScore >= 50
+                  ? t("comprehension.results.goodEffort")
+                  : t("comprehension.results.keepPracticing")}
             </h2>
             <p className="text-foreground-muted mb-6">
-              You scored {totalEarned} out of {totalPossible} points
+              {t("comprehension.results.scoreText", { earned: totalEarned, total: totalPossible })}
             </p>
             {/* Actions - moved up for visibility */}
             <div className="flex gap-4 justify-center">
@@ -550,23 +590,26 @@ export function ComprehensionPage() {
                 onClick={() => navigate({ to: "/read/$storyId", params: { storyId } })}
               >
                 <BookOpen className="w-4 h-4 mr-2" />
-                Back to Story
+                {t("comprehension.navigation.backToStory")}
               </Button>
-              <Button onClick={() => navigate({ to: "/library" })}>
-                Browse More Stories
-              </Button>
+              <Button onClick={() => navigate({ to: "/library" })}>{t("comprehension.navigation.browseMore")}</Button>
             </div>
           </div>
 
           {/* Question Review */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Review Answers</h3>
-            {localQuestions.map((question, index) => (
-              <div key={question.questionId} className="bg-surface rounded-xl border border-border p-4">
+            <h3 className="text-lg font-semibold text-foreground mb-4">{t("comprehension.results.reviewAnswers")}</h3>
+            {localQuestions.map((question, _index) => (
+              <div
+                key={question.questionId}
+                className="bg-surface rounded-xl border border-border p-4"
+              >
                 <div className="flex items-start gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                    question.isCorrect ? "bg-green-500/10" : "bg-red-500/10"
-                  }`}>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                      question.isCorrect ? "bg-green-500/10" : "bg-red-500/10"
+                    }`}
+                  >
                     {question.isCorrect ? (
                       <CheckCircle2 className="w-4 h-4 text-green-500" />
                     ) : (
@@ -576,15 +619,17 @@ export function ComprehensionPage() {
                   <div className="flex-1">
                     <p className="font-medium text-foreground mb-1">{question.question}</p>
                     {question.questionTranslation && (
-                      <p className="text-sm text-foreground-muted mb-2">{question.questionTranslation}</p>
+                      <p className="text-sm text-foreground-muted mb-2">
+                        {question.questionTranslation}
+                      </p>
                     )}
                     <p className="text-sm">
-                      <span className="text-foreground-muted">Your answer: </span>
+                      <span className="text-foreground-muted">{t("comprehension.results.yourAnswer")} </span>
                       <span className="text-foreground">{question.userAnswer}</span>
                     </p>
                     {question.type === "multiple_choice" && !question.isCorrect && (
                       <p className="text-sm text-green-600 mt-1">
-                        Correct answer: {question.correctAnswer}
+                        {t("comprehension.results.correctAnswer")} {question.correctAnswer}
                       </p>
                     )}
                     {question.aiFeedback && (
@@ -593,14 +638,13 @@ export function ComprehensionPage() {
                       </p>
                     )}
                     <p className="text-xs text-foreground-muted mt-2">
-                      {question.earnedPoints ?? 0}/{question.points} points
+                      {t("comprehension.results.pointsEarned", { earned: question.earnedPoints ?? 0, total: question.points })}
                     </p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-
         </main>
       </div>
     );
@@ -612,7 +656,7 @@ export function ComprehensionPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-accent mx-auto mb-4" />
-          <p className="text-foreground-muted">Loading questions...</p>
+          <p className="text-foreground-muted">{t("comprehension.loading.loadingQuestions")}</p>
         </div>
       </div>
     );
@@ -638,7 +682,7 @@ export function ComprehensionPage() {
               <div>
                 <h1 className="font-semibold text-foreground">{story.metadata.title}</h1>
                 <p className="text-sm text-foreground-muted">
-                  Question {currentQuestionIndex + 1} of {localQuestions.length}
+                  {t("comprehension.header.questionOf", { current: currentQuestionIndex + 1, total: localQuestions.length })}
                 </p>
               </div>
             </div>
@@ -707,8 +751,8 @@ export function ComprehensionPage() {
         isOpen={showPaywall}
         onClose={() => setShowPaywall(false)}
         feature="sentences"
-        title="Upgrade for AI Comprehension"
-        description="Get AI-generated questions and detailed feedback on your answers."
+        title={t("comprehension.paywall.title")}
+        description={t("comprehension.paywall.description")}
       />
     </div>
   );

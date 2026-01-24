@@ -1,7 +1,9 @@
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+
 import { useAuth } from "@/contexts/AuthContext";
 import type { User } from "@/lib/convex-types";
+
+import { api } from "../../convex/_generated/api";
 
 /**
  * Hook to get the current user's Convex profile data

@@ -1,10 +1,7 @@
 import { v } from "convex/values";
+
 import { mutation, query } from "./_generated/server";
-import {
-  languageValidator,
-  masteryStateValidator,
-  sourceTypeValidator,
-} from "./schema";
+import { languageValidator, masteryStateValidator, sourceTypeValidator } from "./schema";
 
 // ============================================
 // QUERIES
@@ -137,9 +134,7 @@ export const isSaved = query({
   handler: async (ctx, args) => {
     const item = await ctx.db
       .query("vocabulary")
-      .withIndex("by_user_and_word", (q) =>
-        q.eq("userId", args.userId).eq("word", args.word)
-      )
+      .withIndex("by_user_and_word", (q) => q.eq("userId", args.userId).eq("word", args.word))
       .first();
     return item !== null;
   },
@@ -151,9 +146,7 @@ export const getByWord = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("vocabulary")
-      .withIndex("by_user_and_word", (q) =>
-        q.eq("userId", args.userId).eq("word", args.word)
-      )
+      .withIndex("by_user_and_word", (q) => q.eq("userId", args.userId).eq("word", args.word))
       .first();
   },
 });
@@ -209,9 +202,7 @@ export const add = mutation({
     // Check if word already exists for this user
     const existing = await ctx.db
       .query("vocabulary")
-      .withIndex("by_user_and_word", (q) =>
-        q.eq("userId", args.userId).eq("word", args.word)
-      )
+      .withIndex("by_user_and_word", (q) => q.eq("userId", args.userId).eq("word", args.word))
       .first();
 
     if (existing) {
@@ -284,9 +275,7 @@ export const bulkAdd = mutation({
       // Check if word already exists
       const existing = await ctx.db
         .query("vocabulary")
-        .withIndex("by_user_and_word", (q) =>
-          q.eq("userId", args.userId).eq("word", item.word)
-        )
+        .withIndex("by_user_and_word", (q) => q.eq("userId", args.userId).eq("word", item.word))
         .first();
 
       if (!existing) {
@@ -340,7 +329,7 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     const filteredUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([_, v]) => v !== undefined)
+      Object.entries(updates).filter(([, v]) => v !== undefined)
     );
 
     await ctx.db.patch(id, {

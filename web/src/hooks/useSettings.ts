@@ -1,7 +1,9 @@
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { useCallback, useMemo, useEffect, useRef } from "react";
+import { useMutation,useQuery } from "convex/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { useAuth } from "@/contexts/AuthContext";
+
+import { api } from "../../convex/_generated/api";
 
 // Storage key for dev user login
 const DEV_USER_STORAGE_KEY = "devUserEnabled";
@@ -115,14 +117,12 @@ export function useSettings() {
   const settings = useQuery(api.settings.get, { userId });
   const updateMutation = useMutation(api.settings.update);
 
-  // Use a ref to track if we've received initial data
-  const hasLoadedRef = useRef(false);
-  const cachedSettingsRef = useRef<UserSettings>(getCachedSettings());
+  // Use state for cached settings (initialized from localStorage to prevent flicker)
+  const [cachedSettings, setCachedSettings] = useState<UserSettings>(() => getCachedSettings());
 
   // Update cache when settings change
   useEffect(() => {
     if (settings) {
-      hasLoadedRef.current = true;
       const newSettings: UserSettings = {
         showFurigana: settings.showFurigana,
         theme: settings.theme,
@@ -130,12 +130,13 @@ export function useSettings() {
         autoplayAudio: settings.autoplayAudio,
         audioHighlightMode: (settings.audioHighlightMode as AudioHighlightMode) || "sentence",
       };
-      cachedSettingsRef.current = newSettings;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: sync cache with backend settings
+      setCachedSettings(newSettings);
       cacheSettings(newSettings);
     }
   }, [settings]);
 
-  // Use cached settings while loading, then use live settings
+  // Use live settings when available, otherwise cached settings
   const currentSettings = useMemo<UserSettings>(() => {
     if (settings) {
       return {
@@ -147,14 +148,14 @@ export function useSettings() {
       };
     }
     // Return cached settings while loading to prevent flicker
-    return cachedSettingsRef.current;
-  }, [settings]);
+    return cachedSettings;
+  }, [settings, cachedSettings]);
 
   const updateSettings = useCallback(
     async (updates: Partial<UserSettings>) => {
       // Optimistically update cache
-      const newSettings = { ...cachedSettingsRef.current, ...updates };
-      cachedSettingsRef.current = newSettings;
+      const newSettings = { ...cachedSettings, ...updates };
+      setCachedSettings(newSettings);
       cacheSettings(newSettings);
 
       await updateMutation({
@@ -162,7 +163,7 @@ export function useSettings() {
         ...updates,
       });
     },
-    [updateMutation, userId]
+    [updateMutation, userId, cachedSettings]
   );
 
   const setShowFurigana = useCallback(

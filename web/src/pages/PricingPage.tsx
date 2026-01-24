@@ -1,16 +1,20 @@
-import { useState } from "react";
 import { useAction } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { BookOpen, Brain, Check, Crown, Mic,PenLine, Sparkles, X, Zap } from "lucide-react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
-import { Crown, Zap, Sparkles, Check, X, Brain, PenLine, BookOpen, Mic } from "lucide-react";
-import { useAuth, SignInButton } from "@/contexts/AuthContext";
+import { SignInButton,useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
+
+import { api } from "../../convex/_generated/api";
 
 export function PricingPage() {
+  const t = useT();
   const { user, isAuthenticated } = useAuth();
   const createCheckout = useAction(api.stripe.createCheckoutSession);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
-  const handleUpgrade = async (tier: "basic" | "pro" | "unlimited") => {
+  const handleUpgrade = async (tier: "basic" | "pro" | "power") => {
     if (!user || checkoutLoading) return;
     setCheckoutLoading(tier);
     try {
@@ -44,17 +48,17 @@ export function PricingPage() {
                 <Crown className="w-5 h-5 text-purple-400" />
               </div>
               <span className="text-sm font-semibold text-purple-400 uppercase tracking-wider">
-                Pricing
+                {t('pricing.hero.badge')}
               </span>
             </div>
             <h1
               className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Simple, transparent pricing
+              {t('pricing.hero.title')}
             </h1>
             <p className="text-lg text-foreground max-w-2xl mx-auto">
-              Choose the plan that fits your learning goals. Upgrade or downgrade anytime.
+              {t('pricing.hero.subtitle')}
             </p>
           </div>
         </div>
@@ -68,25 +72,25 @@ export function PricingPage() {
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
               <Brain className="w-5 h-5 text-accent" />
             </div>
-            <span className="text-sm text-foreground">SRS Flashcards</span>
+            <span className="text-sm text-foreground">{t('pricing.features.srsFlashcards')}</span>
           </div>
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
               <PenLine className="w-5 h-5 text-accent" />
             </div>
-            <span className="text-sm text-foreground">Writing Feedback</span>
+            <span className="text-sm text-foreground">{t('pricing.features.writingFeedback')}</span>
           </div>
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-accent" />
             </div>
-            <span className="text-sm text-foreground">Comprehension</span>
+            <span className="text-sm text-foreground">{t('pricing.features.comprehension')}</span>
           </div>
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
               <Mic className="w-5 h-5 text-accent" />
             </div>
-            <span className="text-sm text-foreground">Audio Support</span>
+            <span className="text-sm text-foreground">{t('pricing.features.audioSupport')}</span>
           </div>
         </div>
 
@@ -101,9 +105,7 @@ export function PricingPage() {
                 <span className="text-4xl font-bold text-foreground">$0</span>
                 <span className="text-foreground-muted">/mo</span>
               </div>
-              <p className="text-sm text-foreground-muted mt-2">
-                Get started with the basics
-              </p>
+              <p className="text-sm text-foreground-muted mt-2">Get started with the basics</p>
             </div>
             <ul className="text-sm space-y-3 flex-1">
               <li className="flex items-start gap-2">
@@ -129,9 +131,7 @@ export function PricingPage() {
             </ul>
             <div className="mt-6">
               {isAuthenticated ? (
-                <div className="text-center text-sm text-foreground-muted py-2">
-                  Current plan
-                </div>
+                <div className="text-center text-sm text-foreground-muted py-2">Current plan</div>
               ) : (
                 <SignInButton mode="modal">
                   <Button variant="outline" className="w-full">
@@ -155,9 +155,7 @@ export function PricingPage() {
                 <span className="text-4xl font-bold text-foreground">$5</span>
                 <span className="text-foreground-muted">/mo</span>
               </div>
-              <p className="text-sm text-foreground-muted mt-2">
-                For regular learners
-              </p>
+              <p className="text-sm text-foreground-muted mt-2">For regular learners</p>
             </div>
             <ul className="text-sm space-y-3 flex-1">
               <li className="flex items-start gap-2">
@@ -191,7 +189,7 @@ export function PricingPage() {
                   variant="outline"
                   className={`w-full ${checkoutLoading === "basic" ? "btn-loading-gradient" : ""}`}
                   onClick={() => handleUpgrade("basic")}
-                                  >
+                >
                   Get Basic
                 </Button>
               ) : (
@@ -222,9 +220,7 @@ export function PricingPage() {
                 <span className="text-4xl font-bold text-foreground">$15</span>
                 <span className="text-foreground-muted">/mo</span>
               </div>
-              <p className="text-sm text-foreground-muted mt-2">
-                For serious learners
-              </p>
+              <p className="text-sm text-foreground-muted mt-2">For serious learners</p>
             </div>
             <ul className="text-sm space-y-3 flex-1">
               <li className="flex items-start gap-2">
@@ -246,13 +242,13 @@ export function PricingPage() {
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
                 <span className="text-foreground">
-                  <strong>Unlimited</strong> reading
+                  <strong>100</strong> reading sessions
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
                 <span className="text-foreground">
-                  <strong>Unlimited</strong> flashcards
+                  <strong>3,000</strong> flashcards/month
                 </span>
               </li>
             </ul>
@@ -261,7 +257,7 @@ export function PricingPage() {
                 <Button
                   className={`w-full ${checkoutLoading === "pro" ? "btn-loading-gradient" : ""}`}
                   onClick={() => handleUpgrade("pro")}
-                                  >
+                >
                   Get Pro
                 </Button>
               ) : (
@@ -272,22 +268,20 @@ export function PricingPage() {
             </div>
           </div>
 
-          {/* Unlimited Tier */}
+          {/* Power Tier */}
           <div className="p-6 rounded-2xl border border-border bg-gradient-to-b from-purple-500/5 to-transparent flex flex-col">
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-2">
                 <Sparkles className="w-4 h-4 text-purple-500" />
                 <span className="text-sm font-medium text-foreground uppercase tracking-wider">
-                  Unlimited
+                  Power
                 </span>
               </div>
               <div className="mt-2">
                 <span className="text-4xl font-bold text-foreground">$45</span>
                 <span className="text-foreground-muted">/mo</span>
               </div>
-              <p className="text-sm text-foreground-muted mt-2">
-                No limits, ever
-              </p>
+              <p className="text-sm text-foreground-muted mt-2">5x Pro for power users</p>
             </div>
             <ul className="text-sm space-y-3 flex-1">
               <li className="flex items-start gap-2">
@@ -297,32 +291,34 @@ export function PricingPage() {
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
                 <span className="text-foreground">
-                  <strong>Unlimited</strong> AI feedback
+                  <strong>5,000</strong> AI feedback/month
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
                 <span className="text-foreground">
-                  <strong>Unlimited</strong> audio
+                  <strong>2,500</strong> audio generations
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                <span className="text-foreground">
+                  <strong>15,000</strong> flashcards/month
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
                 <span className="text-foreground">Priority support</span>
               </li>
-              <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                <span className="text-foreground">Early access to new features</span>
-              </li>
             </ul>
             <div className="mt-6">
               {isAuthenticated ? (
                 <Button
                   variant="outline"
-                  className={`w-full border-purple-500/30 hover:bg-purple-500/10 ${checkoutLoading === "unlimited" ? "btn-loading-gradient" : ""}`}
-                  onClick={() => handleUpgrade("unlimited")}
-                                  >
-                  Get Unlimited
+                  className={`w-full border-purple-500/30 hover:bg-purple-500/10 ${checkoutLoading === "power" ? "btn-loading-gradient" : ""}`}
+                  onClick={() => handleUpgrade("power")}
+                >
+                  Get Power
                 </Button>
               ) : (
                 <SignInButton mode="modal">
@@ -330,7 +326,7 @@ export function PricingPage() {
                     variant="outline"
                     className="w-full border-purple-500/30 hover:bg-purple-500/10"
                   >
-                    Get Unlimited
+                    Get Power
                   </Button>
                 </SignInButton>
               )}
@@ -344,13 +340,11 @@ export function PricingPage() {
             className="text-2xl font-bold text-foreground text-center mb-8"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Frequently Asked Questions
+            {t('pricing.faq.title')}
           </h2>
           <div className="space-y-6">
             <div className="bg-surface rounded-xl border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-2">
-                What is AI feedback?
-              </h3>
+              <h3 className="font-semibold text-foreground mb-2">What is AI feedback?</h3>
               <p className="text-sm text-foreground-muted">
                 AI feedback includes writing corrections, comprehension quiz grading, and sentence
                 generation for flashcards. Each time you get feedback on your writing or generate
@@ -368,9 +362,7 @@ export function PricingPage() {
               </p>
             </div>
             <div className="bg-surface rounded-xl border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-2">
-                Can I change plans anytime?
-              </h3>
+              <h3 className="font-semibold text-foreground mb-2">Can I change plans anytime?</h3>
               <p className="text-sm text-foreground-muted">
                 Yes! You can upgrade or downgrade your plan at any time. Changes take effect
                 immediately, and we'll prorate any differences.

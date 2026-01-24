@@ -1,28 +1,31 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useQuery, useMutation, useAction } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
-import { Button } from "@/components/ui/button";
-import { Paywall } from "@/components/Paywall";
+import { useAction,useMutation, useQuery } from "convex/react";
 import {
+  BookOpen,
   Brain,
-  RotateCcw,
   Check,
-  X,
   ChevronRight,
   Loader2,
-  BookOpen,
-  Volume2,
+  Redo2,
+  RefreshCw,
+  RotateCcw,
   Sparkles,
   Undo2,
-  Redo2,
-  RefreshCw
+  Volume2,
+  X,
 } from "lucide-react";
-import { useAuth, SignInButton } from "@/contexts/AuthContext";
+import { useCallback, useEffect, useMemo, useRef,useState } from "react";
+
+import { Paywall } from "@/components/Paywall";
+import { Button } from "@/components/ui/button";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { SignInButton,useAuth } from "@/contexts/AuthContext";
 import { useReviewSession } from "@/contexts/ReviewSessionContext";
-import type { Id, Rating, CardState } from "@/lib/convex-types";
+import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
+import type { CardState,Id, Rating } from "@/lib/convex-types";
+import { useT } from "@/lib/i18n";
 import { LANGUAGES } from "@/lib/languages";
+
+import { api } from "../../convex/_generated/api";
 
 // Extended card type including SRS fields for undo
 type CardType = {
@@ -83,6 +86,7 @@ export function FlashcardsPage() {
   const { user, isAuthenticated } = useAuth();
   const { trackEvent, events } = useAnalytics();
   const { setCardsLeft } = useReviewSession();
+  const t = useT();
   const userId = user?.id ?? "anonymous";
 
   // Fetch user profile for primary language
@@ -94,10 +98,7 @@ export function FlashcardsPage() {
   const languageInfo = LANGUAGES.find((l) => l.value === primaryLanguage);
 
   // Check subscription for AI features
-  const subscription = useQuery(
-    api.subscriptions.get,
-    isAuthenticated ? { userId } : "skip"
-  );
+  const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
   // Fetch due cards and stats - filtered by primary language
@@ -140,19 +141,24 @@ export function FlashcardsPage() {
     return [...(dueCards ?? []), ...(newCards ?? [])] as CardType[];
   }, [dueCards, newCards]);
 
+  // Store counts at initialization time to avoid dependency on changing values
+  const dueCardsCount = dueCards?.length ?? 0;
+  const newCardsCount = newCards?.length ?? 0;
+
   useEffect(() => {
     if (initialCards.length > 0 && !isInitialized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional one-time initialization from async data
       setSessionQueue(initialCards);
       setIsInitialized(true);
       originalSessionSize.current = initialCards.length;
       // Track session started
       trackEvent(events.FLASHCARD_SESSION_STARTED, {
-        cards_due: dueCards?.length ?? 0,
-        cards_new: newCards?.length ?? 0,
+        cards_due: dueCardsCount,
+        cards_new: newCardsCount,
         total_cards: initialCards.length,
       });
     }
-  }, [initialCards, isInitialized]);
+  }, [initialCards, isInitialized, trackEvent, events.FLASHCARD_SESSION_STARTED, dueCardsCount, newCardsCount]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -175,87 +181,90 @@ export function FlashcardsPage() {
 
   const currentCard = sessionQueue[currentIndex];
 
-  const handleRating = useCallback(async (rating: Rating) => {
-    if (!currentCard || isTransitioning) return;
+  const handleRating = useCallback(
+    async (rating: Rating) => {
+      if (!currentCard || isTransitioning) return;
 
-    // Show visual feedback immediately and start transition
-    setLastSelectedRating(rating);
-    setIsTransitioning(true);
+      // Show visual feedback immediately and start transition
+      setLastSelectedRating(rating);
+      setIsTransitioning(true);
 
-    // Capture current state BEFORE mutation for undo
-    const historyEntry: HistoryEntry = {
-      cardId: currentCard._id,
-      card: currentCard,
-      rating,
-      previousState: {
-        sessionQueue: [...sessionQueue],
-        currentIndex,
-        reviewedCount,
-        flashcardState: {
-          state: currentCard.state ?? "new",
-          due: currentCard.due ?? Date.now(),
-          stability: currentCard.stability ?? 0,
-          difficulty: currentCard.difficulty ?? 0,
-          elapsedDays: currentCard.elapsedDays ?? 0,
-          scheduledDays: currentCard.scheduledDays ?? 0,
-          reps: currentCard.reps ?? 0,
-          lapses: currentCard.lapses ?? 0,
-          lastReview: currentCard.lastReview,
-        },
-        vocabStats: {
-          timesReviewed: currentCard.vocabulary?.timesReviewed ?? 0,
-          timesCorrect: currentCard.vocabulary?.timesCorrect ?? 0,
-        },
-      },
-    };
-
-    try {
-      await reviewCard({
-        flashcardId: currentCard._id,
+      // Capture current state BEFORE mutation for undo
+      const historyEntry: HistoryEntry = {
+        cardId: currentCard._id,
+        card: currentCard,
         rating,
-      });
+        previousState: {
+          sessionQueue: [...sessionQueue],
+          currentIndex,
+          reviewedCount,
+          flashcardState: {
+            state: currentCard.state ?? "new",
+            due: currentCard.due ?? Date.now(),
+            stability: currentCard.stability ?? 0,
+            difficulty: currentCard.difficulty ?? 0,
+            elapsedDays: currentCard.elapsedDays ?? 0,
+            scheduledDays: currentCard.scheduledDays ?? 0,
+            reps: currentCard.reps ?? 0,
+            lapses: currentCard.lapses ?? 0,
+            lastReview: currentCard.lastReview,
+          },
+          vocabStats: {
+            timesReviewed: currentCard.vocabulary?.timesReviewed ?? 0,
+            timesCorrect: currentCard.vocabulary?.timesCorrect ?? 0,
+          },
+        },
+      };
 
-      // Save to history after successful mutation
-      setHistory(prev => [...prev, historyEntry]);
-      setUndoneHistory([]); // Clear redo stack on new action
+      try {
+        await reviewCard({
+          flashcardId: currentCard._id,
+          rating,
+        });
 
-      // Track card rated
-      trackEvent(events.FLASHCARD_RATED, {
-        rating,
-        card_state: currentCard.state ?? "new",
-        word: currentCard.vocabulary?.word,
-      });
+        // Save to history after successful mutation
+        setHistory((prev) => [...prev, historyEntry]);
+        setUndoneHistory([]); // Clear redo stack on new action
 
-      // Wait 200ms to show the highlight before advancing
-      advanceTimeoutRef.current = setTimeout(() => {
-        setReviewedCount((prev) => prev + 1);
-        setShowAnswer(false);
+        // Track card rated
+        trackEvent(events.FLASHCARD_RATED, {
+          rating,
+          card_state: currentCard.state ?? "new",
+          word: currentCard.vocabulary?.word,
+        });
+
+        // Wait 200ms to show the highlight before advancing
+        advanceTimeoutRef.current = setTimeout(() => {
+          setReviewedCount((prev) => prev + 1);
+          setShowAnswer(false);
+          setLastSelectedRating(null);
+          setIsTransitioning(false);
+
+          // Advance index first, then requeue if "Again" - this keeps the count stable
+          const isLastCard = currentIndex + 1 >= sessionQueue.length;
+
+          if (isLastCard && rating !== "again") {
+            setSessionComplete(true);
+            trackEvent(events.FLASHCARD_SESSION_COMPLETED, {
+              cards_reviewed: reviewedCount + 1,
+              total_cards: sessionQueue.length,
+            });
+          } else {
+            // Advance and optionally requeue together
+            setCurrentIndex((prev) => prev + 1);
+            if (rating === "again") {
+              setSessionQueue((prev) => [...prev, currentCard]);
+            }
+          }
+        }, 200);
+      } catch (error) {
+        console.error("Failed to review card:", error);
         setLastSelectedRating(null);
         setIsTransitioning(false);
-
-        // Advance index first, then requeue if "Again" - this keeps the count stable
-        const isLastCard = currentIndex + 1 >= sessionQueue.length;
-
-        if (isLastCard && rating !== "again") {
-          setSessionComplete(true);
-          trackEvent(events.FLASHCARD_SESSION_COMPLETED, {
-            cards_reviewed: reviewedCount + 1,
-            total_cards: sessionQueue.length,
-          });
-        } else {
-          // Advance and optionally requeue together
-          setCurrentIndex((prev) => prev + 1);
-          if (rating === "again") {
-            setSessionQueue((prev) => [...prev, currentCard]);
-          }
-        }
-      }, 200);
-    } catch (error) {
-      console.error("Failed to review card:", error);
-      setLastSelectedRating(null);
-      setIsTransitioning(false);
-    }
-  }, [currentCard, currentIndex, sessionQueue, reviewedCount, reviewCard, isTransitioning]);
+      }
+    },
+    [currentCard, currentIndex, sessionQueue, reviewedCount, reviewCard, isTransitioning, trackEvent, events]
+  );
 
   const restartSession = () => {
     setSessionQueue(initialCards);
@@ -289,8 +298,8 @@ export function FlashcardsPage() {
       setSessionComplete(false);
 
       // Move to undone history for redo
-      setHistory(prev => prev.slice(0, -1));
-      setUndoneHistory(prev => [...prev, lastEntry]);
+      setHistory((prev) => prev.slice(0, -1));
+      setUndoneHistory((prev) => [...prev, lastEntry]);
     } catch (error) {
       console.error("Failed to undo:", error);
     }
@@ -310,12 +319,12 @@ export function FlashcardsPage() {
       });
 
       // Re-apply UI state changes
-      setReviewedCount(prev => prev + 1);
+      setReviewedCount((prev) => prev + 1);
       setShowAnswer(false);
 
       // Handle session queue and index based on original rating
       if (entryToRedo.rating === "again") {
-        setSessionQueue(prev => [...prev, entryToRedo.card]);
+        setSessionQueue((prev) => [...prev, entryToRedo.card]);
       }
 
       const prevQueue = entryToRedo.previousState.sessionQueue;
@@ -332,8 +341,8 @@ export function FlashcardsPage() {
       }
 
       // Move back to history
-      setUndoneHistory(prev => prev.slice(0, -1));
-      setHistory(prev => [...prev, entryToRedo]);
+      setUndoneHistory((prev) => prev.slice(0, -1));
+      setHistory((prev) => [...prev, entryToRedo]);
     } catch (error) {
       console.error("Failed to redo:", error);
     }
@@ -356,7 +365,10 @@ export function FlashcardsPage() {
       }
 
       // Redo: Cmd/Ctrl + Shift + Z or Cmd/Ctrl + Y
-      if ((e.metaKey || e.ctrlKey) && ((e.shiftKey && e.key.toLowerCase() === "z") || e.key.toLowerCase() === "y")) {
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        ((e.shiftKey && e.key.toLowerCase() === "z") || e.key.toLowerCase() === "y")
+      ) {
         e.preventDefault();
         e.stopPropagation();
         handleRedo();
@@ -391,19 +403,27 @@ export function FlashcardsPage() {
     // Use capture phase to intercept before browser
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [currentCard, showAnswer, sessionComplete, isTransitioning, handleRating, handleUndo, handleRedo]);
+  }, [
+    currentCard,
+    showAnswer,
+    sessionComplete,
+    isTransitioning,
+    handleRating,
+    handleUndo,
+    handleRedo,
+  ]);
 
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-4">
           <Brain className="w-12 h-12 text-foreground-muted mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">Sign in to start reviewing</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-2">{t('flashcards.signIn.title')}</h2>
           <p className="text-foreground-muted mb-4">
-            Track your progress and master your vocabulary with spaced repetition.
+            {t('flashcards.signIn.description')}
           </p>
           <SignInButton mode="modal">
-            <Button>Sign In</Button>
+            <Button>{t('flashcards.signIn.button')}</Button>
           </SignInButton>
         </div>
       </div>
@@ -432,12 +452,15 @@ export function FlashcardsPage() {
                 <Brain className="w-5 h-5 text-purple-400" />
               </div>
               <span className="text-sm font-semibold text-purple-400 uppercase tracking-wider">
-                Spaced Repetition
+                {t('flashcards.hero.badge')}
               </span>
             </div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl sm:text-4xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                Flashcards
+              <h1
+                className="text-3xl sm:text-4xl font-bold text-foreground"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t('flashcards.hero.title')}
               </h1>
               {languageInfo && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-sm">
@@ -446,7 +469,7 @@ export function FlashcardsPage() {
               )}
             </div>
             <p className="text-foreground-muted text-lg">
-              Review your vocabulary with the FSRS algorithm
+              {t('flashcards.hero.subtitle')}
             </p>
           </div>
         </div>
@@ -459,7 +482,7 @@ export function FlashcardsPage() {
             <span className="text-3xl font-bold text-green-500">
               {sessionQueue.length - currentIndex}
             </span>
-            <span className="text-lg text-foreground-muted ml-2">cards left</span>
+            <span className="text-lg text-foreground-muted ml-2">{t('flashcards.counter.cardsLeft')}</span>
           </div>
         </div>
       </div>
@@ -472,16 +495,19 @@ export function FlashcardsPage() {
             <div className="w-20 h-20 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-6">
               <Check className="w-10 h-10 text-green-500" />
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              All caught up!
+            <h2
+              className="text-2xl font-bold text-foreground mb-2"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t('flashcards.states.allCaughtUp.title')}
             </h2>
             <p className="text-foreground-muted mb-6">
-              No cards are due for review right now. Add more vocabulary or check back later.
+              {t('flashcards.states.allCaughtUp.description')}
             </p>
             <div className="flex justify-center gap-4">
-              <Button variant="outline" onClick={() => window.location.href = "/vocabulary"}>
+              <Button variant="outline" onClick={() => (window.location.href = "/vocabulary")}>
                 <BookOpen className="w-4 h-4 mr-2" />
-                Add Vocabulary
+                {t('flashcards.states.allCaughtUp.addVocabulary')}
               </Button>
             </div>
           </div>
@@ -491,18 +517,25 @@ export function FlashcardsPage() {
             <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
               <Sparkles className="w-10 h-10 text-accent" />
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Session Complete!
+            <h2
+              className="text-2xl font-bold text-foreground mb-2"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t('flashcards.states.sessionComplete.title')}
             </h2>
             <p className="text-foreground-muted mb-2">
-              You reviewed <span className="font-semibold text-foreground">{reviewedCount}</span> cards
+              {t('flashcards.states.sessionComplete.cardsReviewed', { count: reviewedCount }).split('<bold>').map((part, i) =>
+                i === 0 ? part : (
+                  <span key={i}><span className="font-semibold text-foreground">{part.split('</bold>')[0]}</span>{part.split('</bold>')[1]}</span>
+                )
+              )}
             </p>
             <p className="text-sm text-foreground-muted mb-6">
-              Great work! Keep up the consistent practice.
+              {t('flashcards.states.sessionComplete.encouragement')}
             </p>
             <Button onClick={restartSession}>
               <RotateCcw className="w-4 h-4 mr-2" />
-              Review Again
+              {t('flashcards.states.sessionComplete.reviewAgain')}
             </Button>
           </div>
         ) : currentCard ? (
@@ -514,7 +547,7 @@ export function FlashcardsPage() {
                 onClick={handleUndo}
                 disabled={history.length === 0 || isTransitioning}
                 className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title="Undo (Cmd+Z)"
+                title={t('flashcards.actions.undo')}
               >
                 <Undo2 className="w-4 h-4" />
               </button>
@@ -522,7 +555,7 @@ export function FlashcardsPage() {
                 onClick={handleRedo}
                 disabled={undoneHistory.length === 0 || isTransitioning}
                 className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title="Redo (Cmd+Shift+Z)"
+                title={t('flashcards.actions.redo')}
               >
                 <Redo2 className="w-4 h-4" />
               </button>
@@ -539,7 +572,12 @@ export function FlashcardsPage() {
                 setSessionQueue((prev) =>
                   prev.map((card) =>
                     card._id === currentCard._id
-                      ? { ...card, sentence: newSentence, sentenceTranslation: newTranslation, audioUrl: newAudioUrl ?? card.audioUrl }
+                      ? {
+                          ...card,
+                          sentence: newSentence,
+                          sentenceTranslation: newTranslation,
+                          audioUrl: newAudioUrl ?? card.audioUrl,
+                        }
                       : card
                   )
                 );
@@ -549,55 +587,65 @@ export function FlashcardsPage() {
             {/* Rating Buttons */}
             {showAnswer && (
               <div className="space-y-3 animate-fade-in-up">
-                <p className="text-center text-sm text-foreground-muted">How well did you know this?</p>
+                <p className="text-center text-sm text-foreground-muted">
+                  {t('flashcards.rating.prompt')}
+                </p>
                 <div className="grid grid-cols-4 gap-2">
                   <Button
                     variant="outline"
                     onClick={() => handleRating("again")}
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-3 border-red-500/30 hover:bg-red-500/10 hover:border-red-500 transition-all ${
-                      lastSelectedRating === "again" ? "ring-2 ring-red-500 bg-red-500/20 scale-95" : ""
+                      lastSelectedRating === "again"
+                        ? "ring-2 ring-red-500 bg-red-500/20 scale-95"
+                        : ""
                     }`}
                   >
                     <X className="w-5 h-5 text-red-500 mb-1" />
-                    <span className="text-xs font-medium">Again</span>
-                    <span className="text-[10px] text-foreground-muted">1m</span>
+                    <span className="text-xs font-medium">{t('flashcards.rating.again')}</span>
+                    <span className="text-[10px] text-foreground-muted">{t('flashcards.rating.intervals.again')}</span>
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => handleRating("hard")}
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-3 border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500 transition-all ${
-                      lastSelectedRating === "hard" ? "ring-2 ring-amber-500 bg-amber-500/20 scale-95" : ""
+                      lastSelectedRating === "hard"
+                        ? "ring-2 ring-amber-500 bg-amber-500/20 scale-95"
+                        : ""
                     }`}
                   >
                     <span className="text-amber-500 font-bold mb-1">~</span>
-                    <span className="text-xs font-medium">Hard</span>
-                    <span className="text-[10px] text-foreground-muted">10m</span>
+                    <span className="text-xs font-medium">{t('flashcards.rating.hard')}</span>
+                    <span className="text-[10px] text-foreground-muted">{t('flashcards.rating.intervals.hard')}</span>
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => handleRating("good")}
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-3 border-green-500/30 hover:bg-green-500/10 hover:border-green-500 transition-all ${
-                      lastSelectedRating === "good" ? "ring-2 ring-green-500 bg-green-500/20 scale-95" : ""
+                      lastSelectedRating === "good"
+                        ? "ring-2 ring-green-500 bg-green-500/20 scale-95"
+                        : ""
                     }`}
                   >
                     <Check className="w-5 h-5 text-green-500 mb-1" />
-                    <span className="text-xs font-medium">Good</span>
-                    <span className="text-[10px] text-foreground-muted">1d</span>
+                    <span className="text-xs font-medium">{t('flashcards.rating.good')}</span>
+                    <span className="text-[10px] text-foreground-muted">{t('flashcards.rating.intervals.good')}</span>
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => handleRating("easy")}
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-3 border-blue-500/30 hover:bg-blue-500/10 hover:border-blue-500 transition-all ${
-                      lastSelectedRating === "easy" ? "ring-2 ring-blue-500 bg-blue-500/20 scale-95" : ""
+                      lastSelectedRating === "easy"
+                        ? "ring-2 ring-blue-500 bg-blue-500/20 scale-95"
+                        : ""
                     }`}
                   >
                     <ChevronRight className="w-5 h-5 text-blue-500 mb-1" />
-                    <span className="text-xs font-medium">Easy</span>
-                    <span className="text-[10px] text-foreground-muted">4d</span>
+                    <span className="text-xs font-medium">{t('flashcards.rating.easy')}</span>
+                    <span className="text-[10px] text-foreground-muted">{t('flashcards.rating.intervals.easy')}</span>
                   </Button>
                 </div>
               </div>
@@ -631,7 +679,14 @@ interface FlashcardDisplayProps {
   onSentenceRefreshed?: (newSentence: string, newTranslation: string, newAudioUrl?: string) => void;
 }
 
-function FlashcardDisplay({ card, showAnswer, onShowAnswer, isPremiumUser, onSentenceRefreshed }: FlashcardDisplayProps) {
+function FlashcardDisplay({
+  card,
+  showAnswer,
+  onShowAnswer,
+  isPremiumUser,
+  onSentenceRefreshed,
+}: FlashcardDisplayProps) {
+  const t = useT();
   const vocab = card.vocabulary;
   const isJapanese = vocab?.language === "japanese";
   const languageFont = isJapanese ? "var(--font-japanese)" : "inherit";
@@ -715,7 +770,7 @@ function FlashcardDisplay({ card, showAnswer, onShowAnswer, isPremiumUser, onSen
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
             >
               <Volume2 className="w-4 h-4" />
-              Play Word
+              {t('flashcards.card.playWord')}
             </button>
           </div>
         )}
@@ -744,17 +799,17 @@ function FlashcardDisplay({ card, showAnswer, onShowAnswer, isPremiumUser, onSen
                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
               >
                 <Volume2 className="w-4 h-4" />
-                Play Sentence
+                {t('flashcards.card.playSentence')}
               </button>
             )}
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-              title="Generate a new example sentence"
+              title={t('flashcards.card.newSentence')}
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
-              {isRefreshing ? "Refreshing..." : "New Sentence"}
+              {isRefreshing ? t('flashcards.card.refreshing') : t('flashcards.card.newSentence')}
             </button>
           </div>
         )}
@@ -763,14 +818,14 @@ function FlashcardDisplay({ card, showAnswer, onShowAnswer, isPremiumUser, onSen
       {/* Show Answer Button / Answer */}
       {!showAnswer ? (
         <Button onClick={onShowAnswer} className="w-full" size="lg">
-          Show Answer
+          {t('flashcards.card.showAnswer')}
         </Button>
       ) : (
         <div className="space-y-4 animate-fade-in-up">
           {/* Reading (for Japanese) */}
           {isJapanese && vocab?.reading && (
             <div className="text-center">
-              <div className="text-sm text-foreground-muted mb-1">Reading</div>
+              <div className="text-sm text-foreground-muted mb-1">{t('flashcards.card.reading')}</div>
               <div className="text-2xl text-foreground" style={{ fontFamily: languageFont }}>
                 {vocab.reading}
               </div>
@@ -779,7 +834,7 @@ function FlashcardDisplay({ card, showAnswer, onShowAnswer, isPremiumUser, onSen
 
           {/* Definition */}
           <div className="text-center">
-            <div className="text-sm text-foreground-muted mb-1">Definition</div>
+            <div className="text-sm text-foreground-muted mb-1">{t('flashcards.card.definition')}</div>
             <div className="text-xl font-medium text-foreground">
               {vocab?.definitions.join("; ")}
             </div>
@@ -788,11 +843,7 @@ function FlashcardDisplay({ card, showAnswer, onShowAnswer, isPremiumUser, onSen
       )}
 
       {/* Paywall for sentence refresh */}
-      <Paywall
-        isOpen={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        feature="flashcards"
-      />
+      <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="flashcards" />
     </div>
   );
 }

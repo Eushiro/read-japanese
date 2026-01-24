@@ -1,15 +1,17 @@
-import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { useAuth } from "./AuthContext";
+import { createContext, type ReactNode,useContext, useEffect, useRef } from "react";
+
 import {
-  initAnalytics,
+  AnalyticsEvents,
   identifyUser,
+  initAnalytics,
   resetAnalytics,
   trackEvent,
   trackPageView,
-  AnalyticsEvents,
 } from "@/lib/analytics";
+
+import { api } from "../../convex/_generated/api";
+import { useAuth } from "./AuthContext";
 
 interface AnalyticsContextType {
   trackEvent: typeof trackEvent;

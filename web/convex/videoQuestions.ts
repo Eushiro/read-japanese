@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
+
+import { internalMutation, internalQuery,mutation, query } from "./_generated/server";
 import { languageValidator } from "./schema";
 
 // Question type validator
@@ -193,7 +194,9 @@ export const updateQuestion = mutation({
       .first();
 
     if (!record) {
-      throw new Error(`No questions found for video ${args.videoId} at difficulty ${args.difficulty}`);
+      throw new Error(
+        `No questions found for video ${args.videoId} at difficulty ${args.difficulty}`
+      );
     }
 
     if (args.questionIndex < 0 || args.questionIndex >= record.questions.length) {
@@ -206,7 +209,9 @@ export const updateQuestion = mutation({
     questions[args.questionIndex] = {
       ...currentQ,
       ...(args.question !== undefined && { question: args.question }),
-      ...(args.questionTranslation !== undefined && { questionTranslation: args.questionTranslation }),
+      ...(args.questionTranslation !== undefined && {
+        questionTranslation: args.questionTranslation,
+      }),
       ...(args.options !== undefined && { options: args.options }),
       ...(args.correctAnswer !== undefined && { correctAnswer: args.correctAnswer }),
       ...(args.rubric !== undefined && { rubric: args.rubric }),
@@ -237,7 +242,9 @@ export const deleteQuestion = mutation({
       .first();
 
     if (!record) {
-      throw new Error(`No questions found for video ${args.videoId} at difficulty ${args.difficulty}`);
+      throw new Error(
+        `No questions found for video ${args.videoId} at difficulty ${args.difficulty}`
+      );
     }
 
     if (args.questionIndex < 0 || args.questionIndex >= record.questions.length) {
@@ -347,11 +354,7 @@ export const createFromAI = internalMutation({
   args: {
     videoId: v.string(),
     difficulty: v.number(),
-    language: v.union(
-      v.literal("japanese"),
-      v.literal("english"),
-      v.literal("french")
-    ),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     questions: v.array(questionValidator),
   },
   handler: async (ctx, args) => {
@@ -375,4 +378,3 @@ export const createFromAI = internalMutation({
     });
   },
 });
-

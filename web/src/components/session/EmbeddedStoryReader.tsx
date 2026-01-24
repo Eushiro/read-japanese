@@ -1,25 +1,30 @@
-import { useState, useCallback } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { BookOpen,Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useCallback,useState } from "react";
+
 import { ChapterView } from "@/components/reader/ChapterView";
 import { WordPopup } from "@/components/reader/WordPopup";
-import { useStory } from "@/hooks/useStory";
-import { useSettings } from "@/hooks/useSettings";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Token, ProficiencyLevel } from "@/types/story";
-import { Loader2, ChevronLeft, ChevronRight, Check, BookOpen } from "lucide-react";
+import { useSettings } from "@/hooks/useSettings";
+import { useStory } from "@/hooks/useStory";
+import type { ProficiencyLevel,Token } from "@/types/story";
 
 type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
 
 const levelVariantMap: Record<ProficiencyLevel, BadgeVariant> = {
-  N5: "n5", N4: "n4", N3: "n3", N2: "n2", N1: "n1",
-  A1: "a1", A2: "a2", B1: "b1", B2: "b2", C1: "c1", C2: "c2",
+  N5: "n5",
+  N4: "n4",
+  N3: "n3",
+  N2: "n2",
+  N1: "n1",
+  A1: "a1",
+  A2: "a2",
+  B1: "b1",
+  B2: "b2",
+  C1: "c1",
+  C2: "c2",
 };
 
 interface EmbeddedStoryReaderProps {

@@ -15,15 +15,11 @@
 // Re-export payment types for use in components
 export type {
   CheckoutSessionResult,
-  PortalSessionResult,
   CreateCheckoutArgs,
   CreatePortalArgs,
+  PortalSessionResult,
 } from "./lib/paymentTypes";
 
 // Re-export the current payment provider's actions
 // To switch providers, change these imports to point to the new provider
-export {
-  createCheckoutSession,
-  createPortalSession,
-  processWebhook,
-} from "./stripe";
+export { createCheckoutSession, createPortalSession, processWebhook } from "./stripe";

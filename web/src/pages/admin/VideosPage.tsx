@@ -1,21 +1,25 @@
-import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
 import { Link } from "@tanstack/react-router";
-import { useAuth } from "@/contexts/AuthContext";
+import { useMutation,useQuery } from "convex/react";
 import {
-  Video,
-  Plus,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Trash2,
-  Edit,
   AlertCircle,
   CheckCircle2,
+  Edit,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Trash2,
   X,
 } from "lucide-react";
+import { useMemo,useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -24,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -32,14 +37,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
+
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 const LANGUAGES = [
   { value: "all", label: "All Languages" },
@@ -79,31 +80,32 @@ export function VideosPage() {
   const isLoading = videos === undefined;
 
   // Filter videos
-  const filteredVideos = videos?.filter((video) => {
-    // Search filter
-    if (search && !video.title.toLowerCase().includes(search.toLowerCase())) {
-      return false;
-    }
-    // Language filter
-    if (languageFilter !== "all" && video.language !== languageFilter) {
-      return false;
-    }
-    // Status filter - now checks videoQuestions table
-    const stats = questionStatsMap.get(video.videoId);
-    const hasQuestions = stats && stats.difficulties.length > 0;
+  const filteredVideos =
+    videos?.filter((video) => {
+      // Search filter
+      if (search && !video.title.toLowerCase().includes(search.toLowerCase())) {
+        return false;
+      }
+      // Language filter
+      if (languageFilter !== "all" && video.language !== languageFilter) {
+        return false;
+      }
+      // Status filter - now checks videoQuestions table
+      const stats = questionStatsMap.get(video.videoId);
+      const hasQuestions = stats && stats.difficulties.length > 0;
 
-    if (statusFilter === "has_questions" && !hasQuestions) {
-      return false;
-    }
-    if (statusFilter === "needs_questions" && hasQuestions) {
-      return false;
-    }
-    return true;
-  }) ?? [];
+      if (statusFilter === "has_questions" && !hasQuestions) {
+        return false;
+      }
+      if (statusFilter === "needs_questions" && hasQuestions) {
+        return false;
+      }
+      return true;
+    }) ?? [];
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: Id<"youtubeContent">) => {
     if (confirm("Are you sure you want to delete this video?")) {
-      await removeVideo({ id: id as any });
+      await removeVideo({ id });
     }
   };
 
@@ -123,10 +125,11 @@ export function VideosPage() {
   };
 
   // Count videos needing questions (no difficulties in videoQuestions)
-  const needsWorkCount = videos?.filter((v) => {
-    const stats = questionStatsMap.get(v.videoId);
-    return !stats || stats.difficulties.length === 0;
-  }).length ?? 0;
+  const needsWorkCount =
+    videos?.filter((v) => {
+      const stats = questionStatsMap.get(v.videoId);
+      return !stats || stats.difficulties.length === 0;
+    }).length ?? 0;
 
   return (
     <div className="p-8 space-y-6">
@@ -134,7 +137,9 @@ export function VideosPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Videos</h1>
-          <p className="text-foreground-muted">Manage YouTube content and comprehension questions</p>
+          <p className="text-foreground-muted">
+            Manage YouTube content and comprehension questions
+          </p>
         </div>
         <Button asChild>
           <Link to="/admin/videos/new">
@@ -183,9 +188,7 @@ export function VideosPage() {
       <div className="flex gap-4 text-sm text-foreground-muted">
         <span>Total: {videos?.length ?? 0}</span>
         <span>Showing: {filteredVideos.length}</span>
-        <span className="text-amber-500">
-          Needs work: {needsWorkCount}
-        </span>
+        <span className="text-amber-500">Needs work: {needsWorkCount}</span>
       </div>
 
       {/* Table */}

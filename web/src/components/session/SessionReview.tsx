@@ -1,18 +1,13 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { useMutation,useQuery } from "convex/react";
+import { Brain, Check, ChevronRight, Loader2, Volume2,X } from "lucide-react";
+import { useCallback, useEffect, useMemo,useState } from "react";
+
 import { Button } from "@/components/ui/button";
-import {
-  Brain,
-  Check,
-  X,
-  ChevronRight,
-  Loader2,
-  Volume2,
-  Sparkles,
-} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Id, Rating } from "@/lib/convex-types";
+import { useT } from "@/lib/i18n";
+
+import { api } from "../../../convex/_generated/api";
 
 // CardType includes joined vocabulary data from the query
 type CardType = {
@@ -38,12 +33,10 @@ interface SessionReviewProps {
 export function SessionReview({ cardCount, onComplete }: SessionReviewProps) {
   const { user } = useAuth();
   const userId = user?.id ?? "";
+  const t = useT();
 
   // Fetch cards
-  const dueCards = useQuery(
-    api.flashcards.getDue,
-    userId ? { userId, limit: cardCount } : "skip"
-  );
+  const dueCards = useQuery(api.flashcards.getDue, userId ? { userId, limit: cardCount } : "skip");
   const newCards = useQuery(
     api.flashcards.getNew,
     userId ? { userId, limit: Math.max(0, cardCount - (dueCards?.length ?? 0)) } : "skip"
@@ -69,45 +62,49 @@ export function SessionReview({ cardCount, onComplete }: SessionReviewProps) {
 
   useEffect(() => {
     if (initialCards.length > 0 && !isInitialized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional one-time initialization from async data
       setSessionQueue(initialCards);
       setIsInitialized(true);
     }
   }, [initialCards, isInitialized]);
 
   // Handle rating
-  const handleRating = useCallback(async (rating: Rating) => {
-    const currentCard = sessionQueue[currentIndex];
-    if (!currentCard || isTransitioning) return;
+  const handleRating = useCallback(
+    async (rating: Rating) => {
+      const currentCard = sessionQueue[currentIndex];
+      if (!currentCard || isTransitioning) return;
 
-    setLastSelectedRating(rating);
-    setIsTransitioning(true);
+      setLastSelectedRating(rating);
+      setIsTransitioning(true);
 
-    try {
-      await reviewCard({ flashcardId: currentCard._id, rating });
+      try {
+        await reviewCard({ flashcardId: currentCard._id, rating });
 
-      setTimeout(() => {
-        setReviewedCount(prev => prev + 1);
-        setShowAnswer(false);
+        setTimeout(() => {
+          setReviewedCount((prev) => prev + 1);
+          setShowAnswer(false);
+          setLastSelectedRating(null);
+          setIsTransitioning(false);
+
+          const isLastCard = currentIndex + 1 >= sessionQueue.length;
+          if (isLastCard && rating !== "again") {
+            setSessionComplete(true);
+            onComplete(reviewedCount + 1);
+          } else {
+            setCurrentIndex((prev) => prev + 1);
+            if (rating === "again") {
+              setSessionQueue((prev) => [...prev, currentCard]);
+            }
+          }
+        }, 200);
+      } catch (error) {
+        console.error("Failed to review card:", error);
         setLastSelectedRating(null);
         setIsTransitioning(false);
-
-        const isLastCard = currentIndex + 1 >= sessionQueue.length;
-        if (isLastCard && rating !== "again") {
-          setSessionComplete(true);
-          onComplete(reviewedCount + 1);
-        } else {
-          setCurrentIndex(prev => prev + 1);
-          if (rating === "again") {
-            setSessionQueue(prev => [...prev, currentCard]);
-          }
-        }
-      }, 200);
-    } catch (error) {
-      console.error("Failed to review card:", error);
-      setLastSelectedRating(null);
-      setIsTransitioning(false);
-    }
-  }, [sessionQueue, currentIndex, reviewedCount, reviewCard, isTransitioning, onComplete]);
+      }
+    },
+    [sessionQueue, currentIndex, reviewedCount, reviewCard, isTransitioning, onComplete]
+  );
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -123,10 +120,18 @@ export function SessionReview({ cardCount, onComplete }: SessionReviewProps) {
         if (!showAnswer) setShowAnswer(true);
       } else if (showAnswer) {
         switch (e.key) {
-          case "1": handleRating("again"); break;
-          case "2": handleRating("hard"); break;
-          case "3": handleRating("good"); break;
-          case "4": handleRating("easy"); break;
+          case "1":
+            handleRating("again");
+            break;
+          case "2":
+            handleRating("hard");
+            break;
+          case "3":
+            handleRating("good");
+            break;
+          case "4":
+            handleRating("easy");
+            break;
         }
       }
     };
@@ -136,7 +141,11 @@ export function SessionReview({ cardCount, onComplete }: SessionReviewProps) {
   }, [sessionQueue, currentIndex, showAnswer, sessionComplete, isTransitioning, handleRating]);
 
   // Loading state
-  if (dueCards === undefined || newCards === undefined || (!isInitialized && initialCards.length === 0)) {
+  if (
+    dueCards === undefined ||
+    newCards === undefined ||
+    (!isInitialized && initialCards.length === 0)
+  ) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
@@ -151,9 +160,9 @@ export function SessionReview({ cardCount, onComplete }: SessionReviewProps) {
         <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
           <Check className="w-8 h-8 text-green-500" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">All caught up!</h2>
-        <p className="text-foreground-muted mb-6">No cards are due for review.</p>
-        <Button onClick={() => onComplete(0)}>Continue</Button>
+        <h2 className="text-2xl font-bold text-foreground mb-2">{t("flashcards.states.allCaughtUp.title")}</h2>
+        <p className="text-foreground-muted mb-6">{t("flashcards.noCardsToReview")}</p>
+        <Button onClick={() => onComplete(0)}>{t("common.buttons.continue")}</Button>
       </div>
     );
   }
@@ -168,7 +177,7 @@ export function SessionReview({ cardCount, onComplete }: SessionReviewProps) {
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border">
           <Brain className="w-4 h-4 text-accent" />
           <span className="text-2xl font-bold text-green-500">{cardsLeft}</span>
-          <span className="text-foreground-muted">cards left</span>
+          <span className="text-foreground-muted">{t("flashcards.counter.cardsLeft")}</span>
         </div>
       </div>
 
@@ -184,7 +193,9 @@ export function SessionReview({ cardCount, onComplete }: SessionReviewProps) {
           {/* Rating buttons */}
           {showAnswer && (
             <div className="space-y-3 animate-fade-in-up">
-              <p className="text-center text-sm text-foreground-muted">How well did you know this?</p>
+              <p className="text-center text-sm text-foreground-muted">
+                {t("flashcards.rating.prompt")}
+              </p>
               <div className="grid grid-cols-4 gap-2">
                 <RatingButton
                   rating="again"
@@ -229,6 +240,7 @@ function FlashcardDisplay({
   showAnswer: boolean;
   onShowAnswer: () => void;
 }) {
+  const t = useT();
   const vocab = card.vocabulary;
   const isJapanese = vocab?.language === "japanese";
   const languageFont = isJapanese ? "var(--font-japanese)" : "inherit";
@@ -252,7 +264,10 @@ function FlashcardDisplay({
 
       {/* Word */}
       <div className="text-center mb-6">
-        <div className="text-4xl sm:text-5xl font-bold text-foreground mb-2" style={{ fontFamily: languageFont }}>
+        <div
+          className="text-4xl sm:text-5xl font-bold text-foreground mb-2"
+          style={{ fontFamily: languageFont }}
+        >
           {vocab?.word}
         </div>
         {showAnswer && card.wordAudioUrl && (
@@ -261,14 +276,17 @@ function FlashcardDisplay({
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
           >
             <Volume2 className="w-4 h-4" />
-            Play Word
+            {t("flashcards.card.playWord")}
           </button>
         )}
       </div>
 
       {/* Sentence */}
       <div className="bg-muted/50 rounded-xl p-4 mb-6">
-        <p className="text-lg text-foreground leading-relaxed text-center" style={{ fontFamily: languageFont }}>
+        <p
+          className="text-lg text-foreground leading-relaxed text-center"
+          style={{ fontFamily: languageFont }}
+        >
           {card.sentence}
         </p>
         {showAnswer && (
@@ -283,7 +301,7 @@ function FlashcardDisplay({
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
             >
               <Volume2 className="w-4 h-4" />
-              Play Sentence
+              {t("flashcards.card.playSentence")}
             </button>
           </div>
         )}

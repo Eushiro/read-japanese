@@ -1,19 +1,23 @@
-import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { useAuth } from "@/contexts/AuthContext";
-import { useStudySession, type SessionActivity } from "@/contexts/StudySessionContext";
-import { buildSessionPlan, getSessionDescription, DURATION_OPTIONS } from "@/lib/sessionPlanner";
-import { SessionProgress } from "@/components/session/SessionProgress";
+import { useMutation,useQuery } from "convex/react";
+import { AlertCircle, BookOpen, ChevronRight,Loader2, X } from "lucide-react";
+import { useEffect, useMemo,useState } from "react";
+
 import { SessionComplete } from "@/components/session/SessionComplete";
-import { SessionReview } from "@/components/session/SessionReview";
 import { SessionInput } from "@/components/session/SessionInput";
 import { SessionOutput } from "@/components/session/SessionOutput";
+import { SessionProgress } from "@/components/session/SessionProgress";
+import { SessionReview } from "@/components/session/SessionReview";
 import { Button } from "@/components/ui/button";
-import { X, Loader2, AlertCircle, BookOpen, ChevronRight } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { type SessionActivity,useStudySession } from "@/contexts/StudySessionContext";
+import { useT } from "@/lib/i18n";
+import { buildSessionPlan } from "@/lib/sessionPlanner";
+
+import { api } from "../../convex/_generated/api";
 
 export function StudySessionPage() {
+  const t = useT();
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const {
@@ -27,21 +31,15 @@ export function StudySessionPage() {
     recordSentencesWritten,
   } = useStudySession();
 
-  const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
+  const [selectedDuration] = useState<number | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
 
   const userId = user?.id ?? "";
 
   // Fetch data for planning
-  const flashcardStats = useQuery(
-    api.flashcards.getStats,
-    isAuthenticated ? { userId } : "skip"
-  );
-  const vocabulary = useQuery(
-    api.vocabulary.list,
-    isAuthenticated ? { userId } : "skip"
-  );
+  const flashcardStats = useQuery(api.flashcards.getStats, isAuthenticated ? { userId } : "skip");
+  const vocabulary = useQuery(api.vocabulary.list, isAuthenticated ? { userId } : "skip");
   const userProfile = useQuery(
     api.users.getByClerkId,
     isAuthenticated && user ? { clerkId: user.id } : "skip"
@@ -61,7 +59,7 @@ export function StudySessionPage() {
     const dueCardCount = flashcardStats.dueNow ?? 0;
     const newCardCount = flashcardStats.new ?? 0;
     const vocabToReview = vocabulary.filter(
-      v => v.masteryState === "new" || v.masteryState === "learning"
+      (v) => v.masteryState === "new" || v.masteryState === "learning"
     ).length;
 
     // Get recommended content
@@ -95,6 +93,7 @@ export function StudySessionPage() {
   // Initialize session automatically when data is ready
   useEffect(() => {
     if (sessionPlan && isInitializing && state.status === "idle") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: one-time initialization
       setIsInitializing(false);
       startSession(sessionPlan);
     }
@@ -176,14 +175,14 @@ export function StudySessionPage() {
             className="text-2xl font-bold text-foreground mb-2"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Nothing to study yet
+            {t("studySession.emptyState.title")}
           </h2>
           <p className="text-foreground-muted mb-6">
-            Add some vocabulary or read a story to get started with your learning journey.
+            {t("studySession.emptyState.description")}
           </p>
           <div className="flex flex-col gap-3">
             <Button onClick={() => navigate({ to: "/library" })} className="w-full gap-2">
-              Browse Library
+              {t("studySession.buttons.browseLibrary")}
               <ChevronRight className="w-4 h-4" />
             </Button>
             <Button
@@ -191,7 +190,7 @@ export function StudySessionPage() {
               onClick={() => navigate({ to: "/dashboard" })}
               className="w-full"
             >
-              Back to Dashboard
+              {t("studySession.buttons.backToDashboard")}
             </Button>
           </div>
         </div>
@@ -202,11 +201,7 @@ export function StudySessionPage() {
   // Session complete
   if (state.status === "complete") {
     return (
-      <SessionComplete
-        results={state.results}
-        onContinue={handleContinue}
-        onDone={handleDone}
-      />
+      <SessionComplete results={state.results} onContinue={handleContinue} onDone={handleDone} />
     );
   }
 
@@ -226,12 +221,10 @@ export function StudySessionPage() {
               >
                 <X className="w-5 h-5 text-foreground-muted" />
               </button>
-
               <SessionProgress
                 activities={state.plan.activities}
                 currentIndex={state.currentActivityIndex}
               />
-
               <div className="w-9" /> {/* Spacer for centering */}
             </div>
           </div>
@@ -256,10 +249,10 @@ export function StudySessionPage() {
                 <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
                   <AlertCircle className="w-5 h-5 text-amber-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">Exit session?</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("studySession.exitModal.title")}</h3>
               </div>
               <p className="text-foreground-muted mb-6">
-                Your progress in this session will not be saved. Are you sure you want to exit?
+                {t("studySession.exitModal.description")}
               </p>
               <div className="flex gap-3">
                 <Button
@@ -267,14 +260,10 @@ export function StudySessionPage() {
                   onClick={() => setShowExitConfirm(false)}
                   className="flex-1"
                 >
-                  Keep Learning
+                  {t("studySession.buttons.keepLearning")}
                 </Button>
-                <Button
-                  variant="destructive"
-                  onClick={confirmExit}
-                  className="flex-1"
-                >
-                  Exit
+                <Button variant="destructive" onClick={confirmExit} className="flex-1">
+                  {t("studySession.buttons.exit")}
                 </Button>
               </div>
             </div>

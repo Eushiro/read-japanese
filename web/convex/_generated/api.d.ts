@@ -20,6 +20,8 @@ import type * as examTemplates from "../examTemplates.js";
 import type * as flashcards from "../flashcards.js";
 import type * as http from "../http.js";
 import type * as learnerModel from "../learnerModel.js";
+import type * as lib_contentReuse from "../lib/contentReuse.js";
+import type * as lib_generation from "../lib/generation.js";
 import type * as lib_gradingProfiles from "../lib/gradingProfiles.js";
 import type * as lib_helpers from "../lib/helpers.js";
 import type * as lib_models from "../lib/models.js";
@@ -66,6 +68,8 @@ declare const fullApi: ApiFromModules<{
   flashcards: typeof flashcards;
   http: typeof http;
   learnerModel: typeof learnerModel;
+  "lib/contentReuse": typeof lib_contentReuse;
+  "lib/generation": typeof lib_generation;
   "lib/gradingProfiles": typeof lib_gradingProfiles;
   "lib/helpers": typeof lib_helpers;
   "lib/models": typeof lib_models;

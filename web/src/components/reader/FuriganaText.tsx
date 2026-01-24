@@ -1,5 +1,5 @@
 import type { Token, TokenPart } from "@/types/story";
-import { tokenHasFurigana, isTokenPunctuation } from "@/types/story";
+import { isTokenPunctuation,tokenHasFurigana } from "@/types/story";
 
 interface FuriganaTextProps {
   token: Token;
@@ -23,12 +23,11 @@ export function FuriganaText({
     return <span className="text-foreground">{token.surface}</span>;
   }
 
-  const selectedClasses = isSelected
-    ? "bg-accent/25 text-accent rounded-sm px-0.5 -mx-0.5"
-    : "";
-  const highlightClasses = isHighlighted && !isSelected
-    ? "underline decoration-accent decoration-2 underline-offset-4"
-    : "";
+  const selectedClasses = isSelected ? "bg-accent/25 text-accent rounded-sm px-0.5 -mx-0.5" : "";
+  const highlightClasses =
+    isHighlighted && !isSelected
+      ? "underline decoration-accent decoration-2 underline-offset-4"
+      : "";
 
   if (!hasFurigana || !token.parts) {
     return (

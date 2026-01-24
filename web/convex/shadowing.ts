@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+
 import { internal } from "./_generated/api";
+import { mutation, query } from "./_generated/server";
 import { languageValidator } from "./schema";
 
 // ============================================
@@ -21,9 +22,7 @@ export const getStats = query({
     const totalPractices = practices.length;
     const averageScore =
       totalPractices > 0
-        ? Math.round(
-            practices.reduce((sum, p) => sum + p.accuracyScore, 0) / totalPractices
-          )
+        ? Math.round(practices.reduce((sum, p) => sum + p.accuracyScore, 0) / totalPractices)
         : 0;
 
     // Get recent practices (last 7 days)
@@ -37,8 +36,7 @@ export const getStats = query({
       averageScoreThisWeek:
         recentPractices.length > 0
           ? Math.round(
-              recentPractices.reduce((sum, p) => sum + p.accuracyScore, 0) /
-                recentPractices.length
+              recentPractices.reduce((sum, p) => sum + p.accuracyScore, 0) / recentPractices.length
             )
           : 0,
     };
@@ -68,7 +66,12 @@ export const getCardsForShadowing = query({
     });
 
     const results = await Promise.all(cardsWithAudioPromises);
-    const cardsWithAudio = results.filter((r): r is { card: typeof cards[0]; sentence: NonNullable<typeof results[0]>["sentence"] } => r !== null);
+    const cardsWithAudio = results.filter(
+      (
+        r
+      ): r is { card: (typeof cards)[0]; sentence: NonNullable<(typeof results)[0]>["sentence"] } =>
+        r !== null
+    );
 
     // Shuffle and take limit
     const shuffled = cardsWithAudio.sort(() => Math.random() - 0.5);
@@ -182,7 +185,7 @@ export const storeUserAudio = mutation({
   args: {
     userId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     // Generate upload URL for client to upload audio directly
     const uploadUrl = await ctx.storage.generateUploadUrl();
     return { uploadUrl };

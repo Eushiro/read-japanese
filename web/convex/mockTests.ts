@@ -1,7 +1,8 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+
 import { internal } from "./_generated/api";
-import { languageValidator, examTypeValidator } from "./schema";
+import { mutation, query } from "./_generated/server";
+import { examTypeValidator,languageValidator } from "./schema";
 
 // Question type validator
 const questionTypeValidator = v.union(
@@ -103,9 +104,8 @@ export const getStats = query({
       totalTests: tests.length,
       completedTests: completedTests.length,
       inProgressTests: tests.filter((t) => t.startedAt && !t.completedAt).length,
-      averageScore: scores.length > 0
-        ? Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length)
-        : 0,
+      averageScore:
+        scores.length > 0 ? Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length) : 0,
       highestScore: scores.length > 0 ? Math.max(...scores) : 0,
       lowestScore: scores.length > 0 ? Math.min(...scores) : 0,
       byExamType: {} as Record<string, { count: number; avgScore: number }>,
@@ -149,8 +149,7 @@ export const create = mutation({
 
     // Calculate total points
     const totalPoints = args.sections.reduce(
-      (sum, section) =>
-        sum + section.questions.reduce((qSum, q) => qSum + q.points, 0),
+      (sum, section) => sum + section.questions.reduce((qSum, q) => qSum + q.points, 0),
       0
     );
 

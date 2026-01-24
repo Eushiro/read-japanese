@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useCallback, useEffect,useRef, useState } from "react";
 
 export interface AudioRecorderState {
   isRecording: boolean;
@@ -141,7 +141,8 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderActions {
 
       setState((prev) => ({
         ...prev,
-        hasPermission: error instanceof Error && error.name === "NotAllowedError" ? false : prev.hasPermission,
+        hasPermission:
+          error instanceof Error && error.name === "NotAllowedError" ? false : prev.hasPermission,
         error: errorMessage,
       }));
     }
@@ -157,8 +158,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderActions {
       const mediaRecorder = mediaRecorderRef.current;
 
       // Override onstop to resolve the promise
-      const originalOnStop = mediaRecorder.onstop;
-      mediaRecorder.onstop = (event) => {
+      mediaRecorder.onstop = () => {
         const mimeType = mediaRecorder.mimeType || "audio/webm";
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         const audioUrl = URL.createObjectURL(audioBlob);

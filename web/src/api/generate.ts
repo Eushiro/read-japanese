@@ -1,5 +1,6 @@
+import type { JLPTLevel,Story } from "@/types/story";
+
 import apiClient from "./client";
-import type { Story, JLPTLevel } from "@/types/story";
 
 // Story generation request
 export interface GenerateStoryRequest {
@@ -33,9 +34,7 @@ export interface GenerationStatus {
 }
 
 // Start story generation (background)
-export async function generateStory(
-  request: GenerateStoryRequest
-): Promise<GenerateStoryResponse> {
+export async function generateStory(request: GenerateStoryRequest): Promise<GenerateStoryResponse> {
   return apiClient.post<GenerateStoryResponse>("/api/generate/story", request);
 }
 
@@ -43,10 +42,7 @@ export async function generateStory(
 export async function generateStorySync(
   request: GenerateStoryRequest
 ): Promise<{ status: string; story: Story }> {
-  return apiClient.post<{ status: string; story: Story }>(
-    "/api/generate/story/sync",
-    request
-  );
+  return apiClient.post<{ status: string; story: Story }>("/api/generate/story/sync", request);
 }
 
 // Check generation status

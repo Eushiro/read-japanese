@@ -1,34 +1,28 @@
+import { Link,useParams } from "@tanstack/react-router";
+import { useMutation,useQuery } from "convex/react";
+import { AlertCircle,ArrowLeft, Play } from "lucide-react";
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { useParams, Link } from "@tanstack/react-router";
-import {
-  ArrowLeft,
-  Play,
-  Pause,
-  RefreshCw,
-  Upload,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  XCircle,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription,CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+
+import { api } from "../../../convex/_generated/api";
 
 export function DeckDetailPage() {
-  const params = useParams({ from: "/admin/decks/$deckId" as any });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TanStack Router types don't properly infer nested route params
+  const params = useParams({ from: "/admin/decks/$deckId" as any }) as { deckId: string };
   const deckId = params.deckId;
 
   const [batchSize, setBatchSize] = useState("50");
-  const [localServerStatus, setLocalServerStatus] = useState<"checking" | "online" | "offline">("checking");
+  const [localServerStatus, setLocalServerStatus] = useState<"checking" | "online" | "offline">(
+    "checking"
+  );
 
   // Queries
   const deck = useQuery(api.premadeDecks.getDeck, { deckId });
@@ -75,15 +69,12 @@ export function DeckDetailPage() {
     );
   }
 
-  const sentencesPct = deck.totalWords > 0
-    ? Math.round((deck.wordsWithSentences / deck.totalWords) * 100)
-    : 0;
-  const audioPct = deck.totalWords > 0
-    ? Math.round((deck.wordsWithAudio / deck.totalWords) * 100)
-    : 0;
-  const imagesPct = deck.totalWords > 0
-    ? Math.round((deck.wordsWithImages / deck.totalWords) * 100)
-    : 0;
+  const sentencesPct =
+    deck.totalWords > 0 ? Math.round((deck.wordsWithSentences / deck.totalWords) * 100) : 0;
+  const audioPct =
+    deck.totalWords > 0 ? Math.round((deck.wordsWithAudio / deck.totalWords) * 100) : 0;
+  const imagesPct =
+    deck.totalWords > 0 ? Math.round((deck.wordsWithImages / deck.totalWords) * 100) : 0;
 
   const triggerGeneration = async (type: "sentences" | "audio" | "images") => {
     if (localServerStatus !== "online") {
@@ -136,7 +127,9 @@ export function DeckDetailPage() {
 
       {/* Stats */}
       <div className="flex gap-4">
-        <Badge variant="outline" className="capitalize">{deck.language}</Badge>
+        <Badge variant="outline" className="capitalize">
+          {deck.language}
+        </Badge>
         <Badge variant="outline">{deck.level}</Badge>
         <Badge variant="secondary">{deck.totalWords} words</Badge>
       </div>
@@ -306,7 +299,8 @@ export function DeckDetailPage() {
           <div>
             <p className="text-sm font-medium mb-1">Generate with Python:</p>
             <code className="block p-2 bg-muted rounded text-sm font-mono overflow-x-auto">
-              python backend/scripts/batch_generate_deck.py --deck {deckId} --type sentences --count {batchSize}
+              python backend/scripts/batch_generate_deck.py --deck {deckId} --type sentences --count{" "}
+              {batchSize}
             </code>
           </div>
         </CardContent>

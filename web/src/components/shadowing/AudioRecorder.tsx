@@ -1,5 +1,6 @@
-import { useRef, useEffect } from "react";
-import { Mic, MicOff, Square, Loader2 } from "lucide-react";
+import { Loader2,Mic, MicOff, Square } from "lucide-react";
+import { useEffect,useRef } from "react";
+
 import { Button } from "@/components/ui/button";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
 
@@ -83,9 +84,7 @@ export function AudioRecorder({
           <MicOff className="w-10 h-10 text-red-500" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-red-500 mb-1">
-            Microphone access denied
-          </p>
+          <p className="text-sm font-medium text-red-500 mb-1">Microphone access denied</p>
           <p className="text-sm text-foreground-muted">
             Please allow microphone access in your browser settings to use shadowing practice.
           </p>
@@ -101,9 +100,7 @@ export function AudioRecorder({
           <MicOff className="w-10 h-10 text-amber-500" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-amber-500 mb-1">
-            Recording error
-          </p>
+          <p className="text-sm font-medium text-amber-500 mb-1">Recording error</p>
           <p className="text-sm text-foreground-muted">{error}</p>
         </div>
         <Button onClick={onStartRecording} variant="outline" disabled={disabled}>
@@ -156,17 +153,11 @@ export function AudioRecorder({
       <div className="text-center">
         {isRecording ? (
           <>
-            <p className="text-2xl font-mono font-bold text-red-500">
-              {formatDuration(duration)}
-            </p>
-            <p className="text-sm text-foreground-muted">
-              Tap to stop recording
-            </p>
+            <p className="text-2xl font-mono font-bold text-red-500">{formatDuration(duration)}</p>
+            <p className="text-sm text-foreground-muted">Tap to stop recording</p>
           </>
         ) : (
-          <p className="text-sm text-foreground-muted">
-            Tap the microphone to start recording
-          </p>
+          <p className="text-sm text-foreground-muted">Tap the microphone to start recording</p>
         )}
       </div>
 

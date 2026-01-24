@@ -1,6 +1,8 @@
-import { StoryCard } from "./StoryCard";
-import type { StoryListItem } from "@/types/story";
 import { BookOpen } from "lucide-react";
+
+import type { StoryListItem } from "@/types/story";
+
+import { StoryCard } from "./StoryCard";
 
 interface StoryGridProps {
   stories: StoryListItem[];
@@ -62,7 +64,7 @@ function StoryCardSkeleton({ delay = 0 }: { delay?: number }) {
     <div
       className="rounded-xl overflow-hidden bg-surface animate-pulse"
       style={{
-        boxShadow: 'var(--shadow-card)',
+        boxShadow: "var(--shadow-card)",
         animationDelay: `${delay}ms`,
       }}
     >

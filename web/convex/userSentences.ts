@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+
 import { internal } from "./_generated/api";
+import { mutation, query } from "./_generated/server";
 
 // ============================================
 // QUERIES
@@ -190,7 +191,11 @@ export const updateVerification = mutation({
       }
 
       // Update learner profile with sentence practice scores
-      if (args.grammarScore !== undefined && args.usageScore !== undefined && args.naturalnessScore !== undefined) {
+      if (
+        args.grammarScore !== undefined &&
+        args.usageScore !== undefined &&
+        args.naturalnessScore !== undefined
+      ) {
         await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromSentencePracticeInternal, {
           userId: sentence.userId,
           language: vocab?.language ?? "japanese",
@@ -270,7 +275,11 @@ export const submitWithVerification = mutation({
     }
 
     // Update learner profile with sentence practice scores
-    if (args.grammarScore !== undefined && args.usageScore !== undefined && args.naturalnessScore !== undefined) {
+    if (
+      args.grammarScore !== undefined &&
+      args.usageScore !== undefined &&
+      args.naturalnessScore !== undefined
+    ) {
       await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromSentencePracticeInternal, {
         userId: args.userId,
         language: vocab?.language ?? "japanese",

@@ -1,6 +1,17 @@
 // Shared level constants for JLPT and CEFR levels
 
-export type LevelVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
+export type LevelVariant =
+  | "n5"
+  | "n4"
+  | "n3"
+  | "n2"
+  | "n1"
+  | "a1"
+  | "a2"
+  | "b1"
+  | "b2"
+  | "c1"
+  | "c2";
 
 export const levelVariantMap: Record<string, LevelVariant> = {
   N5: "n5",

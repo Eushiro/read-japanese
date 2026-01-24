@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef } from "react";
-import { useMutation, useQuery, useAction } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { lookupWord, type DictionaryEntry } from "@/api/dictionary";
+import { useAction,useMutation, useQuery } from "convex/react";
+import { Check, Minus,Plus } from "lucide-react";
+import { useEffect, useRef,useState } from "react";
+
+import { type DictionaryEntry,lookupWord } from "@/api/dictionary";
+import { getCurrentUserId } from "@/hooks/useSettings";
+import { useT } from "@/lib/i18n";
 import type { Token } from "@/types/story";
 import { getTokenReading } from "@/types/story";
-import { Plus, Check, Minus } from "lucide-react";
-import { getCurrentUserId } from "@/hooks/useSettings";
+
+import { api } from "../../../convex/_generated/api";
 
 // Clean up verbose part of speech strings from dictionary
 function cleanPartOfSpeech(pos: string): string {
@@ -66,7 +69,8 @@ export function WordPopup({
   });
 
   // Determine saved state (query result, but allow local override for immediate feedback)
-  const isSaved = justSaved || (existingVocab !== null && existingVocab !== undefined && !justRemoved);
+  const isSaved =
+    justSaved || (existingVocab !== null && existingVocab !== undefined && !justRemoved);
 
   // Look up the word
   useEffect(() => {
@@ -78,7 +82,7 @@ export function WordPopup({
         if (!cancelled) {
           setEntry(result);
         }
-      } catch (err) {
+      } catch {
         // Silently fail - we'll just show the word without definition
       }
     }
@@ -224,7 +228,7 @@ export function WordPopup({
           <div className="min-w-0">
             <div
               className="text-lg font-semibold text-foreground leading-tight"
-              style={{ fontFamily: 'var(--font-japanese)' }}
+              style={{ fontFamily: "var(--font-japanese)" }}
             >
               {token.surface}
             </div>
@@ -265,9 +269,7 @@ export function WordPopup({
 
         {/* Meaning */}
         {displayMeaning && (
-          <div className="mt-2 text-sm text-foreground line-clamp-2">
-            {displayMeaning}
-          </div>
+          <div className="mt-2 text-sm text-foreground line-clamp-2">{displayMeaning}</div>
         )}
 
         {/* Part of speech */}

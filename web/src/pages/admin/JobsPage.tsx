@@ -1,16 +1,19 @@
-import { useEffect, useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { useMutation,useQuery } from "convex/react";
 import {
-  Clock,
+  AlertCircle,
   CheckCircle2,
-  XCircle,
+  Clock,
   Loader2,
   RefreshCw,
   StopCircle,
-  AlertCircle,
+  XCircle,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -19,9 +22,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
+
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 function formatTimestamp(timestamp?: number) {
   if (!timestamp) return "-";
@@ -45,9 +48,7 @@ export function JobsPage() {
   useEffect(() => {
     if (!autoRefresh || !jobs) return;
 
-    const hasActiveJobs = jobs.some(
-      (j) => j.status === "running" || j.status === "submitted"
-    );
+    const hasActiveJobs = jobs.some((j) => j.status === "running" || j.status === "submitted");
 
     if (hasActiveJobs) {
       const interval = setInterval(() => {
@@ -57,9 +58,9 @@ export function JobsPage() {
     }
   }, [autoRefresh, jobs]);
 
-  const handleCancel = async (jobId: string) => {
+  const handleCancel = async (jobId: Id<"batchJobs">) => {
     if (confirm("Are you sure you want to cancel this job?")) {
-      await cancelJob({ jobId: jobId as any });
+      await cancelJob({ jobId });
     }
   };
 
@@ -166,9 +167,8 @@ export function JobsPage() {
                 </TableRow>
               ) : (
                 jobs.map((job) => {
-                  const progressPct = job.itemCount > 0
-                    ? Math.round((job.processedCount / job.itemCount) * 100)
-                    : 0;
+                  const progressPct =
+                    job.itemCount > 0 ? Math.round((job.processedCount / job.itemCount) * 100) : 0;
 
                   return (
                     <TableRow key={job._id}>

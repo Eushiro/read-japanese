@@ -13,8 +13,8 @@
  *     --publish
  */
 
-import { readFileSync } from "fs";
 import { ConvexHttpClient } from "convex/browser";
+import { readFileSync } from "fs";
 
 // Types matching the extraction output
 interface ExtractedQuestion {
@@ -101,6 +101,7 @@ async function importToConvex(
     }
   }, 0);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic API call using string identifier, types not available at compile time
   const templateId = await client.mutation("examTemplates:create" as any, {
     examType: data.examType,
     language: data.language,
@@ -146,6 +147,7 @@ async function importToConvex(
 
   for (let i = 0; i < questionsToImport.length; i += batchSize) {
     const batch = questionsToImport.slice(i, i + batchSize);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic API call using string identifier, types not available at compile time
     await client.mutation("examQuestions:createBatch" as any, {
       questions: batch,
     });

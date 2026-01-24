@@ -1,28 +1,25 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { useQuery, useAction } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { ChapterView } from "@/components/reader/ChapterView";
-import { WordPopup } from "@/components/reader/WordPopup";
-import { AudioPlayer } from "@/components/reader/AudioPlayer";
-import { FuriganaText } from "@/components/reader/FuriganaText";
-import { useStory } from "@/hooks/useStory";
-import { useSettings } from "@/hooks/useSettings";
-import { useAuth } from "@/contexts/AuthContext";
-import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { testLevelToDifficultyLevel, difficultyLevelToTestLevel } from "@/types/story";
+import { useNavigate,useParams } from "@tanstack/react-router";
+import { useAction, useMutation,useQuery } from "convex/react";
+import { ArrowLeft, BookOpen,ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useMemo,useRef, useState } from "react";
+
 import { getAudioUrl } from "@/api/stories";
+import { Paywall } from "@/components/Paywall";
+import { AudioPlayer } from "@/components/reader/AudioPlayer";
+import { ChapterView } from "@/components/reader/ChapterView";
+import { FuriganaText } from "@/components/reader/FuriganaText";
+import { WordPopup } from "@/components/reader/WordPopup";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Paywall } from "@/components/Paywall";
-import type { Token, ProficiencyLevel } from "@/types/story";
-import {
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  BookOpen,
-  CheckCircle2,
-} from "lucide-react";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSettings } from "@/hooks/useSettings";
+import { useStory } from "@/hooks/useStory";
+import { useT } from "@/lib/i18n";
+import type { ProficiencyLevel,Token } from "@/types/story";
+import { difficultyLevelToTestLevel,testLevelToDifficultyLevel } from "@/types/story";
+
+import { api } from "../../convex/_generated/api";
 
 type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
 
@@ -43,6 +40,7 @@ const levelVariantMap: Record<ProficiencyLevel, BadgeVariant> = {
 export function ReaderPage() {
   const { storyId } = useParams({ from: "/read/$storyId" });
   const navigate = useNavigate();
+  const t = useT();
   const { story, isLoading, error } = useStory(storyId);
   const { user, isAuthenticated } = useAuth();
   const { trackEvent, events } = useAnalytics();
@@ -63,11 +61,15 @@ export function ReaderPage() {
   );
 
   // Check subscription for AI features
-  const subscription = useQuery(
-    api.subscriptions.get,
-    isAuthenticated ? { userId } : "skip"
-  );
+  const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
+
+  // Check if user can read stories (usage limit)
+  const canReadStory = useQuery(
+    api.subscriptions.canPerformAction,
+    isAuthenticated ? { userId, action: "readStory" as const } : "skip"
+  );
+  const hasReachedStoryLimit = canReadStory && !canReadStory.allowed;
 
   // Get user profile for proficiency level (needed for difficulty)
   const userProfile = useQuery(
@@ -79,28 +81,56 @@ export function ReaderPage() {
   const generateQuestions = useAction(api.ai.generateComprehensionQuestions);
   const hasStartedGeneration = useRef(false);
 
+  // Track story reading for usage limits
+  const incrementUsage = useMutation(api.subscriptions.incrementUsage);
+  const hasTrackedReading = useRef(false);
+
   // Reset scroll position when entering the reader or changing story
   useEffect(() => {
     window.scrollTo(0, 0);
+    hasTrackedReading.current = false; // Reset tracking for new story
   }, [storyId]);
 
-  // Track reader opened when story loads
+  // Track reader opened when story loads and increment usage
+  // Only track if user has access (not blocked by premium check or limit)
   useEffect(() => {
-    if (story) {
+    if (story && isAuthenticated && !hasTrackedReading.current) {
+      // Check if this is a premium story the user can't access
+      const storyIsPremium = story?.metadata?.isPremium ?? story?.isPremium ?? false;
+      const userIsPremium = subscription?.tier && subscription.tier !== "free";
+      const blockedByPremium = storyIsPremium && !userIsPremium;
+
+      // Don't track if blocked
+      if (blockedByPremium) {
+        return;
+      }
+
+      hasTrackedReading.current = true;
+
       trackEvent(events.READER_OPENED, {
         story_id: storyId,
         story_title: story.metadata.title,
         level: story.metadata.level,
         chapter_count: story.chapters?.length ?? 1,
       });
+
+      // Increment story reading usage for metering
+      incrementUsage({
+        userId,
+        action: "readStory",
+      }).catch((err) => {
+        console.error("Failed to track story reading usage:", err);
+      });
     }
-  }, [story?._id]); // Only track once per story
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only track once per story load, not on every dep change
+  }, [story?._id, isAuthenticated, subscription?.tier]);
 
   // Get settings from Convex
   const { settings, setShowFurigana } = useSettings();
   const showFurigana = settings.showFurigana;
 
-  const chapters = story?.chapters || [];
+  // Memoize chapters to avoid unstable dependency in effects
+  const chapters = useMemo(() => story?.chapters || [], [story?.chapters]);
   const currentChapter = chapters[currentChapterIndex];
   const isOnLastChapter = currentChapterIndex === chapters.length - 1 && chapters.length > 0;
 
@@ -129,12 +159,14 @@ export function ReaderPage() {
       return chaptersData
         .map((chapter) => {
           const segments = chapter.segments || chapter.content || [];
-          return segments.map((s) => {
-            if (s.tokens && s.tokens.length > 0) {
-              return s.tokens.map((t) => t.surface).join("");
-            }
-            return s.text || "";
-          }).join(" ");
+          return segments
+            .map((s) => {
+              if (s.tokens && s.tokens.length > 0) {
+                return s.tokens.map((t) => t.surface).join("");
+              }
+              return s.text || "";
+            })
+            .join(" ");
         })
         .join("\n\n");
     };
@@ -151,7 +183,8 @@ export function ReaderPage() {
     // Get user's difficulty level for the story's language
     const getUserDifficulty = (): number => {
       const language = getLanguage();
-      const proficiency = userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
+      const proficiency =
+        userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
       if (proficiency?.level) {
         return testLevelToDifficultyLevel(proficiency.level);
       }
@@ -162,7 +195,8 @@ export function ReaderPage() {
     // Get user's display level
     const getUserDisplayLevel = (): string => {
       const language = getLanguage();
-      const proficiency = userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
+      const proficiency =
+        userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
       if (proficiency?.level) {
         return proficiency.level;
       }
@@ -181,7 +215,18 @@ export function ReaderPage() {
     }).catch((err) => {
       console.error("Background comprehension question generation failed:", err);
     });
-  }, [isOnLastChapter, story, isAuthenticated, existingComprehension, storyId, userId, generateQuestions, subscription, isPremiumUser, userProfile]);
+  }, [
+    isOnLastChapter,
+    story,
+    isAuthenticated,
+    existingComprehension,
+    storyId,
+    userId,
+    generateQuestions,
+    subscription,
+    isPremiumUser,
+    userProfile,
+  ]);
 
   // Auto-advance chapters based on audio time (skip if user manually navigated)
   useEffect(() => {
@@ -195,8 +240,8 @@ export function ReaderPage() {
       if (segments.length === 0) continue;
 
       // Get the time range for this chapter
-      const firstSegmentWithTime = segments.find(s => s.audioStartTime !== undefined);
-      const lastSegmentWithTime = [...segments].reverse().find(s => s.audioEndTime !== undefined);
+      const firstSegmentWithTime = segments.find((s) => s.audioStartTime !== undefined);
+      const lastSegmentWithTime = [...segments].reverse().find((s) => s.audioEndTime !== undefined);
 
       if (!firstSegmentWithTime || !lastSegmentWithTime) continue;
 
@@ -206,6 +251,7 @@ export function ReaderPage() {
       // Check if audio time falls within this chapter
       if (audioTime >= chapterStart && audioTime <= chapterEnd) {
         if (i !== currentChapterIndex) {
+           
           setCurrentChapterIndex(i);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
@@ -222,12 +268,16 @@ export function ReaderPage() {
     const segments = currentChapter?.segments || currentChapter?.content || [];
     if (segments.length === 0) return;
 
-    const firstSegmentWithTime = segments.find(s => s.audioStartTime !== undefined);
-    const lastSegmentWithTime = [...segments].reverse().find(s => s.audioEndTime !== undefined);
+    const firstSegmentWithTime = segments.find((s) => s.audioStartTime !== undefined);
+    const lastSegmentWithTime = [...segments].reverse().find((s) => s.audioEndTime !== undefined);
     if (!firstSegmentWithTime || !lastSegmentWithTime) return;
 
     // If audio time is now within the manually selected chapter, re-enable auto-advance
-    if (audioTime >= firstSegmentWithTime.audioStartTime! && audioTime <= lastSegmentWithTime.audioEndTime!) {
+    if (
+      audioTime >= firstSegmentWithTime.audioStartTime! &&
+      audioTime <= lastSegmentWithTime.audioEndTime!
+    ) {
+       
       setManualNavigation(false);
     }
   }, [audioTime, chapters, currentChapterIndex, manualNavigation]);
@@ -320,14 +370,79 @@ export function ReaderPage() {
         <div className="container mx-auto px-4 py-12">
           <div className="flex flex-col items-center justify-center min-h-[50vh] text-foreground-muted">
             <p className="text-lg font-medium text-destructive">
-              {error?.message || "Story not found"}
+              {error?.message || t("reader.errors.storyNotFound")}
             </p>
             <Button variant="outline" className="mt-4" onClick={() => navigate({ to: "/library" })}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Library
+              {t("reader.navigation.backToLibrary")}
             </Button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Show paywall if trying to access premium story without Basic+ subscription
+  const isPremiumStory = story?.metadata?.isPremium ?? story?.isPremium ?? false;
+  const needsPremiumAccess = isPremiumStory && !isPremiumUser;
+
+  if (needsPremiumAccess) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-12 max-w-2xl">
+          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4">
+              <BookOpen className="w-8 h-8 text-accent" />
+            </div>
+            <h2
+              className="text-2xl font-bold text-foreground mb-2"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t("reader.premium.title")}
+            </h2>
+            <p className="text-foreground-muted mb-6">
+              {t("reader.premium.description")}
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => navigate({ to: "/library" })}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                {t("reader.navigation.backToLibrary")}
+              </Button>
+              <Button onClick={() => setShowPaywall(true)}>{t("reader.premium.upgradePlan")}</Button>
+            </div>
+          </div>
+        </div>
+        <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="stories" />
+      </div>
+    );
+  }
+
+  // Show paywall if user has reached their story reading limit
+  if (hasReachedStoryLimit) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-12 max-w-2xl">
+          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+            <BookOpen className="w-16 h-16 text-foreground-muted mb-4" />
+            <h2
+              className="text-2xl font-bold text-foreground mb-2"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t("reader.limit.title")}
+            </h2>
+            <p className="text-foreground-muted mb-6">
+              {t("reader.limit.description", { used: canReadStory?.used ?? 0, limit: canReadStory?.limit ?? 0 })}
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => navigate({ to: "/library" })}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                {t("reader.navigation.backToLibrary")}
+              </Button>
+              <Button onClick={() => setShowPaywall(true)}>{t("reader.premium.upgradePlan")}</Button>
+            </div>
+          </div>
+        </div>
+        <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="stories" />
       </div>
     );
   }
@@ -350,26 +465,21 @@ export function ReaderPage() {
               <div className="min-w-0">
                 <h1
                   className="font-semibold text-foreground truncate"
-                  style={{ fontFamily: 'var(--font-japanese)' }}
+                  style={{ fontFamily: "var(--font-japanese)" }}
                 >
-                  {story.metadata.titleTokens ? (
-                    story.metadata.titleTokens.map((token, i) => (
-                      <FuriganaText
-                        key={i}
-                        token={token}
-                        showFurigana={showFurigana}
-                        onClick={(e) => handleTokenClick(token, e)}
-                      />
-                    ))
-                  ) : (
-                    story.metadata.titleJapanese || story.metadata.title
-                  )}
+                  {story.metadata.titleTokens
+                    ? story.metadata.titleTokens.map((token, i) => (
+                        <FuriganaText
+                          key={i}
+                          token={token}
+                          showFurigana={showFurigana}
+                          onClick={(e) => handleTokenClick(token, e)}
+                        />
+                      ))
+                    : story.metadata.titleJapanese || story.metadata.title}
                 </h1>
                 <div className="flex items-center gap-2 text-sm text-foreground-muted">
-                  <Badge
-                    variant={levelVariantMap[story.metadata.level]}
-                    className="text-xs"
-                  >
+                  <Badge variant={levelVariantMap[story.metadata.level]} className="text-xs">
                     {story.metadata.level}
                   </Badge>
                   <span>{story.metadata.genre}</span>
@@ -391,13 +501,13 @@ export function ReaderPage() {
               {/* Furigana Toggle */}
               <button
                 onClick={() => setShowFurigana(!showFurigana)}
-                title={showFurigana ? "Hide furigana" : "Show furigana"}
+                title={showFurigana ? t("reader.furigana.hide") : t("reader.furigana.show")}
                 className={`relative px-2 py-1 rounded-lg transition-all ${
                   showFurigana
                     ? "bg-accent/10 text-accent"
                     : "bg-muted text-foreground-muted hover:bg-background-subtle"
                 }`}
-                style={{ fontFamily: 'var(--font-japanese)' }}
+                style={{ fontFamily: "var(--font-japanese)" }}
               >
                 <span className="text-[10px] block leading-none mb-0.5 opacity-70">
                   {showFurigana ? "あ" : ""}
@@ -415,10 +525,7 @@ export function ReaderPage() {
           {/* Mobile Audio Player (shown below header on small screens) */}
           {story.metadata.audioURL && (
             <div className="sm:hidden mt-3">
-              <AudioPlayer
-                src={getAudioUrl(story.metadata.audioURL)}
-                onTimeUpdate={setAudioTime}
-              />
+              <AudioPlayer src={getAudioUrl(story.metadata.audioURL)} onTimeUpdate={setAudioTime} />
             </div>
           )}
         </div>
@@ -426,7 +533,6 @@ export function ReaderPage() {
 
       {/* Main Content - Book-like reading area */}
       <main className="container mx-auto px-4 sm:px-6 py-8 max-w-3xl">
-
         <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
           {currentChapter ? (
             <ChapterView
@@ -439,21 +545,15 @@ export function ReaderPage() {
               selectedToken={selectedToken}
               headerAction={
                 currentChapterIndex === chapters.length - 1 && chapters.length > 0 ? (
-                  <Button
-                    onClick={handleTakeQuiz}
-                    className="gap-2"
-                    size="sm"
-                  >
+                  <Button onClick={handleTakeQuiz} className="gap-2" size="sm">
                     <BookOpen className="w-4 h-4" />
-                    Take Quiz
+                    {t("reader.quiz.takeQuiz")}
                   </Button>
                 ) : undefined
               }
             />
           ) : (
-            <div className="text-center text-foreground-muted py-12">
-              No chapters available
-            </div>
+            <div className="text-center text-foreground-muted py-12">{t("reader.empty.noChapters")}</div>
           )}
         </div>
       </main>
@@ -469,7 +569,7 @@ export function ReaderPage() {
                 disabled={currentChapterIndex === 0}
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
-                Previous
+                {t("reader.navigation.previous")}
               </Button>
 
               <div className="flex items-center gap-2">
@@ -486,25 +586,19 @@ export function ReaderPage() {
                         ? "bg-accent w-6"
                         : "bg-border hover:bg-foreground-muted"
                     }`}
-                    aria-label={`Go to chapter ${index + 1}`}
+                    aria-label={t("reader.navigation.goToChapter", { number: index + 1 })}
                   />
                 ))}
               </div>
 
               {currentChapterIndex === chapters.length - 1 ? (
-                <Button
-                  onClick={handleTakeQuiz}
-                  className="gap-1"
-                >
+                <Button onClick={handleTakeQuiz} className="gap-1">
                   <BookOpen className="w-4 h-4" />
-                  Take Quiz
+                  {t("reader.quiz.takeQuiz")}
                 </Button>
               ) : (
-                <Button
-                  variant="outline"
-                  onClick={handleNextChapter}
-                >
-                  Next
+                <Button variant="outline" onClick={handleNextChapter}>
+                  {t("reader.navigation.next")}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               )}
@@ -530,8 +624,8 @@ export function ReaderPage() {
         isOpen={showPaywall}
         onClose={() => setShowPaywall(false)}
         feature="sentences"
-        title="Upgrade for Comprehension Quizzes"
-        description="Get AI-generated comprehension questions to test your understanding of each story."
+        title={t("reader.paywall.title")}
+        description={t("reader.paywall.description")}
       />
     </div>
   );

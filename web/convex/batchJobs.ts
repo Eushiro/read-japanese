@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+
+import { internalMutation,mutation, query } from "./_generated/server";
 
 // ============================================
 // BATCH JOB QUERIES
@@ -55,9 +56,7 @@ export const getByGoogleName = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("batchJobs")
-      .withIndex("by_google_job", (q) =>
-        q.eq("googleBatchJobName", args.googleBatchJobName)
-      )
+      .withIndex("by_google_job", (q) => q.eq("googleBatchJobName", args.googleBatchJobName))
       .first();
   },
 });
@@ -69,11 +68,7 @@ export const getByGoogleName = query({
 // Create a new batch job
 export const create = mutation({
   args: {
-    jobType: v.union(
-      v.literal("sentences"),
-      v.literal("audio"),
-      v.literal("images")
-    ),
+    jobType: v.union(v.literal("sentences"), v.literal("audio"), v.literal("images")),
     deckId: v.optional(v.string()),
     model: v.string(),
     itemCount: v.number(),

@@ -1,6 +1,8 @@
 import { useMemo } from "react";
-import { FuriganaText } from "./FuriganaText";
+
 import type { StorySegment, Token } from "@/types/story";
+
+import { FuriganaText } from "./FuriganaText";
 
 interface SegmentProps {
   segment: StorySegment;
@@ -39,7 +41,7 @@ export function Segment({
   }
 
   // Get the full sentence text from the segment
-  const segmentText = segment.text || segment.tokens.map(t => t.surface).join("");
+  const segmentText = segment.text || segment.tokens.map((t) => t.surface).join("");
 
   return (
     <p className={`${className} ${isSegmentActive ? "transition-colors duration-200" : ""}`}>
@@ -50,7 +52,9 @@ export function Segment({
           showFurigana={showFurigana}
           onClick={(event) => onTokenClick?.(token, event, segmentText)}
           isHighlighted={isSegmentActive}
-          isSelected={selectedToken?.surface === token.surface && selectedToken?.baseForm === token.baseForm}
+          isSelected={
+            selectedToken?.surface === token.surface && selectedToken?.baseForm === token.baseForm
+          }
         />
       ))}
     </p>

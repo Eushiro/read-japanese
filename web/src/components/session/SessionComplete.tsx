@@ -1,6 +1,8 @@
+import { ArrowRight,BookOpen, Brain, Flame, PenLine, Trophy } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Flame, Trophy, Brain, BookOpen, PenLine, ArrowRight } from "lucide-react";
 import type { SessionResults } from "@/contexts/StudySessionContext";
+import { useT } from "@/lib/i18n";
 
 interface SessionCompleteProps {
   results: SessionResults;
@@ -9,7 +11,9 @@ interface SessionCompleteProps {
 }
 
 export function SessionComplete({ results, onContinue, onDone }: SessionCompleteProps) {
-  const hasActivity = results.cardsReviewed > 0 || results.contentConsumed || results.sentencesWritten > 0;
+  const t = useT();
+  const hasActivity =
+    results.cardsReviewed > 0 || results.contentConsumed || results.sentencesWritten > 0;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -33,17 +37,17 @@ export function SessionComplete({ results, onContinue, onDone }: SessionComplete
           className="text-3xl font-bold text-foreground mb-2"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Session Complete!
+          {t("studySession.complete.title")}
         </h1>
 
         {/* Streak display */}
         {results.streakInfo && results.streakInfo.currentStreak > 0 && (
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 text-orange-600 font-semibold mb-6">
             <Flame className="w-5 h-5" />
-            <span>{results.streakInfo.currentStreak} day streak!</span>
+            <span>{t("studySession.complete.streak", { count: results.streakInfo.currentStreak })}</span>
             {results.streakInfo.isNewRecord && (
               <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full ml-1">
-                New record!
+                {t("studySession.complete.newRecord")}
               </span>
             )}
           </div>
@@ -57,7 +61,7 @@ export function SessionComplete({ results, onContinue, onDone }: SessionComplete
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-foreground-muted">
                     <Brain className="w-4 h-4" />
-                    <span>Cards reviewed</span>
+                    <span>{t("studySession.complete.stats.cardsReviewed")}</span>
                   </div>
                   <span className="font-semibold text-foreground">{results.cardsReviewed}</span>
                 </div>

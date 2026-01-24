@@ -126,7 +126,7 @@ export const migrateAllSettings = internalMutation({
 export const cleanupOldTables = internalMutation({
   args: {},
   handler: async (ctx) => {
-    let deleted = { userSettings: 0, fsrsSettings: 0, contentPreferences: 0 };
+    const deleted = { userSettings: 0, fsrsSettings: 0, contentPreferences: 0 };
 
     // Delete all userSettings
     const allUserSettings = await ctx.db.query("userSettings").collect();

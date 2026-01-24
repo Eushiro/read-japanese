@@ -1,30 +1,16 @@
-import { useState, useRef } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
 import { Link } from "@tanstack/react-router";
+import { useMutation,useQuery } from "convex/react";
 import {
-  Layers,
-  Plus,
-  CheckCircle2,
-  AlertCircle,
   ArrowRight,
-  Upload,
+  CheckCircle2,
   FileText,
-  X,
+  Upload,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { useRef,useState } from "react";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -34,9 +20,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -44,7 +29,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+
+import { api } from "../../../convex/_generated/api";
 
 type Language = "japanese" | "english" | "french";
 
@@ -71,7 +68,7 @@ function parseCSV(content: string): ParsedWord[] {
     // Support both comma and tab-separated
     const parts = trimmed.includes("\t")
       ? trimmed.split("\t")
-      : trimmed.split(",").map(p => p.trim());
+      : trimmed.split(",").map((p) => p.trim());
 
     if (parts.length >= 1) {
       const word = parts[0].trim();
@@ -79,9 +76,13 @@ function parseCSV(content: string): ParsedWord[] {
 
       // Format: word, reading (optional), definitions (rest)
       const reading = parts.length >= 2 && parts[1]?.trim() ? parts[1].trim() : undefined;
-      const definitions = parts.length >= 3
-        ? parts.slice(2).filter(d => d.trim()).map(d => d.trim())
-        : ["(no definition)"];
+      const definitions =
+        parts.length >= 3
+          ? parts
+              .slice(2)
+              .filter((d) => d.trim())
+              .map((d) => d.trim())
+          : ["(no definition)"];
 
       results.push({ word, reading, definitions });
     }
@@ -107,7 +108,11 @@ export function DecksPage() {
   const [copyExisting, setCopyExisting] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<{ imported: number; skipped: number; copiedContent: number } | null>(null);
+  const [result, setResult] = useState<{
+    imported: number;
+    skipped: number;
+    copiedContent: number;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLoading = decks === undefined;
@@ -184,7 +189,6 @@ export function DecksPage() {
       setCsvContent("");
       setCsvFile(null);
       setDialogOpen(false);
-
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create deck");
     } finally {
@@ -212,12 +216,17 @@ export function DecksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Flashcard Decks</h1>
-          <p className="text-foreground-muted">Manage vocabulary decks and content generation pipeline</p>
+          <p className="text-foreground-muted">
+            Manage vocabulary decks and content generation pipeline
+          </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) resetDialog();
-        }}>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetDialog();
+          }}
+        >
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
@@ -259,10 +268,13 @@ export function DecksPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Language</Label>
-                  <Select value={language} onValueChange={(v) => {
-                    setLanguage(v as Language);
-                    setLevel(LEVELS_BY_LANGUAGE[v as Language][0]);
-                  }}>
+                  <Select
+                    value={language}
+                    onValueChange={(v) => {
+                      setLanguage(v as Language);
+                      setLevel(LEVELS_BY_LANGUAGE[v as Language][0]);
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -281,7 +293,9 @@ export function DecksPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {LEVELS_BY_LANGUAGE[language].map((l) => (
-                        <SelectItem key={l} value={l}>{l}</SelectItem>
+                        <SelectItem key={l} value={l}>
+                          {l}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -362,12 +376,19 @@ export function DecksPage() {
                         {parsedWords.slice(0, 5).map((w, i) => (
                           <div key={i}>
                             <span className="font-medium">{w.word}</span>
-                            {w.reading && <span className="text-foreground-muted"> ({w.reading})</span>}
-                            <span className="text-foreground-muted"> - {w.definitions.join(", ")}</span>
+                            {w.reading && (
+                              <span className="text-foreground-muted"> ({w.reading})</span>
+                            )}
+                            <span className="text-foreground-muted">
+                              {" "}
+                              - {w.definitions.join(", ")}
+                            </span>
                           </div>
                         ))}
                         {parsedWords.length > 5 && (
-                          <div className="text-foreground-muted">...and {parsedWords.length - 5} more</div>
+                          <div className="text-foreground-muted">
+                            ...and {parsedWords.length - 5} more
+                          </div>
                         )}
                       </div>
                     </div>
@@ -411,7 +432,10 @@ export function DecksPage() {
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateDeck} disabled={isCreating || !deckName.trim() || !deckId.trim()}>
+              <Button
+                onClick={handleCreateDeck}
+                disabled={isCreating || !deckName.trim() || !deckId.trim()}
+              >
                 {isCreating ? "Creating..." : "Create Deck"}
               </Button>
             </DialogFooter>
@@ -451,15 +475,18 @@ export function DecksPage() {
                 </TableRow>
               ) : (
                 decks.map((deck) => {
-                  const sentencesPct = deck.totalWords > 0
-                    ? Math.round((deck.wordsWithSentences / deck.totalWords) * 100)
-                    : 0;
-                  const audioPct = deck.totalWords > 0
-                    ? Math.round((deck.wordsWithAudio / deck.totalWords) * 100)
-                    : 0;
-                  const imagesPct = deck.totalWords > 0
-                    ? Math.round((deck.wordsWithImages / deck.totalWords) * 100)
-                    : 0;
+                  const sentencesPct =
+                    deck.totalWords > 0
+                      ? Math.round((deck.wordsWithSentences / deck.totalWords) * 100)
+                      : 0;
+                  const audioPct =
+                    deck.totalWords > 0
+                      ? Math.round((deck.wordsWithAudio / deck.totalWords) * 100)
+                      : 0;
+                  const imagesPct =
+                    deck.totalWords > 0
+                      ? Math.round((deck.wordsWithImages / deck.totalWords) * 100)
+                      : 0;
 
                   return (
                     <TableRow key={deck.deckId}>

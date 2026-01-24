@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { internalQuery, internalMutation } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+
+import { internalMutation,internalQuery } from "./_generated/server";
 
 // ============================================
 // INTERNAL QUERIES
@@ -53,10 +53,19 @@ export const upsertFlashcard = internalMutation({
 
     // Create sentence in content library
     const difficultyMap: Record<string, number> = {
-      N5: 1, N4: 2, N3: 3, N2: 4, N1: 5,
-      A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6,
+      N5: 1,
+      N4: 2,
+      N3: 3,
+      N2: 4,
+      N1: 5,
+      A1: 1,
+      A2: 2,
+      B1: 3,
+      B2: 4,
+      C1: 5,
+      C2: 6,
     };
-    const difficulty = vocab.examLevel ? difficultyMap[vocab.examLevel] ?? 3 : 3;
+    const difficulty = vocab.examLevel ? (difficultyMap[vocab.examLevel] ?? 3) : 3;
 
     const sentenceId = await ctx.db.insert("sentences", {
       word: vocab.word,
@@ -152,9 +161,7 @@ export const updateFlashcardImage = internalMutation({
     // Check if image already exists for this word
     const existingImage = await ctx.db
       .query("images")
-      .withIndex("by_word_language", (q) =>
-        q.eq("word", vocab.word).eq("language", vocab.language)
-      )
+      .withIndex("by_word_language", (q) => q.eq("word", vocab.word).eq("language", vocab.language))
       .first();
 
     let imageId;
@@ -201,9 +208,7 @@ export const updateFlashcardWordAudio = internalMutation({
     // Check if word audio already exists
     const existingAudio = await ctx.db
       .query("wordAudio")
-      .withIndex("by_word_language", (q) =>
-        q.eq("word", vocab.word).eq("language", vocab.language)
-      )
+      .withIndex("by_word_language", (q) => q.eq("word", vocab.word).eq("language", vocab.language))
       .first();
 
     if (existingAudio) {
@@ -350,9 +355,7 @@ export const getWordAudioByWord = internalQuery({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("wordAudio")
-      .withIndex("by_word_language", (q) =>
-        q.eq("word", args.word).eq("language", args.language)
-      )
+      .withIndex("by_word_language", (q) => q.eq("word", args.word).eq("language", args.language))
       .first();
   },
 });
@@ -385,13 +388,23 @@ export const updatePremadeVocabularyContent = internalMutation({
       throw new Error("Premade vocabulary not found");
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic patch object for Convex db.patch
     const updates: Record<string, any> = { updatedAt: now };
 
     // Create sentence in content library
     if (args.sentence) {
       const difficultyMap: Record<string, number> = {
-        N5: 1, N4: 2, N3: 3, N2: 4, N1: 5,
-        A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6,
+        N5: 1,
+        N4: 2,
+        N3: 3,
+        N2: 4,
+        N1: 5,
+        A1: 1,
+        A2: 2,
+        B1: 3,
+        B2: 4,
+        C1: 5,
+        C2: 6,
       };
       const difficulty = difficultyMap[premade.level] ?? 3;
 

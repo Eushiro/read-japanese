@@ -1,10 +1,11 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
+
+import { internalMutation, internalQuery,mutation, query } from "./_generated/server";
 import {
+  examQuestionTypeValidator,
+  examSectionTypeValidator,
   examTypeValidator,
   languageValidator,
-  examSectionTypeValidator,
-  examQuestionTypeValidator,
 } from "./schema";
 
 // ============================================
@@ -209,7 +210,7 @@ export const update = mutation({
 
     // Filter out undefined values
     const filteredUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([_, value]) => value !== undefined)
+      Object.entries(updates).filter(([, value]) => value !== undefined)
     );
 
     if (Object.keys(filteredUpdates).length > 0) {

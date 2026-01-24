@@ -11,16 +11,9 @@ interface SignUpButtonProps {
  * Abstracted sign-up button that wraps the auth provider's implementation
  * Currently uses Clerk, but can be swapped to other providers
  */
-export function SignUpButton({
-  children,
-  mode = "modal",
-  redirectUrl,
-}: SignUpButtonProps) {
+export function SignUpButton({ children, mode = "modal", redirectUrl }: SignUpButtonProps) {
   return (
-    <ClerkSignUpButton
-      mode={mode}
-      forceRedirectUrl={redirectUrl}
-    >
+    <ClerkSignUpButton mode={mode} forceRedirectUrl={redirectUrl}>
       {children}
     </ClerkSignUpButton>
   );

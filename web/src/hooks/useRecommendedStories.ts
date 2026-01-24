@@ -1,13 +1,45 @@
-import { useMemo } from "react";
-import type { StoryListItem, ProficiencyLevel, JLPTLevel, CEFRLevel } from "@/types/story";
+import { useMemo, useState } from "react";
+
+import type { CEFRLevel,JLPTLevel, ProficiencyLevel, StoryListItem } from "@/types/story";
+
+// Simple seeded PRNG for stable-but-varied shuffling
+function seededRandom(seed: number): () => number {
+  return () => {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  };
+}
+
+// Shuffle array with seeded random for reproducibility
+function shuffleWithSeed<T>(array: T[], seed: number): T[] {
+  const random = seededRandom(seed);
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 type Language = "japanese" | "english" | "french";
 
 // Exam types from Convex schema
 type ExamType =
-  | "jlpt_n5" | "jlpt_n4" | "jlpt_n3" | "jlpt_n2" | "jlpt_n1"
-  | "toefl" | "sat" | "gre"
-  | "delf_a1" | "delf_a2" | "delf_b1" | "delf_b2" | "dalf_c1" | "dalf_c2" | "tcf";
+  | "jlpt_n5"
+  | "jlpt_n4"
+  | "jlpt_n3"
+  | "jlpt_n2"
+  | "jlpt_n1"
+  | "toefl"
+  | "sat"
+  | "gre"
+  | "delf_a1"
+  | "delf_a2"
+  | "delf_b1"
+  | "delf_b2"
+  | "dalf_c1"
+  | "dalf_c2"
+  | "tcf";
 
 // User profile structure from Convex
 interface UserProfile {
@@ -92,6 +124,11 @@ export function useRecommendedStories(
   language: Language,
   maxStories: number = 4
 ): RecommendedStoriesResult {
+  // Generate a stable random seed once per component instance
+  // This ensures consistent shuffling during renders but variety across mounts
+  // Using useState lazy initializer for React compiler purity compliance
+  const [seed] = useState(() => Math.floor(Math.random() * 1000000));
+
   return useMemo(() => {
     if (!allStories || allStories.length === 0) {
       return { stories: [], reason: "", userLevel: null };
@@ -104,15 +141,20 @@ export function useRecommendedStories(
       return { stories: [], reason: "No stories available for this language", userLevel: null };
     }
 
+    // Create a seed based on stable inputs plus the instance seed
+    const baseSeed = seed + languageStories.length;
+
     // Priority 1: Check placement test result
-    const placementLevel = userProfile?.proficiencyLevels?.[language]?.level as ProficiencyLevel | undefined;
+    const placementLevel = userProfile?.proficiencyLevels?.[language]?.level as
+      | ProficiencyLevel
+      | undefined;
     if (placementLevel) {
       const targetLevels = getAdjacentLevels(placementLevel);
       const filtered = languageStories.filter((s) => targetLevels.includes(s.level));
 
       if (filtered.length > 0) {
-        // Shuffle and take maxStories
-        const shuffled = [...filtered].sort(() => Math.random() - 0.5);
+        // Shuffle with seeded random and take maxStories
+        const shuffled = shuffleWithSeed(filtered, baseSeed);
         return {
           stories: shuffled.slice(0, maxStories),
           reason: `Based on your ${placementLevel} level`,
@@ -139,7 +181,7 @@ export function useRecommendedStories(
           const filtered = languageStories.filter((s) => targetLevels.includes(s.level));
 
           if (filtered.length > 0) {
-            const shuffled = [...filtered].sort(() => Math.random() - 0.5);
+            const shuffled = shuffleWithSeed(filtered, baseSeed);
             const examName = exam.replace(/_/g, " ").toUpperCase();
             return {
               stories: shuffled.slice(0, maxStories),
@@ -152,11 +194,11 @@ export function useRecommendedStories(
     }
 
     // Priority 3: Random selection (fallback)
-    const shuffled = [...languageStories].sort(() => Math.random() - 0.5);
+    const shuffled = shuffleWithSeed(languageStories, baseSeed);
     return {
       stories: shuffled.slice(0, maxStories),
       reason: "Popular picks",
       userLevel: null,
     };
-  }, [allStories, userProfile, language, maxStories]);
+  }, [allStories, userProfile, language, maxStories, seed]);
 }

@@ -8,7 +8,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { JLPT_LEVELS, CEFR_LEVELS, type JLPTLevel, type CEFRLevel, type ProficiencyLevel } from "@/types/story";
+import { useT } from "@/lib/i18n";
+import {
+  CEFR_LEVELS,
+  type CEFRLevel,
+  JLPT_LEVELS,
+  type JLPTLevel,
+  type ProficiencyLevel,
+} from "@/types/story";
 
 type Language = "japanese" | "english" | "french";
 
@@ -19,6 +26,8 @@ interface LevelFilterProps {
 }
 
 export function LevelFilter({ selectedLevel, onSelectLevel, languages }: LevelFilterProps) {
+  const t = useT();
+
   // Determine which levels to show based on user's languages
   let jlptLevelsToShow: JLPTLevel[] = [];
   let cefrLevelsToShow: CEFRLevel[] = [];
@@ -43,13 +52,13 @@ export function LevelFilter({ selectedLevel, onSelectLevel, languages }: LevelFi
   return (
     <Select
       value={selectedLevel ?? "all"}
-      onValueChange={(value) => onSelectLevel(value === "all" ? null : value as ProficiencyLevel)}
+      onValueChange={(value) => onSelectLevel(value === "all" ? null : (value as ProficiencyLevel))}
     >
       <SelectTrigger className="w-[130px]">
-        <SelectValue placeholder="Level" />
+        <SelectValue placeholder={t("library.filters.level")} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">All Levels</SelectItem>
+        <SelectItem value="all">{t("library.filters.allLevels")}</SelectItem>
 
         {hasJLPT && (
           <>

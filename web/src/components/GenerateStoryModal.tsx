@@ -1,32 +1,49 @@
-import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Paywall } from "@/components/Paywall";
+import { Image, Loader2, Sparkles, Volume2, X } from "lucide-react";
+import { useState } from "react";
+
 import {
   generateStory,
-  pollGenerationStatus,
   type GenerateStoryRequest,
   type GenerationStatus,
+  pollGenerationStatus,
 } from "@/api/generate";
-import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
-import { Loader2, Sparkles, Volume2, Image, X } from "lucide-react";
+import { Paywall } from "@/components/Paywall";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
+import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
 
-const GENRES = [
-  "Daily Life",
-  "Fantasy",
-  "Mystery",
-  "Travel",
-  "School",
-  "Food",
-  "Nature",
-  "Adventure",
-  "Romance",
-  "Historical",
-];
+import { api } from "../../convex/_generated/api";
+
+const GENRE_KEYS = [
+  "dailyLife",
+  "fantasy",
+  "mystery",
+  "travel",
+  "school",
+  "food",
+  "nature",
+  "adventure",
+  "romance",
+  "historical",
+] as const;
+
+// Map genre keys to the API values
+const GENRE_API_VALUES: Record<(typeof GENRE_KEYS)[number], string> = {
+  dailyLife: "Daily Life",
+  fantasy: "Fantasy",
+  mystery: "Mystery",
+  travel: "Travel",
+  school: "School",
+  food: "Food",
+  nature: "Nature",
+  adventure: "Adventure",
+  romance: "Romance",
+  historical: "Historical",
+};
 
 const levelVariantMap: Record<JLPTLevel, "n5" | "n4" | "n3" | "n2" | "n1"> = {
   N5: "n5",
@@ -102,12 +119,9 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
       }
 
       // Poll for completion
-      const status = await pollGenerationStatus(
-        response.story_id!,
-        (status: GenerationStatus) => {
-          setProgress(status.progress || status.status);
-        }
-      );
+      const status = await pollGenerationStatus(response.story_id!, (status: GenerationStatus) => {
+        setProgress(status.progress || status.status);
+      });
 
       if (status.status === "completed" && status.story_id) {
         onClose();
@@ -142,7 +156,10 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
                 <Sparkles className="w-5 h-5 text-accent" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                <h2
+                  className="text-lg font-semibold text-foreground"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   Generate Story
                 </h2>
                 <p className="text-sm text-foreground-muted">
@@ -163,9 +180,7 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
           <div className="p-4 space-y-5 overflow-y-auto max-h-[calc(90vh-180px)]">
             {/* JLPT Level */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                JLPT Level
-              </label>
+              <label className="text-sm font-medium text-foreground">JLPT Level</label>
               <div className="flex flex-wrap gap-2">
                 {JLPT_LEVELS.map((level) => (
                   <button
@@ -224,9 +239,7 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
             {/* Chapters & Words */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Chapters
-                </label>
+                <label className="text-sm font-medium text-foreground">Chapters</label>
                 <select
                   value={numChapters}
                   onChange={(e) => setNumChapters(Number(e.target.value))}
@@ -242,9 +255,7 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Words/Chapter
-                </label>
+                <label className="text-sm font-medium text-foreground">Words/Chapter</label>
                 <select
                   value={wordsPerChapter}
                   onChange={(e) => setWordsPerChapter(Number(e.target.value))}
@@ -312,11 +323,7 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
 
           {/* Footer */}
           <div className="p-4 border-t border-border bg-muted/30">
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="w-full"
-            >
+            <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
               {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -337,11 +344,7 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
       </div>
 
       {/* Paywall Modal */}
-      <Paywall
-        isOpen={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        feature="stories"
-      />
+      <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="stories" />
     </>
   );
 }

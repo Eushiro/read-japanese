@@ -1,4 +1,6 @@
 import { v } from "convex/values";
+
+import { type Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { languageValidator } from "./schema";
 
@@ -443,8 +445,8 @@ export const importVocabulary = mutation({
       }
 
       // Look for existing content in libraries
-      let sentenceId: typeof args.items[number] extends { sentenceId?: infer T } ? T : undefined;
-      let imageId: typeof args.items[number] extends { imageId?: infer T } ? T : undefined;
+      let sentenceId: Id<"sentences"> | undefined;
+      let imageId: Id<"images"> | undefined;
 
       if (args.linkExistingContent) {
         // Find a sentence at appropriate difficulty
@@ -453,15 +455,11 @@ export const importVocabulary = mutation({
           .withIndex("by_word_language", (q) =>
             q.eq("word", item.word).eq("language", deck.language)
           )
-          .filter((q) =>
-            args.difficulty
-              ? q.lte(q.field("difficulty"), args.difficulty)
-              : true
-          )
+          .filter((q) => (args.difficulty ? q.lte(q.field("difficulty"), args.difficulty) : true))
           .first();
 
         if (sentence) {
-          sentenceId = sentence._id as any;
+          sentenceId = sentence._id;
           linkedContent++;
         }
 
@@ -474,7 +472,7 @@ export const importVocabulary = mutation({
           .first();
 
         if (image) {
-          imageId = image._id as any;
+          imageId = image._id;
         }
       }
 
@@ -584,9 +582,7 @@ export const importDeckToUser = mutation({
       // Check if user already has this word
       const existing = await ctx.db
         .query("vocabulary")
-        .withIndex("by_user_and_word", (q) =>
-          q.eq("userId", args.userId).eq("word", premade.word)
-        )
+        .withIndex("by_user_and_word", (q) => q.eq("userId", args.userId).eq("word", premade.word))
         .first();
 
       if (existing) {
@@ -682,9 +678,7 @@ export const getWordsNeedingAudio = query({
 
       const audio = await ctx.db
         .query("wordAudio")
-        .withIndex("by_word_language", (q) =>
-          q.eq("word", word).eq("language", args.language)
-        )
+        .withIndex("by_word_language", (q) => q.eq("word", word).eq("language", args.language))
         .first();
 
       if (!audio) {
@@ -707,10 +701,7 @@ export const getSentencesNeedingAudio = query({
       .query("sentences")
       .withIndex("by_word_language")
       .filter((q) =>
-        q.and(
-          q.eq(q.field("language"), args.language),
-          q.eq(q.field("audioUrl"), undefined)
-        )
+        q.and(q.eq(q.field("language"), args.language), q.eq(q.field("audioUrl"), undefined))
       )
       .take(args.limit);
 

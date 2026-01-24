@@ -1,37 +1,43 @@
-import { useState, useMemo } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { useAuth, SignInButton } from "@/contexts/AuthContext";
-import { useStories } from "@/hooks/useStories";
-import { Button } from "@/components/ui/button";
+import {
+  ArrowRight,
+  BookmarkCheck,
+  BookOpen,
+  Brain,
+  ChevronRight,
+  Flame,
+  Library,
+  Play,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Video,
+} from "lucide-react";
+import { useMemo,useState } from "react";
+
 import { StoryCard } from "@/components/library/StoryCard";
 import { VideoCard, type VideoItem } from "@/components/library/VideoCard";
-import {
-  Play,
-  Brain,
-  BookmarkCheck,
-  Flame,
-  ChevronRight,
-  ArrowRight,
-  Sparkles,
-  Library,
-  BookOpen,
-  Video,
-  TrendingUp,
-  Target,
-} from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { buildSessionPlan, getSessionDescription, DURATION_OPTIONS } from "@/lib/sessionPlanner";
-import { getRandomStudyPhrase } from "@/lib/studyPhrases";
+import { Paywall } from "@/components/Paywall";
+import { useAuth } from "@/contexts/AuthContext";
+import { useStories } from "@/hooks/useStories";
+import { useT } from "@/lib/i18n";
 import { LANGUAGES } from "@/lib/languages";
+import { buildSessionPlan, DURATION_OPTIONS,getSessionDescription } from "@/lib/sessionPlanner";
+import { getRandomStudyPhrase } from "@/lib/studyPhrases";
+import type { StoryListItem } from "@/types/story";
+
+import { api } from "../../convex/_generated/api";
 
 export function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const userId = user?.id ?? "anonymous";
   const navigate = useNavigate();
+  const t = useT();
 
   const [selectedDuration, setSelectedDuration] = useState<number | null>(15); // Default to 15 min
   const [streakAnimating, setStreakAnimating] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const handleStreakClick = () => {
     setStreakAnimating(true);
@@ -39,16 +45,10 @@ export function DashboardPage() {
   };
 
   // Fetch flashcard stats
-  const flashcardStats = useQuery(
-    api.flashcards.getStats,
-    isAuthenticated ? { userId } : "skip"
-  );
+  const flashcardStats = useQuery(api.flashcards.getStats, isAuthenticated ? { userId } : "skip");
 
   // Fetch vocabulary
-  const vocabulary = useQuery(
-    api.vocabulary.list,
-    isAuthenticated ? { userId } : "skip"
-  );
+  const vocabulary = useQuery(api.vocabulary.list, isAuthenticated ? { userId } : "skip");
 
   // Fetch user profile for streak
   const userProfile = useQuery(
@@ -67,43 +67,58 @@ export function DashboardPage() {
 
   // Get language info and random study phrase (stable per page load)
   const languageInfo = LANGUAGES.find((l) => l.value === primaryLanguage);
-  const studyPhrase = useMemo(
-    () => getRandomStudyPhrase(primaryLanguage),
-    [primaryLanguage]
-  );
+  const studyPhrase = useMemo(() => getRandomStudyPhrase(primaryLanguage), [primaryLanguage]);
+
+  // Check subscription for premium content
+  const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
+  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
   // Check if user needs placement test for their primary language
-  const needsPlacementTest = userProfile && !userProfile.proficiencyLevels?.[primaryLanguage as keyof typeof userProfile.proficiencyLevels];
+  const needsPlacementTest =
+    userProfile &&
+    !userProfile.proficiencyLevels?.[primaryLanguage as keyof typeof userProfile.proficiencyLevels];
 
-  const videos = useQuery(
-    api.youtubeContent.list,
-    { language: primaryLanguage }
-  ) as VideoItem[] | undefined;
+  const videos = useQuery(api.youtubeContent.list, { language: primaryLanguage }) as
+    | VideoItem[]
+    | undefined;
 
   // Fetch stories for recommendations
   const { data: allStories } = useStories();
 
   // Filter stories by user's language/level
-  const suggestedStories = allStories?.filter(story => {
-    // For Japanese: filter to JLPT levels
-    if (primaryLanguage === "japanese") {
-      return ["N5", "N4", "N3", "N2", "N1"].includes(story.level);
-    }
-    // For French/English: filter to CEFR levels
-    return ["A1", "A2", "B1", "B2", "C1", "C2"].includes(story.level);
-  }).slice(0, 6) ?? [];
+  const suggestedStories =
+    allStories
+      ?.filter((story) => {
+        // For Japanese: filter to JLPT levels
+        if (primaryLanguage === "japanese") {
+          return ["N5", "N4", "N3", "N2", "N1"].includes(story.level);
+        }
+        // For French/English: filter to CEFR levels
+        return ["A1", "A2", "B1", "B2", "C1", "C2"].includes(story.level);
+      })
+      .slice(0, 6) ?? [];
 
   // Get suggested videos
   const suggestedVideos = videos?.slice(0, 4) ?? [];
+
+  // Handle story click with premium check
+  const handleStoryClick = (story: StoryListItem) => {
+    if (story.isPremium && !isPremiumUser) {
+      setShowPaywall(true);
+      return;
+    }
+    navigate({ to: "/read/$storyId", params: { storyId: story.id } });
+  };
 
   // Calculate stats
   const isPreviewMode = !isAuthenticated;
   const dueCards = isPreviewMode ? 12 : (flashcardStats?.dueNow ?? 0) + (flashcardStats?.new ?? 0);
   const totalWords = isPreviewMode ? 247 : (vocabulary?.length ?? 0);
   const currentStreak = isPreviewMode ? 3 : (streakData?.currentStreak ?? 0);
-  const vocabToReview = isPreviewMode ? 8 : (vocabulary?.filter(
-    v => v.masteryState === "new" || v.masteryState === "learning"
-  ).length ?? 0);
+  const vocabToReview = isPreviewMode
+    ? 8
+    : (vocabulary?.filter((v) => v.masteryState === "new" || v.masteryState === "learning")
+        .length ?? 0);
 
   // Build session plan
   const firstVideo = videos?.[0];
@@ -150,7 +165,7 @@ export function DashboardPage() {
                 <Sparkles className="w-5 h-5 text-accent" />
               </div>
               <span className="text-sm font-semibold text-accent uppercase tracking-wider">
-                Dashboard
+                {t("dashboard.title")}
               </span>
             </div>
             <h1
@@ -158,14 +173,11 @@ export function DashboardPage() {
               style={{ fontFamily: "var(--font-display)" }}
             >
               {isPreviewMode
-                ? "Your Learning Dashboard"
-                : `Welcome back${user?.displayName ? `, ${user.displayName.split(" ")[0]}` : ""}!`
-              }
+                ? t("dashboard.preview.title")
+                : t("dashboard.welcome", { name: user?.displayName?.split(" ")[0] ?? "" })}
             </h1>
             {isPreviewMode && (
-              <p className="text-foreground mb-6">
-                See how SanLang helps you master vocabulary
-              </p>
+              <p className="text-foreground mb-6">{t("dashboard.preview.subtitle")}</p>
             )}
           </div>
         </div>
@@ -192,7 +204,7 @@ export function DashboardPage() {
                     >
                       <span className="flex items-center justify-center gap-3">
                         <Target className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                        Start Placement Test
+                        {t("dashboard.cta.startPlacement")}
                       </span>
                     </button>
                   </div>
@@ -200,11 +212,10 @@ export function DashboardPage() {
                   {/* Placement test explanation */}
                   <div className="text-center">
                     <p className="text-foreground font-medium mb-2">
-                      Let's find your starting level
+                      {t("dashboard.cta.findLevel")}
                     </p>
                     <p className="text-sm text-foreground-muted max-w-md mx-auto">
-                      Take a quick adaptive test (10-15 questions) to personalize your learning path.
-                      The test adjusts to your skill level as you answer.
+                      {t("dashboard.cta.placementExplainer")}
                     </p>
                   </div>
                 </>
@@ -236,15 +247,17 @@ export function DashboardPage() {
                   {/* Duration selection */}
                   <div className="text-center">
                     <p className="text-sm text-foreground mb-3">
-                      How long do you want to study?
+                      {t("dashboard.cta.durationQuestion")}
                     </p>
                     <div className="flex justify-center gap-2">
                       {DURATION_OPTIONS.map((option) => (
                         <button
                           key={option.value}
-                          onClick={() => setSelectedDuration(
-                            selectedDuration === option.value ? null : option.value
-                          )}
+                          onClick={() =>
+                            setSelectedDuration(
+                              selectedDuration === option.value ? null : option.value
+                            )
+                          }
                           className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all border-2 ${
                             selectedDuration === option.value
                               ? "bg-accent text-white border-accent shadow-md shadow-accent/25"
@@ -270,7 +283,7 @@ export function DashboardPage() {
                     <Brain className="w-5 h-5 text-purple-400" />
                   </div>
                   <div className="text-2xl font-bold text-foreground">{dueCards}</div>
-                  <div className="text-xs text-foreground/80">due cards</div>
+                  <div className="text-xs text-foreground/80">{t("dashboard.stats.dueCards")}</div>
                 </button>
               </SignInButton>
             ) : (
@@ -282,7 +295,7 @@ export function DashboardPage() {
                   <Brain className="w-5 h-5 text-purple-400" />
                 </div>
                 <div className="text-2xl font-bold text-foreground">{dueCards}</div>
-                <div className="text-xs text-foreground/80">due cards</div>
+                <div className="text-xs text-foreground/80">{t("dashboard.stats.dueCards")}</div>
               </Link>
             )}
 
@@ -293,7 +306,7 @@ export function DashboardPage() {
                     <BookmarkCheck className="w-5 h-5 text-blue-400" />
                   </div>
                   <div className="text-2xl font-bold text-foreground">{totalWords}</div>
-                  <div className="text-xs text-foreground/80">words</div>
+                  <div className="text-xs text-foreground/80">{t("dashboard.stats.words")}</div>
                 </button>
               </SignInButton>
             ) : (
@@ -305,7 +318,7 @@ export function DashboardPage() {
                   <BookmarkCheck className="w-5 h-5 text-blue-400" />
                 </div>
                 <div className="text-2xl font-bold text-foreground">{totalWords}</div>
-                <div className="text-xs text-foreground/80">words</div>
+                <div className="text-xs text-foreground/80">{t("dashboard.stats.words")}</div>
               </Link>
             )}
 
@@ -316,9 +329,7 @@ export function DashboardPage() {
                     <Flame className="w-5 h-5 text-orange-400" />
                   </div>
                   <div className="text-2xl font-bold text-foreground">{currentStreak}</div>
-                  <div className="text-xs text-foreground/80">
-                    {currentStreak === 1 ? "day" : "days"} streak
-                  </div>
+                  <div className="text-xs text-foreground/80">{t("dashboard.stats.streak")}</div>
                 </button>
               </SignInButton>
             ) : (
@@ -327,12 +338,12 @@ export function DashboardPage() {
                 className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 rounded-xl border border-orange-500/20 p-4 text-center hover:border-orange-500/40 hover:from-orange-500/15 transition-all cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center mx-auto mb-2">
-                  <Flame className={`w-5 h-5 text-orange-400 ${streakAnimating ? 'animate-flame-shake text-orange-300' : ''}`} />
+                  <Flame
+                    className={`w-5 h-5 text-orange-400 ${streakAnimating ? "animate-flame-shake text-orange-300" : ""}`}
+                  />
                 </div>
                 <div className="text-2xl font-bold text-foreground">{currentStreak}</div>
-                <div className="text-xs text-foreground/80">
-                  {currentStreak === 1 ? "day" : "days"} streak
-                </div>
+                <div className="text-xs text-foreground/80">{t("dashboard.stats.streak")}</div>
               </button>
             )}
           </div>
@@ -347,32 +358,38 @@ export function DashboardPage() {
                     className="text-lg font-semibold text-foreground"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
-                    Suggested for You
+                    {t("dashboard.sections.suggestedForYou")}
                   </h2>
                 </div>
                 <Link
                   to="/library"
                   className="text-sm text-accent hover:text-accent/80 flex items-center gap-1 transition-colors"
                 >
-                  See all
+                  {t("common.actions.viewAll")}
                   <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
-              <p className="text-sm text-foreground mb-4">Popular picks</p>
+              <p className="text-sm text-foreground mb-4">{t("dashboard.sections.popularPicks")}</p>
 
               {/* Stories */}
               {suggestedStories.length > 0 && (
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-3">
                     <BookOpen className="w-4 h-4 text-accent" />
-                    <span className="text-sm font-medium text-foreground">Stories</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {t("dashboard.sections.stories")}
+                    </span>
                   </div>
                   <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 scrollbar-hide">
                     {suggestedStories.map((story) => (
-                      <div key={story.id} className="flex-shrink-0 w-[160px] [&>article]:border [&>article]:border-border [&>article]:bg-background">
+                      <div
+                        key={story.id}
+                        className="flex-shrink-0 w-[160px] [&>article]:border [&>article]:border-border [&>article]:bg-background"
+                      >
                         <StoryCard
                           story={story}
-                          onClick={() => navigate({ to: "/read/$storyId", params: { storyId: story.id } })}
+                          isPremiumUser={!!isPremiumUser}
+                          onClick={() => handleStoryClick(story)}
                         />
                       </div>
                     ))}
@@ -385,14 +402,21 @@ export function DashboardPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Video className="w-4 h-4 text-accent" />
-                    <span className="text-sm font-medium text-foreground">Videos</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {t("dashboard.sections.videos")}
+                    </span>
                   </div>
                   <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 scrollbar-hide items-stretch">
                     {suggestedVideos.map((video) => (
-                      <div key={video._id} className="flex-shrink-0 w-[240px] [&>article]:border [&>article]:border-border [&>article]:bg-background [&>article]:h-full">
+                      <div
+                        key={video._id}
+                        className="flex-shrink-0 w-[240px] [&>article]:border [&>article]:border-border [&>article]:bg-background [&>article]:h-full"
+                      >
                         <VideoCard
                           video={{ ...video, description: undefined }}
-                          onClick={() => navigate({ to: "/video/$videoId", params: { videoId: video._id } })}
+                          onClick={() =>
+                            navigate({ to: "/video/$videoId", params: { videoId: video._id } })
+                          }
                         />
                       </div>
                     ))}
@@ -412,9 +436,11 @@ export function DashboardPage() {
                 <Library className="w-5 h-5 text-accent" />
               </div>
               <div>
-                <div className="font-medium text-foreground">Browse Library</div>
+                <div className="font-medium text-foreground">
+                  {t("dashboard.sections.browseLibrary")}
+                </div>
                 <div className="text-sm text-foreground/90">
-                  Stories and videos at your level
+                  {t("dashboard.sections.libraryDescription")}
                 </div>
               </div>
             </div>
@@ -428,29 +454,28 @@ export function DashboardPage() {
                 className="text-xl font-bold text-foreground mb-2"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Ready to start learning?
+                {t("dashboard.signUpCta.title")}
               </h2>
               <p className="text-foreground mb-6 max-w-md mx-auto">
-                Join for free and start building your vocabulary with AI-powered flashcards.
+                {t("dashboard.signUpCta.subtitle")}
               </p>
               <SignInButton mode="modal">
-                <button
-                  className="group relative px-8 py-4 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-                >
+                <button className="group relative px-8 py-4 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
                   <span className="flex items-center justify-center gap-2">
                     <Sparkles className="w-5 h-5" />
-                    Try it Free
+                    {t("dashboard.signUpCta.button")}
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </button>
               </SignInButton>
-              <p className="text-sm text-foreground mt-3">
-                No credit card required
-              </p>
+              <p className="text-sm text-foreground mt-3">{t("dashboard.signUpCta.disclaimer")}</p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Paywall Modal */}
+      <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="stories" />
     </div>
   );
 }
@@ -461,9 +486,7 @@ function PreviewStartStudying() {
     <div className="text-center">
       <div className="mb-6">
         <SignInButton mode="modal">
-          <button
-            className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-          >
+          <button className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
             <span className="flex items-center justify-center gap-3">
               <Play className="w-6 h-6 group-hover:scale-110 transition-transform" />
               Start Studying
@@ -471,12 +494,8 @@ function PreviewStartStudying() {
           </button>
         </SignInButton>
       </div>
-      <p className="text-foreground font-medium mb-4">
-        Review cards, read a story
-      </p>
-      <p className="text-sm text-foreground">
-        Sign in to track your progress
-      </p>
+      <p className="text-foreground font-medium mb-4">Review cards, read a story</p>
+      <p className="text-sm text-foreground">Sign in to track your progress</p>
     </div>
   );
 }
@@ -513,10 +532,7 @@ function DashboardSkeleton() {
           {/* Quick Stats Skeleton */}
           <div className="grid grid-cols-3 gap-3">
             {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="rounded-xl border border-border bg-surface p-4 text-center"
-              >
+              <div key={i} className="rounded-xl border border-border bg-surface p-4 text-center">
                 <div className="w-10 h-10 rounded-lg bg-border mx-auto mb-2 animate-pulse" />
                 <div className="h-7 bg-border rounded w-12 mx-auto mb-1 animate-pulse" />
                 <div className="h-4 bg-border rounded w-16 mx-auto animate-pulse" />

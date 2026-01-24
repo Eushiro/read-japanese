@@ -1,6 +1,34 @@
-import { useState, useEffect } from "react";
+import { Link,useNavigate } from "@tanstack/react-router";
+import { useAction, useMutation,useQuery } from "convex/react";
+import {
+  Activity,
+  BookOpen,
+  Brain,
+  Check,
+  ChevronRight,
+  Compass,
+  CreditCard,
+  Crown,
+  Eye,
+  EyeOff,
+  Globe,
+  GraduationCap,
+  Languages,
+  Layers,
+  LogOut,
+  Monitor,
+  Moon,
+  PenLine,
+  Sparkles,
+  Sun,
+  User,
+  Volume2,
+  Zap,
+} from "lucide-react";
+import { useEffect,useState } from "react";
+
+import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -8,19 +36,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Crown, User, LogOut, CreditCard, Zap, Check, Globe, GraduationCap, Sparkles, Brain, ChevronRight, BookOpen, Layers, PenLine, Compass } from "lucide-react";
-import { useNavigate, Link } from "@tanstack/react-router";
-import { useSettings } from "@/hooks/useSettings";
-import { useTheme } from "@/components/ThemeProvider";
-import { useAuth, SignInButton, UserButton } from "@/contexts/AuthContext";
+import { Switch } from "@/components/ui/switch";
+import { UILanguageSwitcher } from "@/components/UILanguageSwitcher";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { useQuery, useAction, useMutation } from "convex/react";
+import { SignInButton, useAuth, UserButton } from "@/contexts/AuthContext";
+import { useSettings } from "@/hooks/useSettings";
+import { useT } from "@/lib/i18n";
+import { EXAMS_BY_LANGUAGE, type Language,LANGUAGES } from "@/lib/languages";
+
 import { api } from "../../convex/_generated/api";
-import { LANGUAGES, EXAMS_BY_LANGUAGE, type Language } from "@/lib/languages";
+import type { ExamType } from "../../convex/schema";
 
 export function SettingsPage() {
   const navigate = useNavigate();
   const { trackEvent, events } = useAnalytics();
+  const t = useT();
 
   const {
     settings,
@@ -28,7 +58,6 @@ export function SettingsPage() {
     setShowFurigana,
     setFontSize: updateFontSize,
     setAutoplayAudio: updateAutoplayAudio,
-    userId,
   } = useSettings();
 
   const { theme, setTheme } = useTheme();
@@ -38,6 +67,10 @@ export function SettingsPage() {
   // Subscription data
   const subscription = useQuery(
     api.subscriptions.get,
+    isAuthenticated && user ? { userId: user.id } : "skip"
+  );
+  const usage = useQuery(
+    api.subscriptions.getUsage,
     isAuthenticated && user ? { userId: user.id } : "skip"
   );
   const createCheckout = useAction(api.stripe.createCheckoutSession);
@@ -92,24 +125,25 @@ export function SettingsPage() {
   const handleExamToggle = async (exam: string) => {
     if (!user || !userProfile) return;
 
-    const currentExams = userProfile.targetExams || [];
-    const newExams = currentExams.includes(exam as any)
+    const currentExams = (userProfile.targetExams || []) as ExamType[];
+    const examValue = exam as ExamType;
+    const newExams = currentExams.includes(examValue)
       ? currentExams.filter((e) => e !== exam)
-      : [...currentExams, exam];
+      : [...currentExams, examValue];
 
     await updateTargetExams({
       clerkId: user.id,
-      targetExams: newExams as any[],
+      targetExams: newExams,
     });
 
     trackEvent(events.SETTING_CHANGED, {
       setting: "target_exams",
       value: newExams,
-      action: currentExams.includes(exam as any) ? "remove" : "add",
+      action: currentExams.includes(examValue) ? "remove" : "add",
     });
   };
 
-  const handleUpgrade = async (tier: "basic" | "pro" | "unlimited") => {
+  const handleUpgrade = async (tier: "basic" | "pro" | "power") => {
     if (!user || checkoutLoading) return;
 
     trackEvent(events.UPGRADE_CLICKED, {
@@ -158,8 +192,6 @@ export function SettingsPage() {
     }
   };
 
-  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
-
   const showFurigana = settings.showFurigana;
   const autoplayAudio = settings.autoplayAudio;
   const fontSize = settings.fontSize;
@@ -185,8 +217,11 @@ export function SettingsPage() {
               <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-accent/20">
                 <User className="w-5 h-5 text-purple-400" />
               </div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                Profile
+              <h1
+                className="text-3xl sm:text-4xl font-bold text-foreground"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("settings.title")}
               </h1>
             </div>
           </div>
@@ -202,8 +237,11 @@ export function SettingsPage() {
               <div className="p-1.5 rounded-lg bg-amber-500/15">
                 <Sun className="w-4 h-4 text-amber-400" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                Appearance
+              <h2
+                className="text-lg font-semibold text-foreground"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("settings.appearance.title")}
               </h2>
             </div>
             {settingsLoading ? (
@@ -220,7 +258,7 @@ export function SettingsPage() {
                   className="flex-1"
                 >
                   <Sun className="w-4 h-4 mr-2" />
-                  Light
+                  {t("settings.appearance.light")}
                 </Button>
                 <Button
                   variant={theme === "dark" ? "default" : "outline"}
@@ -228,7 +266,7 @@ export function SettingsPage() {
                   className="flex-1"
                 >
                   <Moon className="w-4 h-4 mr-2" />
-                  Dark
+                  {t("settings.appearance.dark")}
                 </Button>
                 <Button
                   variant={theme === "system" ? "default" : "outline"}
@@ -236,10 +274,29 @@ export function SettingsPage() {
                   className="flex-1"
                 >
                   <Monitor className="w-4 h-4 mr-2" />
-                  System
+                  {t("settings.appearance.system")}
                 </Button>
               </div>
             )}
+          </section>
+
+          {/* Display Language */}
+          <section className="bg-gradient-to-br from-violet-500/5 to-surface rounded-2xl border border-violet-500/20 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-1.5 rounded-lg bg-violet-500/15">
+                <Languages className="w-4 h-4 text-violet-400" />
+              </div>
+              <h2
+                className="text-lg font-semibold text-foreground"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("settings.uiLanguage.title")}
+              </h2>
+            </div>
+            <p className="text-sm text-foreground-muted mb-4">
+              {t("settings.uiLanguage.description")}
+            </p>
+            <UILanguageSwitcher showLabel={false} />
           </section>
 
           {/* Learning Tools */}
@@ -249,12 +306,15 @@ export function SettingsPage() {
                 <div className="p-1.5 rounded-lg bg-accent/15">
                   <Compass className="w-4 h-4 text-accent" />
                 </div>
-                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                  Learning Tools
+                <h2
+                  className="text-lg font-semibold text-foreground"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("settings.learningTools.title")}
                 </h2>
               </div>
               <p className="text-sm text-foreground-muted mb-4">
-                Quick access to all learning features
+                {t("settings.learningTools.description")}
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <Link
@@ -265,8 +325,12 @@ export function SettingsPage() {
                     <BookOpen className="w-4 h-4 text-accent" />
                   </div>
                   <div>
-                    <div className="font-medium text-foreground text-sm">Learn Hub</div>
-                    <div className="text-xs text-foreground-muted">All tools in one place</div>
+                    <div className="font-medium text-foreground text-sm">
+                      {t("settings.learningTools.learnHub")}
+                    </div>
+                    <div className="text-xs text-foreground-muted">
+                      {t("settings.learningTools.learnHubDescription")}
+                    </div>
                   </div>
                 </Link>
                 <Link
@@ -277,8 +341,12 @@ export function SettingsPage() {
                     <Layers className="w-4 h-4 text-blue-500" />
                   </div>
                   <div>
-                    <div className="font-medium text-foreground text-sm">Flashcards</div>
-                    <div className="text-xs text-foreground-muted">Spaced repetition</div>
+                    <div className="font-medium text-foreground text-sm">
+                      {t("settings.learningTools.flashcards")}
+                    </div>
+                    <div className="text-xs text-foreground-muted">
+                      {t("settings.learningTools.flashcardsDescription")}
+                    </div>
                   </div>
                 </Link>
                 <Link
@@ -289,8 +357,12 @@ export function SettingsPage() {
                     <BookOpen className="w-4 h-4 text-green-500" />
                   </div>
                   <div>
-                    <div className="font-medium text-foreground text-sm">Vocabulary</div>
-                    <div className="text-xs text-foreground-muted">Word list</div>
+                    <div className="font-medium text-foreground text-sm">
+                      {t("settings.learningTools.vocabulary")}
+                    </div>
+                    <div className="text-xs text-foreground-muted">
+                      {t("settings.learningTools.vocabularyDescription")}
+                    </div>
                   </div>
                 </Link>
                 <Link
@@ -301,8 +373,12 @@ export function SettingsPage() {
                     <PenLine className="w-4 h-4 text-purple-500" />
                   </div>
                   <div>
-                    <div className="font-medium text-foreground text-sm">Practice</div>
-                    <div className="text-xs text-foreground-muted">Sentence writing</div>
+                    <div className="font-medium text-foreground text-sm">
+                      {t("settings.learningTools.practice")}
+                    </div>
+                    <div className="text-xs text-foreground-muted">
+                      {t("settings.learningTools.practiceDescription")}
+                    </div>
                   </div>
                 </Link>
               </div>
@@ -315,8 +391,11 @@ export function SettingsPage() {
               <div className="p-1.5 rounded-lg bg-emerald-500/15">
                 <BookOpen className="w-4 h-4 text-emerald-400" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                Reading
+              <h2
+                className="text-lg font-semibold text-foreground"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("settings.reading.title")}
               </h2>
             </div>
 
@@ -362,16 +441,15 @@ export function SettingsPage() {
                         )}
                       </div>
                       <div>
-                        <div className="font-medium text-foreground">Show Furigana</div>
+                        <div className="font-medium text-foreground">
+                          {t("settings.reading.showFurigana")}
+                        </div>
                         <div className="text-sm text-foreground-muted">
-                          Display readings above kanji
+                          {t("settings.reading.showFuriganaDescription")}
                         </div>
                       </div>
                     </div>
-                    <Switch
-                      checked={showFurigana}
-                      onCheckedChange={setShowFurigana}
-                    />
+                    <Switch checked={showFurigana} onCheckedChange={setShowFurigana} />
                   </div>
                 )}
 
@@ -381,29 +459,30 @@ export function SettingsPage() {
                       <Volume2 className="w-4 h-4 text-foreground-muted" />
                     </div>
                     <div>
-                      <div className="font-medium text-foreground">Autoplay Audio</div>
+                      <div className="font-medium text-foreground">
+                        {t("settings.reading.autoplayAudio")}
+                      </div>
                       <div className="text-sm text-foreground-muted">
-                        Automatically play chapter audio
+                        {t("settings.reading.autoplayAudioDescription")}
                       </div>
                     </div>
                   </div>
-                  <Switch
-                    checked={autoplayAudio}
-                    onCheckedChange={setAutoplayAudio}
-                  />
+                  <Switch checked={autoplayAudio} onCheckedChange={setAutoplayAudio} />
                 </div>
 
                 <div className="space-y-3">
-                  <label className="font-medium text-foreground">Text Size</label>
+                  <label className="font-medium text-foreground">
+                    {t("settings.reading.textSize")}
+                  </label>
                   <Select value={fontSize} onValueChange={setFontSize}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="small">Small</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="large">Large</SelectItem>
-                      <SelectItem value="x-large">Extra Large</SelectItem>
+                      <SelectItem value="small">{t("settings.reading.small")}</SelectItem>
+                      <SelectItem value="medium">{t("settings.reading.medium")}</SelectItem>
+                      <SelectItem value="large">{t("settings.reading.large")}</SelectItem>
+                      <SelectItem value="x-large">{t("settings.reading.extraLarge")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -418,8 +497,11 @@ export function SettingsPage() {
                 <div className="p-1.5 rounded-lg bg-blue-500/15">
                   <Globe className="w-4 h-4 text-blue-400" />
                 </div>
-                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                  Languages & Exams
+                <h2
+                  className="text-lg font-semibold text-foreground"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("settings.languages.title")}
                 </h2>
               </div>
 
@@ -448,7 +530,7 @@ export function SettingsPage() {
                   {/* Languages */}
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-foreground mb-3">
-                      Languages you're learning
+                      {t("settings.languages.learningLanguages")}
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {LANGUAGES.map((lang) => {
@@ -478,13 +560,14 @@ export function SettingsPage() {
                       <div className="flex items-center gap-2 mb-3">
                         <GraduationCap className="w-4 h-4 text-foreground-muted" />
                         <label className="block text-sm font-medium text-foreground">
-                          Target exams
+                          {t("settings.languages.targetExams")}
                         </label>
                       </div>
                       <div className="space-y-4">
                         {userProfile.languages.map((lang) => {
                           const langInfo = LANGUAGES.find((l) => l.value === lang);
-                          const exams = EXAMS_BY_LANGUAGE[lang as keyof typeof EXAMS_BY_LANGUAGE] || [];
+                          const exams =
+                            EXAMS_BY_LANGUAGE[lang as keyof typeof EXAMS_BY_LANGUAGE] || [];
 
                           return (
                             <div key={lang}>
@@ -493,7 +576,8 @@ export function SettingsPage() {
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {exams.map((exam) => {
-                                  const isSelected = userProfile?.targetExams?.includes(exam.value as any) ?? false;
+                                  const isSelected =
+                                    (userProfile?.targetExams as ExamType[] | undefined)?.includes(exam.value as ExamType) ?? false;
                                   return (
                                     <button
                                       key={exam.value}
@@ -528,19 +612,25 @@ export function SettingsPage() {
                 <div className="p-1.5 rounded-lg bg-purple-500/15">
                   <Brain className="w-4 h-4 text-purple-400" />
                 </div>
-                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                  Proficiency Level
+                <h2
+                  className="text-lg font-semibold text-foreground"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("settings.proficiency.title")}
                 </h2>
               </div>
 
               <p className="text-sm text-foreground-muted mb-4">
-                Take an adaptive placement test to assess your level and get personalized content.
+                {t("settings.proficiency.description")}
               </p>
 
               <div className="space-y-3">
                 {userProfile.languages?.map((lang) => {
                   const langInfo = LANGUAGES.find((l) => l.value === lang);
-                  const proficiency = userProfile.proficiencyLevels?.[lang as keyof typeof userProfile.proficiencyLevels];
+                  const proficiency =
+                    userProfile.proficiencyLevels?.[
+                      lang as keyof typeof userProfile.proficiencyLevels
+                    ];
 
                   return (
                     <div
@@ -553,22 +643,33 @@ export function SettingsPage() {
                           <div className="font-medium text-foreground">{langInfo?.label}</div>
                           {proficiency ? (
                             <div className="text-sm text-foreground-muted">
-                              Level: <span className="font-semibold text-accent">{proficiency.level}</span>
+                              {t("settings.proficiency.level")}:{" "}
+                              <span className="font-semibold text-accent">{proficiency.level}</span>
                               <span className="text-xs ml-2">
-                                (tested {new Date(proficiency.assessedAt).toLocaleDateString()})
+                                (
+                                {t("settings.proficiency.tested", {
+                                  date: new Date(proficiency.assessedAt).toLocaleDateString(),
+                                })}
+                                )
                               </span>
                             </div>
                           ) : (
-                            <div className="text-sm text-foreground-muted">Not assessed yet</div>
+                            <div className="text-sm text-foreground-muted">
+                              {t("settings.proficiency.notAssessed")}
+                            </div>
                           )}
                         </div>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate({ to: "/placement-test", search: { language: lang } })}
+                        onClick={() =>
+                          navigate({ to: "/placement-test", search: { language: lang } })
+                        }
                       >
-                        {proficiency ? "Retake" : "Take Test"}
+                        {proficiency
+                          ? t("settings.proficiency.retake")
+                          : t("settings.proficiency.takeTest")}
                         <ChevronRight className="w-4 h-4 ml-1" />
                       </Button>
                     </div>
@@ -584,8 +685,11 @@ export function SettingsPage() {
               <div className="p-1.5 rounded-lg bg-rose-500/15">
                 <User className="w-4 h-4 text-rose-400" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                Account
+              <h2
+                className="text-lg font-semibold text-foreground"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("settings.account.title")}
               </h2>
             </div>
             {authLoading ? (
@@ -619,25 +723,23 @@ export function SettingsPage() {
                     <div className="font-medium text-foreground truncate">
                       {user.displayName || "User"}
                     </div>
-                    <div className="text-sm text-foreground-muted truncate">
-                      {user.email}
-                    </div>
+                    <div className="text-sm text-foreground-muted truncate">{user.email}</div>
                   </div>
                   <UserButton />
                 </div>
                 <Button variant="outline" onClick={handleSignOut} className="w-full">
                   <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
+                  {t("common.nav.signOut")}
                 </Button>
               </div>
             ) : (
               <div className="p-4 rounded-xl bg-muted/50">
                 <p className="text-sm text-foreground-muted mb-3">
-                  Sign in to sync your vocabulary and reading progress across devices.
+                  {t("settings.account.signInPrompt")}
                 </p>
                 <SignInButton mode="modal">
                   <Button variant="outline" className="w-full">
-                    Sign In
+                    {t("common.nav.signIn")}
                   </Button>
                 </SignInButton>
               </div>
@@ -651,8 +753,11 @@ export function SettingsPage() {
                 <div className="p-1.5 rounded-lg bg-cyan-500/15">
                   <CreditCard className="w-4 h-4 text-cyan-400" />
                 </div>
-                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                  Subscription
+                <h2
+                  className="text-lg font-semibold text-foreground"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("settings.subscription.title")}
                 </h2>
               </div>
 
@@ -660,15 +765,17 @@ export function SettingsPage() {
               <div className="p-4 rounded-xl bg-muted/50 mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <div className="text-sm text-foreground-muted">Current Plan</div>
+                    <div className="text-sm text-foreground-muted">
+                      {t("settings.subscription.currentPlan")}
+                    </div>
                     <div className="text-lg font-semibold text-foreground capitalize">
-                      {subscription?.tier || "Free"}
+                      {subscription?.tier || t("settings.subscription.free")}
                     </div>
                   </div>
                   {/* Only show Manage button if subscription was created through Stripe */}
                   {subscription?.stripeCustomerId && (
                     <Button variant="outline" size="sm" onClick={handleManageSubscription}>
-                      Manage
+                      {t("common.actions.manage")}
                     </Button>
                   )}
                 </div>
@@ -676,26 +783,50 @@ export function SettingsPage() {
                 {/* Show benefits for paid subscribers */}
                 {subscription?.tier === "basic" && (
                   <ul className="text-sm text-foreground-muted space-y-1.5 pt-3 border-t border-border">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-blue-500" /> 5 AI stories/month</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-blue-500" /> 200 AI checks/month</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-blue-500" /> 500 flashcards/month</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-blue-500" /> 2 mock tests/month</li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-blue-500" /> 5 AI stories/month
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-blue-500" /> 200 AI checks/month
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-blue-500" /> 500 flashcards/month
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-blue-500" /> 2 mock tests/month
+                    </li>
                   </ul>
                 )}
                 {subscription?.tier === "pro" && (
                   <ul className="text-sm text-foreground-muted space-y-1.5 pt-3 border-t border-border">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 20 AI stories/month</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 1,000 AI checks/month</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> Unlimited flashcards</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 10 mock tests/month</li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-accent" /> 25 AI stories/month
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-accent" /> 1,000 AI checks/month
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-accent" /> 3,000 flashcards/month
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-accent" /> 15 mock tests/month
+                    </li>
                   </ul>
                 )}
-                {subscription?.tier === "unlimited" && (
+                {subscription?.tier === "power" && (
                   <ul className="text-sm text-foreground-muted space-y-1.5 pt-3 border-t border-border">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited AI stories</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited AI checks</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited flashcards</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited mock tests</li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-purple-500" /> 150 AI stories/month
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-purple-500" /> 5,000 AI checks/month
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-purple-500" /> 15,000 flashcards/month
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-purple-500" /> 100 mock tests/month
+                    </li>
                   </ul>
                 )}
               </div>
@@ -703,31 +834,47 @@ export function SettingsPage() {
               {/* Upgrade Options */}
               {(!subscription?.tier || subscription.tier === "free") && (
                 <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-foreground-muted">Upgrade your plan</h3>
+                  <h3 className="text-sm font-medium text-foreground-muted">
+                    {t("settings.subscription.upgradePlan")}
+                  </h3>
                   <div className="grid gap-4">
                     {/* Basic */}
                     <div className="p-5 rounded-xl border border-border hover:border-accent/50 transition-colors">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <Zap className="w-5 h-5 text-blue-500" />
-                          <span className="font-semibold text-foreground text-lg">Basic</span>
+                          <span className="font-semibold text-foreground text-lg">
+                            {t("settings.subscription.tiers.basic.name")}
+                          </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-2xl font-bold text-foreground">$5</span>
-                          <span className="text-foreground-muted">/mo</span>
+                          <span className="text-2xl font-bold text-foreground">
+                            {t("settings.subscription.tiers.basic.price")}
+                          </span>
+                          <span className="text-foreground-muted">
+                            {t("settings.subscription.perMonth")}
+                          </span>
                         </div>
                       </div>
                       <ul className="text-sm text-foreground-muted space-y-1.5 mb-4">
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> 5 AI stories/month</li>
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> 200 AI checks/month</li>
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> 500 flashcards/month</li>
+                        {(
+                          t("settings.subscription.tiers.basic.features", {
+                            returnObjects: true,
+                          }) as string[]
+                        )
+                          .slice(0, 3)
+                          .map((feature, i) => (
+                            <li key={i} className="flex items-center gap-2">
+                              <Check className="w-4 h-4 text-success" /> {feature}
+                            </li>
+                          ))}
                       </ul>
                       <Button
                         variant="outline"
                         className={`w-full ${checkoutLoading === "basic" ? "btn-loading-gradient" : ""}`}
                         onClick={() => handleUpgrade("basic")}
-                                              >
-                        Get Basic
+                      >
+                        {t("settings.subscription.tiers.basic.cta")}
                       </Button>
                     </div>
 
@@ -735,57 +882,79 @@ export function SettingsPage() {
                     <div className="p-5 rounded-xl border-2 border-accent bg-accent/5 relative">
                       <div className="absolute -top-3 left-4">
                         <span className="text-xs px-3 py-1 rounded-full bg-accent text-white font-medium">
-                          Most Popular
+                          {t("settings.subscription.mostPopular")}
                         </span>
                       </div>
                       <div className="flex items-start justify-between mb-3 mt-1">
                         <div className="flex items-center gap-2">
                           <Crown className="w-5 h-5 text-accent" />
-                          <span className="font-semibold text-foreground text-lg">Pro</span>
+                          <span className="font-semibold text-foreground text-lg">
+                            {t("settings.subscription.tiers.pro.name")}
+                          </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-2xl font-bold text-foreground">$15</span>
-                          <span className="text-foreground-muted">/mo</span>
+                          <span className="text-2xl font-bold text-foreground">
+                            {t("settings.subscription.tiers.pro.price")}
+                          </span>
+                          <span className="text-foreground-muted">
+                            {t("settings.subscription.perMonth")}
+                          </span>
                         </div>
                       </div>
                       <ul className="text-sm text-foreground-muted space-y-1.5 mb-4">
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 20 AI stories/month</li>
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 1,000 AI checks/month</li>
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> Unlimited flashcards</li>
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 10 mock tests/month</li>
+                        {(
+                          t("settings.subscription.tiers.pro.features", {
+                            returnObjects: true,
+                          }) as string[]
+                        ).map((feature, i) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-accent" /> {feature}
+                          </li>
+                        ))}
                       </ul>
                       <Button
                         className={`w-full ${checkoutLoading === "pro" ? "btn-loading-gradient" : ""}`}
                         onClick={() => handleUpgrade("pro")}
-                                              >
-                        Get Pro
+                      >
+                        {t("settings.subscription.tiers.pro.cta")}
                       </Button>
                     </div>
 
-                    {/* Unlimited */}
+                    {/* Power */}
                     <div className="p-5 rounded-xl border border-border bg-gradient-to-b from-purple-500/5 to-transparent hover:border-purple-500/50 transition-colors">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <Sparkles className="w-5 h-5 text-purple-500" />
-                          <span className="font-semibold text-foreground text-lg">Unlimited</span>
+                          <span className="font-semibold text-foreground text-lg">
+                            {t("settings.subscription.tiers.power.name")}
+                          </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-2xl font-bold text-foreground">$45</span>
-                          <span className="text-foreground-muted">/mo</span>
+                          <span className="text-2xl font-bold text-foreground">
+                            {t("settings.subscription.tiers.power.price")}
+                          </span>
+                          <span className="text-foreground-muted">
+                            {t("settings.subscription.perMonth")}
+                          </span>
                         </div>
                       </div>
                       <ul className="text-sm text-foreground-muted space-y-1.5 mb-4">
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited AI stories</li>
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited AI checks</li>
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited flashcards</li>
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" /> Unlimited mock tests</li>
+                        {(
+                          t("settings.subscription.tiers.power.features", {
+                            returnObjects: true,
+                          }) as string[]
+                        ).map((feature, i) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-purple-500" /> {feature}
+                          </li>
+                        ))}
                       </ul>
                       <Button
                         variant="outline"
-                        className={`w-full border-purple-500/30 hover:bg-purple-500/10 ${checkoutLoading === "unlimited" ? "btn-loading-gradient" : ""}`}
-                        onClick={() => handleUpgrade("unlimited")}
-                                              >
-                        Get Unlimited
+                        className={`w-full border-purple-500/30 hover:bg-purple-500/10 ${checkoutLoading === "power" ? "btn-loading-gradient" : ""}`}
+                        onClick={() => handleUpgrade("power")}
+                      >
+                        {t("settings.subscription.tiers.power.cta")}
                       </Button>
                     </div>
                   </div>
@@ -794,40 +963,134 @@ export function SettingsPage() {
             </section>
           )}
 
+          {/* Monthly Usage */}
+          {isAuthenticated && user && subscription && usage && (
+            <section className="bg-gradient-to-br from-indigo-500/5 to-surface rounded-2xl border border-indigo-500/20 p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 rounded-lg bg-indigo-500/15">
+                  <Activity className="w-4 h-4 text-indigo-400" />
+                </div>
+                <h2
+                  className="text-lg font-semibold text-foreground"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("settings.usage.title")}
+                </h2>
+              </div>
+
+              <p className="text-sm text-foreground-muted mb-4">
+                {t("settings.usage.description")}
+              </p>
+
+              <div className="space-y-4">
+                {/* AI Verifications */}
+                <UsageProgressBar
+                  label={t("settings.usage.aiChecks")}
+                  description={t("settings.usage.aiChecksDescription")}
+                  used={usage.aiVerifications}
+                  limit={subscription.limits.aiVerificationsPerMonth}
+                  color="indigo"
+                />
+
+                {/* Flashcards */}
+                <UsageProgressBar
+                  label={t("settings.usage.flashcards")}
+                  description={t("settings.usage.flashcardsDescription")}
+                  used={usage.flashcardsGenerated}
+                  limit={subscription.limits.flashcardsPerMonth}
+                  color="blue"
+                />
+
+                {/* Audio */}
+                <UsageProgressBar
+                  label={t("settings.usage.audio")}
+                  description={t("settings.usage.audioDescription")}
+                  used={usage.audioGenerated}
+                  limit={subscription.limits.audioPerMonth}
+                  color="purple"
+                />
+
+                {/* Stories */}
+                <UsageProgressBar
+                  label={t("settings.usage.stories")}
+                  description={t("settings.usage.storiesDescription")}
+                  used={usage.storiesRead}
+                  limit={subscription.limits.storiesPerMonth}
+                  color="emerald"
+                />
+
+                {/* Personalized Stories */}
+                {subscription.limits.personalizedStoriesPerMonth !== 0 && (
+                  <UsageProgressBar
+                    label={t("settings.usage.aiStories")}
+                    description={t("settings.usage.aiStoriesDescription")}
+                    used={usage.personalizedStoriesGenerated}
+                    limit={subscription.limits.personalizedStoriesPerMonth}
+                    color="amber"
+                  />
+                )}
+
+                {/* Mock Tests */}
+                {subscription.limits.mockTestsPerMonth !== 0 && (
+                  <UsageProgressBar
+                    label={t("settings.usage.mockTests")}
+                    description={t("settings.usage.mockTestsDescription")}
+                    used={usage.mockTestsGenerated}
+                    limit={subscription.limits.mockTestsPerMonth}
+                    color="rose"
+                  />
+                )}
+              </div>
+            </section>
+          )}
+
           {/* Admin Settings - for specific users */}
           {user?.email === "hiro.ayettey@gmail.com" && (
             <section className="bg-surface rounded-2xl border border-amber-500/30 p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <Crown className="w-4 h-4 text-amber-500" />
-                <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                <h2
+                  className="text-lg font-semibold text-foreground"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   Admin
                 </h2>
               </div>
 
               <div className="space-y-5">
+                {/* Tier Selection */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-amber-500/10">
                       <Crown className="w-4 h-4 text-amber-500" />
                     </div>
                     <div>
-                      <div className="font-medium text-foreground">Premium Access</div>
+                      <div className="font-medium text-foreground">Subscription Tier</div>
                       <div className="text-sm text-foreground-muted">
-                        Toggle Pro subscription for testing
+                        Change tier for testing features
                       </div>
                     </div>
                   </div>
-                  <Switch
-                    checked={isPremiumUser}
-                    onCheckedChange={async (checked) => {
+                  <Select
+                    value={subscription?.tier ?? "free"}
+                    onValueChange={async (value) => {
                       if (!user) return;
                       await upsertSubscription({
                         userId: user.id,
-                        tier: checked ? "pro" : "free",
+                        tier: value as "free" | "basic" | "pro" | "power",
                       });
                     }}
-                    className="data-[state=checked]:bg-amber-500"
-                  />
+                  >
+                    <SelectTrigger className="w-32 border-amber-500/30">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="basic">Basic</SelectItem>
+                      <SelectItem value="pro">Pro</SelectItem>
+                      <SelectItem value="power">Power</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Level Override */}
@@ -846,14 +1109,20 @@ export function SettingsPage() {
                   <div className="space-y-3 ml-11">
                     {userProfile?.languages?.map((lang) => {
                       const langInfo = LANGUAGES.find((l) => l.value === lang);
-                      const currentLevel = userProfile.proficiencyLevels?.[lang as keyof typeof userProfile.proficiencyLevels]?.level;
-                      const levels = lang === "japanese"
-                        ? ["N5", "N4", "N3", "N2", "N1"]
-                        : ["A1", "A2", "B1", "B2", "C1", "C2"];
+                      const currentLevel =
+                        userProfile.proficiencyLevels?.[
+                          lang as keyof typeof userProfile.proficiencyLevels
+                        ]?.level;
+                      const levels =
+                        lang === "japanese"
+                          ? ["N5", "N4", "N3", "N2", "N1"]
+                          : ["A1", "A2", "B1", "B2", "C1", "C2"];
 
                       return (
                         <div key={lang} className="flex items-center gap-3">
-                          <span className="text-sm w-20">{langInfo?.flag} {langInfo?.label}</span>
+                          <span className="text-sm w-20">
+                            {langInfo?.flag} {langInfo?.label}
+                          </span>
                           <Select
                             value={currentLevel ?? "not_set"}
                             onValueChange={async (value) => {
@@ -871,7 +1140,9 @@ export function SettingsPage() {
                             <SelectContent>
                               <SelectItem value="not_set">Not set</SelectItem>
                               {levels.map((level) => (
-                                <SelectItem key={level} value={level}>{level}</SelectItem>
+                                <SelectItem key={level} value={level}>
+                                  {level}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -916,17 +1187,84 @@ export function SettingsPage() {
               <div className="p-1.5 rounded-lg bg-slate-500/15">
                 <Sparkles className="w-4 h-4 text-slate-400" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                About
+              <h2
+                className="text-lg font-semibold text-foreground"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("settings.about.title")}
               </h2>
             </div>
             <div className="text-sm text-foreground-muted space-y-1">
-              <p className="font-medium text-foreground">SanLang v1.0.0</p>
-              <p>Personalized exam prep powered by AI</p>
+              <p className="font-medium text-foreground">{t("settings.about.version")}</p>
+              <p>{t("settings.about.description")}</p>
             </div>
           </section>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Usage progress bar component
+function UsageProgressBar({
+  label,
+  description,
+  used,
+  limit,
+  color,
+}: {
+  label: string;
+  description: string;
+  used: number;
+  limit: number;
+  color: "indigo" | "blue" | "purple" | "emerald" | "amber" | "rose";
+}) {
+  const isUnlimited = limit === -1;
+  const percentage = isUnlimited ? 0 : Math.min((used / limit) * 100, 100);
+  const isNearLimit = !isUnlimited && percentage >= 80;
+  const isAtLimit = !isUnlimited && percentage >= 100;
+
+  const colorClasses = {
+    indigo: "bg-indigo-500",
+    blue: "bg-blue-500",
+    purple: "bg-purple-500",
+    emerald: "bg-emerald-500",
+    amber: "bg-amber-500",
+    rose: "bg-rose-500",
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <div>
+          <span className="text-sm font-medium text-foreground">{label}</span>
+          <span className="text-xs text-foreground-muted ml-2">{description}</span>
+        </div>
+        <span
+          className={`text-sm font-medium ${isAtLimit ? "text-rose-500" : isNearLimit ? "text-amber-500" : "text-foreground-muted"}`}
+        >
+          {isUnlimited ? (
+            <span className="text-accent">Unlimited</span>
+          ) : (
+            <>
+              {used.toLocaleString()} / {limit.toLocaleString()}
+            </>
+          )}
+        </span>
+      </div>
+      {!isUnlimited && (
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${isAtLimit ? "bg-rose-500" : isNearLimit ? "bg-amber-500" : colorClasses[color]}`}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+      )}
+      {isUnlimited && (
+        <div className="h-2 bg-accent/20 rounded-full overflow-hidden">
+          <div className="h-full w-full bg-gradient-to-r from-accent/40 to-accent/60 rounded-full" />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+
+import { mutation,query } from "./_generated/server";
 
 // Admin utility queries
 
@@ -11,9 +12,7 @@ export const getStats = query({
   handler: async (ctx) => {
     // Get video counts
     const videos = await ctx.db.query("youtubeContent").collect();
-    const videosWithQuestions = videos.filter(
-      (v) => v.questions && v.questions.length > 0
-    ).length;
+    const videosWithQuestions = videos.filter((v) => v.questions && v.questions.length > 0).length;
     const videosWithTranscripts = videos.filter(
       (v) => v.transcript && v.transcript.length > 0
     ).length;
@@ -56,6 +55,97 @@ export const getStats = query({
 });
 
 // ============================================
+// USER INTEREST ANALYTICS
+// ============================================
+
+/**
+ * Get aggregated user interest analytics for admin panel
+ */
+export const getInterestAnalytics = query({
+  args: {},
+  handler: async (ctx) => {
+    const prefs = await ctx.db.query("userPreferences").collect();
+
+    // Aggregate interests
+    const interestCounts: Record<string, number> = {};
+    const tonePreferences: Record<string, number> = {};
+    const learningGoals: Record<string, number> = {};
+    const culturalFocus: Record<string, number> = {};
+
+    for (const pref of prefs) {
+      // Count interests
+      if (pref.content?.interests) {
+        for (const interest of pref.content.interests) {
+          interestCounts[interest] = (interestCounts[interest] || 0) + 1;
+        }
+      }
+
+      // Count tone preferences
+      if (pref.content?.tonePreference) {
+        tonePreferences[pref.content.tonePreference] =
+          (tonePreferences[pref.content.tonePreference] || 0) + 1;
+      }
+
+      // Count learning goals
+      if (pref.content?.learningGoal) {
+        learningGoals[pref.content.learningGoal] =
+          (learningGoals[pref.content.learningGoal] || 0) + 1;
+      }
+
+      // Count cultural focus
+      if (pref.content?.culturalFocus) {
+        for (const focus of pref.content.culturalFocus) {
+          culturalFocus[focus] = (culturalFocus[focus] || 0) + 1;
+        }
+      }
+    }
+
+    // Sort by count and calculate percentages
+    const totalUsers = prefs.length || 1; // Avoid division by zero
+
+    const sortedInterests = Object.entries(interestCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([interest, count]) => ({
+        interest,
+        count,
+        percentage: Math.round((count / totalUsers) * 100),
+      }));
+
+    const sortedTones = Object.entries(tonePreferences)
+      .sort((a, b) => b[1] - a[1])
+      .map(([tone, count]) => ({
+        tone,
+        count,
+        percentage: Math.round((count / totalUsers) * 100),
+      }));
+
+    const sortedGoals = Object.entries(learningGoals)
+      .sort((a, b) => b[1] - a[1])
+      .map(([goal, count]) => ({
+        goal,
+        count,
+        percentage: Math.round((count / totalUsers) * 100),
+      }));
+
+    const sortedCultural = Object.entries(culturalFocus)
+      .sort((a, b) => b[1] - a[1])
+      .map(([focus, count]) => ({
+        focus,
+        count,
+        percentage: Math.round((count / totalUsers) * 100),
+      }));
+
+    return {
+      totalUsersWithPreferences: prefs.length,
+      interests: sortedInterests,
+      tonePreferences: sortedTones,
+      learningGoals: sortedGoals,
+      culturalFocus: sortedCultural,
+    };
+  },
+});
+
+// ============================================
 // MEDIA MANAGEMENT
 // ============================================
 
@@ -65,13 +155,13 @@ export const getStats = query({
 // PNG: AI-generated images = 100-300KB
 // WebP: Same images = 30-90KB
 const TYPICAL_SIZES = {
-  wav: 350 * 1024,      // ~350KB average
-  mp3: 35 * 1024,       // ~35KB average (90% smaller)
-  png: 200 * 1024,      // ~200KB average
-  webp: 60 * 1024,      // ~60KB average (70% smaller)
-  jpg: 80 * 1024,       // ~80KB average
+  wav: 350 * 1024, // ~350KB average
+  mp3: 35 * 1024, // ~35KB average (90% smaller)
+  png: 200 * 1024, // ~200KB average
+  webp: 60 * 1024, // ~60KB average (70% smaller)
+  jpg: 80 * 1024, // ~80KB average
   jpeg: 80 * 1024,
-  unknown: 100 * 1024,  // fallback
+  unknown: 100 * 1024, // fallback
 };
 
 interface MediaFile {
@@ -197,9 +287,8 @@ export const getMediaStats = query({
       pngToWebpSize; // PNG converted to WebP
 
     const potentialSavings = totalCurrentSize - totalAfterCompression;
-    const savingsPercent = totalCurrentSize > 0
-      ? Math.round((potentialSavings / totalCurrentSize) * 100)
-      : 0;
+    const savingsPercent =
+      totalCurrentSize > 0 ? Math.round((potentialSavings / totalCurrentSize) * 100) : 0;
 
     return {
       total: files.length,
@@ -248,7 +337,8 @@ export const getMediaStats = query({
           png: pngFiles.length,
           webp: webpFiles.length,
           jpg: jpgFiles.length,
-          other: imageFiles.filter((f) => !["png", "webp", "jpg", "jpeg"].includes(f.format)).length,
+          other: imageFiles.filter((f) => !["png", "webp", "jpg", "jpeg"].includes(f.format))
+            .length,
         },
       },
 
@@ -260,14 +350,30 @@ export const getMediaStats = query({
           { name: "PNG", value: pngFiles.length, size: pngSize, fill: "#f97316" },
           { name: "WebP", value: webpFiles.length, size: webpSize, fill: "#06b6d4" },
           { name: "JPG", value: jpgFiles.length, size: jpgSize, fill: "#8b5cf6" },
-        ].filter(d => d.value > 0),
+        ].filter((d) => d.value > 0),
         compressionComparison: [
-          { name: "Current", audio: audioFiles.reduce((sum, f) => sum + f.estimatedSize, 0) / (1024 * 1024), images: imageFiles.reduce((sum, f) => sum + f.estimatedSize, 0) / (1024 * 1024) },
-          { name: "After Compression", audio: (mp3Size + wavToMp3Size) / (1024 * 1024), images: (webpSize + jpgSize + pngToWebpSize) / (1024 * 1024) },
+          {
+            name: "Current",
+            audio: audioFiles.reduce((sum, f) => sum + f.estimatedSize, 0) / (1024 * 1024),
+            images: imageFiles.reduce((sum, f) => sum + f.estimatedSize, 0) / (1024 * 1024),
+          },
+          {
+            name: "After Compression",
+            audio: (mp3Size + wavToMp3Size) / (1024 * 1024),
+            images: (webpSize + jpgSize + pngToWebpSize) / (1024 * 1024),
+          },
         ],
         sizeByType: [
-          { name: "Audio", current: audioFiles.reduce((sum, f) => sum + f.estimatedSize, 0), projected: mp3Size + wavToMp3Size },
-          { name: "Images", current: imageFiles.reduce((sum, f) => sum + f.estimatedSize, 0), projected: webpSize + jpgSize + pngToWebpSize },
+          {
+            name: "Audio",
+            current: audioFiles.reduce((sum, f) => sum + f.estimatedSize, 0),
+            projected: mp3Size + wavToMp3Size,
+          },
+          {
+            name: "Images",
+            current: imageFiles.reduce((sum, f) => sum + f.estimatedSize, 0),
+            projected: webpSize + jpgSize + pngToWebpSize,
+          },
         ],
       },
 
@@ -366,6 +472,7 @@ export const updateCompressedUrl = mutation({
     newUrl: v.string(),
   },
   handler: async (ctx, args) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic table ID requires type assertion
     await ctx.db.patch(args.id as any, { [args.field]: args.newUrl });
     return { success: true };
   },

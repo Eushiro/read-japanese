@@ -1,5 +1,6 @@
+import type { ProficiencyLevel,Story, StoryListItem } from "@/types/story";
+
 import apiClient from "./client";
-import type { Story, StoryListItem, ProficiencyLevel } from "@/types/story";
 
 // Backend story types (with jlptLevel instead of level)
 interface BackendStoryListItem extends Omit<StoryListItem, "level"> {

@@ -1,21 +1,20 @@
-import { useState, useEffect } from "react";
 import {
-  Settings,
+  CheckCircle2,
+  Copy,
   Cpu,
-  Volume2,
   Image,
   MessageSquare,
-  CheckCircle2,
-  XCircle,
   RefreshCw,
   Terminal,
-  Copy,
+  Volume2,
+  XCircle,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useEffect,useState } from "react";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription,CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ServerStatus {
   status: "checking" | "online" | "offline";
@@ -34,16 +33,12 @@ const AI_MODELS = [
   {
     purpose: "Audio (TTS)",
     icon: Volume2,
-    models: [
-      { name: "gemini-2.5-flash-preview-tts", provider: "Google", note: "Default" },
-    ],
+    models: [{ name: "gemini-2.5-flash-preview-tts", provider: "Google", note: "Default" }],
   },
   {
     purpose: "Images",
     icon: Image,
-    models: [
-      { name: "gemini-2.5-flash-image", provider: "Google", note: "Default" },
-    ],
+    models: [{ name: "gemini-2.5-flash-image", provider: "Google", note: "Default" }],
   },
   {
     purpose: "Questions & Verification",
@@ -58,15 +53,18 @@ const AI_MODELS = [
 const CLI_COMMANDS = [
   {
     title: "Add Video",
-    command: 'npx tsx scripts/addVideo.ts "https://youtube.com/watch?v=VIDEO_ID" japanese N4 --manual',
+    command:
+      'npx tsx scripts/addVideo.ts "https://youtube.com/watch?v=VIDEO_ID" japanese N4 --manual',
   },
   {
     title: "Import Word List",
-    command: "npx tsx scripts/importWordList.ts --import jlpt_n5 --file data/jlpt_n5.csv --copy-existing",
+    command:
+      "npx tsx scripts/importWordList.ts --import jlpt_n5 --file data/jlpt_n5.csv --copy-existing",
   },
   {
     title: "Create Deck",
-    command: 'npx tsx scripts/importWordList.ts --create-deck jlpt_n5 --name "JLPT N5" --language japanese --level N5',
+    command:
+      'npx tsx scripts/importWordList.ts --create-deck jlpt_n5 --name "JLPT N5" --language japanese --level N5',
   },
   {
     title: "Batch Generate Sentences",
@@ -74,7 +72,8 @@ const CLI_COMMANDS = [
   },
   {
     title: "Generate Story",
-    command: 'python backend/scripts/generate_story.py --level N4 --genre "slice of life" --style anime',
+    command:
+      'python backend/scripts/generate_story.py --level N4 --genre "slice of life" --style anime',
   },
   {
     title: "Generate Audio for Story",
@@ -131,9 +130,7 @@ export function ConfigPage() {
             <Terminal className="w-5 h-5" />
             Local Batch Server
           </CardTitle>
-          <CardDescription>
-            Required for batch generation from the admin UI
-          </CardDescription>
+          <CardDescription>Required for batch generation from the admin UI</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4">
@@ -152,9 +149,7 @@ export function ConfigPage() {
             )}
 
             {localServerStatus.version && (
-              <span className="text-sm text-foreground-muted">
-                v{localServerStatus.version}
-              </span>
+              <span className="text-sm text-foreground-muted">v{localServerStatus.version}</span>
             )}
 
             <Button
@@ -228,11 +223,7 @@ export function ConfigPage() {
               <div key={cmd.title}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium">{cmd.title}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyCommand(cmd.command)}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => copyCommand(cmd.command)}>
                     <Copy className="w-3 h-3" />
                   </Button>
                 </div>

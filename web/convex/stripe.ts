@@ -1,26 +1,27 @@
 "use node";
 
 import { v } from "convex/values";
-import { action } from "./_generated/server";
-import { internal } from "./_generated/api";
 import Stripe from "stripe";
+
+import { internal } from "./_generated/api";
+import { action } from "./_generated/server";
 
 // ============================================
 // STRIPE CONFIGURATION
 // ============================================
 
 // Price IDs for each tier (you'll set these in Stripe Dashboard)
-const PRICE_IDS: Record<"basic" | "pro" | "unlimited", string | undefined> = {
+const PRICE_IDS: Record<"basic" | "pro" | "power", string | undefined> = {
   basic: process.env.STRIPE_PRICE_BASIC,
   pro: process.env.STRIPE_PRICE_PRO,
-  unlimited: process.env.STRIPE_PRICE_UNLIMITED,
+  power: process.env.STRIPE_PRICE_UNLIMITED,
 };
 
 // Tier from price ID (reverse lookup)
-const TIER_FROM_PRICE: Record<string, "basic" | "pro" | "unlimited"> = {};
+const TIER_FROM_PRICE: Record<string, "basic" | "pro" | "power"> = {};
 if (PRICE_IDS.basic) TIER_FROM_PRICE[PRICE_IDS.basic] = "basic";
 if (PRICE_IDS.pro) TIER_FROM_PRICE[PRICE_IDS.pro] = "pro";
-if (PRICE_IDS.unlimited) TIER_FROM_PRICE[PRICE_IDS.unlimited] = "unlimited";
+if (PRICE_IDS.power) TIER_FROM_PRICE[PRICE_IDS.power] = "power";
 
 // Cache Stripe instance to avoid re-initialization
 let stripeInstance: Stripe | null = null;
@@ -37,7 +38,7 @@ function getStripe(): Stripe {
   return stripeInstance;
 }
 
-function getTierFromPriceId(priceId: string): "basic" | "pro" | "unlimited" | null {
+function getTierFromPriceId(priceId: string): "basic" | "pro" | "power" | null {
   return TIER_FROM_PRICE[priceId] || null;
 }
 
@@ -46,7 +47,7 @@ function getMissingPriceIds(): string[] {
   const missing: string[] = [];
   if (!PRICE_IDS.basic) missing.push("STRIPE_PRICE_BASIC");
   if (!PRICE_IDS.pro) missing.push("STRIPE_PRICE_PRO");
-  if (!PRICE_IDS.unlimited) missing.push("STRIPE_PRICE_UNLIMITED");
+  if (!PRICE_IDS.power) missing.push("STRIPE_PRICE_UNLIMITED");
   return missing;
 }
 
@@ -120,7 +121,7 @@ export const ensureStripeCustomer = action({
 export const createCheckoutSession = action({
   args: {
     userId: v.string(),
-    tier: v.union(v.literal("basic"), v.literal("pro"), v.literal("unlimited")),
+    tier: v.union(v.literal("basic"), v.literal("pro"), v.literal("power")),
     successUrl: v.string(),
     cancelUrl: v.string(),
   },
@@ -134,8 +135,12 @@ export const createCheckoutSession = action({
 
       const priceId = PRICE_IDS[args.tier];
       if (!priceId) {
-        console.error(`[Stripe] STRIPE_PRICE_${args.tier.toUpperCase()} is not set in Convex dashboard`);
-        throw new Error(`Subscription for ${args.tier} tier is not available. Please contact support.`);
+        console.error(
+          `[Stripe] STRIPE_PRICE_${args.tier.toUpperCase()} is not set in Convex dashboard`
+        );
+        throw new Error(
+          `Subscription for ${args.tier} tier is not available. Please contact support.`
+        );
       }
 
       // Initialize Stripe (will throw user-friendly error if key is missing)
@@ -268,12 +273,12 @@ export const processWebhook = action({
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
-        const tier = session.metadata?.tier as "basic" | "pro" | "unlimited" | undefined;
+        const tier = session.metadata?.tier as "basic" | "pro" | "power" | undefined;
 
         if (userId && tier && session.subscription) {
-          const subscriptionData = await stripe.subscriptions.retrieve(
+          const subscriptionData = (await stripe.subscriptions.retrieve(
             session.subscription as string
-          ) as unknown as { id: string; current_period_end: number };
+          )) as unknown as { id: string; current_period_end: number };
 
           await ctx.runMutation(internal.stripeHelpers.handleSubscriptionCreated, {
             userId,
@@ -288,7 +293,9 @@ export const processWebhook = action({
 
       case "customer.subscription.updated": {
         const subscriptionData = event.data.object;
-        const priceId = (subscriptionData as { items?: { data?: Array<{ price?: { id?: string } }> } }).items?.data?.[0]?.price?.id;
+        const priceId = (
+          subscriptionData as { items?: { data?: Array<{ price?: { id?: string } }> } }
+        ).items?.data?.[0]?.price?.id;
         const tier = priceId ? getTierFromPriceId(priceId) : null;
 
         if (tier) {
@@ -304,7 +311,9 @@ export const processWebhook = action({
             stripeSubscriptionId: (subscriptionData as { id: string }).id,
             tier,
             status,
-            currentPeriodEnd: ((subscriptionData as { current_period_end?: number }).current_period_end ?? 0) * 1000,
+            currentPeriodEnd:
+              ((subscriptionData as { current_period_end?: number }).current_period_end ?? 0) *
+              1000,
           });
         }
         break;

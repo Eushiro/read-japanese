@@ -1,58 +1,46 @@
-import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "convex/react";
+import { AlertTriangle,BookOpen, Clock, Flame, Target, TrendingUp } from "lucide-react";
 import {
-  TrendingUp,
-  TrendingDown,
-  Target,
-  BookOpen,
-  Clock,
-  Flame,
-  AlertTriangle,
-  ChevronRight,
-  Calendar,
-} from "lucide-react";
-import {
-  RadarChart,
-  PolarGrid,
+  CartesianGrid,
+  Line,
+  LineChart,
   PolarAngleAxis,
+  PolarGrid,
   PolarRadiusAxis,
   Radar,
+  RadarChart,
   ResponsiveContainer,
-  LineChart,
-  Line,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  CartesianGrid,
 } from "recharts";
 
+import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
+
+import { api } from "../../convex/_generated/api";
+
 export function ProgressPage() {
+  const t = useT();
   const { user, isAuthenticated } = useAuth();
 
   // Get learner profile
   const profile = useQuery(
     api.learnerModel.getProfile,
-    isAuthenticated && user
-      ? { userId: user.id, language: "japanese" }
-      : "skip"
+    isAuthenticated && user ? { userId: user.id, language: "japanese" } : "skip"
   );
 
   // Get weak areas
   const weakAreas = useQuery(
     api.learnerModel.getWeakAreas,
-    isAuthenticated && user
-      ? { userId: user.id, language: "japanese", limit: 5 }
-      : "skip"
+    isAuthenticated && user ? { userId: user.id, language: "japanese", limit: 5 } : "skip"
   );
 
   // Get daily progress (last 30 days)
   const dailyProgress = useQuery(
     api.learnerModel.getDailyProgress,
-    isAuthenticated && user
-      ? { userId: user.id, language: "japanese", days: 30 }
-      : "skip"
+    isAuthenticated && user ? { userId: user.id, language: "japanese", days: 30 } : "skip"
   );
 
   // Get all profiles for language comparison
@@ -71,8 +59,8 @@ export function ProgressPage() {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <TrendingUp className="w-16 h-16 mx-auto text-foreground-muted mb-4" />
-        <h1 className="text-2xl font-bold mb-4">Your Progress</h1>
-        <p className="text-foreground-muted">Sign in to track your learning progress.</p>
+        <h1 className="text-2xl font-bold mb-4">{t("progress.title")}</h1>
+        <p className="text-foreground-muted">{t("progress.signInPrompt")}</p>
       </div>
     );
   }
@@ -80,12 +68,12 @@ export function ProgressPage() {
   // Prepare skill data for radar chart
   const skillData = profile
     ? [
-        { skill: "Vocabulary", value: profile.skills.vocabulary, fullMark: 100 },
-        { skill: "Grammar", value: profile.skills.grammar, fullMark: 100 },
-        { skill: "Reading", value: profile.skills.reading, fullMark: 100 },
-        { skill: "Listening", value: profile.skills.listening, fullMark: 100 },
-        { skill: "Writing", value: profile.skills.writing, fullMark: 100 },
-        { skill: "Speaking", value: profile.skills.speaking, fullMark: 100 },
+        { skill: t("progress.skills.vocabulary"), value: profile.skills.vocabulary, fullMark: 100 },
+        { skill: t("progress.skills.grammar"), value: profile.skills.grammar, fullMark: 100 },
+        { skill: t("progress.skills.reading"), value: profile.skills.reading, fullMark: 100 },
+        { skill: t("progress.skills.listening"), value: profile.skills.listening, fullMark: 100 },
+        { skill: t("progress.skills.writing"), value: profile.skills.writing, fullMark: 100 },
+        { skill: t("progress.skills.speaking"), value: profile.skills.speaking, fullMark: 100 },
       ]
     : [];
 
@@ -110,10 +98,10 @@ export function ProgressPage() {
   };
 
   const readinessLabels: Record<string, string> = {
-    not_ready: "Keep Studying",
-    almost_ready: "Almost Ready",
-    ready: "Ready",
-    confident: "Confident",
+    not_ready: t("progress.readiness.notReady"),
+    almost_ready: t("progress.readiness.almostReady"),
+    ready: t("progress.readiness.ready"),
+    confident: t("progress.readiness.confident"),
   };
 
   return (
@@ -121,9 +109,9 @@ export function ProgressPage() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Your Progress</h1>
+          <h1 className="text-3xl font-bold mb-2">{t("progress.title")}</h1>
           <p className="text-foreground-muted">
-            Track your skills and identify areas for improvement.
+            {t("progress.subtitle")}
           </p>
         </div>
 
@@ -133,19 +121,19 @@ export function ProgressPage() {
           <div className="bg-surface rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 text-orange-500 mb-2">
               <Flame className="w-5 h-5" />
-              <span className="text-sm font-medium">Streak</span>
+              <span className="text-sm font-medium">{t("progress.stats.streak")}</span>
             </div>
-            <p className="text-2xl font-bold">{currentStreak} days</p>
+            <p className="text-2xl font-bold">{t("progress.stats.days", { count: currentStreak })}</p>
           </div>
 
           {/* Study Time */}
           <div className="bg-surface rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 text-blue-500 mb-2">
               <Clock className="w-5 h-5" />
-              <span className="text-sm font-medium">Total Study</span>
+              <span className="text-sm font-medium">{t("progress.stats.totalStudy")}</span>
             </div>
             <p className="text-2xl font-bold">
-              {Math.round((profile?.totalStudyMinutes ?? 0) / 60)}h
+              {t("progress.stats.hours", { count: Math.round((profile?.totalStudyMinutes ?? 0) / 60) })}
             </p>
           </div>
 
@@ -153,7 +141,7 @@ export function ProgressPage() {
           <div className="bg-surface rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 text-green-500 mb-2">
               <BookOpen className="w-5 h-5" />
-              <span className="text-sm font-medium">Vocabulary</span>
+              <span className="text-sm font-medium">{t("progress.stats.vocabulary")}</span>
             </div>
             <p className="text-2xl font-bold">
               {profile?.vocabCoverage?.known ?? 0}
@@ -167,7 +155,7 @@ export function ProgressPage() {
           <div className="bg-surface rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 text-purple-500 mb-2">
               <Target className="w-5 h-5" />
-              <span className="text-sm font-medium">Readiness</span>
+              <span className="text-sm font-medium">{t("progress.readiness.title")}</span>
             </div>
             <span
               className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
@@ -182,7 +170,7 @@ export function ProgressPage() {
         <div className="grid md:grid-cols-2 gap-8 mb-8">
           {/* Skill Radar */}
           <div className="bg-surface rounded-xl border border-border p-6">
-            <h2 className="font-semibold mb-4">Skill Breakdown</h2>
+            <h2 className="font-semibold mb-4">{t("progress.skills.title")}</h2>
             {profile ? (
               <ResponsiveContainer width="100%" height={300}>
                 <RadarChart data={skillData}>
@@ -208,7 +196,7 @@ export function ProgressPage() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-foreground-muted">
-                No data yet. Start learning to see your skills!
+                {t("progress.skills.noData")}
               </div>
             )}
           </div>
@@ -216,12 +204,9 @@ export function ProgressPage() {
           {/* Weak Areas */}
           <div className="bg-surface rounded-xl border border-border p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Focus Areas</h2>
-              <Link
-                to="/flashcards"
-                className="text-sm text-accent hover:underline"
-              >
-                Practice
+              <h2 className="font-semibold">{t("progress.focusAreas.title")}</h2>
+              <Link to="/flashcards" className="text-sm text-accent hover:underline">
+                {t("progress.focusAreas.practice")}
               </Link>
             </div>
             {weakAreas && weakAreas.length > 0 ? (
@@ -234,38 +219,30 @@ export function ProgressPage() {
                     <div className="flex items-center gap-3">
                       <AlertTriangle
                         className={`w-4 h-4 ${
-                          area.score < 50
-                            ? "text-red-500"
-                            : "text-yellow-500"
+                          area.score < 50 ? "text-red-500" : "text-yellow-500"
                         }`}
                       />
                       <div>
                         <p className="font-medium capitalize">{area.topic}</p>
-                        <p className="text-xs text-foreground-muted capitalize">
-                          {area.skill}
-                        </p>
+                        <p className="text-xs text-foreground-muted capitalize">{area.skill}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p
                         className={`font-semibold ${
-                          area.score < 50
-                            ? "text-red-500"
-                            : "text-yellow-500"
+                          area.score < 50 ? "text-red-500" : "text-yellow-500"
                         }`}
                       >
                         {area.score}%
                       </p>
-                      <p className="text-xs text-foreground-muted">
-                        {area.questionCount} Qs
-                      </p>
+                      <p className="text-xs text-foreground-muted">{t("progress.focusAreas.questions", { count: area.questionCount })}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="h-40 flex items-center justify-center text-foreground-muted">
-                Great job! No weak areas detected.
+                {t("progress.focusAreas.noWeakAreas")}
               </div>
             )}
           </div>
@@ -273,7 +250,7 @@ export function ProgressPage() {
 
         {/* Progress Over Time */}
         <div className="bg-surface rounded-xl border border-border p-6 mb-8">
-          <h2 className="font-semibold mb-4">Progress Over Time</h2>
+          <h2 className="font-semibold mb-4">{t("progress.progressChart.title")}</h2>
           {progressChartData && progressChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={progressChartData}>
@@ -299,7 +276,7 @@ export function ProgressPage() {
                   stroke="#22c55e"
                   strokeWidth={2}
                   dot={false}
-                  name="Vocabulary"
+                  name={t("progress.skills.vocabulary")}
                 />
                 <Line
                   type="monotone"
@@ -307,7 +284,7 @@ export function ProgressPage() {
                   stroke="#3b82f6"
                   strokeWidth={2}
                   dot={false}
-                  name="Grammar"
+                  name={t("progress.skills.grammar")}
                 />
                 <Line
                   type="monotone"
@@ -315,13 +292,13 @@ export function ProgressPage() {
                   stroke="#f59e0b"
                   strokeWidth={2}
                   dot={false}
-                  name="Reading"
+                  name={t("progress.skills.reading")}
                 />
               </LineChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-[250px] flex items-center justify-center text-foreground-muted">
-              Study for a few days to see your progress chart.
+              {t("progress.progressChart.noData")}
             </div>
           )}
         </div>
@@ -329,21 +306,15 @@ export function ProgressPage() {
         {/* Language Comparison */}
         {allProfiles && allProfiles.length > 1 && (
           <div className="bg-surface rounded-xl border border-border p-6">
-            <h2 className="font-semibold mb-4">Languages</h2>
+            <h2 className="font-semibold mb-4">{t("progress.languages.title")}</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {allProfiles.map((p) => {
                 const avgSkill = Math.round(
-                  (p.skills.vocabulary +
-                    p.skills.grammar +
-                    p.skills.reading +
-                    p.skills.listening) /
+                  (p.skills.vocabulary + p.skills.grammar + p.skills.reading + p.skills.listening) /
                     4
                 );
                 return (
-                  <div
-                    key={p._id}
-                    className="p-4 bg-muted/30 rounded-lg"
-                  >
+                  <div key={p._id} className="p-4 bg-muted/30 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <p className="font-medium capitalize">{p.language}</p>
                       <span
@@ -360,9 +331,7 @@ export function ProgressPage() {
                         style={{ width: `${avgSkill}%` }}
                       />
                     </div>
-                    <p className="text-xs text-foreground-muted mt-1">
-                      Average: {avgSkill}%
-                    </p>
+                    <p className="text-xs text-foreground-muted mt-1">{t("progress.languages.average", { percent: avgSkill })}</p>
                   </div>
                 );
               })}
@@ -377,14 +346,14 @@ export function ProgressPage() {
             className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90"
           >
             <Target className="w-4 h-4" />
-            Take Practice Exam
+            {t("progress.actions.takePracticeExam")}
           </Link>
           <Link
             to="/flashcards"
             className="inline-flex items-center gap-2 px-6 py-3 border border-border rounded-lg hover:bg-muted/50"
           >
             <BookOpen className="w-4 h-4" />
-            Review Flashcards
+            {t("progress.actions.reviewFlashcards")}
           </Link>
         </div>
       </div>

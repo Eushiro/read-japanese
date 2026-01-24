@@ -1,25 +1,27 @@
-import { useState, useEffect, useMemo } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { useParams, useNavigate, Link } from "@tanstack/react-router";
-import { nanoid } from "nanoid";
+import { Link,useNavigate, useParams } from "@tanstack/react-router";
+import { useMutation,useQuery } from "convex/react";
 import {
-  ArrowLeft,
-  Save,
-  Loader2,
-  Plus,
-  Trash2,
-  Wand2,
-  ExternalLink,
   AlertCircle,
+  ArrowLeft,
   Check,
-  X,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
+  Loader2,
+  Plus,
+  Save,
+  Trash2,
+  X,
 } from "lucide-react";
+import { nanoid } from "nanoid";
+import { useEffect,useState } from "react";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -28,19 +30,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Textarea } from "@/components/ui/textarea";
+
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
+import type { Language } from "../../../convex/schema";
 
 interface Question {
   questionId: string;
   question: string;
-  type: "multiple_choice" | "translation" | "short_answer" | "inference" | "listening" | "grammar" | "opinion";
+  type:
+    | "multiple_choice"
+    | "translation"
+    | "short_answer"
+    | "inference"
+    | "listening"
+    | "grammar"
+    | "opinion";
   questionTranslation?: string;
   options?: string[];
   correctAnswer?: string;
@@ -133,7 +139,8 @@ function parseTranscript(text: string): TranscriptSegment[] {
 }
 
 export function VideoFormPage() {
-  const params = useParams({ from: "/admin/videos/$id" as any });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TanStack Router types don't properly infer nested route params
+  const params = useParams({ from: "/admin/videos/$id" as any }) as { id: string };
   const navigate = useNavigate();
   const isNew = params.id === "new";
 
@@ -151,7 +158,9 @@ export function VideoFormPage() {
 
   // Difficulty-based questions
   const [selectedDifficulty, setSelectedDifficulty] = useState(1);
-  const [questionsByDifficulty, setQuestionsByDifficulty] = useState<Record<number, Question[]>>({});
+  const [questionsByDifficulty, setQuestionsByDifficulty] = useState<Record<number, Question[]>>(
+    {}
+  );
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
 
   // Determine if params.id is a YouTube video ID (11 chars) or Convex document ID
@@ -160,7 +169,9 @@ export function VideoFormPage() {
   // Fetch existing video by Convex ID if it looks like one
   const existingVideoByConvexId = useQuery(
     api.youtubeContent.get,
-    !isNew && params.id && !isYouTubeId ? { id: params.id as any } : "skip"
+    !isNew && params.id && !isYouTubeId
+      ? { id: params.id as Id<"youtubeContent"> }
+      : "skip"
   );
 
   // Fetch existing video by YouTube video ID if it looks like one
@@ -183,12 +194,6 @@ export function VideoFormPage() {
   const updateTranscript = useMutation(api.youtubeContent.updateTranscript);
   const createVideoQuestions = useMutation(api.videoQuestions.create);
 
-  // Available difficulties with questions
-  const availableDifficulties = useMemo(() => {
-    if (!allVideoQuestions) return [];
-    return allVideoQuestions.map((q) => q.difficulty).sort((a, b) => a - b);
-  }, [allVideoQuestions]);
-
   // Load existing video data
   useEffect(() => {
     if (existingVideo) {
@@ -196,7 +201,7 @@ export function VideoFormPage() {
       setYoutubeUrl(`https://youtube.com/watch?v=${existingVideo.videoId}`);
       setTitle(existingVideo.title);
       setDescription(existingVideo.description ?? "");
-      setLanguage(existingVideo.language as any);
+      setLanguage(existingVideo.language);
       setLevel(existingVideo.level ?? "");
       setTranscript(existingVideo.transcript ?? []);
 
@@ -307,7 +312,7 @@ export function VideoFormPage() {
         videoId,
         title,
         description: description || undefined,
-        language: language as any,
+        language,
         level: level || undefined,
       });
 
@@ -368,7 +373,9 @@ export function VideoFormPage() {
               {isNew ? "Add Video" : "Edit Video"}
             </h1>
             <p className="text-foreground-muted">
-              {isNew ? "Add a new YouTube video with transcript" : "Edit video details and questions"}
+              {isNew
+                ? "Add a new YouTube video with transcript"
+                : "Edit video details and questions"}
             </p>
           </div>
         </div>
@@ -405,9 +412,7 @@ export function VideoFormPage() {
                   Fetch Info
                 </Button>
               </div>
-              {videoId && (
-                <p className="text-xs text-foreground-muted">Video ID: {videoId}</p>
-              )}
+              {videoId && <p className="text-xs text-foreground-muted">Video ID: {videoId}</p>}
             </div>
           )}
 
@@ -447,7 +452,7 @@ export function VideoFormPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Language *</Label>
-              <Select value={language} onValueChange={(v) => setLanguage(v as any)}>
+              <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -508,9 +513,7 @@ export function VideoFormPage() {
           />
 
           {transcript.length > 0 && (
-            <p className="text-sm text-foreground-muted">
-              Parsed {transcript.length} segments
-            </p>
+            <p className="text-sm text-foreground-muted">Parsed {transcript.length} segments</p>
           )}
         </CardContent>
       </Card>
@@ -540,7 +543,9 @@ export function VideoFormPage() {
                     className={hasQuestions ? "" : "opacity-50"}
                   >
                     {d}
-                    {hasQuestions && <span className="ml-1 text-xs">({questionsByDifficulty[d].length})</span>}
+                    {hasQuestions && (
+                      <span className="ml-1 text-xs">({questionsByDifficulty[d].length})</span>
+                    )}
                   </Button>
                 );
               })}
@@ -568,13 +573,17 @@ export function VideoFormPage() {
                     <CollapsibleTrigger asChild>
                       <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50">
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium text-foreground-muted">#{index + 1}</span>
+                          <span className="text-sm font-medium text-foreground-muted">
+                            #{index + 1}
+                          </span>
                           <div>
                             <p className="text-sm font-medium truncate max-w-md">
                               {q.question || "(No question text)"}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" className="text-xs">{q.type}</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {q.type}
+                              </Badge>
                               <span className="text-xs text-foreground-muted">{q.points} pts</span>
                             </div>
                           </div>
@@ -594,10 +603,14 @@ export function VideoFormPage() {
                             <Label>Question Type</Label>
                             <Select
                               value={q.type}
-                              onValueChange={(v) => updateQuestion(index, {
-                                type: v as Question["type"],
-                                ...(v === "multiple_choice" && !q.options ? { options: ["", "", "", ""] } : {}),
-                              })}
+                              onValueChange={(v) =>
+                                updateQuestion(index, {
+                                  type: v as Question["type"],
+                                  ...(v === "multiple_choice" && !q.options
+                                    ? { options: ["", "", "", ""] }
+                                    : {}),
+                                })
+                              }
                             >
                               <SelectTrigger>
                                 <SelectValue />
@@ -616,7 +629,9 @@ export function VideoFormPage() {
                             <Input
                               type="number"
                               value={q.points}
-                              onChange={(e) => updateQuestion(index, { points: parseInt(e.target.value) || 10 })}
+                              onChange={(e) =>
+                                updateQuestion(index, { points: parseInt(e.target.value) || 10 })
+                              }
                               min={1}
                               max={100}
                             />
@@ -637,7 +652,9 @@ export function VideoFormPage() {
                           <Input
                             placeholder="English translation"
                             value={q.questionTranslation ?? ""}
-                            onChange={(e) => updateQuestion(index, { questionTranslation: e.target.value })}
+                            onChange={(e) =>
+                              updateQuestion(index, { questionTranslation: e.target.value })
+                            }
                           />
                         </div>
 
@@ -677,10 +694,12 @@ export function VideoFormPage() {
                             <Textarea
                               placeholder="Grading rubric or sample answer..."
                               value={q.rubric ?? q.correctAnswer ?? ""}
-                              onChange={(e) => updateQuestion(index, {
-                                rubric: e.target.value,
-                                correctAnswer: e.target.value,
-                              })}
+                              onChange={(e) =>
+                                updateQuestion(index, {
+                                  rubric: e.target.value,
+                                  correctAnswer: e.target.value,
+                                })
+                              }
                               rows={3}
                             />
                           </div>

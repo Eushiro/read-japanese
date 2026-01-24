@@ -1,9 +1,8 @@
 import { v } from "convex/values";
-import { query, mutation, action, internalMutation } from "./_generated/server";
-import { internal } from "./_generated/api";
-import { languageValidator, type Language } from "./schema";
-import type { Id } from "./_generated/dataModel";
+
+import { internalMutation,mutation, query } from "./_generated/server";
 import { getGradingProfile as getGradingProfileConstant } from "./lib/gradingProfiles";
+import { languageValidator } from "./schema";
 
 // ============================================
 // LEVEL DEFINITIONS
@@ -45,7 +44,7 @@ function abilityToLevel(ability: number, language: string): string {
 
 function levelToAbility(level: string, language: string): number {
   const levels = getLevelsForLanguage(language);
-  const found = levels.find(l => l.level === level);
+  const found = levels.find((l) => l.level === level);
   if (found) {
     return (found.abilityMin + found.abilityMax) / 2;
   }
@@ -74,7 +73,7 @@ function probabilityCorrect(ability: number, difficulty: number, guessing = 0.25
 function itemInformation(ability: number, difficulty: number, guessing = 0.25): number {
   const p = probabilityCorrect(ability, difficulty, guessing);
   const q = 1 - p;
-  const pPrime = p * (1 - p) / (1 - guessing); // Derivative approximation
+  const pPrime = (p * (1 - p)) / (1 - guessing); // Derivative approximation
 
   if (p === 0 || q === 0) return 0;
   return (pPrime * pPrime) / (p * q);
@@ -100,7 +99,7 @@ function updateAbilityEstimate(
       const p = probabilityCorrect(theta, response.difficulty, guessing);
       const pStar = (p - guessing) / (1 - guessing);
 
-      numerator += response.correct ? (1 - p) * pStar / p : -pStar;
+      numerator += response.correct ? ((1 - p) * pStar) / p : -pStar;
       denominator += pStar * (1 - p);
     }
 

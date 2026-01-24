@@ -21,8 +21,8 @@
  *     --exam-type jlpt_n5
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync } from "fs";
-import { basename, join, dirname } from "path";
+import { readdirSync,readFileSync, writeFileSync } from "fs";
+import { basename, dirname,join } from "path";
 
 // Exam types and their languages
 const EXAM_LANGUAGES: Record<string, string> = {
@@ -90,6 +90,7 @@ async function readPdfContent(filePath: string): Promise<string> {
 
   // Attempt to use pdf-parse if available
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const pdfParse = require("pdf-parse");
     const dataBuffer = readFileSync(filePath);
     const data = await pdfParse(dataBuffer);

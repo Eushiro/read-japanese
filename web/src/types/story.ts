@@ -191,9 +191,18 @@ export function estimateReadingTime(story: Story): number {
 export function testLevelToDifficultyLevel(testLevel: string): number {
   const mapping: Record<string, number> = {
     // JLPT (Japanese)
-    N5: 1, N4: 2, N3: 3, N2: 4, N1: 5,
+    N5: 1,
+    N4: 2,
+    N3: 3,
+    N2: 4,
+    N1: 5,
     // CEFR (English, French)
-    A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6,
+    A1: 1,
+    A2: 2,
+    B1: 3,
+    B2: 4,
+    C1: 5,
+    C2: 6,
   };
   return mapping[testLevel] ?? 3; // default to intermediate if unknown
 }

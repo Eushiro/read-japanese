@@ -11,16 +11,9 @@ interface SignInButtonProps {
  * Abstracted sign-in button that wraps the auth provider's implementation
  * Currently uses Clerk, but can be swapped to other providers
  */
-export function SignInButton({
-  children,
-  mode = "modal",
-  redirectUrl,
-}: SignInButtonProps) {
+export function SignInButton({ children, mode = "modal", redirectUrl }: SignInButtonProps) {
   return (
-    <ClerkSignInButton
-      mode={mode}
-      forceRedirectUrl={redirectUrl}
-    >
+    <ClerkSignInButton mode={mode} forceRedirectUrl={redirectUrl}>
       {children}
     </ClerkSignInButton>
   );

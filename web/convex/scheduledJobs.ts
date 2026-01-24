@@ -1,6 +1,7 @@
-import { internalAction, internalMutation, internalQuery } from "./_generated/server";
-import { internal } from "./_generated/api";
 import { v } from "convex/values";
+
+import { internal } from "./_generated/api";
+import { internalAction, internalMutation, internalQuery } from "./_generated/server";
 
 // ============================================
 // SENTENCE REFRESH JOB
@@ -13,14 +14,12 @@ export const getFlashcardsNeedingRefresh = internalQuery({
   args: {
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 50;
-
+  handler: async (ctx) => {
     // With the content library, we don't auto-refresh sentences
     // Instead, users can swap sentences from the pool
     // This is kept for backwards compatibility but will return empty
-    const needsRefresh: typeof allFlashcards = [];
-    const allFlashcards = await ctx.db.query("flashcards").take(0);
+    const needsRefresh: Awaited<ReturnType<typeof ctx.db.query>>[] = [];
+    // const allFlashcards = await ctx.db.query("flashcards").take(0);
 
     // Get vocabulary for each flashcard
     const flashcardsWithVocab = await Promise.all(
@@ -58,10 +57,19 @@ export const updateFlashcardSentence = internalMutation({
 
     // Create new sentence in content library
     const difficultyMap: Record<string, number> = {
-      N5: 1, N4: 2, N3: 3, N2: 4, N1: 5,
-      A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6,
+      N5: 1,
+      N4: 2,
+      N3: 3,
+      N2: 4,
+      N1: 5,
+      A1: 1,
+      A2: 2,
+      B1: 3,
+      B2: 4,
+      C1: 5,
+      C2: 6,
     };
-    const difficulty = vocab.examLevel ? difficultyMap[vocab.examLevel] ?? 3 : 3;
+    const difficulty = vocab.examLevel ? (difficultyMap[vocab.examLevel] ?? 3) : 3;
 
     const sentenceId = await ctx.db.insert("sentences", {
       word: vocab.word,

@@ -1,5 +1,7 @@
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n";
 
 export interface QuestionNavigationProps {
   // Navigation state
@@ -40,17 +42,22 @@ export function QuestionNavigation({
   isSubmitting = false,
   isGrading = false,
   canSubmit = true,
-  submitLabel = "Submit Answer",
-  nextLabel = "Next Question",
-  finishLabel = "Finish Quiz",
+  submitLabel,
+  nextLabel,
+  finishLabel,
   variant = "spread",
 }: QuestionNavigationProps) {
+  const t = useT("quiz");
+
+  // Use translated defaults if no custom labels provided
+  const resolvedSubmitLabel = submitLabel ?? t("navigation.submitAnswer");
+  const resolvedNextLabel = nextLabel ?? t("navigation.nextQuestion");
+  const resolvedFinishLabel = finishLabel ?? t("navigation.finishQuiz");
   const isFirstQuestion = currentIndex === 0;
   const isLastQuestion = currentIndex === totalQuestions - 1;
   const isLoading = isSubmitting || isGrading;
 
-  const containerClass =
-    variant === "spread" ? "flex justify-between" : "flex gap-3";
+  const containerClass = variant === "spread" ? "flex justify-between" : "flex gap-3";
 
   return (
     <div className={`${containerClass} mt-6`}>
@@ -63,14 +70,14 @@ export function QuestionNavigation({
           className="gap-2"
         >
           <ChevronLeft className="w-4 h-4" />
-          Previous
+          {t("navigation.previous")}
         </Button>
       ) : (
         !isFirstQuestion &&
         onPrevious && (
           <Button variant="outline" onClick={onPrevious} className="gap-2">
             <ChevronLeft className="w-4 h-4" />
-            Previous
+            {t("navigation.previous")}
           </Button>
         )
       )}
@@ -87,27 +94,21 @@ export function QuestionNavigation({
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                {isGrading ? "Grading..." : "Submitting..."}
+                {isGrading ? t("navigation.grading") : t("navigation.submitting")}
               </>
             ) : (
-              submitLabel
+              resolvedSubmitLabel
             )}
           </Button>
         ) : isLastQuestion ? (
           // Finish button
-          <Button
-            onClick={onFinish}
-            className={`gap-2 ${variant === "stacked" ? "w-full" : ""}`}
-          >
-            {finishLabel}
+          <Button onClick={onFinish} className={`gap-2 ${variant === "stacked" ? "w-full" : ""}`}>
+            {resolvedFinishLabel}
           </Button>
         ) : (
           // Next button
-          <Button
-            onClick={onNext}
-            className={`gap-2 ${variant === "stacked" ? "w-full" : ""}`}
-          >
-            {nextLabel}
+          <Button onClick={onNext} className={`gap-2 ${variant === "stacked" ? "w-full" : ""}`}>
+            {resolvedNextLabel}
             <ChevronRight className="w-4 h-4" />
           </Button>
         )}
@@ -123,16 +124,16 @@ export interface QuestionProgressProps {
   onNavigate?: (index: number) => void;
 }
 
-export function QuestionProgress({
-  questions,
-  currentIndex,
-  onNavigate,
-}: QuestionProgressProps) {
+export function QuestionProgress({ questions, currentIndex, onNavigate }: QuestionProgressProps) {
+  const t = useT("quiz");
+
   return (
     <div className="flex items-center gap-1">
       {questions.map((q, i) => {
         const isCurrent = i === currentIndex;
         const isAnswered = q.userAnswer !== undefined;
+        const questionLabel = t("navigation.questionNumber", { current: i + 1, total: questions.length });
+        const answeredSuffix = isAnswered ? ` (${t("navigation.answered")})` : "";
 
         return (
           <button
@@ -140,13 +141,9 @@ export function QuestionProgress({
             onClick={() => onNavigate?.(i)}
             disabled={!onNavigate}
             className={`h-2 rounded-full transition-all hover:opacity-80 ${
-              isCurrent
-                ? "bg-accent w-4"
-                : isAnswered
-                ? "bg-green-500 w-2"
-                : "bg-border w-2"
+              isCurrent ? "bg-accent w-4" : isAnswered ? "bg-green-500 w-2" : "bg-border w-2"
             } ${onNavigate ? "cursor-pointer" : "cursor-default"}`}
-            title={`Question ${i + 1}${isAnswered ? " (answered)" : ""}`}
+            title={`${questionLabel}${answeredSuffix}`}
           />
         );
       })}

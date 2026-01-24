@@ -1,36 +1,38 @@
-import { useState, useEffect, useMemo } from "react";
-import { useQuery, useMutation, useAction } from "convex/react";
 import { useSearch } from "@tanstack/react-router";
+import { useAction,useMutation, useQuery } from "convex/react";
 import type { GenericId } from "convex/values";
-import { api } from "../../convex/_generated/api";
-import { Button } from "@/components/ui/button";
-import { Paywall } from "@/components/Paywall";
 import {
-  PenLine,
-  Send,
-  Loader2,
-  Check,
-  RefreshCw,
-  ChevronRight,
-  Sparkles,
   BookOpen,
+  Check,
+  ChevronRight,
+  Loader2,
+  PenLine,
+  RefreshCw,
+  Send,
+  Sparkles,
 } from "lucide-react";
-import { useAuth, SignInButton } from "@/contexts/AuthContext";
+import { useEffect, useMemo,useState } from "react";
+
+import { Paywall } from "@/components/Paywall";
+import { Button } from "@/components/ui/button";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { SignInButton,useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
+
+import { api } from "../../convex/_generated/api";
 
 export function PracticePage() {
+  const t = useT();
   const { user, isAuthenticated } = useAuth();
   const { trackEvent, events } = useAnalytics();
   const userId = user?.id ?? "anonymous";
   const search = useSearch({ strict: false }) as { vocabularyId?: string };
 
   // Get vocabulary for practice (prioritize words that need practice)
-  const vocabulary = useQuery(
-    api.vocabulary.list,
-    isAuthenticated ? { userId } : "skip"
-  );
+  const vocabulary = useQuery(api.vocabulary.list, isAuthenticated ? { userId } : "skip");
 
-  const [selectedWord, setSelectedWord] = useState<typeof vocabulary extends (infer T)[] ? T : never | null>(null);
+  const [selectedWord, setSelectedWord] =
+    useState<typeof vocabulary extends (infer T)[] ? T : never | null>(null);
 
   // Language filter state
   type LanguageFilter = "all" | "japanese" | "english" | "french";
@@ -39,7 +41,7 @@ export function PracticePage() {
   // Compute available languages from vocabulary
   const availableLanguages = useMemo(() => {
     if (!vocabulary) return [];
-    const languages = new Set(vocabulary.map(v => v.language));
+    const languages = new Set(vocabulary.map((v) => v.language));
     return Array.from(languages) as ("japanese" | "english" | "french")[];
   }, [vocabulary]);
 
@@ -89,7 +91,7 @@ export function PracticePage() {
   // Filter vocabulary for practice (prefer new/learning words, respect language filter)
   const practiceWords = useMemo(() => {
     if (!vocabulary) return [];
-    return vocabulary.filter(v => {
+    return vocabulary.filter((v) => {
       const isMasteryMatch = v.masteryState === "new" || v.masteryState === "learning";
       const isLanguageMatch = languageFilter === "all" || v.language === languageFilter;
       return isMasteryMatch && isLanguageMatch;
@@ -171,7 +173,7 @@ export function PracticePage() {
     if (!practiceWords.length || !selectedWord) return;
 
     // Filter to only words of the same language as the current word
-    const sameLanguageWords = practiceWords.filter(w => w.language === selectedWord.language);
+    const sameLanguageWords = practiceWords.filter((w) => w.language === selectedWord.language);
     if (sameLanguageWords.length === 0) return;
 
     const currentIndex = sameLanguageWords.findIndex((w) => w._id === selectedWord._id);
@@ -189,12 +191,14 @@ export function PracticePage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-4">
           <PenLine className="w-12 h-12 text-foreground-muted mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">Sign in to practice writing</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-2">
+            {t('practice.signIn.title')}
+          </h2>
           <p className="text-foreground-muted mb-4">
-            Create sentences with your vocabulary and get AI feedback.
+            {t('practice.signIn.description')}
           </p>
           <SignInButton mode="modal">
-            <Button>Sign In</Button>
+            <Button>{t('practice.signIn.button')}</Button>
           </SignInButton>
         </div>
       </div>
@@ -220,14 +224,17 @@ export function PracticePage() {
                 <PenLine className="w-5 h-5 text-accent" />
               </div>
               <span className="text-sm font-medium text-accent uppercase tracking-wider">
-                Output Practice
+                {t('practice.hero.badge')}
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Write Sentences
+            <h1
+              className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t('practice.hero.title')}
             </h1>
             <p className="text-foreground-muted text-lg">
-              Practice using your vocabulary in context
+              {t('practice.hero.subtitle')}
             </p>
           </div>
         </div>
@@ -240,24 +247,25 @@ export function PracticePage() {
             <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
               <BookOpen className="w-10 h-10 text-foreground-muted" />
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              No words to practice
+            <h2
+              className="text-2xl font-bold text-foreground mb-2"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t('practice.empty.title')}
             </h2>
             <p className="text-foreground-muted mb-6">
-              Add vocabulary words to start practicing sentence writing.
+              {t('practice.empty.description')}
             </p>
-            <Button onClick={() => window.location.href = "/vocabulary"}>
+            <Button onClick={() => (window.location.href = "/vocabulary")}>
               <BookOpen className="w-4 h-4 mr-2" />
-              Go to Vocabulary
+              {t('practice.empty.goToVocabulary')}
             </Button>
           </div>
         ) : !selectedWord ? (
           // Word selection
           <div>
             <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                Select a word to practice
-              </h2>
+              <h2 className="text-lg font-semibold text-foreground">{t('practice.wordSelection.title')}</h2>
               {/* Language Filter - only show if multiple languages */}
               {showLanguageFilter && (
                 <div className="flex gap-2">
@@ -269,7 +277,7 @@ export function PracticePage() {
                         : "bg-muted text-foreground-muted hover:text-foreground"
                     }`}
                   >
-                    All
+                    {t('practice.wordSelection.all')}
                   </button>
                   {availableLanguages.includes("japanese") && (
                     <button
@@ -280,7 +288,7 @@ export function PracticePage() {
                           : "bg-muted text-foreground-muted hover:text-foreground"
                       }`}
                     >
-                      Japanese
+                      {t('practice.wordSelection.japanese')}
                     </button>
                   )}
                   {availableLanguages.includes("english") && (
@@ -292,7 +300,7 @@ export function PracticePage() {
                           : "bg-muted text-foreground-muted hover:text-foreground"
                       }`}
                     >
-                      English
+                      {t('practice.wordSelection.english')}
                     </button>
                   )}
                   {availableLanguages.includes("french") && (
@@ -304,7 +312,7 @@ export function PracticePage() {
                           : "bg-muted text-foreground-muted hover:text-foreground"
                       }`}
                     >
-                      French
+                      {t('practice.wordSelection.french')}
                     </button>
                   )}
                 </div>
@@ -319,7 +327,9 @@ export function PracticePage() {
                 >
                   <div
                     className="text-xl font-semibold text-foreground mb-1"
-                    style={{ fontFamily: word.language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                    style={{
+                      fontFamily: word.language === "japanese" ? "var(--font-japanese)" : "inherit",
+                    }}
                   >
                     {word.word}
                   </div>
@@ -345,21 +355,20 @@ export function PracticePage() {
             <div className="bg-surface rounded-2xl border border-border p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-sm text-foreground-muted mb-1">Write a sentence using:</div>
+                  <div className="text-sm text-foreground-muted mb-1">{t('practice.practiceInterface.prompt')}</div>
                   <div
                     className="text-3xl font-bold text-foreground mb-2"
-                    style={{ fontFamily: selectedWord.language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                    style={{
+                      fontFamily:
+                        selectedWord.language === "japanese" ? "var(--font-japanese)" : "inherit",
+                    }}
                   >
                     {selectedWord.word}
                   </div>
                   {selectedWord.reading && (
-                    <div className="text-sm text-foreground-muted mb-2">
-                      {selectedWord.reading}
-                    </div>
+                    <div className="text-sm text-foreground-muted mb-2">{selectedWord.reading}</div>
                   )}
-                  <div className="text-foreground">
-                    {selectedWord.definitions.join("; ")}
-                  </div>
+                  <div className="text-foreground">{selectedWord.definitions.join("; ")}</div>
                 </div>
                 <Button
                   variant="ghost"
@@ -367,7 +376,7 @@ export function PracticePage() {
                   onClick={() => setSelectedWord(null)}
                   className="text-foreground-muted"
                 >
-                  Change word
+                  {t('practice.practiceInterface.changeWord')}
                 </Button>
               </div>
             </div>
@@ -377,14 +386,17 @@ export function PracticePage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Your sentence
+                    {t('practice.practiceInterface.inputLabel')}
                   </label>
                   <textarea
                     value={sentence}
                     onChange={(e) => setSentence(e.target.value)}
-                    placeholder={`Write a sentence using "${selectedWord.word}"...`}
+                    placeholder={t('practice.practiceInterface.placeholder', { word: selectedWord.word })}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-surface text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none"
-                    style={{ fontFamily: selectedWord.language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                    style={{
+                      fontFamily:
+                        selectedWord.language === "japanese" ? "var(--font-japanese)" : "inherit",
+                    }}
                     rows={3}
                     disabled={isSubmitting}
                   />
@@ -398,12 +410,12 @@ export function PracticePage() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Checking...
+                        {t('practice.practiceInterface.checking')}
                       </>
                     ) : (
                       <>
                         <Send className="w-4 h-4" />
-                        Check Sentence
+                        {t('practice.practiceInterface.checkSentence')}
                       </>
                     )}
                   </Button>
@@ -429,10 +441,10 @@ export function PracticePage() {
                       )}
                       <div>
                         <div className="font-semibold text-foreground">
-                          {result.isCorrect ? "Great job!" : "Good effort!"}
+                          {result.isCorrect ? t('practice.results.greatJob') : t('practice.results.goodEffort')}
                         </div>
                         <div className="text-sm text-foreground-muted">
-                          Overall score: {result.overallScore}/100
+                          {t('practice.results.overallScore', { score: result.overallScore })}
                         </div>
                       </div>
                     </div>
@@ -445,18 +457,23 @@ export function PracticePage() {
 
                   {/* Score bars */}
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <ScoreBar label="Grammar" score={result.grammarScore} />
-                    <ScoreBar label="Word Usage" score={result.usageScore} />
-                    <ScoreBar label="Naturalness" score={result.naturalnessScore} />
+                    <ScoreBar label={t('practice.scores.grammar')} score={result.grammarScore} />
+                    <ScoreBar label={t('practice.scores.wordUsage')} score={result.usageScore} />
+                    <ScoreBar label={t('practice.scores.naturalness')} score={result.naturalnessScore} />
                   </div>
                 </div>
 
                 {/* Your sentence */}
                 <div className="bg-surface rounded-2xl border border-border p-6">
-                  <div className="text-sm font-medium text-foreground-muted mb-2">Your sentence</div>
+                  <div className="text-sm font-medium text-foreground-muted mb-2">
+                    {t('practice.results.yourSentence')}
+                  </div>
                   <div
                     className="text-lg text-foreground"
-                    style={{ fontFamily: selectedWord.language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                    style={{
+                      fontFamily:
+                        selectedWord.language === "japanese" ? "var(--font-japanese)" : "inherit",
+                    }}
                   >
                     {sentence}
                   </div>
@@ -465,16 +482,27 @@ export function PracticePage() {
                 {/* Corrections */}
                 {result.corrections.length > 0 && (
                   <div className="bg-surface rounded-2xl border border-border p-6">
-                    <div className="text-sm font-medium text-foreground-muted mb-3">Corrections</div>
+                    <div className="text-sm font-medium text-foreground-muted mb-3">
+                      {t('practice.results.corrections')}
+                    </div>
                     <div className="space-y-3">
                       {result.corrections.map((correction, i) => (
-                        <div key={i} className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                        <div
+                          key={i}
+                          className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20"
+                        >
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="line-through text-foreground-muted">{correction.original}</span>
+                            <span className="line-through text-foreground-muted">
+                              {correction.original}
+                            </span>
                             <ChevronRight className="w-4 h-4 text-foreground-muted" />
-                            <span className="text-amber-600 font-medium">{correction.corrected}</span>
+                            <span className="text-amber-600 font-medium">
+                              {correction.corrected}
+                            </span>
                           </div>
-                          <div className="text-sm text-foreground-muted">{correction.explanation}</div>
+                          <div className="text-sm text-foreground-muted">
+                            {correction.explanation}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -483,16 +511,23 @@ export function PracticePage() {
 
                 {/* Feedback */}
                 <div className="bg-surface rounded-2xl border border-border p-6">
-                  <div className="text-sm font-medium text-foreground-muted mb-2">Feedback</div>
+                  <div className="text-sm font-medium text-foreground-muted mb-2">{t('practice.results.feedback')}</div>
                   <div className="text-foreground mb-4">{result.feedback}</div>
                   {result.improvedSentence && (
                     <div>
                       <div className="text-sm font-medium text-foreground-muted mb-2">
-                        {result.improvedSentence === sentence ? "Alternative expression" : "Suggested improvement"}
+                        {result.improvedSentence === sentence
+                          ? t('practice.results.alternativeExpression')
+                          : t('practice.results.suggestedImprovement')}
                       </div>
                       <div
                         className="text-lg text-green-600 bg-green-500/5 p-3 rounded-lg border border-green-500/20"
-                        style={{ fontFamily: selectedWord.language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                        style={{
+                          fontFamily:
+                            selectedWord.language === "japanese"
+                              ? "var(--font-japanese)"
+                              : "inherit",
+                        }}
                       >
                         {result.improvedSentence}
                       </div>
@@ -504,11 +539,11 @@ export function PracticePage() {
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={handleTryAgain} className="flex-1 gap-2">
                     <RefreshCw className="w-4 h-4" />
-                    Try Again
+                    {t('practice.results.tryAgain')}
                   </Button>
                   <Button onClick={handleNextWord} className="flex-1 gap-2">
                     <ChevronRight className="w-4 h-4" />
-                    Next Word
+                    {t('practice.results.nextWord')}
                   </Button>
                 </div>
               </div>
@@ -518,11 +553,7 @@ export function PracticePage() {
       </div>
 
       {/* Paywall Modal */}
-      <Paywall
-        isOpen={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        feature="sentences"
-      />
+      <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="sentences" />
     </div>
   );
 }
@@ -553,19 +584,22 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
 
 // Difficulty badge component
 function DifficultyBadge({ level, explanation }: { level: string; explanation: string }) {
-  const config: Record<string, { color: string; label: string }> = {
-    beginner: { color: "bg-green-500/10 text-green-600 border-green-500/20", label: "Beginner" },
-    intermediate: { color: "bg-amber-500/10 text-amber-600 border-amber-500/20", label: "Intermediate" },
-    advanced: { color: "bg-purple-500/10 text-purple-600 border-purple-500/20", label: "Advanced" },
+  const t = useT();
+  const config: Record<string, { color: string; labelKey: string }> = {
+    beginner: { color: "bg-green-500/10 text-green-600 border-green-500/20", labelKey: "practice.difficulty.beginner" },
+    intermediate: {
+      color: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+      labelKey: "practice.difficulty.intermediate",
+    },
+    advanced: { color: "bg-purple-500/10 text-purple-600 border-purple-500/20", labelKey: "practice.difficulty.advanced" },
   };
 
-  const { color, label } = config[level.toLowerCase()] || config.beginner;
+  const { color, labelKey } = config[level.toLowerCase()] || config.beginner;
+  const label = t(labelKey);
 
   return (
     <div className="group relative">
-      <div className={`px-3 py-1.5 rounded-lg text-sm font-medium border ${color}`}>
-        {label}
-      </div>
+      <div className={`px-3 py-1.5 rounded-lg text-sm font-medium border ${color}`}>{label}</div>
       {/* Tooltip */}
       <div className="absolute right-0 top-full mt-2 w-64 p-3 rounded-lg bg-surface border border-border shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
         <div className="text-xs text-foreground-muted">{explanation}</div>

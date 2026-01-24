@@ -1,7 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
-import { internal } from "./_generated/api";
-import { examTypeValidator, languageValidator, examSectionTypeValidator } from "./schema";
+
+import { mutation, type MutationCtx,query } from "./_generated/server";
+import { type ExamType,examTypeValidator } from "./schema";
 
 // ============================================
 // QUERIES
@@ -12,11 +12,9 @@ export const listByUser = query({
   args: {
     userId: v.string(),
     examType: v.optional(examTypeValidator),
-    status: v.optional(v.union(
-      v.literal("in_progress"),
-      v.literal("completed"),
-      v.literal("abandoned")
-    )),
+    status: v.optional(
+      v.union(v.literal("in_progress"), v.literal("completed"), v.literal("abandoned"))
+    ),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -26,9 +24,7 @@ export const listByUser = query({
       const examType = args.examType;
       results = await ctx.db
         .query("examAttempts")
-        .withIndex("by_user_exam", (q) =>
-          q.eq("userId", args.userId).eq("examType", examType)
-        )
+        .withIndex("by_user_exam", (q) => q.eq("userId", args.userId).eq("examType", examType))
         .order("desc")
         .collect();
     } else {
@@ -93,10 +89,7 @@ export const getInProgress = query({
       .query("examAttempts")
       .withIndex("by_template", (q) => q.eq("templateId", args.templateId))
       .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), args.userId),
-          q.eq(q.field("status"), "in_progress")
-        )
+        q.and(q.eq(q.field("userId"), args.userId), q.eq(q.field("status"), "in_progress"))
       )
       .first();
 
@@ -115,9 +108,7 @@ export const getAnalytics = query({
       const examType = args.examType;
       return await ctx.db
         .query("examAnalytics")
-        .withIndex("by_user_exam", (q) =>
-          q.eq("userId", args.userId).eq("examType", examType)
-        )
+        .withIndex("by_user_exam", (q) => q.eq("userId", args.userId).eq("examType", examType))
         .first();
     }
 
@@ -152,10 +143,7 @@ export const start = mutation({
       .query("examAttempts")
       .withIndex("by_template", (q) => q.eq("templateId", args.templateId))
       .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), args.userId),
-          q.eq(q.field("status"), "in_progress")
-        )
+        q.and(q.eq(q.field("userId"), args.userId), q.eq(q.field("status"), "in_progress"))
       )
       .first();
 
@@ -165,6 +153,7 @@ export const start = mutation({
 
     // Get random questions for each section
     const questions: Array<{
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Will be Id<"examQuestions"> but type is complex here
       questionId: any;
       userAnswer?: string;
       isCorrect?: boolean;
@@ -261,13 +250,12 @@ export const submitAnswer = mutation({
       // Check against correct answer and acceptable answers
       const normalizedAnswer = args.userAnswer.trim().toLowerCase();
       const normalizedCorrect = question.correctAnswer.trim().toLowerCase();
-      const acceptableNormalized = (question.acceptableAnswers || []).map(
-        (a) => a.trim().toLowerCase()
+      const acceptableNormalized = (question.acceptableAnswers || []).map((a) =>
+        a.trim().toLowerCase()
       );
 
       isCorrect =
-        normalizedAnswer === normalizedCorrect ||
-        acceptableNormalized.includes(normalizedAnswer);
+        normalizedAnswer === normalizedCorrect || acceptableNormalized.includes(normalizedAnswer);
       earnedPoints = isCorrect ? question.points : 0;
 
       // If not exact match but looks like an attempt, mark for AI grading
@@ -391,9 +379,8 @@ export const complete = mutation({
       }
     }
 
-    const percentScore = attempt.totalPoints > 0
-      ? Math.round((earnedPoints / attempt.totalPoints) * 100)
-      : 0;
+    const percentScore =
+      attempt.totalPoints > 0 ? Math.round((earnedPoints / attempt.totalPoints) * 100) : 0;
 
     const passed = template?.passingScore
       ? percentScore >= template.passingScore
@@ -403,16 +390,12 @@ export const complete = mutation({
     const timeSpentSeconds = Math.round((now - attempt.startedAt) / 1000);
 
     // Format section scores for storage
-    const sectionScoresArray = Object.entries(sectionScores).map(
-      ([type, scores]) => ({
-        sectionType: type as "reading" | "listening" | "vocabulary" | "grammar" | "writing",
-        totalPoints: scores.total,
-        earnedPoints: scores.earned,
-        percentScore: scores.total > 0
-          ? Math.round((scores.earned / scores.total) * 100)
-          : 0,
-      })
-    );
+    const sectionScoresArray = Object.entries(sectionScores).map(([type, scores]) => ({
+      sectionType: type as "reading" | "listening" | "vocabulary" | "grammar" | "writing",
+      totalPoints: scores.total,
+      earnedPoints: scores.earned,
+      percentScore: scores.total > 0 ? Math.round((scores.earned / scores.total) * 100) : 0,
+    }));
 
     // Update the attempt
     await ctx.db.patch(args.attemptId, {
@@ -459,10 +442,10 @@ export const abandon = mutation({
 
 // Helper function to update analytics
 async function updateAnalytics(
-  ctx: { db: any },
+  ctx: MutationCtx,
   args: {
     userId: string;
-    examType: string;
+    examType: ExamType;
     percentScore: number;
     sectionScores: Array<{
       sectionType: string;
@@ -477,7 +460,7 @@ async function updateAnalytics(
   // Get existing analytics
   const existing = await ctx.db
     .query("examAnalytics")
-    .withIndex("by_user_exam", (q: any) =>
+    .withIndex("by_user_exam", (q) =>
       q.eq("userId", args.userId).eq("examType", args.examType)
     )
     .first();
@@ -489,29 +472,27 @@ async function updateAnalytics(
   }
 
   // Find weak areas (sections below 70%)
-  const weakAreas = args.sectionScores
-    .filter((s) => s.percentScore < 70)
-    .map((s) => s.sectionType);
+  const weakAreas = args.sectionScores.filter((s) => s.percentScore < 70).map((s) => s.sectionType);
 
   if (existing) {
     // Update existing analytics
     const newTotalAttempts = existing.totalAttempts + 1;
     const newAverageScore = Math.round(
-      (existing.averageScore * existing.totalAttempts + args.percentScore) /
-        newTotalAttempts
+      (existing.averageScore * existing.totalAttempts + args.percentScore) / newTotalAttempts
     );
     const newHighestScore = Math.max(existing.highestScore, args.percentScore);
 
     // Merge section scores (weighted average)
-    const mergedSections = { ...existing.sectionScores };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic section property access
+    const mergedSections: Record<string, any> = { ...existing.sectionScores };
     for (const [section, score] of Object.entries(sectionAvgs)) {
-      const currentScore = (mergedSections as any)[section];
+      const currentScore = mergedSections[section];
       if (currentScore !== undefined) {
-        (mergedSections as any)[section] = Math.round(
+        mergedSections[section] = Math.round(
           (currentScore * existing.totalAttempts + score) / newTotalAttempts
         );
       } else {
-        (mergedSections as any)[section] = score;
+        mergedSections[section] = score;
       }
     }
 
@@ -528,7 +509,7 @@ async function updateAnalytics(
     // Create new analytics record
     await ctx.db.insert("examAnalytics", {
       userId: args.userId,
-      examType: args.examType as any,
+      examType: args.examType,
       totalAttempts: 1,
       averageScore: args.percentScore,
       highestScore: args.percentScore,

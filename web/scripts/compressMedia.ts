@@ -15,13 +15,14 @@
  *   npx tsx scripts/compressMedia.ts --dry-run    # Preview without changes
  */
 
+import { DeleteObjectCommand,PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { execSync } from "child_process";
-import { writeFileSync, unlinkSync, mkdirSync, existsSync } from "fs";
-import { join } from "path";
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { ConvexHttpClient } from "convex/browser";
-import { api } from "../convex/_generated/api";
+import { existsSync,mkdirSync, unlinkSync, writeFileSync } from "fs";
+import { join } from "path";
 import sharp from "sharp";
+
+import { api } from "../convex/_generated/api";
 
 // Parse arguments
 const args = process.argv.slice(2);
@@ -231,10 +232,14 @@ async function processFile(file: {
     // Cleanup temp files
     try {
       unlinkSync(inputPath);
-    } catch {}
+    } catch {
+      // Intentionally empty - file may not exist
+    }
     try {
       unlinkSync(outputPath);
-    } catch {}
+    } catch {
+      // Intentionally empty - file may not exist
+    }
   }
 
   processed++;
@@ -295,7 +300,9 @@ async function main() {
   try {
     const { rmdirSync } = await import("fs");
     rmdirSync(TEMP_DIR);
-  } catch {}
+  } catch {
+    // Intentionally empty - directory may not exist or may not be empty
+  }
 }
 
 main().catch(console.error);

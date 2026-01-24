@@ -1,6 +1,8 @@
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+
 import { useAuth } from "@/contexts/AuthContext";
+
+import { api } from "../../convex/_generated/api";
 
 /**
  * Hook to check if the current user has a premium subscription

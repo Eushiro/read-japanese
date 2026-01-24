@@ -1,14 +1,16 @@
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { useAuth } from "@/contexts/AuthContext";
-import { LANGUAGES } from "@/lib/languages";
-import { ChevronDown, Check } from "lucide-react";
+import { useMutation,useQuery } from "convex/react";
+import { Check,ChevronDown } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
+import { LANGUAGES } from "@/lib/languages";
+
+import { api } from "../../convex/_generated/api";
 
 export function LanguageSwitcher() {
   const { user, isAuthenticated } = useAuth();
@@ -25,12 +27,8 @@ export function LanguageSwitcher() {
     return null;
   }
 
-  const currentLanguage = LANGUAGES.find(
-    (l) => l.value === userProfile.primaryLanguage
-  );
-  const userLanguages = LANGUAGES.filter((l) =>
-    userProfile.languages.includes(l.value)
-  );
+  const currentLanguage = LANGUAGES.find((l) => l.value === userProfile.primaryLanguage);
+  const userLanguages = LANGUAGES.filter((l) => userProfile.languages.includes(l.value));
 
   const handleLanguageChange = async (language: string) => {
     if (language === userProfile.primaryLanguage) return;

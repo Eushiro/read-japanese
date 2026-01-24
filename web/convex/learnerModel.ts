@@ -1,6 +1,8 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
-import { languageValidator, readinessLevelValidator, questionSourceTypeValidator } from "./schema";
+
+import { internalMutation, internalQuery, mutation, type MutationCtx,query } from "./_generated/server";
+import { getYesterdayString } from "./lib/helpers";
+import { type Language,languageValidator, questionSourceTypeValidator } from "./schema";
 
 // ============================================
 // TYPES
@@ -15,14 +17,6 @@ type SkillScores = {
   speaking: number;
 };
 
-type WeakArea = {
-  skill: string;
-  topic: string;
-  score: number;
-  lastTestedAt: number;
-  questionCount: number;
-};
-
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
@@ -32,9 +26,8 @@ function calculateReadinessLevel(
   vocabCoverage: { known: number; totalWords: number }
 ): "not_ready" | "almost_ready" | "ready" | "confident" {
   const avgSkill = (skills.vocabulary + skills.grammar + skills.reading + skills.listening) / 4;
-  const vocabPercent = vocabCoverage.totalWords > 0
-    ? (vocabCoverage.known / vocabCoverage.totalWords) * 100
-    : 0;
+  const vocabPercent =
+    vocabCoverage.totalWords > 0 ? (vocabCoverage.known / vocabCoverage.totalWords) * 100 : 0;
 
   if (avgSkill >= 90 && vocabPercent >= 90) return "confident";
   if (avgSkill >= 80 && vocabPercent >= 80) return "ready";
@@ -42,11 +35,7 @@ function calculateReadinessLevel(
   return "not_ready";
 }
 
-function updateSkillScore(
-  currentScore: number,
-  newScore: number,
-  sampleSize: number
-): number {
+function updateSkillScore(currentScore: number, newScore: number, sampleSize: number): number {
   // Weighted average: give more weight to existing score as sample size increases
   const existingWeight = Math.min(0.8, sampleSize / 100);
   const newWeight = 1 - existingWeight;
@@ -183,7 +172,6 @@ export const getDailyProgress = query({
   },
   handler: async (ctx, args) => {
     // Calculate date range
-    const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - args.days);
     const startDateStr = startDate.toISOString().split("T")[0];
@@ -191,9 +179,7 @@ export const getDailyProgress = query({
     const progress = await ctx.db
       .query("dailyProgress")
       .withIndex("by_user_language_date", (q) =>
-        q.eq("userId", args.userId)
-          .eq("language", args.language)
-          .gte("date", startDateStr)
+        q.eq("userId", args.userId).eq("language", args.language).gte("date", startDateStr)
       )
       .collect();
 
@@ -209,7 +195,7 @@ export const getQuestionHistory = query({
     sourceType: v.optional(questionSourceTypeValidator),
   },
   handler: async (ctx, args) => {
-    let query = ctx.db
+    const query = ctx.db
       .query("questionHistory")
       .withIndex("by_user_time", (q) => q.eq("userId", args.userId))
       .order("desc");
@@ -217,7 +203,7 @@ export const getQuestionHistory = query({
     const results = await query.take(args.limit ?? 50);
 
     if (args.sourceType) {
-      return results.filter(q => q.sourceType === args.sourceType);
+      return results.filter((q) => q.sourceType === args.sourceType);
     }
 
     return results;
@@ -292,15 +278,12 @@ export const updateFromFlashcards = mutation({
     }
 
     // Calculate new vocabulary score
-    const accuracy = args.cardsReviewed > 0
-      ? (args.cardsCorrect / args.cardsReviewed) * 100
-      : profile.skills.vocabulary;
+    const accuracy =
+      args.cardsReviewed > 0
+        ? (args.cardsCorrect / args.cardsReviewed) * 100
+        : profile.skills.vocabulary;
 
-    const newVocabScore = updateSkillScore(
-      profile.skills.vocabulary,
-      accuracy,
-      args.cardsReviewed
-    );
+    const newVocabScore = updateSkillScore(profile.skills.vocabulary, accuracy, args.cardsReviewed);
 
     const newSkills = { ...profile.skills, vocabulary: newVocabScore };
     const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
@@ -340,11 +323,15 @@ export const updateFromExam = mutation({
       grammar: v.optional(v.number()),
       writing: v.optional(v.number()),
     }),
-    weakTopics: v.optional(v.array(v.object({
-      skill: v.string(),
-      topic: v.string(),
-      score: v.number(),
-    }))),
+    weakTopics: v.optional(
+      v.array(
+        v.object({
+          skill: v.string(),
+          topic: v.string(),
+          score: v.number(),
+        })
+      )
+    ),
     questionsAnswered: v.number(),
     questionsCorrect: v.number(),
   },
@@ -371,10 +358,18 @@ export const updateFromExam = mutation({
       newSkills.reading = updateSkillScore(profile.skills.reading, args.sectionScores.reading, 10);
     }
     if (args.sectionScores.listening !== undefined) {
-      newSkills.listening = updateSkillScore(profile.skills.listening, args.sectionScores.listening, 10);
+      newSkills.listening = updateSkillScore(
+        profile.skills.listening,
+        args.sectionScores.listening,
+        10
+      );
     }
     if (args.sectionScores.vocabulary !== undefined) {
-      newSkills.vocabulary = updateSkillScore(profile.skills.vocabulary, args.sectionScores.vocabulary, 10);
+      newSkills.vocabulary = updateSkillScore(
+        profile.skills.vocabulary,
+        args.sectionScores.vocabulary,
+        10
+      );
     }
     if (args.sectionScores.grammar !== undefined) {
       newSkills.grammar = updateSkillScore(profile.skills.grammar, args.sectionScores.grammar, 10);
@@ -388,7 +383,7 @@ export const updateFromExam = mutation({
     if (args.weakTopics) {
       for (const topic of args.weakTopics) {
         const existingIndex = newWeakAreas.findIndex(
-          w => w.skill === topic.skill && w.topic === topic.topic
+          (w) => w.skill === topic.skill && w.topic === topic.topic
         );
 
         if (existingIndex >= 0) {
@@ -412,7 +407,7 @@ export const updateFromExam = mutation({
       }
 
       // Remove weak areas that are now strong (score > 80)
-      newWeakAreas = newWeakAreas.filter(w => w.score < 80);
+      newWeakAreas = newWeakAreas.filter((w) => w.score < 80);
     }
 
     const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
@@ -524,7 +519,8 @@ export const updateFromSentencePractice = mutation({
     }
 
     // Weighted average of the scores
-    const writingScore = (args.grammarScore * 0.4 + args.usageScore * 0.3 + args.naturalnessScore * 0.3);
+    const writingScore =
+      args.grammarScore * 0.4 + args.usageScore * 0.3 + args.naturalnessScore * 0.3;
 
     const newSkills = {
       ...profile.skills,
@@ -650,10 +646,12 @@ export const recordQuestion = mutation({
     }),
     userAnswer: v.string(),
     responseTimeMs: v.optional(v.number()),
-    skills: v.array(v.object({
-      skill: v.string(),
-      weight: v.number(),
-    })),
+    skills: v.array(
+      v.object({
+        skill: v.string(),
+        weight: v.number(),
+      })
+    ),
     topics: v.optional(v.array(v.string())),
     difficulty: v.optional(v.number()),
     grading: v.object({
@@ -661,11 +659,13 @@ export const recordQuestion = mutation({
       score: v.optional(v.number()),
       modelUsed: v.optional(v.string()),
       feedback: v.optional(v.string()),
-      detailedScores: v.optional(v.object({
-        grammar: v.optional(v.number()),
-        usage: v.optional(v.number()),
-        naturalness: v.optional(v.number()),
-      })),
+      detailedScores: v.optional(
+        v.object({
+          grammar: v.optional(v.number()),
+          usage: v.optional(v.number()),
+          naturalness: v.optional(v.number()),
+        })
+      ),
     }),
   },
   handler: async (ctx, args) => {
@@ -697,10 +697,10 @@ export const recordQuestion = mutation({
 
 // Internal helper for updating daily progress
 async function updateDailyProgressInternal(
-  ctx: { db: any },
+  ctx: MutationCtx,
   args: {
     userId: string;
-    language: "japanese" | "english" | "french";
+    language: Language;
     cardsReviewed?: number;
     cardsCorrect?: number;
     questionsAnswered?: number;
@@ -716,10 +716,8 @@ async function updateDailyProgressInternal(
   // Get existing progress for today
   const existing = await ctx.db
     .query("dailyProgress")
-    .withIndex("by_user_language_date", (q: any) =>
-      q.eq("userId", args.userId)
-        .eq("language", args.language)
-        .eq("date", today)
+    .withIndex("by_user_language_date", (q) =>
+      q.eq("userId", args.userId).eq("language", args.language).eq("date", today)
     )
     .first();
 
@@ -739,7 +737,7 @@ async function updateDailyProgressInternal(
     // Get current skill snapshot from learner profile
     const profile = await ctx.db
       .query("learnerProfile")
-      .withIndex("by_user_language", (q: any) =>
+      .withIndex("by_user_language", (q) =>
         q.eq("userId", args.userId).eq("language", args.language)
       )
       .first();
@@ -766,6 +764,29 @@ async function updateDailyProgressInternal(
       skillSnapshot,
       createdAt: now,
     });
+
+    // Update streak on first activity of the day
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.userId))
+      .first();
+    if (user) {
+      const yesterdayStr = getYesterdayString();
+      const lastActivity = user.lastActivityDate;
+      const currentStreak = user.currentStreak ?? 0;
+      const longestStreak = user.longestStreak ?? 0;
+
+      // Calculate new streak: continues if last activity was yesterday, otherwise resets to 1
+      const newStreak = lastActivity === yesterdayStr ? currentStreak + 1 : 1;
+      const newLongestStreak = Math.max(longestStreak, newStreak);
+
+      await ctx.db.patch(user._id, {
+        currentStreak: newStreak,
+        longestStreak: newLongestStreak,
+        lastActivityDate: today,
+        updatedAt: now,
+      });
+    }
   }
 }
 
@@ -798,11 +819,7 @@ export const updateProfileInternal = internalMutation({
     if (skillKey in profile.skills) {
       const newSkills = {
         ...profile.skills,
-        [skillKey]: updateSkillScore(
-          profile.skills[skillKey],
-          args.score,
-          args.sampleSize ?? 1
-        ),
+        [skillKey]: updateSkillScore(profile.skills[skillKey], args.score, args.sampleSize ?? 1),
       };
 
       const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
@@ -891,7 +908,14 @@ export const updateContentPreferences = mutation({
         userId: args.userId,
         display: { showFurigana: true, theme: "system", fontSize: "medium" },
         audio: { autoplay: false, highlightMode: "sentence", speed: 1.0 },
-        srs: { dailyReviewGoal: 50, newCardsPerDay: 20, sentenceRefreshDays: 30, desiredRetention: 0.9, maximumInterval: 365, preset: "default" },
+        srs: {
+          dailyReviewGoal: 50,
+          newCardsPerDay: 20,
+          sentenceRefreshDays: 30,
+          desiredRetention: 0.9,
+          maximumInterval: 365,
+          preset: "default",
+        },
         content: {
           interests: args.interests ?? [],
           tonePreference: args.tonePreference,
@@ -1027,15 +1051,12 @@ export const updateFromFlashcardsInternal = internalMutation({
       profile = (await ctx.db.get(id))!;
     }
 
-    const accuracy = args.cardsReviewed > 0
-      ? (args.cardsCorrect / args.cardsReviewed) * 100
-      : profile.skills.vocabulary;
+    const accuracy =
+      args.cardsReviewed > 0
+        ? (args.cardsCorrect / args.cardsReviewed) * 100
+        : profile.skills.vocabulary;
 
-    const newVocabScore = updateSkillScore(
-      profile.skills.vocabulary,
-      accuracy,
-      args.cardsReviewed
-    );
+    const newVocabScore = updateSkillScore(profile.skills.vocabulary, accuracy, args.cardsReviewed);
 
     const newSkills = { ...profile.skills, vocabulary: newVocabScore };
     const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
@@ -1073,11 +1094,15 @@ export const updateFromExamInternal = internalMutation({
       grammar: v.optional(v.number()),
       writing: v.optional(v.number()),
     }),
-    weakTopics: v.optional(v.array(v.object({
-      skill: v.string(),
-      topic: v.string(),
-      score: v.number(),
-    }))),
+    weakTopics: v.optional(
+      v.array(
+        v.object({
+          skill: v.string(),
+          topic: v.string(),
+          score: v.number(),
+        })
+      )
+    ),
     questionsAnswered: v.number(),
     questionsCorrect: v.number(),
   },
@@ -1102,10 +1127,18 @@ export const updateFromExamInternal = internalMutation({
       newSkills.reading = updateSkillScore(profile.skills.reading, args.sectionScores.reading, 10);
     }
     if (args.sectionScores.listening !== undefined) {
-      newSkills.listening = updateSkillScore(profile.skills.listening, args.sectionScores.listening, 10);
+      newSkills.listening = updateSkillScore(
+        profile.skills.listening,
+        args.sectionScores.listening,
+        10
+      );
     }
     if (args.sectionScores.vocabulary !== undefined) {
-      newSkills.vocabulary = updateSkillScore(profile.skills.vocabulary, args.sectionScores.vocabulary, 10);
+      newSkills.vocabulary = updateSkillScore(
+        profile.skills.vocabulary,
+        args.sectionScores.vocabulary,
+        10
+      );
     }
     if (args.sectionScores.grammar !== undefined) {
       newSkills.grammar = updateSkillScore(profile.skills.grammar, args.sectionScores.grammar, 10);
@@ -1118,7 +1151,7 @@ export const updateFromExamInternal = internalMutation({
     if (args.weakTopics) {
       for (const topic of args.weakTopics) {
         const existingIndex = newWeakAreas.findIndex(
-          w => w.skill === topic.skill && w.topic === topic.topic
+          (w) => w.skill === topic.skill && w.topic === topic.topic
         );
 
         if (existingIndex >= 0) {
@@ -1138,7 +1171,7 @@ export const updateFromExamInternal = internalMutation({
           });
         }
       }
-      newWeakAreas = newWeakAreas.filter(w => w.score < 80);
+      newWeakAreas = newWeakAreas.filter((w) => w.score < 80);
     }
 
     const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
@@ -1244,7 +1277,8 @@ export const updateFromSentencePracticeInternal = internalMutation({
       profile = (await ctx.db.get(id))!;
     }
 
-    const writingScore = (args.grammarScore * 0.4 + args.usageScore * 0.3 + args.naturalnessScore * 0.3);
+    const writingScore =
+      args.grammarScore * 0.4 + args.usageScore * 0.3 + args.naturalnessScore * 0.3;
 
     const newSkills = {
       ...profile.skills,

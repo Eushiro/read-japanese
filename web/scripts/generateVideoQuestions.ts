@@ -4,6 +4,7 @@
  */
 
 import { ConvexHttpClient } from "convex/browser";
+
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 
@@ -19,7 +20,7 @@ async function main() {
 
   // Get specific video IDs from args or use defaults
   const args = process.argv.slice(2);
-  let videoIds: string[] = args.length > 0 ? args : [
+  const videoIds: string[] = args.length > 0 ? args : [
     "kd70jck2hp5ppdsd9pzawdgmfx7zregj",
     "kd7cbwwxmssjw496e6at2mm3h97zr3a2",
     "kd7ec7k8zd3awt87f51xjypzan7zrgqa",
@@ -74,8 +75,9 @@ async function main() {
       } else {
         console.log(`  ⚠️ Failed: ${result.error}\n`);
       }
-    } catch (error: any) {
-      console.log(`  ❌ Error: ${error.message?.slice(0, 100)}\n`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.log(`  ❌ Error: ${message.slice(0, 100)}\n`);
     }
   }
 

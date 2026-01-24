@@ -16,12 +16,24 @@ export type SourceType = "story" | "manual" | "import" | "youtube" | "mistake";
 
 // Target exams
 export type ExamType =
-  | "jlpt_n5" | "jlpt_n4" | "jlpt_n3" | "jlpt_n2" | "jlpt_n1"  // Japanese
-  | "toefl" | "sat" | "gre"  // English
-  | "delf_a1" | "delf_a2" | "delf_b1" | "delf_b2" | "dalf_c1" | "dalf_c2" | "tcf";  // French
+  | "jlpt_n5"
+  | "jlpt_n4"
+  | "jlpt_n3"
+  | "jlpt_n2"
+  | "jlpt_n1" // Japanese
+  | "toefl"
+  | "sat"
+  | "gre" // English
+  | "delf_a1"
+  | "delf_a2"
+  | "delf_b1"
+  | "delf_b2"
+  | "dalf_c1"
+  | "dalf_c2"
+  | "tcf"; // French
 
 // Subscription tiers
-export type SubscriptionTier = "free" | "basic" | "pro" | "unlimited";
+export type SubscriptionTier = "free" | "basic" | "pro" | "power";
 
 // Subscription status
 export type SubscriptionStatus = "active" | "cancelled" | "expired";
@@ -36,7 +48,13 @@ export type Rating = "again" | "hard" | "good" | "easy";
 export type DeckSubscriptionStatus = "active" | "paused" | "completed";
 
 // Batch job status
-export type BatchJobStatus = "pending" | "submitted" | "running" | "succeeded" | "failed" | "cancelled";
+export type BatchJobStatus =
+  | "pending"
+  | "submitted"
+  | "running"
+  | "succeeded"
+  | "failed"
+  | "cancelled";
 
 // Batch job types
 export type BatchJobType = "sentences" | "audio" | "images";
@@ -105,7 +123,7 @@ export const subscriptionTierValidator = v.union(
   v.literal("free"),
   v.literal("basic"),
   v.literal("pro"),
-  v.literal("unlimited")
+  v.literal("power")
 );
 
 // Subscription status
@@ -189,23 +207,31 @@ export default defineSchema({
     targetExams: v.array(examTypeValidator), // Exams user is preparing for
     primaryLanguage: v.optional(languageValidator), // Currently active language
     // Proficiency levels determined by placement tests
-    proficiencyLevels: v.optional(v.object({
-      japanese: v.optional(v.object({
-        level: v.string(), // "N5", "N4", "N3", "N2", "N1"
-        assessedAt: v.number(),
-        testId: v.optional(v.id("placementTests")),
-      })),
-      english: v.optional(v.object({
-        level: v.string(), // "A1", "A2", "B1", "B2", "C1", "C2"
-        assessedAt: v.number(),
-        testId: v.optional(v.id("placementTests")),
-      })),
-      french: v.optional(v.object({
-        level: v.string(), // "A1", "A2", "B1", "B2", "C1", "C2"
-        assessedAt: v.number(),
-        testId: v.optional(v.id("placementTests")),
-      })),
-    })),
+    proficiencyLevels: v.optional(
+      v.object({
+        japanese: v.optional(
+          v.object({
+            level: v.string(), // "N5", "N4", "N3", "N2", "N1"
+            assessedAt: v.number(),
+            testId: v.optional(v.id("placementTests")),
+          })
+        ),
+        english: v.optional(
+          v.object({
+            level: v.string(), // "A1", "A2", "B1", "B2", "C1", "C2"
+            assessedAt: v.number(),
+            testId: v.optional(v.id("placementTests")),
+          })
+        ),
+        french: v.optional(
+          v.object({
+            level: v.string(), // "A1", "A2", "B1", "B2", "C1", "C2"
+            assessedAt: v.number(),
+            testId: v.optional(v.id("placementTests")),
+          })
+        ),
+      })
+    ),
     // Streak tracking
     currentStreak: v.optional(v.number()), // Current consecutive days of activity
     longestStreak: v.optional(v.number()), // Personal best streak
@@ -214,8 +240,7 @@ export default defineSchema({
     stripeCustomerId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  })
-    .index("by_clerk_id", ["clerkId"]),
+  }).index("by_clerk_id", ["clerkId"]),
 
   // ============================================
   // VOCABULARY SYSTEM
@@ -326,11 +351,15 @@ export default defineSchema({
     overallScore: v.optional(v.number()), // 0-100
 
     // AI feedback
-    corrections: v.optional(v.array(v.object({
-      original: v.string(),
-      corrected: v.string(),
-      explanation: v.string(),
-    }))),
+    corrections: v.optional(
+      v.array(
+        v.object({
+          original: v.string(),
+          corrected: v.string(),
+          explanation: v.string(),
+        })
+      )
+    ),
     feedback: v.optional(v.string()), // General feedback
     improvedSentence: v.optional(v.string()), // AI-suggested improvement
 
@@ -444,20 +473,24 @@ export default defineSchema({
     }),
 
     // Content preferences (from contentPreferences)
-    content: v.optional(v.object({
-      interests: v.optional(v.array(v.string())), // ["anime", "cooking", "travel"]
-      tonePreference: v.optional(v.string()), // "casual" | "formal" | "humorous"
-      ageAppropriate: v.optional(v.string()), // "all_ages" | "teen" | "adult"
-      culturalFocus: v.optional(v.array(v.string())), // ["traditional", "modern"]
-      learningGoal: v.optional(v.string()), // "jlpt_prep" | "travel" | "business"
-      avoidTopics: v.optional(v.array(v.string())), // ["politics", "religion"]
-    })),
+    content: v.optional(
+      v.object({
+        interests: v.optional(v.array(v.string())), // ["anime", "cooking", "travel"]
+        tonePreference: v.optional(v.string()), // "casual" | "formal" | "humorous"
+        ageAppropriate: v.optional(v.string()), // "all_ages" | "teen" | "adult"
+        culturalFocus: v.optional(v.array(v.string())), // ["traditional", "modern"]
+        learningGoal: v.optional(v.string()), // "jlpt_prep" | "travel" | "business"
+        avoidTopics: v.optional(v.array(v.string())), // ["politics", "religion"]
+      })
+    ),
 
     // Notification settings (from userSettings)
-    notifications: v.optional(v.object({
-      reviewReminderEnabled: v.optional(v.boolean()),
-      reviewReminderTime: v.optional(v.string()), // HH:MM format
-    })),
+    notifications: v.optional(
+      v.object({
+        reviewReminderEnabled: v.optional(v.boolean()),
+        reviewReminderTime: v.optional(v.string()), // HH:MM format
+      })
+    ),
 
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
@@ -516,23 +549,27 @@ export default defineSchema({
 
     // Test structure
     title: v.string(),
-    sections: v.array(v.object({
-      type: v.string(), // "reading" | "listening" | "writing" | "vocabulary"
-      title: v.string(),
-      content: v.optional(v.string()), // Passage or prompt
-      audioUrl: v.optional(v.string()), // For listening sections
-      questions: v.array(v.object({
-        question: v.string(),
-        type: v.string(), // "multiple_choice" | "short_answer" | "essay"
-        options: v.optional(v.array(v.string())),
-        correctAnswer: v.optional(v.string()),
-        userAnswer: v.optional(v.string()),
-        isCorrect: v.optional(v.boolean()),
-        points: v.number(),
-        earnedPoints: v.optional(v.number()),
-        feedback: v.optional(v.string()),
-      })),
-    })),
+    sections: v.array(
+      v.object({
+        type: v.string(), // "reading" | "listening" | "writing" | "vocabulary"
+        title: v.string(),
+        content: v.optional(v.string()), // Passage or prompt
+        audioUrl: v.optional(v.string()), // For listening sections
+        questions: v.array(
+          v.object({
+            question: v.string(),
+            type: v.string(), // "multiple_choice" | "short_answer" | "essay"
+            options: v.optional(v.array(v.string())),
+            correctAnswer: v.optional(v.string()),
+            userAnswer: v.optional(v.string()),
+            isCorrect: v.optional(v.boolean()),
+            points: v.number(),
+            earnedPoints: v.optional(v.number()),
+            feedback: v.optional(v.string()),
+          })
+        ),
+      })
+    ),
 
     // Scoring
     totalPoints: v.number(),
@@ -564,30 +601,32 @@ export default defineSchema({
     language: languageValidator,
 
     // Questions generated for this story
-    questions: v.array(v.object({
-      questionId: v.string(),
-      type: v.union(
-        v.literal("multiple_choice"),
-        v.literal("translation"),
-        v.literal("short_answer"),
-        v.literal("inference"),
-        v.literal("prediction"),
-        v.literal("grammar"),
-        v.literal("opinion")
-      ),
-      question: v.string(),
-      questionTranslation: v.optional(v.string()), // English translation for learners
-      options: v.optional(v.array(v.string())), // For multiple choice
-      correctAnswer: v.optional(v.string()), // For MC and short answer
-      rubric: v.optional(v.string()), // AI grading guidelines for essays
-      userAnswer: v.optional(v.string()),
-      isCorrect: v.optional(v.boolean()),
-      aiScore: v.optional(v.number()), // 0-100 for essay/short answer
-      aiFeedback: v.optional(v.string()),
-      relatedChapter: v.optional(v.number()), // Which chapter this question is about
-      points: v.number(), // Points for this question
-      earnedPoints: v.optional(v.number()),
-    })),
+    questions: v.array(
+      v.object({
+        questionId: v.string(),
+        type: v.union(
+          v.literal("multiple_choice"),
+          v.literal("translation"),
+          v.literal("short_answer"),
+          v.literal("inference"),
+          v.literal("prediction"),
+          v.literal("grammar"),
+          v.literal("opinion")
+        ),
+        question: v.string(),
+        questionTranslation: v.optional(v.string()), // English translation for learners
+        options: v.optional(v.array(v.string())), // For multiple choice
+        correctAnswer: v.optional(v.string()), // For MC and short answer
+        rubric: v.optional(v.string()), // AI grading guidelines for essays
+        userAnswer: v.optional(v.string()),
+        isCorrect: v.optional(v.boolean()),
+        aiScore: v.optional(v.number()), // 0-100 for essay/short answer
+        aiFeedback: v.optional(v.string()),
+        relatedChapter: v.optional(v.number()), // Which chapter this question is about
+        points: v.number(), // Points for this question
+        earnedPoints: v.optional(v.number()),
+      })
+    ),
 
     // Overall results
     totalScore: v.number(), // Max possible score
@@ -612,29 +651,30 @@ export default defineSchema({
     language: languageValidator,
 
     // Questions (without user-specific fields)
-    questions: v.array(v.object({
-      questionId: v.string(),
-      type: v.union(
-        v.literal("multiple_choice"),
-        v.literal("translation"),
-        v.literal("short_answer"),
-        v.literal("inference"),
-        v.literal("prediction"),
-        v.literal("grammar"),
-        v.literal("opinion")
-      ),
-      question: v.string(),
-      questionTranslation: v.optional(v.string()),
-      options: v.optional(v.array(v.string())),
-      correctAnswer: v.optional(v.string()),
-      rubric: v.optional(v.string()),
-      relatedChapter: v.optional(v.number()),
-      points: v.number(),
-    })),
+    questions: v.array(
+      v.object({
+        questionId: v.string(),
+        type: v.union(
+          v.literal("multiple_choice"),
+          v.literal("translation"),
+          v.literal("short_answer"),
+          v.literal("inference"),
+          v.literal("prediction"),
+          v.literal("grammar"),
+          v.literal("opinion")
+        ),
+        question: v.string(),
+        questionTranslation: v.optional(v.string()),
+        options: v.optional(v.array(v.string())),
+        correctAnswer: v.optional(v.string()),
+        rubric: v.optional(v.string()),
+        relatedChapter: v.optional(v.number()),
+        points: v.number(),
+      })
+    ),
 
     generatedAt: v.number(),
-  })
-    .index("by_story_and_difficulty", ["storyId", "difficulty"]),
+  }).index("by_story_and_difficulty", ["storyId", "difficulty"]),
 
   // ============================================
   // PLACEMENT TESTS (CAT-style adaptive testing)
@@ -644,31 +684,29 @@ export default defineSchema({
     language: languageValidator,
 
     // Test status
-    status: v.union(
-      v.literal("in_progress"),
-      v.literal("completed"),
-      v.literal("abandoned")
-    ),
+    status: v.union(v.literal("in_progress"), v.literal("completed"), v.literal("abandoned")),
 
     // Questions answered (CAT selects dynamically)
-    questions: v.array(v.object({
-      questionId: v.string(),
-      level: v.string(), // "N5", "A1", etc.
-      type: v.union(
-        v.literal("vocabulary"),
-        v.literal("grammar"),
-        v.literal("reading"),
-        v.literal("listening")
-      ),
-      question: v.string(),
-      questionTranslation: v.optional(v.string()),
-      options: v.array(v.string()),
-      correctAnswer: v.string(),
-      userAnswer: v.optional(v.string()),
-      isCorrect: v.optional(v.boolean()),
-      answeredAt: v.optional(v.number()),
-      difficulty: v.number(), // Item difficulty parameter (IRT)
-    })),
+    questions: v.array(
+      v.object({
+        questionId: v.string(),
+        level: v.string(), // "N5", "A1", etc.
+        type: v.union(
+          v.literal("vocabulary"),
+          v.literal("grammar"),
+          v.literal("reading"),
+          v.literal("listening")
+        ),
+        question: v.string(),
+        questionTranslation: v.optional(v.string()),
+        options: v.array(v.string()),
+        correctAnswer: v.string(),
+        userAnswer: v.optional(v.string()),
+        isCorrect: v.optional(v.boolean()),
+        answeredAt: v.optional(v.number()),
+        difficulty: v.number(), // Item difficulty parameter (IRT)
+      })
+    ),
 
     // CAT algorithm state
     currentAbilityEstimate: v.number(), // Theta (ability) estimate
@@ -679,18 +717,19 @@ export default defineSchema({
     // Results
     determinedLevel: v.optional(v.string()), // Final level (N3, B2, etc.)
     confidence: v.optional(v.number()), // 0-100 confidence score
-    scoresBySection: v.optional(v.object({
-      vocabulary: v.optional(v.number()),
-      grammar: v.optional(v.number()),
-      reading: v.optional(v.number()),
-      listening: v.optional(v.number()),
-    })),
+    scoresBySection: v.optional(
+      v.object({
+        vocabulary: v.optional(v.number()),
+        grammar: v.optional(v.number()),
+        reading: v.optional(v.number()),
+        listening: v.optional(v.number()),
+      })
+    ),
 
     // Timestamps
     startedAt: v.number(),
     completedAt: v.optional(v.number()),
-  })
-    .index("by_user_and_language", ["userId", "language"]),
+  }).index("by_user_and_language", ["userId", "language"]),
 
   // ============================================
   // GRADING PROFILES (level-specific thresholds)
@@ -712,8 +751,7 @@ export default defineSchema({
     // Story difficulty range this level can comfortably read
     storyDifficultyMin: v.optional(v.string()),
     storyDifficultyMax: v.optional(v.string()),
-  })
-    .index("by_language_and_level", ["language", "level"]),
+  }).index("by_language_and_level", ["language", "level"]),
 
   // ============================================
   // CONTENT LIBRARIES
@@ -742,8 +780,7 @@ export default defineSchema({
     model: v.string(), // AI model that generated this (e.g., "gemini-2.0-flash", "user")
     createdBy: v.optional(v.string()), // userId if user-submitted, undefined for system
     createdAt: v.number(),
-  })
-    .index("by_word_language", ["word", "language"]),
+  }).index("by_word_language", ["word", "language"]),
 
   // Image library - multiple images per word for variety
   images: defineTable({
@@ -757,8 +794,7 @@ export default defineSchema({
     model: v.string(), // AI model that generated this (e.g., "dall-e-3", "user")
     createdBy: v.optional(v.string()), // userId if user-submitted, undefined for system
     createdAt: v.number(),
-  })
-    .index("by_word_language", ["word", "language"]),
+  }).index("by_word_language", ["word", "language"]),
 
   // Word audio library - pronunciation of individual words
   wordAudio: defineTable({
@@ -771,8 +807,7 @@ export default defineSchema({
     model: v.string(), // TTS model used (e.g., "gemini-2.5-flash-preview-tts", "user")
     createdBy: v.optional(v.string()), // userId if user-submitted, undefined for system
     createdAt: v.number(),
-  })
-    .index("by_word_language", ["word", "language"]),
+  }).index("by_word_language", ["word", "language"]),
 
   // ============================================
   // PREMADE VOCABULARY (Shared decks)
@@ -916,20 +951,28 @@ export default defineSchema({
     duration: v.optional(v.number()), // In seconds
 
     // Transcript
-    transcript: v.optional(v.array(v.object({
-      text: v.string(),
-      start: v.number(), // Start time in seconds
-      duration: v.number(),
-    }))),
+    transcript: v.optional(
+      v.array(
+        v.object({
+          text: v.string(),
+          start: v.number(), // Start time in seconds
+          duration: v.number(),
+        })
+      )
+    ),
 
     // Generated questions
-    questions: v.optional(v.array(v.object({
-      question: v.string(),
-      type: v.string(),
-      options: v.optional(v.array(v.string())),
-      correctAnswer: v.optional(v.string()),
-      timestamp: v.optional(v.number()), // Related video timestamp
-    }))),
+    questions: v.optional(
+      v.array(
+        v.object({
+          question: v.string(),
+          type: v.string(),
+          options: v.optional(v.array(v.string())),
+          correctAnswer: v.optional(v.string()),
+          timestamp: v.optional(v.number()), // Related video timestamp
+        })
+      )
+    ),
 
     // Vocabulary extracted
     extractedVocabularyIds: v.optional(v.array(v.id("vocabulary"))),
@@ -1001,13 +1044,15 @@ export default defineSchema({
     }),
 
     // Weak areas (auto-detected from mistakes)
-    weakAreas: v.array(v.object({
-      skill: v.string(), // "grammar"
-      topic: v.string(), // "passive voice"
-      score: v.number(), // 0-100
-      lastTestedAt: v.number(),
-      questionCount: v.number(), // Sample size
-    })),
+    weakAreas: v.array(
+      v.object({
+        skill: v.string(), // "grammar"
+        topic: v.string(), // "passive voice"
+        score: v.number(), // 0-100
+        lastTestedAt: v.number(),
+        questionCount: v.number(), // Sample size
+      })
+    ),
 
     // Vocabulary coverage for target level
     vocabCoverage: v.object({
@@ -1026,12 +1071,14 @@ export default defineSchema({
     }),
 
     // FSRS performance metrics
-    fsrsMetrics: v.optional(v.object({
-      actualRetention: v.number(), // Measured from reviews
-      predictedRetention: v.number(), // From FSRS model
-      reviewsPerDay: v.number(), // Average daily load
-      lastOptimizedAt: v.optional(v.number()),
-    })),
+    fsrsMetrics: v.optional(
+      v.object({
+        actualRetention: v.number(), // Measured from reviews
+        predictedRetention: v.number(), // From FSRS model
+        reviewsPerDay: v.number(), // Average daily load
+        lastOptimizedAt: v.optional(v.number()),
+      })
+    ),
 
     // Time tracking
     totalStudyMinutes: v.number(),
@@ -1068,10 +1115,12 @@ export default defineSchema({
     responseTimeMs: v.optional(v.number()),
 
     // Multi-skill tagging
-    skills: v.array(v.object({
-      skill: v.string(), // "vocabulary" | "grammar" | "reading" | etc.
-      weight: v.number(), // 0-1, how much this Q tests this skill
-    })),
+    skills: v.array(
+      v.object({
+        skill: v.string(), // "vocabulary" | "grammar" | "reading" | etc.
+        weight: v.number(), // 0-1, how much this Q tests this skill
+      })
+    ),
     topics: v.optional(v.array(v.string())), // ["passive voice", "N3 kanji"]
     difficulty: v.optional(v.number()), // IRT difficulty parameter
 
@@ -1082,20 +1131,26 @@ export default defineSchema({
       modelUsed: v.optional(v.string()), // "gemini-2.0-flash" | "claude-3-haiku"
       gradedAt: v.number(),
       feedback: v.optional(v.string()), // AI explanation
-      detailedScores: v.optional(v.object({
-        grammar: v.optional(v.number()),
-        usage: v.optional(v.number()),
-        naturalness: v.optional(v.number()),
-      })),
+      detailedScores: v.optional(
+        v.object({
+          grammar: v.optional(v.number()),
+          usage: v.optional(v.number()),
+          naturalness: v.optional(v.number()),
+        })
+      ),
     }),
 
     // GRADING HISTORY (for model comparison)
-    gradingHistory: v.optional(v.array(v.object({
-      modelUsed: v.string(),
-      isCorrect: v.boolean(),
-      score: v.optional(v.number()),
-      gradedAt: v.number(),
-    }))),
+    gradingHistory: v.optional(
+      v.array(
+        v.object({
+          modelUsed: v.string(),
+          isCorrect: v.boolean(),
+          score: v.optional(v.number()),
+          gradedAt: v.number(),
+        })
+      )
+    ),
 
     answeredAt: v.number(),
   })
@@ -1127,8 +1182,7 @@ export default defineSchema({
     }),
 
     createdAt: v.number(),
-  })
-    .index("by_user_language_date", ["userId", "language", "date"]),
+  }).index("by_user_language_date", ["userId", "language", "date"]),
 
   // Topic taxonomy - structured tags for questions and content
   topicTaxonomy: defineTable({
@@ -1174,8 +1228,7 @@ export default defineSchema({
     avoidTopics: v.optional(v.array(v.string())), // ["politics", "religion", ...]
 
     updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"]),
+  }).index("by_user", ["userId"]),
 
   // FSRS settings - user-configurable spaced repetition settings
   // @deprecated: Migrated to userPreferences.srs
@@ -1196,8 +1249,7 @@ export default defineSchema({
     preset: v.optional(v.string()), // "default" | "aggressive" | "relaxed" | "custom"
 
     updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"]),
+  }).index("by_user", ["userId"]),
 
   // ============================================
   // PRACTICE EXAMS
@@ -1211,12 +1263,14 @@ export default defineSchema({
     description: v.optional(v.string()),
     source: v.optional(v.string()), // PDF filename or official source
     year: v.optional(v.number()),
-    sections: v.array(v.object({
-      type: examSectionTypeValidator,
-      title: v.string(),
-      timeLimitMinutes: v.optional(v.number()),
-      questionCount: v.number(),
-    })),
+    sections: v.array(
+      v.object({
+        type: examSectionTypeValidator,
+        title: v.string(),
+        timeLimitMinutes: v.optional(v.number()),
+        questionCount: v.number(),
+      })
+    ),
     totalTimeLimitMinutes: v.optional(v.number()),
     passingScore: v.optional(v.number()), // Percentage needed to pass
     isPublished: v.boolean(),
@@ -1267,22 +1321,20 @@ export default defineSchema({
     language: languageValidator,
 
     // Attempt status
-    status: v.union(
-      v.literal("in_progress"),
-      v.literal("completed"),
-      v.literal("abandoned")
-    ),
+    status: v.union(v.literal("in_progress"), v.literal("completed"), v.literal("abandoned")),
 
     // Questions for this attempt (subset of question bank)
-    questions: v.array(v.object({
-      questionId: v.id("examQuestions"),
-      userAnswer: v.optional(v.string()),
-      isCorrect: v.optional(v.boolean()),
-      aiScore: v.optional(v.number()), // For essay/short answer
-      aiFeedback: v.optional(v.string()),
-      earnedPoints: v.optional(v.number()),
-      answeredAt: v.optional(v.number()),
-    })),
+    questions: v.array(
+      v.object({
+        questionId: v.id("examQuestions"),
+        userAnswer: v.optional(v.string()),
+        isCorrect: v.optional(v.boolean()),
+        aiScore: v.optional(v.number()), // For essay/short answer
+        aiFeedback: v.optional(v.string()),
+        earnedPoints: v.optional(v.number()),
+        answeredAt: v.optional(v.number()),
+      })
+    ),
 
     // Section progress
     currentSection: v.number(), // Index of current section
@@ -1301,12 +1353,16 @@ export default defineSchema({
     passed: v.optional(v.boolean()),
 
     // Section breakdown
-    sectionScores: v.optional(v.array(v.object({
-      sectionType: examSectionTypeValidator,
-      totalPoints: v.number(),
-      earnedPoints: v.number(),
-      percentScore: v.number(),
-    }))),
+    sectionScores: v.optional(
+      v.array(
+        v.object({
+          sectionType: examSectionTypeValidator,
+          totalPoints: v.number(),
+          earnedPoints: v.number(),
+          percentScore: v.number(),
+        })
+      )
+    ),
 
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -1314,6 +1370,22 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_exam", ["userId", "examType"])
     .index("by_template", ["templateId"]),
+
+  // ============================================
+  // USER CONTENT HISTORY (seen tracking)
+  // ============================================
+  // Tracks which content each user has seen per vocabulary word
+  // Prevents showing the same sentence/image twice
+  userContentHistory: defineTable({
+    userId: v.string(),
+    vocabularyId: v.id("vocabulary"),
+    seenSentenceIds: v.array(v.id("sentences")), // Sentences user has seen
+    seenImageIds: v.array(v.id("images")), // Images user has seen
+    lastShownAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_vocabulary", ["userId", "vocabularyId"]),
 
   // User exam analytics - aggregated stats per exam type
   examAnalytics: defineTable({

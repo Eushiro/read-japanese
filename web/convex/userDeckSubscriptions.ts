@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+
 import { mutation, query } from "./_generated/server";
 import { languageValidator } from "./schema";
 
@@ -80,9 +81,7 @@ export const getActiveSubscription = query({
   handler: async (ctx, args) => {
     const activeSub = await ctx.db
       .query("userDeckSubscriptions")
-      .withIndex("by_user_and_status", (q) =>
-        q.eq("userId", args.userId).eq("status", "active")
-      )
+      .withIndex("by_user_and_status", (q) => q.eq("userId", args.userId).eq("status", "active"))
       .first();
 
     if (!activeSub) return null;
@@ -116,9 +115,7 @@ export const getSubscription = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("userDeckSubscriptions")
-      .withIndex("by_user_and_deck", (q) =>
-        q.eq("userId", args.userId).eq("deckId", args.deckId)
-      )
+      .withIndex("by_user_and_deck", (q) => q.eq("userId", args.userId).eq("deckId", args.deckId))
       .first();
   },
 });
@@ -140,9 +137,7 @@ export const subscribe = mutation({
     // Check if already subscribed
     const existing = await ctx.db
       .query("userDeckSubscriptions")
-      .withIndex("by_user_and_deck", (q) =>
-        q.eq("userId", args.userId).eq("deckId", args.deckId)
-      )
+      .withIndex("by_user_and_deck", (q) => q.eq("userId", args.userId).eq("deckId", args.deckId))
       .first();
 
     if (existing) {
@@ -166,9 +161,7 @@ export const subscribe = mutation({
     // Pause any currently active deck for this user
     const activeSub = await ctx.db
       .query("userDeckSubscriptions")
-      .withIndex("by_user_and_status", (q) =>
-        q.eq("userId", args.userId).eq("status", "active")
-      )
+      .withIndex("by_user_and_status", (q) => q.eq("userId", args.userId).eq("status", "active"))
       .first();
 
     if (activeSub) {
@@ -206,9 +199,7 @@ export const setActiveDeck = mutation({
     // Get the subscription to activate
     const sub = await ctx.db
       .query("userDeckSubscriptions")
-      .withIndex("by_user_and_deck", (q) =>
-        q.eq("userId", args.userId).eq("deckId", args.deckId)
-      )
+      .withIndex("by_user_and_deck", (q) => q.eq("userId", args.userId).eq("deckId", args.deckId))
       .first();
 
     if (!sub) {
@@ -222,9 +213,7 @@ export const setActiveDeck = mutation({
     // Pause current active deck (if different)
     const activeSub = await ctx.db
       .query("userDeckSubscriptions")
-      .withIndex("by_user_and_status", (q) =>
-        q.eq("userId", args.userId).eq("status", "active")
-      )
+      .withIndex("by_user_and_status", (q) => q.eq("userId", args.userId).eq("status", "active"))
       .first();
 
     if (activeSub && activeSub._id !== sub._id) {
@@ -251,9 +240,7 @@ export const unsubscribe = mutation({
   handler: async (ctx, args) => {
     const sub = await ctx.db
       .query("userDeckSubscriptions")
-      .withIndex("by_user_and_deck", (q) =>
-        q.eq("userId", args.userId).eq("deckId", args.deckId)
-      )
+      .withIndex("by_user_and_deck", (q) => q.eq("userId", args.userId).eq("deckId", args.deckId))
       .first();
 
     if (!sub) {
@@ -278,9 +265,7 @@ export const updateDailyLimit = mutation({
 
     const sub = await ctx.db
       .query("userDeckSubscriptions")
-      .withIndex("by_user_and_deck", (q) =>
-        q.eq("userId", args.userId).eq("deckId", args.deckId)
-      )
+      .withIndex("by_user_and_deck", (q) => q.eq("userId", args.userId).eq("deckId", args.deckId))
       .first();
 
     if (!sub) {
@@ -303,9 +288,7 @@ export const addDailyCards = mutation({
     // Get active subscription
     const activeSub = await ctx.db
       .query("userDeckSubscriptions")
-      .withIndex("by_user_and_status", (q) =>
-        q.eq("userId", args.userId).eq("status", "active")
-      )
+      .withIndex("by_user_and_status", (q) => q.eq("userId", args.userId).eq("status", "active"))
       .first();
 
     if (!activeSub) {
@@ -484,9 +467,7 @@ export const markWordSkipped = mutation({
   handler: async (ctx, args) => {
     const sub = await ctx.db
       .query("userDeckSubscriptions")
-      .withIndex("by_user_and_deck", (q) =>
-        q.eq("userId", args.userId).eq("deckId", args.deckId)
-      )
+      .withIndex("by_user_and_deck", (q) => q.eq("userId", args.userId).eq("deckId", args.deckId))
       .first();
 
     if (!sub) {
@@ -512,9 +493,7 @@ export const incrementWordsStudied = mutation({
   handler: async (ctx, args) => {
     const sub = await ctx.db
       .query("userDeckSubscriptions")
-      .withIndex("by_user_and_deck", (q) =>
-        q.eq("userId", args.userId).eq("deckId", args.deckId)
-      )
+      .withIndex("by_user_and_deck", (q) => q.eq("userId", args.userId).eq("deckId", args.deckId))
       .first();
 
     if (!sub) {

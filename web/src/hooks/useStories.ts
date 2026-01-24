@@ -1,8 +1,9 @@
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { isRomaji, toHiragana, toKatakana } from "wanakana";
+
 import { listStories } from "@/api/stories";
-import type { StoryListItem, ProficiencyLevel, JLPT_LEVELS, CEFR_LEVELS } from "@/types/story";
-import { toHiragana, isRomaji, toKatakana } from "wanakana";
+import type { ProficiencyLevel,StoryListItem } from "@/types/story";
 
 type Language = "japanese" | "english" | "french";
 
@@ -78,10 +79,7 @@ export function useFilteredStories(
 // Sort utilities
 export type SortOption = "level-asc" | "level-desc" | "title" | "newest";
 
-export function sortStories(
-  stories: StoryListItem[],
-  sortBy: SortOption
-): StoryListItem[] {
+export function sortStories(stories: StoryListItem[], sortBy: SortOption): StoryListItem[] {
   const sorted = [...stories];
 
   switch (sortBy) {

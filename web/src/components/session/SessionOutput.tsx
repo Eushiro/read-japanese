@@ -1,19 +1,14 @@
-import { useState, useMemo } from "react";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useAction,useMutation, useQuery } from "convex/react";
 import type { GenericId } from "convex/values";
-import { api } from "../../../convex/_generated/api";
-import { Button } from "@/components/ui/button";
+import { Check, ChevronRight, Loader2, PenLine, Send, SkipForward, Sparkles } from "lucide-react";
+import { useMemo,useState } from "react";
+
 import { Paywall } from "@/components/Paywall";
-import {
-  PenLine,
-  Send,
-  Loader2,
-  Check,
-  ChevronRight,
-  SkipForward,
-  Sparkles,
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
+
+import { api } from "../../../convex/_generated/api";
 
 interface SessionOutputProps {
   wordCount: number;
@@ -22,24 +17,22 @@ interface SessionOutputProps {
 }
 
 export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputProps) {
+  const t = useT();
   const { user } = useAuth();
   const userId = user?.id ?? "";
 
   // Fetch vocabulary
   const vocabulary = useQuery(api.vocabulary.list, userId ? { userId } : "skip");
-  const subscription = useQuery(
-    api.subscriptions.get,
-    userId ? { userId } : "skip"
-  );
+  const subscription = useQuery(api.subscriptions.get, userId ? { userId } : "skip");
 
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
   // Filter to practice words
   const practiceWords = useMemo(() => {
     if (!vocabulary) return [];
-    return vocabulary.filter(
-      v => v.masteryState === "new" || v.masteryState === "learning"
-    ).slice(0, wordCount);
+    return vocabulary
+      .filter((v) => v.masteryState === "new" || v.masteryState === "learning")
+      .slice(0, wordCount);
   }, [vocabulary, wordCount]);
 
   // State
@@ -103,7 +96,7 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
         improvedSentence: verification.improvedSentence,
       });
 
-      setSentencesWritten(prev => prev + 1);
+      setSentencesWritten((prev) => prev + 1);
     } catch (error) {
       console.error("Failed to verify sentence:", error);
     } finally {
@@ -139,9 +132,9 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
           <PenLine className="w-8 h-8 text-foreground-muted" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">No words to practice</h2>
-        <p className="text-foreground-muted mb-6">Add vocabulary to start writing sentences.</p>
-        <Button onClick={() => onComplete(0)}>Continue</Button>
+        <h2 className="text-2xl font-bold text-foreground mb-2">{t("studySession.output.noWordsTitle")}</h2>
+        <p className="text-foreground-muted mb-6">{t("studySession.output.noWordsDescription")}</p>
+        <Button onClick={() => onComplete(0)}>{t("common.actions.continue")}</Button>
       </div>
     );
   }
@@ -153,17 +146,19 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border">
           <PenLine className="w-4 h-4 text-accent" />
           <span className="text-foreground-muted">
-            Word {currentWordIndex + 1} of {Math.min(practiceWords.length, wordCount)}
+            {t("studySession.output.wordOf", { current: currentWordIndex + 1, total: Math.min(practiceWords.length, wordCount) })}
           </span>
         </div>
       </div>
 
       {/* Word card */}
       <div className="bg-surface rounded-2xl border border-border p-6 mb-6">
-        <div className="text-sm text-foreground-muted mb-2">Write a sentence using:</div>
+        <div className="text-sm text-foreground-muted mb-2">{t("studySession.output.writeSentenceUsing")}</div>
         <div
           className="text-3xl font-bold text-foreground mb-2"
-          style={{ fontFamily: currentWord.language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+          style={{
+            fontFamily: currentWord.language === "japanese" ? "var(--font-japanese)" : "inherit",
+          }}
         >
           {currentWord.word}
         </div>
@@ -179,16 +174,18 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
           <textarea
             value={sentence}
             onChange={(e) => setSentence(e.target.value)}
-            placeholder={`Write a sentence using "${currentWord.word}"...`}
+            placeholder={t("studySession.output.placeholder", { word: currentWord.word })}
             className="w-full px-4 py-3 rounded-xl border border-border bg-surface text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none"
-            style={{ fontFamily: currentWord.language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+            style={{
+              fontFamily: currentWord.language === "japanese" ? "var(--font-japanese)" : "inherit",
+            }}
             rows={3}
             disabled={isSubmitting}
           />
           <div className="flex gap-3">
             <Button variant="outline" onClick={onSkip} className="flex-1 gap-2">
               <SkipForward className="w-4 h-4" />
-              Skip Writing
+              {t("studySession.output.skipWriting")}
             </Button>
             <Button
               onClick={handleSubmit}
@@ -198,12 +195,12 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Checking...
+                  {t("studySession.output.checking")}
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  Check
+                  {t("studySession.output.check")}
                 </>
               )}
             </Button>
@@ -225,10 +222,10 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
               )}
               <div>
                 <div className="font-semibold text-foreground">
-                  {result.isCorrect ? "Great job!" : "Good effort!"}
+                  {result.isCorrect ? t("studySession.output.greatJob") : t("studySession.output.goodEffort")}
                 </div>
                 <div className="text-sm text-foreground-muted">
-                  Score: {result.overallScore}/100
+                  {t("studySession.output.score", { score: result.overallScore })}
                 </div>
               </div>
             </div>
@@ -237,10 +234,13 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
 
             {result.improvedSentence && result.improvedSentence !== sentence && (
               <div>
-                <div className="text-sm text-foreground-muted mb-2">Suggested improvement:</div>
+                <div className="text-sm text-foreground-muted mb-2">{t("studySession.output.suggestedImprovement")}</div>
                 <div
                   className="text-lg text-green-600 bg-green-500/5 p-3 rounded-lg border border-green-500/20"
-                  style={{ fontFamily: currentWord.language === "japanese" ? "var(--font-japanese)" : "inherit" }}
+                  style={{
+                    fontFamily:
+                      currentWord.language === "japanese" ? "var(--font-japanese)" : "inherit",
+                  }}
                 >
                   {result.improvedSentence}
                 </div>
@@ -252,12 +252,12 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
           <Button onClick={handleNextWord} className="w-full gap-2">
             {currentWordIndex + 1 >= Math.min(practiceWords.length, wordCount) ? (
               <>
-                Complete
+                {t("studySession.output.complete")}
                 <Check className="w-4 h-4" />
               </>
             ) : (
               <>
-                Next Word
+                {t("studySession.output.nextWord")}
                 <ChevronRight className="w-4 h-4" />
               </>
             )}
@@ -266,11 +266,7 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
       )}
 
       {/* Paywall */}
-      <Paywall
-        isOpen={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        feature="sentences"
-      />
+      <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="sentences" />
     </div>
   );
 }

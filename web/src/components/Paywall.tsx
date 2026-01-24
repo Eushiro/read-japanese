@@ -1,30 +1,95 @@
-import { useState } from "react";
 import { useAction } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { Check, Crown, Minus,Sparkles, X, Zap } from "lucide-react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
-import { X, Crown, Zap, Sparkles, Check, BookOpen, Brain, Mic, PenLine } from "lucide-react";
-import { useAuth, SignInButton } from "@/contexts/AuthContext";
+import { SignInButton,useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
+
+import { api } from "../../convex/_generated/api";
 
 interface PaywallProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
   description?: string;
-  feature?: "flashcards" | "sentences" | "comprehension" | "stories" | "general";
+  feature?:
+    | "flashcards"
+    | "sentences"
+    | "comprehension"
+    | "stories"
+    | "shadowing"
+    | "images"
+    | "general";
+  /** Minimum tier required for the feature (default: "basic") */
+  requiredTier?: "basic" | "pro" | "power";
 }
+
+// Feature comparison data - translation keys for feature names
+const FEATURE_KEYS = [
+  {
+    nameKey: "pricing.paywall.comparison.premiumStories",
+    free: false,
+    basic: true,
+    pro: true,
+    power: true,
+    highlight: "stories",
+  },
+  { nameKey: "pricing.paywall.comparison.aiWritingFeedback", free: "—", basic: "200/mo", pro: "1,000/mo", power: "5,000/mo" },
+  { nameKey: "pricing.paywall.comparison.audioGeneration", free: "20/mo", basic: "100/mo", pro: "500/mo", power: "2,500/mo" },
+  { nameKey: "pricing.paywall.comparison.readingSessions", free: "5/mo", basic: "20/mo", pro: "100/mo", power: "500/mo" },
+  {
+    nameKey: "pricing.paywall.comparison.flashcardGeneration",
+    free: "100/mo",
+    basic: "500/mo",
+    pro: "3,000/mo",
+    power: "15,000/mo",
+  },
+  {
+    nameKey: "pricing.paywall.comparison.shadowingPractice",
+    free: false,
+    basic: false,
+    pro: true,
+    power: true,
+    highlight: "shadowing",
+  },
+  {
+    nameKey: "pricing.paywall.comparison.aiImageGeneration",
+    free: false,
+    basic: false,
+    pro: true,
+    power: true,
+    highlight: "images",
+  },
+  { nameKey: "pricing.paywall.comparison.comprehensionQuizzes", free: false, basic: true, pro: true, power: true },
+  { nameKey: "pricing.paywall.comparison.prioritySupport", free: false, basic: false, pro: false, power: true },
+] as const;
+
+type TierKey = "free" | "basic" | "pro" | "power";
+
+// Tier info with translation keys
+const TIER_CONFIG: Record<TierKey, { nameKey: string; priceKey: string; icon: typeof Zap; color: string }> =
+  {
+    free: { nameKey: "pricing.tiers.free.name", priceKey: "pricing.tiers.free.price", icon: Minus, color: "text-foreground-muted" },
+    basic: { nameKey: "pricing.tiers.basic.name", priceKey: "pricing.tiers.basic.price", icon: Zap, color: "text-blue-500" },
+    pro: { nameKey: "pricing.tiers.pro.name", priceKey: "pricing.tiers.pro.price", icon: Crown, color: "text-accent" },
+    power: { nameKey: "pricing.tiers.power.name", priceKey: "pricing.tiers.power.price", icon: Sparkles, color: "text-purple-500" },
+  };
 
 export function Paywall({
   isOpen,
   onClose,
-  title = "Upgrade Your Plan",
-  description = "Unlock AI-powered features to accelerate your learning.",
+  title,
+  description,
   feature = "general",
+  requiredTier = "basic",
 }: PaywallProps) {
+  const t = useT();
   const { user, isAuthenticated } = useAuth();
   const createCheckout = useAction(api.stripe.createCheckoutSession);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
-  const handleUpgrade = async (tier: "basic" | "pro" | "unlimited") => {
+  const handleUpgrade = async (tier: "basic" | "pro" | "power") => {
     if (!user || checkoutLoading) return;
     setCheckoutLoading(tier);
     try {
@@ -46,39 +111,62 @@ export function Paywall({
 
   if (!isOpen) return null;
 
-  // Feature-specific messaging
-  const featureMessages = {
-    flashcards: {
-      title: "Upgrade for AI Sentences",
-      description: "Generate new example sentences for your flashcards with AI.",
-    },
-    sentences: {
-      title: "Upgrade for AI Feedback",
-      description: "Get detailed feedback on your writing with grammar corrections and suggestions.",
-    },
-    comprehension: {
-      title: "Upgrade for AI Comprehension",
-      description: "Generate comprehension questions and get AI-powered grading on your answers.",
-    },
-    stories: {
-      title: "Upgrade for Premium Content",
-      description: "Access premium stories and reading materials to improve your comprehension.",
-    },
-    general: {
-      title,
-      description,
-    },
+  // Get translated content based on feature type
+  const getFeatureContent = () => {
+    if (feature === "general") {
+      return {
+        title: title || t("pricing.paywall.defaultTitle"),
+        description: description || t("pricing.paywall.defaultDescription"),
+      };
+    }
+
+    // Feature-specific translations
+    const featureKey = feature as "flashcards" | "sentences" | "comprehension" | "stories" | "shadowing" | "images";
+    return {
+      title: t(`pricing.paywall.features.${featureKey}.title`),
+      description: t(`pricing.paywall.features.${featureKey}.description`),
+    };
   };
 
-  const content = featureMessages[feature];
+  const content = getFeatureContent();
+
+  // Determine which tiers to show based on requiredTier
+  const showTiers: TierKey[] =
+    requiredTier === "pro" || requiredTier === "power"
+      ? ["pro", "power"]
+      : ["free", "basic", "pro", "power"];
+
+  const renderCell = (value: boolean | string, tierKey: TierKey, featureHighlight?: string) => {
+    const isHighlighted = featureHighlight === feature;
+
+    if (typeof value === "boolean") {
+      if (value) {
+        return (
+          <div className={`flex justify-center ${isHighlighted ? "scale-110" : ""}`}>
+            <Check className={`w-5 h-5 ${TIER_CONFIG[tierKey].color}`} />
+          </div>
+        );
+      }
+      return (
+        <div className="flex justify-center">
+          <Minus className="w-5 h-5 text-foreground-muted/40" />
+        </div>
+      );
+    }
+
+    return (
+      <span
+        className={`text-sm font-medium ${value === "—" ? "text-foreground-muted/40" : "text-foreground"}`}
+      >
+        {value}
+      </span>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative bg-surface rounded-2xl border border-border shadow-lg max-w-6xl w-full p-6 sm:p-8 animate-scale-in max-h-[90vh] overflow-y-auto">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-surface rounded-2xl border border-border shadow-lg max-w-4xl w-full p-6 sm:p-8 animate-scale-in max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-1 rounded-lg hover:bg-muted transition-colors"
@@ -86,219 +174,136 @@ export function Paywall({
           <X className="w-5 h-5 text-foreground-muted" />
         </button>
 
-        <div className="text-center mb-8">
-          <h3 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+        <div className="text-center mb-6">
+          <h3
+            className="text-2xl font-bold text-foreground mb-2"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             {content.title}
           </h3>
-          <p className="text-foreground-muted">
-            {content.description}
-          </p>
+          <p className="text-foreground-muted">{content.description}</p>
         </div>
 
         {!isAuthenticated ? (
           <div className="space-y-3 max-w-sm mx-auto">
             <p className="text-sm text-foreground-muted text-center">
-              Sign in to view pricing and upgrade.
+              {t("pricing.paywall.signInPrompt")}
             </p>
             <SignInButton mode="modal">
               <Button className="w-full" size="lg">
-                Sign In to Continue
+                {t("pricing.paywall.signInButton")}
               </Button>
             </SignInButton>
           </div>
         ) : (
-          <>
-            {/* Feature highlights */}
-            <div className="flex flex-wrap justify-center gap-6 mb-6">
-              <div className="flex items-center gap-2 text-sm text-foreground-muted">
-                <Brain className="w-4 h-4 text-accent" />
-                <span>SRS Flashcards</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-foreground-muted">
-                <PenLine className="w-4 h-4 text-accent" />
-                <span>Writing Feedback</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-foreground-muted">
-                <BookOpen className="w-4 h-4 text-accent" />
-                <span>Comprehension</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-foreground-muted">
-                <Mic className="w-4 h-4 text-accent" />
-                <span>Audio Support</span>
-              </div>
-            </div>
+          <div className="overflow-x-auto">
+            {/* Comparison Table */}
+            <table className="w-full">
+              {/* Header Row - Tier names and prices */}
+              <thead>
+                <tr>
+                  <th className="text-left py-3 px-2 w-[180px]"></th>
+                  {showTiers.map((tier) => {
+                    const config = TIER_CONFIG[tier];
+                    const Icon = config.icon;
+                    const isRecommended = tier === "pro";
+                    const isCurrent = tier === "free";
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Free Tier */}
-              <div className="p-5 rounded-xl border border-border bg-muted/30 flex flex-col">
-                <div className="text-center mb-4">
-                  <span className="text-sm font-medium text-foreground-muted uppercase tracking-wider">Free</span>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold text-foreground">$0</span>
-                    <span className="text-foreground-muted">/mo</span>
-                  </div>
-                </div>
-                <ul className="text-sm space-y-2.5 flex-1">
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                    <span className="text-foreground">Premade vocabulary decks</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                    <span className="text-foreground">Basic flashcard reviews</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                    <span className="text-foreground">5 reading sessions/month</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <X className="w-4 h-4 text-foreground-muted mt-0.5 shrink-0" />
-                    <span className="text-foreground-muted">No AI feedback</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <X className="w-4 h-4 text-foreground-muted mt-0.5 shrink-0" />
-                    <span className="text-foreground-muted">No AI sentence generation</span>
-                  </li>
-                </ul>
-                <div className="text-center text-sm text-foreground-muted mt-5">
-                  Current plan
-                </div>
-              </div>
+                    return (
+                      <th
+                        key={tier}
+                        className={`text-center py-3 px-3 min-w-[100px] ${isRecommended ? "bg-accent/5 rounded-t-xl" : ""}`}
+                      >
+                        <div className="flex flex-col items-center gap-1">
+                          {isRecommended && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent text-white font-medium mb-1">
+                              {t("pricing.paywall.recommended")}
+                            </span>
+                          )}
+                          <div className={`flex items-center gap-1.5 ${config.color}`}>
+                            <Icon className="w-4 h-4" />
+                            <span className="font-semibold">{t(config.nameKey)}</span>
+                          </div>
+                          <div className="flex items-baseline gap-0.5">
+                            <span className="text-2xl font-bold text-foreground">{t(config.priceKey)}</span>
+                            <span className="text-xs text-foreground-muted">{t("pricing.tiers.free.period")}</span>
+                          </div>
+                          {isCurrent && (
+                            <span className="text-[10px] text-foreground-muted">{t("pricing.paywall.current")}</span>
+                          )}
+                        </div>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
 
-              {/* Basic Tier */}
-              <div className="p-5 rounded-xl border border-border flex flex-col">
-                <div className="text-center mb-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <Zap className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm font-medium text-foreground uppercase tracking-wider">Basic</span>
-                  </div>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold text-foreground">$5</span>
-                    <span className="text-foreground-muted">/mo</span>
-                  </div>
-                </div>
-                <ul className="text-sm space-y-2.5 flex-1">
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                    <span className="text-foreground">Everything in Free</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                    <span className="text-foreground"><strong>200</strong> AI feedback/month</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                    <span className="text-foreground"><strong>100</strong> audio generations</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                    <span className="text-foreground">20 reading sessions/month</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                    <span className="text-foreground">AI comprehension quizzes</span>
-                  </li>
-                </ul>
-                <Button
-                  variant="outline"
-                  className={`w-full mt-5 ${checkoutLoading === "basic" ? "btn-loading-gradient" : ""}`}
-                  onClick={() => handleUpgrade("basic")}
-                >
-                  Get Basic
-                </Button>
-              </div>
+              {/* Feature Rows */}
+              <tbody>
+                {FEATURES.map((row, idx) => {
+                  const isHighlighted = row.highlight === feature;
 
-              {/* Pro Tier - Recommended */}
-              <div className="p-5 pt-8 rounded-xl border-2 border-accent bg-accent/5 relative flex flex-col">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                  <span className="text-xs px-3 py-1 rounded-full bg-accent text-white font-medium">
-                    Most Popular
-                  </span>
-                </div>
-                <div className="text-center mb-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <Crown className="w-4 h-4 text-accent" />
-                    <span className="text-sm font-medium text-accent uppercase tracking-wider">Pro</span>
-                  </div>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold text-foreground">$15</span>
-                    <span className="text-foreground-muted">/mo</span>
-                  </div>
-                </div>
-                <ul className="text-sm space-y-2.5 flex-1">
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                    <span className="text-foreground">Everything in Basic</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                    <span className="text-foreground"><strong>1,000</strong> AI feedback/month</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                    <span className="text-foreground"><strong>500</strong> audio generations</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                    <span className="text-foreground"><strong>Unlimited</strong> reading</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                    <span className="text-foreground"><strong>Unlimited</strong> flashcards</span>
-                  </li>
-                </ul>
-                <Button
-                  className={`w-full mt-5 ${checkoutLoading === "pro" ? "btn-loading-gradient" : ""}`}
-                  onClick={() => handleUpgrade("pro")}
-                >
-                  Get Pro
-                </Button>
-              </div>
+                  return (
+                    <tr
+                      key={row.name}
+                      className={`border-t border-border/50 ${isHighlighted ? "bg-accent/5" : idx % 2 === 0 ? "bg-muted/20" : ""}`}
+                    >
+                      <td
+                        className={`py-3 px-2 text-sm ${isHighlighted ? "font-semibold text-accent" : "text-foreground"}`}
+                      >
+                        {row.name}
+                        {isHighlighted && <span className="ml-1 text-accent">←</span>}
+                      </td>
+                      {showTiers.map((tier) => {
+                        const isRecommended = tier === "pro";
+                        return (
+                          <td
+                            key={tier}
+                            className={`py-3 px-3 text-center ${isRecommended ? "bg-accent/5" : ""}`}
+                          >
+                            {renderCell(row[tier], tier, row.highlight)}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
 
-              {/* Unlimited Tier */}
-              <div className="p-5 rounded-xl border border-border bg-gradient-to-b from-purple-500/5 to-transparent flex flex-col">
-                <div className="text-center mb-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <Sparkles className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm font-medium text-foreground uppercase tracking-wider">Unlimited</span>
-                  </div>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold text-foreground">$45</span>
-                    <span className="text-foreground-muted">/mo</span>
-                  </div>
-                </div>
-                <ul className="text-sm space-y-2.5 flex-1">
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                    <span className="text-foreground">Everything in Pro</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                    <span className="text-foreground"><strong>Unlimited</strong> AI feedback</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                    <span className="text-foreground"><strong>Unlimited</strong> audio</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                    <span className="text-foreground">Priority support</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                    <span className="text-foreground">Early access to new features</span>
-                  </li>
-                </ul>
-                <Button
-                  variant="outline"
-                  className={`w-full mt-5 border-purple-500/30 hover:bg-purple-500/10 ${checkoutLoading === "unlimited" ? "btn-loading-gradient" : ""}`}
-                  onClick={() => handleUpgrade("unlimited")}
-                >
-                  Get Unlimited
-                </Button>
-              </div>
-            </div>
-          </>
+              {/* Action Row - Upgrade buttons */}
+              <tfoot>
+                <tr className="border-t border-border">
+                  <td className="py-4 px-2"></td>
+                  {showTiers.map((tier) => {
+                    if (tier === "free") {
+                      return <td key={tier} className="py-4 px-3"></td>;
+                    }
+
+                    const isRecommended = tier === "pro";
+                    const info = TIER_INFO[tier];
+
+                    return (
+                      <td
+                        key={tier}
+                        className={`py-4 px-3 ${isRecommended ? "bg-accent/5 rounded-b-xl" : ""}`}
+                      >
+                        <Button
+                          variant={isRecommended ? "default" : "outline"}
+                          size="sm"
+                          className={`w-full ${
+                            tier === "power" ? "border-purple-500/30 hover:bg-purple-500/10" : ""
+                          } ${checkoutLoading === tier ? "btn-loading-gradient" : ""}`}
+                          onClick={() => handleUpgrade(tier as "basic" | "pro" | "power")}
+                        >
+                          Get {info.name}
+                        </Button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         )}
       </div>
     </div>

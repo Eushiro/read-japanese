@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+
 import { internalMutation, internalQuery } from "./_generated/server";
 
 // ============================================
@@ -66,7 +67,7 @@ export const handleSubscriptionCreated = internalMutation({
     userId: v.string(),
     stripeCustomerId: v.string(),
     stripeSubscriptionId: v.string(),
-    tier: v.union(v.literal("basic"), v.literal("pro"), v.literal("unlimited")),
+    tier: v.union(v.literal("basic"), v.literal("pro"), v.literal("power")),
     currentPeriodEnd: v.number(),
   },
   handler: async (ctx, args) => {
@@ -106,7 +107,7 @@ export const handleSubscriptionCreated = internalMutation({
 export const handleSubscriptionUpdated = internalMutation({
   args: {
     stripeSubscriptionId: v.string(),
-    tier: v.union(v.literal("basic"), v.literal("pro"), v.literal("unlimited")),
+    tier: v.union(v.literal("basic"), v.literal("pro"), v.literal("power")),
     status: v.union(v.literal("active"), v.literal("cancelled"), v.literal("expired")),
     currentPeriodEnd: v.number(),
   },

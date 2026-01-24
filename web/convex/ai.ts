@@ -1,9 +1,11 @@
 "use node";
 
 import { v } from "convex/values";
-import { action, internalAction } from "./_generated/server";
-import { internal } from "./_generated/api";
 import { YoutubeTranscript } from "youtube-transcript";
+
+import { internal } from "./_generated/api";
+import { type Id } from "./_generated/dataModel";
+import { action, internalAction } from "./_generated/server";
 import { uploadAudio, uploadImage } from "./lib/storage";
 
 // ============================================
@@ -295,8 +297,8 @@ interface OpenRouterResponse {
 
 // Model configuration - ordered by preference (primary first, then fallbacks)
 const MODEL_CHAIN = [
-  "google/gemini-3-flash-preview",  // Primary: fast and cheap
-  "anthropic/claude-haiku-4.5",      // Fallback: reliable structured output
+  "google/gemini-3-flash-preview", // Primary: fast and cheap
+  "anthropic/claude-haiku-4.5", // Fallback: reliable structured output
 ];
 
 // For backward compatibility
@@ -449,9 +451,17 @@ async function callWithRetry<T>(options: CallWithRetryOptions<T>): Promise<T> {
 // SENTENCE GENERATION
 // ============================================
 
+interface SentenceTranslations {
+  en?: string;
+  ja?: string;
+  fr?: string;
+  zh?: string;
+}
+
 interface GeneratedSentence {
   sentence: string;
-  translation: string;
+  translation: string; // Kept for backwards compatibility (English)
+  translations: SentenceTranslations; // All UI language translations
 }
 
 const languageNames: Record<string, string> = {
@@ -482,14 +492,21 @@ async function generateSentenceHelper(args: {
 Respond ONLY with valid JSON in this exact format:
 {
   "sentence": "the example sentence in ${languageName}",
-  "translation": "the English translation"
+  "translations": {
+    "en": "English translation",
+    "ja": "Japanese translation (日本語訳)",
+    "fr": "French translation (traduction française)",
+    "zh": "Chinese translation (中文翻译)"
+  }
 }`;
 
   const prompt = `Create an example sentence for the ${languageName} word "${args.word}"${readingInfo}${levelInfo}.
 
 The word means: ${definitionList}
 
-Generate a natural, memorable sentence that clearly shows how to use this word. The sentence should be appropriate for language learners${levelInfo}.`;
+Generate a natural, memorable sentence that clearly shows how to use this word. The sentence should be appropriate for language learners${levelInfo}.
+
+Provide translations in all 4 languages: English, Japanese, French, and Chinese (Simplified).`;
 
   const sentenceSchema: JsonSchema = {
     name: "example_sentence",
@@ -497,28 +514,48 @@ Generate a natural, memorable sentence that clearly shows how to use this word. 
       type: "object",
       properties: {
         sentence: { type: "string", description: "The example sentence in the target language" },
-        translation: { type: "string", description: "English translation of the sentence" },
+        translations: {
+          type: "object",
+          description: "Translations in all UI languages",
+          properties: {
+            en: { type: "string", description: "English translation" },
+            ja: { type: "string", description: "Japanese translation" },
+            fr: { type: "string", description: "French translation" },
+            zh: { type: "string", description: "Chinese (Simplified) translation" },
+          },
+          required: ["en", "ja", "fr", "zh"],
+          additionalProperties: false,
+        },
       },
-      required: ["sentence", "translation"],
+      required: ["sentence", "translations"],
       additionalProperties: false,
     },
   };
 
+  interface RawGeneratedSentence {
+    sentence: string;
+    translations: SentenceTranslations;
+  }
+
   return callWithRetry<GeneratedSentence>({
     prompt,
     systemPrompt,
-    maxTokens: 500,
+    maxTokens: 800, // Increased for multiple translations
     jsonSchema: sentenceSchema,
     parse: (response) => {
-      const parsed = parseJson<GeneratedSentence>(response);
+      const parsed = parseJson<RawGeneratedSentence>(response);
       return {
         sentence: parsed.sentence,
-        translation: parsed.translation,
+        translation: parsed.translations.en ?? "", // Backwards compatibility
+        translations: parsed.translations,
       };
     },
     validate: (parsed) => {
-      if (!parsed.sentence || !parsed.translation) {
-        return "Missing sentence or translation";
+      if (!parsed.sentence || !parsed.translations) {
+        return "Missing sentence or translations";
+      }
+      if (!parsed.translations.en) {
+        return "Missing English translation";
       }
       return null;
     },
@@ -531,11 +568,7 @@ export const generateSentence = action({
     word: v.string(),
     reading: v.optional(v.string()),
     definitions: v.array(v.string()),
-    language: v.union(
-      v.literal("japanese"),
-      v.literal("english"),
-      v.literal("french")
-    ),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     examLevel: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<GeneratedSentence> => {
@@ -555,11 +588,7 @@ export const generateSentenceInternal = internalAction({
     word: v.string(),
     reading: v.optional(v.string()),
     definitions: v.array(v.string()),
-    language: v.union(
-      v.literal("japanese"),
-      v.literal("english"),
-      v.literal("french")
-    ),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     examLevel: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<GeneratedSentence> => {
@@ -635,10 +664,9 @@ export const generateFlashcardsBulk = action({
         }
 
         // Check if flashcard already exists
-        const existingFlashcard = await ctx.runQuery(
-          internal.aiHelpers.getFlashcardByVocabulary,
-          { vocabularyId }
-        );
+        const existingFlashcard = await ctx.runQuery(internal.aiHelpers.getFlashcardByVocabulary, {
+          vocabularyId,
+        });
 
         if (existingFlashcard) {
           // Skip if flashcard already exists
@@ -700,11 +728,7 @@ export const verifySentence = action({
     sentence: v.string(),
     targetWord: v.string(),
     wordDefinitions: v.array(v.string()),
-    language: v.union(
-      v.literal("japanese"),
-      v.literal("english"),
-      v.literal("french")
-    ),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
   },
   handler: async (ctx, args): Promise<VerificationResult> => {
     const languageNames: Record<string, string> = {
@@ -790,7 +814,18 @@ Provide detailed feedback and corrections if needed.`;
           feedback: { type: "string" },
           improvedSentence: { type: "string" },
         },
-        required: ["isCorrect", "grammarScore", "usageScore", "naturalnessScore", "overallScore", "difficultyLevel", "difficultyExplanation", "corrections", "feedback", "improvedSentence"],
+        required: [
+          "isCorrect",
+          "grammarScore",
+          "usageScore",
+          "naturalnessScore",
+          "overallScore",
+          "difficultyLevel",
+          "difficultyExplanation",
+          "corrections",
+          "feedback",
+          "improvedSentence",
+        ],
         additionalProperties: false,
       },
     };
@@ -860,10 +895,7 @@ export const generateFlashcardAudio = action({
     }
 
     // Generate audio using Gemini TTS
-    const audioResult = await generateTTSAudio(
-      flashcard.sentenceData.sentence,
-      vocab.language
-    );
+    const audioResult = await generateTTSAudio(flashcard.sentenceData.sentence, vocab.language);
 
     if (!audioResult) {
       console.error("Failed to generate audio");
@@ -871,10 +903,7 @@ export const generateFlashcardAudio = action({
     }
 
     // Upload audio to storage (R2)
-    const audioUrl = await uploadAudio(
-      new Uint8Array(audioResult.audioData),
-      audioResult.mimeType
-    );
+    const audioUrl = await uploadAudio(new Uint8Array(audioResult.audioData), audioResult.mimeType);
 
     // Update sentence with audio URL
     await ctx.runMutation(internal.aiHelpers.updateFlashcardAudio, {
@@ -893,7 +922,16 @@ export const generateFlashcardWithAudio = action({
     includeAudio: v.optional(v.boolean()),
     includeImage: v.optional(v.boolean()),
   },
-  handler: async (ctx, args): Promise<{ success: boolean; flashcardId?: string; audioUrl?: string; wordAudioUrl?: string; imageUrl?: string }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{
+    success: boolean;
+    flashcardId?: string;
+    audioUrl?: string;
+    wordAudioUrl?: string;
+    imageUrl?: string;
+  }> => {
     // Get the vocabulary item
     const vocab = await ctx.runQuery(internal.aiHelpers.getVocabulary, {
       vocabularyId: args.vocabularyId,
@@ -927,20 +965,14 @@ export const generateFlashcardWithAudio = action({
     // Generate sentence audio if requested (default: true)
     if (args.includeAudio !== false) {
       try {
-        const audioResult = await generateTTSAudio(
-          generated.sentence,
-          vocab.language
-        );
+        const audioResult = await generateTTSAudio(generated.sentence, vocab.language);
 
         if (audioResult) {
           // Upload audio to storage (R2)
-          audioUrl = await uploadAudio(
-            new Uint8Array(audioResult.audioData),
-            audioResult.mimeType
-          );
+          audioUrl = await uploadAudio(new Uint8Array(audioResult.audioData), audioResult.mimeType);
 
           await ctx.runMutation(internal.aiHelpers.updateFlashcardAudio, {
-            flashcardId: flashcardId as any,
+            flashcardId: flashcardId as Id<"flashcards">,
             audioUrl,
           });
         }
@@ -951,10 +983,7 @@ export const generateFlashcardWithAudio = action({
 
       // Generate word-only audio
       try {
-        const wordAudioResult = await generateTTSAudio(
-          vocab.word,
-          vocab.language
-        );
+        const wordAudioResult = await generateTTSAudio(vocab.word, vocab.language);
 
         if (wordAudioResult) {
           // Upload word audio to storage (R2)
@@ -964,7 +993,7 @@ export const generateFlashcardWithAudio = action({
           );
 
           await ctx.runMutation(internal.aiHelpers.updateFlashcardWordAudio, {
-            flashcardId: flashcardId as any,
+            flashcardId: flashcardId as Id<"flashcards">,
             wordAudioUrl,
           });
         }
@@ -985,13 +1014,10 @@ export const generateFlashcardWithAudio = action({
 
         if (imageResult) {
           // Upload image to storage (R2)
-          imageUrl = await uploadImage(
-            new Uint8Array(imageResult.imageData),
-            imageResult.mimeType
-          );
+          imageUrl = await uploadImage(new Uint8Array(imageResult.imageData), imageResult.mimeType);
 
           await ctx.runMutation(internal.aiHelpers.updateFlashcardImage, {
-            flashcardId: flashcardId as any,
+            flashcardId: flashcardId as Id<"flashcards">,
             imageUrl,
           });
         }
@@ -1058,12 +1084,12 @@ export const enhancePremadeVocabulary = action({
       hasSentenceAudio = !!existingSentence?.audioUrl;
     }
 
-    try {
-      let sentence = existingSentence?.sentence;
+    let sentence = existingSentence?.sentence;
       let sentenceTranslation = existingSentence?.translations?.en;
 
       // Generate sentence if missing and requested (default: true if missing)
-      const shouldGenerateSentence = args.generateSentence === true || (args.generateSentence !== false && !hasSentence);
+      const shouldGenerateSentence =
+        args.generateSentence === true || (args.generateSentence !== false && !hasSentence);
       if (shouldGenerateSentence) {
         const sentenceResult = await generateSentenceHelper({
           word: vocab.word,
@@ -1157,9 +1183,6 @@ export const enhancePremadeVocabulary = action({
       }
 
       return { success: true, generated };
-    } catch (error) {
-      throw error;
-    }
   },
 });
 
@@ -1169,7 +1192,14 @@ export const enhancePremadeVocabulary = action({
 
 interface ComprehensionQuestion {
   questionId: string;
-  type: "multiple_choice" | "translation" | "short_answer" | "inference" | "prediction" | "grammar" | "opinion";
+  type:
+    | "multiple_choice"
+    | "translation"
+    | "short_answer"
+    | "inference"
+    | "prediction"
+    | "grammar"
+    | "opinion";
   question: string;
   questionTranslation?: string;
   options?: string[];
@@ -1188,16 +1218,15 @@ export const generateComprehensionQuestions = action({
     storyId: v.string(),
     storyTitle: v.string(),
     storyContent: v.string(), // Full story text (plain text, not JSON)
-    language: v.union(
-      v.literal("japanese"),
-      v.literal("english"),
-      v.literal("french")
-    ),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     userId: v.string(),
     difficulty: v.number(), // 1-6 scale (required for caching)
     userLevel: v.optional(v.string()), // User's proficiency level (N3, B2, etc.) for display
   },
-  handler: async (ctx, args): Promise<{ comprehensionId: string; questions: ComprehensionQuestion[] }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{ comprehensionId: string; questions: ComprehensionQuestion[] }> => {
     // First, check if questions are cached for this story/difficulty
     const cachedQuestions = await ctx.runQuery(internal.storyQuestions.getForStoryInternal, {
       storyId: args.storyId,
@@ -1206,10 +1235,12 @@ export const generateComprehensionQuestions = action({
 
     if (cachedQuestions) {
       // Questions exist - create user's comprehension quiz from cached questions
-      const questionsWithIds = cachedQuestions.questions.map((q, index) => ({
-        ...q,
-        questionId: `q_${Date.now()}_${index}`,
-      }));
+      const questionsWithIds = cachedQuestions.questions.map(
+        (q: (typeof cachedQuestions.questions)[number], index: number) => ({
+          ...q,
+          questionId: `q_${Date.now()}_${index}`,
+        })
+      );
 
       const comprehensionId = await ctx.runMutation(internal.storyComprehension.createFromAI, {
         userId: args.userId,
@@ -1227,14 +1258,17 @@ export const generateComprehensionQuestions = action({
     const levelInfo = args.userLevel ? ` The learner is at ${args.userLevel} level.` : "";
 
     // Grammar examples for Japanese
-    const grammarExamples = args.language === "japanese" ? `
+    const grammarExamples =
+      args.language === "japanese"
+        ? `
 - Grammar implication questions: Test understanding of nuances like:
   - 〜たい (want to do)
   - はず (expectation/should be)
   - 〜てしまう (completion/regret)
   - 〜ようにする (try to/make sure to)
   - Passive vs causative forms
-  - Conditional forms (〜たら, 〜ば, 〜なら)` : "";
+  - Conditional forms (〜たら, 〜ば, 〜なら)`
+        : "";
 
     // Work budget system: aim for ~6 work units total
     // This creates variety - could be 6 easy questions or 2 hard ones
@@ -1313,7 +1347,18 @@ Create comprehension questions for the story above, aiming for a total of ${work
             items: {
               type: "object",
               properties: {
-                type: { type: "string", enum: ["multiple_choice", "translation", "short_answer", "inference", "prediction", "grammar", "opinion"] },
+                type: {
+                  type: "string",
+                  enum: [
+                    "multiple_choice",
+                    "translation",
+                    "short_answer",
+                    "inference",
+                    "prediction",
+                    "grammar",
+                    "opinion",
+                  ],
+                },
                 question: { type: "string", maxLength: 500 },
                 questionTranslation: { type: "string", maxLength: 500 },
                 options: { type: "array", items: { type: "string", maxLength: 100 } },
@@ -1332,13 +1377,16 @@ Create comprehension questions for the story above, aiming for a total of ${work
     };
 
     // Helper to sanitize and process questions
-    const processQuestions = (parsed: { questions: Omit<ComprehensionQuestion, "questionId">[] }): ComprehensionQuestion[] => {
+    const processQuestions = (parsed: {
+      questions: Omit<ComprehensionQuestion, "questionId">[];
+    }): ComprehensionQuestion[] => {
       return parsed.questions.map((q, index) => ({
         ...q,
         questionId: `q_${Date.now()}_${index}`,
         // For multiple_choice, rubric is not needed - remove it entirely
         // For other types, keep it short
-        rubric: q.type === "multiple_choice" ? undefined : (q.rubric ? q.rubric.slice(0, 150) : undefined),
+        rubric:
+          q.type === "multiple_choice" ? undefined : q.rubric ? q.rubric.slice(0, 150) : undefined,
         // Truncate answer fields
         correctAnswer: q.correctAnswer ? q.correctAnswer.slice(0, 300) : undefined,
       }));
@@ -1355,21 +1403,21 @@ Create comprehension questions for the story above, aiming for a total of ${work
           return "No questions generated";
         }
         // Check for corrupted fields (AI dumping chain of thought)
-        const corrupted = parsed.questions.some(q =>
-          (q.rubric && q.rubric.length > 200) ||
-          (q.correctAnswer && q.correctAnswer.length > 300)
+        const corrupted = parsed.questions.some(
+          (q) =>
+            (q.rubric && q.rubric.length > 200) || (q.correctAnswer && q.correctAnswer.length > 300)
         );
         if (corrupted) {
           return "Response contains corrupted fields (overly long rubric or correctAnswer)";
         }
         // Validate multiple_choice questions have required fields
-        const invalidMC = parsed.questions.some(q =>
-          q.type === "multiple_choice" && (
-            !q.correctAnswer ||
-            q.correctAnswer.trim() === "" ||
-            !q.options ||
-            q.options.length < 2
-          )
+        const invalidMC = parsed.questions.some(
+          (q) =>
+            q.type === "multiple_choice" &&
+            (!q.correctAnswer ||
+              q.correctAnswer.trim() === "" ||
+              !q.options ||
+              q.options.length < 2)
         );
         if (invalidMC) {
           return "Multiple choice questions must have correctAnswer and options";
@@ -1422,14 +1470,18 @@ export const gradeComprehensionAnswer = action({
     expectedAnswer: v.optional(v.string()), // For short answer, translation, grammar
     rubric: v.optional(v.string()), // For essay, inference, prediction, opinion
     storyContext: v.string(), // Relevant story content for context
-    language: v.union(
-      v.literal("japanese"),
-      v.literal("english"),
-      v.literal("french")
-    ),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     userLevel: v.optional(v.string()),
   },
-  handler: async (ctx, args): Promise<{ aiScore: number; aiFeedback: string; isCorrect: boolean; possibleAnswer: string }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{
+    aiScore: number;
+    aiFeedback: string;
+    isCorrect: boolean;
+    possibleAnswer: string;
+  }> => {
     const languageName = languageNames[args.language];
     const levelInfo = args.userLevel ? ` The student is at ${args.userLevel} level.` : "";
 
@@ -1445,14 +1497,25 @@ export const gradeComprehensionAnswer = action({
     };
     const typeLabel = questionTypeLabels[args.questionType] || args.questionType;
 
-    if ((args.questionType === "short_answer" || args.questionType === "translation" || args.questionType === "grammar") && args.expectedAnswer) {
+    if (
+      (args.questionType === "short_answer" ||
+        args.questionType === "translation" ||
+        args.questionType === "grammar") &&
+      args.expectedAnswer
+    ) {
       gradingInstructions = `Expected answer (or key points): ${args.expectedAnswer}
 
 Grade based on:
 - Accuracy of content (does it match the expected answer?)
 - Completeness (are all key points addressed?)
 - Language quality (for the student's level)`;
-    } else if ((args.questionType === "essay" || args.questionType === "inference" || args.questionType === "prediction" || args.questionType === "opinion") && args.rubric) {
+    } else if (
+      (args.questionType === "essay" ||
+        args.questionType === "inference" ||
+        args.questionType === "prediction" ||
+        args.questionType === "opinion") &&
+      args.rubric
+    ) {
       gradingInstructions = `Grading rubric: ${args.rubric}`;
     } else if (args.expectedAnswer) {
       gradingInstructions = `Expected answer (or key points): ${args.expectedAnswer}`;
@@ -1500,9 +1563,15 @@ Provide a score (0-100), detailed feedback in English, and a possible answer in 
         type: "object",
         properties: {
           aiScore: { type: "number", minimum: 0, maximum: 100 },
-          aiFeedback: { type: "string", description: "Detailed feedback for the student in English" },
+          aiFeedback: {
+            type: "string",
+            description: "Detailed feedback for the student in English",
+          },
           isCorrect: { type: "boolean", description: "True if score >= 70" },
-          possibleAnswer: { type: "string", description: `A sample correct answer written in ${languageName}` },
+          possibleAnswer: {
+            type: "string",
+            description: `A sample correct answer written in ${languageName}`,
+          },
         },
         required: ["aiScore", "aiFeedback", "isCorrect", "possibleAnswer"],
         additionalProperties: false,
@@ -1510,7 +1579,12 @@ Provide a score (0-100), detailed feedback in English, and a possible answer in 
     };
 
     try {
-      const parsed = await callWithRetry<{ aiScore: number; aiFeedback: string; isCorrect: boolean; possibleAnswer: string }>({
+      const parsed = await callWithRetry<{
+        aiScore: number;
+        aiFeedback: string;
+        isCorrect: boolean;
+        possibleAnswer: string;
+      }>({
         prompt,
         systemPrompt,
         maxTokens: 500,
@@ -1587,11 +1661,7 @@ function difficultyToLevel(difficulty: number, language: string): string {
 export const generatePlacementQuestion = action({
   args: {
     testId: v.id("placementTests"),
-    language: v.union(
-      v.literal("japanese"),
-      v.literal("english"),
-      v.literal("french")
-    ),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     targetDifficulty: v.number(), // -3 to +3 scale
     questionType: v.union(
       v.literal("vocabulary"),
@@ -1613,23 +1683,35 @@ export const generatePlacementQuestion = action({
 
 The question should test ${args.questionType} at ${level} level difficulty.
 
-${args.questionType === "vocabulary" ? `
+${
+  args.questionType === "vocabulary"
+    ? `
 For VOCABULARY questions:
 - Test recognition/meaning of words at ${level} level
 - Use words that are commonly tested at this level
-- Include context clues when appropriate` : ""}
+- Include context clues when appropriate`
+    : ""
+}
 
-${args.questionType === "grammar" ? `
+${
+  args.questionType === "grammar"
+    ? `
 For GRAMMAR questions:
 - Test grammar patterns appropriate for ${level} level
 - Use conjugations, particles, or sentence structures at this level
-- Provide clear context for the grammar point` : ""}
+- Provide clear context for the grammar point`
+    : ""
+}
 
-${args.questionType === "reading" ? `
+${
+  args.questionType === "reading"
+    ? `
 For READING questions:
 - Provide a short passage (2-3 sentences) at ${level} level
 - Ask a comprehension question about the passage
-- Test understanding of main ideas or details` : ""}
+- Test understanding of main ideas or details`
+    : ""
+}
 
 Respond ONLY with valid JSON in this exact format:
 {
@@ -1653,7 +1735,10 @@ IMPORTANT:
         type: "object",
         properties: {
           question: { type: "string", description: "The question text in the target language" },
-          questionTranslation: { type: "string", description: "English translation of the question" },
+          questionTranslation: {
+            type: "string",
+            description: "English translation of the question",
+          },
           options: { type: "array", items: { type: "string" }, minItems: 4, maxItems: 4 },
           correctAnswer: { type: "string", description: "Must exactly match one of the options" },
           explanation: { type: "string", description: "Brief explanation of the correct answer" },
@@ -1678,9 +1763,10 @@ IMPORTANT:
 
       // Fix correctAnswer if not in options
       if (!parsed.options.includes(parsed.correctAnswer)) {
-        const match = parsed.options.find(o =>
-          o.toLowerCase().includes(parsed.correctAnswer.toLowerCase()) ||
-          parsed.correctAnswer.toLowerCase().includes(o.toLowerCase())
+        const match = parsed.options.find(
+          (o) =>
+            o.toLowerCase().includes(parsed.correctAnswer.toLowerCase()) ||
+            parsed.correctAnswer.toLowerCase().includes(o.toLowerCase())
         );
         if (match) {
           parsed.correctAnswer = match;
@@ -1735,7 +1821,10 @@ export const getNextQuestionDifficulty = action({
   args: {
     testId: v.id("placementTests"),
   },
-  handler: async (ctx, args): Promise<{
+  handler: async (
+    ctx,
+    args
+  ): Promise<{
     targetDifficulty: number;
     suggestedType: "vocabulary" | "grammar" | "reading";
     shouldContinue: boolean;
@@ -1769,10 +1858,7 @@ export const getNextQuestionDifficulty = action({
       };
     }
 
-    if (
-      test.questionsAnswered >= MIN_QUESTIONS &&
-      test.abilityStandardError < SE_THRESHOLD
-    ) {
+    if (test.questionsAnswered >= MIN_QUESTIONS && test.abilityStandardError < SE_THRESHOLD) {
       return {
         targetDifficulty: 0,
         suggestedType: "vocabulary",
@@ -1798,7 +1884,11 @@ export const getNextQuestionDifficulty = action({
 
     // Cycle through question types
     const typeCycle: Array<"vocabulary" | "grammar" | "reading"> = [
-      "vocabulary", "grammar", "reading", "vocabulary", "grammar",
+      "vocabulary",
+      "grammar",
+      "reading",
+      "vocabulary",
+      "grammar",
     ];
     const suggestedType = typeCycle[test.questionsAnswered % typeCycle.length];
 
@@ -1837,7 +1927,10 @@ export const fetchYoutubeTranscript = action({
     videoId: v.string(),
     youtubeContentId: v.optional(v.id("youtubeContent")),
   },
-  handler: async (ctx, args): Promise<{ success: boolean; segmentCount: number; error?: string }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{ success: boolean; segmentCount: number; error?: string }> => {
     try {
       // Fetch transcript from YouTube
       const transcriptItems = await YoutubeTranscript.fetchTranscript(args.videoId);
@@ -1891,7 +1984,10 @@ export const refreshFlashcardSentence = action({
   args: {
     flashcardId: v.id("flashcards"),
   },
-  handler: async (ctx, args): Promise<{ success: boolean; sentence?: string; translation?: string; audioUrl?: string }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{ success: boolean; sentence?: string; translation?: string; audioUrl?: string }> => {
     // Get the flashcard
     const flashcard = await ctx.runQuery(internal.aiHelpers.getFlashcard, {
       flashcardId: args.flashcardId,
@@ -1923,17 +2019,11 @@ export const refreshFlashcardSentence = action({
 
     // Generate new audio for the sentence
     try {
-      const audioResult = await generateTTSAudio(
-        generated.sentence,
-        vocab.language
-      );
+      const audioResult = await generateTTSAudio(generated.sentence, vocab.language);
 
       if (audioResult) {
         // Upload audio to storage (R2)
-        audioUrl = await uploadAudio(
-          new Uint8Array(audioResult.audioData),
-          audioResult.mimeType
-        );
+        audioUrl = await uploadAudio(new Uint8Array(audioResult.audioData), audioResult.mimeType);
       }
     } catch (error) {
       console.error("Audio generation failed during refresh:", error);
@@ -1964,15 +2054,14 @@ export const generateVideoQuestions = action({
   args: {
     youtubeContentId: v.id("youtubeContent"),
     transcriptText: v.string(), // Full transcript text
-    language: v.union(
-      v.literal("japanese"),
-      v.literal("english"),
-      v.literal("french")
-    ),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     videoTitle: v.string(),
     userLevel: v.optional(v.string()),
   },
-  handler: async (ctx, args): Promise<{ success: boolean; questionCount: number; error?: string }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{ success: boolean; questionCount: number; error?: string }> => {
     const languageName = languageNames[args.language];
     const levelInfo = args.userLevel ? ` The learner is at ${args.userLevel} level.` : "";
 
@@ -2058,12 +2147,10 @@ Create comprehension questions for the video above, aiming for ${workBudget} wor
             return "No questions generated";
           }
           // Validate multiple_choice questions
-          const invalidMC = parsed.questions.some(q =>
-            q.type === "multiple_choice" && (
-              !q.correctAnswer ||
-              !q.options ||
-              q.options.length < 2
-            )
+          const invalidMC = parsed.questions.some(
+            (q) =>
+              q.type === "multiple_choice" &&
+              (!q.correctAnswer || !q.options || q.options.length < 2)
           );
           if (invalidMC) {
             return "Multiple choice questions must have correctAnswer and options";
@@ -2106,56 +2193,56 @@ interface ShadowingFeedback {
 /**
  * Parse SSE stream and accumulate audio + text chunks
  */
-async function parseAudioStream(
-  response: Response
-): Promise<{ textContent: string; audioData: string }> {
-  const reader = response.body?.getReader();
-  if (!reader) {
-    throw new Error("No response body");
-  }
-
-  const decoder = new TextDecoder();
-  let textContent = "";
-  let audioData = "";
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-
-    // Process complete SSE events
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || ""; // Keep incomplete line in buffer
-
-    for (const line of lines) {
-      if (line.startsWith("data: ")) {
-        const data = line.slice(6);
-        if (data === "[DONE]") continue;
-
-        try {
-          const parsed = JSON.parse(data);
-          const delta = parsed.choices?.[0]?.delta;
-
-          // Accumulate text content
-          if (delta?.content) {
-            textContent += delta.content;
-          }
-
-          // Accumulate audio data
-          if (delta?.audio?.data) {
-            audioData += delta.audio.data;
-          }
-        } catch {
-          // Skip malformed JSON
-        }
-      }
-    }
-  }
-
-  return { textContent, audioData };
-}
+// async function parseAudioStream(
+//   response: Response
+// ): Promise<{ textContent: string; audioData: string }> {
+//   const reader = response.body?.getReader();
+//   if (!reader) {
+//     throw new Error("No response body");
+//   }
+//
+//   const decoder = new TextDecoder();
+//   let textContent = "";
+//   let audioData = "";
+//   let buffer = "";
+//
+//   while (true) {
+//     const { done, value } = await reader.read();
+//     if (done) break;
+//
+//     buffer += decoder.decode(value, { stream: true });
+//
+//    // Process complete SSE events
+//    const lines = buffer.split("\n");
+//    buffer = lines.pop() || ""; // Keep incomplete line in buffer
+//
+//    for (const line of lines) {
+//      if (line.startsWith("data: ")) {
+//        const data = line.slice(6);
+//        if (data === "[DONE]") continue;
+//
+//        try {
+//          const parsed = JSON.parse(data);
+//          const delta = parsed.choices?.[0]?.delta;
+//
+//          // Accumulate text content
+//          if (delta?.content) {
+//            textContent += delta.content;
+//          }
+//
+//          // Accumulate audio data
+//          if (delta?.audio?.data) {
+//            audioData += delta.audio.data;
+//          }
+//        } catch {
+//          // Skip malformed JSON
+//        }
+//      }
+//    }
+//  }
+//
+//  return { textContent, audioData };
+// }
 
 /**
  * Evaluate a user's shadowing attempt using gpt-audio-mini
@@ -2164,11 +2251,7 @@ async function parseAudioStream(
 export const evaluateShadowing = action({
   args: {
     targetText: v.string(),
-    targetLanguage: v.union(
-      v.literal("japanese"),
-      v.literal("english"),
-      v.literal("french")
-    ),
+    targetLanguage: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     userAudioBase64: v.string(), // Base64 encoded audio (webm or wav)
   },
   handler: async (ctx, args): Promise<ShadowingFeedback> => {
@@ -2208,11 +2291,13 @@ Common issues to listen for:
           properties: {
             accuracyScore: {
               type: "number",
-              description: "Pronunciation accuracy score from 0-100. 90+ = near-native, 70-89 = good with minor issues, 50-69 = understandable but needs work, <50 = significant issues",
+              description:
+                "Pronunciation accuracy score from 0-100. 90+ = near-native, 70-89 = good with minor issues, 50-69 = understandable but needs work, <50 = significant issues",
             },
             feedbackText: {
               type: "string",
-              description: "Detailed feedback in English: what was good, what needs work, and specific tips to improve. Be thorough, 2-4 sentences.",
+              description:
+                "Detailed feedback in English: what was good, what needs work, and specific tips to improve. Be thorough, 2-4 sentences.",
             },
             spokenFeedback: {
               type: "string",
@@ -2377,8 +2462,8 @@ export const gradeExamAnswer = action({
     if (args.questionType === "short_answer" || args.questionType === "fill_blank") {
       const normalizedAnswer = args.userAnswer.trim().toLowerCase();
       const normalizedCorrect = (args.correctAnswer || "").trim().toLowerCase();
-      const acceptableNormalized = (args.acceptableAnswers || []).map(
-        (a) => a.trim().toLowerCase()
+      const acceptableNormalized = (args.acceptableAnswers || []).map((a) =>
+        a.trim().toLowerCase()
       );
 
       if (
@@ -2511,17 +2596,19 @@ Grade this answer.`;
  */
 export const gradeExamAnswersBatch = action({
   args: {
-    answers: v.array(v.object({
-      questionIndex: v.number(),
-      questionText: v.string(),
-      questionType: v.string(),
-      userAnswer: v.string(),
-      correctAnswer: v.optional(v.string()),
-      acceptableAnswers: v.optional(v.array(v.string())),
-      rubric: v.optional(v.string()),
-      passageText: v.optional(v.string()),
-      maxPoints: v.number(),
-    })),
+    answers: v.array(
+      v.object({
+        questionIndex: v.number(),
+        questionText: v.string(),
+        questionType: v.string(),
+        userAnswer: v.string(),
+        correctAnswer: v.optional(v.string()),
+        acceptableAnswers: v.optional(v.array(v.string())),
+        rubric: v.optional(v.string()),
+        passageText: v.optional(v.string()),
+        maxPoints: v.number(),
+      })
+    ),
     language: v.string(),
     examType: v.string(),
   },
@@ -2605,8 +2692,8 @@ export const gradeExamAnswerInternal = internalAction({
     if (args.questionType === "short_answer" || args.questionType === "fill_blank") {
       const normalizedAnswer = args.userAnswer.trim().toLowerCase();
       const normalizedCorrect = (args.correctAnswer || "").trim().toLowerCase();
-      const acceptableNormalized = (args.acceptableAnswers || []).map(
-        (a) => a.trim().toLowerCase()
+      const acceptableNormalized = (args.acceptableAnswers || []).map((a) =>
+        a.trim().toLowerCase()
       );
 
       if (
@@ -2706,6 +2793,237 @@ Student's answer: "${args.userAnswer}"`;
         feedback: "Unable to grade - manual review needed",
         detailedFeedback: { strengths: [], improvements: [], grammarErrors: [] },
         suggestedAnswer: args.correctAnswer || "",
+      };
+    }
+  },
+});
+
+// ============================================
+// INTERNAL ACTION WRAPPERS
+// ============================================
+// These are used by the centralized generation layer in lib/generation.ts
+
+/**
+ * Internal action wrapper for TTS audio generation
+ */
+export const generateTTSAudioAction = internalAction({
+  args: {
+    text: v.string(),
+    language: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; audioUrl?: string }> => {
+    const audioResult = await generateTTSAudio(args.text, args.language);
+
+    if (!audioResult) {
+      return { success: false };
+    }
+
+    // Upload audio to storage
+    const audioUrl = await uploadAudio(new Uint8Array(audioResult.audioData), audioResult.mimeType);
+
+    return { success: true, audioUrl };
+  },
+});
+
+/**
+ * Internal action wrapper for image generation
+ */
+export const generateFlashcardImageAction = internalAction({
+  args: {
+    word: v.string(),
+    sentence: v.string(),
+    language: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; imageUrl?: string }> => {
+    const imageResult = await generateFlashcardImage(args.word, args.sentence, args.language);
+
+    if (!imageResult) {
+      return { success: false };
+    }
+
+    // Upload image to storage
+    const imageUrl = await uploadImage(new Uint8Array(imageResult.imageData), imageResult.mimeType);
+
+    return { success: true, imageUrl };
+  },
+});
+
+/**
+ * Internal action wrapper for sentence verification
+ * Used by the gated generation layer
+ */
+interface InternalVerificationResultType {
+  isCorrect: boolean;
+  grammarScore: number;
+  usageScore: number;
+  naturalnessScore: number;
+  overallScore: number;
+  corrections: Array<{
+    original: string;
+    corrected: string;
+    explanation: string;
+  }>;
+  feedback: string;
+  improvedSentence: string;
+}
+
+export const verifySentenceInternal = internalAction({
+  args: {
+    userId: v.string(),
+    vocabularyId: v.id("vocabulary"),
+    targetWord: v.string(),
+    sentence: v.string(),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+  },
+  handler: async (ctx, args): Promise<InternalVerificationResultType> => {
+    // Get vocabulary definitions
+    const vocab = await ctx.runQuery(internal.aiHelpers.getVocabulary, {
+      vocabularyId: args.vocabularyId,
+    });
+
+    if (!vocab) {
+      throw new Error("Vocabulary not found");
+    }
+
+    const languageNames: Record<string, string> = {
+      japanese: "Japanese",
+      english: "English",
+      french: "French",
+    };
+
+    const languageName = languageNames[args.language];
+    const definitionList = vocab.definitions.join(", ");
+
+    const systemPrompt = `You are a ${languageName} language teacher evaluating a student's sentence. Be encouraging but accurate in your feedback.
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "isCorrect": boolean (true if the sentence is grammatically correct and uses the word properly),
+  "grammarScore": number (0-100),
+  "usageScore": number (0-100, how well the target word is used),
+  "naturalnessScore": number (0-100, how natural the sentence sounds to a native speaker),
+  "overallScore": number (0-100),
+  "corrections": [
+    {
+      "original": "the part that needs correction",
+      "corrected": "the corrected version",
+      "explanation": "why this correction is needed"
+    }
+  ],
+  "feedback": "overall feedback for the student",
+  "improvedSentence": "a more sophisticated version of the sentence"
+}`;
+
+    const prompt = `Please evaluate this ${languageName} sentence written by a language learner:
+
+Sentence: "${args.sentence}"
+
+The student is trying to use the word "${args.targetWord}" which means: ${definitionList}
+
+Evaluate the sentence for:
+1. Grammar correctness
+2. Proper usage of the target word
+3. Natural expression
+
+Provide detailed feedback and corrections if needed.`;
+
+    const verificationSchema: JsonSchema = {
+      name: "sentence_verification",
+      schema: {
+        type: "object",
+        properties: {
+          isCorrect: { type: "boolean" },
+          grammarScore: { type: "number", minimum: 0, maximum: 100 },
+          usageScore: { type: "number", minimum: 0, maximum: 100 },
+          naturalnessScore: { type: "number", minimum: 0, maximum: 100 },
+          overallScore: { type: "number", minimum: 0, maximum: 100 },
+          corrections: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                original: { type: "string" },
+                corrected: { type: "string" },
+                explanation: { type: "string" },
+              },
+              required: ["original", "corrected", "explanation"],
+              additionalProperties: false,
+            },
+          },
+          feedback: { type: "string" },
+          improvedSentence: { type: "string" },
+        },
+        required: [
+          "isCorrect",
+          "grammarScore",
+          "usageScore",
+          "naturalnessScore",
+          "overallScore",
+          "corrections",
+          "feedback",
+          "improvedSentence",
+        ],
+        additionalProperties: false,
+      },
+    };
+
+    interface InternalVerificationResult {
+      isCorrect: boolean;
+      grammarScore: number;
+      usageScore: number;
+      naturalnessScore: number;
+      overallScore: number;
+      corrections: Array<{
+        original: string;
+        corrected: string;
+        explanation: string;
+      }>;
+      feedback: string;
+      improvedSentence: string;
+    }
+
+    try {
+      const result = await callWithRetry<InternalVerificationResult>({
+        prompt,
+        systemPrompt,
+        maxTokens: 1000,
+        jsonSchema: verificationSchema,
+        parse: (response) => parseJson<InternalVerificationResult>(response),
+        validate: (parsed) => {
+          if (typeof parsed.overallScore !== "number") {
+            return "Missing overallScore";
+          }
+          return null;
+        },
+      });
+
+      // Save the verification result
+      await ctx.runMutation(internal.aiHelpers.saveUserSentenceVerification, {
+        userId: args.userId,
+        vocabularyId: args.vocabularyId,
+        targetWord: args.targetWord,
+        sentence: args.sentence,
+        isCorrect: result.isCorrect,
+        grammarScore: result.grammarScore,
+        usageScore: result.usageScore,
+        naturalnessScore: result.naturalnessScore,
+        overallScore: result.overallScore,
+        corrections: result.corrections,
+        feedback: result.feedback,
+        improvedSentence: result.improvedSentence,
+      });
+
+      return result;
+    } catch {
+      return {
+        isCorrect: false,
+        grammarScore: 0,
+        usageScore: 0,
+        naturalnessScore: 0,
+        overallScore: 0,
+        corrections: [],
+        feedback: "Unable to verify sentence. Please try again.",
+        improvedSentence: args.sentence,
       };
     }
   },

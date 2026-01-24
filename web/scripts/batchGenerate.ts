@@ -14,10 +14,11 @@
  */
 
 import { ConvexHttpClient } from "convex/browser";
-import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
 import * as fs from "fs";
 import * as path from "path";
+
+import { api } from "../convex/_generated/api";
+import type { Id } from "../convex/_generated/dataModel";
 
 // ============================================
 // CONFIGURATION
@@ -536,7 +537,7 @@ async function submitInlineBatch(
 
   // Build inline requests per the docs format
   // { batch: { input_config: { requests: { requests: [...] } } } }
-  const requests = items.map((item, index) => ({
+  const requests = items.map((item) => ({
     request: {
       contents: [
         {
@@ -799,7 +800,7 @@ Examples:
     await submitInlineBatch(items, jobId);
   } else {
     // For larger batches, use file upload
-    const { filePath, items, jobId } = await generateSentenceBatchFile(
+    const { filePath, jobId } = await generateSentenceBatchFile(
       deckId,
       actualCount
     );

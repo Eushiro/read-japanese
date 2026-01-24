@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+
+import { mutation,query } from "./_generated/server";
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -48,8 +49,10 @@ export const get = query({
       dailyReviewGoal: prefs.srs.dailyReviewGoal ?? DEFAULT_SETTINGS.dailyReviewGoal,
       newCardsPerDay: prefs.srs.newCardsPerDay ?? DEFAULT_SETTINGS.newCardsPerDay,
       sentenceRefreshDays: prefs.srs.sentenceRefreshDays ?? DEFAULT_SETTINGS.sentenceRefreshDays,
-      reviewReminderEnabled: prefs.notifications?.reviewReminderEnabled ?? DEFAULT_SETTINGS.reviewReminderEnabled,
-      reviewReminderTime: prefs.notifications?.reviewReminderTime ?? DEFAULT_SETTINGS.reviewReminderTime,
+      reviewReminderEnabled:
+        prefs.notifications?.reviewReminderEnabled ?? DEFAULT_SETTINGS.reviewReminderEnabled,
+      reviewReminderTime:
+        prefs.notifications?.reviewReminderTime ?? DEFAULT_SETTINGS.reviewReminderTime,
     };
   },
 });
@@ -85,7 +88,11 @@ export const update = mutation({
       const patchData: Record<string, unknown> = { updatedAt: now };
 
       // Display updates
-      if (updates.showFurigana !== undefined || updates.theme !== undefined || updates.fontSize !== undefined) {
+      if (
+        updates.showFurigana !== undefined ||
+        updates.theme !== undefined ||
+        updates.fontSize !== undefined
+      ) {
         patchData.display = {
           showFurigana: updates.showFurigana ?? existing.display.showFurigana,
           theme: updates.theme ?? existing.display.theme,
@@ -94,7 +101,11 @@ export const update = mutation({
       }
 
       // Audio updates
-      if (updates.autoplayAudio !== undefined || updates.audioHighlightMode !== undefined || updates.audioSpeed !== undefined) {
+      if (
+        updates.autoplayAudio !== undefined ||
+        updates.audioHighlightMode !== undefined ||
+        updates.audioSpeed !== undefined
+      ) {
         patchData.audio = {
           autoplay: updates.autoplayAudio ?? existing.audio.autoplay,
           highlightMode: updates.audioHighlightMode ?? existing.audio.highlightMode,
@@ -103,7 +114,11 @@ export const update = mutation({
       }
 
       // SRS updates (only the userSettings portion - FSRS settings are handled separately)
-      if (updates.dailyReviewGoal !== undefined || updates.newCardsPerDay !== undefined || updates.sentenceRefreshDays !== undefined) {
+      if (
+        updates.dailyReviewGoal !== undefined ||
+        updates.newCardsPerDay !== undefined ||
+        updates.sentenceRefreshDays !== undefined
+      ) {
         patchData.srs = {
           ...existing.srs,
           dailyReviewGoal: updates.dailyReviewGoal ?? existing.srs.dailyReviewGoal,
@@ -115,8 +130,10 @@ export const update = mutation({
       // Notification updates
       if (updates.reviewReminderEnabled !== undefined || updates.reviewReminderTime !== undefined) {
         patchData.notifications = {
-          reviewReminderEnabled: updates.reviewReminderEnabled ?? existing.notifications?.reviewReminderEnabled,
-          reviewReminderTime: updates.reviewReminderTime ?? existing.notifications?.reviewReminderTime,
+          reviewReminderEnabled:
+            updates.reviewReminderEnabled ?? existing.notifications?.reviewReminderEnabled,
+          reviewReminderTime:
+            updates.reviewReminderTime ?? existing.notifications?.reviewReminderTime,
         };
       }
 
@@ -145,7 +162,8 @@ export const update = mutation({
           preset: "default",
         },
         notifications: {
-          reviewReminderEnabled: updates.reviewReminderEnabled ?? DEFAULT_SETTINGS.reviewReminderEnabled,
+          reviewReminderEnabled:
+            updates.reviewReminderEnabled ?? DEFAULT_SETTINGS.reviewReminderEnabled,
           reviewReminderTime: updates.reviewReminderTime ?? DEFAULT_SETTINGS.reviewReminderTime,
         },
         updatedAt: now,

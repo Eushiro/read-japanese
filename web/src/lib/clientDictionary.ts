@@ -88,7 +88,7 @@ export async function loadDictionary(language: Language): Promise<DictionaryEntr
     .then((data: unknown[]) => {
       const entries = parseEntries(data, language);
       cache[language] = entries;
-      console.log(`Loaded ${entries.length} ${language} words`);
+      // Dictionary loaded successfully
       return entries;
     })
     .catch((err) => {
@@ -151,9 +151,8 @@ export async function searchClientDictionary(
   const entries = await loadDictionary(language);
 
   // For Japanese, get multiple search terms (romaji -> hiragana/katakana)
-  const searchTerms = language === "japanese"
-    ? getJapaneseSearchTerms(query)
-    : [query.toLowerCase()];
+  const searchTerms =
+    language === "japanese" ? getJapaneseSearchTerms(query) : [query.toLowerCase()];
 
   const results: DictionaryEntry[] = [];
   const seen = new Set<string>();
@@ -164,8 +163,8 @@ export async function searchClientDictionary(
     const readingLower = entry.reading?.toLowerCase() || "";
 
     // Check if any search term matches
-    const matches = searchTerms.some(term =>
-      wordLower.startsWith(term) || readingLower.startsWith(term)
+    const matches = searchTerms.some(
+      (term) => wordLower.startsWith(term) || readingLower.startsWith(term)
     );
 
     if (matches && !seen.has(entry.word)) {

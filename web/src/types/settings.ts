@@ -31,8 +31,16 @@ export const DEFAULT_SETTINGS: Settings = {
 
 export const FONT_OPTIONS: { value: FontName; label: string; fontFamily: string }[] = [
   { value: "system", label: "System", fontFamily: "system-ui, sans-serif" },
-  { value: "hiragino-sans", label: "Hiragino Sans", fontFamily: '"Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif' },
-  { value: "hiragino-mincho", label: "Hiragino Mincho", fontFamily: '"Hiragino Mincho ProN", serif' },
+  {
+    value: "hiragino-sans",
+    label: "Hiragino Sans",
+    fontFamily: '"Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif',
+  },
+  {
+    value: "hiragino-mincho",
+    label: "Hiragino Mincho",
+    fontFamily: '"Hiragino Mincho ProN", serif',
+  },
   { value: "noto-sans-jp", label: "Noto Sans JP", fontFamily: '"Noto Sans JP", sans-serif' },
 ];
 

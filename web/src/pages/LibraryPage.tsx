@@ -1,22 +1,14 @@
-import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { StoryCard } from "@/components/library/StoryCard";
-import { SearchBar, matchesSearch } from "@/components/library/SearchBar";
-import { LevelFilter } from "@/components/library/LevelFilter";
-import { Paywall } from "@/components/Paywall";
+import { BookOpen, Film,Library, Sparkles } from "lucide-react";
+import { useEffect,useMemo, useState } from "react";
+
 import { GenerateStoryModal } from "@/components/GenerateStoryModal";
-import {
-  useStories,
-  useFilteredStories,
-  sortStories,
-  type SortOption,
-} from "@/hooks/useStories";
-import type { ProficiencyLevel, StoryListItem } from "@/types/story";
-import { Library, BookOpen, Sparkles, Film } from "lucide-react";
+import { LevelFilter } from "@/components/library/LevelFilter";
+import { matchesSearch,SearchBar } from "@/components/library/SearchBar";
+import { StoryCard } from "@/components/library/StoryCard";
 import { VideoCard, VideoCardSkeleton, type VideoItem } from "@/components/library/VideoCard";
-import { useAuth, SignInButton } from "@/contexts/AuthContext";
+import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -25,19 +17,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SignInButton,useAuth } from "@/contexts/AuthContext";
+import { type SortOption,sortStories, useFilteredStories, useStories } from "@/hooks/useStories";
+import { useT } from "@/lib/i18n";
+import type { ProficiencyLevel, StoryListItem } from "@/types/story";
+
+import { api } from "../../convex/_generated/api";
 
 type Language = "japanese" | "english" | "french";
 
-const LANGUAGE_INFO: Record<Language, { label: string; flag: string }> = {
-  japanese: { label: "Japanese", flag: "🇯🇵" },
-  english: { label: "English", flag: "🇬🇧" },
-  french: { label: "French", flag: "🇫🇷" },
+const LANGUAGE_FLAGS: Record<Language, string> = {
+  japanese: "🇯🇵",
+  english: "🇬🇧",
+  french: "🇫🇷",
 };
 
 type ContentFilter = "all" | "stories" | "videos";
 
 export function LibraryPage() {
   const navigate = useNavigate();
+  const t = useT();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<ProficiencyLevel | null>(null);
@@ -68,6 +67,7 @@ export function LibraryPage() {
 
   // Reset level filter when language changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: reset dependent state when filter changes
     setSelectedLevel(null);
   }, [selectedLanguage]);
 
@@ -92,23 +92,20 @@ export function LibraryPage() {
   const filteredVideos = useMemo(() => {
     if (!videos) return [];
     if (!searchTerm.trim()) return videos;
-    return videos.filter((v) =>
-      matchesSearch(v.title, searchTerm) ||
-      matchesSearch(v.description || "", searchTerm)
+    return videos.filter(
+      (v) => matchesSearch(v.title, searchTerm) || matchesSearch(v.description || "", searchTerm)
     );
   }, [videos, searchTerm]);
-
-  const isLoading = contentFilter === "all"
-    ? (isLoadingStories || isLoadingVideos)
-    : contentFilter === "stories" ? isLoadingStories : isLoadingVideos;
 
   // Check if content exists (after loading)
   const hasStories = !isLoadingStories && sortedStories.length > 0;
   const hasVideos = !isLoadingVideos && filteredVideos.length > 0;
 
   // Show sections based on filter AND content availability
-  const showStories = (contentFilter === "all" || contentFilter === "stories") && (isLoadingStories || hasStories);
-  const showVideos = (contentFilter === "all" || contentFilter === "videos") && (isLoadingVideos || hasVideos);
+  const showStories =
+    (contentFilter === "all" || contentFilter === "stories") && (isLoadingStories || hasStories);
+  const showVideos =
+    (contentFilter === "all" || contentFilter === "videos") && (isLoadingVideos || hasVideos);
 
   const handleStoryClick = (story: StoryListItem) => {
     // Show paywall for premium stories if user doesn't have premium
@@ -131,7 +128,7 @@ export function LibraryPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-destructive">
-        <p className="text-lg font-medium">Failed to load stories</p>
+        <p className="text-lg font-medium">{t('library.errors.loadFailed')}</p>
         <p className="text-sm text-muted-foreground">{error.message}</p>
       </div>
     );
@@ -151,28 +148,34 @@ export function LibraryPage() {
                 <Library className="w-5 h-5 text-blue-400" />
               </div>
               <span className="text-sm font-semibold text-blue-400 uppercase tracking-wider">
-                Your Library
+                {t('library.hero.badge')}
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-              Graded Readers
+            <h1
+              className="text-3xl sm:text-4xl font-bold text-foreground mb-3"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t('library.hero.title')}
             </h1>
             <p className="text-foreground-muted text-lg">
-              Stories tailored to your level. Tap any word to see its meaning.
+              {t('library.hero.subtitle')}
             </p>
 
             {/* Generate Story CTA */}
             <div className="mt-6">
               {isAuthenticated ? (
-                <Button className="gap-2 shadow-lg shadow-accent/25" onClick={() => setShowGenerateModal(true)}>
+                <Button
+                  className="gap-2 shadow-lg shadow-accent/25"
+                  onClick={() => setShowGenerateModal(true)}
+                >
                   <Sparkles className="w-4 h-4" />
-                  Generate Custom Story
+                  {t('library.hero.generateStory')}
                 </Button>
               ) : (
                 <SignInButton mode="modal">
                   <Button className="gap-2 shadow-lg shadow-accent/25">
                     <Sparkles className="w-4 h-4" />
-                    Generate Custom Story
+                    {t('library.hero.generateStory')}
                   </Button>
                 </SignInButton>
               )}
@@ -187,11 +190,7 @@ export function LibraryPage() {
           <div className="flex gap-3">
             {/* Search */}
             <div className="flex-1">
-              <SearchBar
-                value={searchTerm}
-                onChange={setSearchTerm}
-                placeholder="Search..."
-              />
+              <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder={t('library.searchPlaceholder')} />
             </div>
 
             {/* Content Type Filter */}
@@ -203,9 +202,9 @@ export function LibraryPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="stories">Stories</SelectItem>
-                <SelectItem value="videos">Videos</SelectItem>
+                <SelectItem value="all">{t('library.filters.all')}</SelectItem>
+                <SelectItem value="stories">{t('library.filters.stories')}</SelectItem>
+                <SelectItem value="videos">{t('library.filters.videos')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -213,16 +212,18 @@ export function LibraryPage() {
             {hasMultipleLanguages && userLanguages && (
               <Select
                 value={selectedLanguage ?? "all"}
-                onValueChange={(value) => setSelectedLanguage(value === "all" ? null : value as Language)}
+                onValueChange={(value) =>
+                  setSelectedLanguage(value === "all" ? null : (value as Language))
+                }
               >
                 <SelectTrigger className="w-[130px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Languages</SelectItem>
+                  <SelectItem value="all">{t('library.filters.allLanguages')}</SelectItem>
                   {userLanguages.map((lang) => (
                     <SelectItem key={lang} value={lang}>
-                      {LANGUAGE_INFO[lang].flag} {LANGUAGE_INFO[lang].label}
+                      {LANGUAGE_FLAGS[lang]} {t(`library.languages.${lang}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -249,9 +250,7 @@ export function LibraryPage() {
           <section>
             <div className="flex items-center gap-2 mb-4">
               <BookOpen className="w-5 h-5 text-accent" />
-              <h2 className="text-lg font-semibold text-foreground">
-                Stories
-              </h2>
+              <h2 className="text-lg font-semibold text-foreground">{t('library.sections.stories')}</h2>
             </div>
 
             {isLoadingStories ? (
@@ -283,9 +282,7 @@ export function LibraryPage() {
           <section>
             <div className="flex items-center gap-2 mb-4">
               <Film className="w-5 h-5 text-accent" />
-              <h2 className="text-lg font-semibold text-foreground">
-                Videos
-              </h2>
+              <h2 className="text-lg font-semibold text-foreground">{t('library.sections.videos')}</h2>
             </div>
 
             {isLoadingVideos ? (
@@ -313,17 +310,10 @@ export function LibraryPage() {
       </div>
 
       {/* Paywall Modal */}
-      <Paywall
-        isOpen={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        feature="stories"
-      />
+      <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="stories" />
 
       {/* Generate Story Modal */}
-      <GenerateStoryModal
-        isOpen={showGenerateModal}
-        onClose={() => setShowGenerateModal(false)}
-      />
+      <GenerateStoryModal isOpen={showGenerateModal} onClose={() => setShowGenerateModal(false)} />
     </div>
   );
 }
@@ -334,11 +324,12 @@ interface SortDropdownProps {
 }
 
 function SortDropdown({ value, onChange }: SortDropdownProps) {
-  const options: { value: SortOption; label: string }[] = [
-    { value: "level-asc", label: "Easy → Hard" },
-    { value: "level-desc", label: "Hard → Easy" },
-    { value: "title", label: "Title (A-Z)" },
-    { value: "newest", label: "Newest" },
+  const t = useT();
+  const options: { value: SortOption; labelKey: string }[] = [
+    { value: "level-asc", labelKey: "library.sort.easyToHard" },
+    { value: "level-desc", labelKey: "library.sort.hardToEasy" },
+    { value: "title", labelKey: "library.sort.titleAZ" },
+    { value: "newest", labelKey: "library.sort.newest" },
   ];
 
   return (
@@ -349,7 +340,7 @@ function SortDropdown({ value, onChange }: SortDropdownProps) {
       <SelectContent>
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
-            {option.label}
+            {t(option.labelKey)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -362,7 +353,7 @@ function StoryCardSkeleton({ delay = 0 }: { delay?: number }) {
     <div
       className="rounded-xl overflow-hidden bg-surface animate-pulse"
       style={{
-        boxShadow: 'var(--shadow-card)',
+        boxShadow: "var(--shadow-card)",
         animationDelay: `${delay}ms`,
       }}
     >

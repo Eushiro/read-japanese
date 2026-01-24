@@ -18,12 +18,12 @@
  *   1:30 And so on...
  */
 
-import { YoutubeTranscript } from "youtube-transcript";
 import { ConvexHttpClient } from "convex/browser";
-import { api } from "../convex/_generated/api";
 import * as fs from "fs";
-import * as path from "path";
 import * as readline from "readline";
+import { YoutubeTranscript } from "youtube-transcript";
+
+import { api } from "../convex/_generated/api";
 
 // ============================================
 // CONFIGURATION
@@ -345,8 +345,9 @@ async function main() {
         } else {
           console.log(`  ⚠ Question generation failed: ${result.error}\n`);
         }
-      } catch (error: any) {
-        console.log(`  ⚠ Question generation error: ${error.message}\n`);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.log(`  ⚠ Question generation error: ${message}\n`);
       }
     }
 
@@ -358,8 +359,9 @@ async function main() {
   Video "${metadata.title}" added successfully!
   View at: /library → Videos tab
 `);
-  } catch (error: any) {
-    console.error(`  ❌ Database error: ${error.message}\n`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`  ❌ Database error: ${message}\n`);
     process.exit(1);
   }
 }

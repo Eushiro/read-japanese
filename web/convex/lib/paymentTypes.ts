@@ -5,7 +5,7 @@
  * without changing the application code.
  */
 
-import type { SubscriptionTier, SubscriptionStatus } from "../schema";
+import type { SubscriptionStatus,SubscriptionTier } from "../schema";
 
 /**
  * Result of creating a checkout session

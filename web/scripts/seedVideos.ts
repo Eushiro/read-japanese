@@ -9,7 +9,6 @@
  */
 
 import { mutation } from "../convex/_generated/server";
-import { v } from "convex/values";
 
 // Educational videos curated for language learning
 const SEED_VIDEOS = [

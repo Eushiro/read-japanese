@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { Pause, Play, RotateCcw } from "lucide-react";
+import { useCallback,useEffect, useRef, useState } from "react";
+
+import { useT } from "@/lib/i18n";
 
 interface AudioPlayerProps {
   src: string;
@@ -7,6 +9,7 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ src, onTimeUpdate }: AudioPlayerProps) {
+  const t = useT();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -15,6 +18,7 @@ export function AudioPlayer({ src, onTimeUpdate }: AudioPlayerProps) {
 
   // Reset when source changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: sync state with new audio source
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
@@ -101,11 +105,7 @@ export function AudioPlayer({ src, onTimeUpdate }: AudioPlayerProps) {
         disabled={isLoading}
         className="w-8 h-8 flex items-center justify-center rounded-full bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50 shrink-0"
       >
-        {isPlaying ? (
-          <Pause className="w-3.5 h-3.5" />
-        ) : (
-          <Play className="w-3.5 h-3.5 ml-0.5" />
-        )}
+        {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
       </button>
 
       {/* Time display */}
@@ -139,7 +139,7 @@ export function AudioPlayer({ src, onTimeUpdate }: AudioPlayerProps) {
         onClick={handleRestart}
         disabled={isLoading}
         className="p-1.5 rounded-full text-foreground-muted hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50 shrink-0"
-        title="Restart"
+        title={t("reader.audioPlayer.restart")}
       >
         <RotateCcw className="w-3.5 h-3.5" />
       </button>

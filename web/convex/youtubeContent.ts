@@ -1,8 +1,8 @@
 import { v } from "convex/values";
-import { query, mutation, internalMutation } from "./_generated/server";
+
+import { internalMutation,mutation, query } from "./_generated/server";
 import { languageValidator } from "./schema";
-import type { Id } from "./_generated/dataModel";
-import { VIDEOS, validateVideo, getThumbnailUrl } from "./videoData";
+import { getThumbnailUrl,validateVideo, VIDEOS } from "./videoData";
 
 // ============================================
 // QUERIES
@@ -34,10 +34,7 @@ export const list = query({
         .withIndex("by_language", (q) => q.eq("language", args.language!))
         .take(limit);
     } else {
-      videos = await ctx.db
-        .query("youtubeContent")
-        .order("desc")
-        .take(limit);
+      videos = await ctx.db.query("youtubeContent").order("desc").take(limit);
     }
 
     return videos;
@@ -124,7 +121,8 @@ export const seed = mutation({
         level: args.level,
         title: args.title,
         description: args.description,
-        thumbnailUrl: args.thumbnailUrl ?? `https://img.youtube.com/vi/${args.videoId}/hqdefault.jpg`,
+        thumbnailUrl:
+          args.thumbnailUrl ?? `https://img.youtube.com/vi/${args.videoId}/hqdefault.jpg`,
         duration: args.duration,
       });
       return existing._id;
@@ -346,7 +344,8 @@ export const seedStarterVideos = mutation({
         language: "japanese" as const,
         level: "N5",
         title: "自己紹介 - Self Introduction in Japanese",
-        description: "Learn basic self-introduction phrases in Japanese. Perfect for absolute beginners.",
+        description:
+          "Learn basic self-introduction phrases in Japanese. Perfect for absolute beginners.",
         duration: 180,
       },
       {
@@ -536,7 +535,7 @@ export const seedAllVideos = mutation({
     });
 
     if (allErrors.length > 0) {
-      const errorMsg = `❌ Validation failed with ${allErrors.length} error(s):\n${allErrors.map(e => `  • ${e}`).join("\n")}`;
+      const errorMsg = `❌ Validation failed with ${allErrors.length} error(s):\n${allErrors.map((e) => `  • ${e}`).join("\n")}`;
       console.error(errorMsg);
       throw new Error(errorMsg);
     }

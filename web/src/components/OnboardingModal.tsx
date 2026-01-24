@@ -1,10 +1,23 @@
-import { useState, useEffect, useRef } from "react";
-import { useMutation, useAction } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useAction,useMutation } from "convex/react";
+import {
+  BookmarkCheck,
+  BookOpen,
+  Brain,
+  Check,
+  ChevronRight,
+  Globe,
+  GraduationCap,
+  PenLine,
+  Sparkles,
+} from "lucide-react";
+import { useEffect, useRef,useState } from "react";
+
 import { Button } from "@/components/ui/button";
-import { Check, ChevronRight, Globe, GraduationCap, Sparkles, BookOpen, BookmarkCheck, Brain, PenLine } from "lucide-react";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { LANGUAGES, EXAMS_BY_LANGUAGE, detectTargetLanguage, type Language } from "@/lib/languages";
+import { useT } from "@/lib/i18n";
+import { detectTargetLanguage, EXAMS_BY_LANGUAGE, type Language,LANGUAGES } from "@/lib/languages";
+
+import { api } from "../../convex/_generated/api";
 
 interface OnboardingModalProps {
   userId: string;
@@ -19,6 +32,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const startTime = useRef(Date.now());
+  const t = useT();
 
   const upsertUser = useMutation(api.users.upsert);
   const ensureStripeCustomer = useAction(api.stripe.ensureStripeCustomer);
@@ -29,6 +43,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
     trackEvent(events.ONBOARDING_STARTED, {
       user_id: userId,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally run only on mount
   }, []);
 
   // Pre-select detected language on mount
@@ -39,9 +54,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
 
   const handleLanguageToggle = (lang: Language) => {
     const isRemoving = selectedLanguages.includes(lang);
-    setSelectedLanguages((prev) =>
-      isRemoving ? prev.filter((l) => l !== lang) : [...prev, lang]
-    );
+    setSelectedLanguages((prev) => (isRemoving ? prev.filter((l) => l !== lang) : [...prev, lang]));
     if (!isRemoving) {
       trackEvent(events.ONBOARDING_LANGUAGE_SELECTED, { language: lang });
     }
@@ -49,9 +62,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
 
   const handleExamToggle = (exam: string) => {
     const isRemoving = selectedExams.includes(exam);
-    setSelectedExams((prev) =>
-      isRemoving ? prev.filter((e) => e !== exam) : [...prev, exam]
-    );
+    setSelectedExams((prev) => (isRemoving ? prev.filter((e) => e !== exam) : [...prev, exam]));
     if (!isRemoving) {
       trackEvent(events.ONBOARDING_EXAM_SELECTED, { exam });
     }
@@ -67,7 +78,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         email: userEmail ?? undefined,
         name: userName ?? undefined,
         languages: selectedLanguages,
-        targetExams: selectedExams as any[],
+        targetExams: selectedExams,
         primaryLanguage: selectedLanguages[0],
       });
 
@@ -118,14 +129,15 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center mx-auto mb-6">
                 <Sparkles className="w-8 h-8 text-purple-400" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-                Welcome to SanLang
+              <h2
+                className="text-2xl font-bold text-foreground mb-2"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("onboarding.welcome.title")}
               </h2>
-              <p className="text-foreground mb-8">
-                Let's set up your personalized exam prep
-              </p>
+              <p className="text-foreground mb-8">{t("onboarding.welcome.subtitle")}</p>
               <Button onClick={() => setStep(1)} className="w-full gap-2" size="lg">
-                Get Started
+                {t("onboarding.welcome.getStarted")}
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
@@ -140,56 +152,59 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
             <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/25 rounded-full blur-3xl" />
             <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-green-500/20 rounded-full blur-3xl" />
             <div className="relative p-8">
-              <h2 className="text-xl font-bold text-foreground mb-2 text-center" style={{ fontFamily: 'var(--font-display)' }}>
-                How SanLang Works
+              <h2
+                className="text-xl font-bold text-foreground mb-2 text-center"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("onboarding.howItWorks.title")}
               </h2>
               <p className="text-foreground mb-6 text-center">
-                Master vocabulary through our proven learning loop
+                {t("onboarding.howItWorks.subtitle")}
               </p>
 
-            <div className="grid grid-cols-2 gap-3 mb-8">
-              <div className="bg-gradient-to-br from-blue-500/15 to-blue-500/5 rounded-xl border border-blue-500/20 p-4 text-center">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
-                  <BookOpen className="w-5 h-5 text-blue-400" />
+              <div className="grid grid-cols-2 gap-3 mb-8">
+                <div className="bg-gradient-to-br from-blue-500/15 to-blue-500/5 rounded-xl border border-blue-500/20 p-4 text-center">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
+                    <BookOpen className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="text-sm font-semibold text-foreground">{t("onboarding.howItWorks.steps.read.title")}</div>
+                  <div className="text-xs text-foreground/80">{t("onboarding.howItWorks.steps.read.description")}</div>
                 </div>
-                <div className="text-sm font-semibold text-foreground">1. Read</div>
-                <div className="text-xs text-foreground/80">Stories at your level</div>
+
+                <div className="bg-gradient-to-br from-amber-500/15 to-amber-500/5 rounded-xl border border-amber-500/20 p-4 text-center">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center mx-auto mb-2">
+                    <BookmarkCheck className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div className="text-sm font-semibold text-foreground">{t("onboarding.howItWorks.steps.save.title")}</div>
+                  <div className="text-xs text-foreground/80">{t("onboarding.howItWorks.steps.save.description")}</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-purple-500/15 to-purple-500/5 rounded-xl border border-purple-500/20 p-4 text-center">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
+                    <Brain className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div className="text-sm font-semibold text-foreground">{t("onboarding.howItWorks.steps.review.title")}</div>
+                  <div className="text-xs text-foreground/80">{t("onboarding.howItWorks.steps.review.description")}</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-500/15 to-green-500/5 rounded-xl border border-green-500/20 p-4 text-center">
+                  <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mx-auto mb-2">
+                    <PenLine className="w-5 h-5 text-green-400" />
+                  </div>
+                  <div className="text-sm font-semibold text-foreground">{t("onboarding.howItWorks.steps.practice.title")}</div>
+                  <div className="text-xs text-foreground/80">{t("onboarding.howItWorks.steps.practice.description")}</div>
+                </div>
               </div>
 
-              <div className="bg-gradient-to-br from-amber-500/15 to-amber-500/5 rounded-xl border border-amber-500/20 p-4 text-center">
-                <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center mx-auto mb-2">
-                  <BookmarkCheck className="w-5 h-5 text-amber-400" />
-                </div>
-                <div className="text-sm font-semibold text-foreground">2. Save</div>
-                <div className="text-xs text-foreground/80">Words you want to learn</div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setStep(0)} className="flex-1">
+                  {t("onboarding.actions.back")}
+                </Button>
+                <Button onClick={() => setStep(2)} className="flex-1 gap-2">
+                  {t("onboarding.actions.continue")}
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
               </div>
-
-              <div className="bg-gradient-to-br from-purple-500/15 to-purple-500/5 rounded-xl border border-purple-500/20 p-4 text-center">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
-                  <Brain className="w-5 h-5 text-purple-400" />
-                </div>
-                <div className="text-sm font-semibold text-foreground">3. Review</div>
-                <div className="text-xs text-foreground/80">AI-powered flashcards</div>
-              </div>
-
-              <div className="bg-gradient-to-br from-green-500/15 to-green-500/5 rounded-xl border border-green-500/20 p-4 text-center">
-                <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mx-auto mb-2">
-                  <PenLine className="w-5 h-5 text-green-400" />
-                </div>
-                <div className="text-sm font-semibold text-foreground">4. Practice</div>
-                <div className="text-xs text-foreground/80">Write sentences, get feedback</div>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(0)} className="flex-1">
-                Back
-              </Button>
-              <Button onClick={() => setStep(2)} className="flex-1 gap-2">
-                Continue
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
             </div>
           </div>
         )}
@@ -203,59 +218,60 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
             <div className="relative p-8">
               <div className="flex items-center gap-3 mb-2">
                 <Globe className="w-5 h-5 text-accent" />
-                <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                  Which languages are you studying?
+                <h2
+                  className="text-xl font-bold text-foreground"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("onboarding.languageSelection.title")}
                 </h2>
               </div>
-              <p className="text-foreground mb-6">
-                Select all that apply
-              </p>
+              <p className="text-foreground mb-6">{t("onboarding.languageSelection.subtitle")}</p>
 
-            <div className="space-y-3 mb-8">
-              {LANGUAGES.map((lang) => {
-                const isSelected = selectedLanguages.includes(lang.value);
-                return (
-                  <button
-                    key={lang.value}
-                    onClick={() => handleLanguageToggle(lang.value)}
-                    className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
-                      isSelected
-                        ? "border-accent bg-accent/5"
-                        : "border-border hover:border-foreground-muted"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{lang.flag}</span>
-                        <div>
-                          <div className="font-medium text-foreground">{lang.label}</div>
-                          <div className="text-sm text-foreground-muted">{lang.nativeName}</div>
+              <div className="space-y-3 mb-8">
+                {LANGUAGES.map((lang) => {
+                  const isSelected = selectedLanguages.includes(lang.value);
+                  return (
+                    <button
+                      key={lang.value}
+                      onClick={() => handleLanguageToggle(lang.value)}
+                      className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                        isSelected
+                          ? "border-accent bg-accent/5"
+                          : "border-border hover:border-foreground-muted"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{lang.flag}</span>
+                          <div>
+                            <div className="font-medium text-foreground">{lang.label}</div>
+                            <div className="text-sm text-foreground-muted">{lang.nativeName}</div>
+                          </div>
                         </div>
+                        {isSelected && (
+                          <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center">
+                            <Check className="w-4 h-4 text-white" />
+                          </div>
+                        )}
                       </div>
-                      {isSelected && (
-                        <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center">
-                          <Check className="w-4 h-4 text-white" />
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                    </button>
+                  );
+                })}
+              </div>
 
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
-                Back
-              </Button>
-              <Button
-                onClick={() => setStep(3)}
-                disabled={selectedLanguages.length === 0}
-                className="flex-1 gap-2"
-              >
-                Continue
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+                  {t("onboarding.actions.back")}
+                </Button>
+                <Button
+                  onClick={() => setStep(3)}
+                  disabled={selectedLanguages.length === 0}
+                  className="flex-1 gap-2"
+                >
+                  {t("onboarding.actions.continue")}
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -269,73 +285,80 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
             <div className="relative p-8">
               <div className="flex items-center gap-3 mb-2">
                 <GraduationCap className="w-5 h-5 text-accent" />
-                <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                  Any exams coming up?
+                <h2
+                  className="text-xl font-bold text-foreground"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("onboarding.examSelection.title")}
                 </h2>
               </div>
               <p className="text-foreground mb-6">
-                We'll tailor content to your target exams (optional)
+                {t("onboarding.examSelection.subtitle")}
               </p>
 
-            <div className="space-y-6 mb-8 max-h-96 overflow-y-auto">
-              {selectedLanguages.map((lang) => {
-                const langInfo = LANGUAGES.find((l) => l.value === lang);
-                const exams = EXAMS_BY_LANGUAGE[lang] || [];
+              <div className="space-y-6 mb-8 max-h-96 overflow-y-auto">
+                {selectedLanguages.map((lang) => {
+                  const langInfo = LANGUAGES.find((l) => l.value === lang);
+                  const exams = EXAMS_BY_LANGUAGE[lang] || [];
 
-                return (
-                  <div key={lang}>
-                    <div className="text-sm font-medium text-foreground-muted mb-2 flex items-center gap-2">
-                      <span>{langInfo?.flag}</span>
-                      {langInfo?.label}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {exams.map((exam) => {
-                        const isSelected = selectedExams.includes(exam.value);
-                        return (
-                          <button
-                            key={exam.value}
-                            onClick={() => handleExamToggle(exam.value)}
-                            className={`p-3 rounded-lg border text-left transition-all ${
-                              isSelected
-                                ? "border-accent bg-accent/5"
-                                : "border-border hover:border-foreground-muted"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="font-medium text-foreground text-sm">{exam.label}</div>
-                                <div className="text-xs text-foreground-muted">{exam.description}</div>
+                  return (
+                    <div key={lang}>
+                      <div className="text-sm font-medium text-foreground-muted mb-2 flex items-center gap-2">
+                        <span>{langInfo?.flag}</span>
+                        {langInfo?.label}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {exams.map((exam) => {
+                          const isSelected = selectedExams.includes(exam.value);
+                          return (
+                            <button
+                              key={exam.value}
+                              onClick={() => handleExamToggle(exam.value)}
+                              className={`p-3 rounded-lg border text-left transition-all ${
+                                isSelected
+                                  ? "border-accent bg-accent/5"
+                                  : "border-border hover:border-foreground-muted"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium text-foreground text-sm">
+                                    {exam.label}
+                                  </div>
+                                  <div className="text-xs text-foreground-muted">
+                                    {exam.description}
+                                  </div>
+                                </div>
+                                {isSelected && <Check className="w-4 h-4 text-accent" />}
                               </div>
-                              {isSelected && <Check className="w-4 h-4 text-accent" />}
-                            </div>
-                          </button>
-                        );
-                      })}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
 
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
-                Back
-              </Button>
-              <Button onClick={handleComplete} disabled={isSubmitting} className="flex-1 gap-2">
-                {isSubmitting ? "Saving..." : "Start Learning"}
-                <Sparkles className="w-4 h-4" />
-              </Button>
-            </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                  {t("onboarding.actions.back")}
+                </Button>
+                <Button onClick={handleComplete} disabled={isSubmitting} className="flex-1 gap-2">
+                  {isSubmitting ? t("onboarding.actions.saving") : t("onboarding.actions.startLearning")}
+                  <Sparkles className="w-4 h-4" />
+                </Button>
+              </div>
 
-            {selectedExams.length === 0 && (
-              <button
-                onClick={handleComplete}
-                disabled={isSubmitting}
-                className="w-full mt-3 text-sm text-foreground-muted hover:text-foreground transition-colors"
-              >
-                Skip for now
-              </button>
-            )}
+              {selectedExams.length === 0 && (
+                <button
+                  onClick={handleComplete}
+                  disabled={isSubmitting}
+                  className="w-full mt-3 text-sm text-foreground-muted hover:text-foreground transition-colors"
+                >
+                  {t("onboarding.examSelection.skipForNow")}
+                </button>
+              )}
             </div>
           </div>
         )}

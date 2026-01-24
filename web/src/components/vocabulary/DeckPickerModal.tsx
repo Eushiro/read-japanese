@@ -1,24 +1,21 @@
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { useMutation,useQuery } from "convex/react";
+import { BookOpen, Check, Loader2, Minus, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef,useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  BookOpen,
-  Check,
-  Loader2,
-  Minus,
-  Plus,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useT } from "@/lib/i18n";
 import { getLevelVariant } from "@/lib/levels";
+
+import { api } from "../../../convex/_generated/api";
 
 interface DeckPickerModalProps {
   userId: string;
@@ -39,6 +36,7 @@ export function DeckPickerModal({
   onClose,
   defaultLanguage = "japanese",
 }: DeckPickerModalProps) {
+  const t = useT();
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [dailyCards, setDailyCards] = useState(10);
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -49,14 +47,14 @@ export function DeckPickerModal({
 
   // Filter to only show languages user is learning
   const availableLanguages = useMemo(() => {
-    return ALL_LANGUAGES.filter((lang) =>
-      userLanguages.includes(lang.value)
-    );
+    return ALL_LANGUAGES.filter((lang) => userLanguages.includes(lang.value));
   }, [userLanguages]);
 
   // Initialize selected language from default or first available
   const [selectedLanguage, setSelectedLanguage] = useState<"japanese" | "english" | "french">(
-    userLanguages.includes(defaultLanguage) ? defaultLanguage : (userLanguages[0] as "japanese" | "english" | "french") ?? "japanese"
+    userLanguages.includes(defaultLanguage)
+      ? defaultLanguage
+      : ((userLanguages[0] as "japanese" | "english" | "french") ?? "japanese")
   );
 
   // Update selected language when user data loads
@@ -123,10 +121,10 @@ export function DeckPickerModal({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: "var(--font-display)" }}>
-            Browse Vocabulary Decks
+            {t("vocabulary.deckPicker.title")}
           </DialogTitle>
           <DialogDescription>
-            Choose a premade deck to start learning. Cards will be added daily to your vocabulary.
+            {t("vocabulary.deckPicker.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -144,7 +142,7 @@ export function DeckPickerModal({
                 }`}
               >
                 <span className="mr-1.5">{lang.flag}</span>
-                {lang.label}
+                {t(`library.languages.${lang.value}`)}
               </button>
             ))}
           </div>
@@ -154,7 +152,7 @@ export function DeckPickerModal({
         {!showLanguageTabs && availableLanguages.length === 1 && (
           <div className="flex items-center gap-2 text-sm text-foreground-muted pb-2">
             <span>{availableLanguages[0].flag}</span>
-            <span>{availableLanguages[0].label} decks</span>
+            <span>{t(`library.languages.${availableLanguages[0].value}`)} {t("vocabulary.deckPicker.decks")}</span>
           </div>
         )}
 
@@ -174,7 +172,7 @@ export function DeckPickerModal({
                 <Check className="w-6 h-6 text-green-500" />
               </div>
               <p className="text-sm text-foreground-muted text-center">
-                You've subscribed to all available {ALL_LANGUAGES.find((l) => l.value === selectedLanguage)?.label} decks!
+                {t("vocabulary.deckPicker.subscribedToAll", { language: t(`library.languages.${selectedLanguage}`) })}
               </p>
             </div>
           ) : (
@@ -192,28 +190,24 @@ export function DeckPickerModal({
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`font-medium ${selectedDeckId === deck.deckId ? "text-accent" : "text-foreground"}`}>
+                      <span
+                        className={`font-medium ${selectedDeckId === deck.deckId ? "text-accent" : "text-foreground"}`}
+                      >
                         {deck.name}
                       </span>
                       {getLevelVariant(deck.level) ? (
-                        <Badge variant={getLevelVariant(deck.level)}>
-                          {deck.level}
-                        </Badge>
+                        <Badge variant={getLevelVariant(deck.level)}>{deck.level}</Badge>
                       ) : (
                         <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-foreground-muted">
                           {deck.level}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-foreground-muted line-clamp-2">
-                      {deck.description}
-                    </p>
+                    <p className="text-xs text-foreground-muted line-clamp-2">{deck.description}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-sm font-medium text-foreground">
-                      {deck.totalWords}
-                    </div>
-                    <div className="text-xs text-foreground-muted">words</div>
+                    <div className="text-sm font-medium text-foreground">{deck.totalWords}</div>
+                    <div className="text-xs text-foreground-muted">{t("vocabulary.words")}</div>
                   </div>
                 </div>
                 {/* Content availability indicators */}
@@ -221,12 +215,10 @@ export function DeckPickerModal({
                   {deck.wordsWithSentences > 0 && (
                     <span className="flex items-center gap-1">
                       <BookOpen className="w-3 h-3" />
-                      {deck.wordsWithSentences} sentences
+                      {t("vocabulary.deckPicker.sentences", { count: deck.wordsWithSentences })}
                     </span>
                   )}
-                  {deck.wordsWithAudio > 0 && (
-                    <span>🔊 {deck.wordsWithAudio} audio</span>
-                  )}
+                  {deck.wordsWithAudio > 0 && <span>🔊 {t("vocabulary.deckPicker.audio", { count: deck.wordsWithAudio })}</span>}
                 </div>
               </button>
             ))
@@ -239,7 +231,7 @@ export function DeckPickerModal({
             {/* Daily cards slider */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-3">
-                New cards per day
+                {t("vocabulary.deckPicker.newCardsPerDay")}
               </label>
               <div className="flex items-center gap-3">
                 <button
@@ -280,30 +272,29 @@ export function DeckPickerModal({
 
             {/* Estimate */}
             <div className="bg-muted/50 rounded-lg p-3">
-              <p className="text-sm text-foreground-muted">
-                At {dailyCards} cards/day, you'll complete{" "}
-                <span className="font-medium text-foreground">{selectedDeck.name}</span> in approximately{" "}
-                <span className="font-medium text-foreground">
-                  {Math.ceil(selectedDeck.totalWords / dailyCards)} days
-                </span>
-              </p>
+              <p
+                className="text-sm text-foreground-muted"
+                dangerouslySetInnerHTML={{
+                  __html: t("vocabulary.deckPicker.estimate", {
+                    dailyCards,
+                    deckName: selectedDeck.name,
+                    days: Math.ceil(selectedDeck.totalWords / dailyCards),
+                  }),
+                }}
+              />
             </div>
 
             {/* Subscribe Button */}
-            <Button
-              onClick={handleSubscribe}
-              disabled={isSubscribing}
-              className="w-full"
-            >
+            <Button onClick={handleSubscribe} disabled={isSubscribing} className="w-full">
               {isSubscribing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Starting...
+                  {t("vocabulary.deckPicker.starting")}
                 </>
               ) : (
                 <>
                   <Plus className="w-4 h-4 mr-2" />
-                  Start Learning {selectedDeck.name}
+                  {t("vocabulary.deckPicker.startLearning", { deckName: selectedDeck.name })}
                 </>
               )}
             </Button>

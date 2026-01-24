@@ -1,47 +1,31 @@
-import { useState, useMemo } from "react";
-import { useParams, Link } from "@tanstack/react-router";
 import { useQuery as useTanstackQuery } from "@tanstack/react-query";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { getStory } from "@/api/stories";
-import { useAuth } from "@/contexts/AuthContext";
+import { Link,useParams } from "@tanstack/react-router";
+import { useMutation,useQuery } from "convex/react";
 import {
+  AlertCircle,
   ArrowLeft,
-  Save,
-  Trash2,
-  Plus,
+  Check,
   ChevronDown,
   ChevronUp,
-  AlertCircle,
-  Check,
+  Save,
+  Trash2,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useMemo,useState } from "react";
+
+import { getStory } from "@/api/stories";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
+
+import { api } from "../../../convex/_generated/api";
 
 const QUESTION_TYPES = [
   { value: "multiple_choice", label: "Multiple Choice" },
@@ -200,7 +184,9 @@ export function StoryQuestionsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {saveStatus === "saving" && <span className="text-sm text-foreground-muted">Saving...</span>}
+          {saveStatus === "saving" && (
+            <span className="text-sm text-foreground-muted">Saving...</span>
+          )}
           {saveStatus === "saved" && (
             <span className="text-sm text-green-600 flex items-center gap-1">
               <Check className="w-4 h-4" /> Saved
@@ -235,11 +221,7 @@ export function StoryQuestionsPage() {
           })}
         </div>
         {questionsForDifficulty && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDeleteAllQuestions}
-          >
+          <Button variant="destructive" size="sm" onClick={handleDeleteAllQuestions}>
             <Trash2 className="w-4 h-4 mr-2" />
             Delete All
           </Button>
@@ -261,7 +243,8 @@ export function StoryQuestionsPage() {
       ) : (
         <div className="space-y-4">
           <div className="text-sm text-foreground-muted">
-            {questionsForDifficulty.questions.length} questions at {DIFFICULTY_LABELS[selectedDifficulty]}
+            {questionsForDifficulty.questions.length} questions at{" "}
+            {DIFFICULTY_LABELS[selectedDifficulty]}
           </div>
 
           {questionsForDifficulty.questions.map((q, index) => (
@@ -309,7 +292,8 @@ function QuestionEditor({
     await onSave({
       question: editedQuestion,
       questionTranslation: editedTranslation || undefined,
-      options: question.type === "multiple_choice" ? editedOptions.split("\n").filter(Boolean) : undefined,
+      options:
+        question.type === "multiple_choice" ? editedOptions.split("\n").filter(Boolean) : undefined,
       correctAnswer: editedCorrectAnswer || undefined,
       rubric: editedRubric || undefined,
       points: editedPoints,
@@ -327,9 +311,14 @@ function QuestionEditor({
               <div className="flex items-center gap-3">
                 <span className="text-lg font-bold text-foreground-muted">#{index + 1}</span>
                 <div>
-                  <CardTitle className="text-base">{question.question.slice(0, 100)}{question.question.length > 100 ? "..." : ""}</CardTitle>
+                  <CardTitle className="text-base">
+                    {question.question.slice(0, 100)}
+                    {question.question.length > 100 ? "..." : ""}
+                  </CardTitle>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline" className="text-xs">{typeInfo?.label || question.type}</Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {typeInfo?.label || question.type}
+                    </Badge>
                     <span className="text-xs text-foreground-muted">{question.points} pts</span>
                   </div>
                 </div>
@@ -412,11 +401,7 @@ function QuestionEditor({
             </div>
 
             <div className="flex items-center justify-between pt-4 border-t">
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={onDelete}
-              >
+              <Button variant="destructive" size="sm" onClick={onDelete}>
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </Button>

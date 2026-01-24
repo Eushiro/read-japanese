@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { PlayCircle, BookmarkCheck, Brain, PenLine, ArrowRight } from "lucide-react";
+import { ArrowRight,BookmarkCheck, Brain, PenLine, PlayCircle } from "lucide-react";
+
+import { useT } from "@/lib/i18n";
 
 interface LearningLoopVizProps {
   stats: {
@@ -11,14 +13,16 @@ interface LearningLoopVizProps {
 }
 
 export function LearningLoopViz({ stats }: LearningLoopVizProps) {
+  const t = useT();
+
   const steps = [
     {
       icon: PlayCircle,
       step: 1,
-      title: "Input",
+      title: t("dashboard.learningLoop.steps.input.title"),
       stat: stats.contentConsumed,
-      label: "completed",
-      description: "Stories, audio, videos",
+      label: t("dashboard.learningLoop.labels.completed"),
+      description: t("dashboard.learningLoop.steps.input.description"),
       to: "/library",
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
@@ -26,10 +30,10 @@ export function LearningLoopViz({ stats }: LearningLoopVizProps) {
     {
       icon: BookmarkCheck,
       step: 2,
-      title: "Capture",
+      title: t("dashboard.learningLoop.steps.capture.title"),
       stat: stats.wordsSaved,
-      label: "words",
-      description: "Save words to learn",
+      label: t("dashboard.learningLoop.labels.vocabulary"),
+      description: t("dashboard.learningLoop.steps.capture.description"),
       to: "/learn?tab=words",
       color: "text-amber-500",
       bgColor: "bg-amber-500/10",
@@ -37,10 +41,10 @@ export function LearningLoopViz({ stats }: LearningLoopVizProps) {
     {
       icon: Brain,
       step: 3,
-      title: "Review",
+      title: t("dashboard.learningLoop.steps.review.title"),
       stat: stats.cardsReviewed,
-      label: "reviewed",
-      description: "AI-powered flashcards",
+      label: t("dashboard.learningLoop.labels.reviewed"),
+      description: t("dashboard.learningLoop.steps.review.description"),
       to: "/learn?tab=review",
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
@@ -48,10 +52,10 @@ export function LearningLoopViz({ stats }: LearningLoopVizProps) {
     {
       icon: PenLine,
       step: 4,
-      title: "Output",
+      title: t("dashboard.learningLoop.steps.output.title"),
       stat: stats.sentencesWritten,
-      label: "sentences",
-      description: "Write & get feedback",
+      label: t("dashboard.learningLoop.labels.sentences"),
+      description: t("dashboard.learningLoop.steps.output.description"),
       to: "/learn?tab=practice",
       color: "text-green-500",
       bgColor: "bg-green-500/10",
@@ -94,9 +98,7 @@ export function LearningLoopViz({ stats }: LearningLoopVizProps) {
             </div>
 
             {/* Title */}
-            <div className="text-sm font-medium text-foreground mb-1">
-              {step.title}
-            </div>
+            <div className="text-sm font-medium text-foreground mb-1">{step.title}</div>
 
             {/* Stat */}
             <div className={`text-2xl font-bold ${step.color}`}>{step.stat}</div>

@@ -181,11 +181,7 @@ export function trackAIRetry(
   });
 }
 
-export function trackAIFallback(
-  operation: string,
-  failedModel: string,
-  fallbackModel: string
-) {
+export function trackAIFallback(operation: string, failedModel: string, fallbackModel: string) {
   trackEvent(AnalyticsEvents.AI_FALLBACK_USED, {
     operation,
     failed_model: failedModel,

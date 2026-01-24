@@ -1,20 +1,13 @@
-import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
 import { Link } from "@tanstack/react-router";
-import {
-  Video,
-  BookOpen,
-  Layers,
-  Users,
-  Clock,
-  AlertCircle,
-  Plus,
-  ArrowRight,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useQuery } from "convex/react";
+import { AlertCircle, ArrowRight,BookOpen, Clock, Layers, Plus, Video } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+
+import { api } from "../../../convex/_generated/api";
 
 export function AdminDashboard() {
   // Fetch stats
@@ -26,21 +19,24 @@ export function AdminDashboard() {
 
   // Calculate stats
   const totalVideos = videos?.length ?? 0;
-  const videosWithQuestions = videos?.filter((v) => v.questions && v.questions.length > 0).length ?? 0;
+  const videosWithQuestions =
+    videos?.filter((v) => v.questions && v.questions.length > 0).length ?? 0;
   const videosNeedingWork = totalVideos - videosWithQuestions;
 
   const totalDecks = decks?.length ?? 0;
   const publishedDecks = decks?.filter((d) => d.isPublished).length ?? 0;
 
-  const activeJobs = jobs?.filter((j) => j.status === "running" || j.status === "submitted").length ?? 0;
+  const activeJobs =
+    jobs?.filter((j) => j.status === "running" || j.status === "submitted").length ?? 0;
   const failedJobs = jobs?.filter((j) => j.status === "failed").length ?? 0;
 
   // Decks needing attention (less than 50% sentences)
-  const decksNeedingWork = decks?.filter((d) => {
-    if (d.totalWords === 0) return false;
-    const pct = (d.wordsWithSentences / d.totalWords) * 100;
-    return pct < 50;
-  }) ?? [];
+  const decksNeedingWork =
+    decks?.filter((d) => {
+      if (d.totalWords === 0) return false;
+      const pct = (d.wordsWithSentences / d.totalWords) * 100;
+      return pct < 50;
+    }) ?? [];
 
   if (isLoading) {
     return (
@@ -91,9 +87,7 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalDecks}</div>
-            <p className="text-xs text-foreground-muted">
-              {publishedDecks} published
-            </p>
+            <p className="text-xs text-foreground-muted">{publishedDecks} published</p>
           </CardContent>
         </Card>
 
@@ -105,9 +99,7 @@ export function AdminDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{activeJobs}</div>
             <p className="text-xs text-foreground-muted">
-              {failedJobs > 0 && (
-                <span className="text-red-500">{failedJobs} failed</span>
-              )}
+              {failedJobs > 0 && <span className="text-red-500">{failedJobs} failed</span>}
               {failedJobs === 0 && "No failures"}
             </p>
           </CardContent>
@@ -180,9 +172,10 @@ export function AdminDashboard() {
             )}
 
             {decksNeedingWork.slice(0, 3).map((deck) => {
-              const pct = deck.totalWords > 0
-                ? Math.round((deck.wordsWithSentences / deck.totalWords) * 100)
-                : 0;
+              const pct =
+                deck.totalWords > 0
+                  ? Math.round((deck.wordsWithSentences / deck.totalWords) * 100)
+                  : 0;
               return (
                 <Card key={deck.deckId} className="border-amber-500/30">
                   <CardContent className="flex items-center justify-between p-4">
@@ -227,10 +220,13 @@ export function AdminDashboard() {
                     </div>
                     <Badge
                       variant={
-                        job.status === "succeeded" ? "default" :
-                        job.status === "failed" ? "destructive" :
-                        job.status === "running" ? "secondary" :
-                        "outline"
+                        job.status === "succeeded"
+                          ? "default"
+                          : job.status === "failed"
+                            ? "destructive"
+                            : job.status === "running"
+                              ? "secondary"
+                              : "outline"
                       }
                     >
                       {job.status}

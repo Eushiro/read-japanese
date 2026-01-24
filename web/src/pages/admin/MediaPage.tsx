@@ -1,45 +1,38 @@
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
 import {
-  HardDrive,
-  Music,
-  Image,
-  AlertTriangle,
-  CheckCircle2,
-  Terminal,
-  RefreshCw,
-  TrendingDown,
   BarChart3,
+  CheckCircle2,
+  HardDrive,
+  Image,
+  Music,
+  RefreshCw,
+  Terminal,
+  TrendingDown,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import React, { useState } from "react";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import {
   Bar,
   BarChart,
   Cell,
+  Legend,
   Pie,
   PieChart,
-  ResponsiveContainer,
   XAxis,
   YAxis,
-  Legend,
 } from "recharts";
+
+import { Button } from "@/components/ui/button";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Skeleton } from "@/components/ui/skeleton";
+
+import { api } from "../../../convex/_generated/api";
 
 // Chart config type (defined locally to avoid module resolution issues)
 type ChartConfig = {
   [k in string]: {
     label?: React.ReactNode;
     icon?: React.ComponentType;
-  } & (
-    | { color?: string; theme?: never }
-    | { color?: never; theme: Record<string, string> }
-  );
+  } & ({ color?: string; theme?: never } | { color?: never; theme: Record<string, string> });
 };
 
 // Format bytes to human-readable
@@ -128,7 +121,9 @@ export function MediaPage() {
                 </div>
                 <div>
                   <p className="text-sm text-foreground-muted">After Compression</p>
-                  <p className="text-2xl font-bold">{formatBytes(stats.sizes.afterCompression.total)}</p>
+                  <p className="text-2xl font-bold">
+                    {formatBytes(stats.sizes.afterCompression.total)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -230,7 +225,9 @@ export function MediaPage() {
                     <span>WAV (uncompressed)</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono font-semibold">{stats.sizes.byFormat.wav.count}</span>
+                    <span className="font-mono font-semibold">
+                      {stats.sizes.byFormat.wav.count}
+                    </span>
                     <span className="text-foreground-muted ml-2">
                       ({formatBytes(stats.sizes.byFormat.wav.size)})
                     </span>
@@ -242,7 +239,9 @@ export function MediaPage() {
                     <span>MP3 (compressed)</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono font-semibold">{stats.sizes.byFormat.mp3.count}</span>
+                    <span className="font-mono font-semibold">
+                      {stats.sizes.byFormat.mp3.count}
+                    </span>
                     <span className="text-foreground-muted ml-2">
                       ({formatBytes(stats.sizes.byFormat.mp3.size)})
                     </span>
@@ -253,7 +252,9 @@ export function MediaPage() {
                     <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
                       {stats.audio.uncompressed} WAV files → MP3 would save{" "}
                       <span className="font-bold">
-                        {formatBytes(stats.sizes.byFormat.wav.size - (stats.sizes.byFormat.wav.count * 35 * 1024))}
+                        {formatBytes(
+                          stats.sizes.byFormat.wav.size - stats.sizes.byFormat.wav.count * 35 * 1024
+                        )}
                       </span>
                     </p>
                   </div>
@@ -274,7 +275,9 @@ export function MediaPage() {
                     <span>PNG (uncompressed)</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono font-semibold">{stats.sizes.byFormat.png.count}</span>
+                    <span className="font-mono font-semibold">
+                      {stats.sizes.byFormat.png.count}
+                    </span>
                     <span className="text-foreground-muted ml-2">
                       ({formatBytes(stats.sizes.byFormat.png.size)})
                     </span>
@@ -286,7 +289,9 @@ export function MediaPage() {
                     <span>WebP (compressed)</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono font-semibold">{stats.sizes.byFormat.webp.count}</span>
+                    <span className="font-mono font-semibold">
+                      {stats.sizes.byFormat.webp.count}
+                    </span>
                     <span className="text-foreground-muted ml-2">
                       ({formatBytes(stats.sizes.byFormat.webp.size)})
                     </span>
@@ -298,7 +303,9 @@ export function MediaPage() {
                     <span>JPG (compressed)</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono font-semibold">{stats.sizes.byFormat.jpg.count}</span>
+                    <span className="font-mono font-semibold">
+                      {stats.sizes.byFormat.jpg.count}
+                    </span>
                     <span className="text-foreground-muted ml-2">
                       ({formatBytes(stats.sizes.byFormat.jpg.size)})
                     </span>
@@ -309,7 +316,9 @@ export function MediaPage() {
                     <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
                       {stats.images.uncompressed} PNG files → WebP would save{" "}
                       <span className="font-bold">
-                        {formatBytes(stats.sizes.byFormat.png.size - (stats.sizes.byFormat.png.count * 60 * 1024))}
+                        {formatBytes(
+                          stats.sizes.byFormat.png.size - stats.sizes.byFormat.png.count * 60 * 1024
+                        )}
                       </span>
                     </p>
                   </div>
@@ -323,8 +332,8 @@ export function MediaPage() {
             <div className="p-6 border rounded-lg bg-card">
               <h3 className="font-semibold mb-2">Run Compression</h3>
               <p className="text-sm text-foreground-muted mb-4">
-                Compression requires ffmpeg (audio) and sharp (images) which can't run in
-                serverless environments. Run the script locally:
+                Compression requires ffmpeg (audio) and sharp (images) which can't run in serverless
+                environments. Run the script locally:
               </p>
 
               <Button
@@ -383,8 +392,8 @@ export function MediaPage() {
                     All files optimized!
                   </h3>
                   <p className="text-sm text-green-700 dark:text-green-500">
-                    All audio and image files are already in compressed formats.
-                    Total storage: {formatBytes(stats.sizes.current.total)}
+                    All audio and image files are already in compressed formats. Total storage:{" "}
+                    {formatBytes(stats.sizes.current.total)}
                   </p>
                 </div>
               </div>
