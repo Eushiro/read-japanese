@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
-import { internalMutation,mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
+import { getSentenceTranslation, type UILanguage } from "./lib/translation";
 import { cardStateValidator, ratingValidator } from "./schema";
 
 // ============================================
@@ -120,9 +121,11 @@ export const getDue = query({
     userId: v.string(),
     limit: v.optional(v.number()),
     language: v.optional(v.string()),
+    uiLanguage: v.optional(v.string()), // UI language for translation resolution
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
     const cards = await ctx.db
       .query("flashcards")
       .withIndex("by_user_and_due", (q) => q.eq("userId", args.userId).lte("due", now))
@@ -147,10 +150,21 @@ export const getDue = query({
               .first()
           : null;
 
+        // Resolve translation for user's UI language - returns null if not available (NO English fallback)
+        const sentenceTranslation = sentence?.translations
+          ? getSentenceTranslation(sentence.translations, uiLang)
+          : null;
+
         return {
           ...card,
           vocabulary: vocab,
-          sentence,
+          sentence: sentence
+            ? {
+                ...sentence,
+                // Override the translations object with the resolved translation
+                sentenceTranslation,
+              }
+            : null,
           image,
           wordAudio,
         };
@@ -172,8 +186,10 @@ export const getNew = query({
     userId: v.string(),
     limit: v.optional(v.number()),
     language: v.optional(v.string()),
+    uiLanguage: v.optional(v.string()), // UI language for translation resolution
   },
   handler: async (ctx, args) => {
+    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
     const cards = await ctx.db
       .query("flashcards")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -198,10 +214,21 @@ export const getNew = query({
               .first()
           : null;
 
+        // Resolve translation for user's UI language - returns null if not available (NO English fallback)
+        const sentenceTranslation = sentence?.translations
+          ? getSentenceTranslation(sentence.translations, uiLang)
+          : null;
+
         return {
           ...card,
           vocabulary: vocab,
-          sentence,
+          sentence: sentence
+            ? {
+                ...sentence,
+                // Override the translations object with the resolved translation
+                sentenceTranslation,
+              }
+            : null,
           image,
           wordAudio,
         };
@@ -279,8 +306,12 @@ export const getByVocabulary = query({
 
 // Get a single flashcard with resolved content
 export const getWithContent = query({
-  args: { flashcardId: v.id("flashcards") },
+  args: {
+    flashcardId: v.id("flashcards"),
+    uiLanguage: v.optional(v.string()), // UI language for translation resolution
+  },
   handler: async (ctx, args) => {
+    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
     const card = await ctx.db.get(args.flashcardId);
     if (!card) return null;
 
@@ -300,10 +331,21 @@ export const getWithContent = query({
           .first()
       : null;
 
+    // Resolve translation for user's UI language - returns null if not available (NO English fallback)
+    const sentenceTranslation = sentence?.translations
+      ? getSentenceTranslation(sentence.translations, uiLang)
+      : null;
+
     return {
       ...card,
       vocabulary: vocab,
-      sentence,
+      sentence: sentence
+        ? {
+            ...sentence,
+            // Override the translations object with the resolved translation
+            sentenceTranslation,
+          }
+        : null,
       image,
       wordAudio,
     };

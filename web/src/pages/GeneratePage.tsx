@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { Image,Loader2, Sparkles, Volume2 } from "lucide-react";
+import { Image, Loader2, Sparkles, Volume2 } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -152,9 +152,7 @@ export function GeneratePage() {
             >
               {t("generate.hero.title")}
             </h1>
-            <p className="text-foreground-muted text-lg">
-              {t("generate.hero.subtitle")}
-            </p>
+            <p className="text-foreground-muted text-lg">{t("generate.hero.subtitle")}</p>
           </div>
         </div>
       </div>
@@ -164,7 +162,9 @@ export function GeneratePage() {
         <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm space-y-8">
           {/* JLPT Level */}
           <div className="space-y-3">
-            <label className="text-sm font-medium text-foreground">{t("generate.form.jlptLevel")}</label>
+            <label className="text-sm font-medium text-foreground">
+              {t("generate.form.jlptLevel")}
+            </label>
             <div className="flex flex-wrap gap-2">
               {JLPT_LEVELS.map((level) => (
                 <button
@@ -190,7 +190,9 @@ export function GeneratePage() {
 
           {/* Genre */}
           <div className="space-y-3">
-            <label className="text-sm font-medium text-foreground">{t("generate.form.genre")}</label>
+            <label className="text-sm font-medium text-foreground">
+              {t("generate.form.genre")}
+            </label>
             <select
               value={genreKey}
               onChange={(e) => setGenreKey(e.target.value as (typeof GENRE_KEYS)[number])}
@@ -208,7 +210,10 @@ export function GeneratePage() {
           {/* Theme */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">
-              {t("generate.form.theme")} <span className="text-foreground-muted font-normal">{t("generate.form.themeOptional")}</span>
+              {t("generate.form.theme")}{" "}
+              <span className="text-foreground-muted font-normal">
+                {t("generate.form.themeOptional")}
+              </span>
             </label>
             <input
               type="text"
@@ -223,7 +228,9 @@ export function GeneratePage() {
           {/* Chapters */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground">{t("generate.form.chapters")}</label>
+              <label className="text-sm font-medium text-foreground">
+                {t("generate.form.chapters")}
+              </label>
               <select
                 value={numChapters}
                 onChange={(e) => setNumChapters(Number(e.target.value))}
@@ -239,7 +246,9 @@ export function GeneratePage() {
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground">{t("generate.form.wordsPerChapter")}</label>
+              <label className="text-sm font-medium text-foreground">
+                {t("generate.form.wordsPerChapter")}
+              </label>
               <select
                 value={wordsPerChapter}
                 onChange={(e) => setWordsPerChapter(Number(e.target.value))}
@@ -257,7 +266,9 @@ export function GeneratePage() {
 
           {/* Options */}
           <div className="space-y-4">
-            <label className="text-sm font-medium text-foreground">{t("generate.form.options")}</label>
+            <label className="text-sm font-medium text-foreground">
+              {t("generate.form.options")}
+            </label>
             <div className="flex flex-wrap gap-6">
               <label className="flex items-center gap-3 cursor-pointer group">
                 <div className="relative">
@@ -284,7 +295,9 @@ export function GeneratePage() {
                 </div>
                 <span className="flex items-center gap-2">
                   <Volume2 className="w-4 h-4 text-foreground-muted group-hover:text-foreground transition-colors" />
-                  <span className="text-sm text-foreground">{t("generate.options.generateAudio")}</span>
+                  <span className="text-sm text-foreground">
+                    {t("generate.options.generateAudio")}
+                  </span>
                 </span>
               </label>
 
@@ -313,7 +326,9 @@ export function GeneratePage() {
                 </div>
                 <span className="flex items-center gap-2">
                   <Image className="w-4 h-4 text-foreground-muted group-hover:text-foreground transition-colors" />
-                  <span className="text-sm text-foreground">{t("generate.options.generateImages")}</span>
+                  <span className="text-sm text-foreground">
+                    {t("generate.options.generateImages")}
+                  </span>
                 </span>
               </label>
             </div>

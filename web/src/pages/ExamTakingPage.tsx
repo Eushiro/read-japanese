@@ -1,11 +1,10 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-
-import { useAIAction } from "@/hooks/useAIAction";
 import { ChevronLeft, ChevronRight, Clock, Flag, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useAIAction } from "@/hooks/useAIAction";
 import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";

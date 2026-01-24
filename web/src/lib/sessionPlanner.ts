@@ -1,4 +1,4 @@
-import type { SessionActivity,SessionPlan } from "@/contexts/StudySessionContext";
+import type { SessionActivity, SessionPlan } from "@/contexts/StudySessionContext";
 
 interface PlannerInput {
   dueCardCount: number;

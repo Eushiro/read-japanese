@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 
-import { internalMutation,internalQuery } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
+import { isAdminEmail } from "./lib/admin";
+import { CREDIT_COSTS, type CreditAction, TIER_CREDITS } from "./subscriptions";
 
 // ============================================
 // INTERNAL QUERIES
@@ -467,5 +469,179 @@ export const updatePremadeVocabularyContent = internalMutation({
     }
 
     await ctx.db.patch(args.premadeVocabularyId, updates);
+  },
+});
+
+// ============================================
+// CREDIT SYSTEM HELPERS
+// ============================================
+
+// Helper function to get current period
+function getCurrentPeriod() {
+  const now = new Date();
+  return {
+    month: now.getMonth() + 1, // 1-12
+    year: now.getFullYear(),
+  };
+}
+
+// Get user by clerk ID (internal)
+export const getUserByClerkId = internalQuery({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+  },
+});
+
+// Check if user is admin with admin mode enabled
+export const checkAdminMode = internalQuery({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.userId))
+      .first();
+    return !!(user?.isAdminMode && isAdminEmail(user.email));
+  },
+});
+
+// Check credit balance without spending
+export const checkCreditBalance = internalQuery({
+  args: {
+    userId: v.string(),
+    action: v.string(),
+    count: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const actionKey = args.action as CreditAction;
+    const cost = (CREDIT_COSTS[actionKey] ?? 1) * (args.count ?? 1);
+
+    // Check admin bypass first
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.userId))
+      .first();
+
+    if (user?.isAdminMode && isAdminEmail(user.email)) {
+      return { canSpend: true, isAdmin: true, remaining: Infinity, cost };
+    }
+
+    // Get subscription tier
+    const subscription = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    const tier = subscription?.tier ?? "free";
+    const limit = TIER_CREDITS[tier as keyof typeof TIER_CREDITS] ?? TIER_CREDITS.free;
+
+    // Get current usage
+    const { month, year } = getCurrentPeriod();
+    const usage = await ctx.db
+      .query("creditUsage")
+      .withIndex("by_user_and_period", (q) =>
+        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
+      )
+      .first();
+
+    const currentUsed = usage?.creditsUsed ?? 0;
+    const remaining = limit - currentUsed;
+
+    return {
+      canSpend: remaining >= cost,
+      isAdmin: false,
+      remaining,
+      cost,
+      tier,
+    };
+  },
+});
+
+// Spend credits (internal mutation for actions to call)
+export const spendCreditsInternal = internalMutation({
+  args: {
+    userId: v.string(),
+    action: v.string(),
+    count: v.optional(v.number()),
+    metadata: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    const actionKey = args.action as CreditAction;
+    const cost = (CREDIT_COSTS[actionKey] ?? 1) * (args.count ?? 1);
+
+    // Check admin bypass first
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.userId))
+      .first();
+
+    if (user?.isAdminMode && isAdminEmail(user.email)) {
+      // Log but don't deduct
+      await ctx.db.insert("creditTransactions", {
+        userId: args.userId,
+        action: args.action,
+        creditsSpent: 0,
+        metadata: { ...args.metadata, adminBypass: true },
+        createdAt: Date.now(),
+      });
+      return { success: true, creditsRemaining: Infinity, bypassed: true };
+    }
+
+    // Get subscription tier
+    const subscription = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    const tier = subscription?.tier ?? "free";
+    const limit = TIER_CREDITS[tier as keyof typeof TIER_CREDITS] ?? TIER_CREDITS.free;
+
+    // Get current usage
+    const { month, year } = getCurrentPeriod();
+    const usage = await ctx.db
+      .query("creditUsage")
+      .withIndex("by_user_and_period", (q) =>
+        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
+      )
+      .first();
+
+    const currentUsed = usage?.creditsUsed ?? 0;
+    const remaining = limit - currentUsed;
+
+    if (remaining < cost) {
+      throw new Error(
+        `Insufficient credits. Need ${cost}, have ${remaining}. Upgrade your plan for more credits.`
+      );
+    }
+
+    // Deduct credits
+    if (usage) {
+      await ctx.db.patch(usage._id, {
+        creditsUsed: currentUsed + cost,
+        updatedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("creditUsage", {
+        userId: args.userId,
+        periodMonth: month,
+        periodYear: year,
+        creditsUsed: cost,
+        updatedAt: Date.now(),
+      });
+    }
+
+    // Log transaction
+    await ctx.db.insert("creditTransactions", {
+      userId: args.userId,
+      action: args.action,
+      creditsSpent: cost,
+      metadata: args.metadata,
+      createdAt: Date.now(),
+    });
+
+    return { success: true, creditsRemaining: remaining - cost, bypassed: false };
   },
 });

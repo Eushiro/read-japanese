@@ -67,7 +67,8 @@ export const handleSubscriptionCreated = internalMutation({
     userId: v.string(),
     stripeCustomerId: v.string(),
     stripeSubscriptionId: v.string(),
-    tier: v.union(v.literal("basic"), v.literal("pro"), v.literal("power")),
+    tier: v.union(v.literal("starter"), v.literal("pro")),
+    billingPeriod: v.union(v.literal("monthly"), v.literal("annual")),
     currentPeriodEnd: v.number(),
   },
   handler: async (ctx, args) => {
@@ -82,6 +83,7 @@ export const handleSubscriptionCreated = internalMutation({
     if (existing) {
       await ctx.db.patch(existing._id, {
         tier: args.tier,
+        billingPeriod: args.billingPeriod,
         status: "active",
         stripeCustomerId: args.stripeCustomerId,
         stripeSubscriptionId: args.stripeSubscriptionId,
@@ -92,6 +94,7 @@ export const handleSubscriptionCreated = internalMutation({
       await ctx.db.insert("subscriptions", {
         userId: args.userId,
         tier: args.tier,
+        billingPeriod: args.billingPeriod,
         status: "active",
         stripeCustomerId: args.stripeCustomerId,
         stripeSubscriptionId: args.stripeSubscriptionId,
@@ -107,7 +110,8 @@ export const handleSubscriptionCreated = internalMutation({
 export const handleSubscriptionUpdated = internalMutation({
   args: {
     stripeSubscriptionId: v.string(),
-    tier: v.union(v.literal("basic"), v.literal("pro"), v.literal("power")),
+    tier: v.union(v.literal("starter"), v.literal("pro")),
+    billingPeriod: v.union(v.literal("monthly"), v.literal("annual")),
     status: v.union(v.literal("active"), v.literal("cancelled"), v.literal("expired")),
     currentPeriodEnd: v.number(),
   },
@@ -121,6 +125,7 @@ export const handleSubscriptionUpdated = internalMutation({
     if (subscription) {
       await ctx.db.patch(subscription._id, {
         tier: args.tier,
+        billingPeriod: args.billingPeriod,
         status: args.status,
         renewalDate: args.currentPeriodEnd,
         updatedAt: Date.now(),

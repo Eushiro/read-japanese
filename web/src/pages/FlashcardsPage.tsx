@@ -1,6 +1,4 @@
 import { useMutation, useQuery } from "convex/react";
-
-import { useAIAction } from "@/hooks/useAIAction";
 import {
   BookOpen,
   Brain,
@@ -22,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useReviewSession } from "@/contexts/ReviewSessionContext";
+import { useAIAction } from "@/hooks/useAIAction";
 import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
 import type { CardState, Id, Rating } from "@/lib/convex-types";
 import { useT, useUILanguage } from "@/lib/i18n";

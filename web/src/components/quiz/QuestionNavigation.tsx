@@ -132,7 +132,10 @@ export function QuestionProgress({ questions, currentIndex, onNavigate }: Questi
       {questions.map((q, i) => {
         const isCurrent = i === currentIndex;
         const isAnswered = q.userAnswer !== undefined;
-        const questionLabel = t("navigation.questionNumber", { current: i + 1, total: questions.length });
+        const questionLabel = t("navigation.questionNumber", {
+          current: i + 1,
+          total: questions.length,
+        });
         const answeredSuffix = isAnswered ? ` (${t("navigation.answered")})` : "";
 
         return (

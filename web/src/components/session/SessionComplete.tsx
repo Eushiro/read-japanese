@@ -1,4 +1,4 @@
-import { ArrowRight,BookOpen, Brain, Flame, PenLine, Trophy } from "lucide-react";
+import { ArrowRight, BookOpen, Brain, Flame, PenLine, Trophy } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { SessionResults } from "@/contexts/StudySessionContext";
@@ -44,7 +44,9 @@ export function SessionComplete({ results, onContinue, onDone }: SessionComplete
         {results.streakInfo && results.streakInfo.currentStreak > 0 && (
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 text-orange-600 font-semibold mb-6">
             <Flame className="w-5 h-5" />
-            <span>{t("studySession.complete.streak", { count: results.streakInfo.currentStreak })}</span>
+            <span>
+              {t("studySession.complete.streak", { count: results.streakInfo.currentStreak })}
+            </span>
             {results.streakInfo.isNewRecord && (
               <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full ml-1">
                 {t("studySession.complete.newRecord")}

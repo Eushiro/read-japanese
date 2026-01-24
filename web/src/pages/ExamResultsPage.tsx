@@ -1,4 +1,4 @@
-import { Link,useParams } from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import {
   ArrowLeft,
@@ -83,7 +83,9 @@ export function ExamResultsPage() {
             )}
           </div>
           <h1 className="text-3xl font-bold mb-2">
-            {passed ? t("examResults.header.congratulations") : t("examResults.header.keepPracticing")}
+            {passed
+              ? t("examResults.header.congratulations")
+              : t("examResults.header.keepPracticing")}
           </h1>
           <p className="text-foreground-muted mb-4">{attempt.template?.title}</p>
 
@@ -92,7 +94,10 @@ export function ExamResultsPage() {
             <span className={passed ? "text-green-500" : "text-red-500"}>{percentScore}%</span>
           </div>
           <p className="text-foreground-muted">
-            {t("examResults.header.points", { earned: attempt.earnedPoints, total: attempt.totalPoints })}
+            {t("examResults.header.points", {
+              earned: attempt.earnedPoints,
+              total: attempt.totalPoints,
+            })}
           </p>
         </div>
 
@@ -189,7 +194,9 @@ export function ExamResultsPage() {
                         {isCorrect ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
                       </div>
                       <div className="text-left">
-                        <p className="font-medium">{t("examResults.questions.questionNumber", { number: idx + 1 })}</p>
+                        <p className="font-medium">
+                          {t("examResults.questions.questionNumber", { number: idx + 1 })}
+                        </p>
                         <p className="text-sm text-foreground-muted line-clamp-1">
                           {q.questionData?.questionText}
                         </p>
@@ -197,7 +204,10 @@ export function ExamResultsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-foreground-muted">
-                        {t("examResults.questions.points", { earned: q.earnedPoints ?? 0, total: q.questionData?.points })}
+                        {t("examResults.questions.points", {
+                          earned: q.earnedPoints ?? 0,
+                          total: q.questionData?.points,
+                        })}
                       </span>
                       {isExpanded ? (
                         <ChevronUp className="w-5 h-5 text-foreground-muted" />
@@ -222,7 +232,9 @@ export function ExamResultsPage() {
 
                       {/* User's answer */}
                       <div className="mb-3">
-                        <p className="text-sm text-foreground-muted mb-1">{t("examResults.questions.yourAnswer")}</p>
+                        <p className="text-sm text-foreground-muted mb-1">
+                          {t("examResults.questions.yourAnswer")}
+                        </p>
                         <p
                           className={`p-2 rounded ${
                             isCorrect
@@ -237,7 +249,9 @@ export function ExamResultsPage() {
                       {/* Correct answer */}
                       {!isCorrect && q.questionData.correctAnswer && (
                         <div className="mb-3">
-                          <p className="text-sm text-foreground-muted mb-1">{t("examResults.questions.correctAnswer")}</p>
+                          <p className="text-sm text-foreground-muted mb-1">
+                            {t("examResults.questions.correctAnswer")}
+                          </p>
                           <p className="p-2 rounded bg-green-100 dark:bg-green-900/30">
                             {q.questionData.correctAnswer}
                           </p>
@@ -247,7 +261,9 @@ export function ExamResultsPage() {
                       {/* AI Feedback */}
                       {q.aiFeedback && (
                         <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded">
-                          <p className="text-sm font-medium mb-1">{t("examResults.questions.feedback")}</p>
+                          <p className="text-sm font-medium mb-1">
+                            {t("examResults.questions.feedback")}
+                          </p>
                           <p className="text-sm">{q.aiFeedback}</p>
                         </div>
                       )}
@@ -255,7 +271,9 @@ export function ExamResultsPage() {
                       {/* Explanation */}
                       {q.questionData.explanation && (
                         <div className="mt-3 p-3 bg-muted/30 rounded">
-                          <p className="text-sm font-medium mb-1">{t("examResults.questions.explanation")}</p>
+                          <p className="text-sm font-medium mb-1">
+                            {t("examResults.questions.explanation")}
+                          </p>
                           <p className="text-sm">{q.questionData.explanation}</p>
                         </div>
                       )}

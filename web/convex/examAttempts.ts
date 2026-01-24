@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
-import { mutation, type MutationCtx,query } from "./_generated/server";
-import { type ExamType,examTypeValidator } from "./schema";
+import { mutation, type MutationCtx, query } from "./_generated/server";
+import { type ExamType, examTypeValidator } from "./schema";
 
 // ============================================
 // QUERIES
@@ -460,9 +460,7 @@ async function updateAnalytics(
   // Get existing analytics
   const existing = await ctx.db
     .query("examAnalytics")
-    .withIndex("by_user_exam", (q) =>
-      q.eq("userId", args.userId).eq("examType", args.examType)
-    )
+    .withIndex("by_user_exam", (q) => q.eq("userId", args.userId).eq("examType", args.examType))
     .first();
 
   // Calculate section score averages

@@ -1,7 +1,7 @@
-import { useNavigate,useParams } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ArrowLeft, Clock, FileText, HelpCircle, Loader2, Video } from "lucide-react";
-import { useCallback,useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

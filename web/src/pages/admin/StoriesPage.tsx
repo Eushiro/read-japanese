@@ -1,8 +1,6 @@
-import {
-  useQuery as useTanstackQuery,
-} from "@tanstack/react-query";
+import { useQuery as useTanstackQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useMutation,useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   AlertCircle,
   ArrowRight,
@@ -15,12 +13,12 @@ import {
   Wand2,
   X,
 } from "lucide-react";
-import { useEffect,useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { listStories } from "@/api/stories";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription,CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -77,10 +75,7 @@ const ADMIN_API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000
 
 // Topology Component
 function TopologyCard() {
-  const {
-    data: topology,
-    isLoading,
-  } = useTanstackQuery({
+  const { data: topology, isLoading } = useTanstackQuery({
     queryKey: ["storyTopology"],
     queryFn: async () => {
       const response = await fetch(`${ADMIN_API_URL}/admin/stories/topology`);

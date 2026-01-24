@@ -1,6 +1,6 @@
 import { useQuery as useTanstackQuery } from "@tanstack/react-query";
-import { Link,useParams } from "@tanstack/react-router";
-import { useMutation,useQuery } from "convex/react";
+import { Link, useParams } from "@tanstack/react-router";
+import { useMutation, useQuery } from "convex/react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useMemo,useState } from "react";
+import { useMemo, useState } from "react";
 
 import { getStory } from "@/api/stories";
 import { Alert, AlertDescription } from "@/components/ui/alert";

@@ -1,6 +1,6 @@
-import { useMutation,useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { BookOpen, Check, Loader2, Minus, Plus } from "lucide-react";
-import { useEffect, useMemo, useRef,useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -123,9 +123,7 @@ export function DeckPickerModal({
           <DialogTitle style={{ fontFamily: "var(--font-display)" }}>
             {t("vocabulary.deckPicker.title")}
           </DialogTitle>
-          <DialogDescription>
-            {t("vocabulary.deckPicker.description")}
-          </DialogDescription>
+          <DialogDescription>{t("vocabulary.deckPicker.description")}</DialogDescription>
         </DialogHeader>
 
         {/* Language Tabs - only show if learning multiple languages */}
@@ -152,7 +150,10 @@ export function DeckPickerModal({
         {!showLanguageTabs && availableLanguages.length === 1 && (
           <div className="flex items-center gap-2 text-sm text-foreground-muted pb-2">
             <span>{availableLanguages[0].flag}</span>
-            <span>{t(`library.languages.${availableLanguages[0].value}`)} {t("vocabulary.deckPicker.decks")}</span>
+            <span>
+              {t(`library.languages.${availableLanguages[0].value}`)}{" "}
+              {t("vocabulary.deckPicker.decks")}
+            </span>
           </div>
         )}
 
@@ -172,7 +173,9 @@ export function DeckPickerModal({
                 <Check className="w-6 h-6 text-green-500" />
               </div>
               <p className="text-sm text-foreground-muted text-center">
-                {t("vocabulary.deckPicker.subscribedToAll", { language: t(`library.languages.${selectedLanguage}`) })}
+                {t("vocabulary.deckPicker.subscribedToAll", {
+                  language: t(`library.languages.${selectedLanguage}`),
+                })}
               </p>
             </div>
           ) : (
@@ -218,7 +221,11 @@ export function DeckPickerModal({
                       {t("vocabulary.deckPicker.sentences", { count: deck.wordsWithSentences })}
                     </span>
                   )}
-                  {deck.wordsWithAudio > 0 && <span>🔊 {t("vocabulary.deckPicker.audio", { count: deck.wordsWithAudio })}</span>}
+                  {deck.wordsWithAudio > 0 && (
+                    <span>
+                      🔊 {t("vocabulary.deckPicker.audio", { count: deck.wordsWithAudio })}
+                    </span>
+                  )}
                 </div>
               </button>
             ))

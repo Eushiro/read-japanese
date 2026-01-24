@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { SignInButton,useAuth } from "@/contexts/AuthContext";
+import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 
 export function LandingPage() {

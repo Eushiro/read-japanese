@@ -1,5 +1,5 @@
 import { useQuery } from "convex/react";
-import { BookOpen, Loader2,Play, SkipForward } from "lucide-react";
+import { BookOpen, Loader2, Play, SkipForward } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -61,14 +61,18 @@ export function SessionInput({
             <Play className="w-4 h-4 text-accent" />
           )}
           <span className="text-foreground-muted">
-            {contentType === "story" ? t("studySession.input.readingTime") : t("studySession.input.listeningTime")}
+            {contentType === "story"
+              ? t("studySession.input.readingTime")
+              : t("studySession.input.listeningTime")}
           </span>
         </div>
         <h2
           className="text-2xl font-bold text-foreground"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          {contentType === "story" ? t("studySession.input.readAStory") : t("studySession.input.watchAVideo")}
+          {contentType === "story"
+            ? t("studySession.input.readAStory")
+            : t("studySession.input.watchAVideo")}
         </h2>
         <p className="text-foreground-muted mt-2">
           {contentType === "story"

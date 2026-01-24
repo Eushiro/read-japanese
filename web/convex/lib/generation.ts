@@ -13,7 +13,7 @@
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import type { Doc,Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { TIER_LIMITS } from "../subscriptions";
 

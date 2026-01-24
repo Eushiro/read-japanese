@@ -6,7 +6,7 @@ import { formatDuration } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { LANGUAGE_COLORS } from "@/lib/languages";
 import { getLevelVariant } from "@/lib/levels";
-import { getYoutubeThumbnailUrl,isValidYoutubeId } from "@/lib/youtube";
+import { getYoutubeThumbnailUrl, isValidYoutubeId } from "@/lib/youtube";
 
 export interface VideoItem {
   _id: string;

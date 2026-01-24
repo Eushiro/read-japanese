@@ -17,20 +17,16 @@ Models:
     - Images: gemini-2.5-flash-image
 """
 
-import os
-import sys
-import json
-import csv
 import argparse
 import asyncio
+import csv
+import json
 import logging
-import tempfile
-import subprocess
-import wave
-import io
+import os
+import sys
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Optional, List, Dict, Any
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional
 
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -41,9 +37,20 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 
 from google import genai
 from google.genai import types
-from PIL import Image
 import httpx
+from PIL import Image
 from pydantic import BaseModel
+
+# Import shared utilities
+from app.services.generation.media import compress_audio_to_mp3, compress_image_to_webp
+from app.services.generation.batch import BatchJobRunner, BatchRequest
+from app.config.languages import (
+    LANGUAGE_CODES,
+    LANGUAGE_NAMES,
+    TRANSLATION_TARGETS,
+    CODE_TO_ISO,
+    get_translation_targets_for,
+)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -72,6 +79,7 @@ OUTPUT_DIR = Path(__file__).parent.parent / "generated"
 # DATA CLASSES
 # ============================================
 
+
 @dataclass
 class VocabWord:
     """A vocabulary word to generate content for"""
@@ -84,7 +92,7 @@ class VocabWord:
 
     # Generated content
     sentence: Optional[str] = None
-    sentence_translation: Optional[str] = None
+    sentence_translations: Optional[Dict[str, str]] = None  # {"en": "...", "ja": "...", "fr": "..."}
     audio_path: Optional[str] = None
     word_audio_path: Optional[str] = None
     image_path: Optional[str] = None
@@ -95,7 +103,7 @@ class GeneratedSentence:
     """Result from sentence generation (dataclass for internal use)"""
     word: str
     sentence: str
-    translation: str
+    translations: Dict[str, str]  # {"en": "...", "ja": "...", "fr": "..."}
 
 
 # Pydantic model for structured output from Gemini
@@ -103,7 +111,7 @@ class SentenceOutputItem(BaseModel):
     """Pydantic model for Gemini structured output"""
     word: str
     sentence: str
-    translation: str
+    translations: Dict[str, str]  # {"en": "...", "ja": "...", "fr": "..."}
 
 
 # ============================================
@@ -181,12 +189,6 @@ LEVEL_CONTEXT = {
     },
 }
 
-LANGUAGE_NAMES = {
-    "japanese": "Japanese",
-    "english": "English",
-    "french": "French",
-}
-
 
 # ============================================
 # SENTENCE GENERATION (BATCH)
@@ -195,7 +197,9 @@ LANGUAGE_NAMES = {
 def build_multi_word_prompt(words: List[VocabWord], level: str, language: str) -> str:
     """
     Build a prompt for generating sentences for multiple words at once.
-    Includes level-appropriate difficulty context.
+    Includes level-appropriate difficulty context and multi-language translations.
+
+    Uses shared language config to determine translation targets.
     """
     lang_name = LANGUAGE_NAMES.get(language, "Japanese")
     level_info = LEVEL_CONTEXT.get(level, LEVEL_CONTEXT["N5"])
@@ -208,6 +212,19 @@ def build_multi_word_prompt(words: List[VocabWord], level: str, language: str) -
         word_entries.append(f'{i+1}. "{w.word}"{reading_part} - {defs}')
 
     word_list = "\n".join(word_entries)
+
+    # Determine which translations to generate using shared config
+    # get_translation_targets_for() returns full codes (e.g., ["english", "french"])
+    translation_targets = get_translation_targets_for(language)
+
+    # Convert to ISO codes for JSON keys (e.g., "en", "fr")
+    translation_iso_codes = [CODE_TO_ISO[lang] for lang in translation_targets]
+
+    # Build human-readable description (e.g., "English, French")
+    translation_desc = ", ".join(LANGUAGE_NAMES[lang] for lang in translation_targets)
+
+    # Build example JSON keys string (e.g., '"en": "...", "fr": "..."')
+    example_translations = ", ".join(f'"{code}": "..."' for code in translation_iso_codes)
 
     prompt = f"""Generate example sentences for these {len(words)} {lang_name} vocabulary words.
 
@@ -224,11 +241,14 @@ REQUIREMENTS:
 2. Sentences must be appropriate for {level} level learners
 3. Use ONLY grammar and vocabulary that {level} learners would know
 4. Make sentences memorable and useful for language learning
-5. Provide accurate English translations
+5. Provide accurate translations in: {translation_desc}
 
-Respond with a JSON array of objects, one per word, in the same order as the input:
+Respond with a JSON array of objects, one per word, in the same order as the input.
+Include translations for all requested languages in a "translations" object.
+Use ISO language codes as keys: {", ".join(translation_iso_codes)}
+
 [
-  {{"word": "食べる", "sentence": "毎日朝ごはんを食べます。", "translation": "I eat breakfast every day."}},
+  {{"word": "食べる", "sentence": "毎日朝ごはんを食べます。", "translations": {{{example_translations}}}}},
   ...
 ]"""
 
@@ -238,20 +258,46 @@ Respond with a JSON array of objects, one per word, in the same order as the inp
 async def generate_sentences_batch(
     words: List[VocabWord],
     level: str,
-    language: str
+    language: str,
+    use_batch_api: bool = True,
 ) -> List[GeneratedSentence]:
     """
     Generate sentences for a batch of words using Gemini.
-    Groups words into batches of WORDS_PER_PROMPT.
-    Uses Pydantic models for structured JSON output.
+
+    Args:
+        words: List of vocabulary words to generate sentences for
+        level: Difficulty level (N5-N1, A1-C2)
+        language: Target language (japanese, english, french)
+        use_batch_api: If True, use Google Batch API (50% cost savings, async).
+                       If False, use synchronous API (faster for small batches).
+
+    Returns:
+        List of GeneratedSentence objects
     """
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY not set")
 
+    # For very small batches (< 5 words), use synchronous API for speed
+    # For larger batches (5+ words), use Batch API for 50% cost savings
+    if not use_batch_api or len(words) < 5:
+        return await _generate_sentences_sync(words, level, language)
+    else:
+        return await _generate_sentences_batch_api(words, level, language)
+
+
+async def _generate_sentences_sync(
+    words: List[VocabWord],
+    level: str,
+    language: str,
+) -> List[GeneratedSentence]:
+    """
+    Generate sentences using synchronous API calls.
+    Better for small batches where speed matters more than cost.
+    """
     client = genai.Client(api_key=GEMINI_API_KEY)
     results = []
 
-    # Process in batches
+    # Process in batches of WORDS_PER_PROMPT
     for i in range(0, len(words), WORDS_PER_PROMPT):
         batch = words[i:i + WORDS_PER_PROMPT]
         logger.info(f"Processing batch {i // WORDS_PER_PROMPT + 1}: {len(batch)} words")
@@ -268,28 +314,99 @@ async def generate_sentences_batch(
                 )
             )
 
-            # Parse response - with Pydantic schema, response.text is valid JSON
-            response_text = response.text
-            sentences_data = json.loads(response_text)
+            sentences_data = json.loads(response.text)
 
             for item in sentences_data:
                 results.append(GeneratedSentence(
                     word=item["word"],
                     sentence=item["sentence"],
-                    translation=item["translation"]
+                    translations=item.get("translations", {})
                 ))
 
             logger.info(f"  Generated {len(sentences_data)} sentences")
 
         except Exception as e:
             logger.error(f"  Batch failed: {e}")
-            # Mark failed words
             for w in batch:
-                results.append(GeneratedSentence(
-                    word=w.word,
-                    sentence="",
-                    translation=""
-                ))
+                results.append(GeneratedSentence(word=w.word, sentence="", translations={}))
+
+    return results
+
+
+async def _generate_sentences_batch_api(
+    words: List[VocabWord],
+    level: str,
+    language: str,
+) -> List[GeneratedSentence]:
+    """
+    Generate sentences using Google Batch API.
+    50% cost savings, but asynchronous (may take minutes to hours).
+    """
+    logger.info(f"Using Batch API for {len(words)} words (50% cost savings)")
+
+    runner = BatchJobRunner(api_key=GEMINI_API_KEY)
+    results = []
+
+    # Build batch requests - one request per group of words
+    batch_requests = []
+    word_batches = []  # Track which words are in each batch
+
+    for i in range(0, len(words), WORDS_PER_PROMPT):
+        batch = words[i:i + WORDS_PER_PROMPT]
+        word_batches.append(batch)
+
+        prompt = build_multi_word_prompt(batch, level, language)
+
+        batch_requests.append({
+            "key": f"batch_{i // WORDS_PER_PROMPT}",
+            "prompt": prompt,
+        })
+
+    logger.info(f"Created {len(batch_requests)} batch requests")
+
+    # System prompt for consistent JSON output
+    system_prompt = """You are a language teacher creating example sentences for vocabulary flashcards.
+Always respond with a JSON array of objects with "word", "sentence", and "translation" fields.
+Make sentences appropriate for the specified difficulty level."""
+
+    try:
+        # Run batch job
+        def on_progress(status):
+            logger.info(f"Batch job status: {status.state}")
+
+        responses = await runner.run_batch(
+            requests=batch_requests,
+            system_prompt=system_prompt,
+            model=TEXT_MODEL,
+            display_name=f"sentences_{language}_{level}",
+            response_mime_type="application/json",
+            on_progress=on_progress,
+        )
+
+        # Parse responses
+        for batch_key, response_text in responses.items():
+            batch_idx = int(batch_key.split("_")[1])
+            batch = word_batches[batch_idx]
+
+            try:
+                sentences_data = json.loads(response_text)
+                for item in sentences_data:
+                    results.append(GeneratedSentence(
+                        word=item["word"],
+                        sentence=item["sentence"],
+                        translations=item.get("translations", {})
+                    ))
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse response for {batch_key}")
+                for w in batch:
+                    results.append(GeneratedSentence(word=w.word, sentence="", translations={}))
+
+        logger.info(f"Batch API completed: {len(results)} sentences generated")
+
+    except Exception as e:
+        logger.error(f"Batch API failed: {e}")
+        logger.info("Falling back to synchronous API...")
+        return await _generate_sentences_sync(words, level, language)
 
     return results
 
@@ -307,6 +424,8 @@ async def generate_audio(
 ) -> Optional[Path]:
     """
     Generate audio using Gemini TTS and compress to MP3.
+
+    Uses shared compression utility for consistent output across pipelines.
     """
     if not GEMINI_API_KEY:
         return None
@@ -334,31 +453,10 @@ async def generate_audio(
         # Extract PCM audio data
         audio_data = response.candidates[0].content.parts[0].inline_data.data
 
-        # Convert to MP3 using ffmpeg
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        # Convert to MP3 using shared utility
         mp3_path = output_path.with_suffix(".mp3")
+        compress_audio_to_mp3(audio_data, mp3_path, bitrate="64k")
 
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            tmp_path = Path(tmp.name)
-            with wave.open(tmp, "wb") as wf:
-                wf.setnchannels(1)
-                wf.setsampwidth(2)
-                wf.setframerate(24000)
-                wf.writeframes(audio_data)
-
-        try:
-            result = subprocess.run(
-                ["ffmpeg", "-y", "-i", str(tmp_path), "-b:a", "64k", str(mp3_path)],
-                capture_output=True,
-                text=True
-            )
-            if result.returncode != 0:
-                logger.error(f"ffmpeg error: {result.stderr}")
-                return None
-        finally:
-            tmp_path.unlink(missing_ok=True)
-
-        logger.info(f"Audio saved: {mp3_path.stat().st_size / 1024:.1f}KB")
         return mp3_path
 
     except Exception as e:
@@ -380,6 +478,8 @@ async def generate_image(
 ) -> Optional[Path]:
     """
     Generate a flashcard image using Gemini and compress to WebP.
+
+    Uses shared compression utility for consistent output across pipelines.
     """
     if not GEMINI_API_KEY:
         return None
@@ -414,21 +514,9 @@ Style: Simple vector-like illustration with clean lines."""
         # Extract image data
         image_data = response.candidates[0].content.parts[0].inline_data.data
 
-        # Compress to WebP
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        # Compress to WebP using shared utility
         webp_path = output_path.with_suffix(".webp")
-
-        img = Image.open(io.BytesIO(image_data))
-        if img.mode in ('RGBA', 'P'):
-            img = img.convert('RGB')
-        if max(img.size) > max_size:
-            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-
-        img.save(webp_path, 'WEBP', quality=quality, method=6)
-
-        original_size = len(image_data)
-        final_size = webp_path.stat().st_size
-        logger.info(f"Image saved: {original_size/1024:.1f}KB -> {final_size/1024:.1f}KB")
+        compress_image_to_webp(image_data, webp_path, quality=quality, max_size=max_size)
 
         return webp_path
 
@@ -486,7 +574,7 @@ def save_results_json(words: List[VocabWord], output_path: Path):
             "language": w.language,
             "level": w.level,
             "sentence": w.sentence,
-            "sentence_translation": w.sentence_translation,
+            "translations": w.sentence_translations or {},  # {"en": "...", "ja": "...", "fr": "..."}
             "audio_path": str(w.audio_path) if w.audio_path else None,
             "word_audio_path": str(w.word_audio_path) if w.word_audio_path else None,
             "image_path": str(w.image_path) if w.image_path else None,
@@ -510,6 +598,7 @@ async def run_pipeline(
     generate_images_flag: bool = False,
     count: Optional[int] = None,
     output_dir: Path = OUTPUT_DIR,
+    use_batch_api: bool = True,
 ):
     """Run the generation pipeline"""
 
@@ -526,14 +615,14 @@ async def run_pipeline(
     # Step 1: Generate sentences
     if generate_sentences:
         logger.info("=== Generating Sentences ===")
-        sentences = await generate_sentences_batch(words, level, language)
+        sentences = await generate_sentences_batch(words, level, language, use_batch_api=use_batch_api)
 
         # Match results back to words
         word_map = {w.word: w for w in words}
         for sent in sentences:
             if sent.word in word_map and sent.sentence:
                 word_map[sent.word].sentence = sent.sentence
-                word_map[sent.word].sentence_translation = sent.translation
+                word_map[sent.word].sentence_translations = sent.translations
 
         success = sum(1 for w in words if w.sentence)
         logger.info(f"Sentences generated: {success}/{len(words)}")
@@ -604,6 +693,11 @@ def main():
     parser.add_argument("--type", type=str, default="sentences", choices=["sentences", "audio", "images", "all"])
     parser.add_argument("--count", type=int, help="Limit number of words to process")
     parser.add_argument("--output", type=Path, default=OUTPUT_DIR, help="Output directory")
+    parser.add_argument(
+        "--no-batch-api",
+        action="store_true",
+        help="Disable Batch API (faster for small batches, but full price)"
+    )
 
     args = parser.parse_args()
 
@@ -627,6 +721,7 @@ def main():
         generate_images_flag=args.type in ["images", "all"],
         count=args.count,
         output_dir=args.output,
+        use_batch_api=not args.no_batch_api,
     ))
 
 

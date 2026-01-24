@@ -21,10 +21,7 @@
         "Basic flashcard reviews",
         "5 reading sessions/month"
       ],
-      "noFeatures": [
-        "No AI feedback",
-        "No AI sentence generation"
-      ],
+      "noFeatures": ["No AI feedback", "No AI sentence generation"],
       "currentPlan": "Current plan",
       "cta": "Get Started"
     },

@@ -1,8 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useMutation, useQuery } from "convex/react";
-
-import { useAIAction } from "@/hooks/useAIAction";
 import type { GenericId } from "convex/values";
 import {
   ArrowUpDown,
@@ -41,6 +39,7 @@ import { DeckPanel } from "@/components/vocabulary/DeckPanel";
 import { DeckPickerModal } from "@/components/vocabulary/DeckPickerModal";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAIAction } from "@/hooks/useAIAction";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useFlashcard } from "@/hooks/useFlashcard";
 import {

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { AlertTriangle,BookOpen, Clock, Flame, Target, TrendingUp } from "lucide-react";
+import { AlertTriangle, BookOpen, Clock, Flame, Target, TrendingUp } from "lucide-react";
 import {
   CartesianGrid,
   Line,
@@ -110,9 +110,7 @@ export function ProgressPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">{t("progress.title")}</h1>
-          <p className="text-foreground-muted">
-            {t("progress.subtitle")}
-          </p>
+          <p className="text-foreground-muted">{t("progress.subtitle")}</p>
         </div>
 
         {/* Overview Stats */}
@@ -123,7 +121,9 @@ export function ProgressPage() {
               <Flame className="w-5 h-5" />
               <span className="text-sm font-medium">{t("progress.stats.streak")}</span>
             </div>
-            <p className="text-2xl font-bold">{t("progress.stats.days", { count: currentStreak })}</p>
+            <p className="text-2xl font-bold">
+              {t("progress.stats.days", { count: currentStreak })}
+            </p>
           </div>
 
           {/* Study Time */}
@@ -133,7 +133,9 @@ export function ProgressPage() {
               <span className="text-sm font-medium">{t("progress.stats.totalStudy")}</span>
             </div>
             <p className="text-2xl font-bold">
-              {t("progress.stats.hours", { count: Math.round((profile?.totalStudyMinutes ?? 0) / 60) })}
+              {t("progress.stats.hours", {
+                count: Math.round((profile?.totalStudyMinutes ?? 0) / 60),
+              })}
             </p>
           </div>
 
@@ -235,7 +237,9 @@ export function ProgressPage() {
                       >
                         {area.score}%
                       </p>
-                      <p className="text-xs text-foreground-muted">{t("progress.focusAreas.questions", { count: area.questionCount })}</p>
+                      <p className="text-xs text-foreground-muted">
+                        {t("progress.focusAreas.questions", { count: area.questionCount })}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -331,7 +335,9 @@ export function ProgressPage() {
                         style={{ width: `${avgSkill}%` }}
                       />
                     </div>
-                    <p className="text-xs text-foreground-muted mt-1">{t("progress.languages.average", { percent: avgSkill })}</p>
+                    <p className="text-xs text-foreground-muted mt-1">
+                      {t("progress.languages.average", { percent: avgSkill })}
+                    </p>
                   </div>
                 );
               })}

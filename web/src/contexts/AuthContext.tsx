@@ -1,7 +1,7 @@
-import { useAuth as useClerkAuth,useClerk, useUser } from "@clerk/clerk-react";
-import { createContext, type ReactNode,useContext, useEffect, useState } from "react";
+import { useAuth as useClerkAuth, useClerk, useUser } from "@clerk/clerk-react";
+import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 
-import type { AuthContextValue,AuthUser } from "@/lib/auth/types";
+import type { AuthContextValue, AuthUser } from "@/lib/auth/types";
 
 // Re-export types for convenience
 export type { AuthUser as User } from "@/lib/auth/types";

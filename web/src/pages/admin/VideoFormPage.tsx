@@ -1,5 +1,5 @@
-import { Link,useNavigate, useParams } from "@tanstack/react-router";
-import { useMutation,useQuery } from "convex/react";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import { useMutation, useQuery } from "convex/react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { nanoid } from "nanoid";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -169,9 +169,7 @@ export function VideoFormPage() {
   // Fetch existing video by Convex ID if it looks like one
   const existingVideoByConvexId = useQuery(
     api.youtubeContent.get,
-    !isNew && params.id && !isYouTubeId
-      ? { id: params.id as Id<"youtubeContent"> }
-      : "skip"
+    !isNew && params.id && !isYouTubeId ? { id: params.id as Id<"youtubeContent"> } : "skip"
   );
 
   // Fetch existing video by YouTube video ID if it looks like one

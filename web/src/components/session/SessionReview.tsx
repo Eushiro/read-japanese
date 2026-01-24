@@ -1,6 +1,6 @@
-import { useMutation,useQuery } from "convex/react";
-import { Brain, Check, ChevronRight, Loader2, Volume2,X } from "lucide-react";
-import { useCallback, useEffect, useMemo,useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { Brain, Check, ChevronRight, Loader2, Volume2, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -160,7 +160,9 @@ export function SessionReview({ cardCount, onComplete }: SessionReviewProps) {
         <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
           <Check className="w-8 h-8 text-green-500" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">{t("flashcards.states.allCaughtUp.title")}</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-2">
+          {t("flashcards.states.allCaughtUp.title")}
+        </h2>
         <p className="text-foreground-muted mb-6">{t("flashcards.noCardsToReview")}</p>
         <Button onClick={() => onComplete(0)}>{t("common.buttons.continue")}</Button>
       </div>

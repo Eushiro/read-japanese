@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight,BookmarkCheck, Brain, PenLine, PlayCircle } from "lucide-react";
+import { ArrowRight, BookmarkCheck, Brain, PenLine, PlayCircle } from "lucide-react";
 
 import { useT } from "@/lib/i18n";
 

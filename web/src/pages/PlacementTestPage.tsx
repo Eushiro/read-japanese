@@ -1,7 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-
-import { useAIAction } from "@/hooks/useAIAction";
 import { ArrowLeft, Brain, ChevronRight, Loader2, RotateCcw, Target, Trophy } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -9,6 +7,7 @@ import { QuestionDisplay, QuestionNavigation } from "@/components/quiz";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAIAction } from "@/hooks/useAIAction";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
 import { useT } from "@/lib/i18n";
 

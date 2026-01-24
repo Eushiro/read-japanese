@@ -1,9 +1,9 @@
-import { BookOpen,Crown } from "lucide-react";
+import { BookOpen, Crown } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { getCoverImageUrl, prefetchStory } from "@/api/stories";
 import { Badge } from "@/components/ui/badge";
-import type { ProficiencyLevel,StoryListItem } from "@/types/story";
+import type { ProficiencyLevel, StoryListItem } from "@/types/story";
 
 interface StoryCardProps {
   story: StoryListItem;

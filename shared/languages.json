@@ -1,0 +1,30 @@
+{
+  "supported": [
+    {
+      "code": "japanese",
+      "isoCode": "ja",
+      "name": "Japanese",
+      "nativeName": "日本語",
+      "flag": "🇯🇵",
+      "levels": ["N5", "N4", "N3", "N2", "N1"]
+    },
+    {
+      "code": "english",
+      "isoCode": "en",
+      "name": "English",
+      "nativeName": "English",
+      "flag": "🇬🇧",
+      "levels": ["A1", "A2", "B1", "B2", "C1", "C2"]
+    },
+    {
+      "code": "french",
+      "isoCode": "fr",
+      "name": "French",
+      "nativeName": "Français",
+      "flag": "🇫🇷",
+      "levels": ["A1", "A2", "B1", "B2", "C1", "C2"]
+    }
+  ],
+  "default": "japanese",
+  "translationTargets": ["english", "japanese", "french"]
+}

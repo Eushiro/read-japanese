@@ -10,6 +10,11 @@
 
 import type * as admin from "../admin.js";
 import type * as ai from "../ai.js";
+import type * as ai_assessment from "../ai/assessment.js";
+import type * as ai_comprehension from "../ai/comprehension.js";
+import type * as ai_core from "../ai/core.js";
+import type * as ai_flashcards from "../ai/flashcards.js";
+import type * as ai_media from "../ai/media.js";
 import type * as aiHelpers from "../aiHelpers.js";
 import type * as batchJobs from "../batchJobs.js";
 import type * as contentLibrary from "../contentLibrary.js";
@@ -20,13 +25,16 @@ import type * as examTemplates from "../examTemplates.js";
 import type * as flashcards from "../flashcards.js";
 import type * as http from "../http.js";
 import type * as learnerModel from "../learnerModel.js";
+import type * as lib_admin from "../lib/admin.js";
 import type * as lib_contentReuse from "../lib/contentReuse.js";
 import type * as lib_generation from "../lib/generation.js";
 import type * as lib_gradingProfiles from "../lib/gradingProfiles.js";
 import type * as lib_helpers from "../lib/helpers.js";
+import type * as lib_imageCompression from "../lib/imageCompression.js";
 import type * as lib_models from "../lib/models.js";
 import type * as lib_paymentTypes from "../lib/paymentTypes.js";
 import type * as lib_storage from "../lib/storage.js";
+import type * as lib_translation from "../lib/translation.js";
 import type * as migrations_settingsMigration from "../migrations/settingsMigration.js";
 import type * as mockTests from "../mockTests.js";
 import type * as payments from "../payments.js";
@@ -58,6 +66,11 @@ import type {
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   ai: typeof ai;
+  "ai/assessment": typeof ai_assessment;
+  "ai/comprehension": typeof ai_comprehension;
+  "ai/core": typeof ai_core;
+  "ai/flashcards": typeof ai_flashcards;
+  "ai/media": typeof ai_media;
   aiHelpers: typeof aiHelpers;
   batchJobs: typeof batchJobs;
   contentLibrary: typeof contentLibrary;
@@ -68,13 +81,16 @@ declare const fullApi: ApiFromModules<{
   flashcards: typeof flashcards;
   http: typeof http;
   learnerModel: typeof learnerModel;
+  "lib/admin": typeof lib_admin;
   "lib/contentReuse": typeof lib_contentReuse;
   "lib/generation": typeof lib_generation;
   "lib/gradingProfiles": typeof lib_gradingProfiles;
   "lib/helpers": typeof lib_helpers;
+  "lib/imageCompression": typeof lib_imageCompression;
   "lib/models": typeof lib_models;
   "lib/paymentTypes": typeof lib_paymentTypes;
   "lib/storage": typeof lib_storage;
+  "lib/translation": typeof lib_translation;
   "migrations/settingsMigration": typeof migrations_settingsMigration;
   mockTests: typeof mockTests;
   payments: typeof payments;

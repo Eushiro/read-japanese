@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import type { CEFRLevel,JLPTLevel, ProficiencyLevel, StoryListItem } from "@/types/story";
+import type { CEFRLevel, JLPTLevel, ProficiencyLevel, StoryListItem } from "@/types/story";
 
 // Simple seeded PRNG for stable-but-varied shuffling
 function seededRandom(seed: number): () => number {

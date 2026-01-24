@@ -16,7 +16,9 @@ export function SessionProgress({ activities, currentIndex }: SessionProgressPro
       case "review":
         return t("studySession.progress.review");
       case "input":
-        return activity.contentType === "story" ? t("studySession.progress.read") : t("studySession.progress.watch");
+        return activity.contentType === "story"
+          ? t("studySession.progress.read")
+          : t("studySession.progress.watch");
       case "output":
         return t("studySession.progress.write");
     }
@@ -65,4 +67,3 @@ function ActivityIcon({ type, className }: { type: SessionActivity["type"]; clas
       return <PenLine className={className} />;
   }
 }
-

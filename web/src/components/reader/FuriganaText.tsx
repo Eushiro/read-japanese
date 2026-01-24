@@ -1,5 +1,5 @@
 import type { Token, TokenPart } from "@/types/story";
-import { isTokenPunctuation,tokenHasFurigana } from "@/types/story";
+import { isTokenPunctuation, tokenHasFurigana } from "@/types/story";
 
 interface FuriganaTextProps {
   token: Token;

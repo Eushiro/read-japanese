@@ -32,8 +32,8 @@ export type ExamType =
   | "dalf_c2"
   | "tcf"; // French
 
-// Subscription tiers
-export type SubscriptionTier = "free" | "basic" | "pro" | "power";
+// Subscription tiers (unified credit system)
+export type SubscriptionTier = "free" | "starter" | "pro";
 
 // Subscription status
 export type SubscriptionStatus = "active" | "cancelled" | "expired";
@@ -118,12 +118,11 @@ export const examTypeValidator = v.union(
   v.literal("tcf")
 );
 
-// Subscription tiers
+// Subscription tiers (unified credit system)
 export const subscriptionTierValidator = v.union(
   v.literal("free"),
-  v.literal("basic"),
-  v.literal("pro"),
-  v.literal("power")
+  v.literal("starter"),
+  v.literal("pro")
 );
 
 // Subscription status
@@ -238,6 +237,8 @@ export default defineSchema({
     lastActivityDate: v.optional(v.string()), // YYYY-MM-DD format
     // Stripe customer ID (pre-created for faster checkout)
     stripeCustomerId: v.optional(v.string()),
+    // Admin mode (for admin emails only - bypasses credit limits)
+    isAdminMode: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_clerk_id", ["clerkId"]),
@@ -496,19 +497,20 @@ export default defineSchema({
   }).index("by_user", ["userId"]),
 
   // ============================================
-  // SUBSCRIPTIONS (mocked for now)
+  // SUBSCRIPTIONS (unified credit system)
   // ============================================
   subscriptions: defineTable({
     userId: v.string(),
     tier: subscriptionTierValidator,
     status: subscriptionStatusValidator,
+    billingPeriod: v.optional(v.union(v.literal("monthly"), v.literal("annual"))),
 
-    // Billing info (mocked)
+    // Billing info
     startDate: v.number(),
     renewalDate: v.optional(v.number()),
     cancelledAt: v.optional(v.number()),
 
-    // Stripe integration placeholders
+    // Stripe integration
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
 
@@ -519,8 +521,9 @@ export default defineSchema({
     .index("by_stripe_customer", ["stripeCustomerId"]),
 
   // ============================================
-  // USAGE TRACKING
+  // USAGE TRACKING (deprecated - use creditUsage)
   // ============================================
+  // @deprecated: Migrated to creditUsage table for unified credit system
   usageRecords: defineTable({
     userId: v.string(),
     periodMonth: v.number(), // 1-12
@@ -538,6 +541,37 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_and_period", ["userId", "periodYear", "periodMonth"]),
+
+  // ============================================
+  // CREDIT USAGE (unified credit system)
+  // ============================================
+  // Tracks monthly credit consumption per user
+  creditUsage: defineTable({
+    userId: v.string(),
+    periodMonth: v.number(), // 1-12
+    periodYear: v.number(), // e.g., 2024
+    creditsUsed: v.number(), // Total credits consumed this period
+    // Alert dismissal tracking (once per month)
+    alertDismissed80: v.optional(v.boolean()),
+    alertDismissed95: v.optional(v.boolean()),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_period", ["userId", "periodYear", "periodMonth"]),
+
+  // ============================================
+  // CREDIT TRANSACTIONS (usage history)
+  // ============================================
+  // Individual actions for usage history display
+  creditTransactions: defineTable({
+    userId: v.string(),
+    action: v.string(), // "sentence", "feedback", "comprehension", "audio", "shadowing"
+    creditsSpent: v.number(), // 0 for admin bypass
+    metadata: v.optional(v.any()), // { word, text, adminBypass, etc. }
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_date", ["userId", "createdAt"]),
 
   // ============================================
   // MOCK TESTS

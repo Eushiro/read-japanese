@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 
-import { internalMutation,mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { getGradingProfile as getGradingProfileConstant } from "./lib/gradingProfiles";
-import { languageValidator, type Language } from "./schema";
+import { type Language, languageValidator } from "./schema";
 
 // ============================================
 // LEVEL DEFINITIONS

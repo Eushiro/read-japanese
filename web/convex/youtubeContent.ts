@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 
-import { internalMutation,mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { languageValidator } from "./schema";
-import { getThumbnailUrl,validateVideo, VIDEOS } from "./videoData";
+import { getThumbnailUrl, validateVideo, VIDEOS } from "./videoData";
 
 // ============================================
 // QUERIES

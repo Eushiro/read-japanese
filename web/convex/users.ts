@@ -7,7 +7,7 @@ import {
   getYesterdayString,
   requireUserByClerkId,
 } from "./lib/helpers";
-import { examTypeValidator,languageValidator } from "./schema";
+import { examTypeValidator, languageValidator } from "./schema";
 
 // ============================================
 // QUERIES

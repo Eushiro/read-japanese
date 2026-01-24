@@ -1,4 +1,4 @@
-import { useMutation,useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { BookOpen, CheckCircle2, Layers, Pause, PenLine, Play, Plus, Zap } from "lucide-react";
 import { useState } from "react";
 
@@ -86,7 +86,9 @@ export function DeckPanel({ userId, onBrowseDecks, selectedDeckId, onSelectDeck 
       <div>
         <div className="flex items-center gap-2 mb-2">
           <BookOpen className="w-4 h-4 text-foreground-muted" />
-          <span className="font-medium text-foreground text-sm">{t("vocabulary.deckPanel.view")}</span>
+          <span className="font-medium text-foreground text-sm">
+            {t("vocabulary.deckPanel.view")}
+          </span>
         </div>
 
         {isLoading ? (
@@ -148,14 +150,18 @@ export function DeckPanel({ userId, onBrowseDecks, selectedDeckId, onSelectDeck 
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-orange-500" />
-            <span className="font-medium text-foreground text-sm">{t("vocabulary.deckPanel.activeDeck")}</span>
+            <span className="font-medium text-foreground text-sm">
+              {t("vocabulary.deckPanel.activeDeck")}
+            </span>
           </div>
           <Button onClick={onBrowseDecks} variant="ghost" size="sm" className="gap-1 text-xs h-7">
             <Plus className="w-3 h-3" />
             {t("vocabulary.deckPanel.add")}
           </Button>
         </div>
-        <p className="text-xs text-foreground-muted mb-2">{t("vocabulary.deckPanel.dailyCardsInfo")}</p>
+        <p className="text-xs text-foreground-muted mb-2">
+          {t("vocabulary.deckPanel.dailyCardsInfo")}
+        </p>
 
         {isLoading ? (
           <Skeleton className="h-24 w-full rounded-lg" />
@@ -172,7 +178,9 @@ export function DeckPanel({ userId, onBrowseDecks, selectedDeckId, onSelectDeck 
           />
         ) : (
           <div className="text-center py-4 px-3 rounded-lg bg-surface border border-dashed border-border">
-            <p className="text-xs text-foreground-muted mb-2">{t("vocabulary.deckPanel.noActiveDeck")}</p>
+            <p className="text-xs text-foreground-muted mb-2">
+              {t("vocabulary.deckPanel.noActiveDeck")}
+            </p>
             <Button onClick={onBrowseDecks} size="sm" className="gap-1.5 text-xs h-7">
               <Plus className="w-3 h-3" />
               {t("vocabulary.deckPanel.chooseADeck")}
@@ -304,9 +312,13 @@ function DeckCard({
             <DialogHeader>
               <DialogTitle>{t("vocabulary.deckPanel.removeDeckTitle")}</DialogTitle>
               <DialogDescription>
-                <span dangerouslySetInnerHTML={{
-                  __html: t("vocabulary.deckPanel.removeDeckDescription", { deckName: subscription.deck?.name ?? "" })
-                }} />
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: t("vocabulary.deckPanel.removeDeckDescription", {
+                      deckName: subscription.deck?.name ?? "",
+                    }),
+                  }}
+                />
               </DialogDescription>
             </DialogHeader>
             <div className="flex gap-2 mt-4">
@@ -381,10 +393,15 @@ function DeckCard({
           {/* Stats */}
           <div className="flex items-center justify-between text-xs text-foreground-muted">
             <span>
-              {t("vocabulary.deckPanel.wordsProgress", { added: subscription.wordsAdded, total: subscription.totalWordsInDeck })}
+              {t("vocabulary.deckPanel.wordsProgress", {
+                added: subscription.wordsAdded,
+                total: subscription.totalWordsInDeck,
+              })}
             </span>
             {isActive && subscription.cardsAddedToday > 0 && (
-              <span className="text-orange-500">{t("vocabulary.deckPanel.today", { count: subscription.cardsAddedToday })}</span>
+              <span className="text-orange-500">
+                {t("vocabulary.deckPanel.today", { count: subscription.cardsAddedToday })}
+              </span>
             )}
           </div>
 
@@ -392,7 +409,9 @@ function DeckCard({
           {isActive && !isCompleted && userId && (
             <div className="mt-2 pt-2 border-t border-border/50">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-foreground-muted">{t("vocabulary.deckPanel.newCardsPerDay")}</span>
+                <span className="text-xs text-foreground-muted">
+                  {t("vocabulary.deckPanel.newCardsPerDay")}
+                </span>
                 <Input
                   type="number"
                   min={1}
@@ -422,9 +441,13 @@ function DeckCard({
           <DialogHeader>
             <DialogTitle>{t("vocabulary.deckPanel.removeDeckTitle")}</DialogTitle>
             <DialogDescription>
-              <span dangerouslySetInnerHTML={{
-                __html: t("vocabulary.deckPanel.removeDeckDescription", { deckName: subscription.deck?.name ?? "" })
-              }} />
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: t("vocabulary.deckPanel.removeDeckDescription", {
+                    deckName: subscription.deck?.name ?? "",
+                  }),
+                }}
+              />
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 mt-4">

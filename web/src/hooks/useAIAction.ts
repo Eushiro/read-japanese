@@ -10,11 +10,10 @@
  */
 
 import { useAction } from "convex/react";
+import type { FunctionReference } from "convex/server";
 import { useCallback, useMemo, useRef } from "react";
 
 import { trackAIError, trackAIRequest, trackAISuccess } from "@/lib/analytics";
-
-import type { FunctionReference } from "convex/server";
 
 type AnyArgs = Record<string, unknown>;
 
@@ -70,7 +69,7 @@ function camelToSnake(str: string): string {
  * @returns A wrapped action function with the same signature
  */
 export function useAIAction<Args extends AnyArgs, Result>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   actionRef: FunctionReference<"action", "public", Args, Result>,
   options?: {
     /** Override the auto-detected operation name */

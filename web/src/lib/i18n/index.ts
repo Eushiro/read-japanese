@@ -22,20 +22,20 @@
  */
 
 // Types
-export type { TranslateFunction, TranslationContextValue,UILanguage } from "./types";
-export { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES,UI_LANGUAGES } from "./types";
+export type { TranslateFunction, TranslationContextValue, UILanguage } from "./types";
+export { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, UI_LANGUAGES } from "./types";
 
 // Provider (for main.tsx)
 export { TranslationProvider } from "./TranslationProvider";
 
 // Global t function - simple, no hook needed
-export { hasTranslation,t } from "./t";
+export { hasTranslation, t } from "./t";
 
 // Hook for reactive translations (re-renders on language change)
 export { useT } from "./useTranslate";
 
 // UI language management
-export { useSyncUILanguage,useUILanguage } from "./useUILanguage";
+export { useSyncUILanguage, useUILanguage } from "./useUILanguage";
 
 // Language utilities
 export {

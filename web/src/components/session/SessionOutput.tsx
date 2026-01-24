@@ -1,6 +1,4 @@
 import { useMutation, useQuery } from "convex/react";
-
-import { useAIAction } from "@/hooks/useAIAction";
 import type { GenericId } from "convex/values";
 import { Check, ChevronRight, Loader2, PenLine, Send, SkipForward, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -8,6 +6,7 @@ import { useMemo, useState } from "react";
 import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAIAction } from "@/hooks/useAIAction";
 import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../../convex/_generated/api";

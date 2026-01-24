@@ -19,19 +19,19 @@ import enGenerate from "./locales/en/generate.json";
 import enLanding from "./locales/en/landing.json";
 import enLearn from "./locales/en/learn.json";
 import enLibrary from "./locales/en/library.json";
+import enOnboarding from "./locales/en/onboarding.json";
 import enPlacement from "./locales/en/placement.json";
 import enPractice from "./locales/en/practice.json";
 import enPricing from "./locales/en/pricing.json";
 import enProgress from "./locales/en/progress.json";
+import enQuiz from "./locales/en/quiz.json";
 import enReader from "./locales/en/reader.json";
 import enSettings from "./locales/en/settings.json";
+import enShadowing from "./locales/en/shadowing.json";
 import enStudySession from "./locales/en/studySession.json";
 import enVideo from "./locales/en/video.json";
 import enVideoQuiz from "./locales/en/videoQuiz.json";
 import enVocabulary from "./locales/en/vocabulary.json";
-import enOnboarding from "./locales/en/onboarding.json";
-import enQuiz from "./locales/en/quiz.json";
-import enShadowing from "./locales/en/shadowing.json";
 import frCommon from "./locales/fr/common.json";
 import frComprehension from "./locales/fr/comprehension.json";
 import frDashboard from "./locales/fr/dashboard.json";
@@ -43,19 +43,19 @@ import frGenerate from "./locales/fr/generate.json";
 import frLanding from "./locales/fr/landing.json";
 import frLearn from "./locales/fr/learn.json";
 import frLibrary from "./locales/fr/library.json";
+import frOnboarding from "./locales/fr/onboarding.json";
 import frPlacement from "./locales/fr/placement.json";
 import frPractice from "./locales/fr/practice.json";
 import frPricing from "./locales/fr/pricing.json";
 import frProgress from "./locales/fr/progress.json";
+import frQuiz from "./locales/fr/quiz.json";
 import frReader from "./locales/fr/reader.json";
 import frSettings from "./locales/fr/settings.json";
+import frShadowing from "./locales/fr/shadowing.json";
 import frStudySession from "./locales/fr/studySession.json";
 import frVideo from "./locales/fr/video.json";
 import frVideoQuiz from "./locales/fr/videoQuiz.json";
 import frVocabulary from "./locales/fr/vocabulary.json";
-import frOnboarding from "./locales/fr/onboarding.json";
-import frQuiz from "./locales/fr/quiz.json";
-import frShadowing from "./locales/fr/shadowing.json";
 import jaCommon from "./locales/ja/common.json";
 import jaComprehension from "./locales/ja/comprehension.json";
 import jaDashboard from "./locales/ja/dashboard.json";
@@ -67,19 +67,19 @@ import jaGenerate from "./locales/ja/generate.json";
 import jaLanding from "./locales/ja/landing.json";
 import jaLearn from "./locales/ja/learn.json";
 import jaLibrary from "./locales/ja/library.json";
+import jaOnboarding from "./locales/ja/onboarding.json";
 import jaPlacement from "./locales/ja/placement.json";
 import jaPractice from "./locales/ja/practice.json";
 import jaPricing from "./locales/ja/pricing.json";
 import jaProgress from "./locales/ja/progress.json";
+import jaQuiz from "./locales/ja/quiz.json";
 import jaReader from "./locales/ja/reader.json";
 import jaSettings from "./locales/ja/settings.json";
+import jaShadowing from "./locales/ja/shadowing.json";
 import jaStudySession from "./locales/ja/studySession.json";
 import jaVideo from "./locales/ja/video.json";
 import jaVideoQuiz from "./locales/ja/videoQuiz.json";
 import jaVocabulary from "./locales/ja/vocabulary.json";
-import jaOnboarding from "./locales/ja/onboarding.json";
-import jaQuiz from "./locales/ja/quiz.json";
-import jaShadowing from "./locales/ja/shadowing.json";
 import zhCommon from "./locales/zh/common.json";
 import zhComprehension from "./locales/zh/comprehension.json";
 import zhDashboard from "./locales/zh/dashboard.json";
@@ -91,19 +91,19 @@ import zhGenerate from "./locales/zh/generate.json";
 import zhLanding from "./locales/zh/landing.json";
 import zhLearn from "./locales/zh/learn.json";
 import zhLibrary from "./locales/zh/library.json";
+import zhOnboarding from "./locales/zh/onboarding.json";
 import zhPlacement from "./locales/zh/placement.json";
 import zhPractice from "./locales/zh/practice.json";
 import zhPricing from "./locales/zh/pricing.json";
 import zhProgress from "./locales/zh/progress.json";
+import zhQuiz from "./locales/zh/quiz.json";
 import zhReader from "./locales/zh/reader.json";
 import zhSettings from "./locales/zh/settings.json";
+import zhShadowing from "./locales/zh/shadowing.json";
 import zhStudySession from "./locales/zh/studySession.json";
 import zhVideo from "./locales/zh/video.json";
 import zhVideoQuiz from "./locales/zh/videoQuiz.json";
 import zhVocabulary from "./locales/zh/vocabulary.json";
-import zhOnboarding from "./locales/zh/onboarding.json";
-import zhQuiz from "./locales/zh/quiz.json";
-import zhShadowing from "./locales/zh/shadowing.json";
 import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from "./types";
 
 const resources = {
@@ -223,7 +223,32 @@ i18n
 
     // Default namespace
     defaultNS: "common",
-    ns: ["common", "dashboard", "landing", "settings", "vocabulary", "flashcards", "library", "practice", "pricing", "exams", "examTaking", "video", "examResults", "progress", "comprehension", "placement", "learn", "videoQuiz", "generate", "reader", "studySession", "onboarding", "quiz", "shadowing"],
+    ns: [
+      "common",
+      "dashboard",
+      "landing",
+      "settings",
+      "vocabulary",
+      "flashcards",
+      "library",
+      "practice",
+      "pricing",
+      "exams",
+      "examTaking",
+      "video",
+      "examResults",
+      "progress",
+      "comprehension",
+      "placement",
+      "learn",
+      "videoQuiz",
+      "generate",
+      "reader",
+      "studySession",
+      "onboarding",
+      "quiz",
+      "shadowing",
+    ],
 
     // Detection options
     detection: {

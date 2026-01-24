@@ -2,15 +2,15 @@
 Audio generation service using Google Gemini TTS
 Generates audio narration for Japanese graded reader stories.
 """
-import os
-import io
-import wave
 import logging
+import os
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
 
 from google import genai
 from google.genai import types
+
+from .media import compress_audio_to_mp3
 
 logger = logging.getLogger(__name__)
 
@@ -219,36 +219,16 @@ class AudioGenerator:
 
     async def _save_as_mp3(self, pcm_data: bytes, output_path: Path) -> None:
         """
-        Convert PCM audio data to MP3 and save using ffmpeg.
+        Convert PCM audio data to MP3 and save.
+
+        Uses the shared compression utility to ensure consistent
+        compression across all audio generation pipelines.
 
         Args:
             pcm_data: Raw PCM audio (24kHz, 16-bit, mono)
             output_path: Path to save MP3 file
         """
-        import subprocess
-        import tempfile
-
-        # Save PCM as temporary WAV file
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            tmp_path = tmp.name
-            with wave.open(tmp, "wb") as wf:
-                wf.setnchannels(1)  # mono
-                wf.setsampwidth(2)  # 16-bit
-                wf.setframerate(24000)  # 24kHz
-                wf.writeframes(pcm_data)
-
-        try:
-            # Convert to MP3 using ffmpeg
-            result = subprocess.run(
-                ["ffmpeg", "-y", "-i", tmp_path, "-b:a", "64k", str(output_path)],
-                capture_output=True,
-                text=True
-            )
-            if result.returncode != 0:
-                logger.error(f"ffmpeg error: {result.stderr}")
-        finally:
-            # Clean up temp file
-            Path(tmp_path).unlink(missing_ok=True)
+        compress_audio_to_mp3(pcm_data, output_path, bitrate="64k")
 
     def _extract_story_text(self, chapters: List[dict]) -> str:
         """Extract all text from story chapters"""

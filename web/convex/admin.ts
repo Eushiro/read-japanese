@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { mutation,query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 
 // Admin utility queries
 
@@ -474,6 +474,21 @@ export const updateCompressedUrl = mutation({
   handler: async (ctx, args) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic table ID requires type assertion
     await ctx.db.patch(args.id as any, { [args.field]: args.newUrl });
+    return { success: true };
+  },
+});
+
+/**
+ * Delete an orphaned record (e.g., when the R2 file no longer exists)
+ */
+export const deleteOrphanedRecord = mutation({
+  args: {
+    source: v.union(v.literal("sentences"), v.literal("images"), v.literal("wordAudio")),
+    id: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic table ID requires type assertion
+    await ctx.db.delete(args.id as any);
     return { success: true };
   },
 });

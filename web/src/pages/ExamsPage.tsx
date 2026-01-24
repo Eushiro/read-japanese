@@ -1,6 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { AlertCircle, BookOpen, ChevronRight, Clock, Target, TrendingUp,Trophy } from "lucide-react";
+import {
+  AlertCircle,
+  BookOpen,
+  ChevronRight,
+  Clock,
+  Target,
+  TrendingUp,
+  Trophy,
+} from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
@@ -80,9 +88,7 @@ export function ExamsPage() {
         <div className="max-w-xl mx-auto text-center">
           <BookOpen className="w-16 h-16 mx-auto text-foreground-muted mb-4" />
           <h1 className="text-2xl font-bold mb-4">{t("exams.signIn.title")}</h1>
-          <p className="text-foreground-muted mb-6">
-            {t("exams.signIn.description")}
-          </p>
+          <p className="text-foreground-muted mb-6">{t("exams.signIn.description")}</p>
         </div>
       </div>
     );
@@ -94,9 +100,7 @@ export function ExamsPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">{t("exams.hero.title")}</h1>
-          <p className="text-foreground-muted">
-            {t("exams.hero.subtitle")}
-          </p>
+          <p className="text-foreground-muted">{t("exams.hero.subtitle")}</p>
         </div>
 
         {/* Readiness Indicator */}
@@ -158,7 +162,9 @@ export function ExamsPage() {
                 >
                   <div>
                     <p className="font-medium">
-                      {t(`exams.examTypes.${attempt.examType}.name`, { defaultValue: attempt.examType })}
+                      {t(`exams.examTypes.${attempt.examType}.name`, {
+                        defaultValue: attempt.examType,
+                      })}
                     </p>
                     <p className="text-sm text-foreground-muted">
                       {t("exams.continueExam.questionsAnswered", {
@@ -187,9 +193,7 @@ export function ExamsPage() {
           ) : templates.length === 0 ? (
             <div className="text-center py-12 bg-surface rounded-xl border border-border">
               <AlertCircle className="w-12 h-12 mx-auto text-foreground-muted mb-4" />
-              <p className="text-foreground-muted">
-                {t("exams.available.empty")}
-              </p>
+              <p className="text-foreground-muted">{t("exams.available.empty")}</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -220,7 +224,9 @@ export function ExamsPage() {
                           <div className="flex items-center gap-4 text-sm">
                             <div className="flex items-center gap-1 text-foreground-muted">
                               <Target className="w-4 h-4" />
-                              {t("exams.available.attempts", { count: examAnalytics.totalAttempts })}
+                              {t("exams.available.attempts", {
+                                count: examAnalytics.totalAttempts,
+                              })}
                             </div>
                             <div className="flex items-center gap-1 text-foreground-muted">
                               <Trophy className="w-4 h-4 text-yellow-500" />
@@ -246,13 +252,18 @@ export function ExamsPage() {
                               {template.year && <span>{template.year}</span>}
                               <span>
                                 {t("exams.available.questions", {
-                                  count: template.sections.reduce((sum, s) => sum + s.questionCount, 0),
+                                  count: template.sections.reduce(
+                                    (sum, s) => sum + s.questionCount,
+                                    0
+                                  ),
                                 })}
                               </span>
                               {template.totalTimeLimitMinutes && (
                                 <span className="flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
-                                  {t("exams.available.minutes", { count: template.totalTimeLimitMinutes })}
+                                  {t("exams.available.minutes", {
+                                    count: template.totalTimeLimitMinutes,
+                                  })}
                                 </span>
                               )}
                             </div>
@@ -292,13 +303,17 @@ export function ExamsPage() {
                         <span className="text-green-500">{data.highestScore}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-foreground-muted">{t("exams.progress.attempts")}</span>
+                        <span className="text-foreground-muted">
+                          {t("exams.progress.attempts")}
+                        </span>
                         <span>{data.totalAttempts}</span>
                       </div>
                     </div>
                     {data.weakAreas && data.weakAreas.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-border">
-                        <p className="text-xs text-foreground-muted mb-1">{t("exams.progress.focusAreas")}</p>
+                        <p className="text-xs text-foreground-muted mb-1">
+                          {t("exams.progress.focusAreas")}
+                        </p>
                         <div className="flex flex-wrap gap-1">
                           {data.weakAreas.slice(0, 3).map((area) => (
                             <span

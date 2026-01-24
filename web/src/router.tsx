@@ -9,12 +9,12 @@ import {
 } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { BookOpen, CreditCard, Crown, Home, Shield, Sparkles, User, Zap } from "lucide-react";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 // Admin pages
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { OnboardingModal } from "@/components/OnboardingModal";
-import { SignInButton,useAuth } from "@/contexts/AuthContext";
+import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { isAdmin } from "@/lib/admin";
 import { trackPageView } from "@/lib/analytics";
 import { useT } from "@/lib/i18n";
@@ -45,6 +45,7 @@ import { ProgressPage } from "@/pages/ProgressPage";
 import { ReaderPage } from "@/pages/ReaderPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { StudySessionPage } from "@/pages/StudySessionPage";
+import { UsageHistoryPage } from "@/pages/UsageHistoryPage";
 import { VideoPage } from "@/pages/VideoPage";
 import { VideoQuizPage } from "@/pages/VideoQuizPage";
 import { VocabularyPage } from "@/pages/VocabularyPage";
@@ -338,6 +339,12 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
+const usageHistoryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/settings/usage",
+  component: UsageHistoryPage,
+});
+
 const placementTestRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/placement-test",
@@ -476,6 +483,7 @@ const routeTree = rootRoute.addChildren([
   practiceRoute,
   generateRoute,
   settingsRoute,
+  usageHistoryRoute,
   placementTestRoute,
   studySessionRoute,
   pricingRoute,

@@ -14,8 +14,9 @@ import {
   TrendingUp,
   Video,
 } from "lucide-react";
-import { useMemo,useState } from "react";
+import { useMemo, useState } from "react";
 
+import { CreditAlert } from "@/components/CreditAlert";
 import { StoryCard } from "@/components/library/StoryCard";
 import { VideoCard, type VideoItem } from "@/components/library/VideoCard";
 import { Paywall } from "@/components/Paywall";
@@ -23,7 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStories } from "@/hooks/useStories";
 import { useT } from "@/lib/i18n";
 import { LANGUAGES } from "@/lib/languages";
-import { buildSessionPlan, DURATION_OPTIONS,getSessionDescription } from "@/lib/sessionPlanner";
+import { buildSessionPlan, DURATION_OPTIONS, getSessionDescription } from "@/lib/sessionPlanner";
 import { getRandomStudyPhrase } from "@/lib/studyPhrases";
 import type { StoryListItem } from "@/types/story";
 
@@ -185,6 +186,9 @@ export function DashboardPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
+        {/* Credit Alert (shows at 80% and 95% usage) */}
+        {isAuthenticated && <CreditAlert />}
+
         <div className="space-y-6">
           {/* Start Studying CTA */}
           <div className="relative overflow-hidden rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/10 via-surface to-purple-500/10 p-6 sm:p-8">

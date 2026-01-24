@@ -1,4 +1,4 @@
-import { useNavigate,useParams } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import {
   ArrowLeft,
@@ -14,7 +14,7 @@ import {
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { SignInButton,useAuth } from "@/contexts/AuthContext";
+import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { formatDuration } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { getYoutubeWatchUrl } from "@/lib/youtube";
@@ -132,7 +132,9 @@ export function VideoQuizPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <HelpCircle className="w-12 h-12 text-foreground-muted mb-4" />
-        <p className="text-lg font-medium text-foreground mb-2">{t("videoQuiz.auth.signInRequired")}</p>
+        <p className="text-lg font-medium text-foreground mb-2">
+          {t("videoQuiz.auth.signInRequired")}
+        </p>
         <p className="text-sm text-foreground-muted mb-6 text-center max-w-sm">
           {t("videoQuiz.auth.signInDescription")}
         </p>
@@ -157,9 +159,7 @@ export function VideoQuizPage() {
       <div className="min-h-screen flex flex-col items-center justify-center">
         <HelpCircle className="w-12 h-12 text-foreground-muted mb-4" />
         <p className="text-lg font-medium text-foreground mb-2">{t("videoQuiz.noQuiz.title")}</p>
-        <p className="text-sm text-foreground-muted mb-4">
-          {t("videoQuiz.noQuiz.description")}
-        </p>
+        <p className="text-sm text-foreground-muted mb-4">{t("videoQuiz.noQuiz.description")}</p>
         <Button onClick={() => navigate({ to: "/video/$videoId", params: { videoId } })}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t("videoQuiz.backToVideo")}
@@ -186,7 +186,9 @@ export function VideoQuizPage() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className="text-lg font-semibold text-foreground">{t("videoQuiz.results.title")}</h1>
+                <h1 className="text-lg font-semibold text-foreground">
+                  {t("videoQuiz.results.title")}
+                </h1>
                 <p className="text-sm text-foreground-muted">{video.title}</p>
               </div>
             </div>
@@ -211,7 +213,9 @@ export function VideoQuizPage() {
             </div>
 
             <h2 className="text-2xl font-bold text-foreground mb-2">
-              {score.percentage >= 70 ? t("videoQuiz.results.wellDone") : t("videoQuiz.results.keepPracticing")}
+              {score.percentage >= 70
+                ? t("videoQuiz.results.wellDone")
+                : t("videoQuiz.results.keepPracticing")}
             </h2>
             <p className="text-foreground-muted mb-6">
               {t("videoQuiz.results.score", { correct: score.correct, total: score.total })}
@@ -237,7 +241,9 @@ export function VideoQuizPage() {
 
           {/* Review answers */}
           <div className="mt-8 space-y-4">
-            <h3 className="font-semibold text-foreground">{t("videoQuiz.results.reviewAnswers")}</h3>
+            <h3 className="font-semibold text-foreground">
+              {t("videoQuiz.results.reviewAnswers")}
+            </h3>
             {questions.map((q, index) => {
               const answerState = answers[index];
               return (
@@ -264,11 +270,13 @@ export function VideoQuizPage() {
                       {answerState?.submitted && (
                         <div className="mt-2 text-sm">
                           <p className="text-foreground-muted">
-                            {t("videoQuiz.results.yourAnswer")} <span className="font-medium">{answerState.answer}</span>
+                            {t("videoQuiz.results.yourAnswer")}{" "}
+                            <span className="font-medium">{answerState.answer}</span>
                           </p>
                           {q.correctAnswer && !answerState.isCorrect && (
                             <p className="text-green-600">
-                              {t("videoQuiz.results.correct")} <span className="font-medium">{q.correctAnswer}</span>
+                              {t("videoQuiz.results.correct")}{" "}
+                              <span className="font-medium">{q.correctAnswer}</span>
                             </p>
                           )}
                         </div>
@@ -411,7 +419,9 @@ export function VideoQuizPage() {
               />
               {isSubmitted && currentQuestion.correctAnswer && (
                 <div className="mt-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
-                  <p className="text-sm font-medium text-green-600">{t("videoQuiz.quiz.suggestedAnswer")}</p>
+                  <p className="text-sm font-medium text-green-600">
+                    {t("videoQuiz.quiz.suggestedAnswer")}
+                  </p>
                   <p className="text-foreground mt-1">{currentQuestion.correctAnswer}</p>
                 </div>
               )}
@@ -434,7 +444,9 @@ export function VideoQuizPage() {
             )}
             {isSubmitted && (
               <Button onClick={goToNext}>
-                {currentQuestionIndex === questions.length - 1 ? t("videoQuiz.quiz.seeResults") : t("videoQuiz.quiz.next")}
+                {currentQuestionIndex === questions.length - 1
+                  ? t("videoQuiz.quiz.seeResults")
+                  : t("videoQuiz.quiz.next")}
                 {currentQuestionIndex < questions.length - 1 && (
                   <ChevronRight className="w-4 h-4 ml-1" />
                 )}

@@ -10,18 +10,36 @@ import { action } from "./_generated/server";
 // STRIPE CONFIGURATION
 // ============================================
 
-// Price IDs for each tier (you'll set these in Stripe Dashboard)
-const PRICE_IDS: Record<"basic" | "pro" | "power", string | undefined> = {
-  basic: process.env.STRIPE_PRICE_BASIC,
+// Price IDs for new unified credit system (Starter/Pro)
+// Set these in Stripe Dashboard and add to Convex env vars
+const PRICE_IDS = {
+  starter_monthly: process.env.STRIPE_PRICE_STARTER,
+  starter_annual: process.env.STRIPE_PRICE_STARTER_ANNUAL,
+  pro_monthly: process.env.STRIPE_PRICE_PRO,
+  pro_annual: process.env.STRIPE_PRICE_PRO_ANNUAL,
+} as const;
+
+// Legacy price IDs (for existing subscribers - maps to new tiers)
+const LEGACY_PRICE_IDS = {
+  basic: process.env.STRIPE_PRICE_BASIC, // Maps to starter
   pro: process.env.STRIPE_PRICE_PRO,
-  power: process.env.STRIPE_PRICE_UNLIMITED,
+  power: process.env.STRIPE_PRICE_UNLIMITED, // Maps to pro
 };
 
 // Tier from price ID (reverse lookup)
-const TIER_FROM_PRICE: Record<string, "basic" | "pro" | "power"> = {};
-if (PRICE_IDS.basic) TIER_FROM_PRICE[PRICE_IDS.basic] = "basic";
-if (PRICE_IDS.pro) TIER_FROM_PRICE[PRICE_IDS.pro] = "pro";
-if (PRICE_IDS.power) TIER_FROM_PRICE[PRICE_IDS.power] = "power";
+type NewTier = "starter" | "pro";
+const TIER_FROM_PRICE: Record<string, NewTier> = {};
+
+// Map new prices
+if (PRICE_IDS.starter_monthly) TIER_FROM_PRICE[PRICE_IDS.starter_monthly] = "starter";
+if (PRICE_IDS.starter_annual) TIER_FROM_PRICE[PRICE_IDS.starter_annual] = "starter";
+if (PRICE_IDS.pro_monthly) TIER_FROM_PRICE[PRICE_IDS.pro_monthly] = "pro";
+if (PRICE_IDS.pro_annual) TIER_FROM_PRICE[PRICE_IDS.pro_annual] = "pro";
+
+// Map legacy prices to new tiers for existing subscribers
+if (LEGACY_PRICE_IDS.basic) TIER_FROM_PRICE[LEGACY_PRICE_IDS.basic] = "starter";
+if (LEGACY_PRICE_IDS.pro) TIER_FROM_PRICE[LEGACY_PRICE_IDS.pro] = "pro";
+if (LEGACY_PRICE_IDS.power) TIER_FROM_PRICE[LEGACY_PRICE_IDS.power] = "pro";
 
 // Cache Stripe instance to avoid re-initialization
 let stripeInstance: Stripe | null = null;
@@ -38,16 +56,17 @@ function getStripe(): Stripe {
   return stripeInstance;
 }
 
-function getTierFromPriceId(priceId: string): "basic" | "pro" | "power" | null {
+function getTierFromPriceId(priceId: string): NewTier | null {
   return TIER_FROM_PRICE[priceId] || null;
 }
 
 // Helper to check which env vars are missing
 function getMissingPriceIds(): string[] {
   const missing: string[] = [];
-  if (!PRICE_IDS.basic) missing.push("STRIPE_PRICE_BASIC");
-  if (!PRICE_IDS.pro) missing.push("STRIPE_PRICE_PRO");
-  if (!PRICE_IDS.power) missing.push("STRIPE_PRICE_UNLIMITED");
+  if (!PRICE_IDS.starter_monthly) missing.push("STRIPE_PRICE_STARTER");
+  if (!PRICE_IDS.starter_annual) missing.push("STRIPE_PRICE_STARTER_ANNUAL");
+  if (!PRICE_IDS.pro_monthly) missing.push("STRIPE_PRICE_PRO");
+  if (!PRICE_IDS.pro_annual) missing.push("STRIPE_PRICE_PRO_ANNUAL");
   return missing;
 }
 
@@ -121,25 +140,29 @@ export const ensureStripeCustomer = action({
 export const createCheckoutSession = action({
   args: {
     userId: v.string(),
-    tier: v.union(v.literal("basic"), v.literal("pro"), v.literal("power")),
+    tier: v.union(v.literal("starter"), v.literal("pro")),
+    billingPeriod: v.optional(v.union(v.literal("monthly"), v.literal("annual"))),
     successUrl: v.string(),
     cancelUrl: v.string(),
   },
   handler: async (ctx, args): Promise<{ sessionId: string; url: string | null }> => {
     try {
+      const billingPeriod = args.billingPeriod ?? "monthly";
+
       // Log missing configuration for debugging
       const missingPrices = getMissingPriceIds();
       if (missingPrices.length > 0) {
         console.error(`[Stripe] Missing price IDs in Convex env vars: ${missingPrices.join(", ")}`);
       }
 
-      const priceId = PRICE_IDS[args.tier];
+      // Get the appropriate price ID based on tier and billing period
+      const priceKey = `${args.tier}_${billingPeriod}` as keyof typeof PRICE_IDS;
+      const priceId = PRICE_IDS[priceKey];
+
       if (!priceId) {
-        console.error(
-          `[Stripe] STRIPE_PRICE_${args.tier.toUpperCase()} is not set in Convex dashboard`
-        );
+        console.error(`[Stripe] Price ID for ${priceKey} is not set in Convex dashboard`);
         throw new Error(
-          `Subscription for ${args.tier} tier is not available. Please contact support.`
+          `Subscription for ${args.tier} (${billingPeriod}) is not available. Please contact support.`
         );
       }
 
@@ -179,7 +202,9 @@ export const createCheckoutSession = action({
         console.log(`[Stripe] Using pre-created customer ${customerId}`);
       }
 
-      console.log(`[Stripe] Creating checkout session for tier ${args.tier}, price ${priceId}`);
+      console.log(
+        `[Stripe] Creating checkout session for tier ${args.tier} (${billingPeriod}), price ${priceId}`
+      );
 
       // Create checkout session
       const checkoutSession = await stripe.checkout.sessions.create({
@@ -200,6 +225,7 @@ export const createCheckoutSession = action({
         metadata: {
           userId: args.userId,
           tier: args.tier,
+          billingPeriod,
         },
       });
 
@@ -246,6 +272,14 @@ export const createPortalSession = action({
 // WEBHOOK PROCESSING ACTION
 // ============================================
 
+// Determine billing period from price ID
+function getBillingPeriodFromPriceId(priceId: string): "monthly" | "annual" {
+  if (priceId === PRICE_IDS.starter_annual || priceId === PRICE_IDS.pro_annual) {
+    return "annual";
+  }
+  return "monthly";
+}
+
 // Process Stripe webhook (called by HTTP endpoint)
 export const processWebhook = action({
   args: {
@@ -273,18 +307,29 @@ export const processWebhook = action({
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
-        const tier = session.metadata?.tier as "basic" | "pro" | "power" | undefined;
+        const tier = session.metadata?.tier as NewTier | undefined;
+        const billingPeriod = session.metadata?.billingPeriod as "monthly" | "annual" | undefined;
 
         if (userId && tier && session.subscription) {
           const subscriptionData = (await stripe.subscriptions.retrieve(
             session.subscription as string
-          )) as unknown as { id: string; current_period_end: number };
+          )) as unknown as {
+            id: string;
+            current_period_end: number;
+            items: { data: Array<{ price: { id: string } }> };
+          };
+
+          // Determine billing period from price if not in metadata
+          const actualBillingPeriod =
+            billingPeriod ??
+            getBillingPeriodFromPriceId(subscriptionData.items?.data?.[0]?.price?.id ?? "");
 
           await ctx.runMutation(internal.stripeHelpers.handleSubscriptionCreated, {
             userId,
             stripeCustomerId: session.customer as string,
             stripeSubscriptionId: subscriptionData.id,
             tier,
+            billingPeriod: actualBillingPeriod,
             currentPeriodEnd: subscriptionData.current_period_end * 1000,
           });
         }
@@ -307,9 +352,12 @@ export const processWebhook = action({
             status = "expired";
           }
 
+          const billingPeriod = priceId ? getBillingPeriodFromPriceId(priceId) : "monthly";
+
           await ctx.runMutation(internal.stripeHelpers.handleSubscriptionUpdated, {
             stripeSubscriptionId: (subscriptionData as { id: string }).id,
             tier,
+            billingPeriod,
             status,
             currentPeriodEnd:
               ((subscriptionData as { current_period_end?: number }).current_period_end ?? 0) *

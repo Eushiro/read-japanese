@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { AlertCircle, ArrowRight,BookOpen, Clock, Layers, Plus, Video } from "lucide-react";
+import { AlertCircle, ArrowRight, BookOpen, Clock, Layers, Plus, Video } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

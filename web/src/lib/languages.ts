@@ -1,10 +1,24 @@
-// Shared language and exam configuration
+/**
+ * Shared language and exam configuration
+ *
+ * Languages are imported from shared/languages.json to ensure consistency
+ * between frontend and backend. To add a new language, update that file.
+ */
 
-export const LANGUAGES = [
-  { value: "japanese", label: "Japanese", flag: "🇯🇵", nativeName: "日本語" },
-  { value: "english", label: "English", flag: "🇬🇧", nativeName: "English" },
-  { value: "french", label: "French", flag: "🇫🇷", nativeName: "Français" },
-] as const;
+import languagesConfig from "../../../shared/languages.json";
+
+// Build LANGUAGES array from shared config
+export const LANGUAGES = languagesConfig.supported.map((lang) => ({
+  value: lang.code as "japanese" | "english" | "french",
+  label: lang.name,
+  flag: lang.flag,
+  nativeName: lang.nativeName,
+})) as const;
+
+// Export config for direct access
+export const SUPPORTED_LANGUAGE_CODES = languagesConfig.supported.map((l) => l.code);
+export const DEFAULT_LANGUAGE_CODE = languagesConfig.default;
+export const TRANSLATION_TARGETS = languagesConfig.translationTargets;
 
 export const EXAMS_BY_LANGUAGE = {
   japanese: [

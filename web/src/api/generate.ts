@@ -1,4 +1,4 @@
-import type { JLPTLevel,Story } from "@/types/story";
+import type { JLPTLevel, Story } from "@/types/story";
 
 import apiClient from "./client";
 

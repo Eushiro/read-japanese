@@ -1,7 +1,5 @@
 import { useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-
-import { useAIAction } from "@/hooks/useAIAction";
 import type { GenericId } from "convex/values";
 import {
   BookOpen,
@@ -19,6 +17,7 @@ import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
+import { useAIAction } from "@/hooks/useAIAction";
 import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";

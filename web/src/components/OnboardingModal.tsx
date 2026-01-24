@@ -1,4 +1,4 @@
-import { useAction,useMutation } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import {
   BookmarkCheck,
   BookOpen,
@@ -10,12 +10,12 @@ import {
   PenLine,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useRef,useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useT } from "@/lib/i18n";
-import { detectTargetLanguage, EXAMS_BY_LANGUAGE, type Language,LANGUAGES } from "@/lib/languages";
+import { detectTargetLanguage, EXAMS_BY_LANGUAGE, type Language, LANGUAGES } from "@/lib/languages";
 
 import { api } from "../../convex/_generated/api";
 
@@ -167,32 +167,48 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                   <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
                     <BookOpen className="w-5 h-5 text-blue-400" />
                   </div>
-                  <div className="text-sm font-semibold text-foreground">{t("onboarding.howItWorks.steps.read.title")}</div>
-                  <div className="text-xs text-foreground/80">{t("onboarding.howItWorks.steps.read.description")}</div>
+                  <div className="text-sm font-semibold text-foreground">
+                    {t("onboarding.howItWorks.steps.read.title")}
+                  </div>
+                  <div className="text-xs text-foreground/80">
+                    {t("onboarding.howItWorks.steps.read.description")}
+                  </div>
                 </div>
 
                 <div className="bg-gradient-to-br from-amber-500/15 to-amber-500/5 rounded-xl border border-amber-500/20 p-4 text-center">
                   <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center mx-auto mb-2">
                     <BookmarkCheck className="w-5 h-5 text-amber-400" />
                   </div>
-                  <div className="text-sm font-semibold text-foreground">{t("onboarding.howItWorks.steps.save.title")}</div>
-                  <div className="text-xs text-foreground/80">{t("onboarding.howItWorks.steps.save.description")}</div>
+                  <div className="text-sm font-semibold text-foreground">
+                    {t("onboarding.howItWorks.steps.save.title")}
+                  </div>
+                  <div className="text-xs text-foreground/80">
+                    {t("onboarding.howItWorks.steps.save.description")}
+                  </div>
                 </div>
 
                 <div className="bg-gradient-to-br from-purple-500/15 to-purple-500/5 rounded-xl border border-purple-500/20 p-4 text-center">
                   <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
                     <Brain className="w-5 h-5 text-purple-400" />
                   </div>
-                  <div className="text-sm font-semibold text-foreground">{t("onboarding.howItWorks.steps.review.title")}</div>
-                  <div className="text-xs text-foreground/80">{t("onboarding.howItWorks.steps.review.description")}</div>
+                  <div className="text-sm font-semibold text-foreground">
+                    {t("onboarding.howItWorks.steps.review.title")}
+                  </div>
+                  <div className="text-xs text-foreground/80">
+                    {t("onboarding.howItWorks.steps.review.description")}
+                  </div>
                 </div>
 
                 <div className="bg-gradient-to-br from-green-500/15 to-green-500/5 rounded-xl border border-green-500/20 p-4 text-center">
                   <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mx-auto mb-2">
                     <PenLine className="w-5 h-5 text-green-400" />
                   </div>
-                  <div className="text-sm font-semibold text-foreground">{t("onboarding.howItWorks.steps.practice.title")}</div>
-                  <div className="text-xs text-foreground/80">{t("onboarding.howItWorks.steps.practice.description")}</div>
+                  <div className="text-sm font-semibold text-foreground">
+                    {t("onboarding.howItWorks.steps.practice.title")}
+                  </div>
+                  <div className="text-xs text-foreground/80">
+                    {t("onboarding.howItWorks.steps.practice.description")}
+                  </div>
                 </div>
               </div>
 
@@ -292,9 +308,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                   {t("onboarding.examSelection.title")}
                 </h2>
               </div>
-              <p className="text-foreground mb-6">
-                {t("onboarding.examSelection.subtitle")}
-              </p>
+              <p className="text-foreground mb-6">{t("onboarding.examSelection.subtitle")}</p>
 
               <div className="space-y-6 mb-8 max-h-96 overflow-y-auto">
                 {selectedLanguages.map((lang) => {
@@ -345,7 +359,9 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                   {t("onboarding.actions.back")}
                 </Button>
                 <Button onClick={handleComplete} disabled={isSubmitting} className="flex-1 gap-2">
-                  {isSubmitting ? t("onboarding.actions.saving") : t("onboarding.actions.startLearning")}
+                  {isSubmitting
+                    ? t("onboarding.actions.saving")
+                    : t("onboarding.actions.startLearning")}
                   <Sparkles className="w-4 h-4" />
                 </Button>
               </div>

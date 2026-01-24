@@ -21,10 +21,7 @@
         "Révisions de flashcards de base",
         "5 sessions de lecture/mois"
       ],
-      "noFeatures": [
-        "Pas de feedback IA",
-        "Pas de génération de phrases IA"
-      ],
+      "noFeatures": ["Pas de feedback IA", "Pas de génération de phrases IA"],
       "currentPlan": "Forfait actuel",
       "cta": "Commencer"
     },

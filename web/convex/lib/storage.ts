@@ -8,7 +8,12 @@
  * Easy to add: AWS S3, Google Cloud Storage, Backblaze B2, etc.
  */
 
-import { PutObjectCommand,S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 
 // ============================================
 // STORAGE INTERFACE
@@ -25,8 +30,20 @@ export interface UploadOptions {
   cacheControl?: string;
 }
 
+export interface DownloadResult {
+  /** File data as Uint8Array */
+  data: Uint8Array;
+  /** MIME type from storage */
+  contentType: string;
+}
+
 export interface StorageProvider {
+  /** Upload a file and return its public URL */
   upload(options: UploadOptions): Promise<string>;
+  /** Download a file by its key (path after bucket) */
+  download(key: string): Promise<DownloadResult>;
+  /** Delete a file by its key */
+  delete(key: string): Promise<void>;
 }
 
 // ============================================
@@ -94,6 +111,52 @@ class R2StorageProvider implements StorageProvider {
     const baseUrl = this.publicUrl.endsWith("/") ? this.publicUrl.slice(0, -1) : this.publicUrl;
     return `${baseUrl}/${key}`;
   }
+
+  async download(key: string): Promise<DownloadResult> {
+    const client = this.getClient();
+
+    const response = await client.send(
+      new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      })
+    );
+
+    if (!response.Body) {
+      throw new Error(`No body in response for key: ${key}`);
+    }
+
+    // Convert stream to Uint8Array
+    const bytes = await response.Body.transformToByteArray();
+
+    return {
+      data: bytes,
+      contentType: response.ContentType || "application/octet-stream",
+    };
+  }
+
+  async delete(key: string): Promise<void> {
+    const client = this.getClient();
+
+    await client.send(
+      new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      })
+    );
+  }
+
+  /**
+   * Extract the storage key from a public URL
+   * Useful when you have a URL and need to download/delete by key
+   */
+  extractKeyFromUrl(url: string): string | null {
+    const baseUrl = this.publicUrl.endsWith("/") ? this.publicUrl.slice(0, -1) : this.publicUrl;
+    if (!url.startsWith(baseUrl)) {
+      return null;
+    }
+    return url.slice(baseUrl.length + 1); // +1 for the /
+  }
 }
 
 // ============================================
@@ -119,6 +182,16 @@ export class ConvexStorageProvider implements StorageProvider {
       throw new Error("Failed to get URL from Convex storage");
     }
     return url;
+  }
+
+  async download(_key: string): Promise<DownloadResult> {
+    // Convex storage uses storageIds, not keys - direct download not supported through this interface
+    throw new Error("Download by key not supported for Convex storage provider");
+  }
+
+  async delete(_key: string): Promise<void> {
+    // Convex storage uses storageIds for deletion - not supported through this interface
+    throw new Error("Delete by key not supported for Convex storage provider");
   }
 }
 
@@ -191,6 +264,35 @@ export async function uploadImage(
     contentType: mimeType,
     prefix: "images",
   });
+}
+
+/**
+ * Download a file from storage by its key
+ */
+export async function downloadFile(key: string): Promise<DownloadResult> {
+  const provider = getStorageProvider();
+  return provider.download(key);
+}
+
+/**
+ * Delete a file from storage by its key
+ */
+export async function deleteFile(key: string): Promise<void> {
+  const provider = getStorageProvider();
+  return provider.delete(key);
+}
+
+/**
+ * Extract storage key from a public URL (R2 only)
+ * Returns null if URL doesn't match the configured public URL
+ */
+export function extractKeyFromUrl(url: string): string | null {
+  const publicUrl = process.env.R2_PUBLIC_URL || "";
+  const baseUrl = publicUrl.endsWith("/") ? publicUrl.slice(0, -1) : publicUrl;
+  if (!url.startsWith(baseUrl)) {
+    return null;
+  }
+  return url.slice(baseUrl.length + 1);
 }
 
 // ============================================

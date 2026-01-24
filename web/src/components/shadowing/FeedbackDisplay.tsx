@@ -1,5 +1,5 @@
-import { AlertCircle, Check, Sparkles,Volume2, VolumeX } from "lucide-react";
-import { useEffect,useRef, useState } from "react";
+import { AlertCircle, Check, Sparkles, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
@@ -174,7 +174,9 @@ export function FeedbackDisplay({
 
       {/* Target sentence reminder */}
       <div className="bg-surface rounded-xl border border-border p-4">
-        <p className="text-sm text-foreground-muted mb-1">{t("shadowing.feedback.targetSentence")}</p>
+        <p className="text-sm text-foreground-muted mb-1">
+          {t("shadowing.feedback.targetSentence")}
+        </p>
         <p
           className="text-lg text-foreground"
           style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}
@@ -188,7 +190,9 @@ export function FeedbackDisplay({
         {userRecordingUrl && (
           <Button variant="outline" onClick={playUserAudio} className="flex-1 gap-2">
             {isPlayingUser ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            {isPlayingUser ? t("shadowing.feedback.stop") : t("shadowing.feedback.playYourRecording")}
+            {isPlayingUser
+              ? t("shadowing.feedback.stop")
+              : t("shadowing.feedback.playYourRecording")}
           </Button>
         )}
 
@@ -209,7 +213,9 @@ export function FeedbackDisplay({
                 <Volume2 className="w-4 h-4" />
               </>
             )}
-            {isPlayingFeedback ? t("shadowing.feedback.stop") : t("shadowing.feedback.playAiFeedback")}
+            {isPlayingFeedback
+              ? t("shadowing.feedback.stop")
+              : t("shadowing.feedback.playAiFeedback")}
           </Button>
         )}
       </div>
@@ -217,7 +223,9 @@ export function FeedbackDisplay({
       {/* Text feedback */}
       {feedbackText && (
         <div className="bg-accent/5 rounded-xl border border-accent/20 p-4">
-          <p className="text-sm font-medium text-accent mb-2">{t("shadowing.feedback.feedbackLabel")}</p>
+          <p className="text-sm font-medium text-accent mb-2">
+            {t("shadowing.feedback.feedbackLabel")}
+          </p>
           <p className="text-foreground">{feedbackText}</p>
         </div>
       )}

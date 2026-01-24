@@ -1,11 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { BookOpen, Film,Library, Sparkles } from "lucide-react";
-import { useEffect,useMemo, useState } from "react";
+import { BookOpen, Film, Library, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { GenerateStoryModal } from "@/components/GenerateStoryModal";
 import { LevelFilter } from "@/components/library/LevelFilter";
-import { matchesSearch,SearchBar } from "@/components/library/SearchBar";
+import { matchesSearch, SearchBar } from "@/components/library/SearchBar";
 import { StoryCard } from "@/components/library/StoryCard";
 import { VideoCard, VideoCardSkeleton, type VideoItem } from "@/components/library/VideoCard";
 import { Paywall } from "@/components/Paywall";
@@ -17,8 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SignInButton,useAuth } from "@/contexts/AuthContext";
-import { type SortOption,sortStories, useFilteredStories, useStories } from "@/hooks/useStories";
+import { SignInButton, useAuth } from "@/contexts/AuthContext";
+import { type SortOption, sortStories, useFilteredStories, useStories } from "@/hooks/useStories";
 import { useT } from "@/lib/i18n";
 import type { ProficiencyLevel, StoryListItem } from "@/types/story";
 
@@ -128,7 +128,7 @@ export function LibraryPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-destructive">
-        <p className="text-lg font-medium">{t('library.errors.loadFailed')}</p>
+        <p className="text-lg font-medium">{t("library.errors.loadFailed")}</p>
         <p className="text-sm text-muted-foreground">{error.message}</p>
       </div>
     );
@@ -148,18 +148,16 @@ export function LibraryPage() {
                 <Library className="w-5 h-5 text-blue-400" />
               </div>
               <span className="text-sm font-semibold text-blue-400 uppercase tracking-wider">
-                {t('library.hero.badge')}
+                {t("library.hero.badge")}
               </span>
             </div>
             <h1
               className="text-3xl sm:text-4xl font-bold text-foreground mb-3"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {t('library.hero.title')}
+              {t("library.hero.title")}
             </h1>
-            <p className="text-foreground-muted text-lg">
-              {t('library.hero.subtitle')}
-            </p>
+            <p className="text-foreground-muted text-lg">{t("library.hero.subtitle")}</p>
 
             {/* Generate Story CTA */}
             <div className="mt-6">
@@ -169,13 +167,13 @@ export function LibraryPage() {
                   onClick={() => setShowGenerateModal(true)}
                 >
                   <Sparkles className="w-4 h-4" />
-                  {t('library.hero.generateStory')}
+                  {t("library.hero.generateStory")}
                 </Button>
               ) : (
                 <SignInButton mode="modal">
                   <Button className="gap-2 shadow-lg shadow-accent/25">
                     <Sparkles className="w-4 h-4" />
-                    {t('library.hero.generateStory')}
+                    {t("library.hero.generateStory")}
                   </Button>
                 </SignInButton>
               )}
@@ -190,7 +188,11 @@ export function LibraryPage() {
           <div className="flex gap-3">
             {/* Search */}
             <div className="flex-1">
-              <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder={t('library.searchPlaceholder')} />
+              <SearchBar
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder={t("library.searchPlaceholder")}
+              />
             </div>
 
             {/* Content Type Filter */}
@@ -202,9 +204,9 @@ export function LibraryPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t('library.filters.all')}</SelectItem>
-                <SelectItem value="stories">{t('library.filters.stories')}</SelectItem>
-                <SelectItem value="videos">{t('library.filters.videos')}</SelectItem>
+                <SelectItem value="all">{t("library.filters.all")}</SelectItem>
+                <SelectItem value="stories">{t("library.filters.stories")}</SelectItem>
+                <SelectItem value="videos">{t("library.filters.videos")}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -220,7 +222,7 @@ export function LibraryPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t('library.filters.allLanguages')}</SelectItem>
+                  <SelectItem value="all">{t("library.filters.allLanguages")}</SelectItem>
                   {userLanguages.map((lang) => (
                     <SelectItem key={lang} value={lang}>
                       {LANGUAGE_FLAGS[lang]} {t(`library.languages.${lang}`)}
@@ -250,7 +252,9 @@ export function LibraryPage() {
           <section>
             <div className="flex items-center gap-2 mb-4">
               <BookOpen className="w-5 h-5 text-accent" />
-              <h2 className="text-lg font-semibold text-foreground">{t('library.sections.stories')}</h2>
+              <h2 className="text-lg font-semibold text-foreground">
+                {t("library.sections.stories")}
+              </h2>
             </div>
 
             {isLoadingStories ? (
@@ -282,7 +286,9 @@ export function LibraryPage() {
           <section>
             <div className="flex items-center gap-2 mb-4">
               <Film className="w-5 h-5 text-accent" />
-              <h2 className="text-lg font-semibold text-foreground">{t('library.sections.videos')}</h2>
+              <h2 className="text-lg font-semibold text-foreground">
+                {t("library.sections.videos")}
+              </h2>
             </div>
 
             {isLoadingVideos ? (

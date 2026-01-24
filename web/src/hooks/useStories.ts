@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { isRomaji, toHiragana, toKatakana } from "wanakana";
 
 import { listStories } from "@/api/stories";
-import type { ProficiencyLevel,StoryListItem } from "@/types/story";
+import type { ProficiencyLevel, StoryListItem } from "@/types/story";
 
 type Language = "japanese" | "english" | "french";
 

@@ -1,5 +1,5 @@
 import { Pause, Play, RotateCcw } from "lucide-react";
-import { useCallback,useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useT } from "@/lib/i18n";
 

@@ -1,4 +1,4 @@
-import { useCallback,useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { getStoryWithCache } from "@/api/stories";
 import type { Story } from "@/types/story";

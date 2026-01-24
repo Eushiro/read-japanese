@@ -1,12 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { useMutation,useQuery } from "convex/react";
-import {
-  ArrowRight,
-  CheckCircle2,
-  FileText,
-  Upload,
-} from "lucide-react";
-import { useRef,useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { ArrowRight, CheckCircle2, FileText, Upload } from "lucide-react";
+import { useRef, useState } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";

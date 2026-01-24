@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UI_LANGUAGES, type UILanguage,useUILanguage } from "@/lib/i18n";
+import { UI_LANGUAGES, type UILanguage, useUILanguage } from "@/lib/i18n";
 
 interface UILanguageSwitcherProps {
   className?: string;

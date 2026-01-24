@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
-import { examTypeValidator,languageValidator } from "./schema";
+import { examTypeValidator, languageValidator } from "./schema";
 
 // Question type validator
 const questionTypeValidator = v.union(

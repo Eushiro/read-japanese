@@ -1,6 +1,6 @@
-import { Link,useSearch } from "@tanstack/react-router";
-import { BookmarkCheck, Brain, GraduationCap,PenLine } from "lucide-react";
-import { useEffect, useMemo,useState } from "react";
+import { Link, useSearch } from "@tanstack/react-router";
+import { BookmarkCheck, Brain, GraduationCap, PenLine } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useT } from "@/lib/i18n";
 
@@ -21,11 +21,15 @@ const TAB_ICONS: Record<LearnTab, typeof BookmarkCheck> = {
 export function LearnPage() {
   const t = useT();
 
-  const TABS = useMemo(() => TAB_IDS.map((id) => ({
-    id,
-    label: t(`learn.tabs.${id}`),
-    icon: TAB_ICONS[id],
-  })), [t]);
+  const TABS = useMemo(
+    () =>
+      TAB_IDS.map((id) => ({
+        id,
+        label: t(`learn.tabs.${id}`),
+        icon: TAB_ICONS[id],
+      })),
+    [t]
+  );
   // Get tab from URL query param
   const search = useSearch({ strict: false }) as { tab?: string };
   const tabFromUrl = search?.tab as LearnTab | undefined;
@@ -72,7 +76,9 @@ export function LearnPage() {
               <div className="p-1.5 rounded-lg bg-accent/10">
                 <GraduationCap className="w-4 h-4 text-accent" />
               </div>
-              <span className="text-sm font-semibold text-foreground hidden sm:inline">{t("learn.title")}</span>
+              <span className="text-sm font-semibold text-foreground hidden sm:inline">
+                {t("learn.title")}
+              </span>
             </Link>
 
             {/* Tab Buttons */}

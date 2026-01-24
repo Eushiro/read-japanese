@@ -1,6 +1,6 @@
 import { Search, X } from "lucide-react";
-import { useCallback, useEffect, useRef,useState } from "react";
-import { isRomaji,toHiragana, toKatakana } from "wanakana";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { isRomaji, toHiragana, toKatakana } from "wanakana";
 
 import { Input } from "@/components/ui/input";
 

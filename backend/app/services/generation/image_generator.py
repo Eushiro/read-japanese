@@ -2,14 +2,18 @@
 Image generation service using OpenRouter with Gemini Image model.
 Generates cover art and chapter illustrations for Japanese graded reader stories.
 """
-import os
-import logging
 import base64
-import httpx
+import logging
+import os
+import re
+import uuid
 from pathlib import Path
 from typing import Optional
 
+import httpx
+
 from ...config.models import ModelConfig
+from .media import compress_image_to_webp
 
 logger = logging.getLogger(__name__)
 
@@ -299,77 +303,38 @@ Aspect ratio: {aspect_ratio}"""
 
         return None
 
+    def _sanitize_filename(self, text: str) -> str:
+        """Convert text to a safe filename component"""
+        safe = re.sub(r"[^\w\s-]", "", text.lower())
+        return re.sub(r"[-\s]+", "_", safe)
+
     def _save_image_with_prefix(
         self,
         image_data: bytes,
         prefix: str,
         max_size: int = 800,
-        quality: int = 85
+        quality: int = 85,
     ) -> str:
-        """Save image with custom prefix"""
-        import re
-        import uuid
-        import io
-        from PIL import Image
-
-        safe_prefix = re.sub(r'[^\w\s-]', '', prefix.lower())
-        safe_prefix = re.sub(r'[-\s]+', '_', safe_prefix)
+        """Save compressed WebP image (no original stored)"""
+        safe_prefix = self._sanitize_filename(prefix)
         base_filename = f"{safe_prefix}_{uuid.uuid4().hex[:8]}"
 
         IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-        ORIGINALS_DIR.mkdir(parents=True, exist_ok=True)
-
-        # Save original PNG
-        original_path = ORIGINALS_DIR / f"{base_filename}.png"
-        with open(original_path, "wb") as f:
-            f.write(image_data)
-
-        # Optimize
-        img = Image.open(io.BytesIO(image_data))
-        if img.mode in ('RGBA', 'P'):
-            img = img.convert('RGB')
-        if max(img.size) > max_size:
-            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-
-        optimized_path = IMAGES_DIR / f"{base_filename}.webp"
-        img.save(optimized_path, 'WEBP', quality=quality, method=6)
-
-        original_size = len(image_data)
-        final_size = optimized_path.stat().st_size
-        logger.info(f"Image saved: original {original_size/1024:.1f}KB -> optimized {final_size/1024:.1f}KB")
+        output_path = IMAGES_DIR / f"{base_filename}.webp"
+        compress_image_to_webp(image_data, output_path, quality, max_size)
 
         return f"/cdn/images/{base_filename}.webp"
 
-    def _save_image(self, image_data: bytes, title: str, max_size: int = 800, quality: int = 85) -> str:
-        """Save original and optimized image bytes to file"""
-        import re
-        import uuid
-        import io
-        from PIL import Image
-
-        safe_title = re.sub(r'[^\w\s-]', '', title.lower())
-        safe_title = re.sub(r'[-\s]+', '_', safe_title)
+    def _save_image(
+        self, image_data: bytes, title: str, max_size: int = 800, quality: int = 85
+    ) -> str:
+        """Save compressed WebP image (no original stored)"""
+        safe_title = self._sanitize_filename(title)
         base_filename = f"cover_{safe_title}_{uuid.uuid4().hex[:8]}"
 
         IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-        ORIGINALS_DIR.mkdir(parents=True, exist_ok=True)
-
-        original_path = ORIGINALS_DIR / f"{base_filename}.png"
-        with open(original_path, "wb") as f:
-            f.write(image_data)
-
-        img = Image.open(io.BytesIO(image_data))
-        if img.mode in ('RGBA', 'P'):
-            img = img.convert('RGB')
-        if max(img.size) > max_size:
-            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-
-        optimized_path = IMAGES_DIR / f"{base_filename}.webp"
-        img.save(optimized_path, 'WEBP', quality=quality, method=6)
-
-        original_size = len(image_data)
-        final_size = optimized_path.stat().st_size
-        logger.info(f"Image saved: original {original_size/1024:.1f}KB -> optimized {final_size/1024:.1f}KB")
+        output_path = IMAGES_DIR / f"{base_filename}.webp"
+        compress_image_to_webp(image_data, output_path, quality, max_size)
 
         return f"/cdn/images/{base_filename}.webp"
 
@@ -379,38 +344,15 @@ Aspect ratio: {aspect_ratio}"""
         story_title: str,
         chapter_title: str,
         max_size: int = 800,
-        quality: int = 85
+        quality: int = 85,
     ) -> str:
-        """Save original and optimized chapter image bytes to file"""
-        import re
-        import uuid
-        import io
-        from PIL import Image
-
-        safe_story = re.sub(r'[^\w\s-]', '', story_title.lower())
-        safe_story = re.sub(r'[-\s]+', '_', safe_story)
-        safe_chapter = re.sub(r'[^\w\s-]', '', chapter_title.lower())
-        safe_chapter = re.sub(r'[-\s]+', '_', safe_chapter)
+        """Save compressed WebP image (no original stored)"""
+        safe_story = self._sanitize_filename(story_title)
+        safe_chapter = self._sanitize_filename(chapter_title)
         base_filename = f"chapter_{safe_story}_{safe_chapter}_{uuid.uuid4().hex[:8]}"
 
         IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-        ORIGINALS_DIR.mkdir(parents=True, exist_ok=True)
-
-        original_path = ORIGINALS_DIR / f"{base_filename}.png"
-        with open(original_path, "wb") as f:
-            f.write(image_data)
-
-        img = Image.open(io.BytesIO(image_data))
-        if img.mode in ('RGBA', 'P'):
-            img = img.convert('RGB')
-        if max(img.size) > max_size:
-            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-
-        optimized_path = IMAGES_DIR / f"{base_filename}.webp"
-        img.save(optimized_path, 'WEBP', quality=quality, method=6)
-
-        original_size = len(image_data)
-        final_size = optimized_path.stat().st_size
-        logger.info(f"Chapter image saved: original {original_size/1024:.1f}KB -> optimized {final_size/1024:.1f}KB")
+        output_path = IMAGES_DIR / f"{base_filename}.webp"
+        compress_image_to_webp(image_data, output_path, quality, max_size)
 
         return f"/cdn/images/{base_filename}.webp"

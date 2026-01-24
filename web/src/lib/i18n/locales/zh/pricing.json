@@ -16,15 +16,8 @@
       "price": "$0",
       "period": "/月",
       "description": "从基础功能开始",
-      "features": [
-        "预设词汇卡组",
-        "基础闪卡复习",
-        "每月5次阅读"
-      ],
-      "noFeatures": [
-        "无AI反馈",
-        "无AI造句"
-      ],
+      "features": ["预设词汇卡组", "基础闪卡复习", "每月5次阅读"],
+      "noFeatures": ["无AI反馈", "无AI造句"],
       "currentPlan": "当前方案",
       "cta": "开始使用"
     },

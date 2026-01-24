@@ -1,5 +1,5 @@
-import { BookOpen,Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { useCallback,useState } from "react";
+import { BookOpen, Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useCallback, useState } from "react";
 
 import { ChapterView } from "@/components/reader/ChapterView";
 import { WordPopup } from "@/components/reader/WordPopup";
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/hooks/useSettings";
 import { useStory } from "@/hooks/useStory";
-import type { ProficiencyLevel,Token } from "@/types/story";
+import type { ProficiencyLevel, Token } from "@/types/story";
 
 type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
 

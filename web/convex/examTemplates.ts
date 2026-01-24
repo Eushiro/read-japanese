@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
-import { internalMutation,mutation, query } from "./_generated/server";
-import { examSectionTypeValidator,examTypeValidator, languageValidator } from "./schema";
+import { internalMutation, mutation, query } from "./_generated/server";
+import { examSectionTypeValidator, examTypeValidator, languageValidator } from "./schema";
 
 // ============================================
 // QUERIES

@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useMutation,useQuery } from "convex/react";
-import { AlertCircle, BookOpen, ChevronRight,Loader2, X } from "lucide-react";
-import { useEffect, useMemo,useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { AlertCircle, BookOpen, ChevronRight, Loader2, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { SessionComplete } from "@/components/session/SessionComplete";
 import { SessionInput } from "@/components/session/SessionInput";
@@ -10,7 +10,7 @@ import { SessionProgress } from "@/components/session/SessionProgress";
 import { SessionReview } from "@/components/session/SessionReview";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { type SessionActivity,useStudySession } from "@/contexts/StudySessionContext";
+import { type SessionActivity, useStudySession } from "@/contexts/StudySessionContext";
 import { useT } from "@/lib/i18n";
 import { buildSessionPlan } from "@/lib/sessionPlanner";
 
@@ -177,9 +177,7 @@ export function StudySessionPage() {
           >
             {t("studySession.emptyState.title")}
           </h2>
-          <p className="text-foreground-muted mb-6">
-            {t("studySession.emptyState.description")}
-          </p>
+          <p className="text-foreground-muted mb-6">{t("studySession.emptyState.description")}</p>
           <div className="flex flex-col gap-3">
             <Button onClick={() => navigate({ to: "/library" })} className="w-full gap-2">
               {t("studySession.buttons.browseLibrary")}
@@ -249,7 +247,9 @@ export function StudySessionPage() {
                 <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
                   <AlertCircle className="w-5 h-5 text-amber-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">{t("studySession.exitModal.title")}</h3>
+                <h3 className="text-lg font-semibold text-foreground">
+                  {t("studySession.exitModal.title")}
+                </h3>
               </div>
               <p className="text-foreground-muted mb-6">
                 {t("studySession.exitModal.description")}

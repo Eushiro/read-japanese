@@ -1,4 +1,4 @@
-import type { ProficiencyLevel,Story, StoryListItem } from "@/types/story";
+import type { ProficiencyLevel, Story, StoryListItem } from "@/types/story";
 
 import apiClient from "./client";
 
