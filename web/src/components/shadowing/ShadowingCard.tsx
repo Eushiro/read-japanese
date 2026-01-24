@@ -1,11 +1,13 @@
-import { useAction, useMutation, useQuery } from "convex/react";
-import { ChevronRight, Crown,RefreshCw, Volume2, VolumeX } from "lucide-react";
-import { useEffect,useRef, useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+
+import { useAIAction } from "@/hooks/useAIAction";
+import { ChevronRight, Crown, RefreshCw, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
-import { useT } from "@/lib/i18n";
+import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -115,6 +117,7 @@ type CardState = "ready" | "recording" | "processing" | "results";
 
 export function ShadowingCard({ flashcard, userId, onNext }: ShadowingCardProps) {
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
   const [cardState, setCardState] = useState<CardState>("ready");
   const [isPlayingTarget, setIsPlayingTarget] = useState(false);
   const [feedbackResult, setFeedbackResult] = useState<{
@@ -127,7 +130,7 @@ export function ShadowingCard({ flashcard, userId, onNext }: ShadowingCardProps)
   const targetAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const recorder = useAudioRecorder();
-  const evaluateShadowing = useAction(api.ai.evaluateShadowing);
+  const evaluateShadowing = useAIAction(api.ai.evaluateShadowing);
   const submitShadowing = useMutation(api.shadowing.submit);
   const storeUserAudio = useMutation(api.shadowing.storeUserAudio);
 
@@ -214,11 +217,12 @@ export function ShadowingCard({ flashcard, userId, onNext }: ShadowingCardProps)
         // Continue without storing - don't block the user experience
       }
 
-      // Call AI to evaluate
+      // Call AI to evaluate - pass UI language for localized feedback
       const result = await evaluateShadowing({
         targetText: flashcard.sentence,
         targetLanguage: language,
         userAudioBase64: audioBase64,
+        feedbackLanguage: uiLanguage,
       });
 
       // Convert feedback audio to data URL if present
@@ -287,7 +291,9 @@ export function ShadowingCard({ flashcard, userId, onNext }: ShadowingCardProps)
 
       {/* Target sentence section */}
       <div className="p-6 border-b border-border">
-        <div className="text-sm text-foreground-muted mb-2">{t("shadowing.card.listenAndRepeat")}</div>
+        <div className="text-sm text-foreground-muted mb-2">
+          {t("shadowing.card.listenAndRepeat")}
+        </div>
         <p
           className="text-2xl font-semibold text-foreground mb-2"
           style={{ fontFamily: language === "japanese" ? "var(--font-japanese)" : "inherit" }}

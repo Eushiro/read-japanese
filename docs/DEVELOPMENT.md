@@ -183,17 +183,41 @@ trackEvent('event', {...});
 - `{feature}_abandoned` - User leaves without completing
 - `{feature}_error` - Something went wrong
 
-**AI-specific tracking (helpers already exist):**
+**AI action tracking - use `useAIAction` instead of `useAction`:**
+```typescript
+// ❌ Wrong - no analytics tracking
+import { useAction } from "convex/react";
+const verifySentence = useAction(api.ai.verifySentence);
+
+// ✅ Correct - automatic analytics tracking (completely seamless!)
+import { useAIAction } from '@/hooks/useAIAction';
+const verifySentence = useAIAction(api.ai.verifySentence);
+
+// Use exactly like useAction - tracking is automatic
+const result = await verifySentence(args);
+```
+
+The `useAIAction` hook:
+- Auto-detects operation name from the action reference (`api.ai.verifySentence` → `verify_sentence`)
+- Tracks `ai_request_started` before the action
+- Tracks `ai_request_completed` with latency on success
+- Tracks `ai_request_failed` with error message on failure
+
+**Optional overrides:**
+```typescript
+// Override auto-detected operation name or model
+const verifySentence = useAIAction(api.ai.verifySentence, {
+  operationName: "custom_name",  // Override auto-detection
+  model: "gpt-4",                // Default: "gemini-2.0-flash"
+});
+```
+
+**Manual tracking (for non-hook contexts):**
 ```typescript
 import { trackAIRequest, trackAISuccess, trackAIError } from '@/lib/analytics';
 
-// Track AI requests
 trackAIRequest('sentence_generation', 'gemini-2.0-flash', { word_count: 5 });
-
-// Track success with latency
 trackAISuccess('sentence_generation', 'gemini-2.0-flash', 1500);
-
-// Track failures
 trackAIError('sentence_generation', 'gemini-2.0-flash', 'timeout');
 ```
 
@@ -278,3 +302,122 @@ await ctx.runAction(internal.lib.generation.generateSentenceForWord, {
   skipUsageCheck: true, // Bypasses paywall for batch ops
 });
 ```
+
+---
+
+## 7. Use Shared Language Configuration
+
+**All language support is defined in `shared/languages.json`** - the single source of truth for both frontend and backend.
+
+**In the frontend (`web/src/lib/languages.ts`):**
+```typescript
+import { LANGUAGES, SUPPORTED_LANGUAGE_CODES, TRANSLATION_TARGETS } from "@/lib/languages";
+
+// LANGUAGES = [{value: "japanese", label: "Japanese", flag: "🇯🇵", ...}, ...]
+// SUPPORTED_LANGUAGE_CODES = ["japanese", "english", "french"]
+// TRANSLATION_TARGETS = ["english", "japanese", "french"]
+```
+
+**In the Python backend (`backend/app/config/languages.py`):**
+```python
+from app.config.languages import (
+    LANGUAGE_CODES,              # ["japanese", "english", "french"]
+    LANGUAGE_NAMES,              # {"japanese": "Japanese", ...}
+    TRANSLATION_TARGETS,         # Languages to generate translations for
+    CODE_TO_ISO,                 # {"japanese": "ja", ...}
+    get_translation_targets_for, # Get translation targets excluding source
+    is_valid_language,           # Validate language codes
+)
+
+# When generating translations:
+targets = get_translation_targets_for("japanese")  # Returns ["english", "french"]
+iso_codes = [CODE_TO_ISO[lang] for lang in targets]  # Returns ["en", "fr"]
+```
+
+**DO NOT:**
+- Hardcode language lists - always import from the shared config
+- Add languages without updating `shared/languages.json`
+- Define local `LANGUAGE_NAMES` or similar mappings that duplicate the config
+
+**Adding a new language:**
+1. Add to `shared/languages.json` with all required fields
+2. Run `cd web && bun run typecheck` to verify TypeScript
+3. Add i18n locale files in `web/src/lib/i18n/locales/<isoCode>/`
+4. Update `EXAMS_BY_LANGUAGE` in `web/src/lib/languages.ts` if applicable
+
+See `shared/README.md` for full documentation.
+
+---
+
+## 8. Media Compression Standards
+
+**All generated media must be compressed before storage.**
+
+| Media Type | Format | Settings | Savings |
+|------------|--------|----------|---------|
+| Audio | MP3 | 64kbps mono | ~90% vs WAV |
+| Images | WebP | Quality 80-85, max 800px | ~70-95% vs PNG |
+
+**Convex (frontend):**
+- Audio: Gemini TTS outputs MP3 directly (configured in `ai.ts`)
+- Images: Use `compressToWebp()` from `lib/imageCompression.ts` before upload
+
+**Python backend:**
+```python
+from app.services.generation import (
+    compress_audio_to_mp3,    # PCM/WAV -> MP3
+    compress_image_to_webp,   # Any image -> WebP
+)
+```
+
+**DO NOT:**
+- Store audio as WAV
+- Store images as PNG
+- Store original uncompressed files
+- Implement custom compression logic
+
+---
+
+## 9. Batch API for Bulk Generation (Backend)
+
+**For 5+ items, always use Google Batch API** (50% cost savings).
+
+```python
+from app.services.generation import run_text_batch
+
+results = await run_text_batch(
+    prompts={"word_1": "prompt...", "word_2": "prompt..."},
+    system_prompt="...",
+    model="gemini-3-flash-preview",
+)
+```
+
+The batch generation functions automatically use Batch API for 5+ items.
+
+**DO NOT** make individual API calls in a loop for bulk generation.
+
+---
+
+## 10. JSON Schemas for AI Structured Output
+
+**Always use JSON schemas when requesting structured data from AI models.**
+
+```python
+from pydantic import BaseModel
+
+class OutputItem(BaseModel):
+    word: str
+    sentence: str
+    translations: Dict[str, str]
+
+response = client.models.generate_content(
+    model=model,
+    contents=prompt,
+    config=types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema=list[OutputItem],
+    )
+)
+```
+
+**Why:** Guarantees valid JSON, enforces types, reduces parsing errors.

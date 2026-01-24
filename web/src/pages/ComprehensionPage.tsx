@@ -1,5 +1,7 @@
-import { useNavigate,useParams } from "@tanstack/react-router";
-import { useAction,useMutation, useQuery } from "convex/react";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import { useMutation, useQuery } from "convex/react";
+
+import { useAIAction } from "@/hooks/useAIAction";
 import {
   ArrowLeft,
   BookOpen,
@@ -10,7 +12,7 @@ import {
   Sparkles,
   XCircle,
 } from "lucide-react";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Paywall } from "@/components/Paywall";
 import {
@@ -24,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStory } from "@/hooks/useStory";
 import { useT } from "@/lib/i18n";
-import { difficultyLevelToTestLevel,testLevelToDifficultyLevel } from "@/types/story";
+import { difficultyLevelToTestLevel, testLevelToDifficultyLevel } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
 
@@ -81,8 +83,8 @@ export function ComprehensionPage() {
   const [showPaywall, setShowPaywall] = useState(false);
 
   // Actions and mutations
-  const generateQuestions = useAction(api.ai.generateComprehensionQuestions);
-  const gradeAnswer = useAction(api.ai.gradeComprehensionAnswer);
+  const generateQuestions = useAIAction(api.ai.generateComprehensionQuestions);
+  const gradeAnswer = useAIAction(api.ai.gradeComprehensionAnswer);
   const submitAnswer = useMutation(api.storyComprehension.submitAnswer);
   const completeQuiz = useMutation(api.storyComprehension.complete);
   const resetQuiz = useMutation(api.storyComprehension.reset);
@@ -528,7 +530,9 @@ export function ComprehensionPage() {
                 </Button>
                 <div>
                   <h1 className="font-semibold text-foreground">{story.metadata.title}</h1>
-                  <p className="text-sm text-foreground-muted">{t("comprehension.header.results")}</p>
+                  <p className="text-sm text-foreground-muted">
+                    {t("comprehension.header.results")}
+                  </p>
                 </div>
               </div>
               {isAdmin && (
@@ -592,13 +596,17 @@ export function ComprehensionPage() {
                 <BookOpen className="w-4 h-4 mr-2" />
                 {t("comprehension.navigation.backToStory")}
               </Button>
-              <Button onClick={() => navigate({ to: "/library" })}>{t("comprehension.navigation.browseMore")}</Button>
+              <Button onClick={() => navigate({ to: "/library" })}>
+                {t("comprehension.navigation.browseMore")}
+              </Button>
             </div>
           </div>
 
           {/* Question Review */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground mb-4">{t("comprehension.results.reviewAnswers")}</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">
+              {t("comprehension.results.reviewAnswers")}
+            </h3>
             {localQuestions.map((question, _index) => (
               <div
                 key={question.questionId}
@@ -624,7 +632,9 @@ export function ComprehensionPage() {
                       </p>
                     )}
                     <p className="text-sm">
-                      <span className="text-foreground-muted">{t("comprehension.results.yourAnswer")} </span>
+                      <span className="text-foreground-muted">
+                        {t("comprehension.results.yourAnswer")}{" "}
+                      </span>
                       <span className="text-foreground">{question.userAnswer}</span>
                     </p>
                     {question.type === "multiple_choice" && !question.isCorrect && (
@@ -638,7 +648,10 @@ export function ComprehensionPage() {
                       </p>
                     )}
                     <p className="text-xs text-foreground-muted mt-2">
-                      {t("comprehension.results.pointsEarned", { earned: question.earnedPoints ?? 0, total: question.points })}
+                      {t("comprehension.results.pointsEarned", {
+                        earned: question.earnedPoints ?? 0,
+                        total: question.points,
+                      })}
                     </p>
                   </div>
                 </div>
@@ -682,7 +695,10 @@ export function ComprehensionPage() {
               <div>
                 <h1 className="font-semibold text-foreground">{story.metadata.title}</h1>
                 <p className="text-sm text-foreground-muted">
-                  {t("comprehension.header.questionOf", { current: currentQuestionIndex + 1, total: localQuestions.length })}
+                  {t("comprehension.header.questionOf", {
+                    current: currentQuestionIndex + 1,
+                    total: localQuestions.length,
+                  })}
                 </p>
               </div>
             </div>

@@ -1,4 +1,6 @@
-import { useAction,useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+
+import { useAIAction } from "@/hooks/useAIAction";
 import {
   BookOpen,
   Brain,
@@ -13,16 +15,16 @@ import {
   Volume2,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef,useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { SignInButton,useAuth } from "@/contexts/AuthContext";
+import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useReviewSession } from "@/contexts/ReviewSessionContext";
 import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
-import type { CardState,Id, Rating } from "@/lib/convex-types";
-import { useT } from "@/lib/i18n";
+import type { CardState, Id, Rating } from "@/lib/convex-types";
+import { useT, useUILanguage } from "@/lib/i18n";
 import { LANGUAGES } from "@/lib/languages";
 
 import { api } from "../../convex/_generated/api";
@@ -31,7 +33,7 @@ import { api } from "../../convex/_generated/api";
 type CardType = {
   _id: Id<"flashcards">;
   sentence: string;
-  sentenceTranslation: string;
+  sentenceTranslation: string | null; // null when translation not available in user's UI language
   audioUrl?: string | null;
   wordAudioUrl?: string | null;
   imageUrl?: string | null;
@@ -87,6 +89,7 @@ export function FlashcardsPage() {
   const { trackEvent, events } = useAnalytics();
   const { setCardsLeft } = useReviewSession();
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
   const userId = user?.id ?? "anonymous";
 
   // Fetch user profile for primary language
@@ -108,11 +111,11 @@ export function FlashcardsPage() {
   );
   const dueCards = useQuery(
     api.flashcards.getDue,
-    isAuthenticated ? { userId, limit: 50, language: primaryLanguage } : "skip"
+    isAuthenticated ? { userId, limit: 50, language: primaryLanguage, uiLanguage } : "skip"
   );
   const newCards = useQuery(
     api.flashcards.getNew,
-    isAuthenticated ? { userId, limit: 20, language: primaryLanguage } : "skip"
+    isAuthenticated ? { userId, limit: 20, language: primaryLanguage, uiLanguage } : "skip"
   );
 
   // Session queue - includes original cards plus requeued "Again" cards
@@ -158,7 +161,14 @@ export function FlashcardsPage() {
         total_cards: initialCards.length,
       });
     }
-  }, [initialCards, isInitialized, trackEvent, events.FLASHCARD_SESSION_STARTED, dueCardsCount, newCardsCount]);
+  }, [
+    initialCards,
+    isInitialized,
+    trackEvent,
+    events.FLASHCARD_SESSION_STARTED,
+    dueCardsCount,
+    newCardsCount,
+  ]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -263,7 +273,16 @@ export function FlashcardsPage() {
         setIsTransitioning(false);
       }
     },
-    [currentCard, currentIndex, sessionQueue, reviewedCount, reviewCard, isTransitioning, trackEvent, events]
+    [
+      currentCard,
+      currentIndex,
+      sessionQueue,
+      reviewedCount,
+      reviewCard,
+      isTransitioning,
+      trackEvent,
+      events,
+    ]
   );
 
   const restartSession = () => {
@@ -418,12 +437,12 @@ export function FlashcardsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-4">
           <Brain className="w-12 h-12 text-foreground-muted mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">{t('flashcards.signIn.title')}</h2>
-          <p className="text-foreground-muted mb-4">
-            {t('flashcards.signIn.description')}
-          </p>
+          <h2 className="text-xl font-semibold text-foreground mb-2">
+            {t("flashcards.signIn.title")}
+          </h2>
+          <p className="text-foreground-muted mb-4">{t("flashcards.signIn.description")}</p>
           <SignInButton mode="modal">
-            <Button>{t('flashcards.signIn.button')}</Button>
+            <Button>{t("flashcards.signIn.button")}</Button>
           </SignInButton>
         </div>
       </div>
@@ -452,7 +471,7 @@ export function FlashcardsPage() {
                 <Brain className="w-5 h-5 text-purple-400" />
               </div>
               <span className="text-sm font-semibold text-purple-400 uppercase tracking-wider">
-                {t('flashcards.hero.badge')}
+                {t("flashcards.hero.badge")}
               </span>
             </div>
             <div className="flex items-center gap-3 mb-2">
@@ -460,7 +479,7 @@ export function FlashcardsPage() {
                 className="text-3xl sm:text-4xl font-bold text-foreground"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                {t('flashcards.hero.title')}
+                {t("flashcards.hero.title")}
               </h1>
               {languageInfo && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-sm">
@@ -468,9 +487,7 @@ export function FlashcardsPage() {
                 </span>
               )}
             </div>
-            <p className="text-foreground-muted text-lg">
-              {t('flashcards.hero.subtitle')}
-            </p>
+            <p className="text-foreground-muted text-lg">{t("flashcards.hero.subtitle")}</p>
           </div>
         </div>
       </div>
@@ -482,7 +499,9 @@ export function FlashcardsPage() {
             <span className="text-3xl font-bold text-green-500">
               {sessionQueue.length - currentIndex}
             </span>
-            <span className="text-lg text-foreground-muted ml-2">{t('flashcards.counter.cardsLeft')}</span>
+            <span className="text-lg text-foreground-muted ml-2">
+              {t("flashcards.counter.cardsLeft")}
+            </span>
           </div>
         </div>
       </div>
@@ -499,15 +518,15 @@ export function FlashcardsPage() {
               className="text-2xl font-bold text-foreground mb-2"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {t('flashcards.states.allCaughtUp.title')}
+              {t("flashcards.states.allCaughtUp.title")}
             </h2>
             <p className="text-foreground-muted mb-6">
-              {t('flashcards.states.allCaughtUp.description')}
+              {t("flashcards.states.allCaughtUp.description")}
             </p>
             <div className="flex justify-center gap-4">
               <Button variant="outline" onClick={() => (window.location.href = "/vocabulary")}>
                 <BookOpen className="w-4 h-4 mr-2" />
-                {t('flashcards.states.allCaughtUp.addVocabulary')}
+                {t("flashcards.states.allCaughtUp.addVocabulary")}
               </Button>
             </div>
           </div>
@@ -521,21 +540,30 @@ export function FlashcardsPage() {
               className="text-2xl font-bold text-foreground mb-2"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {t('flashcards.states.sessionComplete.title')}
+              {t("flashcards.states.sessionComplete.title")}
             </h2>
             <p className="text-foreground-muted mb-2">
-              {t('flashcards.states.sessionComplete.cardsReviewed', { count: reviewedCount }).split('<bold>').map((part, i) =>
-                i === 0 ? part : (
-                  <span key={i}><span className="font-semibold text-foreground">{part.split('</bold>')[0]}</span>{part.split('</bold>')[1]}</span>
-                )
-              )}
+              {t("flashcards.states.sessionComplete.cardsReviewed", { count: reviewedCount })
+                .split("<bold>")
+                .map((part, i) =>
+                  i === 0 ? (
+                    part
+                  ) : (
+                    <span key={i}>
+                      <span className="font-semibold text-foreground">
+                        {part.split("</bold>")[0]}
+                      </span>
+                      {part.split("</bold>")[1]}
+                    </span>
+                  )
+                )}
             </p>
             <p className="text-sm text-foreground-muted mb-6">
-              {t('flashcards.states.sessionComplete.encouragement')}
+              {t("flashcards.states.sessionComplete.encouragement")}
             </p>
             <Button onClick={restartSession}>
               <RotateCcw className="w-4 h-4 mr-2" />
-              {t('flashcards.states.sessionComplete.reviewAgain')}
+              {t("flashcards.states.sessionComplete.reviewAgain")}
             </Button>
           </div>
         ) : currentCard ? (
@@ -547,7 +575,7 @@ export function FlashcardsPage() {
                 onClick={handleUndo}
                 disabled={history.length === 0 || isTransitioning}
                 className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title={t('flashcards.actions.undo')}
+                title={t("flashcards.actions.undo")}
               >
                 <Undo2 className="w-4 h-4" />
               </button>
@@ -555,7 +583,7 @@ export function FlashcardsPage() {
                 onClick={handleRedo}
                 disabled={undoneHistory.length === 0 || isTransitioning}
                 className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title={t('flashcards.actions.redo')}
+                title={t("flashcards.actions.redo")}
               >
                 <Redo2 className="w-4 h-4" />
               </button>
@@ -588,7 +616,7 @@ export function FlashcardsPage() {
             {showAnswer && (
               <div className="space-y-3 animate-fade-in-up">
                 <p className="text-center text-sm text-foreground-muted">
-                  {t('flashcards.rating.prompt')}
+                  {t("flashcards.rating.prompt")}
                 </p>
                 <div className="grid grid-cols-4 gap-2">
                   <Button
@@ -602,8 +630,10 @@ export function FlashcardsPage() {
                     }`}
                   >
                     <X className="w-5 h-5 text-red-500 mb-1" />
-                    <span className="text-xs font-medium">{t('flashcards.rating.again')}</span>
-                    <span className="text-[10px] text-foreground-muted">{t('flashcards.rating.intervals.again')}</span>
+                    <span className="text-xs font-medium">{t("flashcards.rating.again")}</span>
+                    <span className="text-[10px] text-foreground-muted">
+                      {t("flashcards.rating.intervals.again")}
+                    </span>
                   </Button>
                   <Button
                     variant="outline"
@@ -616,8 +646,10 @@ export function FlashcardsPage() {
                     }`}
                   >
                     <span className="text-amber-500 font-bold mb-1">~</span>
-                    <span className="text-xs font-medium">{t('flashcards.rating.hard')}</span>
-                    <span className="text-[10px] text-foreground-muted">{t('flashcards.rating.intervals.hard')}</span>
+                    <span className="text-xs font-medium">{t("flashcards.rating.hard")}</span>
+                    <span className="text-[10px] text-foreground-muted">
+                      {t("flashcards.rating.intervals.hard")}
+                    </span>
                   </Button>
                   <Button
                     variant="outline"
@@ -630,8 +662,10 @@ export function FlashcardsPage() {
                     }`}
                   >
                     <Check className="w-5 h-5 text-green-500 mb-1" />
-                    <span className="text-xs font-medium">{t('flashcards.rating.good')}</span>
-                    <span className="text-[10px] text-foreground-muted">{t('flashcards.rating.intervals.good')}</span>
+                    <span className="text-xs font-medium">{t("flashcards.rating.good")}</span>
+                    <span className="text-[10px] text-foreground-muted">
+                      {t("flashcards.rating.intervals.good")}
+                    </span>
                   </Button>
                   <Button
                     variant="outline"
@@ -644,8 +678,10 @@ export function FlashcardsPage() {
                     }`}
                   >
                     <ChevronRight className="w-5 h-5 text-blue-500 mb-1" />
-                    <span className="text-xs font-medium">{t('flashcards.rating.easy')}</span>
-                    <span className="text-[10px] text-foreground-muted">{t('flashcards.rating.intervals.easy')}</span>
+                    <span className="text-xs font-medium">{t("flashcards.rating.easy")}</span>
+                    <span className="text-[10px] text-foreground-muted">
+                      {t("flashcards.rating.intervals.easy")}
+                    </span>
                   </Button>
                 </div>
               </div>
@@ -662,7 +698,7 @@ interface FlashcardDisplayProps {
   card: {
     _id: string;
     sentence: string;
-    sentenceTranslation: string;
+    sentenceTranslation: string | null; // null when translation not available in user's UI language
     audioUrl?: string | null;
     wordAudioUrl?: string | null;
     imageUrl?: string | null;
@@ -676,7 +712,11 @@ interface FlashcardDisplayProps {
   showAnswer: boolean;
   onShowAnswer: () => void;
   isPremiumUser: boolean;
-  onSentenceRefreshed?: (newSentence: string, newTranslation: string, newAudioUrl?: string) => void;
+  onSentenceRefreshed?: (
+    newSentence: string,
+    newTranslation: string | null,
+    newAudioUrl?: string
+  ) => void;
 }
 
 function FlashcardDisplay({
@@ -697,7 +737,7 @@ function FlashcardDisplay({
   const [localAudioUrl, setLocalAudioUrl] = useState(card.audioUrl);
   const [showPaywall, setShowPaywall] = useState(false);
 
-  const refreshSentence = useAction(api.ai.refreshFlashcardSentence);
+  const refreshSentence = useAIAction(api.ai.refreshFlashcardSentence);
 
   // Preload audio and images when card changes (before user clicks "Show Answer")
   useEffect(() => {
@@ -770,7 +810,7 @@ function FlashcardDisplay({
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
             >
               <Volume2 className="w-4 h-4" />
-              {t('flashcards.card.playWord')}
+              {t("flashcards.card.playWord")}
             </button>
           </div>
         )}
@@ -784,8 +824,8 @@ function FlashcardDisplay({
         >
           {localSentence}
         </p>
-        {/* Sentence Translation - shown directly below sentence */}
-        {showAnswer && (
+        {/* Sentence Translation - shown directly below sentence (only if available in user's UI language) */}
+        {showAnswer && localTranslation && (
           <p className="text-sm text-foreground-muted text-center mt-2 italic">
             {localTranslation}
           </p>
@@ -799,17 +839,17 @@ function FlashcardDisplay({
                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
               >
                 <Volume2 className="w-4 h-4" />
-                {t('flashcards.card.playSentence')}
+                {t("flashcards.card.playSentence")}
               </button>
             )}
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-              title={t('flashcards.card.newSentence')}
+              title={t("flashcards.card.newSentence")}
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
-              {isRefreshing ? t('flashcards.card.refreshing') : t('flashcards.card.newSentence')}
+              {isRefreshing ? t("flashcards.card.refreshing") : t("flashcards.card.newSentence")}
             </button>
           </div>
         )}
@@ -818,14 +858,16 @@ function FlashcardDisplay({
       {/* Show Answer Button / Answer */}
       {!showAnswer ? (
         <Button onClick={onShowAnswer} className="w-full" size="lg">
-          {t('flashcards.card.showAnswer')}
+          {t("flashcards.card.showAnswer")}
         </Button>
       ) : (
         <div className="space-y-4 animate-fade-in-up">
           {/* Reading (for Japanese) */}
           {isJapanese && vocab?.reading && (
             <div className="text-center">
-              <div className="text-sm text-foreground-muted mb-1">{t('flashcards.card.reading')}</div>
+              <div className="text-sm text-foreground-muted mb-1">
+                {t("flashcards.card.reading")}
+              </div>
               <div className="text-2xl text-foreground" style={{ fontFamily: languageFont }}>
                 {vocab.reading}
               </div>
@@ -834,7 +876,9 @@ function FlashcardDisplay({
 
           {/* Definition */}
           <div className="text-center">
-            <div className="text-sm text-foreground-muted mb-1">{t('flashcards.card.definition')}</div>
+            <div className="text-sm text-foreground-muted mb-1">
+              {t("flashcards.card.definition")}
+            </div>
             <div className="text-xl font-medium text-foreground">
               {vocab?.definitions.join("; ")}
             </div>

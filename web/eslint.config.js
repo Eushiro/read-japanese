@@ -50,6 +50,38 @@ export default defineConfig([
       'prefer-const': 'error',
     },
   },
+  // Enforce analytics abstraction - no direct PostHog usage
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/lib/analytics.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['posthog-js', 'posthog-js/*'],
+              message: 'Use @/lib/analytics instead of PostHog directly.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Enforce useAIAction for AI actions - automatic analytics tracking
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/hooks/useAIAction.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.name='useAction'][arguments.0.object.object.name='api'][arguments.0.object.property.name='ai']",
+          message: 'Use useAIAction from @/hooks/useAIAction instead of useAction for AI actions. It provides automatic analytics tracking.',
+        },
+      ],
+    },
+  },
   // i18n linting - warn on hardcoded strings in JSX (excludes admin pages)
   {
     files: ['src/**/*.tsx'],

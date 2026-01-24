@@ -1,7 +1,9 @@
-import { useNavigate,useParams } from "@tanstack/react-router";
-import { useAction, useMutation,useQuery } from "convex/react";
-import { ArrowLeft, BookOpen,ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useEffect, useMemo,useRef, useState } from "react";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import { useMutation, useQuery } from "convex/react";
+
+import { useAIAction } from "@/hooks/useAIAction";
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getAudioUrl } from "@/api/stories";
 import { Paywall } from "@/components/Paywall";
@@ -16,8 +18,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/hooks/useSettings";
 import { useStory } from "@/hooks/useStory";
 import { useT } from "@/lib/i18n";
-import type { ProficiencyLevel,Token } from "@/types/story";
-import { difficultyLevelToTestLevel,testLevelToDifficultyLevel } from "@/types/story";
+import type { ProficiencyLevel, Token } from "@/types/story";
+import { difficultyLevelToTestLevel, testLevelToDifficultyLevel } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
 
@@ -78,7 +80,7 @@ export function ReaderPage() {
   );
 
   // Action to generate comprehension questions
-  const generateQuestions = useAction(api.ai.generateComprehensionQuestions);
+  const generateQuestions = useAIAction(api.ai.generateComprehensionQuestions);
   const hasStartedGeneration = useRef(false);
 
   // Track story reading for usage limits
@@ -251,7 +253,6 @@ export function ReaderPage() {
       // Check if audio time falls within this chapter
       if (audioTime >= chapterStart && audioTime <= chapterEnd) {
         if (i !== currentChapterIndex) {
-           
           setCurrentChapterIndex(i);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
@@ -277,7 +278,6 @@ export function ReaderPage() {
       audioTime >= firstSegmentWithTime.audioStartTime! &&
       audioTime <= lastSegmentWithTime.audioEndTime!
     ) {
-       
       setManualNavigation(false);
     }
   }, [audioTime, chapters, currentChapterIndex, manualNavigation]);
@@ -400,15 +400,15 @@ export function ReaderPage() {
             >
               {t("reader.premium.title")}
             </h2>
-            <p className="text-foreground-muted mb-6">
-              {t("reader.premium.description")}
-            </p>
+            <p className="text-foreground-muted mb-6">{t("reader.premium.description")}</p>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => navigate({ to: "/library" })}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 {t("reader.navigation.backToLibrary")}
               </Button>
-              <Button onClick={() => setShowPaywall(true)}>{t("reader.premium.upgradePlan")}</Button>
+              <Button onClick={() => setShowPaywall(true)}>
+                {t("reader.premium.upgradePlan")}
+              </Button>
             </div>
           </div>
         </div>
@@ -431,14 +431,19 @@ export function ReaderPage() {
               {t("reader.limit.title")}
             </h2>
             <p className="text-foreground-muted mb-6">
-              {t("reader.limit.description", { used: canReadStory?.used ?? 0, limit: canReadStory?.limit ?? 0 })}
+              {t("reader.limit.description", {
+                used: canReadStory?.used ?? 0,
+                limit: canReadStory?.limit ?? 0,
+              })}
             </p>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => navigate({ to: "/library" })}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 {t("reader.navigation.backToLibrary")}
               </Button>
-              <Button onClick={() => setShowPaywall(true)}>{t("reader.premium.upgradePlan")}</Button>
+              <Button onClick={() => setShowPaywall(true)}>
+                {t("reader.premium.upgradePlan")}
+              </Button>
             </div>
           </div>
         </div>
@@ -553,7 +558,9 @@ export function ReaderPage() {
               }
             />
           ) : (
-            <div className="text-center text-foreground-muted py-12">{t("reader.empty.noChapters")}</div>
+            <div className="text-center text-foreground-muted py-12">
+              {t("reader.empty.noChapters")}
+            </div>
           )}
         </div>
       </main>

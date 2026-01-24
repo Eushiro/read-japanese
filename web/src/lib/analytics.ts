@@ -198,5 +198,5 @@ export function getFeatureFlag(flag: string): unknown {
   return posthog.getFeatureFlagPayload(flag);
 }
 
-// Export posthog instance for advanced usage
-export { posthog };
+// Note: posthog instance is NOT exported to enforce using the abstraction layer.
+// All analytics should go through trackEvent, trackAIRequest, etc.

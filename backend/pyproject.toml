@@ -1,0 +1,31 @@
+[project]
+name = "sanlang-backend"
+version = "0.1.0"
+description = "SanLang backend for content generation"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "W",      # pycodestyle warnings
+    "I",      # isort
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py
+"scripts/*" = ["E402"]     # Allow imports not at top for scripts
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]

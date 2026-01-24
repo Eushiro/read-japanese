@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useAction,useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+
+import { useAIAction } from "@/hooks/useAIAction";
 import type { GenericId } from "convex/values";
 import {
   ArrowUpDown,
@@ -20,13 +22,13 @@ import {
   Volume2,
   X,
 } from "lucide-react";
-import { useCallback,useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Paywall } from "@/components/Paywall";
 import { AudioRecorder } from "@/components/shadowing/AudioRecorder";
 import { FeedbackDisplay } from "@/components/shadowing/FeedbackDisplay";
 import { Button } from "@/components/ui/button";
-import { matchesSearch,SearchBox } from "@/components/ui/search-box";
+import { matchesSearch, SearchBox } from "@/components/ui/search-box";
 import {
   Select,
   SelectContent,
@@ -46,7 +48,7 @@ import {
   preloadDictionary,
   searchClientDictionary,
 } from "@/lib/clientDictionary";
-import { useT } from "@/lib/i18n";
+import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -72,7 +74,7 @@ const MASTERY_COLORS: Record<string, string> = {
 };
 
 import type { MasteryState } from "@/lib/convex-types";
-import { type Language,LANGUAGES } from "@/lib/languages";
+import { type Language, LANGUAGES } from "@/lib/languages";
 
 // Type for vocabulary item used in detail modal (subset of Doc<"vocabulary">)
 type VocabularyItem = {
@@ -231,7 +233,12 @@ export function VocabularyPage() {
       }
 
       // Mastery filter - only applies to user vocabulary, not premade
-      if (masteryFilter && !isViewingPremade && "masteryState" in item && item.masteryState !== masteryFilter) {
+      if (
+        masteryFilter &&
+        !isViewingPremade &&
+        "masteryState" in item &&
+        item.masteryState !== masteryFilter
+      ) {
         return false;
       }
 
@@ -769,8 +776,8 @@ function VocabularyCard({
   // For user vocab, we need to fetch the flashcard
   const existingFlashcard = useFlashcard(isPremade ? undefined : item._id);
 
-  const generateFlashcardWithAudio = useAction(api.ai.generateFlashcardWithAudio);
-  const enhancePremadeVocabulary = useAction(api.ai.enhancePremadeVocabulary);
+  const generateFlashcardWithAudio = useAIAction(api.ai.generateFlashcardWithAudio);
+  const enhancePremadeVocabulary = useAIAction(api.ai.enhancePremadeVocabulary);
   const updateVocabulary = useMutation(api.vocabulary.update);
 
   // Calculate what's being enhanced for skeleton display
@@ -1152,6 +1159,7 @@ interface VocabularyDetailModalProps {
 
 function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyDetailModalProps) {
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
   const { user } = useAuth();
   const userId = user?.id ?? "anonymous";
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
@@ -1169,7 +1177,7 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
   } | null>(null);
 
   const recorder = useAudioRecorder();
-  const evaluateShadowing = useAction(api.ai.evaluateShadowing);
+  const evaluateShadowing = useAIAction(api.ai.evaluateShadowing);
   const submitShadowing = useMutation(api.shadowing.submit);
 
   // Fetch the flashcard data - skip for premade items
@@ -1209,10 +1217,12 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
       // Convert blob to base64
       const audioBase64 = await recorder.getBase64FromBlob(audioBlob);
 
+      // Pass UI language for localized feedback
       const result = await evaluateShadowing({
         targetText: flashcard.sentence,
         targetLanguage: item.language as "japanese" | "english" | "french",
         userAudioBase64: audioBase64,
+        feedbackLanguage: uiLanguage,
       });
 
       let feedbackAudioUrl: string | undefined;
@@ -1344,7 +1354,7 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
               >
                 {flashcard?.sentence || item.sourceContext}
               </p>
-              {/* Sentence Translation */}
+              {/* Sentence Translation - only if available in user's UI language */}
               {flashcard?.sentenceTranslation && (
                 <p className="text-sm text-foreground-muted text-center mt-2 italic">
                   {flashcard.sentenceTranslation}
@@ -1494,7 +1504,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
 
   const { trackEvent, events } = useAnalytics();
   const addWord = useMutation(api.vocabulary.add);
-  const generateFlashcardWithAudio = useAction(api.ai.generateFlashcardWithAudio);
+  const generateFlashcardWithAudio = useAIAction(api.ai.generateFlashcardWithAudio);
   const getOrCreatePersonalDeck = useMutation(api.premadeDecks.getOrCreatePersonalDeck);
 
   // Preload dictionary when modal opens

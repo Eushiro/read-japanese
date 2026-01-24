@@ -1,12 +1,14 @@
-import { useAction,useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+
+import { useAIAction } from "@/hooks/useAIAction";
 import type { GenericId } from "convex/values";
 import { Check, ChevronRight, Loader2, PenLine, Send, SkipForward, Sparkles } from "lucide-react";
-import { useMemo,useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useT } from "@/lib/i18n";
+import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../../convex/_generated/api";
 
@@ -18,6 +20,7 @@ interface SessionOutputProps {
 
 export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputProps) {
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
   const { user } = useAuth();
   const userId = user?.id ?? "";
 
@@ -48,7 +51,7 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
     improvedSentence?: string;
   } | null>(null);
 
-  const verifySentence = useAction(api.ai.verifySentence);
+  const verifySentence = useAIAction(api.ai.verifySentence);
   const submitSentence = useMutation(api.userSentences.submit);
 
   const currentWord = practiceWords[currentWordIndex];
@@ -66,11 +69,13 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
     setResult(null);
 
     try {
+      // Pass UI language for localized feedback
       const verification = await verifySentence({
         sentence: sentence.trim(),
         targetWord: currentWord.word,
         wordDefinitions: currentWord.definitions,
         language: currentWord.language as "japanese" | "english" | "french",
+        feedbackLanguage: uiLanguage,
       });
 
       setResult({
@@ -132,7 +137,9 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
           <PenLine className="w-8 h-8 text-foreground-muted" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">{t("studySession.output.noWordsTitle")}</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-2">
+          {t("studySession.output.noWordsTitle")}
+        </h2>
         <p className="text-foreground-muted mb-6">{t("studySession.output.noWordsDescription")}</p>
         <Button onClick={() => onComplete(0)}>{t("common.actions.continue")}</Button>
       </div>
@@ -146,14 +153,19 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border">
           <PenLine className="w-4 h-4 text-accent" />
           <span className="text-foreground-muted">
-            {t("studySession.output.wordOf", { current: currentWordIndex + 1, total: Math.min(practiceWords.length, wordCount) })}
+            {t("studySession.output.wordOf", {
+              current: currentWordIndex + 1,
+              total: Math.min(practiceWords.length, wordCount),
+            })}
           </span>
         </div>
       </div>
 
       {/* Word card */}
       <div className="bg-surface rounded-2xl border border-border p-6 mb-6">
-        <div className="text-sm text-foreground-muted mb-2">{t("studySession.output.writeSentenceUsing")}</div>
+        <div className="text-sm text-foreground-muted mb-2">
+          {t("studySession.output.writeSentenceUsing")}
+        </div>
         <div
           className="text-3xl font-bold text-foreground mb-2"
           style={{
@@ -222,7 +234,9 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
               )}
               <div>
                 <div className="font-semibold text-foreground">
-                  {result.isCorrect ? t("studySession.output.greatJob") : t("studySession.output.goodEffort")}
+                  {result.isCorrect
+                    ? t("studySession.output.greatJob")
+                    : t("studySession.output.goodEffort")}
                 </div>
                 <div className="text-sm text-foreground-muted">
                   {t("studySession.output.score", { score: result.overallScore })}
@@ -234,7 +248,9 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
 
             {result.improvedSentence && result.improvedSentence !== sentence && (
               <div>
-                <div className="text-sm text-foreground-muted mb-2">{t("studySession.output.suggestedImprovement")}</div>
+                <div className="text-sm text-foreground-muted mb-2">
+                  {t("studySession.output.suggestedImprovement")}
+                </div>
                 <div
                   className="text-lg text-green-600 bg-green-500/5 p-3 rounded-lg border border-green-500/20"
                   style={{

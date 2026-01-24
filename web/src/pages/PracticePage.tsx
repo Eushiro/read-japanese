@@ -1,5 +1,7 @@
 import { useSearch } from "@tanstack/react-router";
-import { useAction,useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+
+import { useAIAction } from "@/hooks/useAIAction";
 import type { GenericId } from "convex/values";
 import {
   BookOpen,
@@ -11,18 +13,19 @@ import {
   Send,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useMemo,useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { SignInButton,useAuth } from "@/contexts/AuthContext";
-import { useT } from "@/lib/i18n";
+import { SignInButton, useAuth } from "@/contexts/AuthContext";
+import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
 
 export function PracticePage() {
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
   const { user, isAuthenticated } = useAuth();
   const { trackEvent, events } = useAnalytics();
   const userId = user?.id ?? "anonymous";
@@ -78,7 +81,7 @@ export function PracticePage() {
     improvedSentence: string;
   } | null>(null);
 
-  const verifySentence = useAction(api.ai.verifySentence);
+  const verifySentence = useAIAction(api.ai.verifySentence);
   const submitSentence = useMutation(api.userSentences.submit);
 
   // Subscription check
@@ -128,12 +131,13 @@ export function PracticePage() {
     });
 
     try {
-      // Verify the sentence with AI
+      // Verify the sentence with AI - pass UI language for localized feedback
       const verification = await verifySentence({
         sentence: sentence.trim(),
         targetWord: selectedWord.word,
         wordDefinitions: selectedWord.definitions,
         language: selectedWord.language as "japanese" | "english" | "french",
+        feedbackLanguage: uiLanguage,
       });
 
       setResult(verification);
@@ -192,13 +196,11 @@ export function PracticePage() {
         <div className="text-center max-w-md mx-4">
           <PenLine className="w-12 h-12 text-foreground-muted mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-foreground mb-2">
-            {t('practice.signIn.title')}
+            {t("practice.signIn.title")}
           </h2>
-          <p className="text-foreground-muted mb-4">
-            {t('practice.signIn.description')}
-          </p>
+          <p className="text-foreground-muted mb-4">{t("practice.signIn.description")}</p>
           <SignInButton mode="modal">
-            <Button>{t('practice.signIn.button')}</Button>
+            <Button>{t("practice.signIn.button")}</Button>
           </SignInButton>
         </div>
       </div>
@@ -224,18 +226,16 @@ export function PracticePage() {
                 <PenLine className="w-5 h-5 text-accent" />
               </div>
               <span className="text-sm font-medium text-accent uppercase tracking-wider">
-                {t('practice.hero.badge')}
+                {t("practice.hero.badge")}
               </span>
             </div>
             <h1
               className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {t('practice.hero.title')}
+              {t("practice.hero.title")}
             </h1>
-            <p className="text-foreground-muted text-lg">
-              {t('practice.hero.subtitle')}
-            </p>
+            <p className="text-foreground-muted text-lg">{t("practice.hero.subtitle")}</p>
           </div>
         </div>
       </div>
@@ -251,21 +251,21 @@ export function PracticePage() {
               className="text-2xl font-bold text-foreground mb-2"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {t('practice.empty.title')}
+              {t("practice.empty.title")}
             </h2>
-            <p className="text-foreground-muted mb-6">
-              {t('practice.empty.description')}
-            </p>
+            <p className="text-foreground-muted mb-6">{t("practice.empty.description")}</p>
             <Button onClick={() => (window.location.href = "/vocabulary")}>
               <BookOpen className="w-4 h-4 mr-2" />
-              {t('practice.empty.goToVocabulary')}
+              {t("practice.empty.goToVocabulary")}
             </Button>
           </div>
         ) : !selectedWord ? (
           // Word selection
           <div>
             <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-              <h2 className="text-lg font-semibold text-foreground">{t('practice.wordSelection.title')}</h2>
+              <h2 className="text-lg font-semibold text-foreground">
+                {t("practice.wordSelection.title")}
+              </h2>
               {/* Language Filter - only show if multiple languages */}
               {showLanguageFilter && (
                 <div className="flex gap-2">
@@ -277,7 +277,7 @@ export function PracticePage() {
                         : "bg-muted text-foreground-muted hover:text-foreground"
                     }`}
                   >
-                    {t('practice.wordSelection.all')}
+                    {t("practice.wordSelection.all")}
                   </button>
                   {availableLanguages.includes("japanese") && (
                     <button
@@ -288,7 +288,7 @@ export function PracticePage() {
                           : "bg-muted text-foreground-muted hover:text-foreground"
                       }`}
                     >
-                      {t('practice.wordSelection.japanese')}
+                      {t("practice.wordSelection.japanese")}
                     </button>
                   )}
                   {availableLanguages.includes("english") && (
@@ -300,7 +300,7 @@ export function PracticePage() {
                           : "bg-muted text-foreground-muted hover:text-foreground"
                       }`}
                     >
-                      {t('practice.wordSelection.english')}
+                      {t("practice.wordSelection.english")}
                     </button>
                   )}
                   {availableLanguages.includes("french") && (
@@ -312,7 +312,7 @@ export function PracticePage() {
                           : "bg-muted text-foreground-muted hover:text-foreground"
                       }`}
                     >
-                      {t('practice.wordSelection.french')}
+                      {t("practice.wordSelection.french")}
                     </button>
                   )}
                 </div>
@@ -355,7 +355,9 @@ export function PracticePage() {
             <div className="bg-surface rounded-2xl border border-border p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-sm text-foreground-muted mb-1">{t('practice.practiceInterface.prompt')}</div>
+                  <div className="text-sm text-foreground-muted mb-1">
+                    {t("practice.practiceInterface.prompt")}
+                  </div>
                   <div
                     className="text-3xl font-bold text-foreground mb-2"
                     style={{
@@ -376,7 +378,7 @@ export function PracticePage() {
                   onClick={() => setSelectedWord(null)}
                   className="text-foreground-muted"
                 >
-                  {t('practice.practiceInterface.changeWord')}
+                  {t("practice.practiceInterface.changeWord")}
                 </Button>
               </div>
             </div>
@@ -386,12 +388,14 @@ export function PracticePage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    {t('practice.practiceInterface.inputLabel')}
+                    {t("practice.practiceInterface.inputLabel")}
                   </label>
                   <textarea
                     value={sentence}
                     onChange={(e) => setSentence(e.target.value)}
-                    placeholder={t('practice.practiceInterface.placeholder', { word: selectedWord.word })}
+                    placeholder={t("practice.practiceInterface.placeholder", {
+                      word: selectedWord.word,
+                    })}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-surface text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none"
                     style={{
                       fontFamily:
@@ -410,12 +414,12 @@ export function PracticePage() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        {t('practice.practiceInterface.checking')}
+                        {t("practice.practiceInterface.checking")}
                       </>
                     ) : (
                       <>
                         <Send className="w-4 h-4" />
-                        {t('practice.practiceInterface.checkSentence')}
+                        {t("practice.practiceInterface.checkSentence")}
                       </>
                     )}
                   </Button>
@@ -441,10 +445,12 @@ export function PracticePage() {
                       )}
                       <div>
                         <div className="font-semibold text-foreground">
-                          {result.isCorrect ? t('practice.results.greatJob') : t('practice.results.goodEffort')}
+                          {result.isCorrect
+                            ? t("practice.results.greatJob")
+                            : t("practice.results.goodEffort")}
                         </div>
                         <div className="text-sm text-foreground-muted">
-                          {t('practice.results.overallScore', { score: result.overallScore })}
+                          {t("practice.results.overallScore", { score: result.overallScore })}
                         </div>
                       </div>
                     </div>
@@ -457,16 +463,19 @@ export function PracticePage() {
 
                   {/* Score bars */}
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <ScoreBar label={t('practice.scores.grammar')} score={result.grammarScore} />
-                    <ScoreBar label={t('practice.scores.wordUsage')} score={result.usageScore} />
-                    <ScoreBar label={t('practice.scores.naturalness')} score={result.naturalnessScore} />
+                    <ScoreBar label={t("practice.scores.grammar")} score={result.grammarScore} />
+                    <ScoreBar label={t("practice.scores.wordUsage")} score={result.usageScore} />
+                    <ScoreBar
+                      label={t("practice.scores.naturalness")}
+                      score={result.naturalnessScore}
+                    />
                   </div>
                 </div>
 
                 {/* Your sentence */}
                 <div className="bg-surface rounded-2xl border border-border p-6">
                   <div className="text-sm font-medium text-foreground-muted mb-2">
-                    {t('practice.results.yourSentence')}
+                    {t("practice.results.yourSentence")}
                   </div>
                   <div
                     className="text-lg text-foreground"
@@ -483,7 +492,7 @@ export function PracticePage() {
                 {result.corrections.length > 0 && (
                   <div className="bg-surface rounded-2xl border border-border p-6">
                     <div className="text-sm font-medium text-foreground-muted mb-3">
-                      {t('practice.results.corrections')}
+                      {t("practice.results.corrections")}
                     </div>
                     <div className="space-y-3">
                       {result.corrections.map((correction, i) => (
@@ -511,14 +520,16 @@ export function PracticePage() {
 
                 {/* Feedback */}
                 <div className="bg-surface rounded-2xl border border-border p-6">
-                  <div className="text-sm font-medium text-foreground-muted mb-2">{t('practice.results.feedback')}</div>
+                  <div className="text-sm font-medium text-foreground-muted mb-2">
+                    {t("practice.results.feedback")}
+                  </div>
                   <div className="text-foreground mb-4">{result.feedback}</div>
                   {result.improvedSentence && (
                     <div>
                       <div className="text-sm font-medium text-foreground-muted mb-2">
                         {result.improvedSentence === sentence
-                          ? t('practice.results.alternativeExpression')
-                          : t('practice.results.suggestedImprovement')}
+                          ? t("practice.results.alternativeExpression")
+                          : t("practice.results.suggestedImprovement")}
                       </div>
                       <div
                         className="text-lg text-green-600 bg-green-500/5 p-3 rounded-lg border border-green-500/20"
@@ -539,11 +550,11 @@ export function PracticePage() {
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={handleTryAgain} className="flex-1 gap-2">
                     <RefreshCw className="w-4 h-4" />
-                    {t('practice.results.tryAgain')}
+                    {t("practice.results.tryAgain")}
                   </Button>
                   <Button onClick={handleNextWord} className="flex-1 gap-2">
                     <ChevronRight className="w-4 h-4" />
-                    {t('practice.results.nextWord')}
+                    {t("practice.results.nextWord")}
                   </Button>
                 </div>
               </div>
@@ -586,12 +597,18 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
 function DifficultyBadge({ level, explanation }: { level: string; explanation: string }) {
   const t = useT();
   const config: Record<string, { color: string; labelKey: string }> = {
-    beginner: { color: "bg-green-500/10 text-green-600 border-green-500/20", labelKey: "practice.difficulty.beginner" },
+    beginner: {
+      color: "bg-green-500/10 text-green-600 border-green-500/20",
+      labelKey: "practice.difficulty.beginner",
+    },
     intermediate: {
       color: "bg-amber-500/10 text-amber-600 border-amber-500/20",
       labelKey: "practice.difficulty.intermediate",
     },
-    advanced: { color: "bg-purple-500/10 text-purple-600 border-purple-500/20", labelKey: "practice.difficulty.advanced" },
+    advanced: {
+      color: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+      labelKey: "practice.difficulty.advanced",
+    },
   };
 
   const { color, labelKey } = config[level.toLowerCase()] || config.beginner;

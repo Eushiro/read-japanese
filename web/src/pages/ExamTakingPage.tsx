@@ -1,10 +1,12 @@
-import { useNavigate,useParams } from "@tanstack/react-router";
-import { useAction,useMutation, useQuery } from "convex/react";
-import { ChevronLeft, ChevronRight, Clock, Flag,Loader2 } from "lucide-react";
-import { useEffect,useState } from "react";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import { useMutation, useQuery } from "convex/react";
+
+import { useAIAction } from "@/hooks/useAIAction";
+import { ChevronLeft, ChevronRight, Clock, Flag, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useT } from "@/lib/i18n";
+import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -14,6 +16,7 @@ export function ExamTakingPage() {
   const { templateId } = useParams({ from: "/exams/$templateId" });
   const navigate = useNavigate();
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -38,7 +41,7 @@ export function ExamTakingPage() {
   const submitAnswer = useMutation(api.examAttempts.submitAnswer);
   const updatePosition = useMutation(api.examAttempts.updatePosition);
   const completeExam = useMutation(api.examAttempts.complete);
-  const gradeAnswer = useAction(api.ai.gradeExamAnswer);
+  const gradeAnswer = useAIAction(api.ai.gradeExamAnswer);
 
   // Get current attempt (existing or create new)
   const [attemptId, setAttemptId] = useState<Id<"examAttempts"> | null>(null);
@@ -151,6 +154,7 @@ export function ExamTakingPage() {
           const idx = attempt.questionsWithDetails.indexOf(q);
 
           try {
+            // Pass UI language for localized feedback
             const result = await gradeAnswer({
               questionText: q.questionData.questionText,
               questionType: q.questionData.questionType,
@@ -162,6 +166,7 @@ export function ExamTakingPage() {
               language: template?.language || "japanese",
               examType: template?.examType || "",
               maxPoints: q.questionData.points,
+              feedbackLanguage: uiLanguage,
             });
 
             // Update with AI grading
@@ -229,7 +234,10 @@ export function ExamTakingPage() {
             <div>
               <h1 className="font-semibold">{template.title}</h1>
               <p className="text-sm text-foreground-muted">
-                {t("examTaking.questionProgress", { current: currentQuestionIndex + 1, total: totalQuestions })}
+                {t("examTaking.questionProgress", {
+                  current: currentQuestionIndex + 1,
+                  total: totalQuestions,
+                })}
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -270,7 +278,9 @@ export function ExamTakingPage() {
               {/* Passage if present */}
               {currentQuestion.questionData.passageText && (
                 <div className="mb-6 p-4 bg-muted/30 rounded-lg">
-                  <p className="text-sm text-foreground-muted mb-2">{t("examTaking.readPassage")}</p>
+                  <p className="text-sm text-foreground-muted mb-2">
+                    {t("examTaking.readPassage")}
+                  </p>
                   <p className="whitespace-pre-wrap">{currentQuestion.questionData.passageText}</p>
                 </div>
               )}

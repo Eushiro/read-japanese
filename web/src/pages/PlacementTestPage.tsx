@@ -1,7 +1,9 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { useAction,useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Brain, ChevronRight, Loader2, RotateCcw,Target, Trophy } from "lucide-react";
-import { useEffect, useMemo,useRef, useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+
+import { useAIAction } from "@/hooks/useAIAction";
+import { ArrowLeft, Brain, ChevronRight, Loader2, RotateCcw, Target, Trophy } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { QuestionDisplay, QuestionNavigation } from "@/components/quiz";
 import { Badge } from "@/components/ui/badge";
@@ -119,8 +121,8 @@ export function PlacementTestPage() {
   const submitAnswer = useMutation(api.placementTest.submitAnswer);
   const completeTest = useMutation(api.placementTest.complete);
   const resetTest = useMutation(api.placementTest.reset);
-  const generateQuestion = useAction(api.ai.generatePlacementQuestion);
-  const getNextDifficulty = useAction(api.ai.getNextQuestionDifficulty);
+  const generateQuestion = useAIAction(api.ai.generatePlacementQuestion);
+  const getNextDifficulty = useAIAction(api.ai.getNextQuestionDifficulty);
 
   // Admin check
   const isAdmin = user?.email === "hiro.ayettey@gmail.com";
@@ -417,7 +419,8 @@ export function PlacementTestPage() {
             </div>
 
             <h2 className="text-2xl font-bold mb-2">
-              {languageFlags[language]} {t("placement:results.yourLevel", { language: languageName })}
+              {languageFlags[language]}{" "}
+              {t("placement:results.yourLevel", { language: languageName })}
             </h2>
 
             <div className="text-5xl font-bold text-accent my-6">{currentTest.determinedLevel}</div>
@@ -502,14 +505,14 @@ export function PlacementTestPage() {
                 <Brain className="w-8 h-8 text-accent" />
               </div>
               <h2 className="text-2xl font-bold mb-2">{t("placement:start.adaptiveTest")}</h2>
-              <p className="text-foreground-muted">
-                {t("placement:start.description")}
-              </p>
+              <p className="text-foreground-muted">{t("placement:start.description")}</p>
             </div>
 
             {/* How it works explanation */}
             <div className="bg-muted/50 rounded-xl p-4 mb-6 text-sm">
-              <h4 className="font-medium text-foreground mb-2">{t("placement:start.howItWorks")}</h4>
+              <h4 className="font-medium text-foreground mb-2">
+                {t("placement:start.howItWorks")}
+              </h4>
               <ul className="space-y-1.5 text-foreground-muted">
                 <li
                   dangerouslySetInnerHTML={{
@@ -533,7 +536,9 @@ export function PlacementTestPage() {
                 </div>
                 <div>
                   <div className="font-medium">{t("placement:start.skillsTitle")}</div>
-                  <div className="text-foreground-muted">{t("placement:start.skillsDescription")}</div>
+                  <div className="text-foreground-muted">
+                    {t("placement:start.skillsDescription")}
+                  </div>
                 </div>
               </div>
               <div className="flex items-start gap-3 text-sm">
@@ -575,12 +580,16 @@ export function PlacementTestPage() {
             <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/settings" })}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <h1 className="text-xl font-bold">{languageFlags[language]} {t("placement:question.title")}</h1>
+            <h1 className="text-xl font-bold">
+              {languageFlags[language]} {t("placement:question.title")}
+            </h1>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline">
               {t("placement:question.questionNumber", { number: (viewingIndex ?? 0) + 1 })}
-              {isViewingPastQuestion ? ` ${t("placement:question.ofTotal", { total: currentQuestionIndex + 1 })}` : ""}
+              {isViewingPastQuestion
+                ? ` ${t("placement:question.ofTotal", { total: currentQuestionIndex + 1 })}`
+                : ""}
             </Badge>
             {isAdmin && (
               <Button variant="destructive" size="sm" onClick={handleResetTest}>
@@ -594,7 +603,9 @@ export function PlacementTestPage() {
         {currentTest && (
           <div className="mb-6">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-foreground-muted">{t("placement:question.questionNumber", { number: currentQuestionIndex + 1 })}</span>
+              <span className="text-foreground-muted">
+                {t("placement:question.questionNumber", { number: currentQuestionIndex + 1 })}
+              </span>
               <span className="text-foreground">
                 {maxConfidence >= 70
                   ? t("placement:question.almostThere")
@@ -612,7 +623,10 @@ export function PlacementTestPage() {
             <div className="flex justify-between text-xs text-foreground-muted mt-1">
               <span>
                 {currentTest.questionsAnswered > 0
-                  ? t("placement:question.correctCount", { correct: currentTest.correctAnswers, total: currentTest.questionsAnswered })
+                  ? t("placement:question.correctCount", {
+                      correct: currentTest.correctAnswers,
+                      total: currentTest.questionsAnswered,
+                    })
                   : ""}
               </span>
               <span>{t("placement:question.confident", { percent: maxConfidence })}</span>
@@ -698,7 +712,11 @@ export function PlacementTestPage() {
               onFinish={!isViewingPastQuestion && showFeedback ? handleNextQuestion : undefined}
               isSubmitting={isSubmitting}
               canSubmit={selectedAnswer !== null}
-              nextLabel={viewingIndex === currentQuestionIndex - 1 ? t("placement:question.returnToCurrent") : t("placement:question.next")}
+              nextLabel={
+                viewingIndex === currentQuestionIndex - 1
+                  ? t("placement:question.returnToCurrent")
+                  : t("placement:question.next")
+              }
               finishLabel={t("placement:question.nextQuestion")}
               variant="stacked"
             />
@@ -707,7 +725,9 @@ export function PlacementTestPage() {
           <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
             <div className="flex flex-col items-center justify-center py-8 gap-3">
               <Loader2 className="w-6 h-6 animate-spin text-accent" />
-              <span className="text-foreground-muted">{t("placement:question.loadingQuestion")}</span>
+              <span className="text-foreground-muted">
+                {t("placement:question.loadingQuestion")}
+              </span>
             </div>
           </div>
         )}

@@ -6,6 +6,7 @@ import { YoutubeTranscript } from "youtube-transcript";
 import { internal } from "./_generated/api";
 import { type Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
+import { compressToWebp } from "./lib/imageCompression";
 import { uploadAudio, uploadImage } from "./lib/storage";
 
 // ============================================
@@ -15,54 +16,12 @@ import { uploadAudio, uploadImage } from "./lib/storage";
 const GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
 
-/**
- * Convert raw PCM audio data to WAV format
- * PCM specs: 24kHz sample rate, 16-bit, mono
- */
-function pcmToWav(pcmData: Uint8Array): Uint8Array {
-  const sampleRate = 24000;
-  const numChannels = 1;
-  const bitsPerSample = 16;
-  const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
-  const blockAlign = numChannels * (bitsPerSample / 8);
-  const dataSize = pcmData.length;
-  const headerSize = 44;
-  const fileSize = headerSize + dataSize;
-
-  const wav = new Uint8Array(fileSize);
-  const view = new DataView(wav.buffer);
-
-  // RIFF header
-  wav.set([0x52, 0x49, 0x46, 0x46], 0); // "RIFF"
-  view.setUint32(4, fileSize - 8, true); // File size - 8
-  wav.set([0x57, 0x41, 0x56, 0x45], 8); // "WAVE"
-
-  // fmt subchunk
-  wav.set([0x66, 0x6d, 0x74, 0x20], 12); // "fmt "
-  view.setUint32(16, 16, true); // Subchunk1 size (16 for PCM)
-  view.setUint16(20, 1, true); // Audio format (1 = PCM)
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, byteRate, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, bitsPerSample, true);
-
-  // data subchunk
-  wav.set([0x64, 0x61, 0x74, 0x61], 36); // "data"
-  view.setUint32(40, dataSize, true);
-
-  // PCM data
-  wav.set(pcmData, headerSize);
-
-  return wav;
-}
-
 // Consistent voice for all languages
 const TTS_VOICE = "Aoede";
 
 /**
  * Generate audio for a sentence using Gemini 2.5 Flash TTS
- * Returns PCM audio data (24kHz, 16-bit mono)
+ * Returns MP3 audio data
  */
 async function generateTTSAudio(
   text: string,
@@ -122,6 +81,9 @@ async function generateTTSAudio(
                   voiceName: voice,
                 },
               },
+              audioConfig: {
+                audioEncoding: "MP3",
+              },
             },
           },
         }),
@@ -143,19 +105,16 @@ async function generateTTSAudio(
       return null;
     }
 
-    // Decode base64 PCM audio (24kHz, 16-bit mono)
+    // Decode base64 MP3 audio
     const binaryString = atob(audioData.data);
-    const pcmBytes = new Uint8Array(binaryString.length);
+    const audioBytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
-      pcmBytes[i] = binaryString.charCodeAt(i);
+      audioBytes[i] = binaryString.charCodeAt(i);
     }
 
-    // Convert PCM to WAV for browser playback
-    const wavBytes = pcmToWav(pcmBytes);
-
     return {
-      audioData: wavBytes,
-      mimeType: "audio/wav",
+      audioData: audioBytes,
+      mimeType: "audio/mpeg",
     };
   } catch (error) {
     console.error("TTS generation failed:", error);
@@ -232,6 +191,9 @@ The image should:
     const result = await response.json();
     console.log("Image generation response:", JSON.stringify(result, null, 2));
 
+    // Extract raw image bytes from response
+    let rawImageBytes: Uint8Array | null = null;
+
     // Check for images array in the response (OpenRouter format)
     const images = result.choices?.[0]?.message?.images;
     if (images && images.length > 0) {
@@ -239,42 +201,47 @@ The image should:
       if (imageUrl && imageUrl.startsWith("data:image/")) {
         const base64Match = imageUrl.match(/data:image\/(\w+);base64,(.+)/);
         if (base64Match) {
-          const mimeType = `image/${base64Match[1]}`;
           const base64Data = base64Match[2];
           const binaryString = atob(base64Data);
-          const bytes = new Uint8Array(binaryString.length);
+          rawImageBytes = new Uint8Array(binaryString.length);
           for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
+            rawImageBytes[i] = binaryString.charCodeAt(i);
           }
-          return {
-            imageData: bytes,
-            mimeType,
-          };
         }
       }
     }
 
     // Fallback: Check content for base64 data URL
-    const content = result.choices?.[0]?.message?.content;
-    if (content && typeof content === "string") {
-      const base64Match = content.match(/data:image\/(\w+);base64,([A-Za-z0-9+/=]+)/);
-      if (base64Match) {
-        const mimeType = `image/${base64Match[1]}`;
-        const base64Data = base64Match[2];
-        const binaryString = atob(base64Data);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
+    if (!rawImageBytes) {
+      const content = result.choices?.[0]?.message?.content;
+      if (content && typeof content === "string") {
+        const base64Match = content.match(/data:image\/(\w+);base64,([A-Za-z0-9+/=]+)/);
+        if (base64Match) {
+          const base64Data = base64Match[2];
+          const binaryString = atob(base64Data);
+          rawImageBytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            rawImageBytes[i] = binaryString.charCodeAt(i);
+          }
         }
-        return {
-          imageData: bytes,
-          mimeType,
-        };
       }
     }
 
-    console.error("No image data found in response");
-    return null;
+    if (!rawImageBytes) {
+      console.error("No image data found in response");
+      return null;
+    }
+
+    // Compress to WebP for ~70% storage savings
+    const compressedBytes = await compressToWebp(rawImageBytes);
+    console.log(
+      `Image compressed: ${rawImageBytes.length} bytes -> ${compressedBytes.length} bytes (${Math.round((1 - compressedBytes.length / rawImageBytes.length) * 100)}% savings)`
+    );
+
+    return {
+      imageData: compressedBytes,
+      mimeType: "image/webp",
+    };
   } catch (error) {
     console.error("Image generation failed:", error);
     return null;
@@ -617,6 +584,22 @@ export const generateFlashcard = action({
       throw new Error("Vocabulary item not found");
     }
 
+    // Require authentication - verify user owns this vocabulary
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+    if (vocab.userId !== identity.subject) {
+      throw new Error("Unauthorized: You don't own this vocabulary item");
+    }
+
+    // Spend credits before generation
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: vocab.userId,
+      action: "sentence",
+      metadata: { word: vocab.word, vocabularyId: args.vocabularyId },
+    });
+
     // Generate the sentence using the helper function
     const generated = await generateSentenceHelper({
       word: vocab.word,
@@ -729,18 +712,44 @@ export const verifySentence = action({
     targetWord: v.string(),
     wordDefinitions: v.array(v.string()),
     language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    feedbackLanguage: v.union(v.literal("en"), v.literal("ja"), v.literal("fr"), v.literal("zh")),
   },
   handler: async (ctx, args): Promise<VerificationResult> => {
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
+    // Spend credits before verification
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: identity.subject,
+      action: "feedback",
+      metadata: { targetWord: args.targetWord, sentence: args.sentence.substring(0, 50) },
+    });
+
     const languageNames: Record<string, string> = {
       japanese: "Japanese",
       english: "English",
       french: "French",
     };
 
+    // UI language names for feedback
+    const uiLanguageNames: Record<string, string> = {
+      en: "English",
+      ja: "日本語",
+      fr: "français",
+      zh: "中文",
+    };
+
     const languageName = languageNames[args.language];
+    const feedbackLang = args.feedbackLanguage;
+    const feedbackLanguageName = uiLanguageNames[feedbackLang];
     const definitionList = args.wordDefinitions.join(", ");
 
     const systemPrompt = `You are a ${languageName} language teacher evaluating a student's sentence. Be encouraging but accurate in your feedback.
+
+IMPORTANT: Provide ALL feedback, explanations, and the "improvedSentence" in ${feedbackLanguageName}. Do NOT respond in English unless the feedback language is English.
 
 Respond ONLY with valid JSON in this exact format:
 {
@@ -893,6 +902,22 @@ export const generateFlashcardAudio = action({
     if (!vocab) {
       throw new Error("Vocabulary not found");
     }
+
+    // Require authentication - verify user owns this flashcard
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+    if (flashcard.userId !== identity.subject) {
+      throw new Error("Unauthorized: You don't own this flashcard");
+    }
+
+    // Spend credits before generation (2 credits for audio)
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: flashcard.userId,
+      action: "audio",
+      metadata: { word: vocab.word, flashcardId: args.flashcardId },
+    });
 
     // Generate audio using Gemini TTS
     const audioResult = await generateTTSAudio(flashcard.sentenceData.sentence, vocab.language);
@@ -1085,104 +1110,104 @@ export const enhancePremadeVocabulary = action({
     }
 
     let sentence = existingSentence?.sentence;
-      let sentenceTranslation = existingSentence?.translations?.en;
+    let sentenceTranslation = existingSentence?.translations?.en;
 
-      // Generate sentence if missing and requested (default: true if missing)
-      const shouldGenerateSentence =
-        args.generateSentence === true || (args.generateSentence !== false && !hasSentence);
-      if (shouldGenerateSentence) {
-        const sentenceResult = await generateSentenceHelper({
-          word: vocab.word,
-          reading: vocab.reading ?? undefined,
-          definitions: vocab.definitions,
-          language: vocab.language,
-          examLevel: vocab.level ?? undefined,
-        });
+    // Generate sentence if missing and requested (default: true if missing)
+    const shouldGenerateSentence =
+      args.generateSentence === true || (args.generateSentence !== false && !hasSentence);
+    if (shouldGenerateSentence) {
+      const sentenceResult = await generateSentenceHelper({
+        word: vocab.word,
+        reading: vocab.reading ?? undefined,
+        definitions: vocab.definitions,
+        language: vocab.language,
+        examLevel: vocab.level ?? undefined,
+      });
 
-        sentence = sentenceResult.sentence;
-        sentenceTranslation = sentenceResult.translation;
+      sentence = sentenceResult.sentence;
+      sentenceTranslation = sentenceResult.translation;
 
-        await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
-          premadeVocabularyId: args.premadeVocabularyId,
-          sentence,
-          sentenceTranslation,
-        });
+      await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+        premadeVocabularyId: args.premadeVocabularyId,
+        sentence,
+        sentenceTranslation,
+      });
 
-        generated.push("sentence");
-      }
+      generated.push("sentence");
+    }
 
-      // Generate audio if explicitly requested (true) or if not explicitly disabled
-      const shouldGenerateAudio = args.generateAudio === true || args.generateAudio !== false;
-      // For sentence audio: regenerate if explicitly requested OR if missing
-      const shouldRegenerateSentenceAudio = args.generateAudio === true || !hasSentenceAudio;
+    // Generate audio if explicitly requested (true) or if not explicitly disabled
+    const shouldGenerateAudio = args.generateAudio === true || args.generateAudio !== false;
+    // For sentence audio: regenerate if explicitly requested OR if missing
+    const shouldRegenerateSentenceAudio = args.generateAudio === true || !hasSentenceAudio;
 
-      // Generate sentence audio if we have a sentence
-      if (shouldGenerateAudio && sentence && shouldRegenerateSentenceAudio) {
-        try {
-          const audioResult = await generateTTSAudio(sentence, vocab.language);
-          if (audioResult) {
-            // Upload audio to storage (R2)
-            const audioUrl = await uploadAudio(
-              new Uint8Array(audioResult.audioData),
-              audioResult.mimeType
-            );
+    // Generate sentence audio if we have a sentence
+    if (shouldGenerateAudio && sentence && shouldRegenerateSentenceAudio) {
+      try {
+        const audioResult = await generateTTSAudio(sentence, vocab.language);
+        if (audioResult) {
+          // Upload audio to storage (R2)
+          const audioUrl = await uploadAudio(
+            new Uint8Array(audioResult.audioData),
+            audioResult.mimeType
+          );
 
-            await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
-              premadeVocabularyId: args.premadeVocabularyId,
-              audioUrl,
-            });
-            generated.push("sentenceAudio");
-          }
-        } catch (error) {
-          console.error("Sentence audio generation failed:", error);
+          await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+            premadeVocabularyId: args.premadeVocabularyId,
+            audioUrl,
+          });
+          generated.push("sentenceAudio");
         }
+      } catch (error) {
+        console.error("Sentence audio generation failed:", error);
       }
+    }
 
-      // Generate word audio if missing
-      if (shouldGenerateAudio && !hasWordAudio) {
-        try {
-          const wordAudioResult = await generateTTSAudio(vocab.word, vocab.language);
-          if (wordAudioResult) {
-            // Upload word audio to storage (R2)
-            const wordAudioUrl = await uploadAudio(
-              new Uint8Array(wordAudioResult.audioData),
-              wordAudioResult.mimeType
-            );
+    // Generate word audio if missing
+    if (shouldGenerateAudio && !hasWordAudio) {
+      try {
+        const wordAudioResult = await generateTTSAudio(vocab.word, vocab.language);
+        if (wordAudioResult) {
+          // Upload word audio to storage (R2)
+          const wordAudioUrl = await uploadAudio(
+            new Uint8Array(wordAudioResult.audioData),
+            wordAudioResult.mimeType
+          );
 
-            await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
-              premadeVocabularyId: args.premadeVocabularyId,
-              wordAudioUrl,
-            });
-            generated.push("wordAudio");
-          }
-        } catch (error) {
-          console.error("Word audio generation failed:", error);
+          await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+            premadeVocabularyId: args.premadeVocabularyId,
+            wordAudioUrl,
+          });
+          generated.push("wordAudio");
         }
+      } catch (error) {
+        console.error("Word audio generation failed:", error);
       }
+    }
 
-      // Generate image if missing and requested
-      if (args.generateImage && sentence && !hasImage) {
-        try {
-          const imageResult = await generateFlashcardImage(vocab.word, sentence, vocab.language);
-          if (imageResult) {
-            // Upload image to storage (R2)
-            const imageUrl = await uploadImage(
-              new Uint8Array(imageResult.imageData),
-              imageResult.mimeType
-            );
+    // Generate image if missing and requested
+    if (args.generateImage && sentence && !hasImage) {
+      try {
+        const imageResult = await generateFlashcardImage(vocab.word, sentence, vocab.language);
+        if (imageResult) {
+          // Upload image to storage (R2)
+          const imageUrl = await uploadImage(
+            new Uint8Array(imageResult.imageData),
+            imageResult.mimeType
+          );
 
-            await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
-              premadeVocabularyId: args.premadeVocabularyId,
-              imageUrl,
-            });
-            generated.push("image");
-          }
-        } catch (error) {
-          console.error("Image generation failed:", error);
+          await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+            premadeVocabularyId: args.premadeVocabularyId,
+            imageUrl,
+          });
+          generated.push("image");
         }
+      } catch (error) {
+        console.error("Image generation failed:", error);
       }
+    }
 
-      return { success: true, generated };
+    return { success: true, generated };
   },
 });
 
@@ -1482,6 +1507,19 @@ export const gradeComprehensionAnswer = action({
     isCorrect: boolean;
     possibleAnswer: string;
   }> => {
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
+    // Spend credits before grading (1 credit for comprehension)
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: identity.subject,
+      action: "comprehension",
+      metadata: { comprehensionId: args.comprehensionId, questionIndex: args.questionIndex },
+    });
+
     const languageName = languageNames[args.language];
     const levelInfo = args.userLevel ? ` The student is at ${args.userLevel} level.` : "";
 
@@ -1997,6 +2035,15 @@ export const refreshFlashcardSentence = action({
       throw new Error("Flashcard not found");
     }
 
+    // Require authentication - verify user owns this flashcard
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+    if (flashcard.userId !== identity.subject) {
+      throw new Error("Unauthorized: You don't own this flashcard");
+    }
+
     // Get vocabulary for language info and word details
     const vocab = await ctx.runQuery(internal.aiHelpers.getVocabulary, {
       vocabularyId: flashcard.vocabularyId,
@@ -2005,6 +2052,13 @@ export const refreshFlashcardSentence = action({
     if (!vocab) {
       throw new Error("Vocabulary not found");
     }
+
+    // Spend credits before generation (1 credit for sentence)
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: flashcard.userId,
+      action: "sentence",
+      metadata: { word: vocab.word, flashcardId: args.flashcardId, refresh: true },
+    });
 
     // Generate a new sentence using the helper function
     const generated = await generateSentenceHelper({
@@ -2253,8 +2307,22 @@ export const evaluateShadowing = action({
     targetText: v.string(),
     targetLanguage: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     userAudioBase64: v.string(), // Base64 encoded audio (webm or wav)
+    feedbackLanguage: v.union(v.literal("en"), v.literal("ja"), v.literal("fr"), v.literal("zh")),
   },
   handler: async (ctx, args): Promise<ShadowingFeedback> => {
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
+    // Spend credits before evaluation (3 credits for shadowing)
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: identity.subject,
+      action: "shadowing",
+      metadata: { targetText: args.targetText.substring(0, 50) },
+    });
+
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       throw new Error("OPENROUTER_API_KEY environment variable is not set");
@@ -2262,8 +2330,20 @@ export const evaluateShadowing = action({
 
     const languageName = languageNames[args.targetLanguage];
 
+    // UI language names for feedback
+    const uiLanguageNames: Record<string, string> = {
+      en: "English",
+      ja: "日本語",
+      fr: "français",
+      zh: "中文",
+    };
+    const feedbackLang = args.feedbackLanguage;
+    const feedbackLanguageName = uiLanguageNames[feedbackLang];
+
     // System prompt for the audio model
     const systemPrompt = `You are an experienced ${languageName} pronunciation coach providing detailed, constructive feedback. The student is serious about improving and needs honest, specific guidance.
+
+IMPORTANT: Provide ALL feedback and explanations in ${feedbackLanguageName}. Do NOT respond in English unless the feedback language is English.
 
 The student is trying to repeat: "${args.targetText}"
 
@@ -2296,12 +2376,11 @@ Common issues to listen for:
             },
             feedbackText: {
               type: "string",
-              description:
-                "Detailed feedback in English: what was good, what needs work, and specific tips to improve. Be thorough, 2-4 sentences.",
+              description: `Detailed feedback in ${feedbackLanguageName}: what was good, what needs work, and specific tips to improve. Be thorough, 2-4 sentences.`,
             },
             spokenFeedback: {
               type: "string",
-              description: `Encouraging but specific feedback in ${languageName}, 2-3 sentences. Mention one thing done well and one thing to focus on.`,
+              description: `Encouraging but specific feedback in ${feedbackLanguageName}, 2-3 sentences. Mention one thing done well and one thing to focus on.`,
             },
           },
           required: ["accuracyScore", "feedbackText", "spokenFeedback"],
@@ -2438,8 +2517,25 @@ export const gradeExamAnswer = action({
     language: v.string(), // "japanese" | "english" | "french"
     examType: v.string(), // "jlpt_n5" | "toefl" | etc.
     maxPoints: v.number(),
+    feedbackLanguage: v.union(v.literal("en"), v.literal("ja"), v.literal("fr"), v.literal("zh")),
   },
   handler: async (ctx, args): Promise<ExamGradingResult> => {
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // UI language names for feedback
+    const uiLanguageNames: Record<string, string> = {
+      en: "English",
+      ja: "日本語",
+      fr: "français",
+      zh: "中文",
+    };
+    const feedbackLang = args.feedbackLanguage;
+    const feedbackLanguageName = uiLanguageNames[feedbackLang];
+
     // For multiple choice, just do simple comparison
     if (args.questionType === "multiple_choice") {
       const isCorrect = args.userAnswer === args.correctAnswer;
@@ -2505,6 +2601,8 @@ export const gradeExamAnswer = action({
 
     const systemPrompt = `You are a ${languageName} language exam grader for ${args.examType.replace("_", " ").toUpperCase()}.
 
+IMPORTANT: Provide ALL feedback, explanations, strengths, improvements, and grammar errors in ${feedbackLanguageName}. Do NOT respond in English unless the feedback language is English.
+
 Grade the student's answer to this ${args.questionType.replace("_", " ")} question.
 ${gradingContext}
 
@@ -2512,11 +2610,11 @@ Respond ONLY with valid JSON in this exact format:
 {
   "score": number (0-100),
   "isCorrect": boolean (true if score >= 70),
-  "feedback": "Brief overall feedback for the student",
+  "feedback": "Brief overall feedback for the student in ${feedbackLanguageName}",
   "detailedFeedback": {
-    "strengths": ["What the student did well"],
-    "improvements": ["Areas to improve"],
-    "grammarErrors": ["Specific grammar mistakes if any"]
+    "strengths": ["What the student did well - in ${feedbackLanguageName}"],
+    "improvements": ["Areas to improve - in ${feedbackLanguageName}"],
+    "grammarErrors": ["Specific grammar mistakes if any - in ${feedbackLanguageName}"]
   },
   "suggestedAnswer": "A model answer in ${languageName}"
 }
@@ -2557,6 +2655,13 @@ Grade this answer.`;
         additionalProperties: false,
       },
     };
+
+    // Spend credits before AI grading (1 credit for exam answer grading)
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: identity.subject,
+      action: "comprehension", // Reuse comprehension credit type for exam grading
+      metadata: { examType: args.examType, questionType: args.questionType },
+    });
 
     try {
       return await callWithRetry<ExamGradingResult>({
@@ -2613,11 +2718,26 @@ export const gradeExamAnswersBatch = action({
     examType: v.string(),
   },
   handler: async (ctx, args): Promise<Array<{ questionIndex: number } & ExamGradingResult>> => {
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
     const results: Array<{ questionIndex: number } & ExamGradingResult> = [];
 
     // Grade each answer
     for (const answer of args.answers) {
       try {
+        // Spend credits for AI grading (skip for multiple choice which doesn't use AI)
+        if (answer.questionType !== "multiple_choice") {
+          await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+            userId: identity.subject,
+            action: "comprehension",
+            metadata: { examType: args.examType, questionType: answer.questionType, batch: true },
+          });
+        }
+
         const result = await ctx.runAction(internal.ai.gradeExamAnswerInternal, {
           questionText: answer.questionText,
           questionType: answer.questionType,
