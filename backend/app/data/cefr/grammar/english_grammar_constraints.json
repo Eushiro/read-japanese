@@ -1,0 +1,148 @@
+{
+  "A1": {
+    "allowed": [
+      {"pattern": "simple present", "description": "I work, She works, They play"},
+      {"pattern": "present continuous", "description": "I am working, She is eating"},
+      {"pattern": "simple past (regular)", "description": "I worked, She played"},
+      {"pattern": "simple past (common irregulars)", "description": "went, had, was/were, did, saw, ate"},
+      {"pattern": "basic articles", "description": "a, an, the"},
+      {"pattern": "personal pronouns", "description": "I, you, he, she, it, we, they"},
+      {"pattern": "possessive adjectives", "description": "my, your, his, her, its, our, their"},
+      {"pattern": "basic prepositions", "description": "in, on, at, to, from, with"},
+      {"pattern": "there is/are", "description": "There is a cat. There are two dogs."},
+      {"pattern": "can/can't", "description": "ability and permission: I can swim"},
+      {"pattern": "like + noun/verb-ing", "description": "I like coffee. I like swimming."},
+      {"pattern": "want + noun/to-infinitive", "description": "I want coffee. I want to go."},
+      {"pattern": "have/has got", "description": "I have got a car. She has got a dog."},
+      {"pattern": "basic questions", "description": "What, Where, When, Who, How + auxiliary"},
+      {"pattern": "imperatives", "description": "Sit down. Please open the door."},
+      {"pattern": "basic conjunctions", "description": "and, but, or, because"},
+      {"pattern": "this/that/these/those", "description": "demonstratives"},
+      {"pattern": "some/any", "description": "some water, any questions"}
+    ],
+    "forbidden": [
+      {"pattern": "present perfect", "description": "have/has + past participle", "example": "I have finished"},
+      {"pattern": "past continuous", "description": "was/were + verb-ing", "example": "I was working"},
+      {"pattern": "future perfect", "description": "will have + past participle", "example": "I will have finished"},
+      {"pattern": "past perfect", "description": "had + past participle", "example": "I had finished"},
+      {"pattern": "passive voice", "description": "be + past participle", "example": "The book was written"},
+      {"pattern": "conditionals (1st/2nd/3rd)", "description": "if clauses with would/could", "example": "If I had money, I would buy it"},
+      {"pattern": "reported speech", "description": "indirect speech", "example": "She said that she was tired"},
+      {"pattern": "relative clauses", "description": "who/which/that clauses", "example": "The man who lives here"},
+      {"pattern": "modal perfects", "description": "could have, should have, might have", "example": "I should have called"},
+      {"pattern": "phrasal verbs (complex)", "description": "multi-word verbs with idiomatic meaning", "example": "put up with, look forward to"},
+      {"pattern": "used to", "description": "past habits", "example": "I used to play tennis"},
+      {"pattern": "would for past habits", "description": "habitual past", "example": "We would always go there"}
+    ]
+  },
+  "A2": {
+    "allowed": [
+      {"pattern": "All A1 patterns", "description": "plus the following:"},
+      {"pattern": "past continuous", "description": "I was working when you called"},
+      {"pattern": "future with will", "description": "I will help you tomorrow"},
+      {"pattern": "future with going to", "description": "I am going to visit Paris"},
+      {"pattern": "comparatives", "description": "bigger, more expensive, better"},
+      {"pattern": "superlatives", "description": "the biggest, the most expensive, the best"},
+      {"pattern": "adverbs of frequency", "description": "always, usually, often, sometimes, never"},
+      {"pattern": "have to/don't have to", "description": "obligation: I have to work"},
+      {"pattern": "should/shouldn't", "description": "advice: You should rest"},
+      {"pattern": "could for past ability", "description": "I could swim when I was young"},
+      {"pattern": "might/may for possibility", "description": "It might rain"},
+      {"pattern": "simple relative clauses", "description": "The man who called you", "note": "short, defining clauses only"},
+      {"pattern": "basic phrasal verbs", "description": "get up, turn on, look for"},
+      {"pattern": "too/enough", "description": "too hot, big enough"},
+      {"pattern": "so/such", "description": "so tired, such a nice day"}
+    ],
+    "forbidden": [
+      {"pattern": "present perfect continuous", "description": "have been + verb-ing", "example": "I have been waiting"},
+      {"pattern": "past perfect", "description": "had + past participle", "example": "I had already left"},
+      {"pattern": "future perfect", "description": "will have + past participle", "example": "I will have finished by then"},
+      {"pattern": "passive voice (all forms)", "description": "be + past participle", "example": "The cake was eaten"},
+      {"pattern": "conditionals (2nd/3rd)", "description": "unreal conditionals", "example": "If I were rich, I would travel"},
+      {"pattern": "reported speech (complex)", "description": "tense shifts in indirect speech", "example": "He said he had been there"},
+      {"pattern": "wish + past", "description": "wishes about present/past", "example": "I wish I had more time"},
+      {"pattern": "causative have/get", "description": "have something done", "example": "I had my hair cut"},
+      {"pattern": "inversion", "description": "inverted word order", "example": "Rarely do I see such things"},
+      {"pattern": "subjunctive", "description": "formal subjunctive mood", "example": "I suggest that he leave"}
+    ]
+  },
+  "B1": {
+    "allowed": [
+      {"pattern": "All A2 patterns", "description": "plus the following:"},
+      {"pattern": "present perfect", "description": "I have visited Paris. She has never seen snow."},
+      {"pattern": "present perfect continuous", "description": "I have been waiting for an hour"},
+      {"pattern": "first conditional", "description": "If it rains, I will stay home"},
+      {"pattern": "passive voice (present/past)", "description": "The letter was sent. The food is cooked."},
+      {"pattern": "used to", "description": "I used to live in London"},
+      {"pattern": "reported speech (basic)", "description": "She said she was tired"},
+      {"pattern": "defining relative clauses", "description": "The book that I bought is interesting"},
+      {"pattern": "purpose clauses", "description": "to + infinitive, in order to, so that"},
+      {"pattern": "gerunds as subjects/objects", "description": "Swimming is fun. I enjoy reading."},
+      {"pattern": "infinitive vs gerund", "description": "want to go, enjoy going, stop to do vs stop doing"},
+      {"pattern": "common phrasal verbs", "description": "give up, put off, look after, carry on"}
+    ],
+    "forbidden": [
+      {"pattern": "past perfect", "description": "had + past participle in complex narratives", "example": "By the time I arrived, she had left"},
+      {"pattern": "second conditional", "description": "If I were you, I would...", "example": "If I had money, I would buy a car"},
+      {"pattern": "third conditional", "description": "If I had known...", "example": "If I had studied, I would have passed"},
+      {"pattern": "mixed conditionals", "description": "mixing time frames", "example": "If I had studied, I would be rich now"},
+      {"pattern": "non-defining relative clauses", "description": "extra information clauses", "example": "My brother, who lives in Paris, is visiting"},
+      {"pattern": "wish + past perfect", "description": "regrets about past", "example": "I wish I had studied harder"},
+      {"pattern": "causative structures", "description": "have/get something done", "example": "I had my car repaired"},
+      {"pattern": "advanced modal forms", "description": "must have, can't have", "example": "He must have forgotten"},
+      {"pattern": "cleft sentences", "description": "It was John who...", "example": "It was the rain that ruined the picnic"},
+      {"pattern": "inversion for emphasis", "description": "inverted structures", "example": "Never have I seen such a thing"}
+    ]
+  },
+  "B2": {
+    "allowed": [
+      {"pattern": "All B1 patterns", "description": "plus the following:"},
+      {"pattern": "past perfect", "description": "I had already eaten when she arrived"},
+      {"pattern": "past perfect continuous", "description": "I had been working for hours"},
+      {"pattern": "second conditional", "description": "If I had more time, I would travel"},
+      {"pattern": "third conditional", "description": "If I had known, I would have called"},
+      {"pattern": "passive voice (all tenses)", "description": "will be done, has been made, was being built"},
+      {"pattern": "reported speech (full)", "description": "all tense changes and structures"},
+      {"pattern": "non-defining relative clauses", "description": "My sister, who is a doctor, lives in Paris"},
+      {"pattern": "wish + past/past perfect", "description": "I wish I knew. I wish I had known."},
+      {"pattern": "causative have/get", "description": "I had my hair cut. I got my car fixed."},
+      {"pattern": "modal perfects", "description": "must have, could have, should have, might have"},
+      {"pattern": "reduced relative clauses", "description": "The man standing there is my boss"},
+      {"pattern": "participle clauses", "description": "Having finished work, I went home"},
+      {"pattern": "advanced connectors", "description": "nevertheless, furthermore, in spite of, despite"}
+    ],
+    "forbidden": [
+      {"pattern": "mixed conditionals (complex)", "description": "unusual time mixing", "example": "If I hadn't missed the train, I would be there now"},
+      {"pattern": "subjunctive mood", "description": "formal subjunctive", "example": "I insist that he be present"},
+      {"pattern": "inversion for emphasis", "description": "literary/formal inversion", "example": "Seldom do we see such dedication"},
+      {"pattern": "cleft sentences (advanced)", "description": "complex focus structures", "example": "What I need is a vacation"},
+      {"pattern": "advanced idioms", "description": "highly idiomatic expressions", "example": "to be over the moon"},
+      {"pattern": "archaic/literary forms", "description": "formal/literary language", "example": "Hitherto, one might have assumed..."}
+    ]
+  },
+  "C1": {
+    "allowed": [
+      {"pattern": "All B2 patterns", "description": "plus the following:"},
+      {"pattern": "mixed conditionals", "description": "all combinations of time frames"},
+      {"pattern": "subjunctive mood", "description": "I suggest that he be careful"},
+      {"pattern": "inversion for emphasis", "description": "Never have I seen such beauty"},
+      {"pattern": "cleft sentences", "description": "It was John who told me. What I need is rest."},
+      {"pattern": "ellipsis", "description": "omitting words for style: He can swim, but I can't."},
+      {"pattern": "advanced idiomatic expressions", "description": "over the moon, under the weather"},
+      {"pattern": "nominalization", "description": "turning verbs to nouns for formal style"},
+      {"pattern": "hedging language", "description": "It would appear that..., One might argue..."},
+      {"pattern": "discourse markers (advanced)", "description": "be that as it may, having said that"}
+    ],
+    "forbidden": [
+      {"pattern": "archaic language", "description": "obsolete forms", "example": "wherefore, hitherto, erstwhile"},
+      {"pattern": "highly specialized jargon", "description": "technical terminology without context"},
+      {"pattern": "regional dialects", "description": "non-standard dialectal forms"}
+    ]
+  },
+  "C2": {
+    "allowed": [
+      {"pattern": "All grammar patterns", "description": "No restrictions at C2 level - native-like command of all structures"}
+    ],
+    "forbidden": []
+  }
+}

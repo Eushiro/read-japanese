@@ -1,38 +1,66 @@
 """
 Story generation service using OpenRouter.
-Generates Japanese graded reader stories with appropriate vocabulary and grammar for JLPT levels.
+Generates graded reader stories with appropriate vocabulary and grammar for JLPT/CEFR levels.
+Supports Japanese, English, and French.
 """
 import json
 import logging
 import random
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 from ..openrouter_client import get_openrouter_client
 from ...config.models import ModelConfig
 
 logger = logging.getLogger(__name__)
 
-# JLPT data directories
-JLPT_DIR = Path(__file__).parent.parent.parent / "data" / "jlpt"
+# Data directories
+DATA_DIR = Path(__file__).parent.parent.parent / "data"
+JLPT_DIR = DATA_DIR / "jlpt"
+CEFR_DIR = DATA_DIR / "cefr"
 GRAMMAR_DIR = JLPT_DIR / "grammar"
+
+# Language type
+Language = Literal["japanese", "english", "french"]
+
+# Level mapping for each language
+LEVEL_SYSTEMS = {
+    "japanese": ["N5", "N4", "N3", "N2", "N1"],
+    "english": ["A1", "A2", "B1", "B2", "C1", "C2"],
+    "french": ["A1", "A2", "B1", "B2", "C1", "C2"],
+}
 
 
 class StoryGenerator:
-    """Generates Japanese stories using OpenRouter (Gemini 3 Flash)"""
+    """Generates graded reader stories using OpenRouter (Gemini 3 Flash)"""
 
     def __init__(self):
         self.client = get_openrouter_client()
         self.model = ModelConfig.TEXT_MODEL
-        self._grammar_cache = None  # Cache grammar constraints
+        self._grammar_cache: dict[str, dict] = {}  # Cache grammar constraints by language
 
-    def _load_jlpt_vocabulary_examples(self, target_level: str, sample_size: int = 20) -> list[str]:
+    def _load_vocabulary_examples(
+        self,
+        language: Language,
+        target_level: str,
+        sample_size: int = 20
+    ) -> list[str]:
         """
-        Load a small sample of JLPT vocabulary to illustrate the target difficulty level.
+        Load a small sample of vocabulary to illustrate the target difficulty level.
         These are examples only, not a prescriptive list.
+
+        Args:
+            language: Target language (japanese, english, french)
+            target_level: JLPT level (N5-N1) for Japanese or CEFR (A1-C2) for others
+            sample_size: Number of example words to return
         """
-        level_file = JLPT_DIR / f"{target_level.lower()}.txt"
+        if language == "japanese":
+            level_file = JLPT_DIR / f"{target_level.lower()}.txt"
+        else:
+            level_file = CEFR_DIR / language / f"{target_level.lower()}.txt"
+
         if not level_file.exists():
+            logger.warning(f"Vocabulary file not found: {level_file}")
             return []
 
         with open(level_file, "r", encoding="utf-8") as f:
@@ -41,28 +69,58 @@ class StoryGenerator:
         # Return a small random sample as examples
         return random.sample(words, min(sample_size, len(words)))
 
-    def _load_grammar_constraints(self, target_level: str) -> dict:
+    # Backwards compatibility alias
+    def _load_jlpt_vocabulary_examples(self, target_level: str, sample_size: int = 20) -> list[str]:
+        """Deprecated: Use _load_vocabulary_examples instead"""
+        return self._load_vocabulary_examples("japanese", target_level, sample_size)
+
+    def _get_grammar_file_path(self, language: Language) -> Path:
+        """Get the path to grammar constraints file for a language."""
+        if language == "japanese":
+            return JLPT_DIR / "grammar" / "grammar_constraints.json"
+        else:
+            return CEFR_DIR / "grammar" / f"{language}_grammar_constraints.json"
+
+    def _load_grammar_constraints(
+        self,
+        target_level: str,
+        language: Language = "japanese"
+    ) -> dict:
         """
-        Load grammar constraints for the target JLPT level.
+        Load grammar constraints for the target level and language.
+
+        Args:
+            target_level: JLPT level (N5-N1) or CEFR level (A1-C2)
+            language: Target language (japanese, english, french)
 
         Returns:
             Dict with 'allowed' and 'forbidden' grammar patterns
         """
-        if self._grammar_cache is None:
-            grammar_file = GRAMMAR_DIR / "grammar_constraints.json"
-            if grammar_file.exists():
-                try:
-                    with open(grammar_file, "r", encoding="utf-8") as f:
-                        self._grammar_cache = json.load(f)
-                    logger.info(f"Loaded grammar constraints from {grammar_file}")
-                except Exception as e:
-                    logger.warning(f"Failed to load grammar constraints: {e}")
-                    self._grammar_cache = {}
-            else:
-                logger.warning(f"Grammar constraints file not found: {grammar_file}")
-                self._grammar_cache = {}
+        cache_key = f"{language}_{target_level.upper()}"
 
-        return self._grammar_cache.get(target_level.upper(), {"allowed": [], "forbidden": []})
+        # Check if already cached
+        if cache_key in self._grammar_cache:
+            return self._grammar_cache[cache_key]
+
+        # Load grammar file for this language
+        grammar_file = self._get_grammar_file_path(language)
+        if grammar_file.exists():
+            try:
+                with open(grammar_file, "r", encoding="utf-8") as f:
+                    all_constraints = json.load(f)
+                logger.info(f"Loaded {language} grammar constraints from {grammar_file}")
+
+                # Cache the specific level
+                level_constraints = all_constraints.get(target_level.upper(), {"allowed": [], "forbidden": []})
+                self._grammar_cache[cache_key] = level_constraints
+                return level_constraints
+
+            except Exception as e:
+                logger.warning(f"Failed to load grammar constraints for {language}: {e}")
+                return {"allowed": [], "forbidden": []}
+        else:
+            logger.warning(f"Grammar constraints file not found: {grammar_file}")
+            return {"allowed": [], "forbidden": []}
 
     def _format_grammar_constraints(self, constraints: dict) -> str:
         """
@@ -101,7 +159,8 @@ class StoryGenerator:
         self,
         story: dict,
         problematic_words: List[str],
-        jlpt_level: str
+        level: str,
+        language: Language = "japanese"
     ) -> dict:
         """
         Rewrite specific sentences containing problematic vocabulary.
@@ -110,7 +169,8 @@ class StoryGenerator:
         Args:
             story: The story dict with chapters and segments
             problematic_words: List of words to replace
-            jlpt_level: Target JLPT level
+            level: Target level (JLPT N5-N1 or CEFR A1-C2)
+            language: Target language
 
         Returns:
             Story with simplified sentences
@@ -118,7 +178,7 @@ class StoryGenerator:
         if not problematic_words:
             return story
 
-        logger.info(f"Simplifying sentences with {len(problematic_words)} problematic words...")
+        logger.info(f"Simplifying {language} sentences with {len(problematic_words)} problematic words...")
 
         # Find segments containing problematic words
         segments_to_fix = []
@@ -138,10 +198,12 @@ class StoryGenerator:
         logger.info(f"Found {len(segments_to_fix)} segments to simplify")
 
         # Load grammar constraints for context
-        grammar_constraints = self._load_grammar_constraints(jlpt_level)
+        grammar_constraints = self._load_grammar_constraints(level, language)
         grammar_section = self._format_grammar_constraints(grammar_constraints)
 
-        prompt = f"""Rewrite these Japanese sentences for {jlpt_level} learners.
+        language_name = {"japanese": "Japanese", "english": "English", "french": "French"}[language]
+
+        prompt = f"""Rewrite these {language_name} sentences for {level} learners.
 
 PROBLEMATIC WORDS TO REPLACE: {', '.join(problematic_words[:20])}
 
@@ -152,9 +214,9 @@ SENTENCES TO REWRITE:
 {json.dumps(segments_to_fix, ensure_ascii=False, indent=2)}
 
 For each sentence:
-1. Replace the problematic words with simpler {jlpt_level}-appropriate alternatives
+1. Replace the problematic words with simpler {level}-appropriate alternatives
 2. Keep the meaning and plot the same
-3. Maintain natural Japanese flow
+3. Maintain natural {language_name} flow
 4. Follow the grammar constraints above
 
 Output as JSON:
@@ -182,34 +244,38 @@ Output as JSON:
 
     async def generate_story(
         self,
-        jlpt_level: str,
+        level: str,
         genre: str,
         theme: Optional[str] = None,
+        detailed_prompt: Optional[str] = None,
         num_chapters: int = 5,
-        words_per_chapter: int = 100
+        words_per_chapter: int = 100,
+        language: Language = "japanese"
     ) -> dict:
         """
         Generate a complete story with chapters.
 
         Args:
-            jlpt_level: Target JLPT level (N5, N4, N3, N2, N1)
+            level: Target level (JLPT N5-N1 for Japanese, CEFR A1-C2 for English/French)
             genre: Story genre (e.g., "slice of life", "mystery", "adventure")
             theme: Optional theme or topic for the story
+            detailed_prompt: Optional detailed prompt (overrides theme if provided)
             num_chapters: Number of chapters to generate
             words_per_chapter: Approximate words per chapter
+            language: Target language (japanese, english, french)
 
         Returns:
             Complete story dict with metadata, chapters, and segments
         """
-        logger.info(f"Generating {jlpt_level} story: {genre}, theme={theme}")
+        logger.info(f"Generating {language} {level} story: {genre}, theme={theme}")
 
         # Load example vocabulary to illustrate the target level
-        vocab_examples = self._load_jlpt_vocabulary_examples(jlpt_level)
+        vocab_examples = self._load_vocabulary_examples(language, level)
 
         # Build the prompt
-        system_prompt = self._get_system_prompt(jlpt_level, vocab_examples)
+        system_prompt = self._get_system_prompt(level, vocab_examples, language)
         user_prompt = self._build_story_prompt(
-            jlpt_level, genre, theme, num_chapters, words_per_chapter
+            level, genre, theme, detailed_prompt, num_chapters, words_per_chapter, language
         )
 
         try:
@@ -218,7 +284,7 @@ Output as JSON:
                 system_prompt=system_prompt,
                 temperature=0.8
             )
-            return self._format_story(story_json, jlpt_level, genre)
+            return self._format_story(story_json, level, genre, language)
 
         except Exception as e:
             logger.error(f"Story generation failed: {e}")
@@ -228,12 +294,13 @@ Output as JSON:
         self,
         failed_story: dict,
         validation_result: dict,
-        jlpt_level: str,
+        level: str,
         genre: str,
         theme: Optional[str] = None,
         num_chapters: int = 5,
         words_per_chapter: int = 100,
-        attempt: int = 1
+        attempt: int = 1,
+        language: Language = "japanese"
     ) -> dict:
         """
         Regenerate a story with feedback from vocabulary validation.
@@ -241,20 +308,21 @@ Output as JSON:
         Args:
             failed_story: The story that failed validation
             validation_result: The validation result with feedback
-            jlpt_level: Target JLPT level
+            level: Target level (JLPT or CEFR)
             genre: Story genre
             theme: Optional theme
             num_chapters: Number of chapters
             words_per_chapter: Words per chapter
             attempt: Current attempt number (for logging)
+            language: Target language
 
         Returns:
             Regenerated story dict
         """
-        logger.info(f"Regenerating story (attempt {attempt}) with vocabulary feedback...")
+        logger.info(f"Regenerating {language} story (attempt {attempt}) with vocabulary feedback...")
 
         # Load example vocabulary to illustrate the target level
-        vocab_examples = self._load_jlpt_vocabulary_examples(jlpt_level)
+        vocab_examples = self._load_vocabulary_examples(language, level)
 
         # Build feedback prompt
         feedback_parts = []
@@ -263,8 +331,8 @@ Output as JSON:
             target_count = validation_result.get("targetLevelCount", 0)
             min_threshold = validation_result.get("minTargetThreshold", 0)
             feedback_parts.append(
-                f"- The story needs MORE {jlpt_level} vocabulary. "
-                f"Found only {target_count} unique {jlpt_level} words (need at least {min_threshold})."
+                f"- The story needs MORE {level} vocabulary. "
+                f"Found only {target_count} unique {level} words (need at least {min_threshold})."
             )
 
         if not validation_result.get("notTooHard", True):
@@ -272,7 +340,7 @@ Output as JSON:
             max_threshold = validation_result.get("maxAboveThreshold", 0)
             above_words = validation_result.get("aboveLevelWords", [])[:15]
             feedback_parts.append(
-                f"- The story uses TOO MANY advanced words ({above_count} above {jlpt_level}, max {max_threshold}).\n"
+                f"- The story uses TOO MANY advanced words ({above_count} above {level}, max {max_threshold}).\n"
                 f"  Avoid or simplify these words: {', '.join(above_words)}"
             )
 
@@ -284,12 +352,13 @@ Output as JSON:
                 f"  Avoid these uncommon words: {', '.join(unknown_words)}"
             )
 
-        feedback_prompt = "\n".join(feedback_parts) if feedback_parts else "Please use more standard JLPT vocabulary."
+        level_system = "JLPT" if language == "japanese" else "CEFR"
+        feedback_prompt = "\n".join(feedback_parts) if feedback_parts else f"Please use more standard {level_system} vocabulary."
 
         # Build system prompt with vocabulary examples
-        system_prompt = self._get_system_prompt(jlpt_level, vocab_examples)
+        system_prompt = self._get_system_prompt(level, vocab_examples, language)
         user_prompt = self._build_regeneration_prompt(
-            jlpt_level, genre, theme, num_chapters, words_per_chapter, feedback_prompt
+            level, genre, theme, num_chapters, words_per_chapter, feedback_prompt, language
         )
 
         try:
@@ -298,7 +367,7 @@ Output as JSON:
                 system_prompt=system_prompt,
                 temperature=0.7  # Slightly lower for more focused output
             )
-            result = self._format_story(story_json, jlpt_level, genre)
+            result = self._format_story(story_json, level, genre, language)
             result["metadata"]["regenerationAttempt"] = attempt
             return result
 
@@ -308,38 +377,43 @@ Output as JSON:
 
     def _build_regeneration_prompt(
         self,
-        jlpt_level: str,
+        level: str,
         genre: str,
         theme: Optional[str],
         num_chapters: int,
         words_per_chapter: int,
-        feedback: str
+        feedback: str,
+        language: Language = "japanese"
     ) -> str:
         """Build prompt for regeneration with vocabulary feedback and grammar reminders"""
         theme_text = f" about {theme}" if theme else ""
 
         # Include grammar constraints in regeneration prompt
-        grammar_constraints = self._load_grammar_constraints(jlpt_level)
+        grammar_constraints = self._load_grammar_constraints(level, language)
         grammar_section = self._format_grammar_constraints(grammar_constraints)
+
+        language_name = {"japanese": "Japanese", "english": "English", "french": "French"}[language]
+        level_system = "JLPT" if language == "japanese" else "CEFR"
+        char_or_word = "characters" if language == "japanese" else "words"
 
         return f"""The previous story had vocabulary issues that need to be fixed:
 
 {feedback}
 
-Please create a NEW {genre} story{theme_text} for Japanese learners at JLPT {jlpt_level} level.
+Please create a NEW {genre} story{theme_text} for {language_name} learners at {level_system} {level} level.
 
 IMPORTANT VOCABULARY REQUIREMENTS:
-- Use MOSTLY words from the {jlpt_level} level vocabulary list provided above
-- Avoid complex or literary vocabulary not commonly used in everyday Japanese
+- Use MOSTLY words from the {level} level vocabulary list provided above
+- Avoid complex or literary vocabulary not commonly used in everyday {language_name}
 - Prefer simple, common expressions over sophisticated alternatives
 - If you must use an advanced word, consider if a simpler synonym exists
 
-GRAMMAR REMINDERS FOR {jlpt_level}:
+GRAMMAR REMINDERS FOR {level}:
 {grammar_section}
 
 Requirements:
 - {num_chapters} chapters
-- Approximately {words_per_chapter} Japanese characters per chapter
+- Approximately {words_per_chapter} {char_or_word} per chapter
 - Engaging plot with character development
 - Natural dialogue between characters
 - Cultural authenticity
@@ -347,9 +421,16 @@ Requirements:
 
 Generate the complete story now as a JSON object."""
 
-    def _get_system_prompt(self, jlpt_level: str, vocabulary: list[str] = None) -> str:
-        """Get system prompt with JLPT level guidelines, vocabulary, and grammar constraints"""
-        level_guidelines = {
+    def _get_system_prompt(
+        self,
+        level: str,
+        vocabulary: list[str] = None,
+        language: Language = "japanese"
+    ) -> str:
+        """Get system prompt with level guidelines, vocabulary, and grammar constraints"""
+
+        # Language-specific level guidelines
+        jlpt_guidelines = {
             "N5": """
 - Use only basic vocabulary (~800 words)
 - Simple sentence structures (です/ます form)
@@ -392,7 +473,64 @@ Generate the complete story now as a JSON object."""
 """
         }
 
-        guidelines = level_guidelines.get(jlpt_level.upper(), level_guidelines["N5"])
+        cefr_guidelines = {
+            "A1": """
+- Very basic vocabulary (~500 words)
+- Simple present and past tense
+- Basic sentence structures (subject-verb-object)
+- Common everyday phrases
+- Short, simple sentences
+- Familiar topics (family, shopping, daily routines)
+""",
+            "A2": """
+- Elementary vocabulary (~1,000 words)
+- Past continuous, future tense
+- Comparatives and superlatives
+- Basic connectors (and, but, because)
+- Simple compound sentences
+- Familiar situations (travel, work, hobbies)
+""",
+            "B1": """
+- Intermediate vocabulary (~2,000 words)
+- Present perfect, first conditional
+- Basic passive voice
+- Common phrasal verbs
+- Connected discourse
+- Abstract and cultural topics
+""",
+            "B2": """
+- Upper-intermediate vocabulary (~4,000 words)
+- All tenses including perfect forms
+- Second and third conditionals
+- Complex sentences and clauses
+- Nuanced expressions
+- Professional and academic topics
+""",
+            "C1": """
+- Advanced vocabulary (~8,000 words)
+- All grammar structures
+- Idiomatic expressions
+- Subtle nuances and implications
+- Formal and informal registers
+- Complex abstract concepts
+""",
+            "C2": """
+- Full vocabulary range (~16,000+ words)
+- Native-level complexity
+- Literary expressions
+- Stylistic devices
+- Any topic or register
+- Full command of grammar
+"""
+        }
+
+        language_name = {"japanese": "Japanese", "english": "English", "french": "French"}[language]
+        level_system = "JLPT" if language == "japanese" else "CEFR"
+
+        if language == "japanese":
+            guidelines = jlpt_guidelines.get(level.upper(), jlpt_guidelines["N5"])
+        else:
+            guidelines = cefr_guidelines.get(level.upper(), cefr_guidelines["A1"])
 
         # Build vocabulary guidance section
         vocab_section = ""
@@ -400,30 +538,47 @@ Generate the complete story now as a JSON object."""
             vocab_list = ", ".join(vocabulary[:20])
             vocab_section = f"""
 VOCABULARY DIFFICULTY GUIDANCE:
-Here are some example {jlpt_level} words to illustrate the target difficulty level:
+Here are some example {level} words to illustrate the target difficulty level:
 {vocab_list}
 
-These examples show the complexity of vocabulary appropriate for {jlpt_level}. You are NOT limited to these specific words - use any vocabulary at this difficulty level. The goal is to write at {jlpt_level} difficulty, using words that {jlpt_level} learners would know or be learning.
+These examples show the complexity of vocabulary appropriate for {level}. You are NOT limited to these specific words - use any vocabulary at this difficulty level. The goal is to write at {level} difficulty, using words that {level} learners would know or be learning.
 """
 
         # Build grammar constraints section
-        grammar_constraints = self._load_grammar_constraints(jlpt_level)
+        grammar_constraints = self._load_grammar_constraints(level, language)
         grammar_section = self._format_grammar_constraints(grammar_constraints)
 
-        return f"""You are a Japanese language educator creating graded reader stories.
-Your task is to write engaging stories appropriate for {jlpt_level} learners.
+        # Language-specific title field names
+        if language == "japanese":
+            native_title_field = '"titleJapanese": "日本語タイトル"'
+            native_summary_field = '"summaryJapanese": "日本語の要約"'
+            chapter_native_title = '"titleJapanese": "章のタイトル"'
+            write_only_rule = "Write ONLY in Japanese (no English translations in the story text)"
+        elif language == "french":
+            native_title_field = '"titleFrench": "Titre en français"'
+            native_summary_field = '"summaryFrench": "Résumé en français"'
+            chapter_native_title = '"titleFrench": "Titre du chapitre"'
+            write_only_rule = "Write ONLY in French (no English translations in the story text)"
+        else:  # english
+            native_title_field = '"titleEnglish": "English title"'
+            native_summary_field = '"summaryEnglish": "English summary"'
+            chapter_native_title = '"titleEnglish": "Chapter title"'
+            write_only_rule = "Write the story in English"
 
-JLPT {jlpt_level} Guidelines:
+        return f"""You are a {language_name} language educator creating graded reader stories.
+Your task is to write engaging stories appropriate for {level_system} {level} learners.
+
+{level_system} {level} Guidelines:
 {guidelines}
 {vocab_section}
-GRAMMAR CONSTRAINTS FOR {jlpt_level}:
+GRAMMAR CONSTRAINTS FOR {level}:
 {grammar_section}
 
 CRITICAL: You MUST follow the grammar constraints above. Using forbidden grammar patterns will make the story too difficult for learners at this level.
 
 IMPORTANT RULES:
-1. Write ONLY in Japanese (no English translations in the story text)
-2. Use natural, conversational Japanese appropriate for the level
+1. {write_only_rule}
+2. Use natural, conversational {language_name} appropriate for the level
 3. STRICTLY avoid forbidden grammar patterns listed above
 4. Include dialogue when appropriate
 5. Create relatable characters and situations
@@ -434,18 +589,18 @@ IMPORTANT RULES:
 Your response must be a JSON object with this exact structure:
 {{
   "title": "English title",
-  "titleJapanese": "日本語タイトル",
+  {native_title_field},
   "summary": "English summary (2-3 sentences)",
-  "summaryJapanese": "日本語の要約",
+  {native_summary_field},
   "chapters": [
     {{
       "title": "Chapter title in English",
-      "titleJapanese": "章のタイトル",
+      {chapter_native_title},
       "content": [
         {{
           "type": "narration|dialogue|thought",
           "speaker": "Character name (for dialogue only)",
-          "text": "Japanese text content"
+          "text": "{language_name} text content"
         }}
       ]
     }}
@@ -454,32 +609,69 @@ Your response must be a JSON object with this exact structure:
 
     def _build_story_prompt(
         self,
-        jlpt_level: str,
+        level: str,
         genre: str,
         theme: Optional[str],
+        detailed_prompt: Optional[str],
         num_chapters: int,
-        words_per_chapter: int
+        words_per_chapter: int,
+        language: Language = "japanese"
     ) -> str:
         """Build the user prompt for story generation"""
-        theme_text = f" about {theme}" if theme else ""
+        language_name = {"japanese": "Japanese", "english": "English", "french": "French"}[language]
+        level_system = "JLPT" if language == "japanese" else "CEFR"
+        char_or_word = "characters" if language == "japanese" else "words"
 
-        return f"""Create a {genre} story{theme_text} for Japanese learners at JLPT {jlpt_level} level.
+        # Use detailed prompt if provided, otherwise use theme
+        if detailed_prompt:
+            story_description = f"""Create a story based on this detailed description:
+
+{detailed_prompt}
+
+Target audience: {language_name} learners at {level_system} {level} level.
+Genre: {genre}"""
+        else:
+            theme_text = f" about {theme}" if theme else ""
+            story_description = f"Create a {genre} story{theme_text} for {language_name} learners at {level_system} {level} level."
+
+        return f"""{story_description}
 
 Requirements:
 - {num_chapters} chapters
-- Approximately {words_per_chapter} Japanese characters per chapter
+- Approximately {words_per_chapter} {char_or_word} per chapter
 - Engaging plot with character development
 - Natural dialogue between characters
 - Cultural authenticity
 
 Generate the complete story now as a JSON object."""
 
-    def _format_story(self, raw_story: dict, jlpt_level: str, genre: str) -> dict:
+    def _format_story(
+        self,
+        raw_story: dict,
+        level: str,
+        genre: str,
+        language: Language = "japanese"
+    ) -> dict:
         """Format the generated story into the app's expected structure"""
         import uuid
         from datetime import datetime
 
-        story_id = f"{jlpt_level.lower()}_{raw_story.get('title', 'story').lower().replace(' ', '_')}_{uuid.uuid4().hex[:6]}"
+        # Create story ID with language prefix
+        lang_prefix = {"japanese": "jp", "english": "en", "french": "fr"}[language]
+        story_id = f"{lang_prefix}_{level.lower()}_{raw_story.get('title', 'story').lower().replace(' ', '_')}_{uuid.uuid4().hex[:6]}"
+
+        # Get native title field based on language
+        native_title_key = {
+            "japanese": "titleJapanese",
+            "english": "titleEnglish",
+            "french": "titleFrench"
+        }[language]
+
+        native_summary_key = {
+            "japanese": "summaryJapanese",
+            "english": "summaryEnglish",
+            "french": "summaryFrench"
+        }[language]
 
         chapters = []
         for i, chapter in enumerate(raw_story.get("chapters", [])):
@@ -494,68 +686,100 @@ Generate the complete story now as a JSON object."""
                     segment["speaker"] = content["speaker"]
                 segments.append(segment)
 
-            chapters.append({
+            chapter_data = {
                 "id": f"{story_id}_ch{i+1}",
                 "number": i + 1,
                 "title": chapter.get("title", f"Chapter {i+1}"),
-                "titleJapanese": chapter.get("titleJapanese"),
                 "content": segments
-            })
+            }
+            # Add native title if present
+            if chapter.get(native_title_key):
+                chapter_data[native_title_key] = chapter[native_title_key]
+            # Backwards compatibility for Japanese
+            if language == "japanese" and chapter.get("titleJapanese"):
+                chapter_data["titleJapanese"] = chapter["titleJapanese"]
 
-        # Calculate word count (Japanese characters)
+            chapters.append(chapter_data)
+
+        # Calculate word count
         total_chars = sum(
             len(seg.get("text", ""))
             for ch in chapters
             for seg in ch.get("content", [])
         )
 
+        # Build metadata
+        metadata = {
+            "title": raw_story.get("title", "Untitled"),
+            "language": language,
+            "level": level.upper(),
+            "wordCount": total_chars,
+            "genre": genre,
+            "summary": raw_story.get("summary", ""),
+            "createdDate": datetime.utcnow().isoformat() + "Z",
+            "generationModel": self.model,
+            "coverImageURL": None,
+            "audioURL": None
+        }
+
+        # Add native title/summary
+        if raw_story.get(native_title_key):
+            metadata[native_title_key] = raw_story[native_title_key]
+        if raw_story.get(native_summary_key):
+            metadata[native_summary_key] = raw_story[native_summary_key]
+
+        # Backwards compatibility: keep jlptLevel for Japanese
+        if language == "japanese":
+            metadata["jlptLevel"] = level.upper()
+            if raw_story.get("titleJapanese"):
+                metadata["titleJapanese"] = raw_story["titleJapanese"]
+            if raw_story.get("summaryJapanese"):
+                metadata["summaryJapanese"] = raw_story["summaryJapanese"]
+
         return {
             "id": story_id,
-            "metadata": {
-                "title": raw_story.get("title", "Untitled"),
-                "titleJapanese": raw_story.get("titleJapanese"),
-                "jlptLevel": jlpt_level.upper(),
-                "wordCount": total_chars,
-                "genre": genre,
-                "summary": raw_story.get("summary", ""),
-                "summaryJapanese": raw_story.get("summaryJapanese"),
-                "createdDate": datetime.utcnow().isoformat() + "Z",
-                "generationModel": self.model,
-                "coverImageURL": None,
-                "audioURL": None
-            },
+            "metadata": metadata,
             "chapters": chapters
         }
 
     async def refine_user_prompt(
         self,
         user_prompt: str,
-        jlpt_level: str,
-        genre: Optional[str] = None
+        level: str,
+        genre: Optional[str] = None,
+        language: Language = "japanese"
     ) -> dict:
         """
         Refine and expand a user's story prompt into detailed story parameters.
 
         Args:
             user_prompt: The user's raw story idea/prompt
-            jlpt_level: Target JLPT level
+            level: Target level (JLPT or CEFR)
             genre: Optional genre hint
+            language: Target language
 
         Returns:
             Dict with refined theme, suggested genre, and story parameters
         """
-        logger.info(f"Refining user prompt for {jlpt_level}...")
+        language_name = {"japanese": "Japanese", "english": "English", "french": "French"}[language]
+        level_system = "JLPT" if language == "japanese" else "CEFR"
 
-        system_prompt = "You analyze story ideas and refine them for Japanese language learners. Always output valid JSON."
+        logger.info(f"Refining user prompt for {language} {level}...")
 
-        prompt = f"""Analyze and refine this story idea for a Japanese graded reader at {jlpt_level} level.
+        system_prompt = f"You analyze story ideas and refine them for {language_name} language learners. Always output valid JSON."
+
+        # Determine beginner levels for this language
+        beginner_levels = ["N5", "N4"] if language == "japanese" else ["A1", "A2"]
+        words_per_chapter = 150 if level.upper() in beginner_levels else 200
+
+        prompt = f"""Analyze and refine this story idea for a {language_name} graded reader at {level_system} {level} level.
 
 User's idea: "{user_prompt}"
 {f"Suggested genre: {genre}" if genre else ""}
 
 Consider:
-1. Is the topic appropriate for {jlpt_level} vocabulary and grammar?
-2. Can this be written with mostly {jlpt_level}-level Japanese?
+1. Is the topic appropriate for {level} vocabulary and grammar?
+2. Can this be written with mostly {level}-level {language_name}?
 3. Is the setting/scenario relatable for language learners?
 
 Output a JSON object with:
@@ -563,11 +787,11 @@ Output a JSON object with:
   "refined_theme": "A more detailed, specific story theme based on the user's idea",
   "genre": "Best genre for this story (slice of life, mystery, adventure, romance, comedy, fantasy, school life, workplace, travel, food, sports, family, friendship)",
   "suggested_title": "A suggested English title",
-  "suggested_title_japanese": "日本語のタイトル",
+  "suggested_title_native": "Title in {language_name}",
   "setting": "Suggested setting for the story",
   "main_character": "Brief description of the main character",
   "num_chapters": 5,
-  "words_per_chapter": {150 if jlpt_level.upper() in ["N5", "N4"] else 200},
+  "words_per_chapter": {words_per_chapter},
   "vocabulary_focus": ["list", "of", "3-5", "vocabulary", "themes"],
   "level_appropriate": true,
   "adjustments_made": "Brief note on any adjustments made to fit the level"
@@ -589,7 +813,7 @@ Output a JSON object with:
                 "refined_theme": user_prompt,
                 "genre": genre or "slice of life",
                 "num_chapters": 5,
-                "words_per_chapter": 150 if jlpt_level.upper() in ["N5", "N4"] else 200,
+                "words_per_chapter": words_per_chapter,
                 "level_appropriate": True,
                 "adjustments_made": "Using original prompt"
             }
@@ -597,25 +821,29 @@ Output a JSON object with:
     async def generate_from_user_prompt(
         self,
         user_prompt: str,
-        jlpt_level: str,
+        level: str,
         genre: Optional[str] = None,
-        refine_prompt: bool = True
+        refine_prompt: bool = True,
+        language: Language = "japanese"
     ) -> dict:
         """
         Generate a story from a user's prompt, optionally refining it first.
 
         Args:
             user_prompt: The user's story idea
-            jlpt_level: Target JLPT level
+            level: Target level (JLPT or CEFR)
             genre: Optional genre preference
             refine_prompt: Whether to refine the prompt first
+            language: Target language
 
         Returns:
             Generated story dict
         """
+        beginner_levels = ["N5", "N4"] if language == "japanese" else ["A1", "A2"]
+
         if refine_prompt:
             # Refine the user's prompt
-            refined = await self.refine_user_prompt(user_prompt, jlpt_level, genre)
+            refined = await self.refine_user_prompt(user_prompt, level, genre, language)
             theme = refined.get("refined_theme", user_prompt)
             story_genre = refined.get("genre", genre or "slice of life")
             num_chapters = refined.get("num_chapters", 5)
@@ -624,15 +852,16 @@ Output a JSON object with:
             theme = user_prompt
             story_genre = genre or "slice of life"
             num_chapters = 5
-            words_per_chapter = 150 if jlpt_level.upper() in ["N5", "N4"] else 200
+            words_per_chapter = 150 if level.upper() in beginner_levels else 200
 
         # Generate the story with the refined parameters
         story = await self.generate_story(
-            jlpt_level=jlpt_level,
+            level=level,
             genre=story_genre,
             theme=theme,
             num_chapters=num_chapters,
-            words_per_chapter=words_per_chapter
+            words_per_chapter=words_per_chapter,
+            language=language
         )
 
         # Add refinement info to metadata
@@ -641,14 +870,21 @@ Output a JSON object with:
 
         return story
 
-    async def generate_story_idea(self, jlpt_level: str) -> dict:
+    async def generate_story_idea(
+        self,
+        level: str,
+        language: Language = "japanese"
+    ) -> dict:
         """Generate a story idea/outline without full content"""
-        system_prompt = "You generate creative story ideas for Japanese learners. Always output valid JSON."
+        language_name = {"japanese": "Japanese", "english": "English", "french": "French"}[language]
+        level_system = "JLPT" if language == "japanese" else "CEFR"
 
-        prompt = f"""Generate 3 unique story ideas for JLPT {jlpt_level} learners.
+        system_prompt = f"You generate creative story ideas for {language_name} learners. Always output valid JSON."
+
+        prompt = f"""Generate 3 unique story ideas for {level_system} {level} learners studying {language_name}.
 Each idea should have:
 - title (English)
-- titleJapanese
+- titleNative (in {language_name})
 - genre
 - summary (2-3 sentences)
 - themes (list of 2-3 themes)

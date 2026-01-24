@@ -26,7 +26,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from app.routers import stories, health, tokenize, generate, dictionary, admin_batch
+from app.routers import stories, health, tokenize, generate, dictionary, admin_batch, admin_stories
 
 # Environment configuration
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
@@ -72,6 +72,7 @@ app.include_router(tokenize.router, prefix="/api", tags=["Tokenization"])
 app.include_router(generate.router, prefix="/api", tags=["Generation"])
 app.include_router(dictionary.router, prefix="/api", tags=["Dictionary"])
 app.include_router(admin_batch.router, tags=["Admin Batch"])
+app.include_router(admin_stories.router, tags=["Admin Stories"])
 
 # Mount static files for audio and images
 static_path = Path(__file__).parent / "static"

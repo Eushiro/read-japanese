@@ -1,0 +1,144 @@
+{
+  "A1": {
+    "allowed": [
+      {"pattern": "present tense (regular)", "description": "je parle, tu manges, il/elle finit"},
+      {"pattern": "present tense (common irregulars)", "description": "être, avoir, aller, faire, venir, pouvoir, vouloir"},
+      {"pattern": "immediate future", "description": "aller + infinitive: je vais manger"},
+      {"pattern": "passe compose (avoir)", "description": "j'ai mangé, tu as fini, il a parlé"},
+      {"pattern": "basic negation", "description": "ne...pas: Je ne comprends pas"},
+      {"pattern": "definite articles", "description": "le, la, les"},
+      {"pattern": "indefinite articles", "description": "un, une, des"},
+      {"pattern": "possessive adjectives", "description": "mon, ma, mes, ton, ta, tes, son, sa, ses"},
+      {"pattern": "demonstratives", "description": "ce, cette, ces, cet"},
+      {"pattern": "basic prepositions", "description": "à, de, dans, sur, avec, pour, chez"},
+      {"pattern": "c'est / ce sont", "description": "C'est un livre. Ce sont mes amis."},
+      {"pattern": "il y a", "description": "Il y a un chat."},
+      {"pattern": "basic questions", "description": "Qu'est-ce que, Où, Quand, Comment, Pourquoi, Qui"},
+      {"pattern": "basic adjective agreement", "description": "grand/grande, petit/petite"},
+      {"pattern": "numbers and time", "description": "counting, telling time"},
+      {"pattern": "basic conjunctions", "description": "et, ou, mais, parce que"}
+    ],
+    "forbidden": [
+      {"pattern": "imparfait", "description": "imperfect tense", "example": "je parlais, il mangeait"},
+      {"pattern": "plus-que-parfait", "description": "pluperfect", "example": "j'avais mangé"},
+      {"pattern": "futur simple", "description": "simple future", "example": "je parlerai"},
+      {"pattern": "conditionnel", "description": "conditional mood", "example": "je parlerais"},
+      {"pattern": "subjonctif", "description": "subjunctive mood", "example": "que je parle"},
+      {"pattern": "passive voice", "description": "être + past participle", "example": "Le livre est lu"},
+      {"pattern": "relative clauses", "description": "qui, que, dont, où", "example": "L'homme qui parle"},
+      {"pattern": "complex negation", "description": "ne...jamais, ne...rien, ne...personne", "example": "Je ne vois personne"},
+      {"pattern": "object pronouns", "description": "le, la, les, lui, leur", "example": "Je le vois"},
+      {"pattern": "reflexive verbs (complex)", "description": "beyond basic se lever, se coucher", "example": "se souvenir de"},
+      {"pattern": "passe compose (être)", "description": "verbs conjugated with être", "example": "je suis allé"}
+    ]
+  },
+  "A2": {
+    "allowed": [
+      {"pattern": "All A1 patterns", "description": "plus the following:"},
+      {"pattern": "passe compose (être)", "description": "je suis allé(e), elle est partie"},
+      {"pattern": "imparfait (basic)", "description": "descriptions and habits: Il faisait beau. Je mangeais souvent..."},
+      {"pattern": "futur proche vs passe recent", "description": "je vais faire / je viens de faire"},
+      {"pattern": "reflexive verbs (common)", "description": "se lever, se coucher, s'appeler, se laver"},
+      {"pattern": "direct object pronouns", "description": "le, la, les: Je le vois"},
+      {"pattern": "indirect object pronouns", "description": "lui, leur: Je lui parle"},
+      {"pattern": "simple negation variations", "description": "ne...plus, ne...jamais"},
+      {"pattern": "comparatives", "description": "plus...que, moins...que, aussi...que"},
+      {"pattern": "superlatives", "description": "le plus grand, la moins chère"},
+      {"pattern": "en + present participle", "description": "en mangeant, en parlant"},
+      {"pattern": "basic relative clauses", "description": "qui, que: L'homme qui parle. Le livre que j'ai lu."},
+      {"pattern": "depuis + present", "description": "J'habite ici depuis deux ans"},
+      {"pattern": "il faut + infinitive", "description": "Il faut partir"}
+    ],
+    "forbidden": [
+      {"pattern": "plus-que-parfait", "description": "pluperfect tense", "example": "J'avais déjà mangé quand..."},
+      {"pattern": "futur simple", "description": "simple future", "example": "Je partirai demain"},
+      {"pattern": "futur anterieur", "description": "future perfect", "example": "J'aurai fini"},
+      {"pattern": "conditionnel present", "description": "conditional", "example": "Je voudrais, j'aimerais"},
+      {"pattern": "conditionnel passe", "description": "past conditional", "example": "J'aurais aimé"},
+      {"pattern": "subjonctif", "description": "subjunctive mood", "example": "Il faut que je parte"},
+      {"pattern": "passive voice", "description": "être + past participle", "example": "Le gâteau a été mangé"},
+      {"pattern": "dont, où", "description": "complex relative pronouns", "example": "La personne dont je parle"},
+      {"pattern": "y and en pronouns", "description": "J'y vais. J'en veux.", "example": "complex usage"},
+      {"pattern": "double object pronouns", "description": "Je le lui donne", "example": "two pronouns together"},
+      {"pattern": "discours indirect", "description": "reported speech", "example": "Il a dit qu'il viendrait"}
+    ]
+  },
+  "B1": {
+    "allowed": [
+      {"pattern": "All A2 patterns", "description": "plus the following:"},
+      {"pattern": "futur simple", "description": "Je partirai demain. Il fera beau."},
+      {"pattern": "conditionnel present", "description": "Je voudrais un café. J'aimerais voyager."},
+      {"pattern": "imparfait vs passe compose", "description": "distinguishing completed vs ongoing past"},
+      {"pattern": "plus-que-parfait (basic)", "description": "J'avais déjà mangé quand il est arrivé"},
+      {"pattern": "subjonctif (common triggers)", "description": "il faut que, je veux que, bien que"},
+      {"pattern": "relative pronouns dont, où", "description": "La ville où j'habite. L'ami dont je parle."},
+      {"pattern": "y and en pronouns", "description": "J'y vais souvent. J'en veux trois."},
+      {"pattern": "passive voice (basic)", "description": "Le livre a été écrit par Victor Hugo"},
+      {"pattern": "discours indirect (basic)", "description": "Il a dit qu'il était fatigué"},
+      {"pattern": "cause and consequence", "description": "comme, puisque, donc, alors"},
+      {"pattern": "concession", "description": "bien que + subjonctif, même si"},
+      {"pattern": "faire + infinitive", "description": "Je fais réparer ma voiture"}
+    ],
+    "forbidden": [
+      {"pattern": "futur anterieur", "description": "future perfect", "example": "Quand j'aurai fini..."},
+      {"pattern": "conditionnel passe", "description": "past conditional", "example": "J'aurais pu, j'aurais dû"},
+      {"pattern": "subjonctif passe", "description": "past subjunctive", "example": "Je doute qu'il soit venu"},
+      {"pattern": "subjonctif (all triggers)", "description": "complex subjunctive usage", "example": "pour que, avant que, à moins que"},
+      {"pattern": "passe simple", "description": "literary past tense", "example": "Il parla, ils allèrent"},
+      {"pattern": "double object pronouns", "description": "combining multiple pronouns", "example": "Je le lui ai donné"},
+      {"pattern": "gérondif (complex)", "description": "tout en + present participle", "example": "Tout en travaillant..."},
+      {"pattern": "mise en relief", "description": "emphasis structures", "example": "C'est lui qui l'a fait"},
+      {"pattern": "ne explétif", "description": "non-negating ne", "example": "avant qu'il ne parte"}
+    ]
+  },
+  "B2": {
+    "allowed": [
+      {"pattern": "All B1 patterns", "description": "plus the following:"},
+      {"pattern": "conditionnel passe", "description": "J'aurais aimé venir. Il aurait dû partir."},
+      {"pattern": "futur anterieur", "description": "Quand j'aurai terminé, je partirai."},
+      {"pattern": "subjonctif (expanded triggers)", "description": "pour que, avant que, à moins que, sans que"},
+      {"pattern": "subjonctif passe", "description": "Je suis content qu'il soit venu"},
+      {"pattern": "double object pronouns", "description": "Je le lui ai donné. Il me l'a dit."},
+      {"pattern": "gérondif (all uses)", "description": "tout en travaillant, en arrivant"},
+      {"pattern": "mise en relief", "description": "C'est lui qui..., Ce que je veux, c'est..."},
+      {"pattern": "hypothetical si clauses", "description": "Si j'avais su, je serais venu"},
+      {"pattern": "discours indirect (complex)", "description": "tense concordance in reported speech"},
+      {"pattern": "participe present", "description": "as adjective or verb: étant fatigué, sachant que"},
+      {"pattern": "advanced connectors", "description": "néanmoins, toutefois, d'ailleurs, en revanche"}
+    ],
+    "forbidden": [
+      {"pattern": "passe simple", "description": "literary past tense", "example": "Il regarda, ils partirent"},
+      {"pattern": "passe anterieur", "description": "past anterior", "example": "Quand il eut fini..."},
+      {"pattern": "subjonctif imparfait", "description": "imperfect subjunctive", "example": "qu'il parlât"},
+      {"pattern": "subjonctif plus-que-parfait", "description": "pluperfect subjunctive", "example": "qu'il eût parlé"},
+      {"pattern": "ne explétif", "description": "non-negating ne in formal contexts", "example": "Je crains qu'il ne vienne"},
+      {"pattern": "inversion stylistique", "description": "literary inversion", "example": "Vint alors le roi..."},
+      {"pattern": "archaisms", "description": "archaic vocabulary and forms", "example": "moult, point (negation)"}
+    ]
+  },
+  "C1": {
+    "allowed": [
+      {"pattern": "All B2 patterns", "description": "plus the following:"},
+      {"pattern": "passe simple", "description": "recognition and limited use: Il regarda par la fenêtre"},
+      {"pattern": "ne explétif", "description": "Je crains qu'il ne parte. Avant qu'il ne vienne."},
+      {"pattern": "subjonctif imparfait (recognition)", "description": "understanding in literary texts"},
+      {"pattern": "inversion stylistique", "description": "Peut-être viendra-t-il. Ainsi parla-t-il."},
+      {"pattern": "nuanced connectors", "description": "quoi qu'il en soit, soit dit en passant"},
+      {"pattern": "formal register", "description": "academic and professional writing conventions"},
+      {"pattern": "idiomatic expressions", "description": "avoir le cafard, mettre les pieds dans le plat"},
+      {"pattern": "nominalization", "description": "transforming verbs/adjectives to nouns for formal style"}
+    ],
+    "forbidden": [
+      {"pattern": "passe anterieur", "description": "past anterior", "example": "Dès qu'il eut parlé..."},
+      {"pattern": "subjonctif plus-que-parfait", "description": "pluperfect subjunctive", "example": "qu'il eût été"},
+      {"pattern": "highly archaic forms", "description": "obsolete language", "example": "icelle, lequel (as subject)"},
+      {"pattern": "regional/dialectal forms", "description": "non-standard French"}
+    ]
+  },
+  "C2": {
+    "allowed": [
+      {"pattern": "All grammar patterns", "description": "No restrictions at C2 level - native-like command including literary forms"}
+    ],
+    "forbidden": []
+  }
+}
