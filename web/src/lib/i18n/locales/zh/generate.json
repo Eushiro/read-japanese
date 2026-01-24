@@ -1,0 +1,56 @@
+{
+  "hero": {
+    "badge": "AI驱动",
+    "title": "生成故事",
+    "subtitle": "创建适合您水平的自定义日语故事"
+  },
+  "modal": {
+    "title": "生成故事",
+    "subtitle": "创建适合您水平的故事"
+  },
+  "form": {
+    "jlptLevel": "JLPT等级",
+    "genre": "类型",
+    "theme": "主题",
+    "themeOptional": "(可选)",
+    "themePlaceholder": "例如：樱花、夏日祭...",
+    "chapters": "章节",
+    "chaptersCount": "{{count}}章",
+    "wordsPerChapter": "每章字数",
+    "wordsCount": "约{{count}}字",
+    "options": "选项"
+  },
+  "genres": {
+    "dailyLife": "日常生活",
+    "fantasy": "奇幻",
+    "mystery": "悬疑",
+    "travel": "旅行",
+    "school": "校园",
+    "food": "美食",
+    "nature": "自然",
+    "adventure": "冒险",
+    "romance": "爱情",
+    "historical": "历史"
+  },
+  "options": {
+    "generateAudio": "生成音频",
+    "generateImages": "生成图片",
+    "audio": "音频",
+    "images": "图片"
+  },
+  "actions": {
+    "generate": "生成故事",
+    "generating": "生成中..."
+  },
+  "progress": {
+    "starting": "开始生成..."
+  },
+  "errors": {
+    "signInRequired": "请登录以生成故事。",
+    "generationFailed": "生成失败"
+  },
+  "info": {
+    "generationTime": "根据所选选项，故事生成可能需要2-5分钟。",
+    "generationTimeBrief": "生成需要2-5分钟"
+  }
+}

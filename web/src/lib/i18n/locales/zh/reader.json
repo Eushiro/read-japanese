@@ -1,0 +1,41 @@
+{
+  "audioPlayer": {
+    "restart": "重新播放"
+  },
+  "errors": {
+    "storyNotFound": "找不到故事"
+  },
+  "navigation": {
+    "backToLibrary": "返回图书馆",
+    "previous": "上一章",
+    "next": "下一章",
+    "goToChapter": "转到第{{number}}章"
+  },
+  "premium": {
+    "title": "高级故事",
+    "description": "此故事仅供基础版及以上订阅用户阅读。升级以解锁所有高级内容。",
+    "upgradePlan": "升级计划"
+  },
+  "limit": {
+    "title": "已达到每月阅读限制",
+    "description": "您本月已阅读{{limit}}个故事中的{{used}}个。升级您的计划以继续阅读。"
+  },
+  "furigana": {
+    "hide": "隐藏假名注音",
+    "show": "显示假名注音"
+  },
+  "quiz": {
+    "takeQuiz": "开始测验"
+  },
+  "empty": {
+    "noChapters": "暂无章节"
+  },
+  "paywall": {
+    "title": "升级以获取理解测验",
+    "description": "获取AI生成的理解问题,测试您对每个故事的理解程度。"
+  },
+  "wordPopup": {
+    "saveToVocabulary": "添加到词汇",
+    "removeFromVocabulary": "从词汇中删除"
+  }
+}

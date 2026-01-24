@@ -1,0 +1,44 @@
+{
+  "welcome": {
+    "title": "Bienvenue sur SanLang",
+    "subtitle": "Configurons ta préparation aux examens",
+    "getStarted": "C'est parti"
+  },
+  "actions": {
+    "back": "Retour",
+    "continue": "Continuer",
+    "startLearning": "Commencer",
+    "saving": "Enregistrement..."
+  },
+  "howItWorks": {
+    "title": "Comment ça marche",
+    "subtitle": "Maîtrise le vocabulaire avec notre méthode éprouvée",
+    "steps": {
+      "read": {
+        "title": "1. Lis",
+        "description": "Des histoires adaptées à ton niveau"
+      },
+      "save": {
+        "title": "2. Enregistre",
+        "description": "Les mots que tu veux apprendre"
+      },
+      "review": {
+        "title": "3. Révise",
+        "description": "Flashcards intelligentes"
+      },
+      "practice": {
+        "title": "4. Pratique",
+        "description": "Écris des phrases, reçois des conseils"
+      }
+    }
+  },
+  "languageSelection": {
+    "title": "Quelles langues étudies-tu ?",
+    "subtitle": "Sélectionne toutes celles qui s'appliquent"
+  },
+  "examSelection": {
+    "title": "Un examen en vue ?",
+    "subtitle": "On adaptera le contenu à tes objectifs (facultatif)",
+    "skipForNow": "Passer pour l'instant"
+  }
+}

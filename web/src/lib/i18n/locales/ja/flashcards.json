@@ -1,0 +1,87 @@
+{
+  "hero": {
+    "badge": "間隔反復",
+    "title": "フラッシュカード",
+    "subtitle": "FSRSアルゴリズムで語彙を復習"
+  },
+  "signIn": {
+    "title": "ログインして復習を開始",
+    "description": "間隔反復で進捗を追跡し、語彙をマスターしましょう。",
+    "button": "ログイン"
+  },
+  "counter": {
+    "cardsLeft": "カード残り"
+  },
+  "states": {
+    "allCaughtUp": {
+      "title": "すべて完了！",
+      "description": "現在、復習予定のカードはありません。語彙を追加するか、後で確認してください。",
+      "addVocabulary": "語彙を追加"
+    },
+    "sessionComplete": {
+      "title": "セッション完了！",
+      "cardsReviewed": "<bold>{{count}}</bold>枚のカードを復習しました",
+      "encouragement": "お疲れ様でした！継続して頑張りましょう。",
+      "reviewAgain": "もう一度復習"
+    }
+  },
+  "rating": {
+    "prompt": "どのくらい覚えていましたか？",
+    "again": "もう一度",
+    "hard": "難しい",
+    "good": "良い",
+    "easy": "簡単",
+    "intervals": {
+      "again": "1分",
+      "hard": "10分",
+      "good": "1日",
+      "easy": "4日"
+    }
+  },
+  "actions": {
+    "undo": "元に戻す (Cmd+Z)",
+    "redo": "やり直し (Cmd+Shift+Z)"
+  },
+  "card": {
+    "showAnswer": "答えを表示",
+    "playWord": "単語を再生",
+    "playSentence": "文を再生",
+    "newSentence": "新しい文",
+    "refreshing": "更新中...",
+    "reading": "読み方",
+    "definition": "定義"
+  },
+  "title": "フラッシュカード",
+  "subtitle": "間隔反復で語彙を復習",
+  "startReview": "復習を始める",
+  "continueReview": "復習を続ける",
+  "noCardsToReview": "復習するカードがありません",
+  "allCaughtUp": "全部終わりました！後でまた確認してください。",
+  "dueCards": "{{count}}枚が復習待ち",
+  "newCards": "{{count}}枚の新規カード",
+  "reviewComplete": "復習完了",
+  "cardsReviewed": "{{count}}枚復習しました",
+  "session": {
+    "progress": "{{current}} / {{total}}",
+    "remaining": "残り{{count}}枚",
+    "timeSpent": "学習時間",
+    "accuracy": "正答率",
+    "streak": "連続"
+  },
+  "settings": {
+    "newCardsPerDay": "1日の新規カード数",
+    "maxReviewsPerDay": "1日の最大復習数",
+    "showSentence": "例文を表示",
+    "showImage": "画像を表示",
+    "autoplayAudio": "音声を自動再生"
+  },
+  "stats": {
+    "title": "復習統計",
+    "today": "今日",
+    "thisWeek": "今週",
+    "allTime": "全期間",
+    "cardsStudied": "学習したカード",
+    "averageAccuracy": "平均正答率",
+    "longestStreak": "最長連続日数"
+  }
+}

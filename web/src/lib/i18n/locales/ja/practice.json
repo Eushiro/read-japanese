@@ -1,0 +1,54 @@
+{
+  "hero": {
+    "badge": "アウトプット練習",
+    "title": "文章を書く",
+    "subtitle": "語彙を文脈の中で使う練習"
+  },
+  "signIn": {
+    "title": "ログインして練習を開始",
+    "description": "語彙を使って文章を作成し、AIからフィードバックを受けましょう。",
+    "button": "ログイン"
+  },
+  "empty": {
+    "title": "練習する単語がありません",
+    "description": "語彙を追加して、文章練習を始めましょう。",
+    "goToVocabulary": "語彙へ移動"
+  },
+  "wordSelection": {
+    "title": "練習する単語を選択",
+    "all": "すべて",
+    "japanese": "日本語",
+    "english": "英語",
+    "french": "フランス語"
+  },
+  "practiceInterface": {
+    "prompt": "この単語を使って文章を書く：",
+    "changeWord": "単語を変更",
+    "inputLabel": "あなたの文章",
+    "placeholder": "「{{word}}」を使って文章を書いてください...",
+    "checking": "確認中...",
+    "checkSentence": "文章をチェック"
+  },
+  "results": {
+    "greatJob": "よくできました！",
+    "goodEffort": "頑張りました！",
+    "overallScore": "総合スコア：{{score}}/100",
+    "yourSentence": "あなたの文章",
+    "corrections": "修正点",
+    "feedback": "フィードバック",
+    "alternativeExpression": "別の表現",
+    "suggestedImprovement": "改善案",
+    "tryAgain": "もう一度",
+    "nextWord": "次の単語"
+  },
+  "scores": {
+    "grammar": "文法",
+    "wordUsage": "語彙の使い方",
+    "naturalness": "自然さ"
+  },
+  "difficulty": {
+    "beginner": "初級",
+    "intermediate": "中級",
+    "advanced": "上級"
+  }
+}

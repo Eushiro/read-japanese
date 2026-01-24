@@ -1,0 +1,56 @@
+{
+  "hero": {
+    "badge": "Propulsé par IA",
+    "title": "Générer une histoire",
+    "subtitle": "Créez une histoire japonaise personnalisée adaptée à votre niveau"
+  },
+  "modal": {
+    "title": "Générer une histoire",
+    "subtitle": "Créez une histoire adaptée à votre niveau"
+  },
+  "form": {
+    "jlptLevel": "Niveau JLPT",
+    "genre": "Genre",
+    "theme": "Thème",
+    "themeOptional": "(Optionnel)",
+    "themePlaceholder": "ex: fleurs de cerisier, festival d'été...",
+    "chapters": "Chapitres",
+    "chaptersCount": "{{count}} chapitres",
+    "wordsPerChapter": "Mots/Chapitre",
+    "wordsCount": "~{{count}} mots",
+    "options": "Options"
+  },
+  "genres": {
+    "dailyLife": "Vie quotidienne",
+    "fantasy": "Fantastique",
+    "mystery": "Mystère",
+    "travel": "Voyage",
+    "school": "École",
+    "food": "Cuisine",
+    "nature": "Nature",
+    "adventure": "Aventure",
+    "romance": "Romance",
+    "historical": "Historique"
+  },
+  "options": {
+    "generateAudio": "Générer l'audio",
+    "generateImages": "Générer les images",
+    "audio": "Audio",
+    "images": "Images"
+  },
+  "actions": {
+    "generate": "Générer l'histoire",
+    "generating": "Génération en cours..."
+  },
+  "progress": {
+    "starting": "Démarrage de la génération..."
+  },
+  "errors": {
+    "signInRequired": "Veuillez vous connecter pour générer des histoires.",
+    "generationFailed": "La génération a échoué"
+  },
+  "info": {
+    "generationTime": "La génération de l'histoire peut prendre 2 à 5 minutes selon les options sélectionnées.",
+    "generationTimeBrief": "La génération prend 2 à 5 minutes"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "hero": {
+    "badge": "间隔重复",
+    "title": "闪卡",
+    "subtitle": "使用FSRS算法复习词汇"
+  },
+  "signIn": {
+    "title": "登录开始复习",
+    "description": "通过间隔重复追踪进度，掌握词汇。",
+    "button": "登录"
+  },
+  "counter": {
+    "cardsLeft": "张卡片剩余"
+  },
+  "states": {
+    "allCaughtUp": {
+      "title": "全部完成！",
+      "description": "目前没有待复习的卡片。添加更多词汇或稍后再来。",
+      "addVocabulary": "添加词汇"
+    },
+    "sessionComplete": {
+      "title": "学习完成！",
+      "cardsReviewed": "您复习了<bold>{{count}}</bold>张卡片",
+      "encouragement": "做得好！继续保持。",
+      "reviewAgain": "再次复习"
+    }
+  },
+  "rating": {
+    "prompt": "您记得多少？",
+    "again": "重来",
+    "hard": "困难",
+    "good": "良好",
+    "easy": "简单",
+    "intervals": {
+      "again": "1分钟",
+      "hard": "10分钟",
+      "good": "1天",
+      "easy": "4天"
+    }
+  },
+  "actions": {
+    "undo": "撤销 (Cmd+Z)",
+    "redo": "重做 (Cmd+Shift+Z)"
+  },
+  "card": {
+    "showAnswer": "显示答案",
+    "playWord": "播放单词",
+    "playSentence": "播放句子",
+    "newSentence": "新句子",
+    "refreshing": "刷新中...",
+    "reading": "读音",
+    "definition": "定义"
+  },
+  "title": "闪卡",
+  "subtitle": "用间隔重复法复习词汇",
+  "startReview": "开始复习",
+  "continueReview": "继续复习",
+  "noCardsToReview": "没有要复习的卡片",
+  "allCaughtUp": "全部完成！稍后再来查看。",
+  "dueCards": "{{count}}张待复习",
+  "newCards": "{{count}}张新卡片",
+  "reviewComplete": "复习完成",
+  "cardsReviewed": "已复习{{count}}张卡片",
+  "session": {
+    "progress": "{{current}} / {{total}}",
+    "remaining": "剩余{{count}}张",
+    "timeSpent": "学习时间",
+    "accuracy": "正确率",
+    "streak": "连续"
+  },
+  "settings": {
+    "newCardsPerDay": "每日新卡片数",
+    "maxReviewsPerDay": "每日最大复习数",
+    "showSentence": "显示例句",
+    "showImage": "显示图片",
+    "autoplayAudio": "自动播放音频"
+  },
+  "stats": {
+    "title": "复习统计",
+    "today": "今天",
+    "thisWeek": "本周",
+    "allTime": "总计",
+    "cardsStudied": "已学卡片",
+    "averageAccuracy": "平均正确率",
+    "longestStreak": "最长连续"
+  }
+}

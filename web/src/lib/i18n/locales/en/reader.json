@@ -1,0 +1,41 @@
+{
+  "audioPlayer": {
+    "restart": "Restart"
+  },
+  "errors": {
+    "storyNotFound": "Story not found"
+  },
+  "navigation": {
+    "backToLibrary": "Back to Library",
+    "previous": "Previous",
+    "next": "Next",
+    "goToChapter": "Go to chapter {{number}}"
+  },
+  "premium": {
+    "title": "Premium Story",
+    "description": "This story is available to Basic subscribers and above. Upgrade to unlock all premium content.",
+    "upgradePlan": "Upgrade Plan"
+  },
+  "limit": {
+    "title": "Monthly Reading Limit Reached",
+    "description": "You've read {{used}} of {{limit}} stories this month. Upgrade your plan to continue reading."
+  },
+  "furigana": {
+    "hide": "Hide furigana",
+    "show": "Show furigana"
+  },
+  "quiz": {
+    "takeQuiz": "Take Quiz"
+  },
+  "empty": {
+    "noChapters": "No chapters available"
+  },
+  "paywall": {
+    "title": "Upgrade for Comprehension Quizzes",
+    "description": "Get AI-generated comprehension questions to test your understanding of each story."
+  },
+  "wordPopup": {
+    "saveToVocabulary": "Save to vocabulary",
+    "removeFromVocabulary": "Remove from vocabulary"
+  }
+}

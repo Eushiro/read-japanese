@@ -1,0 +1,84 @@
+{
+  "hero": {
+    "badge": "Votre bibliothèque",
+    "title": "Lectures graduées",
+    "subtitle": "Des histoires adaptées à votre niveau. Appuyez sur un mot pour voir sa définition.",
+    "generateStory": "Générer une histoire"
+  },
+  "title": "Bibliothèque",
+  "subtitle": "Histoires et vidéos pour votre niveau",
+  "searchPlaceholder": "Rechercher...",
+  "filters": {
+    "all": "Tout",
+    "stories": "Histoires",
+    "videos": "Vidéos",
+    "level": "Niveau",
+    "allLevels": "Tous les niveaux",
+    "allLanguages": "Toutes les langues",
+    "duration": "Durée",
+    "anyDuration": "Toutes les durées",
+    "short": "Court (< 5 min)",
+    "medium": "Moyen (5-15 min)",
+    "long": "Long (> 15 min)"
+  },
+  "sort": {
+    "easyToHard": "Facile → Difficile",
+    "hardToEasy": "Difficile → Facile",
+    "titleAZ": "Titre (A-Z)",
+    "newest": "Plus récent"
+  },
+  "sections": {
+    "stories": "Histoires",
+    "videos": "Vidéos"
+  },
+  "languages": {
+    "japanese": "Japonais",
+    "english": "Anglais",
+    "french": "Français"
+  },
+  "errors": {
+    "loadFailed": "Échec du chargement des histoires"
+  },
+  "empty": {
+    "title": "Aucun contenu trouv\u00e9",
+    "description": "Essayez d'ajuster vos filtres ou votre terme de recherche",
+    "noStories": "Pas encore d'histoires",
+    "noVideos": "Pas encore de vid\u00e9os"
+  },
+  "story": {
+    "chapter": "Chapitre {{number}}",
+    "chapters": "{{count}} chapitres",
+    "readTime": "{{minutes}} min de lecture",
+    "continueReading": "Continuer la lecture",
+    "startReading": "Commencer la lecture",
+    "completed": "Termin\u00e9",
+    "inProgress": "En cours",
+    "wordsSaved": "{{count}} mots enregistr\u00e9s"
+  },
+  "video": {
+    "badge": "Vidéo",
+    "duration": "{{minutes}} min",
+    "watch": "Regarder",
+    "continueWatching": "Continuer \u00e0 regarder",
+    "transcript": "Transcription",
+    "questions": "{{count}} questions"
+  },
+  "difficulty": {
+    "beginner": "D\u00e9butant",
+    "elementary": "\u00c9l\u00e9mentaire",
+    "intermediate": "Interm\u00e9diaire",
+    "upperIntermediate": "Interm\u00e9diaire avanc\u00e9",
+    "advanced": "Avanc\u00e9",
+    "native": "Natif"
+  },
+  "decks": {
+    "title": "Paquets de vocabulaire",
+    "browse": "Parcourir les paquets",
+    "subscribe": "S'abonner",
+    "subscribed": "Abonn\u00e9",
+    "wordsCount": "{{count}} mots",
+    "premadeDecks": "Paquets pr\u00e9d\u00e9finis",
+    "personalDeck": "Paquet personnel",
+    "allWords": "Tous les mots"
+  }
+}

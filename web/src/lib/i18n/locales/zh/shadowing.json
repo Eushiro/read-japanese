@@ -1,0 +1,26 @@
+{
+  "card": {
+    "listenAndRepeat": "听并跟读:",
+    "stop": "停止",
+    "playTargetAudio": "播放目标音频",
+    "tryAgain": "重试",
+    "nextSentence": "下一句",
+    "requiresPro": "跟读练习需要Pro或更高级别订阅",
+    "evaluationFailed": "录音评估失败，请重试。"
+  },
+  "feedback": {
+    "targetSentence": "目标句子:",
+    "playYourRecording": "播放你的录音",
+    "playAiFeedback": "播放AI反馈",
+    "stop": "停止",
+    "feedbackLabel": "反馈",
+    "accuracy": "准确度",
+    "scores": {
+      "excellent": "太棒了!",
+      "great": "做得好!",
+      "good": "不错!",
+      "keepPracticing": "继续加油!",
+      "tryAgain": "再试一次!"
+    }
+  }
+}

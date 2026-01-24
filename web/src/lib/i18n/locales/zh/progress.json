@@ -1,0 +1,47 @@
+{
+  "title": "您的进度",
+  "subtitle": "跟踪您的技能并找出需要改进的领域。",
+  "signInPrompt": "登录以跟踪您的学习进度。",
+  "stats": {
+    "streak": "连续天数",
+    "days": "{{count}} 天",
+    "totalStudy": "总学习时间",
+    "hours": "{{count}}小时",
+    "vocabulary": "词汇"
+  },
+  "readiness": {
+    "title": "准备程度",
+    "notReady": "继续学习",
+    "almostReady": "即将准备好",
+    "ready": "准备就绪",
+    "confident": "信心十足"
+  },
+  "skills": {
+    "title": "技能分布",
+    "vocabulary": "词汇",
+    "grammar": "语法",
+    "reading": "阅读",
+    "listening": "听力",
+    "writing": "写作",
+    "speaking": "口语",
+    "noData": "暂无数据。开始学习以查看您的技能！"
+  },
+  "focusAreas": {
+    "title": "重点领域",
+    "practice": "练习",
+    "questions": "{{count}} 题",
+    "noWeakAreas": "太棒了！没有发现薄弱环节。"
+  },
+  "progressChart": {
+    "title": "随时间推移的进度",
+    "noData": "学习几天后即可查看您的进度图表。"
+  },
+  "languages": {
+    "title": "语言",
+    "average": "平均: {{percent}}%"
+  },
+  "actions": {
+    "takePracticeExam": "参加模拟考试",
+    "reviewFlashcards": "复习闪卡"
+  }
+}

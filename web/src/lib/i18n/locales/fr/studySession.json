@@ -1,0 +1,65 @@
+{
+  "emptyState": {
+    "title": "Rien à étudier pour l'instant",
+    "description": "Ajoutez du vocabulaire ou lisez une histoire pour commencer votre apprentissage."
+  },
+  "buttons": {
+    "browseLibrary": "Parcourir la bibliothèque",
+    "backToDashboard": "Retour au tableau de bord",
+    "keepLearning": "Continuer à apprendre",
+    "exit": "Quitter",
+    "skip": "Passer",
+    "startReading": "Commencer la lecture",
+    "startWatching": "Commencer à regarder"
+  },
+  "exitModal": {
+    "title": "Quitter la session ?",
+    "description": "Votre progression dans cette session ne sera pas sauvegardée. Êtes-vous sûr de vouloir quitter ?"
+  },
+  "complete": {
+    "title": "Session terminée !",
+    "streak": "{{count}} jours consécutifs !",
+    "newRecord": "Nouveau record !",
+    "stats": {
+      "cardsReviewed": "Cartes révisées",
+      "read": "Lu",
+      "watched": "Regardé",
+      "wordsAdded": "Mots ajoutés",
+      "sentencesWritten": "Phrases écrites"
+    },
+    "encouragement": "Excellent travail ! La pratique régulière est la clé de la maîtrise.",
+    "doneForToday": "C'est fini pour aujourd'hui",
+    "continueStudying": "Continuer à étudier"
+  },
+  "input": {
+    "readingTime": "Temps de lecture",
+    "listeningTime": "Temps d'écoute",
+    "readAStory": "Lire une histoire",
+    "watchAVideo": "Regarder une vidéo",
+    "storyDescription": "Plongez-vous dans du contenu adapté à votre niveau",
+    "videoDescription": "Pratiquez l'écoute et enrichissez votre vocabulaire",
+    "gradedStory": "Une histoire adaptée à votre niveau"
+  },
+  "output": {
+    "wordOf": "Mot {{current}} sur {{total}}",
+    "writeSentenceUsing": "Écris une phrase avec :",
+    "placeholder": "Écris une phrase avec « {{word}} »...",
+    "skipWriting": "Passer l'écriture",
+    "checking": "Vérification...",
+    "check": "Vérifier",
+    "greatJob": "Excellent !",
+    "goodEffort": "Bon effort !",
+    "score": "Score : {{score}}/100",
+    "suggestedImprovement": "Suggestion d'amélioration :",
+    "complete": "Terminer",
+    "nextWord": "Mot suivant",
+    "noWordsTitle": "Pas de mots à pratiquer",
+    "noWordsDescription": "Ajoute du vocabulaire pour commencer à écrire."
+  },
+  "progress": {
+    "review": "Révision",
+    "read": "Lire",
+    "watch": "Regarder",
+    "write": "Écrire"
+  }
+}

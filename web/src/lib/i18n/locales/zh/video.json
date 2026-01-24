@@ -1,0 +1,14 @@
+{
+  "notFound": "未找到视频",
+  "backToLibrary": "返回图书馆",
+  "takeQuiz": "开始测验",
+  "demo": {
+    "title": "演示内容 - 视频播放不可用",
+    "subtitle": "请阅读下方的文字记录"
+  },
+  "about": "关于此视频",
+  "transcript": {
+    "title": "文字记录",
+    "notAvailable": "此视频暂无文字记录。"
+  }
+}

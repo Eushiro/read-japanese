@@ -1,0 +1,64 @@
+{
+  "header": {
+    "quiz": "Comprehension Quiz",
+    "results": "Quiz Results",
+    "questionOf": "Question {{current}} of {{total}}"
+  },
+  "questionTypes": {
+    "multiple_choice": "Multiple Choice",
+    "short_answer": "Short Answer",
+    "essay": "Essay",
+    "translation": "Translation",
+    "inference": "Inference",
+    "prediction": "Prediction",
+    "grammar": "Grammar",
+    "opinion": "Opinion"
+  },
+  "questionDisplay": {
+    "points": "{{count}} points",
+    "placeholders": {
+      "essay": "Write your response...",
+      "translation": "Enter your translation...",
+      "default": "Type your answer..."
+    },
+    "feedback": {
+      "score": "Score",
+      "expectedAnswer": "Expected answer:",
+      "possibleAnswer": "Possible answer:",
+      "feedback": "Feedback:"
+    }
+  },
+  "loading": {
+    "generatingQuestions": "Generating questions...",
+    "loadingQuestions": "Loading questions..."
+  },
+  "errors": {
+    "storyNotFound": "Story not found"
+  },
+  "generate": {
+    "title": "Test Your Understanding",
+    "description": "Generate AI-powered comprehension questions based on the story you just read. Questions will test your understanding at different levels.",
+    "button": "Generate Questions",
+    "signInRequired": "Please sign in to generate questions."
+  },
+  "results": {
+    "greatJob": "Great job!",
+    "goodEffort": "Good effort!",
+    "keepPracticing": "Keep practicing!",
+    "scoreText": "You scored {{earned}} out of {{total}} points",
+    "reviewAnswers": "Review Answers",
+    "yourAnswer": "Your answer:",
+    "correctAnswer": "Correct answer:",
+    "pointsEarned": "{{earned}}/{{total}} points"
+  },
+  "navigation": {
+    "backToLibrary": "Back to Library",
+    "backToStory": "Back to Story",
+    "browseMore": "Browse More Stories"
+  },
+  "paywall": {
+    "title": "Upgrade for AI Comprehension",
+    "description": "Get AI-generated questions and detailed feedback on your answers.",
+    "freeUserFeedback": "Upgrade to a paid plan to get AI feedback on your answers."
+  }
+}

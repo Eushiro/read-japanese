@@ -1,0 +1,103 @@
+{
+  "nav": {
+    "home": "Home",
+    "library": "Library",
+    "profile": "Profile",
+    "settings": "Settings",
+    "pricing": "Pricing",
+    "admin": "Admin",
+    "signIn": "Sign In",
+    "signOut": "Sign Out"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "back": "Back",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "remove": "Remove",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "manage": "Manage",
+    "upgrade": "Upgrade",
+    "getStarted": "Get Started",
+    "startLearning": "Start Learning",
+    "tryFree": "Try it Free",
+    "learnMore": "Learn More",
+    "browseLibrary": "Browse Library",
+    "viewAll": "View All",
+    "show": "Show",
+    "hide": "Hide",
+    "play": "Play",
+    "pause": "Pause"
+  },
+  "status": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "processing": "Processing...",
+    "error": "Something went wrong",
+    "success": "Success",
+    "empty": "No items found",
+    "noResults": "No results found"
+  },
+  "time": {
+    "minutes": "{{count}} min",
+    "hours": "{{count}} hr",
+    "seconds": "{{count}} sec",
+    "days": "{{count}} day",
+    "days_other": "{{count}} days",
+    "ago": "{{time}} ago",
+    "remaining": "{{time}} remaining"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Network error. Please check your connection.",
+    "unauthorized": "Please sign in to continue.",
+    "notFound": "Not found."
+  },
+  "auth": {
+    "signInPrompt": "Sign in to continue",
+    "signInDescription": "Create an account or sign in to access all features.",
+    "signedInAs": "Signed in as {{name}}",
+    "syncDescription": "Sign in to sync your vocabulary and reading progress across devices."
+  },
+  "languages": {
+    "japanese": "Japanese",
+    "english": "English",
+    "french": "French",
+    "chinese": "Chinese",
+    "allLanguages": "All Languages"
+  },
+  "mastery": {
+    "new": "New",
+    "learning": "Learning",
+    "tested": "Tested",
+    "mastered": "Mastered",
+    "allMastery": "All Mastery"
+  },
+  "sort": {
+    "newestFirst": "Newest First",
+    "oldestFirst": "Oldest First",
+    "alphabetical": "A \u2192 Z",
+    "alphabeticalReverse": "Z \u2192 A",
+    "byMastery": "By Mastery"
+  },
+  "duration": {
+    "quick": "Quick review",
+    "standard": "Standard",
+    "deep": "Deep study"
+  },
+  "about": {
+    "title": "About",
+    "version": "SanLang v1.0.0",
+    "description": "Personalized exam prep powered by AI"
+  }
+}

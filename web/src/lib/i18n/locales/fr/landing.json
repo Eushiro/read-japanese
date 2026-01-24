@@ -1,0 +1,94 @@
+{
+  "hero": {
+    "tagline": "Préparation aux examens par l'IA",
+    "title": "Apprentissage personnalisé",
+    "titleHighlight": "pour votre examen",
+    "subtitle": "L'IA génère du contenu à partir de votre vocabulaire, corrige vos écrits et crée des examens blancs adaptés à votre objectif. Pas de matériel générique—un parcours d'apprentissage conçu pour vous.",
+    "startLearning": "Commencer à apprendre",
+    "getStartedFree": "Commencer gratuitement",
+    "browseLibrary": "Parcourir la bibliothèque"
+  },
+  "exams": {
+    "title": "Préparez les examens qui comptent",
+    "subtitle": "Contenu et tests alignés sur les formats officiels et les listes de vocabulaire.",
+    "japanese": "Japonais",
+    "english": "Anglais",
+    "french": "Français"
+  },
+  "comparison": {
+    "title": "Pas une autre application de flashcards",
+    "subtitle": "La plupart des applications testent ce que vous reconnaissez. Nous testons ce que vous pouvez produire.",
+    "sanlang": "SanLang",
+    "others": "Autres applications",
+    "us": {
+      "item1": "Écrivez des phrases, obtenez des retours de l'IA",
+      "item2": "Contenu généré à partir de VOTRE vocabulaire",
+      "item3": "Examens blancs au format réel",
+      "item4": "Multimodal : texte, audio, images"
+    },
+    "them": {
+      "item1": "Retournez les cartes, tapez la bonne réponse",
+      "item2": "Listes de mots génériques pour tous",
+      "item3": "Gamifié mais pas axé sur les examens",
+      "item4": "Généralement monomodal"
+    }
+  },
+  "loop": {
+    "title": "Le cycle d'apprentissage complet",
+    "subtitle": "Entrée, pratique, sortie, répétition. Chaque fonctionnalité vous aide à vraiment apprendre.",
+    "input": {
+      "title": "Entrée",
+      "description": "Lisez des histoires, écoutez des audios, regardez des vidéos—tout à votre niveau"
+    },
+    "capture": {
+      "title": "Capture",
+      "description": "Enregistrez les mots automatiquement ou manuellement. Construisez votre vocabulaire personnel."
+    },
+    "review": {
+      "title": "Révision",
+      "description": "Flashcards générées par l'IA avec des phrases exemples, actualisées pour rester pertinentes"
+    },
+    "output": {
+      "title": "Production",
+      "description": "Écrivez des phrases, obtenez des retours instantanés de l'IA sur la grammaire et l'usage"
+    }
+  },
+  "features": {
+    "title": "Tout ce dont vous avez besoin pour réussir",
+    "subtitle": "De la construction du vocabulaire aux examens blancs, nous avons tout prévu.",
+    "flashcards": {
+      "title": "Flashcards par l'IA",
+      "description": "Cartes auto-générées avec des phrases exemples à votre niveau. Les phrases sont actualisées régulièrement pour éviter la mémorisation de schémas."
+    },
+    "writing": {
+      "title": "Pratique de l'écriture",
+      "description": "Créez des phrases avec les mots cibles. L'IA vérifie la grammaire, l'usage des mots et le naturel—puis vous montre comment vous améliorer."
+    },
+    "personalized": {
+      "title": "Contenu personnalisé",
+      "description": "Histoires et tests générés à partir de VOTRE vocabulaire. Pratiquez exactement ce que vous devez apprendre."
+    },
+    "exams": {
+      "title": "Formats d'examen réels",
+      "description": "Examens blancs correspondant aux structures et notations officielles du JLPT, TOEFL, DELF et autres."
+    },
+    "audio": {
+      "title": "Audio natif",
+      "description": "Écoutez les histoires et flashcards avec une prononciation naturelle. Entraînez vos oreilles tout en apprenant."
+    },
+    "tapDefine": {
+      "title": "Tapez pour définir",
+      "description": "Tapez sur n'importe quel mot pour des définitions instantanées. Des aides à la lecture comme les furigana vous maintiennent dans le flux."
+    }
+  },
+  "cta": {
+    "title": "Commencez à apprendre plus intelligemment",
+    "subtitle": "Rejoignez les apprenants qui préparent leurs examens avec des matériaux d'étude personnalisés par l'IA.",
+    "goToLibrary": "Aller à la bibliothèque",
+    "getStartedFree": "Commencer gratuitement",
+    "noCreditCard": "Aucune carte de crédit requise"
+  },
+  "footer": {
+    "tagline": "SanLang - Préparation aux examens personnalisée par l'IA"
+  }
+}

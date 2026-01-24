@@ -1,0 +1,54 @@
+{
+  "hero": {
+    "badge": "输出练习",
+    "title": "写句子",
+    "subtitle": "在语境中练习使用词汇"
+  },
+  "signIn": {
+    "title": "登录开始练习",
+    "description": "用词汇造句，获得AI反馈。",
+    "button": "登录"
+  },
+  "empty": {
+    "title": "没有可练习的单词",
+    "description": "添加词汇以开始句子写作练习。",
+    "goToVocabulary": "前往词汇"
+  },
+  "wordSelection": {
+    "title": "选择要练习的单词",
+    "all": "全部",
+    "japanese": "日语",
+    "english": "英语",
+    "french": "法语"
+  },
+  "practiceInterface": {
+    "prompt": "用这个词写一个句子：",
+    "changeWord": "更换单词",
+    "inputLabel": "你的句子",
+    "placeholder": "用「{{word}}」写一个句子...",
+    "checking": "检查中...",
+    "checkSentence": "检查句子"
+  },
+  "results": {
+    "greatJob": "做得好！",
+    "goodEffort": "不错的尝试！",
+    "overallScore": "总分：{{score}}/100",
+    "yourSentence": "你的句子",
+    "corrections": "修改",
+    "feedback": "反馈",
+    "alternativeExpression": "替代表达",
+    "suggestedImprovement": "改进建议",
+    "tryAgain": "再试一次",
+    "nextWord": "下一个词"
+  },
+  "scores": {
+    "grammar": "语法",
+    "wordUsage": "词汇用法",
+    "naturalness": "自然度"
+  },
+  "difficulty": {
+    "beginner": "初级",
+    "intermediate": "中级",
+    "advanced": "高级"
+  }
+}

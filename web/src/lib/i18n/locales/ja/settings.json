@@ -1,0 +1,131 @@
+{
+  "title": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb",
+  "appearance": {
+    "title": "\u5916\u89b3",
+    "light": "\u30e9\u30a4\u30c8",
+    "dark": "\u30c0\u30fc\u30af",
+    "system": "\u30b7\u30b9\u30c6\u30e0"
+  },
+  "reading": {
+    "title": "\u8aad\u66f8\u8a2d\u5b9a",
+    "showFurigana": "\u3075\u308a\u304c\u306a\u3092\u8868\u793a",
+    "showFuriganaDescription": "\u6f22\u5b57\u306e\u4e0a\u306b\u8aad\u307f\u65b9\u3092\u8868\u793a",
+    "autoplayAudio": "\u81ea\u52d5\u518d\u751f",
+    "autoplayAudioDescription": "\u30c1\u30e3\u30d7\u30bf\u30fc\u306e\u97f3\u58f0\u3092\u81ea\u52d5\u3067\u518d\u751f",
+    "textSize": "\u6587\u5b57\u30b5\u30a4\u30ba",
+    "small": "\u5c0f",
+    "medium": "\u4e2d",
+    "large": "\u5927",
+    "extraLarge": "\u7279\u5927"
+  },
+  "learningTools": {
+    "title": "\u5b66\u7fd2\u30c4\u30fc\u30eb",
+    "description": "\u3059\u3079\u3066\u306e\u6a5f\u80fd\u306b\u30af\u30a4\u30c3\u30af\u30a2\u30af\u30bb\u30b9",
+    "learnHub": "\u5b66\u7fd2\u30cf\u30d6",
+    "learnHubDescription": "\u3059\u3079\u3066\u306e\u30c4\u30fc\u30eb\u3092\u4e00\u304b\u6240\u306b",
+    "flashcards": "\u30d5\u30e9\u30c3\u30b7\u30e5\u30ab\u30fc\u30c9",
+    "flashcardsDescription": "\u9593\u9694\u53cd\u5fa9",
+    "vocabulary": "語彙",
+    "vocabularyDescription": "語彙リスト",
+    "practice": "\u7df4\u7fd2",
+    "practiceDescription": "\u4f8b\u6587\u4f5c\u6210"
+  },
+  "languages": {
+    "title": "\u8a00\u8a9e\u3068\u8a66\u9a13",
+    "learningLanguages": "\u5b66\u7fd2\u4e2d\u306e\u8a00\u8a9e",
+    "targetExams": "\u76ee\u6a19\u8a66\u9a13"
+  },
+  "proficiency": {
+    "title": "\u7fd2\u5f97\u30ec\u30d9\u30eb",
+    "description": "\u9069\u5fdc\u30c6\u30b9\u30c8\u3092\u53d7\u3051\u3066\u3001\u30ec\u30d9\u30eb\u3092\u5224\u5b9a\u3057\u3001\u30d1\u30fc\u30bd\u30ca\u30e9\u30a4\u30ba\u3055\u308c\u305f\u30b3\u30f3\u30c6\u30f3\u30c4\u3092\u53d6\u5f97\u3057\u307e\u3057\u3087\u3046\u3002",
+    "level": "\u30ec\u30d9\u30eb",
+    "tested": "{{date}}\u306b\u30c6\u30b9\u30c8\u6e08\u307f",
+    "notAssessed": "\u672a\u8a55\u4fa1",
+    "takeTest": "\u30c6\u30b9\u30c8\u3092\u53d7\u3051\u308b",
+    "retake": "\u518d\u53d7\u9a13"
+  },
+  "account": {
+    "title": "\u30a2\u30ab\u30a6\u30f3\u30c8",
+    "user": "\u30e6\u30fc\u30b6\u30fc",
+    "signInPrompt": "ログインして、語彙と進捗をデバイス間で同期しましょう。"
+  },
+  "subscription": {
+    "title": "サブスクリプション",
+    "currentPlan": "現在のプラン",
+    "free": "無料",
+    "upgradePlan": "プランをアップグレード",
+    "mostPopular": "一番人気",
+    "perMonth": "/月",
+    "tiers": {
+      "basic": {
+        "name": "ベーシック",
+        "price": "$5",
+        "cta": "ベーシックを選ぶ",
+        "features": [
+          "AIストーリー 5件/月",
+          "AI添削 200件/月",
+          "フラッシュカード 500枚/月",
+          "模擬テスト 2回/月"
+        ]
+      },
+      "pro": {
+        "name": "プロ",
+        "price": "$15",
+        "cta": "プロを選ぶ",
+        "features": [
+          "AIストーリー 25件/月",
+          "AI添削 1,000件/月",
+          "フラッシュカード 3,000枚/月",
+          "模擬テスト 15回/月"
+        ]
+      },
+      "power": {
+        "name": "パワー",
+        "price": "$45",
+        "cta": "パワーを選ぶ",
+        "features": [
+          "AIストーリー 150件/月",
+          "AI添削 5,000件/月",
+          "フラッシュカード 15,000枚/月",
+          "模擬テスト 100回/月"
+        ]
+      }
+    }
+  },
+  "admin": {
+    "title": "\u7ba1\u7406",
+    "premiumAccess": "\u30d7\u30ec\u30df\u30a2\u30e0\u30a2\u30af\u30bb\u30b9",
+    "premiumAccessDescription": "\u30c6\u30b9\u30c8\u7528\u306bPro\u30b5\u30d6\u30b9\u30af\u30ea\u30d7\u30b7\u30e7\u30f3\u3092\u5207\u308a\u66ff\u3048",
+    "levelOverride": "\u30ec\u30d9\u30eb\u4e0a\u66f8\u304d",
+    "levelOverrideDescription": "\u8cea\u554f\u30c6\u30b9\u30c8\u7528\u306b\u30ec\u30d9\u30eb\u3092\u624b\u52d5\u8a2d\u5b9a",
+    "showOnboarding": "\u30aa\u30f3\u30dc\u30fc\u30c7\u30a3\u30f3\u30b0\u3092\u8868\u793a",
+    "showOnboardingDescription": "\u30aa\u30f3\u30dc\u30fc\u30c7\u30a3\u30f3\u30b0\u30d5\u30ed\u30fc\u3092\u30d7\u30ec\u30d3\u30e5\u30fc",
+    "notSet": "\u672a\u8a2d\u5b9a"
+  },
+  "uiLanguage": {
+    "title": "表示言語",
+    "description": "インターフェースの言語を変更"
+  },
+  "usage": {
+    "title": "月間使用状況",
+    "description": "使用量は毎月1日にリセットされます。アップグレードで上限を増やせます。",
+    "aiChecks": "AI添削",
+    "aiChecksDescription": "文章のフィードバックと採点",
+    "flashcards": "フラッシュカード",
+    "flashcardsDescription": "AI生成フラッシュカード",
+    "audio": "音声",
+    "audioDescription": "テキスト読み上げ",
+    "stories": "ストーリー",
+    "storiesDescription": "読んだストーリー数",
+    "aiStories": "AIストーリー",
+    "aiStoriesDescription": "パーソナライズストーリー生成",
+    "mockTests": "模擬テスト",
+    "mockTestsDescription": "AI生成練習テスト",
+    "unlimited": "無制限"
+  },
+  "about": {
+    "title": "このアプリについて",
+    "version": "SanLang v1.0.0",
+    "description": "AIを活用したパーソナライズ学習"
+  }
+}

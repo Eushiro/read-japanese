@@ -1,0 +1,91 @@
+{
+  "title": "Votre tableau de bord",
+  "welcome": "Bon retour, {{name}} !",
+  "dailyActivities": {
+    "title": "Activités du jour",
+    "noActivities": "Aucune activité en attente. Commencez par lire une histoire !",
+    "flashcardsDue": "{{count}} flashcard à réviser",
+    "flashcardsDue_other": "{{count}} flashcards à réviser",
+    "flashcardsSubtitle": "Révisez pour renforcer la mémoire",
+    "wordsToPractice": "{{count}} mot à pratiquer",
+    "wordsToPractice_other": "{{count}} mots à pratiquer",
+    "wordsSubtitle": "Écrivez des phrases pour maîtriser le vocabulaire",
+    "continueReading": "Continuer la lecture",
+    "readingProgress": "{{title}} ({{progress}}% terminé)",
+    "review": "Réviser",
+    "practice": "Pratiquer",
+    "continue": "Continuer"
+  },
+  "preview": {
+    "title": "Votre tableau de bord",
+    "subtitle": "D\u00e9couvrez comment SanLang vous aide \u00e0 ma\u00eetriser le vocabulaire"
+  },
+  "stats": {
+    "dueCards": "cartes \u00e0 r\u00e9viser",
+    "words": "mots",
+    "streak": "jour cons\u00e9cutif",
+    "streak_other": "jours cons\u00e9cutifs",
+    "wordsLearned": "mots appris",
+    "minutesToday": "minutes aujourd'hui",
+    "accuracy": "pr\u00e9cision"
+  },
+  "cta": {
+    "startPlacement": "Commencer le test de niveau",
+    "findLevel": "Trouvons votre niveau de départ",
+    "placementExplainer": "Passez un test adaptatif rapide (10-15 questions) pour personnaliser votre parcours d'apprentissage.",
+    "durationQuestion": "Combien de temps voulez-vous \u00e9tudier ?",
+    "noContentYet": "Pas encore de contenu",
+    "addVocabulary": "Ajoutez du vocabulaire ou parcourez la biblioth\u00e8que pour commencer."
+  },
+  "sections": {
+    "suggestedForYou": "Sugg\u00e9r\u00e9 pour vous",
+    "popularPicks": "S\u00e9lections populaires",
+    "stories": "Histoires",
+    "videos": "Vid\u00e9os",
+    "browseLibrary": "Parcourir la biblioth\u00e8que",
+    "libraryDescription": "Histoires et vid\u00e9os \u00e0 votre niveau",
+    "continueReading": "Continuer la lecture",
+    "quickActions": "Actions rapides",
+    "recentActivity": "Activit\u00e9 r\u00e9cente"
+  },
+  "signUpCta": {
+    "title": "Pr\u00eat \u00e0 commencer ?",
+    "subtitle": "Inscrivez-vous gratuitement et commencez \u00e0 enrichir votre vocabulaire avec des flashcards aliment\u00e9es par l'IA.",
+    "button": "Essayer gratuitement",
+    "disclaimer": "Aucune carte de cr\u00e9dit requise"
+  },
+  "session": {
+    "startSession": "D\u00e9marrer la session",
+    "sessionComplete": "Session termin\u00e9e",
+    "greatWork": "Excellent travail !",
+    "keepItUp": "Continuez comme \u00e7a !"
+  },
+  "learningLoop": {
+    "title": "La boucle d'apprentissage",
+    "completeLoop": "Complétez la boucle pour maîtriser votre langue",
+    "steps": {
+      "input": {
+        "title": "Entrée",
+        "description": "Histoires, audio, vidéos"
+      },
+      "capture": {
+        "title": "Capture",
+        "description": "Enregistrez du vocabulaire"
+      },
+      "review": {
+        "title": "Révision",
+        "description": "Flashcards intelligentes"
+      },
+      "output": {
+        "title": "Sortie",
+        "description": "Écrivez et recevez des retours"
+      }
+    },
+    "labels": {
+      "completed": "terminé",
+      "vocabulary": "vocabulaire",
+      "reviewed": "révisé",
+      "sentences": "phrases"
+    }
+  }
+}

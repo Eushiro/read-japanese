@@ -1,0 +1,32 @@
+{
+  "title": "Quiz Vidéo",
+  "auth": {
+    "signInRequired": "Connectez-vous pour faire le quiz",
+    "signInDescription": "Créez un compte pour suivre vos progrès et sauvegarder vos résultats.",
+    "signIn": "Se connecter"
+  },
+  "backToVideo": "Retour à la vidéo",
+  "noQuiz": {
+    "title": "Aucun quiz disponible",
+    "description": "Les questions n'ont pas encore été générées pour cette vidéo."
+  },
+  "results": {
+    "title": "Résultats du Quiz",
+    "wellDone": "Bien joué !",
+    "keepPracticing": "Continuez à pratiquer !",
+    "score": "Vous avez obtenu {{correct}} sur {{total}} questions correctes.",
+    "tryAgain": "Réessayer",
+    "watchVideo": "Regarder la vidéo",
+    "reviewAnswers": "Revoir les réponses",
+    "yourAnswer": "Votre réponse :",
+    "correct": "Correct :"
+  },
+  "quiz": {
+    "previous": "Précédent",
+    "next": "Suivant",
+    "submit": "Soumettre",
+    "seeResults": "Voir les résultats",
+    "placeholder": "Tapez votre réponse...",
+    "suggestedAnswer": "Réponse suggérée :"
+  }
+}

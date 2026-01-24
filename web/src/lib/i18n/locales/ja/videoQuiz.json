@@ -1,0 +1,32 @@
+{
+  "title": "動画クイズ",
+  "auth": {
+    "signInRequired": "クイズを受けるにはログインしてください",
+    "signInDescription": "アカウントを作成して、進捗状況を追跡し、クイズの結果を保存しましょう。",
+    "signIn": "ログイン"
+  },
+  "backToVideo": "動画に戻る",
+  "noQuiz": {
+    "title": "クイズがありません",
+    "description": "この動画の問題はまだ作成されていません。"
+  },
+  "results": {
+    "title": "クイズ結果",
+    "wellDone": "よくできました！",
+    "keepPracticing": "練習を続けましょう！",
+    "score": "{{total}}問中{{correct}}問正解しました。",
+    "tryAgain": "もう一度",
+    "watchVideo": "動画を見る",
+    "reviewAnswers": "回答を確認",
+    "yourAnswer": "あなたの回答:",
+    "correct": "正解:"
+  },
+  "quiz": {
+    "previous": "前へ",
+    "next": "次へ",
+    "submit": "送信",
+    "seeResults": "結果を見る",
+    "placeholder": "回答を入力...",
+    "suggestedAnswer": "模範解答:"
+  }
+}

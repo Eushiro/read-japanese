@@ -1,0 +1,131 @@
+{
+  "title": "Profile",
+  "appearance": {
+    "title": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "reading": {
+    "title": "Reading",
+    "showFurigana": "Show Furigana",
+    "showFuriganaDescription": "Display readings above kanji",
+    "autoplayAudio": "Autoplay Audio",
+    "autoplayAudioDescription": "Automatically play chapter audio",
+    "textSize": "Text Size",
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "extraLarge": "Extra Large"
+  },
+  "learningTools": {
+    "title": "Learning Tools",
+    "description": "Quick access to all learning features",
+    "learnHub": "Learn Hub",
+    "learnHubDescription": "All tools in one place",
+    "flashcards": "Flashcards",
+    "flashcardsDescription": "Spaced repetition",
+    "vocabulary": "Vocabulary",
+    "vocabularyDescription": "Word list",
+    "practice": "Practice",
+    "practiceDescription": "Sentence writing"
+  },
+  "languages": {
+    "title": "Languages & Exams",
+    "learningLanguages": "Languages you're learning",
+    "targetExams": "Target exams"
+  },
+  "proficiency": {
+    "title": "Proficiency Level",
+    "description": "Take an adaptive placement test to assess your level and get personalized content.",
+    "level": "Level",
+    "tested": "tested {{date}}",
+    "notAssessed": "Not assessed yet",
+    "takeTest": "Take Test",
+    "retake": "Retake"
+  },
+  "account": {
+    "title": "Account",
+    "user": "User",
+    "signInPrompt": "Sign in to sync your vocabulary and reading progress across devices."
+  },
+  "subscription": {
+    "title": "Subscription",
+    "currentPlan": "Current Plan",
+    "free": "Free",
+    "upgradePlan": "Upgrade your plan",
+    "mostPopular": "Most Popular",
+    "perMonth": "/mo",
+    "tiers": {
+      "basic": {
+        "name": "Basic",
+        "price": "$5",
+        "cta": "Get Basic",
+        "features": [
+          "5 AI stories/month",
+          "200 AI checks/month",
+          "500 flashcards/month",
+          "2 mock tests/month"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$15",
+        "cta": "Get Pro",
+        "features": [
+          "25 AI stories/month",
+          "1,000 AI checks/month",
+          "3,000 flashcards/month",
+          "15 mock tests/month"
+        ]
+      },
+      "power": {
+        "name": "Power",
+        "price": "$45",
+        "cta": "Get Power",
+        "features": [
+          "150 AI stories/month",
+          "5,000 AI checks/month",
+          "15,000 flashcards/month",
+          "100 mock tests/month"
+        ]
+      }
+    }
+  },
+  "admin": {
+    "title": "Admin",
+    "premiumAccess": "Premium Access",
+    "premiumAccessDescription": "Toggle Pro subscription for testing",
+    "levelOverride": "Level Override",
+    "levelOverrideDescription": "Manually set proficiency level for testing questions",
+    "showOnboarding": "Show Onboarding",
+    "showOnboardingDescription": "Preview the onboarding flow",
+    "notSet": "Not set"
+  },
+  "uiLanguage": {
+    "title": "Display Language",
+    "description": "Change the language of the interface"
+  },
+  "usage": {
+    "title": "Monthly Usage",
+    "description": "Your usage resets on the 1st of each month. Upgrade to get more.",
+    "aiChecks": "AI Checks",
+    "aiChecksDescription": "Sentence feedback & grading",
+    "flashcards": "Flashcards",
+    "flashcardsDescription": "AI-generated flashcards",
+    "audio": "Audio",
+    "audioDescription": "Text-to-speech generations",
+    "stories": "Stories",
+    "storiesDescription": "Stories read",
+    "aiStories": "AI Stories",
+    "aiStoriesDescription": "Personalized story generation",
+    "mockTests": "Mock Tests",
+    "mockTestsDescription": "AI-generated practice tests",
+    "unlimited": "Unlimited"
+  },
+  "about": {
+    "title": "About",
+    "version": "SanLang v1.0.0",
+    "description": "Personalized exam prep powered by AI"
+  }
+}

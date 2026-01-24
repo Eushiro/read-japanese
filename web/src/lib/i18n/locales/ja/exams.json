@@ -1,0 +1,82 @@
+{
+  "signIn": {
+    "title": "模擬試験",
+    "description": "ログインして模擬試験にアクセスし、進捗を追跡しましょう。"
+  },
+  "hero": {
+    "title": "模擬試験",
+    "subtitle": "AIフィードバック付きの本物の試験で目標試験に向けて準備しましょう。"
+  },
+  "readiness": {
+    "title": "あなたの準備状況",
+    "viewProgress": "進捗を見る",
+    "levels": {
+      "confident": "自信あり",
+      "ready": "準備完了",
+      "almostReady": "もう少し",
+      "keepStudying": "学習を続けよう"
+    },
+    "vocabularyMastered": "語彙: {{known}}/{{total}} マスター済み"
+  },
+  "continueExam": {
+    "title": "試験を続ける",
+    "questionsAnswered": "{{answered}}/{{total}} 問回答済み"
+  },
+  "available": {
+    "title": "利用可能な試験",
+    "empty": "まだ模擬試験がありません。また確認してください！",
+    "attempts": "{{count}}回受験",
+    "best": "最高: {{score}}%",
+    "questions": "{{count}}問",
+    "minutes": "{{count}}分"
+  },
+  "progress": {
+    "title": "あなたの進捗",
+    "average": "平均",
+    "best": "最高",
+    "attempts": "受験回数",
+    "focusAreas": "重点エリア:"
+  },
+  "examTypes": {
+    "jlpt_n5": {
+      "name": "JLPT N5",
+      "description": "基本的な日本語能力"
+    },
+    "jlpt_n4": {
+      "name": "JLPT N4",
+      "description": "初級日本語"
+    },
+    "jlpt_n3": {
+      "name": "JLPT N3",
+      "description": "中級日本語"
+    },
+    "jlpt_n2": {
+      "name": "JLPT N2",
+      "description": "中上級日本語"
+    },
+    "jlpt_n1": {
+      "name": "JLPT N1",
+      "description": "上級日本語能力"
+    },
+    "toefl": {
+      "name": "TOEFL",
+      "description": "英語能力テスト"
+    },
+    "delf_a1": {
+      "name": "DELF A1",
+      "description": "基礎フランス語"
+    },
+    "delf_a2": {
+      "name": "DELF A2",
+      "description": "初級フランス語"
+    },
+    "delf_b1": {
+      "name": "DELF B1",
+      "description": "中級フランス語"
+    },
+    "delf_b2": {
+      "name": "DELF B2",
+      "description": "中上級フランス語"
+    }
+  }
+}

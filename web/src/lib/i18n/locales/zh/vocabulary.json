@@ -1,0 +1,105 @@
+{
+  "title": "词汇",
+  "yourWords": "您的单词",
+  "wordsInCollection": "收藏中有{{count}}个单词",
+  "addWord": "添加单词",
+  "searchPlaceholder": "搜索词汇...",
+  "browseDecks": "浏览卡组",
+  "word": "单词",
+  "words": "单词",
+  "ofTotal": "共{{total}}个",
+  "deckPanel": {
+    "view": "查看",
+    "allWords": "所有单词",
+    "myWords": "我的单词",
+    "activeDeck": "当前卡组",
+    "add": "添加",
+    "dailyCardsInfo": "每天从该卡组添加新卡片",
+    "noActiveDeck": "没有当前卡组",
+    "chooseADeck": "选择卡组",
+    "paused": "已暂停",
+    "makeActive": "设为当前卡组",
+    "removeDeckTitle": "删除卡组？",
+    "removeDeckDescription": "这将从您的卡组中删除<strong>{{deckName}}</strong>。您已学会的单词将保留在词汇表中。",
+    "cancel": "取消",
+    "remove": "删除",
+    "wordsProgress": "{{added}}/{{total}}个单词",
+    "today": "今天+{{count}}",
+    "newCardsPerDay": "每日新卡片"
+  },
+  "sort": {
+    "newest": "最新优先",
+    "oldest": "最早优先",
+    "alphabetical": "A → Z",
+    "alphabeticalReverse": "Z → A",
+    "byMastery": "按掌握程度"
+  },
+  "mastery": {
+    "new": "新词",
+    "learning": "学习中",
+    "tested": "已测试",
+    "mastered": "已掌握"
+  },
+  "filters": {
+    "allLanguages": "所有语言",
+    "allMastery": "所有掌握程度",
+    "clearAll": "清除全部",
+    "label": "筛选"
+  },
+  "signInPrompt": {
+    "title": "登录以查看您的词汇",
+    "description": "登录后您保存的单词将显示在这里。"
+  },
+  "empty": {
+    "title": "还没有保存词汇",
+    "description": "手动添加单词或在阅读时保存",
+    "addFirst": "添加第一个单词",
+    "noMatches": "未找到匹配的单词",
+    "tryAdjusting": "请尝试调整搜索或筛选条件"
+  },
+  "card": {
+    "playPronunciation": "播放发音",
+    "playWord": "播放单词",
+    "playSentence": "播放句子",
+    "practiceShadowing": "练习跟读",
+    "practiceWriting": "练习写句子",
+    "generateFlashcard": "生成AI闪卡",
+    "generatingContent": "正在生成内容...",
+    "enhancing": "正在增强...",
+    "regeneratingSentence": "正在重新生成句子和音频...",
+    "generatingSentence": "正在生成句子、音频和图片...",
+    "originalContext": "原始上下文",
+    "reading": "读音",
+    "definition": "定义"
+  },
+  "addModal": {
+    "title": "添加新单词",
+    "language": "语言",
+    "word": "单词",
+    "wordPlaceholder": "输入以搜索...",
+    "wordPlaceholderJapanese": "食べる, taberu...",
+    "readingLabel": "读音（平假名）",
+    "readingPlaceholder": "たべる",
+    "definitionLabel": "定义",
+    "definitionPlaceholder": "吃，消耗",
+    "definitionHint": "多个定义请用逗号分隔",
+    "noResults": "无结果",
+    "adding": "正在添加..."
+  },
+  "shadowing": {
+    "tryAgain": "重试",
+    "done": "完成"
+  },
+  "deckPicker": {
+    "title": "浏览词汇卡组",
+    "description": "选择一个预制卡组开始学习。每天会自动将新卡片添加到您的词汇中。",
+    "subscribedToAll": "您已订阅所有可用的{{language}}卡组！",
+    "sentences": "{{count}}个句子",
+    "audio": "{{count}}个音频",
+    "newCardsPerDay": "每日新卡片数",
+    "estimate": "按每天{{dailyCards}}张卡片，您将在大约<strong>{{days}}天</strong>内完成<strong>{{deckName}}</strong>",
+    "starting": "正在开始...",
+    "startLearning": "开始学习 {{deckName}}",
+    "decks": "卡组"
+  }
+}

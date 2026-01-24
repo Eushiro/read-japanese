@@ -1,0 +1,10 @@
+{
+  "signInRequired": "試験を受けるにはログインしてください。",
+  "questionProgress": "問題 {{current}} / {{total}}",
+  "finishExam": "試験を終了",
+  "readPassage": "次の文章を読んでください：",
+  "writeAnswer": "回答を書いてください...",
+  "typeAnswer": "回答を入力してください...",
+  "previous": "前へ",
+  "next": "次へ"
+}

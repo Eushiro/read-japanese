@@ -1,0 +1,103 @@
+{
+  "nav": {
+    "home": "\u9996\u9875",
+    "library": "图书馆",
+    "profile": "\u4e2a\u4eba\u8d44\u6599",
+    "settings": "\u8bbe\u7f6e",
+    "pricing": "\u4ef7\u683c",
+    "admin": "\u7ba1\u7406",
+    "signIn": "\u767b\u5f55",
+    "signOut": "\u9000\u51fa"
+  },
+  "actions": {
+    "save": "\u4fdd\u5b58",
+    "cancel": "\u53d6\u6d88",
+    "continue": "\u7ee7\u7eed",
+    "back": "\u8fd4\u56de",
+    "close": "\u5173\u95ed",
+    "delete": "\u5220\u9664",
+    "edit": "\u7f16\u8f91",
+    "add": "\u6dfb\u52a0",
+    "remove": "\u79fb\u9664",
+    "search": "\u641c\u7d22",
+    "filter": "\u7b5b\u9009",
+    "sort": "\u6392\u5e8f",
+    "refresh": "\u5237\u65b0",
+    "retry": "\u91cd\u8bd5",
+    "submit": "\u63d0\u4ea4",
+    "confirm": "\u786e\u8ba4",
+    "manage": "\u7ba1\u7406",
+    "upgrade": "\u5347\u7ea7",
+    "getStarted": "\u5f00\u59cb",
+    "startLearning": "\u5f00\u59cb\u5b66\u4e60",
+    "tryFree": "\u514d\u8d39\u8bd5\u7528",
+    "learnMore": "\u4e86\u89e3\u66f4\u591a",
+    "browseLibrary": "浏览图书馆",
+    "viewAll": "\u67e5\u770b\u5168\u90e8",
+    "show": "\u663e\u793a",
+    "hide": "\u9690\u85cf",
+    "play": "\u64ad\u653e",
+    "pause": "\u6682\u505c"
+  },
+  "status": {
+    "loading": "\u52a0\u8f7d\u4e2d...",
+    "saving": "\u4fdd\u5b58\u4e2d...",
+    "processing": "\u5904\u7406\u4e2d...",
+    "error": "\u51fa\u9519\u4e86",
+    "success": "\u6210\u529f",
+    "empty": "\u672a\u627e\u5230\u9879\u76ee",
+    "noResults": "\u65e0\u7ed3\u679c"
+  },
+  "time": {
+    "minutes": "{{count}}\u5206\u949f",
+    "hours": "{{count}}\u5c0f\u65f6",
+    "seconds": "{{count}}\u79d2",
+    "days": "{{count}}\u5929",
+    "days_other": "{{count}}\u5929",
+    "ago": "{{time}}\u524d",
+    "remaining": "\u5269\u4f59{{time}}"
+  },
+  "errors": {
+    "generic": "\u51fa\u9519\u4e86\u3002\u8bf7\u91cd\u8bd5\u3002",
+    "network": "\u7f51\u7edc\u9519\u8bef\u3002\u8bf7\u68c0\u67e5\u60a8\u7684\u8fde\u63a5\u3002",
+    "unauthorized": "\u8bf7\u767b\u5f55\u4ee5\u7ee7\u7eed\u3002",
+    "notFound": "\u672a\u627e\u5230\u3002"
+  },
+  "auth": {
+    "signInPrompt": "\u8bf7\u767b\u5f55\u4ee5\u7ee7\u7eed",
+    "signInDescription": "\u521b\u5efa\u8d26\u6237\u6216\u767b\u5f55\u4ee5\u8bbf\u95ee\u6240\u6709\u529f\u80fd\u3002",
+    "signedInAs": "\u5df2\u4ee5{{name}}\u8eab\u4efd\u767b\u5f55",
+    "syncDescription": "\u767b\u5f55\u4ee5\u5728\u8bbe\u5907\u95f4\u540c\u6b65\u60a8\u7684\u8bcd\u6c47\u548c\u5b66\u4e60\u8fdb\u5ea6\u3002"
+  },
+  "languages": {
+    "japanese": "\u65e5\u8bed",
+    "english": "\u82f1\u8bed",
+    "french": "\u6cd5\u8bed",
+    "chinese": "\u4e2d\u6587",
+    "allLanguages": "\u6240\u6709\u8bed\u8a00"
+  },
+  "mastery": {
+    "new": "\u65b0\u5355\u8bcd",
+    "learning": "\u5b66\u4e60\u4e2d",
+    "tested": "\u5df2\u6d4b\u8bd5",
+    "mastered": "\u5df2\u638c\u63e1",
+    "allMastery": "\u6240\u6709\u7ea7\u522b"
+  },
+  "sort": {
+    "newestFirst": "\u6700\u65b0\u4f18\u5148",
+    "oldestFirst": "\u6700\u65e7\u4f18\u5148",
+    "alphabetical": "A \u2192 Z",
+    "alphabeticalReverse": "Z \u2192 A",
+    "byMastery": "\u6309\u638c\u63e1\u7a0b\u5ea6"
+  },
+  "duration": {
+    "quick": "\u5feb\u901f\u590d\u4e60",
+    "standard": "\u6807\u51c6",
+    "deep": "\u6df1\u5165\u5b66\u4e60"
+  },
+  "about": {
+    "title": "\u5173\u4e8e",
+    "version": "SanLang v1.0.0",
+    "description": "AI\u9a71\u52a8\u7684\u4e2a\u6027\u5316\u8003\u8bd5\u51c6\u5907"
+  }
+}

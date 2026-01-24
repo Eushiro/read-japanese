@@ -1,0 +1,56 @@
+{
+  "hero": {
+    "badge": "AI搭載",
+    "title": "ストーリーを生成",
+    "subtitle": "あなたのレベルに合わせたカスタムストーリーを作成"
+  },
+  "modal": {
+    "title": "ストーリーを生成",
+    "subtitle": "あなたのレベルに合わせたストーリーを作成"
+  },
+  "form": {
+    "jlptLevel": "JLPTレベル",
+    "genre": "ジャンル",
+    "theme": "テーマ",
+    "themeOptional": "(任意)",
+    "themePlaceholder": "例：桜、夏祭り...",
+    "chapters": "章数",
+    "chaptersCount": "{{count}}章",
+    "wordsPerChapter": "章あたりの単語数",
+    "wordsCount": "約{{count}}語",
+    "options": "オプション"
+  },
+  "genres": {
+    "dailyLife": "日常",
+    "fantasy": "ファンタジー",
+    "mystery": "ミステリー",
+    "travel": "旅行",
+    "school": "学校",
+    "food": "食べ物",
+    "nature": "自然",
+    "adventure": "冒険",
+    "romance": "恋愛",
+    "historical": "歴史"
+  },
+  "options": {
+    "generateAudio": "音声を生成",
+    "generateImages": "画像を生成",
+    "audio": "音声",
+    "images": "画像"
+  },
+  "actions": {
+    "generate": "ストーリーを生成",
+    "generating": "生成中..."
+  },
+  "progress": {
+    "starting": "生成を開始しています..."
+  },
+  "errors": {
+    "signInRequired": "ストーリーを生成するにはログインしてください。",
+    "generationFailed": "生成に失敗しました"
+  },
+  "info": {
+    "generationTime": "ストーリーの生成には、選択したオプションにより2〜5分かかる場合があります。",
+    "generationTimeBrief": "生成には2〜5分かかります"
+  }
+}

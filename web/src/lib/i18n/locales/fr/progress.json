@@ -1,0 +1,47 @@
+{
+  "title": "Votre progression",
+  "subtitle": "Suivez vos compétences et identifiez les domaines à améliorer.",
+  "signInPrompt": "Connectez-vous pour suivre votre progression d'apprentissage.",
+  "stats": {
+    "streak": "Série",
+    "days": "{{count}} jours",
+    "totalStudy": "Étude totale",
+    "hours": "{{count}}h",
+    "vocabulary": "Vocabulaire"
+  },
+  "readiness": {
+    "title": "Préparation",
+    "notReady": "Continuez à étudier",
+    "almostReady": "Presque prêt",
+    "ready": "Prêt",
+    "confident": "Confiant"
+  },
+  "skills": {
+    "title": "Répartition des compétences",
+    "vocabulary": "Vocabulaire",
+    "grammar": "Grammaire",
+    "reading": "Lecture",
+    "listening": "Écoute",
+    "writing": "Écriture",
+    "speaking": "Expression orale",
+    "noData": "Pas encore de données. Commencez à apprendre pour voir vos compétences !"
+  },
+  "focusAreas": {
+    "title": "Domaines prioritaires",
+    "practice": "Pratiquer",
+    "questions": "{{count}} Q",
+    "noWeakAreas": "Excellent ! Aucun point faible détecté."
+  },
+  "progressChart": {
+    "title": "Progression au fil du temps",
+    "noData": "Étudiez pendant quelques jours pour voir votre graphique de progression."
+  },
+  "languages": {
+    "title": "Langues",
+    "average": "Moyenne : {{percent}}%"
+  },
+  "actions": {
+    "takePracticeExam": "Passer un examen pratique",
+    "reviewFlashcards": "Réviser les flashcards"
+  }
+}

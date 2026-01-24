@@ -1,0 +1,65 @@
+{
+  "emptyState": {
+    "title": "Nothing to study yet",
+    "description": "Add some vocabulary or read a story to get started with your learning journey."
+  },
+  "buttons": {
+    "browseLibrary": "Browse Library",
+    "backToDashboard": "Back to Dashboard",
+    "keepLearning": "Keep Learning",
+    "exit": "Exit",
+    "skip": "Skip",
+    "startReading": "Start Reading",
+    "startWatching": "Start Watching"
+  },
+  "exitModal": {
+    "title": "Exit session?",
+    "description": "Your progress in this session will not be saved. Are you sure you want to exit?"
+  },
+  "complete": {
+    "title": "Session Complete!",
+    "streak": "{{count}} day streak!",
+    "newRecord": "New record!",
+    "stats": {
+      "cardsReviewed": "Cards reviewed",
+      "read": "Read",
+      "watched": "Watched",
+      "wordsAdded": "Words added",
+      "sentencesWritten": "Sentences written"
+    },
+    "encouragement": "Great work! Consistent practice is the key to mastery.",
+    "doneForToday": "Done for Today",
+    "continueStudying": "Continue Studying"
+  },
+  "input": {
+    "readingTime": "Reading Time",
+    "listeningTime": "Listening Time",
+    "readAStory": "Read a Story",
+    "watchAVideo": "Watch a Video",
+    "storyDescription": "Immerse yourself in content at your level",
+    "videoDescription": "Practice listening and pick up new vocabulary",
+    "gradedStory": "A graded story at your level"
+  },
+  "output": {
+    "wordOf": "Word {{current}} of {{total}}",
+    "writeSentenceUsing": "Write a sentence using:",
+    "placeholder": "Write a sentence using \"{{word}}\"...",
+    "skipWriting": "Skip Writing",
+    "checking": "Checking...",
+    "check": "Check",
+    "greatJob": "Great job!",
+    "goodEffort": "Good effort!",
+    "score": "Score: {{score}}/100",
+    "suggestedImprovement": "Suggested improvement:",
+    "complete": "Complete",
+    "nextWord": "Next Word",
+    "noWordsTitle": "No words to practice",
+    "noWordsDescription": "Add vocabulary to start writing sentences."
+  },
+  "progress": {
+    "review": "Review",
+    "read": "Read",
+    "watch": "Watch",
+    "write": "Write"
+  }
+}

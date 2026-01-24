@@ -1,0 +1,131 @@
+{
+  "title": "Profil",
+  "appearance": {
+    "title": "Apparence",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Syst\u00e8me"
+  },
+  "reading": {
+    "title": "Lecture",
+    "showFurigana": "Afficher les furigana",
+    "showFuriganaDescription": "Afficher les lectures au-dessus des kanji",
+    "autoplayAudio": "Lecture automatique",
+    "autoplayAudioDescription": "Lire automatiquement l'audio des chapitres",
+    "textSize": "Taille du texte",
+    "small": "Petit",
+    "medium": "Moyen",
+    "large": "Grand",
+    "extraLarge": "Tr\u00e8s grand"
+  },
+  "learningTools": {
+    "title": "Outils d'apprentissage",
+    "description": "Acc\u00e8s rapide \u00e0 toutes les fonctionnalit\u00e9s",
+    "learnHub": "Centre d'apprentissage",
+    "learnHubDescription": "Tous les outils en un seul endroit",
+    "flashcards": "Flashcards",
+    "flashcardsDescription": "R\u00e9p\u00e9tition espac\u00e9e",
+    "vocabulary": "Vocabulaire",
+    "vocabularyDescription": "Liste de mots",
+    "practice": "Pratique",
+    "practiceDescription": "\u00c9criture de phrases"
+  },
+  "languages": {
+    "title": "Langues et examens",
+    "learningLanguages": "Langues que vous apprenez",
+    "targetExams": "Examens vis\u00e9s"
+  },
+  "proficiency": {
+    "title": "Niveau de comp\u00e9tence",
+    "description": "Passez un test de niveau adaptatif pour \u00e9valuer votre niveau et obtenir un contenu personnalis\u00e9.",
+    "level": "Niveau",
+    "tested": "test\u00e9 le {{date}}",
+    "notAssessed": "Pas encore \u00e9valu\u00e9",
+    "takeTest": "Passer le test",
+    "retake": "Repasser"
+  },
+  "account": {
+    "title": "Compte",
+    "user": "Utilisateur",
+    "signInPrompt": "Connectez-vous pour synchroniser votre vocabulaire et votre progression sur tous vos appareils."
+  },
+  "subscription": {
+    "title": "Abonnement",
+    "currentPlan": "Forfait actuel",
+    "free": "Gratuit",
+    "upgradePlan": "Améliorer votre forfait",
+    "mostPopular": "Le plus populaire",
+    "perMonth": "/mois",
+    "tiers": {
+      "basic": {
+        "name": "Basique",
+        "price": "5 $",
+        "cta": "Choisir Basique",
+        "features": [
+          "5 histoires IA/mois",
+          "200 vérifications IA/mois",
+          "500 flashcards/mois",
+          "2 tests blancs/mois"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "15 $",
+        "cta": "Choisir Pro",
+        "features": [
+          "25 histoires IA/mois",
+          "1 000 vérifications IA/mois",
+          "3 000 flashcards/mois",
+          "15 tests blancs/mois"
+        ]
+      },
+      "power": {
+        "name": "Power",
+        "price": "45 $",
+        "cta": "Choisir Power",
+        "features": [
+          "150 histoires IA/mois",
+          "5 000 vérifications IA/mois",
+          "15 000 flashcards/mois",
+          "100 tests blancs/mois"
+        ]
+      }
+    }
+  },
+  "admin": {
+    "title": "Admin",
+    "premiumAccess": "Acc\u00e8s Premium",
+    "premiumAccessDescription": "Activer l'abonnement Pro pour les tests",
+    "levelOverride": "Forcer le niveau",
+    "levelOverrideDescription": "D\u00e9finir manuellement le niveau pour tester les questions",
+    "showOnboarding": "Afficher l'int\u00e9gration",
+    "showOnboardingDescription": "Pr\u00e9visualiser le flux d'int\u00e9gration",
+    "notSet": "Non d\u00e9fini"
+  },
+  "uiLanguage": {
+    "title": "Langue d'affichage",
+    "description": "Changer la langue de l'interface"
+  },
+  "usage": {
+    "title": "Utilisation mensuelle",
+    "description": "Votre utilisation se réinitialise le 1er de chaque mois. Passez à un forfait supérieur pour plus.",
+    "aiChecks": "Vérifications IA",
+    "aiChecksDescription": "Retours et notation des phrases",
+    "flashcards": "Flashcards",
+    "flashcardsDescription": "Flashcards générées par IA",
+    "audio": "Audio",
+    "audioDescription": "Génération de synthèse vocale",
+    "stories": "Histoires",
+    "storiesDescription": "Histoires lues",
+    "aiStories": "Histoires IA",
+    "aiStoriesDescription": "Génération d'histoires personnalisées",
+    "mockTests": "Tests blancs",
+    "mockTestsDescription": "Tests pratiques générés par IA",
+    "unlimited": "Illimité"
+  },
+  "about": {
+    "title": "À propos",
+    "version": "SanLang v1.0.0",
+    "description": "Préparation aux examens personnalisée par IA"
+  }
+}

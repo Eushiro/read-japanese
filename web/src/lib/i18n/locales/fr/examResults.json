@@ -1,0 +1,32 @@
+{
+  "loading": "Chargement des résultats...",
+  "backToExams": "Retour aux examens",
+  "header": {
+    "congratulations": "Félicitations !",
+    "keepPracticing": "Continuez à pratiquer",
+    "points": "{{earned}} / {{total}} points"
+  },
+  "stats": {
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "minutes": "Minutes"
+  },
+  "sections": {
+    "title": "Détail par section"
+  },
+  "questions": {
+    "title": "Révision des questions",
+    "questionNumber": "Question {{number}}",
+    "points": "{{earned}} / {{total}} pts",
+    "yourAnswer": "Votre réponse :",
+    "noAnswer": "(Pas de réponse)",
+    "correctAnswer": "Bonne réponse :",
+    "feedback": "Commentaires :",
+    "explanation": "Explication :"
+  },
+  "actions": {
+    "tryAgain": "Réessayer",
+    "viewProgress": "Voir la progression",
+    "moreExams": "Plus d'examens"
+  }
+}

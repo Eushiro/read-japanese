@@ -1,0 +1,87 @@
+{
+  "hero": {
+    "badge": "Répétition espacée",
+    "title": "Flashcards",
+    "subtitle": "Révisez votre vocabulaire avec l'algorithme FSRS"
+  },
+  "signIn": {
+    "title": "Connectez-vous pour commencer",
+    "description": "Suivez vos progrès et maîtrisez votre vocabulaire avec la répétition espacée.",
+    "button": "Se connecter"
+  },
+  "counter": {
+    "cardsLeft": "cartes restantes"
+  },
+  "states": {
+    "allCaughtUp": {
+      "title": "Tout est à jour !",
+      "description": "Aucune carte à réviser pour le moment. Ajoutez du vocabulaire ou revenez plus tard.",
+      "addVocabulary": "Ajouter du vocabulaire"
+    },
+    "sessionComplete": {
+      "title": "Session terminée !",
+      "cardsReviewed": "Vous avez révisé <bold>{{count}}</bold> cartes",
+      "encouragement": "Excellent travail ! Continuez ainsi.",
+      "reviewAgain": "Réviser à nouveau"
+    }
+  },
+  "rating": {
+    "prompt": "Quel était votre niveau de connaissance ?",
+    "again": "Encore",
+    "hard": "Difficile",
+    "good": "Bien",
+    "easy": "Facile",
+    "intervals": {
+      "again": "1m",
+      "hard": "10m",
+      "good": "1j",
+      "easy": "4j"
+    }
+  },
+  "actions": {
+    "undo": "Annuler (Cmd+Z)",
+    "redo": "Rétablir (Cmd+Shift+Z)"
+  },
+  "card": {
+    "showAnswer": "Afficher la réponse",
+    "playWord": "Écouter le mot",
+    "playSentence": "Écouter la phrase",
+    "newSentence": "Nouvelle phrase",
+    "refreshing": "Actualisation...",
+    "reading": "Lecture",
+    "definition": "Définition"
+  },
+  "title": "Flashcards",
+  "subtitle": "Révisez votre vocabulaire avec la répétition espacée",
+  "startReview": "Commencer la révision",
+  "continueReview": "Continuer la révision",
+  "noCardsToReview": "Aucune carte à réviser",
+  "allCaughtUp": "Vous êtes à jour ! Revenez plus tard.",
+  "dueCards": "{{count}} cartes à réviser",
+  "newCards": "{{count}} nouvelles cartes",
+  "reviewComplete": "Révision terminée",
+  "cardsReviewed": "{{count}} cartes révisées",
+  "session": {
+    "progress": "{{current}} sur {{total}}",
+    "remaining": "{{count}} restantes",
+    "timeSpent": "Temps passé",
+    "accuracy": "Précision",
+    "streak": "Série"
+  },
+  "settings": {
+    "newCardsPerDay": "Nouvelles cartes par jour",
+    "maxReviewsPerDay": "Révisions max par jour",
+    "showSentence": "Afficher la phrase d'exemple",
+    "showImage": "Afficher l'image",
+    "autoplayAudio": "Lecture automatique de l'audio"
+  },
+  "stats": {
+    "title": "Statistiques de révision",
+    "today": "Aujourd'hui",
+    "thisWeek": "Cette semaine",
+    "allTime": "Depuis le début",
+    "cardsStudied": "Cartes étudiées",
+    "averageAccuracy": "Précision moyenne",
+    "longestStreak": "Plus longue série"
+  }
+}

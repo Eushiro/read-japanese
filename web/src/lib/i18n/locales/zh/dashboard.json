@@ -1,0 +1,91 @@
+{
+  "title": "\u5b66\u4e60\u4eea\u8868\u76d8",
+  "welcome": "\u6b22\u8fce\u56de\u6765\uff0c{{name}}\uff01",
+  "dailyActivities": {
+    "title": "今日活动",
+    "noActivities": "暂无待办活动。开始阅读故事吧！",
+    "flashcardsDue": "{{count}}张闪卡待复习",
+    "flashcardsDue_other": "{{count}}张闪卡待复习",
+    "flashcardsSubtitle": "复习以加强记忆",
+    "wordsToPractice": "{{count}}个词汇待练习",
+    "wordsToPractice_other": "{{count}}个词汇待练习",
+    "wordsSubtitle": "写句子来掌握词汇",
+    "continueReading": "继续阅读",
+    "readingProgress": "{{title}} (已完成{{progress}}%)",
+    "review": "复习",
+    "practice": "练习",
+    "continue": "继续"
+  },
+  "preview": {
+    "title": "\u60a8\u7684\u5b66\u4e60\u4eea\u8868\u76d8",
+    "subtitle": "\u4e86\u89e3SanLang\u5982\u4f55\u5e2e\u52a9\u60a8\u638c\u63e1\u8bcd\u6c47"
+  },
+  "stats": {
+    "dueCards": "\u5f85\u590d\u4e60\u5361\u7247",
+    "words": "\u5355\u8bcd",
+    "streak": "\u5929\u8fde\u7eed",
+    "streak_other": "\u5929\u8fde\u7eed",
+    "wordsLearned": "\u5df2\u5b66\u5355\u8bcd",
+    "minutesToday": "\u4eca\u65e5\u5b66\u4e60\u65f6\u95f4",
+    "accuracy": "\u6b63\u786e\u7387"
+  },
+  "cta": {
+    "startPlacement": "开始分级测试",
+    "findLevel": "让我们确定您的起始水平",
+    "placementExplainer": "参加快速自适应测试（10-15题），个性化您的学习路径。",
+    "durationQuestion": "\u60a8\u60f3\u5b66\u4e60\u591a\u957f\u65f6\u95f4\uff1f",
+    "noContentYet": "\u8fd8\u6ca1\u6709\u5185\u5bb9",
+    "addVocabulary": "添加词汇或浏览图书馆开始。"
+  },
+  "sections": {
+    "suggestedForYou": "\u4e3a\u60a8\u63a8\u8350",
+    "popularPicks": "\u70ed\u95e8\u9009\u62e9",
+    "stories": "\u6545\u4e8b",
+    "videos": "\u89c6\u9891",
+    "browseLibrary": "浏览图书馆",
+    "libraryDescription": "\u9002\u5408\u60a8\u7ea7\u522b\u7684\u6545\u4e8b\u548c\u89c6\u9891",
+    "continueReading": "\u7ee7\u7eed\u9605\u8bfb",
+    "quickActions": "\u5feb\u901f\u64cd\u4f5c",
+    "recentActivity": "\u6700\u8fd1\u6d3b\u52a8"
+  },
+  "signUpCta": {
+    "title": "\u51c6\u5907\u597d\u5f00\u59cb\u5b66\u4e60\u4e86\u5417\uff1f",
+    "subtitle": "\u514d\u8d39\u52a0\u5165\uff0c\u4f7f\u7528AI\u95ea\u5361\u5f00\u59cb\u79ef\u7d2f\u8bcd\u6c47\u3002",
+    "button": "\u514d\u8d39\u8bd5\u7528",
+    "disclaimer": "\u65e0\u9700\u4fe1\u7528\u5361"
+  },
+  "session": {
+    "startSession": "\u5f00\u59cb\u5b66\u4e60",
+    "sessionComplete": "\u5b66\u4e60\u5b8c\u6210",
+    "greatWork": "\u505a\u5f97\u597d\uff01",
+    "keepItUp": "\u7ee7\u7eed\u52a0\u6cb9\uff01"
+  },
+  "learningLoop": {
+    "title": "学习循环",
+    "completeLoop": "完成循环，掌握您的语言",
+    "steps": {
+      "input": {
+        "title": "输入",
+        "description": "故事、音频、视频"
+      },
+      "capture": {
+        "title": "捕获",
+        "description": "保存词汇学习"
+      },
+      "review": {
+        "title": "复习",
+        "description": "AI智能闪卡"
+      },
+      "output": {
+        "title": "输出",
+        "description": "写作并获得反馈"
+      }
+    },
+    "labels": {
+      "completed": "已完成",
+      "vocabulary": "词汇",
+      "reviewed": "已复习",
+      "sentences": "句子"
+    }
+  }
+}

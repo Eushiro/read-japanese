@@ -1,0 +1,12 @@
+{
+  "navigation": {
+    "previous": "Précédent",
+    "submitAnswer": "Soumettre",
+    "nextQuestion": "Question suivante",
+    "finishQuiz": "Terminer",
+    "submitting": "Envoi...",
+    "grading": "Correction...",
+    "questionNumber": "Question {{current}} sur {{total}}",
+    "answered": "répondu"
+  }
+}

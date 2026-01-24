@@ -1,0 +1,44 @@
+{
+  "welcome": {
+    "title": "Welcome to SanLang",
+    "subtitle": "Let's set up your personalized exam prep",
+    "getStarted": "Get Started"
+  },
+  "actions": {
+    "back": "Back",
+    "continue": "Continue",
+    "startLearning": "Start Learning",
+    "saving": "Saving..."
+  },
+  "howItWorks": {
+    "title": "How SanLang Works",
+    "subtitle": "Master vocabulary through our proven learning loop",
+    "steps": {
+      "read": {
+        "title": "1. Read",
+        "description": "Stories at your level"
+      },
+      "save": {
+        "title": "2. Save",
+        "description": "Words you want to learn"
+      },
+      "review": {
+        "title": "3. Review",
+        "description": "AI-powered flashcards"
+      },
+      "practice": {
+        "title": "4. Practice",
+        "description": "Write sentences, get feedback"
+      }
+    }
+  },
+  "languageSelection": {
+    "title": "Which languages are you studying?",
+    "subtitle": "Select all that apply"
+  },
+  "examSelection": {
+    "title": "Any exams coming up?",
+    "subtitle": "We'll tailor content to your target exams (optional)",
+    "skipForNow": "Skip for now"
+  }
+}

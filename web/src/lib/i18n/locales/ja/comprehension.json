@@ -1,0 +1,64 @@
+{
+  "header": {
+    "quiz": "読解クイズ",
+    "results": "クイズ結果",
+    "questionOf": "質問 {{current}} / {{total}}"
+  },
+  "questionTypes": {
+    "multiple_choice": "選択問題",
+    "short_answer": "短答",
+    "essay": "作文",
+    "translation": "翻訳",
+    "inference": "推論",
+    "prediction": "予測",
+    "grammar": "文法",
+    "opinion": "意見"
+  },
+  "questionDisplay": {
+    "points": "{{count}}点",
+    "placeholders": {
+      "essay": "回答を入力してください...",
+      "translation": "翻訳を入力してください...",
+      "default": "回答を入力..."
+    },
+    "feedback": {
+      "score": "スコア",
+      "expectedAnswer": "正解:",
+      "possibleAnswer": "解答例:",
+      "feedback": "フィードバック:"
+    }
+  },
+  "loading": {
+    "generatingQuestions": "質問を生成中...",
+    "loadingQuestions": "質問を読み込み中..."
+  },
+  "errors": {
+    "storyNotFound": "ストーリーが見つかりません"
+  },
+  "generate": {
+    "title": "理解度をテスト",
+    "description": "読んだストーリーに基づいてAIが読解問題を生成します。様々なレベルで理解度をテストします。",
+    "button": "質問を生成",
+    "signInRequired": "質問を生成するにはログインしてください。"
+  },
+  "results": {
+    "greatJob": "素晴らしい!",
+    "goodEffort": "よく頑張りました!",
+    "keepPracticing": "練習を続けましょう!",
+    "scoreText": "{{total}}点中{{earned}}点を獲得しました",
+    "reviewAnswers": "回答を確認",
+    "yourAnswer": "あなたの回答:",
+    "correctAnswer": "正解:",
+    "pointsEarned": "{{earned}}/{{total}}点"
+  },
+  "navigation": {
+    "backToLibrary": "ライブラリに戻る",
+    "backToStory": "ストーリーに戻る",
+    "browseMore": "他のストーリーを見る"
+  },
+  "paywall": {
+    "title": "AI読解機能にアップグレード",
+    "description": "AIが生成した質問と回答への詳細なフィードバックを受け取れます。",
+    "freeUserFeedback": "AIフィードバックを受けるには有料プランにアップグレードしてください。"
+  }
+}

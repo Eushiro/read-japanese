@@ -1,0 +1,65 @@
+{
+  "emptyState": {
+    "title": "暂时没有学习内容",
+    "description": "添加一些词汇或阅读一篇故事来开始您的学习之旅。"
+  },
+  "buttons": {
+    "browseLibrary": "浏览图书馆",
+    "backToDashboard": "返回仪表板",
+    "keepLearning": "继续学习",
+    "exit": "退出",
+    "skip": "跳过",
+    "startReading": "开始阅读",
+    "startWatching": "开始观看"
+  },
+  "exitModal": {
+    "title": "退出学习?",
+    "description": "此次学习的进度将不会被保存。您确定要退出吗？"
+  },
+  "complete": {
+    "title": "学习完成！",
+    "streak": "连续 {{count}} 天！",
+    "newRecord": "新纪录！",
+    "stats": {
+      "cardsReviewed": "复习的卡片",
+      "read": "阅读",
+      "watched": "观看",
+      "wordsAdded": "添加的词汇",
+      "sentencesWritten": "写的句子"
+    },
+    "encouragement": "做得好！坚持练习是掌握的关键。",
+    "doneForToday": "今天结束",
+    "continueStudying": "继续学习"
+  },
+  "input": {
+    "readingTime": "阅读时间",
+    "listeningTime": "听力时间",
+    "readAStory": "阅读故事",
+    "watchAVideo": "观看视频",
+    "storyDescription": "沉浸在适合你水平的内容中",
+    "videoDescription": "练习听力，学习新词汇",
+    "gradedStory": "适合你水平的故事"
+  },
+  "output": {
+    "wordOf": "第{{current}}个词，共{{total}}个",
+    "writeSentenceUsing": "用这个词写一个句子：",
+    "placeholder": "用「{{word}}」写一个句子...",
+    "skipWriting": "跳过写作",
+    "checking": "检查中...",
+    "check": "检查",
+    "greatJob": "做得好！",
+    "goodEffort": "不错！",
+    "score": "分数：{{score}}/100",
+    "suggestedImprovement": "改进建议：",
+    "complete": "完成",
+    "nextWord": "下一个词",
+    "noWordsTitle": "没有可练习的词汇",
+    "noWordsDescription": "添加词汇开始写句子。"
+  },
+  "progress": {
+    "review": "复习",
+    "read": "阅读",
+    "watch": "观看",
+    "write": "写作"
+  }
+}

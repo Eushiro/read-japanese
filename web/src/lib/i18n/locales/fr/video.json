@@ -1,0 +1,14 @@
+{
+  "notFound": "Vidéo introuvable",
+  "backToLibrary": "Retour à la bibliothèque",
+  "takeQuiz": "Faire le quiz",
+  "demo": {
+    "title": "Contenu de démonstration - lecture vidéo non disponible",
+    "subtitle": "Lisez la transcription ci-dessous"
+  },
+  "about": "À propos de cette vidéo",
+  "transcript": {
+    "title": "Transcription",
+    "notAvailable": "Transcription non disponible pour cette vidéo."
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "title": "学習の進捗",
+  "subtitle": "スキルを追跡し、改善が必要な分野を特定しましょう。",
+  "signInPrompt": "学習の進捗を追跡するにはログインしてください。",
+  "stats": {
+    "streak": "連続記録",
+    "days": "{{count}}日",
+    "totalStudy": "総学習時間",
+    "hours": "{{count}}時間",
+    "vocabulary": "語彙"
+  },
+  "readiness": {
+    "title": "準備状況",
+    "notReady": "学習を続けよう",
+    "almostReady": "もう少し",
+    "ready": "準備完了",
+    "confident": "自信あり"
+  },
+  "skills": {
+    "title": "スキル内訳",
+    "vocabulary": "語彙",
+    "grammar": "文法",
+    "reading": "読解",
+    "listening": "リスニング",
+    "writing": "ライティング",
+    "speaking": "スピーキング",
+    "noData": "まだデータがありません。学習を始めてスキルを確認しましょう！"
+  },
+  "focusAreas": {
+    "title": "重点分野",
+    "practice": "練習",
+    "questions": "{{count}}問",
+    "noWeakAreas": "素晴らしい！弱点は見つかりませんでした。"
+  },
+  "progressChart": {
+    "title": "時間経過による進捗",
+    "noData": "数日間学習すると進捗チャートが表示されます。"
+  },
+  "languages": {
+    "title": "言語",
+    "average": "平均: {{percent}}%"
+  },
+  "actions": {
+    "takePracticeExam": "練習試験を受ける",
+    "reviewFlashcards": "フラッシュカードを復習"
+  }
+}

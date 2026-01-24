@@ -1,0 +1,26 @@
+{
+  "card": {
+    "listenAndRepeat": "Écoute et répète :",
+    "stop": "Arrêter",
+    "playTargetAudio": "Écouter l'audio cible",
+    "tryAgain": "Réessayer",
+    "nextSentence": "Phrase suivante",
+    "requiresPro": "Le shadowing nécessite un abonnement Pro ou supérieur",
+    "evaluationFailed": "Échec de l'évaluation de votre enregistrement. Veuillez réessayer."
+  },
+  "feedback": {
+    "targetSentence": "Phrase cible :",
+    "playYourRecording": "Écouter votre enregistrement",
+    "playAiFeedback": "Écouter le feedback IA",
+    "stop": "Arrêter",
+    "feedbackLabel": "Feedback",
+    "accuracy": "Précision",
+    "scores": {
+      "excellent": "Excellent !",
+      "great": "Très bien !",
+      "good": "Bon effort !",
+      "keepPracticing": "Continue à pratiquer !",
+      "tryAgain": "Réessaie !"
+    }
+  }
+}

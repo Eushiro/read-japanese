@@ -1,0 +1,41 @@
+{
+  "audioPlayer": {
+    "restart": "Recommencer"
+  },
+  "errors": {
+    "storyNotFound": "Histoire introuvable"
+  },
+  "navigation": {
+    "backToLibrary": "Retour à la bibliothèque",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "goToChapter": "Aller au chapitre {{number}}"
+  },
+  "premium": {
+    "title": "Histoire Premium",
+    "description": "Cette histoire est disponible pour les abonnés Basique et supérieur. Passez à un niveau supérieur pour débloquer tout le contenu premium.",
+    "upgradePlan": "Mettre à niveau"
+  },
+  "limit": {
+    "title": "Limite de lecture mensuelle atteinte",
+    "description": "Vous avez lu {{used}} histoires sur {{limit}} ce mois-ci. Mettez à niveau pour continuer à lire."
+  },
+  "furigana": {
+    "hide": "Masquer les furigana",
+    "show": "Afficher les furigana"
+  },
+  "quiz": {
+    "takeQuiz": "Faire le quiz"
+  },
+  "empty": {
+    "noChapters": "Aucun chapitre disponible"
+  },
+  "paywall": {
+    "title": "Mettez à niveau pour les quiz de compréhension",
+    "description": "Obtenez des questions de compréhension générées par IA pour tester votre compréhension de chaque histoire."
+  },
+  "wordPopup": {
+    "saveToVocabulary": "Ajouter au vocabulaire",
+    "removeFromVocabulary": "Retirer du vocabulaire"
+  }
+}

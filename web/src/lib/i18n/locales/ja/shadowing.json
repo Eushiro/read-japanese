@@ -1,0 +1,26 @@
+{
+  "card": {
+    "listenAndRepeat": "聞いて繰り返す:",
+    "stop": "停止",
+    "playTargetAudio": "お手本を再生",
+    "tryAgain": "もう一度",
+    "nextSentence": "次の文へ",
+    "requiresPro": "シャドーイング練習はProプラン以上が必要です",
+    "evaluationFailed": "録音の評価に失敗しました。もう一度お試しください。"
+  },
+  "feedback": {
+    "targetSentence": "目標文:",
+    "playYourRecording": "録音を再生",
+    "playAiFeedback": "AIフィードバックを再生",
+    "stop": "停止",
+    "feedbackLabel": "フィードバック",
+    "accuracy": "正確さ",
+    "scores": {
+      "excellent": "素晴らしい!",
+      "great": "よくできました!",
+      "good": "いい調子!",
+      "keepPracticing": "練習を続けよう!",
+      "tryAgain": "もう一度!"
+    }
+  }
+}

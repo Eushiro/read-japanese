@@ -1,0 +1,66 @@
+{
+  "loadingPhrases": {
+    "creating": "Création de votre question...",
+    "calibrating": "Calibrage de la difficulté...",
+    "selectingFormat": "Sélection du meilleur format...",
+    "preparingChoices": "Préparation des choix de réponse...",
+    "verifying": "Vérification de l'exactitude...",
+    "analyzing": "Analyse de votre niveau...",
+    "consulting": "Consultation de la banque de questions...",
+    "balancing": "Équilibrage défi et apprentissage...",
+    "crafting": "Création d'une question unique...",
+    "checkingGrammar": "Vérification des points de grammaire...",
+    "selectingVocab": "Sélection du vocabulaire pertinent...",
+    "optimizing": "Optimisation pour votre progression...",
+    "reviewingDifficulty": "Révision des paramètres de difficulté...",
+    "matchingSkill": "Adaptation à votre niveau..."
+  },
+  "auth": {
+    "signInRequired": "Connexion requise",
+    "signInPrompt": "Veuillez vous connecter pour passer le test de niveau.",
+    "goToHome": "Retour à l'accueil"
+  },
+  "results": {
+    "title": "Résultats du test de niveau",
+    "resetTest": "Réinitialiser le test",
+    "yourLevel": "Votre niveau en {{language}}",
+    "confidence": "{{percent}}% de confiance",
+    "questions": "questions",
+    "correct": "correctes",
+    "accuracy": "précision",
+    "startLearning": "Commencer l'apprentissage au niveau {{level}}",
+    "backToSettings": "Retour aux paramètres"
+  },
+  "start": {
+    "title": "Test de niveau {{language}}",
+    "reset": "Réinitialiser",
+    "adaptiveTest": "Test de niveau adaptatif",
+    "description": "Ce test s'adapte à votre niveau au fur et à mesure. Répondez honnêtement pour une évaluation précise.",
+    "howItWorks": "Comment ça marche",
+    "questionRange": "Ce test adaptatif comprend <strong>8 à 20 questions</strong>",
+    "questionsAdjust": "Les questions s'ajustent à votre niveau",
+    "testEnds": "Le test se termine quand nous sommes certains d'avoir évalué votre niveau",
+    "typicalDuration": "La plupart des gens terminent en <strong>10 à 15 questions</strong>",
+    "skillsTitle": "Vocabulaire, grammaire et lecture",
+    "skillsDescription": "Teste plusieurs compétences linguistiques",
+    "personalizedTitle": "Parcours d'apprentissage personnalisé",
+    "personalizedDescription": "Les résultats personnalisent la difficulté du contenu",
+    "startTest": "Commencer le test",
+    "preparingTest": "Préparation du test..."
+  },
+  "question": {
+    "title": "Test de niveau",
+    "questionNumber": "Q{{number}}",
+    "ofTotal": "sur {{total}}",
+    "almostThere": "Presque fini !",
+    "gettingClearer": "Ça se précise...",
+    "assessing": "Évaluation de votre niveau...",
+    "correctCount": "{{correct}} / {{total}} correctes",
+    "confident": "{{percent}}% de confiance",
+    "loadingQuestion": "Chargement de la question...",
+    "reviewing": "Révision",
+    "returnToCurrent": "Retour à la question actuelle",
+    "next": "Suivant",
+    "nextQuestion": "Question suivante"
+  }
+}

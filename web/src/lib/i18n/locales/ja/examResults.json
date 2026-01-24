@@ -1,0 +1,32 @@
+{
+  "loading": "結果を読み込み中...",
+  "backToExams": "試験一覧に戻る",
+  "header": {
+    "congratulations": "おめでとうございます!",
+    "keepPracticing": "練習を続けましょう",
+    "points": "{{earned}} / {{total}} 点"
+  },
+  "stats": {
+    "correct": "正解",
+    "incorrect": "不正解",
+    "minutes": "分"
+  },
+  "sections": {
+    "title": "セクション別結果"
+  },
+  "questions": {
+    "title": "問題レビュー",
+    "questionNumber": "問題 {{number}}",
+    "points": "{{earned}} / {{total}} 点",
+    "yourAnswer": "あなたの回答:",
+    "noAnswer": "(回答なし)",
+    "correctAnswer": "正解:",
+    "feedback": "フィードバック:",
+    "explanation": "解説:"
+  },
+  "actions": {
+    "tryAgain": "再挑戦",
+    "viewProgress": "進捗を見る",
+    "moreExams": "他の試験"
+  }
+}

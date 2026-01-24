@@ -1,0 +1,66 @@
+{
+  "loadingPhrases": {
+    "creating": "Creating your question...",
+    "calibrating": "Calibrating difficulty...",
+    "selectingFormat": "Selecting the best format...",
+    "preparingChoices": "Preparing answer choices...",
+    "verifying": "Verifying accuracy...",
+    "analyzing": "Analyzing your level...",
+    "consulting": "Consulting the question bank...",
+    "balancing": "Balancing challenge and learning...",
+    "crafting": "Crafting a unique question...",
+    "checkingGrammar": "Checking grammar points...",
+    "selectingVocab": "Selecting relevant vocabulary...",
+    "optimizing": "Optimizing for your progress...",
+    "reviewingDifficulty": "Reviewing difficulty settings...",
+    "matchingSkill": "Matching to your skill level..."
+  },
+  "auth": {
+    "signInRequired": "Sign In Required",
+    "signInPrompt": "Please sign in to take the placement test.",
+    "goToHome": "Go to Home"
+  },
+  "results": {
+    "title": "Placement Test Results",
+    "resetTest": "Reset Test",
+    "yourLevel": "Your {{language}} Level",
+    "confidence": "{{percent}}% confidence",
+    "questions": "questions",
+    "correct": "correct",
+    "accuracy": "accuracy",
+    "startLearning": "Start Learning at {{level}}",
+    "backToSettings": "Back to Settings"
+  },
+  "start": {
+    "title": "{{language}} Placement Test",
+    "reset": "Reset",
+    "adaptiveTest": "Adaptive Placement Test",
+    "description": "This test adapts to your level as you answer. Answer honestly to get an accurate assessment.",
+    "howItWorks": "How it works",
+    "questionRange": "This adaptive test has <strong>8-20 questions</strong>",
+    "questionsAdjust": "Questions adjust to your skill level as you answer",
+    "testEnds": "The test ends when we're confident we've assessed your level",
+    "typicalDuration": "Most people finish in about <strong>10-15 questions</strong>",
+    "skillsTitle": "Vocabulary, Grammar & Reading",
+    "skillsDescription": "Tests multiple language skills",
+    "personalizedTitle": "Personalized learning path",
+    "personalizedDescription": "Results customize content difficulty for you",
+    "startTest": "Start Test",
+    "preparingTest": "Preparing test..."
+  },
+  "question": {
+    "title": "Placement Test",
+    "questionNumber": "Q{{number}}",
+    "ofTotal": "of {{total}}",
+    "almostThere": "Almost there!",
+    "gettingClearer": "Getting clearer...",
+    "assessing": "Assessing your level...",
+    "correctCount": "{{correct}} / {{total}} correct",
+    "confident": "{{percent}}% confident",
+    "loadingQuestion": "Loading question...",
+    "reviewing": "Reviewing",
+    "returnToCurrent": "Return to Current",
+    "next": "Next",
+    "nextQuestion": "Next Question"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "title": "Video Quiz",
+  "auth": {
+    "signInRequired": "Sign in to take the quiz",
+    "signInDescription": "Create an account to track your progress and save your quiz results.",
+    "signIn": "Sign In"
+  },
+  "backToVideo": "Back to Video",
+  "noQuiz": {
+    "title": "No quiz available",
+    "description": "Questions haven't been generated for this video yet."
+  },
+  "results": {
+    "title": "Quiz Results",
+    "wellDone": "Well done!",
+    "keepPracticing": "Keep practicing!",
+    "score": "You got {{correct}} out of {{total}} questions correct.",
+    "tryAgain": "Try Again",
+    "watchVideo": "Watch Video",
+    "reviewAnswers": "Review Answers",
+    "yourAnswer": "Your answer:",
+    "correct": "Correct:"
+  },
+  "quiz": {
+    "previous": "Previous",
+    "next": "Next",
+    "submit": "Submit",
+    "seeResults": "See Results",
+    "placeholder": "Type your answer...",
+    "suggestedAnswer": "Suggested answer:"
+  }
+}

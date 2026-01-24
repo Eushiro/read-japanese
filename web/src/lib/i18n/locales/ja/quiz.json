@@ -1,0 +1,12 @@
+{
+  "navigation": {
+    "previous": "前へ",
+    "submitAnswer": "回答を送信",
+    "nextQuestion": "次の問題",
+    "finishQuiz": "クイズ終了",
+    "submitting": "送信中...",
+    "grading": "採点中...",
+    "questionNumber": "問題 {{current}} / {{total}}",
+    "answered": "回答済み"
+  }
+}

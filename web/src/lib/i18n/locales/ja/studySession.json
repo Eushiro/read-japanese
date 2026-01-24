@@ -1,0 +1,65 @@
+{
+  "emptyState": {
+    "title": "まだ学習するものがありません",
+    "description": "語彙を追加するか、ストーリーを読んで学習を始めましょう。"
+  },
+  "buttons": {
+    "browseLibrary": "ライブラリを見る",
+    "backToDashboard": "ダッシュボードに戻る",
+    "keepLearning": "学習を続ける",
+    "exit": "終了",
+    "skip": "スキップ",
+    "startReading": "読み始める",
+    "startWatching": "視聴を開始"
+  },
+  "exitModal": {
+    "title": "セッションを終了しますか？",
+    "description": "このセッションの進捗は保存されません。終了してもよろしいですか？"
+  },
+  "complete": {
+    "title": "セッション完了！",
+    "streak": "{{count}}日連続！",
+    "newRecord": "新記録！",
+    "stats": {
+      "cardsReviewed": "復習したカード",
+      "read": "読んだ",
+      "watched": "視聴した",
+      "wordsAdded": "追加した語彙",
+      "sentencesWritten": "書いた文章"
+    },
+    "encouragement": "お疲れ様でした！毎日の練習が上達への鍵です。",
+    "doneForToday": "今日はここまで",
+    "continueStudying": "学習を続ける"
+  },
+  "input": {
+    "readingTime": "読書時間",
+    "listeningTime": "リスニング時間",
+    "readAStory": "ストーリーを読む",
+    "watchAVideo": "動画を見る",
+    "storyDescription": "あなたのレベルに合ったコンテンツに浸りましょう",
+    "videoDescription": "リスニング練習と新しい語彙を身につけましょう",
+    "gradedStory": "あなたのレベルに合ったストーリー"
+  },
+  "output": {
+    "wordOf": "{{total}}語中{{current}}語目",
+    "writeSentenceUsing": "この言葉を使って文を書こう：",
+    "placeholder": "「{{word}}」を使って文を書いてください...",
+    "skipWriting": "ライティングをスキップ",
+    "checking": "確認中...",
+    "check": "チェック",
+    "greatJob": "よくできました！",
+    "goodEffort": "いい調子！",
+    "score": "スコア：{{score}}/100",
+    "suggestedImprovement": "改善案：",
+    "complete": "完了",
+    "nextWord": "次の単語",
+    "noWordsTitle": "練習する単語がありません",
+    "noWordsDescription": "語彙を追加して文章を書き始めましょう。"
+  },
+  "progress": {
+    "review": "復習",
+    "read": "読む",
+    "watch": "見る",
+    "write": "書く"
+  }
+}

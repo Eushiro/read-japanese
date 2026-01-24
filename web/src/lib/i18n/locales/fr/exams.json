@@ -1,0 +1,82 @@
+{
+  "signIn": {
+    "title": "Examens pratiques",
+    "description": "Connectez-vous pour accéder aux examens pratiques et suivre vos progrès."
+  },
+  "hero": {
+    "title": "Examens pratiques",
+    "subtitle": "Passez de vrais examens numérisés avec un retour IA pour préparer votre examen cible."
+  },
+  "readiness": {
+    "title": "Votre niveau de préparation",
+    "viewProgress": "Voir les progrès",
+    "levels": {
+      "confident": "Confiant",
+      "ready": "Prêt",
+      "almostReady": "Presque prêt",
+      "keepStudying": "Continuez à étudier"
+    },
+    "vocabularyMastered": "Vocabulaire : {{known}}/{{total}} maîtrisé"
+  },
+  "continueExam": {
+    "title": "Continuer l'examen",
+    "questionsAnswered": "{{answered}}/{{total}} questions répondues"
+  },
+  "available": {
+    "title": "Examens disponibles",
+    "empty": "Aucun examen pratique disponible pour le moment. Revenez bientôt !",
+    "attempts": "{{count}} tentatives",
+    "best": "Meilleur : {{score}}%",
+    "questions": "{{count}} questions",
+    "minutes": "{{count}} min"
+  },
+  "progress": {
+    "title": "Vos progrès",
+    "average": "Moyenne",
+    "best": "Meilleur",
+    "attempts": "Tentatives",
+    "focusAreas": "Domaines à travailler :"
+  },
+  "examTypes": {
+    "jlpt_n5": {
+      "name": "JLPT N5",
+      "description": "Compétence japonaise de base"
+    },
+    "jlpt_n4": {
+      "name": "JLPT N4",
+      "description": "Japonais élémentaire"
+    },
+    "jlpt_n3": {
+      "name": "JLPT N3",
+      "description": "Japonais intermédiaire"
+    },
+    "jlpt_n2": {
+      "name": "JLPT N2",
+      "description": "Japonais intermédiaire supérieur"
+    },
+    "jlpt_n1": {
+      "name": "JLPT N1",
+      "description": "Compétence japonaise avancée"
+    },
+    "toefl": {
+      "name": "TOEFL",
+      "description": "Test d'anglais"
+    },
+    "delf_a1": {
+      "name": "DELF A1",
+      "description": "Français de base"
+    },
+    "delf_a2": {
+      "name": "DELF A2",
+      "description": "Français élémentaire"
+    },
+    "delf_b1": {
+      "name": "DELF B1",
+      "description": "Français intermédiaire"
+    },
+    "delf_b2": {
+      "name": "DELF B2",
+      "description": "Français intermédiaire supérieur"
+    }
+  }
+}

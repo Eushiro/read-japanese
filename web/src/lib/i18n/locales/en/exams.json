@@ -1,0 +1,82 @@
+{
+  "signIn": {
+    "title": "Practice Exams",
+    "description": "Sign in to access practice exams and track your progress."
+  },
+  "hero": {
+    "title": "Practice Exams",
+    "subtitle": "Take digitized real exams with AI feedback to prepare for your target exam."
+  },
+  "readiness": {
+    "title": "Your Readiness",
+    "viewProgress": "View Progress",
+    "levels": {
+      "confident": "Confident",
+      "ready": "Ready",
+      "almostReady": "Almost Ready",
+      "keepStudying": "Keep Studying"
+    },
+    "vocabularyMastered": "Vocabulary: {{known}}/{{total}} mastered"
+  },
+  "continueExam": {
+    "title": "Continue Exam",
+    "questionsAnswered": "{{answered}}/{{total}} questions answered"
+  },
+  "available": {
+    "title": "Available Exams",
+    "empty": "No practice exams available yet. Check back soon!",
+    "attempts": "{{count}} attempts",
+    "best": "Best: {{score}}%",
+    "questions": "{{count}} questions",
+    "minutes": "{{count}} min"
+  },
+  "progress": {
+    "title": "Your Progress",
+    "average": "Average",
+    "best": "Best",
+    "attempts": "Attempts",
+    "focusAreas": "Focus areas:"
+  },
+  "examTypes": {
+    "jlpt_n5": {
+      "name": "JLPT N5",
+      "description": "Basic Japanese proficiency"
+    },
+    "jlpt_n4": {
+      "name": "JLPT N4",
+      "description": "Elementary Japanese"
+    },
+    "jlpt_n3": {
+      "name": "JLPT N3",
+      "description": "Intermediate Japanese"
+    },
+    "jlpt_n2": {
+      "name": "JLPT N2",
+      "description": "Upper intermediate Japanese"
+    },
+    "jlpt_n1": {
+      "name": "JLPT N1",
+      "description": "Advanced Japanese proficiency"
+    },
+    "toefl": {
+      "name": "TOEFL",
+      "description": "Test of English"
+    },
+    "delf_a1": {
+      "name": "DELF A1",
+      "description": "Basic French"
+    },
+    "delf_a2": {
+      "name": "DELF A2",
+      "description": "Elementary French"
+    },
+    "delf_b1": {
+      "name": "DELF B1",
+      "description": "Intermediate French"
+    },
+    "delf_b2": {
+      "name": "DELF B2",
+      "description": "Upper intermediate French"
+    }
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "title": "語彙",
+  "yourWords": "あなたの単語",
+  "wordsInCollection": "コレクションに{{count}}単語",
+  "addWord": "単語を追加",
+  "searchPlaceholder": "単語を検索...",
+  "browseDecks": "デッキを見る",
+  "word": "単語",
+  "words": "単語",
+  "ofTotal": "全{{total}}件中",
+  "deckPanel": {
+    "view": "表示",
+    "allWords": "すべての単語",
+    "myWords": "マイワード",
+    "activeDeck": "アクティブなデッキ",
+    "add": "追加",
+    "dailyCardsInfo": "このデッキから毎日新しいカードが追加されます",
+    "noActiveDeck": "アクティブなデッキがありません",
+    "chooseADeck": "デッキを選択",
+    "paused": "一時停止中",
+    "makeActive": "このデッキをアクティブにする",
+    "removeDeckTitle": "デッキを削除しますか？",
+    "removeDeckDescription": "<strong>{{deckName}}</strong>をデッキから削除します。すでに学習した単語は語彙に残ります。",
+    "cancel": "キャンセル",
+    "remove": "削除",
+    "wordsProgress": "{{added}}/{{total}}単語",
+    "today": "今日+{{count}}",
+    "newCardsPerDay": "1日の新規カード"
+  },
+  "sort": {
+    "newest": "新しい順",
+    "oldest": "古い順",
+    "alphabetical": "あ → わ",
+    "alphabeticalReverse": "わ → あ",
+    "byMastery": "習得度順"
+  },
+  "mastery": {
+    "new": "新規",
+    "learning": "学習中",
+    "tested": "テスト済み",
+    "mastered": "マスター済み"
+  },
+  "filters": {
+    "allLanguages": "すべての言語",
+    "allMastery": "すべての習得度",
+    "clearAll": "すべてクリア",
+    "label": "フィルター"
+  },
+  "signInPrompt": {
+    "title": "単語を見るにはログインしてください",
+    "description": "ログインすると、保存した単語がここに表示されます。"
+  },
+  "empty": {
+    "title": "まだ単語が保存されていません",
+    "description": "手動で単語を追加するか、読書中に保存してください",
+    "addFirst": "最初の単語を追加",
+    "noMatches": "一致する単語が見つかりません",
+    "tryAdjusting": "検索やフィルターを調整してみてください"
+  },
+  "card": {
+    "playPronunciation": "発音を再生",
+    "playWord": "単語を再生",
+    "playSentence": "文を再生",
+    "practiceShadowing": "シャドーイング練習",
+    "practiceWriting": "例文作成の練習",
+    "generateFlashcard": "AIフラッシュカードを生成",
+    "generatingContent": "コンテンツを生成中...",
+    "enhancing": "強化中...",
+    "regeneratingSentence": "文と音声を再生成中...",
+    "generatingSentence": "文、音声、画像を生成中...",
+    "originalContext": "元のコンテキスト",
+    "reading": "読み方",
+    "definition": "定義"
+  },
+  "addModal": {
+    "title": "新しい単語を追加",
+    "language": "言語",
+    "word": "単語",
+    "wordPlaceholder": "入力して検索...",
+    "wordPlaceholderJapanese": "食べる, taberu...",
+    "readingLabel": "読み方（ひらがな）",
+    "readingPlaceholder": "たべる",
+    "definitionLabel": "定義",
+    "definitionPlaceholder": "食べる、消費する",
+    "definitionHint": "複数の定義はカンマで区切ってください",
+    "noResults": "結果なし",
+    "adding": "追加中..."
+  },
+  "shadowing": {
+    "tryAgain": "もう一度",
+    "done": "完了"
+  },
+  "deckPicker": {
+    "title": "語彙デッキを見る",
+    "description": "学習を始めるデッキを選択してください。毎日新しいカードが語彙に追加されます。",
+    "subscribedToAll": "利用可能なすべての{{language}}デッキに登録済みです！",
+    "sentences": "{{count}}つの例文",
+    "audio": "{{count}}つの音声",
+    "newCardsPerDay": "1日の新規カード数",
+    "estimate": "{{dailyCards}}カード/日で、<strong>{{deckName}}</strong>を約<strong>{{days}}日</strong>で完了できます",
+    "starting": "開始中...",
+    "startLearning": "{{deckName}}を学習開始",
+    "decks": "デッキ"
+  }
+}

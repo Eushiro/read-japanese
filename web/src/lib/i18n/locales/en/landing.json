@@ -1,0 +1,94 @@
+{
+  "hero": {
+    "tagline": "AI-Powered Exam Prep",
+    "title": "Personalized Learning",
+    "titleHighlight": "for Your Exam",
+    "subtitle": "AI generates content from your vocabulary, verifies your writing, and creates mock tests tailored to your target exam. Not generic study materials—a learning path built for you.",
+    "startLearning": "Start Learning",
+    "getStartedFree": "Get Started Free",
+    "browseLibrary": "Browse Library"
+  },
+  "exams": {
+    "title": "Prep for the exams that matter",
+    "subtitle": "Content and tests aligned with official exam formats and vocabulary lists.",
+    "japanese": "Japanese",
+    "english": "English",
+    "french": "French"
+  },
+  "comparison": {
+    "title": "Not another flashcard app",
+    "subtitle": "Most apps test what you recognize. We test what you can produce.",
+    "sanlang": "SanLang",
+    "others": "Other Apps",
+    "us": {
+      "item1": "Write sentences, get AI feedback",
+      "item2": "Content generated from YOUR vocabulary",
+      "item3": "Mock tests in real exam formats",
+      "item4": "Multi-modal: text, audio, images"
+    },
+    "them": {
+      "item1": "Flip cards, tap correct answer",
+      "item2": "Generic word lists for everyone",
+      "item3": "Gamified but not exam-focused",
+      "item4": "Usually single-modal"
+    }
+  },
+  "loop": {
+    "title": "The complete learning loop",
+    "subtitle": "Input, practice, output, repeat. Every feature connects to help you actually learn.",
+    "input": {
+      "title": "Input",
+      "description": "Read stories, listen to audio, watch videos—all at your level"
+    },
+    "capture": {
+      "title": "Capture",
+      "description": "Save words automatically or manually. Build your personal vocabulary."
+    },
+    "review": {
+      "title": "Review",
+      "description": "AI-generated flashcards with example sentences, refreshed to stay relevant"
+    },
+    "output": {
+      "title": "Output",
+      "description": "Write sentences, get instant AI feedback on grammar and usage"
+    }
+  },
+  "features": {
+    "title": "Everything you need to pass your exam",
+    "subtitle": "From vocabulary building to mock tests, we've got you covered.",
+    "flashcards": {
+      "title": "AI-Powered Flashcards",
+      "description": "Cards auto-generated with example sentences at your level. Sentences refresh periodically so you don't just memorize patterns."
+    },
+    "writing": {
+      "title": "Writing Practice",
+      "description": "Create sentences using target words. AI checks grammar, word usage, and naturalness—then shows you how to improve."
+    },
+    "personalized": {
+      "title": "Personalized Content",
+      "description": "Stories and tests generated from YOUR vocabulary. Practice exactly what you need to learn."
+    },
+    "exams": {
+      "title": "Real Exam Formats",
+      "description": "Mock tests that match JLPT, TOEFL, DELF, and other official exam structures and scoring."
+    },
+    "audio": {
+      "title": "Native Audio",
+      "description": "Listen to stories and flashcards with natural pronunciation. Train your ears while you learn."
+    },
+    "tapDefine": {
+      "title": "Tap-to-Define",
+      "description": "Tap any word for instant definitions. Reading aids like furigana help you stay in flow."
+    }
+  },
+  "cta": {
+    "title": "Start learning smarter",
+    "subtitle": "Join learners who are preparing for their exams with AI-powered, personalized study materials.",
+    "goToLibrary": "Go to Library",
+    "getStartedFree": "Get Started Free",
+    "noCreditCard": "No credit card required"
+  },
+  "footer": {
+    "tagline": "SanLang - Personalized exam prep powered by AI"
+  }
+}

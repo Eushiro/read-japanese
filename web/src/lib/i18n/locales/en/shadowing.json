@@ -1,0 +1,26 @@
+{
+  "card": {
+    "listenAndRepeat": "Listen and repeat:",
+    "stop": "Stop",
+    "playTargetAudio": "Play Target Audio",
+    "tryAgain": "Try Again",
+    "nextSentence": "Next Sentence",
+    "requiresPro": "Shadowing practice requires Pro or higher",
+    "evaluationFailed": "Failed to evaluate your recording. Please try again."
+  },
+  "feedback": {
+    "targetSentence": "Target sentence:",
+    "playYourRecording": "Play Your Recording",
+    "playAiFeedback": "Play AI Feedback",
+    "stop": "Stop",
+    "feedbackLabel": "Feedback",
+    "accuracy": "Accuracy",
+    "scores": {
+      "excellent": "Excellent!",
+      "great": "Great job!",
+      "good": "Good effort!",
+      "keepPracticing": "Keep practicing!",
+      "tryAgain": "Try again!"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "loading": "Loading results...",
+  "backToExams": "Back to Exams",
+  "header": {
+    "congratulations": "Congratulations!",
+    "keepPracticing": "Keep Practicing",
+    "points": "{{earned}} / {{total}} points"
+  },
+  "stats": {
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "minutes": "Minutes"
+  },
+  "sections": {
+    "title": "Section Breakdown"
+  },
+  "questions": {
+    "title": "Question Review",
+    "questionNumber": "Question {{number}}",
+    "points": "{{earned}} / {{total}} pts",
+    "yourAnswer": "Your answer:",
+    "noAnswer": "(No answer)",
+    "correctAnswer": "Correct answer:",
+    "feedback": "Feedback:",
+    "explanation": "Explanation:"
+  },
+  "actions": {
+    "tryAgain": "Try Again",
+    "viewProgress": "View Progress",
+    "moreExams": "More Exams"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "hero": {
+    "badge": "Pratique d'expression",
+    "title": "Écrire des phrases",
+    "subtitle": "Pratiquez l'utilisation de votre vocabulaire en contexte"
+  },
+  "signIn": {
+    "title": "Connectez-vous pour pratiquer",
+    "description": "Créez des phrases avec votre vocabulaire et obtenez des commentaires de l'IA.",
+    "button": "Se connecter"
+  },
+  "empty": {
+    "title": "Aucun mot à pratiquer",
+    "description": "Ajoutez des mots de vocabulaire pour commencer à pratiquer l'écriture de phrases.",
+    "goToVocabulary": "Aller au vocabulaire"
+  },
+  "wordSelection": {
+    "title": "Sélectionnez un mot à pratiquer",
+    "all": "Tous",
+    "japanese": "Japonais",
+    "english": "Anglais",
+    "french": "Français"
+  },
+  "practiceInterface": {
+    "prompt": "Écrivez une phrase avec :",
+    "changeWord": "Changer de mot",
+    "inputLabel": "Votre phrase",
+    "placeholder": "Écrivez une phrase avec « {{word}} »...",
+    "checking": "Vérification...",
+    "checkSentence": "Vérifier la phrase"
+  },
+  "results": {
+    "greatJob": "Excellent travail !",
+    "goodEffort": "Bon effort !",
+    "overallScore": "Score global : {{score}}/100",
+    "yourSentence": "Votre phrase",
+    "corrections": "Corrections",
+    "feedback": "Commentaires",
+    "alternativeExpression": "Expression alternative",
+    "suggestedImprovement": "Amélioration suggérée",
+    "tryAgain": "Réessayer",
+    "nextWord": "Mot suivant"
+  },
+  "scores": {
+    "grammar": "Grammaire",
+    "wordUsage": "Utilisation du mot",
+    "naturalness": "Naturel"
+  },
+  "difficulty": {
+    "beginner": "Débutant",
+    "intermediate": "Intermédiaire",
+    "advanced": "Avancé"
+  }
+}

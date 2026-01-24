@@ -1,0 +1,10 @@
+{
+  "signInRequired": "Veuillez vous connecter pour passer des examens.",
+  "questionProgress": "Question {{current}} sur {{total}}",
+  "finishExam": "Terminer l'examen",
+  "readPassage": "Lisez le passage suivant :",
+  "writeAnswer": "Écrivez votre réponse...",
+  "typeAnswer": "Tapez votre réponse...",
+  "previous": "Précédent",
+  "next": "Suivant"
+}

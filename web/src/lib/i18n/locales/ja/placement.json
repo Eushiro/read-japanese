@@ -1,0 +1,66 @@
+{
+  "loadingPhrases": {
+    "creating": "問題を作成中...",
+    "calibrating": "難易度を調整中...",
+    "selectingFormat": "最適な形式を選択中...",
+    "preparingChoices": "選択肢を準備中...",
+    "verifying": "正確性を確認中...",
+    "analyzing": "レベルを分析中...",
+    "consulting": "問題バンクを検索中...",
+    "balancing": "挑戦と学習のバランスを調整中...",
+    "crafting": "ユニークな問題を作成中...",
+    "checkingGrammar": "文法ポイントを確認中...",
+    "selectingVocab": "関連語彙を選択中...",
+    "optimizing": "進捗に合わせて最適化中...",
+    "reviewingDifficulty": "難易度設定を確認中...",
+    "matchingSkill": "スキルレベルに合わせて調整中..."
+  },
+  "auth": {
+    "signInRequired": "ログインが必要です",
+    "signInPrompt": "レベルテストを受けるにはログインしてください。",
+    "goToHome": "ホームへ戻る"
+  },
+  "results": {
+    "title": "レベルテスト結果",
+    "resetTest": "テストをリセット",
+    "yourLevel": "あなたの{{language}}レベル",
+    "confidence": "確信度 {{percent}}%",
+    "questions": "問",
+    "correct": "正解",
+    "accuracy": "正解率",
+    "startLearning": "{{level}}から学習を開始",
+    "backToSettings": "設定に戻る"
+  },
+  "start": {
+    "title": "{{language}} レベルテスト",
+    "reset": "リセット",
+    "adaptiveTest": "適応型レベルテスト",
+    "description": "このテストはあなたの回答に応じて難易度が変わります。正確な評価のために正直に答えてください。",
+    "howItWorks": "テストの仕組み",
+    "questionRange": "このテストは<strong>8〜20問</strong>の問題で構成されています",
+    "questionsAdjust": "回答に応じて問題の難易度が調整されます",
+    "testEnds": "レベルが十分に評価できた時点で終了します",
+    "typicalDuration": "多くの方は<strong>10〜15問</strong>で完了します",
+    "skillsTitle": "語彙・文法・読解",
+    "skillsDescription": "複数の言語スキルをテストします",
+    "personalizedTitle": "パーソナライズされた学習パス",
+    "personalizedDescription": "結果に基づいてコンテンツの難易度がカスタマイズされます",
+    "startTest": "テストを開始",
+    "preparingTest": "テストを準備中..."
+  },
+  "question": {
+    "title": "レベルテスト",
+    "questionNumber": "第{{number}}問",
+    "ofTotal": "/ {{total}}問中",
+    "almostThere": "もう少しです！",
+    "gettingClearer": "明確になってきました...",
+    "assessing": "レベルを評価中...",
+    "correctCount": "{{correct}} / {{total}} 正解",
+    "confident": "確信度 {{percent}}%",
+    "loadingQuestion": "問題を読み込み中...",
+    "reviewing": "確認中",
+    "returnToCurrent": "現在の問題に戻る",
+    "next": "次へ",
+    "nextQuestion": "次の問題"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "navigation": {
+    "previous": "Previous",
+    "submitAnswer": "Submit Answer",
+    "nextQuestion": "Next Question",
+    "finishQuiz": "Finish Quiz",
+    "submitting": "Submitting...",
+    "grading": "Grading...",
+    "questionNumber": "Question {{current}} of {{total}}",
+    "answered": "answered"
+  }
+}

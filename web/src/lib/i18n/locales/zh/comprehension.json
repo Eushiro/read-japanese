@@ -1,0 +1,64 @@
+{
+  "header": {
+    "quiz": "阅读理解测验",
+    "results": "测验结果",
+    "questionOf": "第 {{current}} 题，共 {{total}} 题"
+  },
+  "questionTypes": {
+    "multiple_choice": "选择题",
+    "short_answer": "简答题",
+    "essay": "论述题",
+    "translation": "翻译题",
+    "inference": "推理题",
+    "prediction": "预测题",
+    "grammar": "语法题",
+    "opinion": "观点题"
+  },
+  "questionDisplay": {
+    "points": "{{count}}分",
+    "placeholders": {
+      "essay": "写下您的回答...",
+      "translation": "输入您的翻译...",
+      "default": "输入您的答案..."
+    },
+    "feedback": {
+      "score": "得分",
+      "expectedAnswer": "期望答案：",
+      "possibleAnswer": "可能的答案：",
+      "feedback": "反馈："
+    }
+  },
+  "loading": {
+    "generatingQuestions": "正在生成问题...",
+    "loadingQuestions": "正在加载问题..."
+  },
+  "errors": {
+    "storyNotFound": "未找到故事"
+  },
+  "generate": {
+    "title": "测试你的理解",
+    "description": "根据你刚刚阅读的故事生成AI驱动的理解题。问题将在不同层次测试你的理解。",
+    "button": "生成问题",
+    "signInRequired": "请登录以生成问题。"
+  },
+  "results": {
+    "greatJob": "太棒了！",
+    "goodEffort": "做得好！",
+    "keepPracticing": "继续练习！",
+    "scoreText": "你获得了 {{earned}} 分，满分 {{total}} 分",
+    "reviewAnswers": "查看答案",
+    "yourAnswer": "你的答案：",
+    "correctAnswer": "正确答案：",
+    "pointsEarned": "{{earned}}/{{total}} 分"
+  },
+  "navigation": {
+    "backToLibrary": "返回图书馆",
+    "backToStory": "返回故事",
+    "browseMore": "浏览更多故事"
+  },
+  "paywall": {
+    "title": "升级获取AI理解功能",
+    "description": "获取AI生成的问题和对你答案的详细反馈。",
+    "freeUserFeedback": "升级到付费计划以获取AI对你答案的反馈。"
+  }
+}

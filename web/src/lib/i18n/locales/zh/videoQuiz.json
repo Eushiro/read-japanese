@@ -1,0 +1,32 @@
+{
+  "title": "视频测验",
+  "auth": {
+    "signInRequired": "登录后参加测验",
+    "signInDescription": "创建账户以追踪您的进度并保存测验结果。",
+    "signIn": "登录"
+  },
+  "backToVideo": "返回视频",
+  "noQuiz": {
+    "title": "暂无测验",
+    "description": "此视频的问题尚未生成。"
+  },
+  "results": {
+    "title": "测验结果",
+    "wellDone": "做得好！",
+    "keepPracticing": "继续练习！",
+    "score": "您答对了{{total}}道题中的{{correct}}道。",
+    "tryAgain": "再试一次",
+    "watchVideo": "观看视频",
+    "reviewAnswers": "查看答案",
+    "yourAnswer": "您的答案：",
+    "correct": "正确答案："
+  },
+  "quiz": {
+    "previous": "上一题",
+    "next": "下一题",
+    "submit": "提交",
+    "seeResults": "查看结果",
+    "placeholder": "输入您的答案...",
+    "suggestedAnswer": "参考答案："
+  }
+}

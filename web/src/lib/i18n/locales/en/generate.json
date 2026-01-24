@@ -1,0 +1,56 @@
+{
+  "hero": {
+    "badge": "AI Powered",
+    "title": "Generate Story",
+    "subtitle": "Create a custom Japanese story tailored to your level"
+  },
+  "modal": {
+    "title": "Generate Story",
+    "subtitle": "Create a custom story for your level"
+  },
+  "form": {
+    "jlptLevel": "JLPT Level",
+    "genre": "Genre",
+    "theme": "Theme",
+    "themeOptional": "(Optional)",
+    "themePlaceholder": "e.g., cherry blossoms, summer festival...",
+    "chapters": "Chapters",
+    "chaptersCount": "{{count}} chapters",
+    "wordsPerChapter": "Words/Chapter",
+    "wordsCount": "~{{count}} words",
+    "options": "Options"
+  },
+  "genres": {
+    "dailyLife": "Daily Life",
+    "fantasy": "Fantasy",
+    "mystery": "Mystery",
+    "travel": "Travel",
+    "school": "School",
+    "food": "Food",
+    "nature": "Nature",
+    "adventure": "Adventure",
+    "romance": "Romance",
+    "historical": "Historical"
+  },
+  "options": {
+    "generateAudio": "Generate Audio",
+    "generateImages": "Generate Images",
+    "audio": "Audio",
+    "images": "Images"
+  },
+  "actions": {
+    "generate": "Generate Story",
+    "generating": "Generating..."
+  },
+  "progress": {
+    "starting": "Starting generation..."
+  },
+  "errors": {
+    "signInRequired": "Please sign in to generate stories.",
+    "generationFailed": "Generation failed"
+  },
+  "info": {
+    "generationTime": "Story generation may take 2-5 minutes depending on options selected.",
+    "generationTimeBrief": "Generation takes 2-5 minutes"
+  }
+}

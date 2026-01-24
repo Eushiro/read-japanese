@@ -1,0 +1,105 @@
+{
+  "title": "Vocabulary",
+  "yourWords": "Your Words",
+  "wordsInCollection": "{{count}} words in your collection",
+  "addWord": "Add Word",
+  "searchPlaceholder": "Search vocabulary...",
+  "browseDecks": "Browse Decks",
+  "word": "word",
+  "words": "words",
+  "ofTotal": "of {{total}} total",
+  "deckPanel": {
+    "view": "View",
+    "allWords": "All Words",
+    "myWords": "My Words",
+    "activeDeck": "Active Deck",
+    "add": "Add",
+    "dailyCardsInfo": "New cards added daily from this deck",
+    "noActiveDeck": "No active deck",
+    "chooseADeck": "Choose a Deck",
+    "paused": "Paused",
+    "makeActive": "Make this the active deck",
+    "removeDeckTitle": "Remove deck?",
+    "removeDeckDescription": "This will remove <strong>{{deckName}}</strong> from your decks. Words you've already learned will stay in your vocabulary.",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "wordsProgress": "{{added}}/{{total}} words",
+    "today": "+{{count}} today",
+    "newCardsPerDay": "New cards/day"
+  },
+  "sort": {
+    "newest": "Newest First",
+    "oldest": "Oldest First",
+    "alphabetical": "A → Z",
+    "alphabeticalReverse": "Z → A",
+    "byMastery": "By Mastery"
+  },
+  "mastery": {
+    "new": "New",
+    "learning": "Learning",
+    "tested": "Tested",
+    "mastered": "Mastered"
+  },
+  "filters": {
+    "allLanguages": "All Languages",
+    "allMastery": "All Mastery",
+    "clearAll": "Clear all",
+    "label": "Filters"
+  },
+  "signInPrompt": {
+    "title": "Sign in to view your vocabulary",
+    "description": "Your saved words will appear here once you sign in."
+  },
+  "empty": {
+    "title": "No vocabulary saved yet",
+    "description": "Add words manually or save them while reading",
+    "addFirst": "Add Your First Word",
+    "noMatches": "No matching words found",
+    "tryAdjusting": "Try adjusting your search or filters"
+  },
+  "card": {
+    "playPronunciation": "Play pronunciation",
+    "playWord": "Play Word",
+    "playSentence": "Play Sentence",
+    "practiceShadowing": "Practice Shadowing",
+    "practiceWriting": "Practice writing sentences",
+    "generateFlashcard": "Generate AI flashcard",
+    "generatingContent": "Generating content...",
+    "enhancing": "Enhancing...",
+    "regeneratingSentence": "Regenerating sentence & audio...",
+    "generatingSentence": "Generating sentence, audio & image...",
+    "originalContext": "Original context",
+    "reading": "Reading",
+    "definition": "Definition"
+  },
+  "addModal": {
+    "title": "Add New Word",
+    "language": "Language",
+    "word": "Word",
+    "wordPlaceholder": "Type to search...",
+    "wordPlaceholderJapanese": "\u98df\u3079\u308b, taberu...",
+    "readingLabel": "Reading (Hiragana)",
+    "readingPlaceholder": "\u305f\u3079\u308b",
+    "definitionLabel": "Definition(s)",
+    "definitionPlaceholder": "to eat, to consume",
+    "definitionHint": "Separate multiple definitions with commas",
+    "noResults": "No results found",
+    "adding": "Adding..."
+  },
+  "shadowing": {
+    "tryAgain": "Try Again",
+    "done": "Done"
+  },
+  "deckPicker": {
+    "title": "Browse Vocabulary Decks",
+    "description": "Choose a premade deck to start learning. Cards will be added daily to your vocabulary.",
+    "subscribedToAll": "You've subscribed to all available {{language}} decks!",
+    "sentences": "{{count}} sentences",
+    "audio": "{{count}} audio",
+    "newCardsPerDay": "New cards per day",
+    "estimate": "At {{dailyCards}} cards/day, you'll complete <strong>{{deckName}}</strong> in approximately <strong>{{days}} days</strong>",
+    "starting": "Starting...",
+    "startLearning": "Start Learning {{deckName}}",
+    "decks": "decks"
+  }
+}

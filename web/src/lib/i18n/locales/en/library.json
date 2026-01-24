@@ -1,0 +1,84 @@
+{
+  "hero": {
+    "badge": "Your Library",
+    "title": "Graded Readers",
+    "subtitle": "Stories tailored to your level. Tap any word to see its meaning.",
+    "generateStory": "Generate Custom Story"
+  },
+  "title": "Library",
+  "subtitle": "Stories and videos for your level",
+  "searchPlaceholder": "Search...",
+  "filters": {
+    "all": "All",
+    "stories": "Stories",
+    "videos": "Videos",
+    "level": "Level",
+    "allLevels": "All Levels",
+    "allLanguages": "All Languages",
+    "duration": "Duration",
+    "anyDuration": "Any Duration",
+    "short": "Short (< 5 min)",
+    "medium": "Medium (5-15 min)",
+    "long": "Long (> 15 min)"
+  },
+  "sort": {
+    "easyToHard": "Easy → Hard",
+    "hardToEasy": "Hard → Easy",
+    "titleAZ": "Title (A-Z)",
+    "newest": "Newest"
+  },
+  "sections": {
+    "stories": "Stories",
+    "videos": "Videos"
+  },
+  "languages": {
+    "japanese": "Japanese",
+    "english": "English",
+    "french": "French"
+  },
+  "errors": {
+    "loadFailed": "Failed to load stories"
+  },
+  "empty": {
+    "title": "No content found",
+    "description": "Try adjusting your filters or search term",
+    "noStories": "No stories yet",
+    "noVideos": "No videos yet"
+  },
+  "story": {
+    "chapter": "Chapter {{number}}",
+    "chapters": "{{count}} chapters",
+    "readTime": "{{minutes}} min read",
+    "continueReading": "Continue Reading",
+    "startReading": "Start Reading",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "wordsSaved": "{{count}} words saved"
+  },
+  "video": {
+    "badge": "Video",
+    "duration": "{{minutes}} min",
+    "watch": "Watch",
+    "continueWatching": "Continue Watching",
+    "transcript": "Transcript",
+    "questions": "{{count}} questions"
+  },
+  "difficulty": {
+    "beginner": "Beginner",
+    "elementary": "Elementary",
+    "intermediate": "Intermediate",
+    "upperIntermediate": "Upper Intermediate",
+    "advanced": "Advanced",
+    "native": "Native"
+  },
+  "decks": {
+    "title": "Vocabulary Decks",
+    "browse": "Browse Decks",
+    "subscribe": "Subscribe",
+    "subscribed": "Subscribed",
+    "wordsCount": "{{count}} words",
+    "premadeDecks": "Premade Decks",
+    "personalDeck": "Personal Deck",
+    "allWords": "All Words"
+  }
+}

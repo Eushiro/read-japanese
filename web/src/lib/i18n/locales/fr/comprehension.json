@@ -1,0 +1,64 @@
+{
+  "header": {
+    "quiz": "Quiz de compréhension",
+    "results": "Résultats du quiz",
+    "questionOf": "Question {{current}} sur {{total}}"
+  },
+  "questionTypes": {
+    "multiple_choice": "Choix multiple",
+    "short_answer": "Réponse courte",
+    "essay": "Rédaction",
+    "translation": "Traduction",
+    "inference": "Inférence",
+    "prediction": "Prédiction",
+    "grammar": "Grammaire",
+    "opinion": "Opinion"
+  },
+  "questionDisplay": {
+    "points": "{{count}} points",
+    "placeholders": {
+      "essay": "Rédigez votre réponse...",
+      "translation": "Entrez votre traduction...",
+      "default": "Tapez votre réponse..."
+    },
+    "feedback": {
+      "score": "Score",
+      "expectedAnswer": "Réponse attendue :",
+      "possibleAnswer": "Réponse possible :",
+      "feedback": "Commentaires :"
+    }
+  },
+  "loading": {
+    "generatingQuestions": "Génération des questions...",
+    "loadingQuestions": "Chargement des questions..."
+  },
+  "errors": {
+    "storyNotFound": "Histoire introuvable"
+  },
+  "generate": {
+    "title": "Testez votre compréhension",
+    "description": "Générez des questions de compréhension basées sur l'histoire que vous venez de lire. Les questions testeront votre compréhension à différents niveaux.",
+    "button": "Générer des questions",
+    "signInRequired": "Veuillez vous connecter pour générer des questions."
+  },
+  "results": {
+    "greatJob": "Excellent travail !",
+    "goodEffort": "Bon effort !",
+    "keepPracticing": "Continuez à pratiquer !",
+    "scoreText": "Vous avez obtenu {{earned}} sur {{total}} points",
+    "reviewAnswers": "Revoir les réponses",
+    "yourAnswer": "Votre réponse :",
+    "correctAnswer": "Bonne réponse :",
+    "pointsEarned": "{{earned}}/{{total}} points"
+  },
+  "navigation": {
+    "backToLibrary": "Retour à la bibliothèque",
+    "backToStory": "Retour à l'histoire",
+    "browseMore": "Parcourir plus d'histoires"
+  },
+  "paywall": {
+    "title": "Passer à la compréhension IA",
+    "description": "Obtenez des questions générées par l'IA et des commentaires détaillés sur vos réponses.",
+    "freeUserFeedback": "Passez à un forfait payant pour obtenir des commentaires IA sur vos réponses."
+  }
+}

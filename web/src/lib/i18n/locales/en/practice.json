@@ -1,0 +1,54 @@
+{
+  "hero": {
+    "badge": "Output Practice",
+    "title": "Write Sentences",
+    "subtitle": "Practice using your vocabulary in context"
+  },
+  "signIn": {
+    "title": "Sign in to practice writing",
+    "description": "Create sentences with your vocabulary and get AI feedback.",
+    "button": "Sign In"
+  },
+  "empty": {
+    "title": "No words to practice",
+    "description": "Add vocabulary words to start practicing sentence writing.",
+    "goToVocabulary": "Go to Vocabulary"
+  },
+  "wordSelection": {
+    "title": "Select a word to practice",
+    "all": "All",
+    "japanese": "Japanese",
+    "english": "English",
+    "french": "French"
+  },
+  "practiceInterface": {
+    "prompt": "Write a sentence using:",
+    "changeWord": "Change word",
+    "inputLabel": "Your sentence",
+    "placeholder": "Write a sentence using \"{{word}}\"...",
+    "checking": "Checking...",
+    "checkSentence": "Check Sentence"
+  },
+  "results": {
+    "greatJob": "Great job!",
+    "goodEffort": "Good effort!",
+    "overallScore": "Overall score: {{score}}/100",
+    "yourSentence": "Your sentence",
+    "corrections": "Corrections",
+    "feedback": "Feedback",
+    "alternativeExpression": "Alternative expression",
+    "suggestedImprovement": "Suggested improvement",
+    "tryAgain": "Try Again",
+    "nextWord": "Next Word"
+  },
+  "scores": {
+    "grammar": "Grammar",
+    "wordUsage": "Word Usage",
+    "naturalness": "Naturalness"
+  },
+  "difficulty": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
+  }
+}

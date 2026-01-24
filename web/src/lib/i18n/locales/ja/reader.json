@@ -1,0 +1,41 @@
+{
+  "audioPlayer": {
+    "restart": "最初から"
+  },
+  "errors": {
+    "storyNotFound": "ストーリーが見つかりません"
+  },
+  "navigation": {
+    "backToLibrary": "ライブラリに戻る",
+    "previous": "前へ",
+    "next": "次へ",
+    "goToChapter": "第{{number}}章へ移動"
+  },
+  "premium": {
+    "title": "プレミアムストーリー",
+    "description": "このストーリーはベーシック会員以上の方がご利用いただけます。アップグレードしてすべてのプレミアムコンテンツをお楽しみください。",
+    "upgradePlan": "プランをアップグレード"
+  },
+  "limit": {
+    "title": "月間読書制限に達しました",
+    "description": "今月は{{limit}}件中{{used}}件のストーリーを読みました。続けて読むにはプランをアップグレードしてください。"
+  },
+  "furigana": {
+    "hide": "ふりがなを非表示",
+    "show": "ふりがなを表示"
+  },
+  "quiz": {
+    "takeQuiz": "クイズに挑戦"
+  },
+  "empty": {
+    "noChapters": "チャプターがありません"
+  },
+  "paywall": {
+    "title": "理解度クイズのアップグレード",
+    "description": "AIが生成した理解度確認問題で、各ストーリーの理解度をテストしましょう。"
+  },
+  "wordPopup": {
+    "saveToVocabulary": "語彙に保存",
+    "removeFromVocabulary": "語彙から削除"
+  }
+}

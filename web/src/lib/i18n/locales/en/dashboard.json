@@ -1,0 +1,90 @@
+{
+  "title": "Dashboard",
+  "welcome": "Welcome back, {{name}}!",
+  "dailyActivities": {
+    "title": "Today's Activities",
+    "noActivities": "No activities pending. Start by reading a story!",
+    "flashcardsDue": "{{count}} flashcard due",
+    "flashcardsDue_other": "{{count}} flashcards due",
+    "flashcardsSubtitle": "Review to strengthen memory",
+    "wordsToPractice": "{{count}} word to practice",
+    "wordsToPractice_other": "{{count}} words to practice",
+    "wordsSubtitle": "Write sentences to master vocabulary",
+    "continueReading": "Continue reading",
+    "readingProgress": "{{title}} ({{progress}}% complete)",
+    "review": "Review",
+    "practice": "Practice",
+    "continue": "Continue"
+  },
+  "preview": {
+    "title": "Your Learning Dashboard",
+    "subtitle": "See how SanLang helps you master vocabulary"
+  },
+  "stats": {
+    "dueCards": "due cards",
+    "words": "words",
+    "streak": "day streak",
+    "wordsLearned": "words learned",
+    "minutesToday": "minutes today",
+    "accuracy": "accuracy"
+  },
+  "cta": {
+    "startPlacement": "Start Placement Test",
+    "findLevel": "Let's find your starting level",
+    "placementExplainer": "Take a quick adaptive test (10-15 questions) to personalize your learning path. The test adjusts to your skill level as you answer.",
+    "durationQuestion": "How long do you want to study?",
+    "noContentYet": "No content yet",
+    "addVocabulary": "Add vocabulary or browse the library to get started."
+  },
+  "sections": {
+    "suggestedForYou": "Suggested for You",
+    "popularPicks": "Popular picks",
+    "stories": "Stories",
+    "videos": "Videos",
+    "browseLibrary": "Browse Library",
+    "libraryDescription": "Stories and videos at your level",
+    "continueReading": "Continue Reading",
+    "quickActions": "Quick Actions",
+    "recentActivity": "Recent Activity"
+  },
+  "signUpCta": {
+    "title": "Ready to start learning?",
+    "subtitle": "Join for free and start building your vocabulary with AI-powered flashcards.",
+    "button": "Try it Free",
+    "disclaimer": "No credit card required"
+  },
+  "session": {
+    "startSession": "Start Session",
+    "sessionComplete": "Session Complete",
+    "greatWork": "Great work!",
+    "keepItUp": "Keep it up!"
+  },
+  "learningLoop": {
+    "title": "The Learning Loop",
+    "completeLoop": "Complete the loop to master your language",
+    "steps": {
+      "input": {
+        "title": "Input",
+        "description": "Stories, audio, videos"
+      },
+      "capture": {
+        "title": "Capture",
+        "description": "Save vocabulary to learn"
+      },
+      "review": {
+        "title": "Review",
+        "description": "AI-powered flashcards"
+      },
+      "output": {
+        "title": "Output",
+        "description": "Write & get feedback"
+      }
+    },
+    "labels": {
+      "completed": "completed",
+      "vocabulary": "vocabulary",
+      "reviewed": "reviewed",
+      "sentences": "sentences"
+    }
+  }
+}

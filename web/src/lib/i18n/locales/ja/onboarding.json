@@ -1,0 +1,44 @@
+{
+  "welcome": {
+    "title": "SanLangへようこそ",
+    "subtitle": "あなた専用の試験対策を設定しましょう",
+    "getStarted": "始めましょう"
+  },
+  "actions": {
+    "back": "戻る",
+    "continue": "続ける",
+    "startLearning": "学習を始める",
+    "saving": "保存中..."
+  },
+  "howItWorks": {
+    "title": "SanLangの使い方",
+    "subtitle": "効果的な学習サイクルで語彙をマスター",
+    "steps": {
+      "read": {
+        "title": "1. 読む",
+        "description": "レベルに合ったストーリー"
+      },
+      "save": {
+        "title": "2. 保存",
+        "description": "覚えたい単語を追加"
+      },
+      "review": {
+        "title": "3. 復習",
+        "description": "AIフラッシュカード"
+      },
+      "practice": {
+        "title": "4. 練習",
+        "description": "文を書いてフィードバック"
+      }
+    }
+  },
+  "languageSelection": {
+    "title": "勉強している言語は？",
+    "subtitle": "該当するものをすべて選択"
+  },
+  "examSelection": {
+    "title": "受験予定の試験はありますか？",
+    "subtitle": "目標の試験に合わせてコンテンツを調整します（任意）",
+    "skipForNow": "今はスキップ"
+  }
+}

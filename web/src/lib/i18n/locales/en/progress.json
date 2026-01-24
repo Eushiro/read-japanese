@@ -1,0 +1,47 @@
+{
+  "title": "Your Progress",
+  "subtitle": "Track your skills and identify areas for improvement.",
+  "signInPrompt": "Sign in to track your learning progress.",
+  "stats": {
+    "streak": "Streak",
+    "days": "{{count}} days",
+    "totalStudy": "Total Study",
+    "hours": "{{count}}h",
+    "vocabulary": "Vocabulary"
+  },
+  "readiness": {
+    "title": "Readiness",
+    "notReady": "Keep Studying",
+    "almostReady": "Almost Ready",
+    "ready": "Ready",
+    "confident": "Confident"
+  },
+  "skills": {
+    "title": "Skill Breakdown",
+    "vocabulary": "Vocabulary",
+    "grammar": "Grammar",
+    "reading": "Reading",
+    "listening": "Listening",
+    "writing": "Writing",
+    "speaking": "Speaking",
+    "noData": "No data yet. Start learning to see your skills!"
+  },
+  "focusAreas": {
+    "title": "Focus Areas",
+    "practice": "Practice",
+    "questions": "{{count}} Qs",
+    "noWeakAreas": "Great job! No weak areas detected."
+  },
+  "progressChart": {
+    "title": "Progress Over Time",
+    "noData": "Study for a few days to see your progress chart."
+  },
+  "languages": {
+    "title": "Languages",
+    "average": "Average: {{percent}}%"
+  },
+  "actions": {
+    "takePracticeExam": "Take Practice Exam",
+    "reviewFlashcards": "Review Flashcards"
+  }
+}

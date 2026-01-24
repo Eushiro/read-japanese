@@ -1,0 +1,105 @@
+{
+  "title": "Vocabulaire",
+  "yourWords": "Vos mots",
+  "wordsInCollection": "{{count}} mots dans votre collection",
+  "addWord": "Ajouter un mot",
+  "searchPlaceholder": "Rechercher dans le vocabulaire...",
+  "browseDecks": "Parcourir les paquets",
+  "word": "mot",
+  "words": "mots",
+  "ofTotal": "sur {{total}} au total",
+  "deckPanel": {
+    "view": "Affichage",
+    "allWords": "Tous les mots",
+    "myWords": "Mes mots",
+    "activeDeck": "Paquet actif",
+    "add": "Ajouter",
+    "dailyCardsInfo": "De nouvelles cartes sont ajoutées chaque jour depuis ce paquet",
+    "noActiveDeck": "Aucun paquet actif",
+    "chooseADeck": "Choisir un paquet",
+    "paused": "En pause",
+    "makeActive": "Activer ce paquet",
+    "removeDeckTitle": "Supprimer le paquet ?",
+    "removeDeckDescription": "Cela supprimera <strong>{{deckName}}</strong> de vos paquets. Les mots que vous avez déjà appris resteront dans votre vocabulaire.",
+    "cancel": "Annuler",
+    "remove": "Supprimer",
+    "wordsProgress": "{{added}}/{{total}} mots",
+    "today": "+{{count}} aujourd'hui",
+    "newCardsPerDay": "Nouvelles cartes/jour"
+  },
+  "sort": {
+    "newest": "Plus récent",
+    "oldest": "Plus ancien",
+    "alphabetical": "A → Z",
+    "alphabeticalReverse": "Z → A",
+    "byMastery": "Par maîtrise"
+  },
+  "mastery": {
+    "new": "Nouveau",
+    "learning": "En cours",
+    "tested": "Testé",
+    "mastered": "Maîtrisé"
+  },
+  "filters": {
+    "allLanguages": "Toutes les langues",
+    "allMastery": "Toute maîtrise",
+    "clearAll": "Tout effacer",
+    "label": "Filtres"
+  },
+  "signInPrompt": {
+    "title": "Connectez-vous pour voir votre vocabulaire",
+    "description": "Vos mots enregistrés apparaîtront ici une fois connecté."
+  },
+  "empty": {
+    "title": "Aucun vocabulaire enregistré",
+    "description": "Ajoutez des mots manuellement ou enregistrez-les pendant la lecture",
+    "addFirst": "Ajouter votre premier mot",
+    "noMatches": "Aucun mot correspondant trouvé",
+    "tryAdjusting": "Essayez d'ajuster votre recherche ou vos filtres"
+  },
+  "card": {
+    "playPronunciation": "Lire la prononciation",
+    "playWord": "Lire le mot",
+    "playSentence": "Lire la phrase",
+    "practiceShadowing": "Pratiquer le shadowing",
+    "practiceWriting": "Pratiquer l'écriture de phrases",
+    "generateFlashcard": "Générer une flashcard IA",
+    "generatingContent": "Génération du contenu...",
+    "enhancing": "Amélioration...",
+    "regeneratingSentence": "Regénération de la phrase et de l'audio...",
+    "generatingSentence": "Génération de la phrase, de l'audio et de l'image...",
+    "originalContext": "Contexte original",
+    "reading": "Lecture",
+    "definition": "Définition"
+  },
+  "addModal": {
+    "title": "Ajouter un nouveau mot",
+    "language": "Langue",
+    "word": "Mot",
+    "wordPlaceholder": "Tapez pour rechercher...",
+    "wordPlaceholderJapanese": "食べる, taberu...",
+    "readingLabel": "Lecture (Hiragana)",
+    "readingPlaceholder": "たべる",
+    "definitionLabel": "Définition(s)",
+    "definitionPlaceholder": "manger, consommer",
+    "definitionHint": "Séparez plusieurs définitions par des virgules",
+    "noResults": "Aucun résultat",
+    "adding": "Ajout en cours..."
+  },
+  "shadowing": {
+    "tryAgain": "Réessayer",
+    "done": "Terminé"
+  },
+  "deckPicker": {
+    "title": "Parcourir les paquets de vocabulaire",
+    "description": "Choisissez un paquet prédéfini pour commencer à apprendre. Des cartes seront ajoutées quotidiennement à votre vocabulaire.",
+    "subscribedToAll": "Vous êtes abonné à tous les paquets {{language}} disponibles !",
+    "sentences": "{{count}} phrases",
+    "audio": "{{count}} audio",
+    "newCardsPerDay": "Nouvelles cartes par jour",
+    "estimate": "À {{dailyCards}} cartes/jour, vous terminerez <strong>{{deckName}}</strong> en environ <strong>{{days}} jours</strong>",
+    "starting": "Démarrage...",
+    "startLearning": "Commencer à apprendre {{deckName}}",
+    "decks": "paquets"
+  }
+}

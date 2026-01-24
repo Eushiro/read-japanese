@@ -1,0 +1,66 @@
+{
+  "loadingPhrases": {
+    "creating": "正在创建问题...",
+    "calibrating": "正在调整难度...",
+    "selectingFormat": "正在选择最佳格式...",
+    "preparingChoices": "正在准备选项...",
+    "verifying": "正在验证准确性...",
+    "analyzing": "正在分析您的水平...",
+    "consulting": "正在查询题库...",
+    "balancing": "正在平衡挑战与学习...",
+    "crafting": "正在创建独特的问题...",
+    "checkingGrammar": "正在检查语法点...",
+    "selectingVocab": "正在选择相关词汇...",
+    "optimizing": "正在根据您的进度优化...",
+    "reviewingDifficulty": "正在审核难度设置...",
+    "matchingSkill": "正在匹配您的技能水平..."
+  },
+  "auth": {
+    "signInRequired": "需要登录",
+    "signInPrompt": "请登录以参加水平测试。",
+    "goToHome": "返回首页"
+  },
+  "results": {
+    "title": "水平测试结果",
+    "resetTest": "重置测试",
+    "yourLevel": "您的{{language}}水平",
+    "confidence": "{{percent}}% 置信度",
+    "questions": "题",
+    "correct": "正确",
+    "accuracy": "正确率",
+    "startLearning": "从 {{level}} 开始学习",
+    "backToSettings": "返回设置"
+  },
+  "start": {
+    "title": "{{language}}水平测试",
+    "reset": "重置",
+    "adaptiveTest": "自适应水平测试",
+    "description": "此测试会根据您的回答调整难度。请诚实作答以获得准确评估。",
+    "howItWorks": "测试说明",
+    "questionRange": "这个自适应测试包含<strong>8-20道题目</strong>",
+    "questionsAdjust": "题目难度会根据您的回答进行调整",
+    "testEnds": "当我们确信已评估出您的水平时测试结束",
+    "typicalDuration": "大多数人在<strong>10-15道题目</strong>内完成",
+    "skillsTitle": "词汇、语法和阅读",
+    "skillsDescription": "测试多项语言技能",
+    "personalizedTitle": "个性化学习路径",
+    "personalizedDescription": "测试结果将为您定制内容难度",
+    "startTest": "开始测试",
+    "preparingTest": "正在准备测试..."
+  },
+  "question": {
+    "title": "水平测试",
+    "questionNumber": "第{{number}}题",
+    "ofTotal": "共{{total}}题",
+    "almostThere": "快完成了！",
+    "gettingClearer": "越来越清晰...",
+    "assessing": "正在评估您的水平...",
+    "correctCount": "{{correct}} / {{total}} 正确",
+    "confident": "{{percent}}% 置信度",
+    "loadingQuestion": "正在加载问题...",
+    "reviewing": "回顾中",
+    "returnToCurrent": "返回当前问题",
+    "next": "下一题",
+    "nextQuestion": "下一题"
+  }
+}

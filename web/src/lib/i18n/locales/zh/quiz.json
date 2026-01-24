@@ -1,0 +1,12 @@
+{
+  "navigation": {
+    "previous": "上一题",
+    "submitAnswer": "提交答案",
+    "nextQuestion": "下一题",
+    "finishQuiz": "完成测验",
+    "submitting": "提交中...",
+    "grading": "批改中...",
+    "questionNumber": "第 {{current}} 题，共 {{total}} 题",
+    "answered": "已作答"
+  }
+}

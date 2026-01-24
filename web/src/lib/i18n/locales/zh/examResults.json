@@ -1,0 +1,32 @@
+{
+  "loading": "正在加载结果...",
+  "backToExams": "返回考试列表",
+  "header": {
+    "congratulations": "恭喜!",
+    "keepPracticing": "继续练习",
+    "points": "{{earned}} / {{total}} 分"
+  },
+  "stats": {
+    "correct": "正确",
+    "incorrect": "错误",
+    "minutes": "分钟"
+  },
+  "sections": {
+    "title": "各部分得分"
+  },
+  "questions": {
+    "title": "题目回顾",
+    "questionNumber": "第 {{number}} 题",
+    "points": "{{earned}} / {{total}} 分",
+    "yourAnswer": "你的答案:",
+    "noAnswer": "(未作答)",
+    "correctAnswer": "正确答案:",
+    "feedback": "反馈:",
+    "explanation": "解析:"
+  },
+  "actions": {
+    "tryAgain": "再试一次",
+    "viewProgress": "查看进度",
+    "moreExams": "更多考试"
+  }
+}

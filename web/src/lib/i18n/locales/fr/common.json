@@ -1,0 +1,103 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "library": "Biblioth\u00e8que",
+    "profile": "Profil",
+    "settings": "Param\u00e8tres",
+    "pricing": "Tarifs",
+    "admin": "Admin",
+    "signIn": "Se connecter",
+    "signOut": "Se d\u00e9connecter"
+  },
+  "actions": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "continue": "Continuer",
+    "back": "Retour",
+    "close": "Fermer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "remove": "Retirer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "refresh": "Actualiser",
+    "retry": "R\u00e9essayer",
+    "submit": "Soumettre",
+    "confirm": "Confirmer",
+    "manage": "G\u00e9rer",
+    "upgrade": "Mettre à niveau",
+    "getStarted": "Commencer",
+    "startLearning": "Commencer \u00e0 apprendre",
+    "tryFree": "Essayer gratuitement",
+    "learnMore": "En savoir plus",
+    "browseLibrary": "Parcourir la biblioth\u00e8que",
+    "viewAll": "Voir tout",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "play": "Lire",
+    "pause": "Pause"
+  },
+  "status": {
+    "loading": "Chargement...",
+    "saving": "Enregistrement...",
+    "processing": "Traitement...",
+    "error": "Une erreur s'est produite",
+    "success": "Succ\u00e8s",
+    "empty": "Aucun \u00e9l\u00e9ment trouv\u00e9",
+    "noResults": "Aucun r\u00e9sultat"
+  },
+  "time": {
+    "minutes": "{{count}} min",
+    "hours": "{{count}} h",
+    "seconds": "{{count}} sec",
+    "days": "{{count}} jour",
+    "days_other": "{{count}} jours",
+    "ago": "il y a {{time}}",
+    "remaining": "{{time}} restant"
+  },
+  "errors": {
+    "generic": "Une erreur s'est produite. Veuillez r\u00e9essayer.",
+    "network": "Erreur r\u00e9seau. V\u00e9rifiez votre connexion.",
+    "unauthorized": "Veuillez vous connecter pour continuer.",
+    "notFound": "Non trouv\u00e9."
+  },
+  "auth": {
+    "signInPrompt": "Connectez-vous pour continuer",
+    "signInDescription": "Cr\u00e9ez un compte ou connectez-vous pour acc\u00e9der \u00e0 toutes les fonctionnalit\u00e9s.",
+    "signedInAs": "Connect\u00e9 en tant que {{name}}",
+    "syncDescription": "Connectez-vous pour synchroniser votre vocabulaire et votre progression sur tous vos appareils."
+  },
+  "languages": {
+    "japanese": "Japonais",
+    "english": "Anglais",
+    "french": "Fran\u00e7ais",
+    "chinese": "Chinois",
+    "allLanguages": "Toutes les langues"
+  },
+  "mastery": {
+    "new": "Nouveau",
+    "learning": "En cours",
+    "tested": "Test\u00e9",
+    "mastered": "Ma\u00eetris\u00e9",
+    "allMastery": "Tous les niveaux"
+  },
+  "sort": {
+    "newestFirst": "Plus r\u00e9cent",
+    "oldestFirst": "Plus ancien",
+    "alphabetical": "A \u2192 Z",
+    "alphabeticalReverse": "Z \u2192 A",
+    "byMastery": "Par ma\u00eetrise"
+  },
+  "duration": {
+    "quick": "R\u00e9vision rapide",
+    "standard": "Standard",
+    "deep": "\u00c9tude approfondie"
+  },
+  "about": {
+    "title": "\u00c0 propos",
+    "version": "SanLang v1.0.0",
+    "description": "Pr\u00e9paration aux examens personnalis\u00e9e par l'IA"
+  }
+}

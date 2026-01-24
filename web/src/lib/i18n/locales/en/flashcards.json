@@ -1,0 +1,87 @@
+{
+  "hero": {
+    "badge": "Spaced Repetition",
+    "title": "Flashcards",
+    "subtitle": "Review your vocabulary with the FSRS algorithm"
+  },
+  "signIn": {
+    "title": "Sign in to start reviewing",
+    "description": "Track your progress and master your vocabulary with spaced repetition.",
+    "button": "Sign In"
+  },
+  "counter": {
+    "cardsLeft": "cards left"
+  },
+  "states": {
+    "allCaughtUp": {
+      "title": "All caught up!",
+      "description": "No cards are due for review right now. Add more vocabulary or check back later.",
+      "addVocabulary": "Add Vocabulary"
+    },
+    "sessionComplete": {
+      "title": "Session Complete!",
+      "cardsReviewed": "You reviewed <bold>{{count}}</bold> cards",
+      "encouragement": "Great work! Keep up the consistent practice.",
+      "reviewAgain": "Review Again"
+    }
+  },
+  "rating": {
+    "prompt": "How well did you know this?",
+    "again": "Again",
+    "hard": "Hard",
+    "good": "Good",
+    "easy": "Easy",
+    "intervals": {
+      "again": "1m",
+      "hard": "10m",
+      "good": "1d",
+      "easy": "4d"
+    }
+  },
+  "actions": {
+    "undo": "Undo (Cmd+Z)",
+    "redo": "Redo (Cmd+Shift+Z)"
+  },
+  "card": {
+    "showAnswer": "Show Answer",
+    "playWord": "Play Word",
+    "playSentence": "Play Sentence",
+    "newSentence": "New Sentence",
+    "refreshing": "Refreshing...",
+    "reading": "Reading",
+    "definition": "Definition"
+  },
+  "title": "Flashcards",
+  "subtitle": "Review your vocabulary with spaced repetition",
+  "startReview": "Start Review",
+  "continueReview": "Continue Review",
+  "noCardsToReview": "No cards to review",
+  "allCaughtUp": "You're all caught up! Check back later.",
+  "dueCards": "{{count}} cards due",
+  "newCards": "{{count}} new cards",
+  "reviewComplete": "Review Complete",
+  "cardsReviewed": "{{count}} cards reviewed",
+  "session": {
+    "progress": "{{current}} of {{total}}",
+    "remaining": "{{count}} remaining",
+    "timeSpent": "Time spent",
+    "accuracy": "Accuracy",
+    "streak": "Streak"
+  },
+  "settings": {
+    "newCardsPerDay": "New cards per day",
+    "maxReviewsPerDay": "Max reviews per day",
+    "showSentence": "Show example sentence",
+    "showImage": "Show image",
+    "autoplayAudio": "Auto-play audio"
+  },
+  "stats": {
+    "title": "Review Statistics",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "allTime": "All Time",
+    "cardsStudied": "Cards Studied",
+    "averageAccuracy": "Average Accuracy",
+    "longestStreak": "Longest Streak"
+  }
+}

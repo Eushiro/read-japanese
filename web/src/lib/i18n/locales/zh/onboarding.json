@@ -1,0 +1,44 @@
+{
+  "welcome": {
+    "title": "欢迎来到SanLang",
+    "subtitle": "来设置你的个性化备考方案吧",
+    "getStarted": "开始吧"
+  },
+  "actions": {
+    "back": "返回",
+    "continue": "继续",
+    "startLearning": "开始学习",
+    "saving": "保存中..."
+  },
+  "howItWorks": {
+    "title": "SanLang是怎么运作的",
+    "subtitle": "通过我们的学习循环掌握词汇",
+    "steps": {
+      "read": {
+        "title": "1. 阅读",
+        "description": "适合你水平的故事"
+      },
+      "save": {
+        "title": "2. 收藏",
+        "description": "想学习的单词"
+      },
+      "review": {
+        "title": "3. 复习",
+        "description": "AI智能闪卡"
+      },
+      "practice": {
+        "title": "4. 练习",
+        "description": "写句子，获得反馈"
+      }
+    }
+  },
+  "languageSelection": {
+    "title": "你在学习哪些语言？",
+    "subtitle": "选择所有适用的选项"
+  },
+  "examSelection": {
+    "title": "有即将到来的考试吗？",
+    "subtitle": "我们会根据你的目标考试调整内容（可选）",
+    "skipForNow": "暂时跳过"
+  }
+}

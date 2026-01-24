@@ -1,0 +1,82 @@
+{
+  "signIn": {
+    "title": "模拟考试",
+    "description": "登录以访问模拟考试并跟踪您的进度。"
+  },
+  "hero": {
+    "title": "模拟考试",
+    "subtitle": "使用AI反馈的真实考试为目标考试做准备。"
+  },
+  "readiness": {
+    "title": "您的准备程度",
+    "viewProgress": "查看进度",
+    "levels": {
+      "confident": "自信满满",
+      "ready": "准备就绪",
+      "almostReady": "即将就绪",
+      "keepStudying": "继续学习"
+    },
+    "vocabularyMastered": "词汇：{{known}}/{{total}} 已掌握"
+  },
+  "continueExam": {
+    "title": "继续考试",
+    "questionsAnswered": "{{answered}}/{{total}} 题已回答"
+  },
+  "available": {
+    "title": "可用考试",
+    "empty": "暂无可用的模拟考试。请稍后再来查看！",
+    "attempts": "{{count}}次尝试",
+    "best": "最高：{{score}}%",
+    "questions": "{{count}}题",
+    "minutes": "{{count}}分钟"
+  },
+  "progress": {
+    "title": "您的进度",
+    "average": "平均",
+    "best": "最高",
+    "attempts": "尝试次数",
+    "focusAreas": "重点领域："
+  },
+  "examTypes": {
+    "jlpt_n5": {
+      "name": "JLPT N5",
+      "description": "基础日语能力"
+    },
+    "jlpt_n4": {
+      "name": "JLPT N4",
+      "description": "初级日语"
+    },
+    "jlpt_n3": {
+      "name": "JLPT N3",
+      "description": "中级日语"
+    },
+    "jlpt_n2": {
+      "name": "JLPT N2",
+      "description": "中高级日语"
+    },
+    "jlpt_n1": {
+      "name": "JLPT N1",
+      "description": "高级日语能力"
+    },
+    "toefl": {
+      "name": "TOEFL",
+      "description": "英语能力测试"
+    },
+    "delf_a1": {
+      "name": "DELF A1",
+      "description": "基础法语"
+    },
+    "delf_a2": {
+      "name": "DELF A2",
+      "description": "初级法语"
+    },
+    "delf_b1": {
+      "name": "DELF B1",
+      "description": "中级法语"
+    },
+    "delf_b2": {
+      "name": "DELF B2",
+      "description": "中高级法语"
+    }
+  }
+}
