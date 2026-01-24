@@ -46,6 +46,10 @@ See **`docs/DEVELOPMENT.md`** for detailed patterns on:
 - Analytics integration (`web/src/lib/analytics.ts`)
 - Learner model integration for assessments
 - Centralized AI generation functions (`web/convex/lib/generation.ts`)
+- Shared language configuration (`shared/languages.json`)
+- Media compression standards (MP3/WebP)
+- Batch API usage for bulk generation
+- JSON schemas for AI structured output
 
 ---
 
@@ -95,7 +99,7 @@ cd backend && source venv/bin/activate && python run.py
 ## Pre-commit Hooks
 
 See **`docs/HOOKS.md`** for details on:
-- What runs on commit (secret detection, Prettier, TypeScript, ESLint, i18n, Convex)
+- What runs on commit (secret detection, Prettier, TypeScript, ESLint, i18n, Convex, tests, Claude review)
 - Conventional commit message format
 - How to fix common failures
 - Manual validation commands
@@ -106,6 +110,43 @@ cd web
 bun run validate      # Run all checks
 bun run lint:fix      # Auto-fix ESLint issues
 bun run format        # Auto-fix Prettier issues
+bun test              # Run smoke tests
+```
+
+---
+
+## Git Workflow for Agents
+
+**After completing work, commit your changes but do NOT push.**
+
+1. **Commit only files you modified** - Use `git add <specific-files>` not `git add -A` or `git add .`
+2. **Create the commit** - Follow conventional commit format
+3. **Do NOT push** - Let the human review and push when ready
+4. **If commit fails with review feedback** - Follow the instructions to fix issues or update docs, then commit again
+
+This allows:
+- Multiple agents to work on separate branches
+- Human oversight before code reaches remote
+- Pre-commit hooks to catch issues early
+- Documentation stays in sync with code changes
+
+**Example:**
+```bash
+# Good - commit specific files
+git add web/src/components/MyComponent.tsx web/src/hooks/useMyHook.ts
+git commit -m "feat: add new component"
+
+# If review says UPDATE_DOCS - add the doc changes too
+git add docs/DEVELOPMENT.md
+git commit -m "feat: add new component
+
+- Added MyComponent for X functionality
+- Updated DEVELOPMENT.md with new pattern"
+
+# Bad - don't do these
+git add -A                    # May include unrelated changes
+git add .                     # May include unrelated changes
+git push                      # Let human push
 ```
 
 ---
@@ -176,6 +217,7 @@ CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-domain.clerk.accounts.dev
 | `docs/ARCHITECTURE.md` | System architecture and data models |
 | `docs/TASKS.md` | Step-by-step admin and content tasks |
 | `docs/HOOKS.md` | Pre-commit hooks and validation |
+| `shared/languages.json` | Supported languages (shared between frontend/backend) |
 | `web/convex/schema.ts` | All Convex table definitions |
 | `web/convex/learnerModel.ts` | Unified skill tracking |
 | `web/convex/ai.ts` | AI model routing |
@@ -183,3 +225,18 @@ CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-domain.clerk.accounts.dev
 | `web/src/router.tsx` | All routes |
 | `web/src/lib/analytics.ts` | Analytics abstraction layer |
 | `web/src/components/ui/` | Reusable UI components (shadcn/ui) |
+
+---
+
+## Maintaining This Documentation
+
+**When establishing new "always do" patterns**, update the documentation:
+
+1. **Add to `docs/DEVELOPMENT.md`** for coding patterns (or create a new doc file if it's a distinct topic)
+2. **Update this CLAUDE.md** to reference the doc file with a brief description of when to consult it
+3. **Keep CLAUDE.md concise** - it should be a quick reference that points to detailed docs, not contain all details itself
+
+**Subdirectory CLAUDE.md files** (`backend/CLAUDE.md`, `web/convex/CLAUDE.md`):
+- Keep them focused on directory-specific essentials
+- Reference `docs/DEVELOPMENT.md` for shared patterns
+- Don't duplicate information that's already in the main docs

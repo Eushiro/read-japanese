@@ -13,12 +13,11 @@ import { Paywall } from "@/components/Paywall";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useT } from "@/lib/i18n";
 import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
 
-const GENRE_KEYS = [
+const _GENRE_KEYS = [
   "dailyLife",
   "fantasy",
   "mystery",
@@ -32,7 +31,7 @@ const GENRE_KEYS = [
 ] as const;
 
 // Map genre keys to the API values
-const GENRE_API_VALUES: Record<(typeof GENRE_KEYS)[number], string> = {
+const _GENRE_API_VALUES: Record<(typeof _GENRE_KEYS)[number], string> = {
   dailyLife: "Daily Life",
   fantasy: "Fantasy",
   mystery: "Mystery",

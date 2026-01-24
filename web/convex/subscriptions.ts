@@ -1,60 +1,61 @@
 import { v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
+import { isAdminEmail } from "./lib/admin";
 import { subscriptionTierValidator } from "./schema";
 
 // ============================================
-// USAGE LIMITS PER TIER
+// CREDIT LIMITS PER TIER
 // ============================================
-// Scaling: Each tier gives ~4-5x value for 3x price
-// This incentivizes upgrades while maintaining cost control
+// Unified credit system - simpler than per-action limits
 //
-// Estimated API costs per action:
-// - Sentence generation: ~$0.001
-// - AI verification: ~$0.002
-// - Audio (TTS): ~$0.002
-// - Image generation: ~$0.02
-// - Mock test generation: ~$0.05
-// - Personalized story: ~$0.10
+// Tier pricing:
+// - Free: $0, 50 credits (loss leader)
+// - Starter: $7.99/mo, 500 credits (94% margin)
+// - Pro: $17.99/mo, 2000 credits (89% margin)
 //
-export const TIER_LIMITS = {
-  free: {
-    aiVerificationsPerMonth: 50,
-    storiesPerMonth: 5,
-    personalizedStoriesPerMonth: 0,
-    mockTestsPerMonth: 0,
-    flashcardsPerMonth: 100,
-    audioPerMonth: 20,
-  },
-  basic: {
-    // $5/mo - 4x free value
-    aiVerificationsPerMonth: 200,
-    storiesPerMonth: 20,
-    personalizedStoriesPerMonth: 5,
-    mockTestsPerMonth: 2,
-    flashcardsPerMonth: 500,
-    audioPerMonth: 100,
-  },
-  pro: {
-    // $15/mo (3x basic) - 5x basic value
-    aiVerificationsPerMonth: 1000,
-    storiesPerMonth: 100,
-    personalizedStoriesPerMonth: 25,
-    mockTestsPerMonth: 15,
-    flashcardsPerMonth: 3000,
-    audioPerMonth: 500,
-  },
-  power: {
-    // $45/mo (3x pro) - 5x pro value
-    // Renamed from "unlimited" - no truly unlimited tier
-    aiVerificationsPerMonth: 5000,
-    storiesPerMonth: 500,
-    personalizedStoriesPerMonth: 150,
-    mockTestsPerMonth: 100,
-    flashcardsPerMonth: 15000,
-    audioPerMonth: 2500,
-  },
+// Annual plans (17% discount):
+// - Starter: $79.99/year (vs $95.88)
+// - Pro: $179.99/year (vs $215.88)
+//
+export const TIER_CREDITS = {
+  free: 50,
+  starter: 500,
+  pro: 2000,
 } as const;
+
+// ============================================
+// CREDIT COSTS PER ACTION
+// ============================================
+// Based on actual API costs (with margin):
+// - Sentence generation: ~$0.0007 → 1 credit
+// - AI verification: ~$0.001 → 1 credit
+// - Comprehension grading: ~$0.001 → 1 credit
+// - Audio (TTS): ~$0.002 → 2 credits
+// - Shadowing session: ~$0.003 → 3 credits
+//
+export const CREDIT_COSTS = {
+  sentence: 1, // generateFlashcard
+  feedback: 1, // verifySentence (writing practice)
+  comprehension: 1, // gradeComprehensionAnswer (story/video quiz)
+  audio: 2, // generateFlashcardAudio
+  shadowing: 3, // shadowing session (audio + scoring)
+} as const;
+
+export type CreditAction = keyof typeof CREDIT_COSTS;
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+// Get current month and year
+function getCurrentPeriod() {
+  const now = new Date();
+  return {
+    month: now.getMonth() + 1, // 1-12
+    year: now.getFullYear(),
+  };
+}
 
 // ============================================
 // SUBSCRIPTION QUERIES
@@ -74,24 +75,351 @@ export const get = query({
       return {
         tier: "free" as const,
         status: "active" as const,
-        limits: TIER_LIMITS.free,
+        billingPeriod: undefined,
+        credits: TIER_CREDITS.free,
       };
     }
 
     return {
       ...subscription,
-      limits: TIER_LIMITS[subscription.tier],
+      credits: TIER_CREDITS[subscription.tier as keyof typeof TIER_CREDITS] ?? TIER_CREDITS.free,
     };
   },
 });
 
-// Get current usage for the month
+// ============================================
+// CREDIT BALANCE QUERIES
+// ============================================
+
+// Get credit balance for the current month
+export const getCreditBalance = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    // Get subscription tier
+    const subscription = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    const tier = subscription?.tier ?? "free";
+    const limit = TIER_CREDITS[tier as keyof typeof TIER_CREDITS] ?? TIER_CREDITS.free;
+
+    // Get current period usage
+    const { month, year } = getCurrentPeriod();
+    const usage = await ctx.db
+      .query("creditUsage")
+      .withIndex("by_user_and_period", (q) =>
+        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
+      )
+      .first();
+
+    const used = usage?.creditsUsed ?? 0;
+    const remaining = Math.max(0, limit - used);
+    const percentage = limit > 0 ? Math.round((used / limit) * 100) : 0;
+
+    // Calculate reset date (first of next month)
+    const resetDate = new Date(year, month, 1); // month is 0-indexed, so this is first of next month
+
+    return {
+      used,
+      limit,
+      remaining,
+      percentage,
+      nearLimit: percentage >= 80,
+      tier,
+      billingPeriod: subscription?.billingPeriod,
+      resetDate: resetDate.toISOString(),
+      // Alert dismissal status
+      alertDismissed80: usage?.alertDismissed80 ?? false,
+      alertDismissed95: usage?.alertDismissed95 ?? false,
+    };
+  },
+});
+
+// Get credit transactions for usage history
+export const getCreditTransactions = query({
+  args: {
+    userId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const queryLimit = args.limit ?? 100;
+
+    const transactions = await ctx.db
+      .query("creditTransactions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(queryLimit);
+
+    return transactions;
+  },
+});
+
+// ============================================
+// CREDIT SPENDING MUTATIONS
+// ============================================
+
+// Spend credits for an action
+export const spendCredits = mutation({
+  args: {
+    userId: v.string(),
+    action: v.string(),
+    count: v.optional(v.number()),
+    metadata: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    const actionKey = args.action as CreditAction;
+    const cost = (CREDIT_COSTS[actionKey] ?? 1) * (args.count ?? 1);
+
+    // Check if admin mode is enabled
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.userId))
+      .first();
+
+    const isAdmin = user?.isAdminMode && isAdminEmail(user.email);
+
+    if (isAdmin) {
+      // Admin bypass - log but don't deduct
+      await ctx.db.insert("creditTransactions", {
+        userId: args.userId,
+        action: args.action,
+        creditsSpent: 0, // Free for admin
+        metadata: { ...args.metadata, adminBypass: true },
+        createdAt: Date.now(),
+      });
+      return { success: true, creditsRemaining: Infinity, bypassed: true };
+    }
+
+    // Get current balance
+    const subscription = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    const tier = subscription?.tier ?? "free";
+    const limit = TIER_CREDITS[tier as keyof typeof TIER_CREDITS] ?? TIER_CREDITS.free;
+
+    const { month, year } = getCurrentPeriod();
+    const usage = await ctx.db
+      .query("creditUsage")
+      .withIndex("by_user_and_period", (q) =>
+        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
+      )
+      .first();
+
+    const currentUsed = usage?.creditsUsed ?? 0;
+    const remaining = limit - currentUsed;
+
+    // Check if enough credits
+    if (remaining < cost) {
+      throw new Error(
+        `Insufficient credits. Need ${cost}, have ${remaining}. Upgrade your plan for more credits.`
+      );
+    }
+
+    // Deduct credits
+    if (usage) {
+      await ctx.db.patch(usage._id, {
+        creditsUsed: currentUsed + cost,
+        updatedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("creditUsage", {
+        userId: args.userId,
+        periodMonth: month,
+        periodYear: year,
+        creditsUsed: cost,
+        updatedAt: Date.now(),
+      });
+    }
+
+    // Log transaction
+    await ctx.db.insert("creditTransactions", {
+      userId: args.userId,
+      action: args.action,
+      creditsSpent: cost,
+      metadata: args.metadata,
+      createdAt: Date.now(),
+    });
+
+    return {
+      success: true,
+      creditsRemaining: remaining - cost,
+      bypassed: false,
+    };
+  },
+});
+
+// Internal mutation for logging transactions from actions
+export const logCreditTransactionInternal = internalMutation({
+  args: {
+    userId: v.string(),
+    action: v.string(),
+    creditsSpent: v.number(),
+    metadata: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("creditTransactions", {
+      userId: args.userId,
+      action: args.action,
+      creditsSpent: args.creditsSpent,
+      metadata: args.metadata,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+// ============================================
+// ALERT DISMISSAL
+// ============================================
+
+// Dismiss credit alert (80% or 95%)
+export const dismissCreditAlert = mutation({
+  args: {
+    userId: v.string(),
+    threshold: v.union(v.literal(80), v.literal(95)),
+  },
+  handler: async (ctx, args) => {
+    const { month, year } = getCurrentPeriod();
+
+    const usage = await ctx.db
+      .query("creditUsage")
+      .withIndex("by_user_and_period", (q) =>
+        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
+      )
+      .first();
+
+    const field = args.threshold === 80 ? "alertDismissed80" : "alertDismissed95";
+
+    if (usage) {
+      await ctx.db.patch(usage._id, {
+        [field]: true,
+        updatedAt: Date.now(),
+      });
+    } else {
+      // Create usage record if it doesn't exist
+      await ctx.db.insert("creditUsage", {
+        userId: args.userId,
+        periodMonth: month,
+        periodYear: year,
+        creditsUsed: 0,
+        [field]: true,
+        updatedAt: Date.now(),
+      });
+    }
+  },
+});
+
+// ============================================
+// SUBSCRIPTION MUTATIONS
+// ============================================
+
+// Create or update subscription
+export const upsert = mutation({
+  args: {
+    userId: v.string(),
+    tier: subscriptionTierValidator,
+    billingPeriod: v.optional(v.union(v.literal("monthly"), v.literal("annual"))),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    // Calculate renewal date based on billing period
+    const isAnnual = args.billingPeriod === "annual";
+    const renewalMs = isAnnual ? 365 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        tier: args.tier,
+        status: "active",
+        billingPeriod: args.billingPeriod,
+        renewalDate: now + renewalMs,
+        updatedAt: now,
+      });
+      return existing._id;
+    }
+
+    return await ctx.db.insert("subscriptions", {
+      userId: args.userId,
+      tier: args.tier,
+      status: "active",
+      billingPeriod: args.billingPeriod,
+      startDate: now,
+      renewalDate: now + renewalMs,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+// Cancel subscription
+export const cancel = mutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const subscription = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (subscription) {
+      await ctx.db.patch(subscription._id, {
+        status: "cancelled",
+        cancelledAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    }
+  },
+});
+
+// ============================================
+// ADMIN MODE
+// ============================================
+
+// Toggle admin mode (for admin emails only)
+export const toggleAdminMode = mutation({
+  args: {
+    userId: v.string(),
+    enabled: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.userId))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Verify user is admin
+    if (!isAdminEmail(user.email)) {
+      throw new Error("Only admin users can enable admin mode");
+    }
+
+    await ctx.db.patch(user._id, {
+      isAdminMode: args.enabled,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true, isAdminMode: args.enabled };
+  },
+});
+
+// ============================================
+// LEGACY USAGE TRACKING (deprecated)
+// ============================================
+// Keep for backward compatibility during migration
+
+// @deprecated: Use getCreditBalance instead
 export const getUsage = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
+    const { month, year } = getCurrentPeriod();
 
     const usage = await ctx.db
       .query("usageRecords")
@@ -122,129 +450,7 @@ export const getUsage = query({
   },
 });
 
-// Check if user can perform an action
-export const canPerformAction = query({
-  args: {
-    userId: v.string(),
-    action: v.union(
-      v.literal("aiVerification"),
-      v.literal("readStory"),
-      v.literal("generatePersonalizedStory"),
-      v.literal("generateMockTest"),
-      v.literal("generateFlashcard"),
-      v.literal("generateAudio")
-    ),
-  },
-  handler: async (ctx, args) => {
-    // Get subscription
-    const subscription = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .first();
-
-    const tier = subscription?.tier ?? "free";
-    const limits = TIER_LIMITS[tier];
-
-    // Get current usage
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-
-    const usage = await ctx.db
-      .query("usageRecords")
-      .withIndex("by_user_and_period", (q) =>
-        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
-      )
-      .first();
-
-    const actionToLimit: Record<string, { limitKey: keyof typeof limits; usageKey: string }> = {
-      aiVerification: { limitKey: "aiVerificationsPerMonth", usageKey: "aiVerifications" },
-      readStory: { limitKey: "storiesPerMonth", usageKey: "storiesRead" },
-      generatePersonalizedStory: {
-        limitKey: "personalizedStoriesPerMonth",
-        usageKey: "personalizedStoriesGenerated",
-      },
-      generateMockTest: { limitKey: "mockTestsPerMonth", usageKey: "mockTestsGenerated" },
-      generateFlashcard: { limitKey: "flashcardsPerMonth", usageKey: "flashcardsGenerated" },
-      generateAudio: { limitKey: "audioPerMonth", usageKey: "audioGenerated" },
-    };
-
-    const { limitKey, usageKey } = actionToLimit[args.action];
-    const limit = limits[limitKey];
-    const currentUsage = usage ? ((usage as unknown as Record<string, number>)[usageKey] ?? 0) : 0;
-
-    const remaining = limit - currentUsage;
-    return {
-      allowed: remaining > 0,
-      remaining: Math.max(0, remaining),
-      limit,
-      used: currentUsage,
-    };
-  },
-});
-
-// ============================================
-// SUBSCRIPTION MUTATIONS
-// ============================================
-
-// Create or update subscription (mocked - no real payment)
-export const upsert = mutation({
-  args: {
-    userId: v.string(),
-    tier: subscriptionTierValidator,
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    const existing = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .first();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        tier: args.tier,
-        status: "active",
-        updatedAt: now,
-      });
-      return existing._id;
-    }
-
-    return await ctx.db.insert("subscriptions", {
-      userId: args.userId,
-      tier: args.tier,
-      status: "active",
-      startDate: now,
-      renewalDate: now + 30 * 24 * 60 * 60 * 1000, // 30 days
-      createdAt: now,
-      updatedAt: now,
-    });
-  },
-});
-
-// Cancel subscription (mocked)
-export const cancel = mutation({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    const subscription = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .first();
-
-    if (subscription) {
-      await ctx.db.patch(subscription._id, {
-        status: "cancelled",
-        cancelledAt: Date.now(),
-        updatedAt: Date.now(),
-      });
-    }
-  },
-});
-
-// ============================================
-// USAGE TRACKING MUTATIONS
-// ============================================
-
-// Increment usage counter
+// @deprecated: Use spendCredits instead
 export const incrementUsage = mutation({
   args: {
     userId: v.string(),
@@ -259,9 +465,7 @@ export const incrementUsage = mutation({
     count: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
+    const { month, year } = getCurrentPeriod();
     const increment = args.count ?? 1;
 
     const existing = await ctx.db
@@ -304,29 +508,45 @@ export const incrementUsage = mutation({
   },
 });
 
-// Reset usage (for testing/admin)
+// @deprecated: Use for testing only
 export const resetUsage = mutation({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
+    const { month, year } = getCurrentPeriod();
 
-    const existing = await ctx.db
+    // Reset old usage records
+    const oldUsage = await ctx.db
       .query("usageRecords")
       .withIndex("by_user_and_period", (q) =>
         q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
       )
       .first();
 
-    if (existing) {
-      await ctx.db.patch(existing._id, {
+    if (oldUsage) {
+      await ctx.db.patch(oldUsage._id, {
         aiVerifications: 0,
         storiesRead: 0,
         personalizedStoriesGenerated: 0,
         mockTestsGenerated: 0,
         flashcardsGenerated: 0,
         audioGenerated: 0,
+        updatedAt: Date.now(),
+      });
+    }
+
+    // Reset new credit usage
+    const creditUsage = await ctx.db
+      .query("creditUsage")
+      .withIndex("by_user_and_period", (q) =>
+        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
+      )
+      .first();
+
+    if (creditUsage) {
+      await ctx.db.patch(creditUsage._id, {
+        creditsUsed: 0,
+        alertDismissed80: false,
+        alertDismissed95: false,
         updatedAt: Date.now(),
       });
     }

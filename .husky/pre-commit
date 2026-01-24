@@ -33,4 +33,63 @@ bun run check-i18n || exit 1
 echo "Checking Convex types..."
 bunx convex typecheck || exit 1
 
+# 7. Run smoke tests
+echo "Running tests..."
+bun test || exit 1
+
+cd ..
+
+# 8. Claude Code review (blocking)
+echo "Running Claude Code review..."
+
+# Get staged diff
+diff=$(git diff --cached)
+
+if [ -n "$diff" ]; then
+    if command -v claude &> /dev/null; then
+        # Include key guideline files in context
+        claude_md=$(cat CLAUDE.md 2>/dev/null || echo "")
+        dev_md=$(cat docs/DEVELOPMENT.md 2>/dev/null || echo "")
+
+        review_prompt="You are reviewing staged changes before commit. Review for:
+
+1. **Bugs or logic errors**
+2. **Security issues** (hardcoded secrets, injection vulnerabilities)
+3. **CLAUDE.md violations** - Check against project guidelines below
+4. **docs/ violations** - Check against development patterns below
+5. **Documentation updates needed** - If adding new patterns, features, or changing architecture, docs may need updating
+
+If issues found, output clear instructions for the agent to fix them. Use these keywords for blocking issues:
+- \"BLOCKER:\" for issues that must be fixed
+- \"UPDATE_DOCS:\" if documentation needs to be updated
+
+If everything looks good, say \"LGTM\" briefly.
+
+=== CLAUDE.md Guidelines ===
+$claude_md
+
+=== Development Guidelines (docs/DEVELOPMENT.md) ===
+$dev_md
+
+=== Staged Diff ===
+$diff"
+
+        result=$(echo "$review_prompt" | claude -p --output-format text 2>&1)
+        echo ""
+        echo "=== Claude Code Review ==="
+        echo "$result"
+        echo "=========================="
+
+        # Block on critical issues or doc updates needed
+        if echo "$result" | grep -qiE "(BLOCKER:|UPDATE_DOCS:|critical|must fix|security vulnerability|hardcoded secret)"; then
+            echo ""
+            echo "Review found issues that need attention. Commit blocked."
+            echo "Fix the issues above and try committing again."
+            exit 1
+        fi
+    else
+        echo "Note: 'claude' command not found. Skipping AI review."
+    fi
+fi
+
 echo "All checks passed!"
