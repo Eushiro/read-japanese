@@ -161,391 +161,67 @@ Usage limits (example):
 
 ## Phased Roadmap
 
----
+### Active Phases
 
-## Implementation Status Overview
-
-| Phase | Name | Status | Progress |
+| Phase | Name | Status | Priority |
 |-------|------|--------|----------|
-| 0 | Infrastructure | ✅ Complete | Clerk auth, Convex deployed |
-| 0.25 | Onboarding & Learning Loop | ✅ Complete | Dashboard, simplified nav, improved onboarding |
-| 0.3 | Guided Study Sessions | ✅ Complete | Start Studying CTA, session flow, streaks, 3-tab nav |
-| 0.5 | Analytics & Quick Wins | ✅ Complete | PostHog, premade decks, content library |
-| 1 | Flashcard Foundation | ✅ Complete | FSRS algorithm, UI, content rotation |
-| 2 | Active Output Verification | ✅ Complete | Practice page with AI feedback, scoring |
-| 3 | Personalized Story Generation | ❌ Not Started | - |
-| 4 | Multi-Language Foundation | ✅ Complete | Language/exam settings, schema support |
-| 5 | Practice Exams | ✅ Complete | Templates, questions, attempts, AI grading, results UI |
-| 5.5 | Listening & Speaking Practice | 🚧 Partial | Shadowing schema exists, dictation not started |
-| 6 | YouTube Integration | ✅ Complete | Videos, player, transcript sync, quiz |
-| 7 | Image-Based Learning | ❌ Not Started | - |
-| 8 | Email Marketing | ❌ Not Started | - |
-| 9 | Exam Digitization & Q&A | ❌ Not Started | Blocked on sourcing exam content |
-| **NEW** | Unified Learner Model | ✅ Complete | Skills, weak areas, readiness, daily progress |
-| **NEW** | Placement Testing | ✅ Complete | CAT/IRT adaptive testing |
-| **NEW** | Progress Dashboard | ✅ Complete | Skill radar, charts, analytics |
-| **NEW** | Admin Panel | ✅ Complete | Videos, stories, decks, jobs management |
-| **NEW** | Premade Decks | ✅ Complete | JLPT decks, drip-feed subscriptions |
+| 3 | Compression Pipeline | ❌ Not Started | **TOP** |
+| 4 | Personalization | 🚧 In Progress | High |
+| 5 | Exam Digitization | ❌ Not Started | High |
+| 6 | Anki Import | ❌ Not Started | High |
+| 7 | Listening & Speaking | 🚧 Partial | Medium |
+| 8 | Missing UI | ❌ Not Started | Low |
+| 9 | Image Cost Visibility | ❌ Not Started | Low |
+| 10 | Testing | ❌ Not Started | Low |
+| 11 | Mobile App | ❌ Not Started | Low |
+
+### Deferred
+
+- **Image-Based Learning** - Describe images, vision questions (low priority)
+- **Email Marketing** - Engagement campaigns (not urgent)
 
 ---
 
-### Phase 0: Infrastructure
-**Goal:** Set up core platform infrastructure
+### Phase 3: Compression Pipeline
+**Goal:** Fix storage costs with serve-first-compress-later pattern
 
-**Status:** ✅ Complete
-
-| Task | Status | Notes |
-|------|--------|-------|
-| Convex schema (all tables) | ✅ Complete | `web/convex/schema.ts` |
-| Convex functions (vocabulary) | ✅ Complete | `web/convex/vocabulary.ts` |
-| Convex functions (flashcards) | ✅ Complete | `web/convex/flashcards.ts` with FSRS |
-| Convex functions (subscriptions) | ✅ Complete | `web/convex/subscriptions.ts` |
-| Convex functions (user sentences) | ✅ Complete | `web/convex/userSentences.ts` |
-| Convex functions (mock tests) | ✅ Complete | `web/convex/mockTests.ts` |
-| Convex functions (users) | ✅ Complete | `web/convex/users.ts` |
-| Convex functions (settings) | ✅ Complete | `web/convex/settings.ts` |
-| Convex functions (progress) | ✅ Complete | `web/convex/progress.ts` |
-| Clerk auth integration | ✅ Complete | Clerk provider + Convex JWT auth configured |
-| Remove Firebase | ✅ Complete | Firebase package and config removed |
-| Deploy schema to Convex | ✅ Complete | Schema deployed with all indexes |
-
----
-
-### Phase 0.25: Onboarding & Learning Loop Visibility
-**Goal:** Make the learning loop obvious in the product and guide users through the experience
-
-**Status:** ✅ Complete
+**Status:** ❌ Not Started | **Priority:** TOP
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Dashboard page | ✅ Complete | Home with learning loop visualization, daily activities |
-| Simplified navigation | ✅ Complete | 6 tabs → 4 tabs (Home, Learn, Library, Settings) |
-| Combined Learn page | ✅ Complete | Vocab/Review/Practice together with internal tabs |
-| Sentence context saving | ✅ Complete | Save source sentence when saving word from Reader |
-| Onboarding loop explanation | ✅ Complete | New step explaining how the learning loop works |
-
-**Files created:**
-- `web/src/pages/DashboardPage.tsx` - Main dashboard
-- `web/src/pages/LearnPage.tsx` - Combined learning page
-- `web/src/components/dashboard/LearningLoopViz.tsx` - Loop visualization
-- `web/src/components/dashboard/DailyActivities.tsx` - Today's activities
-
-**Files modified:**
-- `web/src/router.tsx` - New routes, updated navigation
-- `web/src/components/OnboardingModal.tsx` - Added learning loop step
-- `web/src/components/reader/WordPopup.tsx` - Saves sourceContext
-- `web/convex/schema.ts` - Added sourceContext field
-- `web/convex/vocabulary.ts` - Accepts sourceContext
+| Compression utilities | ❌ Not Started | lamejs for MP3, sharp for WebP |
+| Temp storage for immediate serve | ❌ Not Started | Convex temp storage |
+| Background compression jobs | ❌ Not Started | Via scheduler |
+| R2 upload after compression | ❌ Not Started | Update URLs after compress |
 
 ---
 
-### Phase 0.3: Guided Study Sessions
-**Goal:** Simplify UX by putting users into guided sessions following the learning loop automatically
+### Phase 4: Personalization
+**Goal:** Use your vocabulary and learner profile to generate content tailored to YOU
 
-**Status:** ✅ Complete
+**Status:** 🚧 In Progress | **Priority:** High
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Session infrastructure | ✅ Complete | StudySessionContext, sessionPlanner.ts |
-| Session page with activity flow | ✅ Complete | StudySessionPage with Review → Input → Output |
-| Embedded review component | ✅ Complete | SessionReview in session mode |
-| Embedded input component | ✅ Complete | SessionInput for story/video |
-| Embedded output component | ✅ Complete | SessionOutput for sentence practice |
-| Session completion screen | ✅ Complete | SessionComplete with celebration |
-| Streak tracking (backend) | ✅ Complete | currentStreak, longestStreak in users schema |
-| Streak tracking (UI) | ✅ Complete | Dashboard shows streak, session updates it |
-| Dashboard redesign | ✅ Complete | Start Studying CTA, quick stats, time selection |
-| Navigation simplification | ✅ Complete | 3 tabs (Home, Library, Profile) |
-| Hide nav during session | ✅ Complete | Clean session UI without main nav |
-
-**Files created:**
-- `web/src/contexts/StudySessionContext.tsx` - Session state management
-- `web/src/lib/sessionPlanner.ts` - Session planning logic
-- `web/src/pages/StudySessionPage.tsx` - Main session orchestrator
-- `web/src/components/session/SessionProgress.tsx` - Progress indicator
-- `web/src/components/session/SessionComplete.tsx` - Completion screen
-- `web/src/components/session/SessionReview.tsx` - Flashcard review in session
-- `web/src/components/session/SessionInput.tsx` - Content consumption in session
-- `web/src/components/session/SessionOutput.tsx` - Sentence practice in session
-
-**Files modified:**
-- `web/convex/schema.ts` - Added streak fields to users
-- `web/convex/users.ts` - Added updateStreak, getStreak
-- `web/src/pages/DashboardPage.tsx` - Redesigned with Start Studying CTA
-- `web/src/router.tsx` - Added /study-session route, 3-tab nav
-- `web/src/main.tsx` - Added StudySessionProvider
+| Multi-language story generation | ✅ Complete | Japanese, English, French with JLPT/CEFR constraints |
+| CEFR grammar constraints | ✅ Complete | `english_grammar_constraints.json`, `french_grammar_constraints.json` |
+| Admin story generation UI | ✅ Complete | Detailed prompts, direct generation from admin panel |
+| Content topology/gaps analysis | ✅ Complete | `/admin/stories/topology` endpoint + UI |
+| AI story suggestions | ✅ Complete | On-demand suggestions based on gaps and interests |
+| User interest analytics | ✅ Complete | Convex `getInterestAnalytics` query |
+| Vocabulary coverage check | ❌ Not Started | Check user knows enough words before recommending |
+| Story recommendation by known words | ❌ Not Started | Personalized ranking based on vocabulary |
+| Stories from your words | ❌ Not Started | Generate stories featuring words user is learning |
+| Questions from your weak areas | ❌ Not Started | Generate questions targeting learner profile gaps |
+| i+1 comprehensible input | ❌ Not Started | Content at user's level + 1 new concept |
+| Integration with flashcards | ❌ Not Started | Link stories to vocabulary learning |
 
 ---
 
-### Phase 0.5: Analytics & Quick Wins
-**Goal:** Add analytics foundation and vocabulary UX improvements before building more features
+### Phase 5: Exam Digitization & Q&A
+**Goal:** Build question bank from real exams with AI explanations
 
-**Status:** ✅ Complete
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| PostHog integration | ✅ Complete | Event tracking, page views, user identification, feature flags |
-| AI failure metrics | ✅ Complete | Tracking helpers added to analytics.ts |
-| Save sentence with word | ✅ Complete | Moved to Phase 0.25 |
-| Manual vocab + AI enhance | ✅ Complete | VocabularyPage with add functionality |
-| Premade flashcard decks | ✅ Complete | `premadeDecks`, `premadeVocabulary` tables, drip-feed subscriptions |
-| Content library | ✅ Complete | `sentences`, `images`, `wordAudio` shared pools |
-
-**Tech notes:**
-- PostHog: Use `posthog-js` for web, initialize in `main.tsx`
-- Sentence context: Add `sourceContext` field to vocabulary schema
-- AI enhance: Extend OpenRouter integration to enrich manual word entries
-- AI failure metrics: Track when AI outputs corrupted responses (e.g., reasoning dumped into fields), which model failed, retry success rates, latency per model. Helps identify unreliable models and optimize fallback strategies.
-
-**Why this phase:**
-- PostHog gives us data to measure feature impact
-- Vocab UX improvements are quick wins that improve core loop
-- No external dependencies - can build immediately
-
----
-
-### Phase 1: Flashcard Foundation (MVP)
-**Goal:** Transform vocabulary saving into active learning
-
-**Status:** ✅ Complete
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Enhanced vocabulary input (backend) | ✅ Complete | Convex functions support manual, import, bulk add |
-| Enhanced vocabulary input (UI) | ✅ Complete | VocabularyPage with add/filter/search |
-| Auto-generated flashcards (backend) | ✅ Complete | Schema + create function done |
-| Auto-generated flashcards (AI integration) | ✅ Complete | OpenRouter integration in `convex/ai.ts` |
-| Auto-generated flashcards (UI) | ✅ Complete | Generate button on vocabulary cards |
-| Sentence refresh (backend) | ✅ Complete | `nextRefreshAt` field + `updateSentence` mutation |
-| Content rotation | ✅ Complete | Multiple sentences/images per word via content library |
-| Basic spaced repetition (backend) | ✅ Complete | Full FSRS algorithm with 17-weight vector |
-| Basic spaced repetition (UI) | ✅ Complete | FlashcardsPage with review interface |
-| Audio flashcards (backend) | ✅ Complete | `audioUrl` field, content library support |
-| Audio flashcards (TTS integration) | 🚧 Partial | Schema ready, ElevenLabs not integrated |
-| Audio flashcards (UI) | ✅ Complete | Audio play button on flashcard display |
-
-**Tech notes:**
-- Leverage existing OpenRouter/Gemini for sentence generation
-- Leverage existing ElevenLabs for audio
-- New vocabulary input UI (React)
-- New flashcard review UI
-
----
-
-### Phase 2: Active Output Verification
-**Goal:** Users must produce, not just recognize
-
-**Status:** ✅ Complete
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Sentence creation (backend) | ✅ Complete | `userSentences.ts` with submit mutation |
-| Sentence creation (UI) | ✅ Complete | `PracticePage.tsx` with word selection and input |
-| AI verification (backend schema) | ✅ Complete | Scores + corrections in schema |
-| AI verification (AI integration) | ✅ Complete | `verifySentence` action in `convex/ai.ts` |
-| Mastery tracking (backend) | ✅ Complete | `masteryState` field + `updateMastery` mutation |
-| Mastery tracking (UI) | ✅ Complete | ProgressPage with skill radar and weak areas |
-| Feedback loop (backend) | ✅ Complete | `corrections`, `feedback`, `improvedSentence` fields |
-| Feedback loop (UI) | ✅ Complete | Score bars, corrections, improved sentence display |
-| Learner model integration | ✅ Complete | Updates grammar/writing skills after practice |
-
-**Tech notes:**
-- Use Claude/GPT for verification (more nuanced than rule-based)
-- Store user sentences and AI feedback
-- New UI for sentence input and feedback display
-
----
-
-### Phase 3: Personalized Story Generation
-**Goal:** Content that reinforces YOUR vocabulary
-
-**Status:** ❌ Not Started
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Stories from your words | ❌ Not Started | Need AI generation pipeline |
-| Comprehension questions | ❌ Not Started | Need question generation |
-| Integration with flashcards | ❌ Not Started | Need linking logic |
-
-**Tech notes:**
-- Extend existing story generation pipeline
-- Add vocabulary seeding to generation prompts
-- New question generation component
-
----
-
-### Phase 4: Multi-Language Foundation
-**Goal:** Language-agnostic architecture
-
-**Status:** ✅ Complete
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Language selection (backend) | ✅ Complete | `users.languages`, `users.primaryLanguage` |
-| Language selection (UI) | ✅ Complete | Settings page with language/exam picker |
-| Exam-specific vocabulary (schema) | ✅ Complete | `examTypeValidator` with all exams |
-| Exam-specific vocabulary (data) | ✅ Complete | Premade decks for JLPT levels |
-| Per-language learner profiles | ✅ Complete | Separate `learnerProfile` per language |
-| Separate content tracks (backend) | ✅ Complete | `language` field on all models |
-| Separate content tracks (UI) | ✅ Complete | Vocabulary page filters by language |
-
-**Supported exams in schema:**
-- Japanese: JLPT N5-N1
-- English: TOEFL, SAT, GRE
-- French: DELF A1-B2, DALF C1-C2, TCF
-
-**Tech notes:**
-- Abstract tokenization behind interface
-- Language field on all content models
-- Separate vocabulary list sources per language
-- **Exam level auto-detection:** Import official word lists (JLPT N5-N1, CEFR A1-C2, etc.) and use them to automatically determine a word's difficulty level when added to vocabulary. User doesn't need to manually specify exam level.
-
----
-
-### Phase 5: Practice Exams
-**Goal:** Full exam simulation with timed sections and AI grading
-
-**Status:** ✅ Complete
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Exam templates (schema) | ✅ Complete | `examTemplates` with sections, time limits, passing scores |
-| Question bank (schema) | ✅ Complete | `examQuestions` with multiple types, rubrics, explanations |
-| Exam attempts (schema) | ✅ Complete | `examAttempts` with progress tracking, section scores |
-| Exam taking UI | ✅ Complete | `ExamTakingPage.tsx` with timer, navigation, question display |
-| Exam results UI | ✅ Complete | `ExamResultsPage.tsx` with scores, section breakdown, review |
-| AI grading for essays | ✅ Complete | `gradeExamAnswer` action with rubric-based scoring |
-| Pass/fail determination | ✅ Complete | Based on template passing score |
-| Learner model integration | ✅ Complete | Updates skills + weak areas after exam |
-| Question types | ✅ Complete | Multiple choice, short answer, essay, translation, fill blank |
-| Timed practice | ✅ Complete | Timer with auto-submit on expiry |
-
----
-
-### Phase 5.5: Listening & Speaking Practice
-**Goal:** Active listening and pronunciation practice with AI feedback
-
-**Status:** 🚧 Partial
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Shadowing practice (backend) | ✅ Complete | `shadowingPractices` table, submit mutation |
-| Shadowing practice (UI) | ❌ Not Started | Need recording interface |
-| Shadowing accuracy scoring | ✅ Complete | Accuracy score stored, learner model updated |
-| Dictation exercises | ❌ Not Started | Listen, type what you hear, compare to transcript |
-| Audio comprehension | ✅ Complete | Video quiz with listening questions |
-| Pronunciation scoring | ❌ Not Started | AI feedback on accent/fluency |
-
-**Tech notes:**
-- Speech recognition: Web Speech API or Whisper API for transcription
-- Pronunciation scoring: Compare user audio transcription to target text
-- Audio generation: Use existing ElevenLabs integration for target audio
-- Start simple: Basic matching before advanced pronunciation analysis
-
-**Why this comes before Phase 9:**
-- Can be built entirely with AI (no external content dependencies)
-- Shadowing is highly requested for language learning
-- Builds on existing audio infrastructure
-
----
-
-### Phase 6: YouTube Integration
-**Goal:** Learn from real video content
-
-**Status:** ✅ Complete
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Dashboard recommended stories | ✅ Complete | Based on placement test/target exam level |
-| YouTube schema with level field | ✅ Complete | youtubeContent table with level, transcript, questions |
-| Convex functions for videos | ✅ Complete | list, get, seed, updateTranscript, updateQuestions |
-| Stories/Videos toggle in Library | ✅ Complete | Tab-based switching in LibraryPage |
-| VideoCard component | ✅ Complete | Thumbnail, duration, level badge |
-| VideoPage with player | ✅ Complete | YouTube embed + synced transcript scroll |
-| VideoQuizPage | ✅ Complete | Multiple choice quiz with results |
-| Transcript fetch action | ✅ Complete | youtube-transcript npm package |
-| Video question generation | ✅ Complete | AI generates questions from transcript |
-| Video questions by difficulty | ✅ Complete | `videoQuestions` table with 6 difficulty levels |
-| Admin video management | ✅ Complete | Add, edit videos with question generation in admin panel |
-
----
-
-### Phase 7: Image-Based Learning
-**Goal:** Multi-modal comprehension
-
-**Status:** ❌ Not Started
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Image description practice | ❌ Not Started | Need image + input UI |
-| Image comprehension questions | ❌ Not Started | Need AI vision integration |
-| AI image generation for prompts | ❌ Not Started | DALL-E 3 exists in legacy |
-
----
-
-### Phase 8: Email Marketing & User Engagement
-**Goal:** Drive retention and re-engagement through personalized email campaigns
-
-**Status:** ❌ Not Started
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Transactional emails | ❌ Not Started | Need email provider setup |
-| Engagement campaigns | ❌ Not Started | Need automation platform |
-| Re-engagement campaigns | ❌ Not Started | Need user activity tracking |
-| Educational drip campaigns | ❌ Not Started | Need content creation |
-| User preferences (backend) | ❌ Not Started | Need to add to schema |
-| User preferences (UI) | ❌ Not Started | Need settings UI |
-
-**Features:**
-1. **Transactional emails**
-   - Welcome email on signup
-   - Password reset
-   - Subscription confirmation/changes
-   - Weekly progress summary
-
-2. **Engagement campaigns**
-   - "You have X cards due for review" reminders
-   - Streak maintenance reminders
-   - "New content in your language" announcements
-   - Personalized study tips based on performance
-
-3. **Re-engagement campaigns**
-   - "We miss you" for inactive users (7, 14, 30 days)
-   - "Your vocabulary is fading" with data on words needing review
-   - Special offers for churned users
-
-4. **Educational drip campaigns**
-   - Onboarding series (how to use SRS effectively)
-   - Exam prep tips leading up to test dates
-   - Weekly vocabulary spotlights
-
-5. **User preferences**
-   - Email frequency settings (daily/weekly/monthly/none)
-   - Content type preferences
-   - Unsubscribe management
-
-**Tech notes:**
-- Use Resend, SendGrid, or Postmark for transactional emails
-- Consider Loops, Customer.io, or Mailchimp for marketing automation
-- Store email preferences in user settings
-- Convex scheduled functions for automated sends
-- Track open rates, click rates for optimization
-
-**Potential providers:**
-| Provider | Use Case | Notes |
-|----------|----------|-------|
-| **Resend** | Transactional | Developer-friendly, React Email support |
-| **Loops** | Marketing automation | Built for SaaS, good drip campaigns |
-| **Customer.io** | Both | Powerful segmentation, event-based |
-| **Postmark** | Transactional | Excellent deliverability |
-
----
-
-### Phase 9: Exam Digitization & Q&A
-**Goal:** Build a question bank from real exams and enable Q&A for test questions
-
-**Status:** ❌ Not Started (Blocked on sourcing exam content)
+**Status:** ❌ Not Started | **Priority:** High
 
 | Feature | Status | Notes |
 |---------|--------|-------|
@@ -560,120 +236,171 @@ Usage limits (example):
 - TOEFL: ETS official practice tests, TPO materials
 - DELF/DALF: Official CIEP/France Éducation sample papers
 
+---
+
+### Phase 6: Anki Import
+**Goal:** Import existing Anki decks to bootstrap vocabulary
+
+**Status:** ❌ Not Started | **Priority:** High
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Parse .apkg files | ❌ Not Started | Anki export format (SQLite + media) |
+| Map Anki fields to vocabulary | ❌ Not Started | Handle different note types |
+| Import media (audio/images) | ❌ Not Started | Extract and store in content library |
+| Duplicate detection | ❌ Not Started | Skip words already in user's vocabulary |
+| Preview before import | ❌ Not Started | Let user review/select what to import |
+
 **Tech notes:**
-- Question bank: Separate from AI-generated questions, tagged with source
-- Parser: May need OCR for scanned materials (consider Textract or Tesseract)
-- Q&A: Conversational interface attached to each question
-- Could crowdsource explanations from community later
-
-**Why this is Phase 9:**
-- Blocked on acquiring/licensing official exam content
-- Listening/Speaking (Phase 5.5) can be built with AI immediately
-- Value is high but dependency is external
+- .apkg files are ZIP archives containing SQLite database + media folder
+- Need to handle various Anki note types (Basic, Cloze, Japanese-specific)
+- Consider import limits for free tier
 
 ---
 
-### NEW: Unified Learner Model
-**Goal:** Single source of truth for user understanding across all activities
+### Phase 7: Listening & Speaking
+**Goal:** Dictation and shadowing as question types, not separate modes
 
-**Status:** ✅ Complete
+**Status:** 🚧 Partial | **Priority:** Medium
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Learner profile schema | ✅ Complete | `learnerProfile` with skills, weak areas, readiness |
-| Question history | ✅ Complete | `questionHistory` with full context for re-grading |
-| Daily progress | ✅ Complete | `dailyProgress` for time-series analytics |
-| Update from flashcards | ✅ Complete | Vocabulary skill updated after reviews |
-| Update from exams | ✅ Complete | All skills + weak areas updated |
-| Update from comprehension | ✅ Complete | Reading/listening updated after quizzes |
-| Update from sentence practice | ✅ Complete | Grammar/writing updated |
-| Update from shadowing | ✅ Complete | Speaking skill updated |
-| Weak area detection | ✅ Complete | Auto-detected from mistake patterns |
-| Readiness prediction | ✅ Complete | 4-level readiness indicator |
+| Shadowing backend | ✅ Complete | `shadowingPractices` table, submit mutation |
+| Shadowing accuracy scoring | ✅ Complete | Accuracy score stored, learner model updated |
+| Audio comprehension | ✅ Complete | Video quiz with listening questions |
+| Dictation questions | ❌ Not Started | Listen, type what you hear, compare to transcript |
+| Shadowing questions | ❌ Not Started | Repeat after audio, compare recording |
+| AI conversation partner | ❌ Not Started | Future: AI teacher you can talk to |
+
+**Tech notes:**
+- Speech recognition: Web Speech API or Whisper API
+- These are question types within the existing quiz system, not separate practice modes
 
 ---
 
-### NEW: Placement Testing
-**Goal:** Adaptive testing to determine user's initial level
+### Phase 8: Missing UI for Existing Data
+**Goal:** Surface data that's already being collected
 
-**Status:** ✅ Complete
+**Status:** ❌ Not Started | **Priority:** Low
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Placement test schema | ✅ Complete | `placementTests` with IRT fields |
-| CAT algorithm | ✅ Complete | 3-Parameter Logistic model |
-| Adaptive question selection | ✅ Complete | Maximum Fisher Information |
-| Section-based scoring | ✅ Complete | Vocabulary, grammar, reading, listening |
-| Ability estimation | ✅ Complete | With confidence intervals |
-| Level determination | ✅ Complete | Maps ability to N5-N1 or A1-C2 |
-| Placement test UI | ✅ Complete | `PlacementTestPage.tsx` |
+| Question history page | ❌ Not Started | All answered questions with review |
+| Content preferences in onboarding | ❌ Not Started | Backend exists, need UI |
+| Gradebook with all attempts | ❌ Not Started | Centralized view of exam/quiz attempts |
 
 ---
 
-### NEW: Progress Dashboard
-**Goal:** Visual analytics of learning progress
+### Phase 9: Image Cost Visibility
+**Goal:** Track and understand image generation costs
 
-**Status:** ✅ Complete
+**Status:** ❌ Not Started | **Priority:** Low
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Progress page | ✅ Complete | `ProgressPage.tsx` |
-| Skill radar chart | ✅ Complete | 6-dimension visualization |
-| Weak areas list | ✅ Complete | Prioritized with scores |
-| Daily progress charts | ✅ Complete | Time-series visualization |
-| Readiness indicator | ✅ Complete | Exam readiness display |
+| Image cost tracking in admin | ❌ Not Started | Per-deck cost breakdown |
+| Content reuse metrics | ❌ Not Started | Images shared across words |
 
 ---
 
-### NEW: Admin Panel
-**Goal:** Content management for administrators
+### Phase 10: Testing
+**Goal:** Add unit and integration tests once features stabilize
 
-**Status:** ✅ Complete
+**Status:** ❌ Not Started | **Priority:** Low (wait for stability)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Admin dashboard | ✅ Complete | Stats overview (videos, decks, jobs, users) |
-| Video management | ✅ Complete | Add, edit, generate questions |
-| Story management | ✅ Complete | Questions by difficulty level |
-| Deck management | ✅ Complete | Sentence/audio/image generation pipeline |
-| Batch job monitoring | ✅ Complete | Cost tracking, status monitoring |
-| Admin auth guard | ✅ Complete | Email-based admin check |
+| Unit tests for Convex functions | ❌ Not Started | Test learner model, flashcard logic, etc. |
+| Component tests (React Testing Library) | ❌ Not Started | Key UI components |
+| Integration tests | ❌ Not Started | Full user flows (review session, quiz, etc.) |
+| E2E tests (Playwright) | ❌ Not Started | Critical paths: auth, payment, study session |
+| CI pipeline | ❌ Not Started | Run tests on PR, block merge on failure |
+
+**Tech notes:**
+- Wait until core features are stable before investing in tests
+- Start with Convex function unit tests (most bang for buck)
+- Use Vitest for unit/component tests
+- Playwright already in dependencies for E2E
 
 ---
 
-### NEW: Premade Decks & Content Library
-**Goal:** Pre-generated content for efficient vocabulary learning
+### Phase 11: Mobile App
+**Goal:** React Native app for iOS/Android with shared Convex backend
 
-**Status:** ✅ Complete
+**Status:** ❌ Not Started | **Priority:** Low (post-MVP)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Premade decks schema | ✅ Complete | `premadeDecks`, `premadeVocabulary` |
-| Content library | ✅ Complete | `sentences`, `images`, `wordAudio` shared pools |
-| Drip-feed subscriptions | ✅ Complete | `userDeckSubscriptions` with daily release |
-| Deck import scripts | ✅ Complete | `importWordList.ts`, `batch_generate_deck.py` |
-| Content generation pipeline | ✅ Complete | Gemini for sentences/audio/images |
-| Deck publishing | ✅ Complete | Published/draft status |
+| React Native + Expo setup | ❌ Not Started | Monorepo structure with web |
+| Shared Convex client | ❌ Not Started | Same backend, mobile UI |
+| Core screens (Dashboard, Library, Flashcards) | ❌ Not Started | Mobile-optimized layouts |
+| Offline support | ❌ Not Started | Cache flashcards for offline review |
+| Push notifications | ❌ Not Started | Streak reminders, review nudges |
+| App Store / Play Store submission | ❌ Not Started | Store listings, screenshots |
+
+**Tech notes:**
+- Web app is priority; mobile comes after web is polished
+- Share Convex backend and business logic
+- Use Expo for faster development and easier deployment
+
+---
+
+## Next Steps
+
+### Immediate
+| Task | Priority | Notes |
+|------|----------|-------|
+| Phase 3: Compression Pipeline | **TOP** | Fix storage costs |
+
+### Short-term
+| Task | Priority | Notes |
+|------|----------|-------|
+| Phase 4: Vocabulary coverage check | High | First step toward personalization |
+| Phase 4: Questions from weak areas | High | Use learner profile for targeting |
+| Phase 5: Source exam content | High | Find and digitize materials |
+
+### Medium-term
+| Task | Priority | Notes |
+|------|----------|-------|
+| Phase 4: i+1 content generation | High | Core differentiator |
+| Phase 6: Anki import | High | Bootstrap user vocabulary |
+| Phase 7: Add dictation question type | Medium | Backend shadowing exists |
+
+---
+
+## Platform Strategy
+
+**Decision: React (Web) + React Native (Mobile)**
+
+**Current approach:**
+1. **Web app with React** - Current implementation in `/web`
+2. **Future mobile with React Native** - Cross-platform iOS/Android
+3. **Shared Convex backend** - Single source of truth for data
+4. **Clerk for auth** - Unified authentication across platforms
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Frontend (Web)** | React + Vite + TailwindCSS |
+| **Frontend (Mobile)** | React Native + Expo (future) |
+| **Backend** | Convex (database + functions) |
+| **Auth** | Clerk |
+| **AI** | OpenRouter (Claude/GPT), Gemini |
+| **Audio** | ElevenLabs TTS |
+| **Images** | DALL-E 3 |
 
 ---
 
 ## Ongoing Research
-
-Research to inform product decisions (not phases, but continuous):
 
 | Research Area | Purpose | Status |
 |---------------|---------|--------|
 | **Duolingo engagement study** | Understand gamification, streaks, XP, lesson structure | 📚 Ongoing |
 | **Competitor analysis** | WaniKani, Bunpro, Anki, Lingodeer patterns | 📚 Ongoing |
 | **Exam format research** | Deep dive into each exam's actual format/rubrics | 📚 Ongoing |
-
-**Duolingo observations to track:**
-- Streak mechanics and psychology
-- XP and leveling system
-- Lesson structure and pacing
-- Mistake handling and retry flow
-- Social features (leaderboards, friends)
-- Notification strategies
 
 ---
 
@@ -722,14 +449,6 @@ YouTubeContent
 ├── transcript: tokenized
 ├── questions: [Question]
 └── vocabularyExtracted: [VocabularyItem]
-
-EmailCampaign
-├── userId
-├── campaignType
-├── sentAt
-├── openedAt
-├── clickedAt
-└── metadata
 ```
 
 ### Subscription & Usage Tracking
@@ -757,33 +476,6 @@ UsageLimits (per tier)
 ├── personalizedStoriesPerMonth
 └── mockTestsPerMonth
 ```
-
----
-
-## Platform Strategy
-
-**Decision: React (Web) + React Native (Mobile)**
-
-**Current approach:**
-1. **Web app with React** - Current implementation in `/web`
-2. **Future mobile with React Native** - Cross-platform iOS/Android
-3. **Shared Convex backend** - Single source of truth for data
-4. **Clerk for auth** - Unified authentication across platforms
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| **Frontend (Web)** | React + Vite + TailwindCSS |
-| **Frontend (Mobile)** | React Native + Expo (future) |
-| **Backend** | Convex (database + functions) |
-| **Auth** | Clerk |
-| **AI** | OpenRouter (Claude/GPT), Gemini |
-| **Audio** | ElevenLabs TTS |
-| **Images** | DALL-E 3 |
-| **Email** | Resend or Loops (TBD) |
 
 ---
 
@@ -816,40 +508,222 @@ UsageLimits (per tier)
 
 ---
 
-## Next Steps
+## Archived: Completed Work
 
-### Immediate
-| Task | Priority | Notes |
-|------|----------|-------|
-| Integrate ElevenLabs for audio | High | Schema ready, need API integration |
-| Seed starter content (videos, stories) | High | Admin panel ready, need curated content |
-| Test full exam flow end-to-end | High | UI complete, needs QA |
+<details>
+<summary>Phase 0: Infrastructure ✅</summary>
 
-### Short-term
-| Task | Priority | Notes |
-|------|----------|-------|
-| Shadowing practice UI | Medium | Backend complete, need recording interface |
-| FSRS parameter optimization | Medium | Schema exists, need optimizer |
-| Topic taxonomy seeding | Medium | Schema exists, need initial data |
+| Task | Status |
+|------|--------|
+| Convex schema (all tables) | ✅ Complete |
+| Convex functions (vocabulary, flashcards, subscriptions, etc.) | ✅ Complete |
+| Clerk auth integration | ✅ Complete |
+| Remove Firebase | ✅ Complete |
+| Deploy schema to Convex | ✅ Complete |
 
-### Medium-term
-| Task | Priority | Notes |
-|------|----------|-------|
-| Personalized story generation | High | Phase 3, blocked on AI pipeline |
-| Dictation exercises | Medium | Part of Phase 5.5 |
-| Email marketing setup | Medium | Phase 8 |
+</details>
 
-### Later
-| Task | Priority | Notes |
-|------|----------|-------|
-| React Native mobile app | Medium | Web-first approach |
-| PDF exam digitization | Low | Phase 9, blocked on content |
-| Image-based learning | Low | Phase 7 |
+<details>
+<summary>Phase 0.25: Onboarding & Learning Loop ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Dashboard page | ✅ Complete |
+| Simplified navigation | ✅ Complete |
+| Combined Learn page | ✅ Complete |
+| Sentence context saving | ✅ Complete |
+| Onboarding loop explanation | ✅ Complete |
+
+</details>
+
+<details>
+<summary>Phase 0.3: Guided Study Sessions ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Session infrastructure | ✅ Complete |
+| Session page with activity flow | ✅ Complete |
+| Embedded review/input/output components | ✅ Complete |
+| Session completion screen | ✅ Complete |
+| Streak tracking | ✅ Complete |
+| Dashboard redesign | ✅ Complete |
+| Navigation simplification (3 tabs) | ✅ Complete |
+
+</details>
+
+<details>
+<summary>Phase 0.5: Analytics & Quick Wins ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| PostHog integration | ✅ Complete |
+| AI failure metrics | ✅ Complete |
+| Manual vocab + AI enhance | ✅ Complete |
+| Premade flashcard decks | ✅ Complete |
+| Content library | ✅ Complete |
+
+</details>
+
+<details>
+<summary>Phase 1: Flashcard Foundation ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Enhanced vocabulary input | ✅ Complete |
+| Auto-generated flashcards | ✅ Complete |
+| Sentence refresh | ✅ Complete |
+| Content rotation | ✅ Complete |
+| FSRS spaced repetition | ✅ Complete |
+| Audio flashcards (schema) | ✅ Complete |
+
+**Note:** ElevenLabs TTS integration pending.
+
+</details>
+
+<details>
+<summary>Phase 2: Active Output Verification ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Sentence creation | ✅ Complete |
+| AI verification | ✅ Complete |
+| Mastery tracking | ✅ Complete |
+| Feedback loop | ✅ Complete |
+| Learner model integration | ✅ Complete |
+
+</details>
+
+<details>
+<summary>Multi-Language Foundation ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Language selection | ✅ Complete |
+| Exam-specific vocabulary | ✅ Complete |
+| Per-language learner profiles | ✅ Complete |
+| Separate content tracks | ✅ Complete |
+
+</details>
+
+<details>
+<summary>Practice Exams ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Exam templates | ✅ Complete |
+| Question bank | ✅ Complete |
+| Exam attempts | ✅ Complete |
+| Exam taking UI | ✅ Complete |
+| Exam results UI | ✅ Complete |
+| AI grading for essays | ✅ Complete |
+| Learner model integration | ✅ Complete |
+
+</details>
+
+<details>
+<summary>YouTube Integration ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Dashboard recommended stories | ✅ Complete |
+| YouTube schema with level field | ✅ Complete |
+| Stories/Videos toggle in Library | ✅ Complete |
+| VideoPage with player | ✅ Complete |
+| VideoQuizPage | ✅ Complete |
+| Transcript fetch action | ✅ Complete |
+| Video question generation | ✅ Complete |
+| Video questions by difficulty | ✅ Complete |
+| Admin video management | ✅ Complete |
+
+</details>
+
+<details>
+<summary>AI Abstraction & Enforcement ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Centralized generation layer | ✅ Complete |
+| Content reuse helpers | ✅ Complete |
+| User content history (seen tracking) | ✅ Complete |
+| Usage limit checking | ✅ Complete |
+| Usage metering | ✅ Complete |
+| Monthly usage display | ✅ Complete |
+
+</details>
+
+<details>
+<summary>Unified Learner Model ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Learner profile schema | ✅ Complete |
+| Question history | ✅ Complete |
+| Daily progress | ✅ Complete |
+| Update from all activities | ✅ Complete |
+| Weak area detection | ✅ Complete |
+| Readiness prediction | ✅ Complete |
+
+</details>
+
+<details>
+<summary>Placement Testing ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Placement test schema | ✅ Complete |
+| CAT algorithm (3-PL IRT) | ✅ Complete |
+| Adaptive question selection | ✅ Complete |
+| Ability estimation | ✅ Complete |
+| Level determination | ✅ Complete |
+| Placement test UI | ✅ Complete |
+
+</details>
+
+<details>
+<summary>Progress Dashboard ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Progress page | ✅ Complete |
+| Skill radar chart | ✅ Complete |
+| Weak areas list | ✅ Complete |
+| Daily progress charts | ✅ Complete |
+| Readiness indicator | ✅ Complete |
+
+</details>
+
+<details>
+<summary>Admin Panel ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Admin dashboard | ✅ Complete |
+| Video management | ✅ Complete |
+| Story management | ✅ Complete |
+| Deck management | ✅ Complete |
+| Batch job monitoring | ✅ Complete |
+| Admin auth guard | ✅ Complete |
+
+</details>
+
+<details>
+<summary>Premade Decks & Content Library ✅</summary>
+
+| Feature | Status |
+|---------|--------|
+| Premade decks schema | ✅ Complete |
+| Content library | ✅ Complete |
+| Drip-feed subscriptions | ✅ Complete |
+| Deck import scripts | ✅ Complete |
+| Content generation pipeline | ✅ Complete |
+| Deck publishing | ✅ Complete |
+
+</details>
 
 ---
 
 ## Document Control
 
-**Version**: 3.0
+**Version**: 4.0
 **Last Updated**: 2026-01-23
-**Status**: Active development - Core features complete, polishing and content needed
+**Status**: Active development - Core complete, focusing on compression and personalization
