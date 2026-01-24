@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cd web || exit 1
+
+# Validate commit message format (conventional commits)
+bunx commitlint --edit "$1"
