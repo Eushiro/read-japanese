@@ -338,6 +338,58 @@
   animation: gradientX 3s ease infinite;
 }
 
+/* Rotating gradient border for loading buttons */
+@keyframes rotateBorder {
+  0% { --border-angle: 0deg; }
+  100% { --border-angle: 360deg; }
+}
+
+@property --border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.btn-loading-gradient {
+  position: relative;
+  z-index: 0;
+  border-color: transparent !important;
+  overflow: visible;
+  opacity: 1 !important;
+  pointer-events: none;
+}
+
+.btn-loading-gradient::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: calc(var(--radius) + 4px);
+  padding: 4px;
+  background: conic-gradient(
+    from var(--border-angle),
+    #ea580c,
+    #f97316,
+    #fbbf24,
+    #f59e0b,
+    #ea580c
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rotateBorder 1.2s linear infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Fallback for browsers without @property support */
+@supports not (background: conic-gradient(from 0deg, red, blue)) {
+  .btn-loading-gradient::before {
+    background: linear-gradient(90deg, #ea580c, #f97316, #fbbf24, #ea580c);
+    background-size: 300% 100%;
+    animation: gradientX 1.2s ease infinite;
+  }
+}
+
 /* Ruby (furigana) styling */
 ruby {
   ruby-align: center;

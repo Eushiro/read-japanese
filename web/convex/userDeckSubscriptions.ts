@@ -334,12 +334,14 @@ export const addDailyCards = mutation({
       return { added: 0, reason: "deck_not_found" };
     }
 
-    // Get all complete premade vocabulary for this deck
-    const premadeItems = await ctx.db
+    // Get all premade vocabulary for this deck that have sentences
+    const allPremadeItems = await ctx.db
       .query("premadeVocabulary")
       .withIndex("by_deck", (q) => q.eq("deckId", activeSub.deckId))
-      .filter((q) => q.eq(q.field("generationStatus"), "complete"))
       .collect();
+
+    // Filter to items that have generated content (sentenceId)
+    const premadeItems = allPremadeItems.filter((item) => item.sentenceId);
 
     // Get user's existing vocabulary words for this deck
     const existingVocab = await ctx.db
@@ -434,16 +436,13 @@ export const addDailyCards = mutation({
         updatedAt: now,
       });
 
-      // Create flashcard with pre-generated content
-      if (premade.sentence) {
+      // Create flashcard with content library references
+      if (premade.sentenceId) {
         await ctx.db.insert("flashcards", {
           userId: args.userId,
           vocabularyId: vocabId,
-          sentence: premade.sentence,
-          sentenceTranslation: premade.sentenceTranslation ?? "",
-          audioUrl: premade.audioUrl,
-          wordAudioUrl: premade.wordAudioUrl,
-          imageUrl: premade.imageUrl,
+          sentenceId: premade.sentenceId,
+          imageId: premade.imageId,
           state: "new",
           due: now,
           stability: 0,
@@ -452,7 +451,6 @@ export const addDailyCards = mutation({
           scheduledDays: 0,
           reps: 0,
           lapses: 0,
-          sentenceGeneratedAt: now,
           createdAt: now,
           updatedAt: now,
         });

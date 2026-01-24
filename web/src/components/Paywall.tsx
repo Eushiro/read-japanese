@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { X, Loader2, Crown, Zap, Sparkles, Check, BookOpen, Brain, Mic, PenLine } from "lucide-react";
+import { X, Crown, Zap, Sparkles, Check, BookOpen, Brain, Mic, PenLine } from "lucide-react";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
 
 interface PaywallProps {
@@ -25,7 +25,7 @@ export function Paywall({
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   const handleUpgrade = async (tier: "basic" | "pro" | "unlimited") => {
-    if (!user) return;
+    if (!user || checkoutLoading) return;
     setCheckoutLoading(tier);
     try {
       const result = await createCheckout({
@@ -201,11 +201,10 @@ export function Paywall({
                 </ul>
                 <Button
                   variant="outline"
-                  className="w-full mt-5"
+                  className={`w-full mt-5 ${checkoutLoading === "basic" ? "btn-loading-gradient" : ""}`}
                   onClick={() => handleUpgrade("basic")}
-                  disabled={checkoutLoading === "basic"}
                 >
-                  {checkoutLoading === "basic" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Basic"}
+                  Get Basic
                 </Button>
               </div>
 
@@ -249,11 +248,10 @@ export function Paywall({
                   </li>
                 </ul>
                 <Button
-                  className="w-full mt-5"
+                  className={`w-full mt-5 ${checkoutLoading === "pro" ? "btn-loading-gradient" : ""}`}
                   onClick={() => handleUpgrade("pro")}
-                  disabled={checkoutLoading === "pro"}
                 >
-                  {checkoutLoading === "pro" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Pro"}
+                  Get Pro
                 </Button>
               </div>
 
@@ -293,11 +291,10 @@ export function Paywall({
                 </ul>
                 <Button
                   variant="outline"
-                  className="w-full mt-5 border-purple-500/30 hover:bg-purple-500/10"
+                  className={`w-full mt-5 border-purple-500/30 hover:bg-purple-500/10 ${checkoutLoading === "unlimited" ? "btn-loading-gradient" : ""}`}
                   onClick={() => handleUpgrade("unlimited")}
-                  disabled={checkoutLoading === "unlimited"}
                 >
-                  {checkoutLoading === "unlimited" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Unlimited"}
+                  Get Unlimited
                 </Button>
               </div>
             </div>

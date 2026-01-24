@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 import { query, mutation, action, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { languageValidator } from "./schema";
+import { languageValidator, type Language } from "./schema";
 import type { Id } from "./_generated/dataModel";
+import { getGradingProfile as getGradingProfileConstant } from "./lib/gradingProfiles";
 
 // ============================================
 // LEVEL DEFINITIONS
@@ -194,19 +195,15 @@ export const getUserLevel = query({
 
 /**
  * Get grading profile for a level
+ * Now uses constants instead of database lookup for simplicity
  */
 export const getGradingProfile = query({
   args: {
     language: languageValidator,
     level: v.string(),
   },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("gradingProfiles")
-      .withIndex("by_language_and_level", (q) =>
-        q.eq("language", args.language).eq("level", args.level)
-      )
-      .first();
+  handler: async (_ctx, args) => {
+    return getGradingProfileConstant(args.language as Language, args.level);
   },
 });
 

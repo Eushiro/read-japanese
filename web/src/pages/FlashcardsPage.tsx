@@ -22,6 +22,7 @@ import { useAuth, SignInButton } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useReviewSession } from "@/contexts/ReviewSessionContext";
 import type { Id, Rating, CardState } from "@/lib/convex-types";
+import { LANGUAGES } from "@/lib/languages";
 
 // Extended card type including SRS fields for undo
 type CardType = {
@@ -84,6 +85,14 @@ export function FlashcardsPage() {
   const { setCardsLeft } = useReviewSession();
   const userId = user?.id ?? "anonymous";
 
+  // Fetch user profile for primary language
+  const userProfile = useQuery(
+    api.users.getByClerkId,
+    isAuthenticated && user ? { clerkId: user.id } : "skip"
+  );
+  const primaryLanguage = userProfile?.primaryLanguage;
+  const languageInfo = LANGUAGES.find((l) => l.value === primaryLanguage);
+
   // Check subscription for AI features
   const subscription = useQuery(
     api.subscriptions.get,
@@ -91,18 +100,18 @@ export function FlashcardsPage() {
   );
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
-  // Fetch due cards and stats
+  // Fetch due cards and stats - filtered by primary language
   const stats = useQuery(
     api.flashcards.getStats,
-    isAuthenticated ? { userId } : "skip"
+    isAuthenticated ? { userId, language: primaryLanguage } : "skip"
   );
   const dueCards = useQuery(
     api.flashcards.getDue,
-    isAuthenticated ? { userId, limit: 50 } : "skip"
+    isAuthenticated ? { userId, limit: 50, language: primaryLanguage } : "skip"
   );
   const newCards = useQuery(
     api.flashcards.getNew,
-    isAuthenticated ? { userId, limit: 20 } : "skip"
+    isAuthenticated ? { userId, limit: 20, language: primaryLanguage } : "skip"
   );
 
   // Session queue - includes original cards plus requeued "Again" cards
@@ -426,9 +435,16 @@ export function FlashcardsPage() {
                 Spaced Repetition
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Flashcards
-            </h1>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl sm:text-4xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                Flashcards
+              </h1>
+              {languageInfo && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-sm">
+                  {languageInfo.flag} {languageInfo.label}
+                </span>
+              )}
+            </div>
             <p className="text-foreground-muted text-lg">
               Review your vocabulary with the FSRS algorithm
             </p>

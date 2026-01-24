@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronRight, Globe, GraduationCap, Sparkles, BookOpen, BookmarkCheck, Brain, PenLine } from "lucide-react";
@@ -21,6 +21,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
   const startTime = useRef(Date.now());
 
   const upsertUser = useMutation(api.users.upsert);
+  const ensureStripeCustomer = useAction(api.stripe.ensureStripeCustomer);
   const { trackEvent, events } = useAnalytics();
 
   // Track onboarding started
@@ -69,6 +70,13 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         targetExams: selectedExams as any[],
         primaryLanguage: selectedLanguages[0],
       });
+
+      // Pre-create Stripe customer in background for faster checkout later
+      // Don't await - let it run in background so onboarding completes immediately
+      ensureStripeCustomer({
+        userId,
+        email: userEmail ?? undefined,
+      }).catch((err) => console.error("Failed to pre-create Stripe customer:", err));
 
       trackEvent(events.ONBOARDING_COMPLETED, {
         selected_languages: selectedLanguages,

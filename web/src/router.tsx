@@ -27,8 +27,27 @@ import { VideoPage } from "@/pages/VideoPage";
 import { VideoQuizPage } from "@/pages/VideoQuizPage";
 import { StudySessionPage } from "@/pages/StudySessionPage";
 import { PricingPage } from "@/pages/PricingPage";
-import { BookOpen, User, Home, CreditCard } from "lucide-react";
+import { ExamsPage } from "@/pages/ExamsPage";
+import { ExamTakingPage } from "@/pages/ExamTakingPage";
+import { ExamResultsPage } from "@/pages/ExamResultsPage";
+import { ProgressPage } from "@/pages/ProgressPage";
+import { BookOpen, User, Home, CreditCard, Shield } from "lucide-react";
 import { trackPageView } from "@/lib/analytics";
+import { isAdmin } from "@/lib/admin";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+
+// Admin pages
+import { AdminLayout } from "@/components/admin/AdminLayout";
+import { AdminDashboard } from "@/pages/admin/AdminDashboard";
+import { VideosPage } from "@/pages/admin/VideosPage";
+import { VideoFormPage } from "@/pages/admin/VideoFormPage";
+import { DecksPage } from "@/pages/admin/DecksPage";
+import { DeckDetailPage } from "@/pages/admin/DeckDetailPage";
+import { JobsPage } from "@/pages/admin/JobsPage";
+import { StoriesPage } from "@/pages/admin/StoriesPage";
+import { StoryQuestionsPage } from "@/pages/admin/StoryQuestionsPage";
+import { ConfigPage } from "@/pages/admin/ConfigPage";
+import { MediaPage } from "@/pages/admin/MediaPage";
 
 // Root layout
 const rootRoute = createRootRoute({
@@ -106,7 +125,8 @@ function RootLayout() {
 
 function Navigation() {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const userIsAdmin = isAdmin(user?.email);
 
   // Links visible to everyone (logged-out users see preview dashboard)
   const publicLinks = [
@@ -169,6 +189,27 @@ function Navigation() {
                 </Link>
               );
             })}
+
+            {/* Admin link - only visible to admins */}
+            {userIsAdmin && (
+              <Link
+                to="/admin"
+                className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  location.pathname.startsWith("/admin")
+                    ? "text-amber-500"
+                    : "text-foreground-muted hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                <Shield className={`w-4 h-4 ${location.pathname.startsWith("/admin") ? "text-amber-500" : ""}`} />
+                <span className="hidden sm:inline">Admin</span>
+                {location.pathname.startsWith("/admin") && (
+                  <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-amber-500 rounded-full" />
+                )}
+              </Link>
+            )}
+
+            {/* Language Switcher - only shows when authenticated with multiple languages */}
+            {isAuthenticated && <LanguageSwitcher />}
 
             {/* Sign In button when not authenticated */}
             {!isAuthenticated && (
@@ -286,6 +327,99 @@ const pricingRoute = createRoute({
   component: PricingPage,
 });
 
+// Exam routes
+const examsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/exams",
+  component: ExamsPage,
+});
+
+const examTakingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/exams/$templateId",
+  component: ExamTakingPage,
+});
+
+const examResultsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/exams/$templateId/results/$attemptId",
+  component: ExamResultsPage,
+});
+
+// Progress route
+const progressRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/progress",
+  component: ProgressPage,
+});
+
+// Admin routes - wrapped in AdminLayout which handles auth
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin",
+  component: AdminLayout,
+});
+
+const adminDashboardRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "/",
+  component: AdminDashboard,
+});
+
+const adminVideosRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "/videos",
+  component: VideosPage,
+});
+
+const adminVideoFormRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "/videos/$id",
+  component: VideoFormPage,
+});
+
+const adminDecksRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "/decks",
+  component: DecksPage,
+});
+
+const adminDeckDetailRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "/decks/$deckId",
+  component: DeckDetailPage,
+});
+
+const adminJobsRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "/jobs",
+  component: JobsPage,
+});
+
+const adminStoriesRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "/stories",
+  component: StoriesPage,
+});
+
+const adminStoryQuestionsRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "/stories/$storyId",
+  component: StoryQuestionsPage,
+});
+
+const adminConfigRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "/config",
+  component: ConfigPage,
+});
+
+const adminMediaRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "/media",
+  component: MediaPage,
+});
+
 // Route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -304,6 +438,24 @@ const routeTree = rootRoute.addChildren([
   placementTestRoute,
   studySessionRoute,
   pricingRoute,
+  // Exam routes
+  examsRoute,
+  examTakingRoute,
+  examResultsRoute,
+  progressRoute,
+  // Admin routes
+  adminRoute.addChildren([
+    adminDashboardRoute,
+    adminVideosRoute,
+    adminVideoFormRoute,
+    adminDecksRoute,
+    adminDeckDetailRoute,
+    adminJobsRoute,
+    adminStoriesRoute,
+    adminStoryQuestionsRoute,
+    adminConfigRoute,
+    adminMediaRoute,
+  ]),
 ]);
 
 // Router

@@ -295,13 +295,13 @@ export const deleteUser = mutation({
       await ctx.db.delete(p._id);
     }
 
-    // Delete settings
-    const settings = await ctx.db
-      .query("userSettings")
+    // Delete user preferences (consolidated settings table)
+    const prefs = await ctx.db
+      .query("userPreferences")
       .withIndex("by_user", (q) => q.eq("userId", args.clerkId))
       .first();
-    if (settings) {
-      await ctx.db.delete(settings._id);
+    if (prefs) {
+      await ctx.db.delete(prefs._id);
     }
 
     // Delete subscription

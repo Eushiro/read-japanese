@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { cardStateValidator, ratingValidator } from "./schema";
 
 // ============================================
@@ -92,58 +93,115 @@ export const list = query({
   },
 });
 
-// Get flashcards due for review
+// Get flashcards due for review with resolved content
 export const getDue = query({
   args: {
     userId: v.string(),
     limit: v.optional(v.number()),
+    language: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
     const cards = await ctx.db
       .query("flashcards")
       .withIndex("by_user_and_due", (q) => q.eq("userId", args.userId).lte("due", now))
-      .take(args.limit ?? 100);
+      .take((args.limit ?? 100) * (args.language ? 3 : 1));
 
-    // Fetch associated vocabulary for each card
-    const cardsWithVocab = await Promise.all(
+    // Fetch associated vocabulary and content for each card
+    const cardsWithContent = await Promise.all(
       cards.map(async (card) => {
-        const vocab = await ctx.db.get(card.vocabularyId);
-        return { ...card, vocabulary: vocab };
+        const [vocab, sentence, image] = await Promise.all([
+          ctx.db.get(card.vocabularyId),
+          card.sentenceId ? ctx.db.get(card.sentenceId) : null,
+          card.imageId ? ctx.db.get(card.imageId) : null,
+        ]);
+
+        // Look up word audio
+        const wordAudio = vocab
+          ? await ctx.db
+              .query("wordAudio")
+              .withIndex("by_word_language", (q) =>
+                q.eq("word", vocab.word).eq("language", vocab.language)
+              )
+              .first()
+          : null;
+
+        return {
+          ...card,
+          vocabulary: vocab,
+          sentence,
+          image,
+          wordAudio,
+        };
       })
     );
 
-    return cardsWithVocab;
+    // Filter by language if specified
+    const filtered = args.language
+      ? cardsWithContent.filter((c) => c.vocabulary?.language === args.language)
+      : cardsWithContent;
+
+    return filtered.slice(0, args.limit ?? 100);
   },
 });
 
-// Get new cards (never reviewed)
+// Get new cards (never reviewed) with resolved content
 export const getNew = query({
   args: {
     userId: v.string(),
     limit: v.optional(v.number()),
+    language: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const cards = await ctx.db
       .query("flashcards")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .filter((q) => q.eq(q.field("state"), "new"))
-      .take(args.limit ?? 20);
+      .take((args.limit ?? 20) * (args.language ? 3 : 1));
 
-    const cardsWithVocab = await Promise.all(
+    const cardsWithContent = await Promise.all(
       cards.map(async (card) => {
-        const vocab = await ctx.db.get(card.vocabularyId);
-        return { ...card, vocabulary: vocab };
+        const [vocab, sentence, image] = await Promise.all([
+          ctx.db.get(card.vocabularyId),
+          card.sentenceId ? ctx.db.get(card.sentenceId) : null,
+          card.imageId ? ctx.db.get(card.imageId) : null,
+        ]);
+
+        // Look up word audio
+        const wordAudio = vocab
+          ? await ctx.db
+              .query("wordAudio")
+              .withIndex("by_word_language", (q) =>
+                q.eq("word", vocab.word).eq("language", vocab.language)
+              )
+              .first()
+          : null;
+
+        return {
+          ...card,
+          vocabulary: vocab,
+          sentence,
+          image,
+          wordAudio,
+        };
       })
     );
 
-    return cardsWithVocab;
+    // Filter by language if specified
+    const filtered = args.language
+      ? cardsWithContent.filter((c) => c.vocabulary?.language === args.language)
+      : cardsWithContent;
+
+    return filtered.slice(0, args.limit ?? 20);
   },
 });
 
 // Get review stats for user
 export const getStats = query({
-  args: { userId: v.string() },
+  args: {
+    userId: v.string(),
+    language: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const now = Date.now();
     const allCards = await ctx.db
@@ -151,8 +209,20 @@ export const getStats = query({
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
 
+    // If language filter is specified, fetch vocabulary and filter
+    let filteredCards = allCards;
+    if (args.language) {
+      const cardsWithVocab = await Promise.all(
+        allCards.map(async (card) => {
+          const vocab = await ctx.db.get(card.vocabularyId);
+          return { ...card, vocabulary: vocab };
+        })
+      );
+      filteredCards = cardsWithVocab.filter((c) => c.vocabulary?.language === args.language);
+    }
+
     const stats = {
-      total: allCards.length,
+      total: filteredCards.length,
       new: 0,
       learning: 0,
       review: 0,
@@ -165,7 +235,7 @@ export const getStats = query({
     endOfDay.setHours(23, 59, 59, 999);
     const endOfDayTimestamp = endOfDay.getTime();
 
-    for (const card of allCards) {
+    for (const card of filteredCards) {
       stats[card.state as keyof typeof stats]++;
       if (card.due <= now) stats.dueNow++;
       if (card.due <= endOfDayTimestamp) stats.dueToday++;
@@ -186,6 +256,39 @@ export const getByVocabulary = query({
   },
 });
 
+// Get a single flashcard with resolved content
+export const getWithContent = query({
+  args: { flashcardId: v.id("flashcards") },
+  handler: async (ctx, args) => {
+    const card = await ctx.db.get(args.flashcardId);
+    if (!card) return null;
+
+    const [vocab, sentence, image] = await Promise.all([
+      ctx.db.get(card.vocabularyId),
+      card.sentenceId ? ctx.db.get(card.sentenceId) : null,
+      card.imageId ? ctx.db.get(card.imageId) : null,
+    ]);
+
+    // Look up word audio
+    const wordAudio = vocab
+      ? await ctx.db
+          .query("wordAudio")
+          .withIndex("by_word_language", (q) =>
+            q.eq("word", vocab.word).eq("language", vocab.language)
+          )
+          .first()
+      : null;
+
+    return {
+      ...card,
+      vocabulary: vocab,
+      sentence,
+      image,
+      wordAudio,
+    };
+  },
+});
+
 // ============================================
 // MUTATIONS
 // ============================================
@@ -195,9 +298,8 @@ export const create = mutation({
   args: {
     userId: v.string(),
     vocabularyId: v.id("vocabulary"),
-    sentence: v.string(),
-    sentenceTranslation: v.string(),
-    audioUrl: v.optional(v.string()),
+    sentenceId: v.optional(v.id("sentences")), // Optional during migration
+    imageId: v.optional(v.id("images")),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -215,9 +317,8 @@ export const create = mutation({
     return await ctx.db.insert("flashcards", {
       userId: args.userId,
       vocabularyId: args.vocabularyId,
-      sentence: args.sentence,
-      sentenceTranslation: args.sentenceTranslation,
-      audioUrl: args.audioUrl,
+      sentenceId: args.sentenceId,
+      imageId: args.imageId,
 
       // Initial SRS state
       state: "new",
@@ -229,7 +330,6 @@ export const create = mutation({
       reps: 0,
       lapses: 0,
 
-      sentenceGeneratedAt: now,
       createdAt: now,
       updatedAt: now,
     });
@@ -351,24 +451,30 @@ export const review = mutation({
   },
 });
 
-// Update flashcard sentence (for refresh)
-export const updateSentence = mutation({
+// Swap to a different sentence from the library
+export const swapSentence = mutation({
   args: {
     flashcardId: v.id("flashcards"),
-    sentence: v.string(),
-    sentenceTranslation: v.string(),
-    audioUrl: v.optional(v.string()),
-    nextRefreshAt: v.optional(v.number()),
+    sentenceId: v.id("sentences"),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
     await ctx.db.patch(args.flashcardId, {
-      sentence: args.sentence,
-      sentenceTranslation: args.sentenceTranslation,
-      audioUrl: args.audioUrl,
-      sentenceGeneratedAt: now,
-      nextRefreshAt: args.nextRefreshAt,
-      updatedAt: now,
+      sentenceId: args.sentenceId,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Swap to a different image from the library
+export const swapImage = mutation({
+  args: {
+    flashcardId: v.id("flashcards"),
+    imageId: v.optional(v.id("images")),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.flashcardId, {
+      imageId: args.imageId,
+      updatedAt: Date.now(),
     });
   },
 });
@@ -393,22 +499,86 @@ export const getReviewHistory = query({
   },
 });
 
-// Get cards needing sentence refresh
-export const getNeedingRefresh = query({
+// Get available sentences for a word (for swapping)
+export const getAvailableSentences = query({
   args: {
-    userId: v.string(),
-    limit: v.optional(v.number()),
+    flashcardId: v.id("flashcards"),
+    maxDifficulty: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
-    const cards = await ctx.db
-      .query("flashcards")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+    const card = await ctx.db.get(args.flashcardId);
+    if (!card) return [];
+
+    const vocab = await ctx.db.get(card.vocabularyId);
+    if (!vocab) return [];
+
+    const sentences = await ctx.db
+      .query("sentences")
+      .withIndex("by_word_language", (q) =>
+        q.eq("word", vocab.word).eq("language", vocab.language)
+      )
       .collect();
 
-    return cards
-      .filter((card) => card.nextRefreshAt && card.nextRefreshAt <= now)
-      .slice(0, args.limit ?? 10);
+    // Filter by difficulty if specified
+    const filtered = args.maxDifficulty
+      ? sentences.filter((s) => s.difficulty <= args.maxDifficulty!)
+      : sentences;
+
+    // Mark current sentence
+    return filtered.map((s) => ({
+      ...s,
+      isCurrent: s._id === card.sentenceId,
+    }));
+  },
+});
+
+// Get available images for a word (for swapping)
+export const getAvailableImages = query({
+  args: {
+    flashcardId: v.id("flashcards"),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db.get(args.flashcardId);
+    if (!card) return [];
+
+    const vocab = await ctx.db.get(card.vocabularyId);
+    if (!vocab) return [];
+
+    const images = await ctx.db
+      .query("images")
+      .withIndex("by_word_language", (q) =>
+        q.eq("word", vocab.word).eq("language", vocab.language)
+      )
+      .collect();
+
+    // Mark current image
+    return images.map((img) => ({
+      ...img,
+      isCurrent: img._id === card.imageId,
+    }));
+  },
+});
+
+// Complete a review session and update learner profile
+export const completeReviewSession = mutation({
+  args: {
+    userId: v.string(),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    cardsReviewed: v.number(),
+    cardsCorrect: v.number(),
+    studyMinutes: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    if (args.cardsReviewed > 0) {
+      // Update learner profile with session stats
+      await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromFlashcardsInternal, {
+        userId: args.userId,
+        language: args.language,
+        cardsReviewed: args.cardsReviewed,
+        cardsCorrect: args.cardsCorrect,
+        studyMinutes: args.studyMinutes,
+      });
+    }
   },
 });
 
@@ -481,7 +651,22 @@ export const unreview = mutation({
 // INTERNAL MUTATIONS (for actions)
 // ============================================
 
-// Update flashcard sentence (internal, for refresh action)
+// Swap sentence (internal, for actions)
+export const swapSentenceInternal = internalMutation({
+  args: {
+    flashcardId: v.id("flashcards"),
+    sentenceId: v.id("sentences"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.flashcardId, {
+      sentenceId: args.sentenceId,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Update sentence (internal, for sentence refresh actions)
+// Creates a new sentence in the content library and links it to the flashcard
 export const updateSentenceInternal = internalMutation({
   args: {
     flashcardId: v.id("flashcards"),
@@ -491,11 +676,38 @@ export const updateSentenceInternal = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    await ctx.db.patch(args.flashcardId, {
+    const flashcard = await ctx.db.get(args.flashcardId);
+    if (!flashcard) {
+      throw new Error("Flashcard not found");
+    }
+
+    const vocab = await ctx.db.get(flashcard.vocabularyId);
+    if (!vocab) {
+      throw new Error("Vocabulary not found");
+    }
+
+    // Create new sentence in content library
+    const difficultyMap: Record<string, number> = {
+      N5: 1, N4: 2, N3: 3, N2: 4, N1: 5,
+      A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6,
+    };
+    const difficulty = vocab.examLevel ? difficultyMap[vocab.examLevel] ?? 3 : 3;
+
+    const sentenceId = await ctx.db.insert("sentences", {
+      word: vocab.word,
+      language: vocab.language,
+      difficulty,
       sentence: args.sentence,
-      sentenceTranslation: args.sentenceTranslation,
+      translations: {
+        en: args.sentenceTranslation,
+      },
       audioUrl: args.audioUrl,
-      sentenceGeneratedAt: now,
+      model: "gemini-3-flash",
+      createdAt: now,
+    });
+
+    await ctx.db.patch(args.flashcardId, {
+      sentenceId,
       updatedAt: now,
     });
   },

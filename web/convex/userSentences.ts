@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 // ============================================
 // QUERIES
@@ -187,6 +188,17 @@ export const updateVerification = mutation({
           updatedAt: Date.now(),
         });
       }
+
+      // Update learner profile with sentence practice scores
+      if (args.grammarScore !== undefined && args.usageScore !== undefined && args.naturalnessScore !== undefined) {
+        await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromSentencePracticeInternal, {
+          userId: sentence.userId,
+          language: vocab?.language ?? "japanese",
+          grammarScore: args.grammarScore,
+          usageScore: args.usageScore,
+          naturalnessScore: args.naturalnessScore,
+        });
+      }
     }
 
     return sentenceId;
@@ -244,15 +256,28 @@ export const submitWithVerification = mutation({
       createdAt: Date.now(),
     });
 
+    // Get vocabulary to access language
+    const vocab = await ctx.db.get(args.vocabularyId);
+
     // Update vocabulary mastery if correct
     if (args.isCorrect) {
-      const vocab = await ctx.db.get(args.vocabularyId);
       if (vocab && vocab.masteryState === "learning") {
         await ctx.db.patch(args.vocabularyId, {
           masteryState: "tested",
           updatedAt: Date.now(),
         });
       }
+    }
+
+    // Update learner profile with sentence practice scores
+    if (args.grammarScore !== undefined && args.usageScore !== undefined && args.naturalnessScore !== undefined) {
+      await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromSentencePracticeInternal, {
+        userId: args.userId,
+        language: vocab?.language ?? "japanese",
+        grammarScore: args.grammarScore,
+        usageScore: args.usageScore,
+        naturalnessScore: args.naturalnessScore,
+      });
     }
 
     // If incorrect, auto-add mistakes to vocabulary (per roadmap)

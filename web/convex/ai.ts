@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { YoutubeTranscript } from "youtube-transcript";
+import { uploadAudio, uploadImage } from "./lib/storage";
 
 // ============================================
 // GEMINI TTS CONFIGURATION (Generative Language API)
@@ -836,13 +837,17 @@ export const generateFlashcardAudio = action({
     flashcardId: v.id("flashcards"),
   },
   handler: async (ctx, args): Promise<{ success: boolean; audioUrl?: string }> => {
-    // Get the flashcard
-    const flashcard = await ctx.runQuery(internal.aiHelpers.getFlashcard, {
+    // Get the flashcard with sentence data
+    const flashcard = await ctx.runQuery(internal.aiHelpers.getFlashcardWithSentence, {
       flashcardId: args.flashcardId,
     });
 
     if (!flashcard) {
       throw new Error("Flashcard not found");
+    }
+
+    if (!flashcard.sentenceData) {
+      throw new Error("No sentence found for flashcard");
     }
 
     // Get vocabulary for language info
@@ -856,7 +861,7 @@ export const generateFlashcardAudio = action({
 
     // Generate audio using Gemini TTS
     const audioResult = await generateTTSAudio(
-      flashcard.sentence,
+      flashcard.sentenceData.sentence,
       vocab.language
     );
 
@@ -865,19 +870,13 @@ export const generateFlashcardAudio = action({
       return { success: false };
     }
 
-    // Store audio in Convex file storage
-    const blob = new Blob([new Uint8Array(audioResult.audioData)], { type: audioResult.mimeType });
-    const storageId = await ctx.storage.store(blob);
+    // Upload audio to storage (R2)
+    const audioUrl = await uploadAudio(
+      new Uint8Array(audioResult.audioData),
+      audioResult.mimeType
+    );
 
-    // Get the public URL
-    const audioUrl = await ctx.storage.getUrl(storageId);
-
-    if (!audioUrl) {
-      console.error("Failed to get audio URL");
-      return { success: false };
-    }
-
-    // Update flashcard with audio URL
+    // Update sentence with audio URL
     await ctx.runMutation(internal.aiHelpers.updateFlashcardAudio, {
       flashcardId: args.flashcardId,
       audioUrl,
@@ -934,17 +933,16 @@ export const generateFlashcardWithAudio = action({
         );
 
         if (audioResult) {
-          // Store audio in Convex file storage
-          const blob = new Blob([new Uint8Array(audioResult.audioData)], { type: audioResult.mimeType });
-          const storageId = await ctx.storage.store(blob);
-          audioUrl = await ctx.storage.getUrl(storageId) ?? undefined;
+          // Upload audio to storage (R2)
+          audioUrl = await uploadAudio(
+            new Uint8Array(audioResult.audioData),
+            audioResult.mimeType
+          );
 
-          if (audioUrl) {
-            await ctx.runMutation(internal.aiHelpers.updateFlashcardAudio, {
-              flashcardId: flashcardId as any,
-              audioUrl,
-            });
-          }
+          await ctx.runMutation(internal.aiHelpers.updateFlashcardAudio, {
+            flashcardId: flashcardId as any,
+            audioUrl,
+          });
         }
       } catch (error) {
         console.error("Sentence audio generation failed:", error);
@@ -959,17 +957,16 @@ export const generateFlashcardWithAudio = action({
         );
 
         if (wordAudioResult) {
-          // Store word audio in Convex file storage
-          const blob = new Blob([new Uint8Array(wordAudioResult.audioData)], { type: wordAudioResult.mimeType });
-          const storageId = await ctx.storage.store(blob);
-          wordAudioUrl = await ctx.storage.getUrl(storageId) ?? undefined;
+          // Upload word audio to storage (R2)
+          wordAudioUrl = await uploadAudio(
+            new Uint8Array(wordAudioResult.audioData),
+            wordAudioResult.mimeType
+          );
 
-          if (wordAudioUrl) {
-            await ctx.runMutation(internal.aiHelpers.updateFlashcardWordAudio, {
-              flashcardId: flashcardId as any,
-              wordAudioUrl,
-            });
-          }
+          await ctx.runMutation(internal.aiHelpers.updateFlashcardWordAudio, {
+            flashcardId: flashcardId as any,
+            wordAudioUrl,
+          });
         }
       } catch (error) {
         console.error("Word audio generation failed:", error);
@@ -987,17 +984,16 @@ export const generateFlashcardWithAudio = action({
         );
 
         if (imageResult) {
-          // Store image in Convex file storage
-          const blob = new Blob([new Uint8Array(imageResult.imageData)], { type: imageResult.mimeType });
-          const storageId = await ctx.storage.store(blob);
-          imageUrl = await ctx.storage.getUrl(storageId) ?? undefined;
+          // Upload image to storage (R2)
+          imageUrl = await uploadImage(
+            new Uint8Array(imageResult.imageData),
+            imageResult.mimeType
+          );
 
-          if (imageUrl) {
-            await ctx.runMutation(internal.aiHelpers.updateFlashcardImage, {
-              flashcardId: flashcardId as any,
-              imageUrl,
-            });
-          }
+          await ctx.runMutation(internal.aiHelpers.updateFlashcardImage, {
+            flashcardId: flashcardId as any,
+            imageUrl,
+          });
         }
       } catch (error) {
         console.error("Image generation failed:", error);
@@ -1020,7 +1016,7 @@ export const generateFlashcardWithAudio = action({
 
 /**
  * Enhance a premade vocabulary item by generating missing content
- * Only generates what's missing (sentence, audio, wordAudio, image)
+ * Content is stored in the content library (sentences, images, wordAudio tables)
  */
 export const enhancePremadeVocabulary = action({
   args: {
@@ -1040,24 +1036,34 @@ export const enhancePremadeVocabulary = action({
     }
 
     const generated: string[] = [];
-    const wasAlreadyComplete = vocab.generationStatus === "complete";
 
-    // Only set status to generating if not already complete
-    // (to avoid item disappearing from filtered queries during enhancement)
-    if (!wasAlreadyComplete) {
-      await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
-        premadeVocabularyId: args.premadeVocabularyId,
-        generationStatus: "generating",
+    // Check existing content
+    const hasSentence = !!vocab.sentenceId;
+    const hasImage = !!vocab.imageId;
+
+    // Check for word audio in content library
+    const existingWordAudio = await ctx.runQuery(internal.aiHelpers.getWordAudioByWord, {
+      word: vocab.word,
+      language: vocab.language,
+    });
+    const hasWordAudio = !!existingWordAudio;
+
+    // Check for sentence audio (if sentence exists)
+    let existingSentence = null;
+    let hasSentenceAudio = false;
+    if (vocab.sentenceId) {
+      existingSentence = await ctx.runQuery(internal.aiHelpers.getSentenceById, {
+        sentenceId: vocab.sentenceId,
       });
+      hasSentenceAudio = !!existingSentence?.audioUrl;
     }
 
     try {
-      let sentence = vocab.sentence;
-      let sentenceTranslation = vocab.sentenceTranslation;
+      let sentence = existingSentence?.sentence;
+      let sentenceTranslation = existingSentence?.translations?.en;
 
       // Generate sentence if missing and requested (default: true if missing)
-      // Generate sentence if explicitly requested (true) or if missing and not explicitly disabled
-      const shouldGenerateSentence = args.generateSentence === true || (args.generateSentence !== false && !vocab.sentence);
+      const shouldGenerateSentence = args.generateSentence === true || (args.generateSentence !== false && !hasSentence);
       if (shouldGenerateSentence) {
         const sentenceResult = await generateSentenceHelper({
           word: vocab.word,
@@ -1079,27 +1085,27 @@ export const enhancePremadeVocabulary = action({
         generated.push("sentence");
       }
 
-      // Generate audio if explicitly requested (true) or if missing and not explicitly disabled
+      // Generate audio if explicitly requested (true) or if not explicitly disabled
       const shouldGenerateAudio = args.generateAudio === true || args.generateAudio !== false;
       // For sentence audio: regenerate if explicitly requested OR if missing
-      const shouldRegenerateSentenceAudio = args.generateAudio === true || !vocab.audioUrl;
+      const shouldRegenerateSentenceAudio = args.generateAudio === true || !hasSentenceAudio;
 
       // Generate sentence audio if we have a sentence
       if (shouldGenerateAudio && sentence && shouldRegenerateSentenceAudio) {
         try {
           const audioResult = await generateTTSAudio(sentence, vocab.language);
           if (audioResult) {
-            const blob = new Blob([new Uint8Array(audioResult.audioData)], { type: audioResult.mimeType });
-            const storageId = await ctx.storage.store(blob);
-            const audioUrl = await ctx.storage.getUrl(storageId);
+            // Upload audio to storage (R2)
+            const audioUrl = await uploadAudio(
+              new Uint8Array(audioResult.audioData),
+              audioResult.mimeType
+            );
 
-            if (audioUrl) {
-              await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
-                premadeVocabularyId: args.premadeVocabularyId,
-                audioUrl,
-              });
-              generated.push("sentenceAudio");
-            }
+            await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+              premadeVocabularyId: args.premadeVocabularyId,
+              audioUrl,
+            });
+            generated.push("sentenceAudio");
           }
         } catch (error) {
           console.error("Sentence audio generation failed:", error);
@@ -1107,21 +1113,21 @@ export const enhancePremadeVocabulary = action({
       }
 
       // Generate word audio if missing
-      if (shouldGenerateAudio && !vocab.wordAudioUrl) {
+      if (shouldGenerateAudio && !hasWordAudio) {
         try {
           const wordAudioResult = await generateTTSAudio(vocab.word, vocab.language);
           if (wordAudioResult) {
-            const blob = new Blob([new Uint8Array(wordAudioResult.audioData)], { type: wordAudioResult.mimeType });
-            const storageId = await ctx.storage.store(blob);
-            const wordAudioUrl = await ctx.storage.getUrl(storageId);
+            // Upload word audio to storage (R2)
+            const wordAudioUrl = await uploadAudio(
+              new Uint8Array(wordAudioResult.audioData),
+              wordAudioResult.mimeType
+            );
 
-            if (wordAudioUrl) {
-              await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
-                premadeVocabularyId: args.premadeVocabularyId,
-                wordAudioUrl,
-              });
-              generated.push("wordAudio");
-            }
+            await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+              premadeVocabularyId: args.premadeVocabularyId,
+              wordAudioUrl,
+            });
+            generated.push("wordAudio");
           }
         } catch (error) {
           console.error("Word audio generation failed:", error);
@@ -1129,44 +1135,29 @@ export const enhancePremadeVocabulary = action({
       }
 
       // Generate image if missing and requested
-      if (args.generateImage && sentence && !vocab.imageUrl) {
+      if (args.generateImage && sentence && !hasImage) {
         try {
           const imageResult = await generateFlashcardImage(vocab.word, sentence, vocab.language);
           if (imageResult) {
-            const blob = new Blob([new Uint8Array(imageResult.imageData)], { type: imageResult.mimeType });
-            const storageId = await ctx.storage.store(blob);
-            const imageUrl = await ctx.storage.getUrl(storageId);
+            // Upload image to storage (R2)
+            const imageUrl = await uploadImage(
+              new Uint8Array(imageResult.imageData),
+              imageResult.mimeType
+            );
 
-            if (imageUrl) {
-              await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
-                premadeVocabularyId: args.premadeVocabularyId,
-                imageUrl,
-              });
-              generated.push("image");
-            }
+            await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
+              premadeVocabularyId: args.premadeVocabularyId,
+              imageUrl,
+            });
+            generated.push("image");
           }
         } catch (error) {
           console.error("Image generation failed:", error);
         }
       }
 
-      // Mark as complete (only if we changed it to generating earlier)
-      if (!wasAlreadyComplete) {
-        await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
-          premadeVocabularyId: args.premadeVocabularyId,
-          generationStatus: "complete",
-        });
-      }
-
       return { success: true, generated };
     } catch (error) {
-      // Mark as failed (only if we changed it to generating earlier)
-      if (!wasAlreadyComplete) {
-        await ctx.runMutation(internal.aiHelpers.updatePremadeVocabularyContent, {
-          premadeVocabularyId: args.premadeVocabularyId,
-          generationStatus: "failed",
-        });
-      }
       throw error;
     }
   },
@@ -1938,10 +1929,11 @@ export const refreshFlashcardSentence = action({
       );
 
       if (audioResult) {
-        // Store audio in Convex file storage
-        const blob = new Blob([new Uint8Array(audioResult.audioData)], { type: audioResult.mimeType });
-        const storageId = await ctx.storage.store(blob);
-        audioUrl = await ctx.storage.getUrl(storageId) ?? undefined;
+        // Upload audio to storage (R2)
+        audioUrl = await uploadAudio(
+          new Uint8Array(audioResult.audioData),
+          audioResult.mimeType
+        );
       }
     } catch (error) {
       console.error("Audio generation failed during refresh:", error);
@@ -2324,6 +2316,396 @@ Common issues to listen for:
       return {
         accuracyScore: 0,
         feedbackText: "Unable to evaluate your recording. Please try again.",
+      };
+    }
+  },
+});
+
+// ============================================
+// EXAM ANSWER GRADING
+// ============================================
+
+interface ExamGradingResult {
+  score: number; // 0-100
+  isCorrect: boolean; // score >= 70
+  feedback: string;
+  detailedFeedback: {
+    strengths: string[];
+    improvements: string[];
+    grammarErrors: string[];
+  };
+  suggestedAnswer: string;
+}
+
+/**
+ * Grade an exam answer using AI
+ * Supports multiple choice (simple), short answer, essay, and translation
+ */
+export const gradeExamAnswer = action({
+  args: {
+    questionText: v.string(),
+    questionType: v.string(), // "multiple_choice" | "short_answer" | "essay" | "translation" | "fill_blank"
+    userAnswer: v.string(),
+    correctAnswer: v.optional(v.string()),
+    acceptableAnswers: v.optional(v.array(v.string())),
+    rubric: v.optional(v.string()),
+    passageText: v.optional(v.string()), // Context for reading questions
+    language: v.string(), // "japanese" | "english" | "french"
+    examType: v.string(), // "jlpt_n5" | "toefl" | etc.
+    maxPoints: v.number(),
+  },
+  handler: async (ctx, args): Promise<ExamGradingResult> => {
+    // For multiple choice, just do simple comparison
+    if (args.questionType === "multiple_choice") {
+      const isCorrect = args.userAnswer === args.correctAnswer;
+      return {
+        score: isCorrect ? 100 : 0,
+        isCorrect,
+        feedback: isCorrect
+          ? "Correct!"
+          : `Incorrect. The correct answer is: ${args.correctAnswer}`,
+        detailedFeedback: {
+          strengths: isCorrect ? ["Correct answer selected"] : [],
+          improvements: isCorrect ? [] : ["Review this topic"],
+          grammarErrors: [],
+        },
+        suggestedAnswer: args.correctAnswer || "",
+      };
+    }
+
+    // For short answer with exact match checking
+    if (args.questionType === "short_answer" || args.questionType === "fill_blank") {
+      const normalizedAnswer = args.userAnswer.trim().toLowerCase();
+      const normalizedCorrect = (args.correctAnswer || "").trim().toLowerCase();
+      const acceptableNormalized = (args.acceptableAnswers || []).map(
+        (a) => a.trim().toLowerCase()
+      );
+
+      if (
+        normalizedAnswer === normalizedCorrect ||
+        acceptableNormalized.includes(normalizedAnswer)
+      ) {
+        return {
+          score: 100,
+          isCorrect: true,
+          feedback: "Correct!",
+          detailedFeedback: {
+            strengths: ["Exact match"],
+            improvements: [],
+            grammarErrors: [],
+          },
+          suggestedAnswer: args.correctAnswer || "",
+        };
+      }
+
+      // Fall through to AI grading for partial credit
+    }
+
+    // AI grading for essays, translations, and partial credit
+    const languageName = languageNames[args.language] || "English";
+
+    let gradingContext = "";
+    if (args.correctAnswer) {
+      gradingContext += `\nExpected answer: ${args.correctAnswer}`;
+    }
+    if (args.acceptableAnswers?.length) {
+      gradingContext += `\nAlso acceptable: ${args.acceptableAnswers.join(", ")}`;
+    }
+    if (args.rubric) {
+      gradingContext += `\nGrading rubric: ${args.rubric}`;
+    }
+    if (args.passageText) {
+      gradingContext += `\n\nPassage context:\n${args.passageText}`;
+    }
+
+    const systemPrompt = `You are a ${languageName} language exam grader for ${args.examType.replace("_", " ").toUpperCase()}.
+
+Grade the student's answer to this ${args.questionType.replace("_", " ")} question.
+${gradingContext}
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "score": number (0-100),
+  "isCorrect": boolean (true if score >= 70),
+  "feedback": "Brief overall feedback for the student",
+  "detailedFeedback": {
+    "strengths": ["What the student did well"],
+    "improvements": ["Areas to improve"],
+    "grammarErrors": ["Specific grammar mistakes if any"]
+  },
+  "suggestedAnswer": "A model answer in ${languageName}"
+}
+
+Be fair but rigorous. Consider:
+1. Content accuracy and completeness
+2. Grammar and language usage
+3. Relevance to the question
+4. For ${languageName}, check proper use of language-specific features`;
+
+    const prompt = `Question: ${args.questionText}
+
+Student's answer: "${args.userAnswer}"
+
+Grade this answer.`;
+
+    const gradingSchema: JsonSchema = {
+      name: "exam_grading",
+      schema: {
+        type: "object",
+        properties: {
+          score: { type: "number", minimum: 0, maximum: 100 },
+          isCorrect: { type: "boolean" },
+          feedback: { type: "string" },
+          detailedFeedback: {
+            type: "object",
+            properties: {
+              strengths: { type: "array", items: { type: "string" } },
+              improvements: { type: "array", items: { type: "string" } },
+              grammarErrors: { type: "array", items: { type: "string" } },
+            },
+            required: ["strengths", "improvements", "grammarErrors"],
+            additionalProperties: false,
+          },
+          suggestedAnswer: { type: "string" },
+        },
+        required: ["score", "isCorrect", "feedback", "detailedFeedback", "suggestedAnswer"],
+        additionalProperties: false,
+      },
+    };
+
+    try {
+      return await callWithRetry<ExamGradingResult>({
+        prompt,
+        systemPrompt,
+        maxTokens: 800,
+        jsonSchema: gradingSchema,
+        parse: (response) => parseJson<ExamGradingResult>(response),
+        validate: (parsed) => {
+          if (typeof parsed.score !== "number") {
+            return "Missing score";
+          }
+          return null;
+        },
+      });
+    } catch (error) {
+      console.error("AI grading failed:", error);
+      // Return a conservative fallback
+      return {
+        score: 50,
+        isCorrect: false,
+        feedback: "Unable to fully grade answer. Manual review may be needed.",
+        detailedFeedback: {
+          strengths: ["Attempted the question"],
+          improvements: ["Unable to analyze - please review"],
+          grammarErrors: [],
+        },
+        suggestedAnswer: args.correctAnswer || "",
+      };
+    }
+  },
+});
+
+/**
+ * Grade multiple exam answers in batch
+ * More efficient for completing exams with many written answers
+ */
+export const gradeExamAnswersBatch = action({
+  args: {
+    answers: v.array(v.object({
+      questionIndex: v.number(),
+      questionText: v.string(),
+      questionType: v.string(),
+      userAnswer: v.string(),
+      correctAnswer: v.optional(v.string()),
+      acceptableAnswers: v.optional(v.array(v.string())),
+      rubric: v.optional(v.string()),
+      passageText: v.optional(v.string()),
+      maxPoints: v.number(),
+    })),
+    language: v.string(),
+    examType: v.string(),
+  },
+  handler: async (ctx, args): Promise<Array<{ questionIndex: number } & ExamGradingResult>> => {
+    const results: Array<{ questionIndex: number } & ExamGradingResult> = [];
+
+    // Grade each answer
+    for (const answer of args.answers) {
+      try {
+        const result = await ctx.runAction(internal.ai.gradeExamAnswerInternal, {
+          questionText: answer.questionText,
+          questionType: answer.questionType,
+          userAnswer: answer.userAnswer,
+          correctAnswer: answer.correctAnswer,
+          acceptableAnswers: answer.acceptableAnswers,
+          rubric: answer.rubric,
+          passageText: answer.passageText,
+          language: args.language,
+          examType: args.examType,
+          maxPoints: answer.maxPoints,
+        });
+
+        results.push({
+          questionIndex: answer.questionIndex,
+          ...result,
+        });
+      } catch (error) {
+        console.error(`Failed to grade question ${answer.questionIndex}:`, error);
+        results.push({
+          questionIndex: answer.questionIndex,
+          score: 0,
+          isCorrect: false,
+          feedback: "Grading failed - please review manually",
+          detailedFeedback: {
+            strengths: [],
+            improvements: [],
+            grammarErrors: [],
+          },
+          suggestedAnswer: answer.correctAnswer || "",
+        });
+      }
+    }
+
+    return results;
+  },
+});
+
+// Internal action for batch grading
+export const gradeExamAnswerInternal = internalAction({
+  args: {
+    questionText: v.string(),
+    questionType: v.string(),
+    userAnswer: v.string(),
+    correctAnswer: v.optional(v.string()),
+    acceptableAnswers: v.optional(v.array(v.string())),
+    rubric: v.optional(v.string()),
+    passageText: v.optional(v.string()),
+    language: v.string(),
+    examType: v.string(),
+    maxPoints: v.number(),
+  },
+  handler: async (ctx, args): Promise<ExamGradingResult> => {
+    // Same logic as gradeExamAnswer
+    if (args.questionType === "multiple_choice") {
+      const isCorrect = args.userAnswer === args.correctAnswer;
+      return {
+        score: isCorrect ? 100 : 0,
+        isCorrect,
+        feedback: isCorrect
+          ? "Correct!"
+          : `Incorrect. The correct answer is: ${args.correctAnswer}`,
+        detailedFeedback: {
+          strengths: isCorrect ? ["Correct answer selected"] : [],
+          improvements: isCorrect ? [] : ["Review this topic"],
+          grammarErrors: [],
+        },
+        suggestedAnswer: args.correctAnswer || "",
+      };
+    }
+
+    if (args.questionType === "short_answer" || args.questionType === "fill_blank") {
+      const normalizedAnswer = args.userAnswer.trim().toLowerCase();
+      const normalizedCorrect = (args.correctAnswer || "").trim().toLowerCase();
+      const acceptableNormalized = (args.acceptableAnswers || []).map(
+        (a) => a.trim().toLowerCase()
+      );
+
+      if (
+        normalizedAnswer === normalizedCorrect ||
+        acceptableNormalized.includes(normalizedAnswer)
+      ) {
+        return {
+          score: 100,
+          isCorrect: true,
+          feedback: "Correct!",
+          detailedFeedback: {
+            strengths: ["Exact match"],
+            improvements: [],
+            grammarErrors: [],
+          },
+          suggestedAnswer: args.correctAnswer || "",
+        };
+      }
+    }
+
+    const languageName = languageNames[args.language] || "English";
+
+    let gradingContext = "";
+    if (args.correctAnswer) {
+      gradingContext += `\nExpected answer: ${args.correctAnswer}`;
+    }
+    if (args.acceptableAnswers?.length) {
+      gradingContext += `\nAlso acceptable: ${args.acceptableAnswers.join(", ")}`;
+    }
+    if (args.rubric) {
+      gradingContext += `\nGrading rubric: ${args.rubric}`;
+    }
+    if (args.passageText) {
+      gradingContext += `\n\nPassage context:\n${args.passageText}`;
+    }
+
+    const systemPrompt = `You are a ${languageName} language exam grader for ${args.examType.replace("_", " ").toUpperCase()}.
+
+Grade the student's answer to this ${args.questionType.replace("_", " ")} question.
+${gradingContext}
+
+Respond ONLY with valid JSON:
+{
+  "score": number (0-100),
+  "isCorrect": boolean (true if score >= 70),
+  "feedback": "Brief overall feedback",
+  "detailedFeedback": {
+    "strengths": ["What was good"],
+    "improvements": ["What to improve"],
+    "grammarErrors": ["Grammar mistakes"]
+  },
+  "suggestedAnswer": "Model answer in ${languageName}"
+}`;
+
+    const prompt = `Question: ${args.questionText}
+Student's answer: "${args.userAnswer}"`;
+
+    const gradingSchema: JsonSchema = {
+      name: "exam_grading",
+      schema: {
+        type: "object",
+        properties: {
+          score: { type: "number" },
+          isCorrect: { type: "boolean" },
+          feedback: { type: "string" },
+          detailedFeedback: {
+            type: "object",
+            properties: {
+              strengths: { type: "array", items: { type: "string" } },
+              improvements: { type: "array", items: { type: "string" } },
+              grammarErrors: { type: "array", items: { type: "string" } },
+            },
+            required: ["strengths", "improvements", "grammarErrors"],
+          },
+          suggestedAnswer: { type: "string" },
+        },
+        required: ["score", "isCorrect", "feedback", "detailedFeedback", "suggestedAnswer"],
+      },
+    };
+
+    try {
+      return await callWithRetry<ExamGradingResult>({
+        prompt,
+        systemPrompt,
+        maxTokens: 600,
+        jsonSchema: gradingSchema,
+        parse: (response) => parseJson<ExamGradingResult>(response),
+        validate: (parsed) => {
+          if (typeof parsed.score !== "number") return "Missing score";
+          return null;
+        },
+      });
+    } catch {
+      return {
+        score: 50,
+        isCorrect: false,
+        feedback: "Unable to grade - manual review needed",
+        detailedFeedback: { strengths: [], improvements: [], grammarErrors: [] },
+        suggestedAnswer: args.correctAnswer || "",
       };
     }
   },

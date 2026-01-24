@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { languageValidator } from "./schema";
 
 // ============================================
@@ -67,7 +67,7 @@ export const getOrCreatePersonalDeck = mutation({
       wordsWithSentences: 0,
       wordsWithAudio: 0,
       wordsWithImages: 0,
-      isPublished: false, // Personal decks aren't published
+      isPublished: false,
       lastUpdated: now,
       isPersonal: true,
       ownerUserId: args.userId,
@@ -107,38 +107,25 @@ export const getVocabularyForDeck = query({
   args: {
     deckId: v.string(),
     limit: v.optional(v.number()),
-    status: v.optional(
-      v.union(
-        v.literal("pending"),
-        v.literal("generating"),
-        v.literal("complete"),
-        v.literal("failed")
-      )
-    ),
   },
   handler: async (ctx, args) => {
-    let query = ctx.db
+    const items = await ctx.db
       .query("premadeVocabulary")
-      .withIndex("by_deck", (q) => q.eq("deckId", args.deckId));
+      .withIndex("by_deck", (q) => q.eq("deckId", args.deckId))
+      .collect();
 
-    const items = await query.collect();
-
-    // Filter by status if provided
-    const filtered = args.status
-      ? items.filter((item) => item.generationStatus === args.status)
-      : items;
-
-    return args.limit ? filtered.slice(0, args.limit) : filtered;
+    return args.limit ? items.slice(0, args.limit) : items;
   },
 });
 
-// Get all vocabulary from user's subscribed decks
+// Get all vocabulary from all decks the user is subscribed to
 export const getAllSubscribedVocabulary = query({
   args: {
     userId: v.string(),
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    // Get user's subscriptions
+    // Get all user's deck subscriptions
     const subscriptions = await ctx.db
       .query("userDeckSubscriptions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -148,56 +135,73 @@ export const getAllSubscribedVocabulary = query({
       return [];
     }
 
-    // Get vocabulary for each subscribed deck
+    // Get vocabulary from all subscribed decks
     const deckIds = subscriptions.map((s) => s.deckId);
-    const allVocab = await Promise.all(
+    const allVocabulary = await Promise.all(
       deckIds.map(async (deckId) => {
-        const items = await ctx.db
+        return await ctx.db
           .query("premadeVocabulary")
           .withIndex("by_deck", (q) => q.eq("deckId", deckId))
           .collect();
-        return items;
       })
     );
 
-    // Flatten and return
-    return allVocab.flat();
+    // Flatten and dedupe by word+language
+    const seen = new Set<string>();
+    const flattened = allVocabulary.flat().filter((item) => {
+      const key = `${item.word}-${item.language}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return args.limit ? flattened.slice(0, args.limit) : flattened;
   },
 });
 
-// Find existing generated content for a word (across all decks)
-export const findExistingWordContent = query({
+// Get vocabulary with resolved content (sentences, images, audio)
+export const getVocabularyWithContent = query({
   args: {
-    word: v.string(),
-    language: languageValidator,
+    deckId: v.string(),
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    // Find any premade vocabulary with this word that has generated content
-    const existing = await ctx.db
+    const items = await ctx.db
       .query("premadeVocabulary")
-      .withIndex("by_language", (q) => q.eq("language", args.language))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("word"), args.word),
-          q.eq(q.field("generationStatus"), "complete")
-        )
-      )
-      .first();
+      .withIndex("by_deck", (q) => q.eq("deckId", args.deckId))
+      .collect();
 
-    if (!existing) return null;
+    const limited = args.limit ? items.slice(0, args.limit) : items;
 
-    return {
-      sentence: existing.sentence,
-      sentenceTranslation: existing.sentenceTranslation,
-      audioUrl: existing.audioUrl,
-      wordAudioUrl: existing.wordAudioUrl,
-      imageUrl: existing.imageUrl,
-    };
+    // Resolve content for each item
+    const withContent = await Promise.all(
+      limited.map(async (item) => {
+        const [sentence, image, wordAudio] = await Promise.all([
+          item.sentenceId ? ctx.db.get(item.sentenceId) : null,
+          item.imageId ? ctx.db.get(item.imageId) : null,
+          ctx.db
+            .query("wordAudio")
+            .withIndex("by_word_language", (q) =>
+              q.eq("word", item.word).eq("language", item.language)
+            )
+            .first(),
+        ]);
+
+        return {
+          ...item,
+          sentence,
+          image,
+          wordAudio,
+        };
+      })
+    );
+
+    return withContent;
   },
 });
 
-// Get generation stats for a deck
-export const getDeckGenerationStats = query({
+// Get deck stats (computed from content libraries)
+export const getDeckStats = query({
   args: {
     deckId: v.string(),
   },
@@ -207,15 +211,24 @@ export const getDeckGenerationStats = query({
       .withIndex("by_deck", (q) => q.eq("deckId", args.deckId))
       .collect();
 
+    // Check word audio availability
+    const wordsWithAudio = await Promise.all(
+      items.map(async (item) => {
+        const audio = await ctx.db
+          .query("wordAudio")
+          .withIndex("by_word_language", (q) =>
+            q.eq("word", item.word).eq("language", item.language)
+          )
+          .first();
+        return audio !== null;
+      })
+    );
+
     return {
       total: items.length,
-      pending: items.filter((i) => i.generationStatus === "pending").length,
-      generating: items.filter((i) => i.generationStatus === "generating").length,
-      complete: items.filter((i) => i.generationStatus === "complete").length,
-      failed: items.filter((i) => i.generationStatus === "failed").length,
-      withSentences: items.filter((i) => i.sentence).length,
-      withAudio: items.filter((i) => i.audioUrl).length,
-      withImages: items.filter((i) => i.imageUrl).length,
+      withSentences: items.filter((i) => i.sentenceId).length,
+      withImages: items.filter((i) => i.imageId).length,
+      withWordAudio: wordsWithAudio.filter(Boolean).length,
     };
   },
 });
@@ -262,7 +275,7 @@ export const createDeck = mutation({
   },
 });
 
-// Update deck stats (call after import or generation)
+// Update deck stats (call after import or content generation)
 export const updateDeckStats = mutation({
   args: {
     deckId: v.string(),
@@ -282,11 +295,24 @@ export const updateDeckStats = mutation({
       .withIndex("by_deck", (q) => q.eq("deckId", args.deckId))
       .collect();
 
+    // Check word audio availability
+    const wordsWithAudio = await Promise.all(
+      items.map(async (item) => {
+        const audio = await ctx.db
+          .query("wordAudio")
+          .withIndex("by_word_language", (q) =>
+            q.eq("word", item.word).eq("language", item.language)
+          )
+          .first();
+        return audio !== null;
+      })
+    );
+
     await ctx.db.patch(deck._id, {
       totalWords: items.length,
-      wordsWithSentences: items.filter((i) => i.sentence).length,
-      wordsWithAudio: items.filter((i) => i.audioUrl).length,
-      wordsWithImages: items.filter((i) => i.imageUrl).length,
+      wordsWithSentences: items.filter((i) => i.sentenceId).length,
+      wordsWithImages: items.filter((i) => i.imageId).length,
+      wordsWithAudio: wordsWithAudio.filter(Boolean).length,
       lastUpdated: Date.now(),
     });
   },
@@ -315,11 +341,11 @@ export const setDeckPublished = mutation({
   },
 });
 
-// Link decks in sequence for auto-progression (admin)
+// Link decks in sequence for auto-progression
 export const setNextDeck = mutation({
   args: {
     deckId: v.string(),
-    nextDeckId: v.optional(v.string()), // null to remove the link
+    nextDeckId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const deck = await ctx.db
@@ -331,7 +357,6 @@ export const setNextDeck = mutation({
       throw new Error(`Deck ${args.deckId} not found`);
     }
 
-    // Validate next deck exists if provided
     if (args.nextDeckId) {
       const nextDeck = await ctx.db
         .query("premadeDecks")
@@ -350,7 +375,7 @@ export const setNextDeck = mutation({
   },
 });
 
-// Delete a deck (keeps vocabulary for reuse in other decks)
+// Delete a deck
 export const deleteDeck = mutation({
   args: {
     deckId: v.string(),
@@ -365,9 +390,7 @@ export const deleteDeck = mutation({
       throw new Error(`Deck ${args.deckId} not found`);
     }
 
-    // Delete the deck metadata only (vocabulary preserved for reuse)
     await ctx.db.delete(deck._id);
-
     return { deleted: true };
   },
 });
@@ -377,7 +400,6 @@ export const deleteDeck = mutation({
 // ============================================
 
 // Import vocabulary items to a deck (bulk)
-// If copyExistingContent is true, will copy generated content from other decks
 export const importVocabulary = mutation({
   args: {
     deckId: v.string(),
@@ -389,7 +411,8 @@ export const importVocabulary = mutation({
         partOfSpeech: v.optional(v.string()),
       })
     ),
-    copyExistingContent: v.optional(v.boolean()), // Copy content from other decks if available
+    linkExistingContent: v.optional(v.boolean()), // Link content from libraries if available
+    difficulty: v.optional(v.number()), // Preferred difficulty for sentence lookup
   },
   handler: async (ctx, args) => {
     const deck = await ctx.db
@@ -404,7 +427,7 @@ export const importVocabulary = mutation({
     const now = Date.now();
     let imported = 0;
     let skipped = 0;
-    let copiedContent = 0;
+    let linkedContent = 0;
 
     for (const item of args.items) {
       // Check for duplicates within this deck
@@ -419,38 +442,39 @@ export const importVocabulary = mutation({
         continue;
       }
 
-      // Check for existing content in other decks (if flag is set)
-      let existingContent: {
-        sentence?: string;
-        sentenceTranslation?: string;
-        audioUrl?: string;
-        wordAudioUrl?: string;
-        imageUrl?: string;
-        generationStatus: "pending" | "complete";
-      } = { generationStatus: "pending" };
+      // Look for existing content in libraries
+      let sentenceId: typeof args.items[number] extends { sentenceId?: infer T } ? T : undefined;
+      let imageId: typeof args.items[number] extends { imageId?: infer T } ? T : undefined;
 
-      if (args.copyExistingContent) {
-        const otherDeckWord = await ctx.db
-          .query("premadeVocabulary")
-          .withIndex("by_language", (q) => q.eq("language", deck.language))
+      if (args.linkExistingContent) {
+        // Find a sentence at appropriate difficulty
+        const sentence = await ctx.db
+          .query("sentences")
+          .withIndex("by_word_language", (q) =>
+            q.eq("word", item.word).eq("language", deck.language)
+          )
           .filter((q) =>
-            q.and(
-              q.eq(q.field("word"), item.word),
-              q.eq(q.field("generationStatus"), "complete")
-            )
+            args.difficulty
+              ? q.lte(q.field("difficulty"), args.difficulty)
+              : true
           )
           .first();
 
-        if (otherDeckWord) {
-          existingContent = {
-            sentence: otherDeckWord.sentence,
-            sentenceTranslation: otherDeckWord.sentenceTranslation,
-            audioUrl: otherDeckWord.audioUrl,
-            wordAudioUrl: otherDeckWord.wordAudioUrl,
-            imageUrl: otherDeckWord.imageUrl,
-            generationStatus: "complete",
-          };
-          copiedContent++;
+        if (sentence) {
+          sentenceId = sentence._id as any;
+          linkedContent++;
+        }
+
+        // Find an image
+        const image = await ctx.db
+          .query("images")
+          .withIndex("by_word_language", (q) =>
+            q.eq("word", item.word).eq("language", deck.language)
+          )
+          .first();
+
+        if (image) {
+          imageId = image._id as any;
         }
       }
 
@@ -462,7 +486,8 @@ export const importVocabulary = mutation({
         reading: item.reading,
         definitions: item.definitions,
         partOfSpeech: item.partOfSpeech,
-        ...existingContent,
+        sentenceId,
+        imageId,
         createdAt: now,
         updatedAt: now,
       });
@@ -475,80 +500,31 @@ export const importVocabulary = mutation({
       lastUpdated: now,
     });
 
-    return { imported, skipped, copiedContent };
+    return { imported, skipped, linkedContent };
   },
 });
 
-// ============================================
-// INTERNAL MUTATIONS (for batch processing)
-// ============================================
-
-// Mark items as generating (internal)
-export const markItemsGenerating = internalMutation({
+// Link a vocabulary item to content from libraries
+export const linkVocabularyContent = mutation({
   args: {
-    itemIds: v.array(v.id("premadeVocabulary")),
-    batchJobId: v.id("batchJobs"),
+    vocabularyId: v.id("premadeVocabulary"),
+    sentenceId: v.optional(v.id("sentences")),
+    imageId: v.optional(v.id("images")),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
-    for (const id of args.itemIds) {
-      await ctx.db.patch(id, {
-        generationStatus: "generating",
-        batchJobId: args.batchJobId,
-        updatedAt: now,
-      });
-    }
+    const item = await ctx.db.get(args.vocabularyId);
+    if (!item) throw new Error("Vocabulary item not found");
+
+    const updates: Record<string, unknown> = { updatedAt: Date.now() };
+    if (args.sentenceId !== undefined) updates.sentenceId = args.sentenceId;
+    if (args.imageId !== undefined) updates.imageId = args.imageId;
+
+    await ctx.db.patch(args.vocabularyId, updates);
   },
 });
 
-// Update item by deck + word (for external scripts that don't have Convex IDs)
-export const updateItemByWord = mutation({
-  args: {
-    deckId: v.string(),
-    word: v.string(),
-    sentence: v.optional(v.string()),
-    sentenceTranslation: v.optional(v.string()),
-    audioUrl: v.optional(v.string()),
-    wordAudioUrl: v.optional(v.string()),
-    imageUrl: v.optional(v.string()),
-    generationStatus: v.optional(
-      v.union(
-        v.literal("pending"),
-        v.literal("generating"),
-        v.literal("complete"),
-        v.literal("failed")
-      )
-    ),
-  },
-  handler: async (ctx, args) => {
-    const { deckId, word, ...updates } = args;
-
-    // Find the item by deck + word
-    const item = await ctx.db
-      .query("premadeVocabulary")
-      .withIndex("by_deck", (q) => q.eq("deckId", deckId))
-      .filter((q) => q.eq(q.field("word"), word))
-      .first();
-
-    if (!item) {
-      throw new Error(`Word "${word}" not found in deck "${deckId}"`);
-    }
-
-    // Filter out undefined values
-    const patchData: Record<string, unknown> = { updatedAt: Date.now() };
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined) {
-        patchData[key] = value;
-      }
-    }
-
-    await ctx.db.patch(item._id, patchData);
-    return item._id;
-  },
-});
-
-// Delete a vocabulary item by word (admin)
-export const deleteItemByWord = mutation({
+// Delete a vocabulary item
+export const deleteVocabularyItem = mutation({
   args: {
     deckId: v.string(),
     word: v.string(),
@@ -566,66 +542,6 @@ export const deleteItemByWord = mutation({
 
     await ctx.db.delete(item._id);
     return { deleted: true };
-  },
-});
-
-// Update item with generated content
-// Note: This is a regular mutation so external scripts can call it
-// TODO: Add admin auth check when auth is set up
-export const updateItemContent = mutation({
-  args: {
-    itemId: v.id("premadeVocabulary"),
-    sentence: v.optional(v.string()),
-    sentenceTranslation: v.optional(v.string()),
-    audioUrl: v.optional(v.string()),
-    wordAudioUrl: v.optional(v.string()),
-    imageUrl: v.optional(v.string()),
-    generationStatus: v.union(
-      v.literal("pending"),
-      v.literal("generating"),
-      v.literal("complete"),
-      v.literal("failed")
-    ),
-  },
-  handler: async (ctx, args) => {
-    const { itemId, ...updates } = args;
-    await ctx.db.patch(itemId, {
-      ...updates,
-      updatedAt: Date.now(),
-    });
-  },
-});
-
-// Get pending items for batch (internal)
-export const getPendingItemsForBatch = internalQuery({
-  args: {
-    deckId: v.string(),
-    limit: v.number(),
-    contentType: v.union(
-      v.literal("sentences"),
-      v.literal("audio"),
-      v.literal("images")
-    ),
-  },
-  handler: async (ctx, args) => {
-    const items = await ctx.db
-      .query("premadeVocabulary")
-      .withIndex("by_deck", (q) => q.eq("deckId", args.deckId))
-      .collect();
-
-    // Filter based on content type
-    const pending = items.filter((item) => {
-      if (args.contentType === "sentences") {
-        return !item.sentence && item.generationStatus !== "generating";
-      } else if (args.contentType === "audio") {
-        return item.sentence && !item.audioUrl && item.generationStatus !== "generating";
-      } else if (args.contentType === "images") {
-        return item.sentence && !item.imageUrl && item.generationStatus !== "generating";
-      }
-      return false;
-    });
-
-    return pending.slice(0, args.limit);
   },
 });
 
@@ -653,11 +569,11 @@ export const importDeckToUser = mutation({
       throw new Error(`Deck ${args.deckId} is not available`);
     }
 
-    // Get all complete vocabulary items
+    // Get vocabulary items that have a sentence
     const premadeItems = await ctx.db
       .query("premadeVocabulary")
       .withIndex("by_deck", (q) => q.eq("deckId", args.deckId))
-      .filter((q) => q.eq(q.field("generationStatus"), "complete"))
+      .filter((q) => q.neq(q.field("sentenceId"), undefined))
       .collect();
 
     const now = Date.now();
@@ -688,6 +604,7 @@ export const importDeckToUser = mutation({
         partOfSpeech: premade.partOfSpeech,
         masteryState: "new",
         sourceType: "import",
+        sourceDeckId: args.deckId,
         examLevel: premade.level,
         timesReviewed: 0,
         timesCorrect: 0,
@@ -695,16 +612,13 @@ export const importDeckToUser = mutation({
         updatedAt: now,
       });
 
-      // Create flashcard with pre-generated content
-      if (premade.sentence) {
+      // Create flashcard referencing content libraries
+      if (premade.sentenceId) {
         await ctx.db.insert("flashcards", {
           userId: args.userId,
           vocabularyId: vocabId,
-          sentence: premade.sentence,
-          sentenceTranslation: premade.sentenceTranslation ?? "",
-          audioUrl: premade.audioUrl,
-          wordAudioUrl: premade.wordAudioUrl,
-          imageUrl: premade.imageUrl,
+          sentenceId: premade.sentenceId,
+          imageId: premade.imageId,
           state: "new",
           due: now,
           stability: 0,
@@ -713,7 +627,6 @@ export const importDeckToUser = mutation({
           scheduledDays: 0,
           reps: 0,
           lapses: 0,
-          sentenceGeneratedAt: now,
           createdAt: now,
           updatedAt: now,
         });
@@ -723,5 +636,84 @@ export const importDeckToUser = mutation({
     }
 
     return { imported, skipped, total: premadeItems.length };
+  },
+});
+
+// ============================================
+// CONTENT GENERATION HELPERS
+// ============================================
+
+// Get items that need sentences generated
+export const getItemsNeedingSentences = query({
+  args: {
+    deckId: v.string(),
+    limit: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const items = await ctx.db
+      .query("premadeVocabulary")
+      .withIndex("by_deck", (q) => q.eq("deckId", args.deckId))
+      .filter((q) => q.eq(q.field("sentenceId"), undefined))
+      .take(args.limit);
+
+    return items;
+  },
+});
+
+// Get words that need audio generated
+export const getWordsNeedingAudio = query({
+  args: {
+    language: languageValidator,
+    limit: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // Get all unique words from sentences that don't have word audio
+    const sentences = await ctx.db
+      .query("sentences")
+      .withIndex("by_word_language")
+      .filter((q) => q.eq(q.field("language"), args.language))
+      .collect();
+
+    const uniqueWords = [...new Set(sentences.map((s) => s.word))];
+
+    const needsAudio: string[] = [];
+    for (const word of uniqueWords) {
+      if (needsAudio.length >= args.limit) break;
+
+      const audio = await ctx.db
+        .query("wordAudio")
+        .withIndex("by_word_language", (q) =>
+          q.eq("word", word).eq("language", args.language)
+        )
+        .first();
+
+      if (!audio) {
+        needsAudio.push(word);
+      }
+    }
+
+    return needsAudio;
+  },
+});
+
+// Get sentences that need audio generated
+export const getSentencesNeedingAudio = query({
+  args: {
+    language: languageValidator,
+    limit: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const sentences = await ctx.db
+      .query("sentences")
+      .withIndex("by_word_language")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("language"), args.language),
+          q.eq(q.field("audioUrl"), undefined)
+        )
+      )
+      .take(args.limit);
+
+    return sentences;
   },
 });

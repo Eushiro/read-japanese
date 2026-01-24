@@ -32,9 +32,6 @@ export type CardState = "new" | "learning" | "review" | "relearning";
 // Rating for SRS reviews
 export type Rating = "again" | "hard" | "good" | "easy";
 
-// Generation status for premade content
-export type GenerationStatus = "pending" | "generating" | "complete" | "failed";
-
 // Subscription status for deck subscriptions
 export type DeckSubscriptionStatus = "active" | "paused" | "completed";
 
@@ -43,6 +40,15 @@ export type BatchJobStatus = "pending" | "submitted" | "running" | "succeeded" |
 
 // Batch job types
 export type BatchJobType = "sentences" | "audio" | "images";
+
+// Readiness levels for exam preparation
+export type ReadinessLevel = "not_ready" | "almost_ready" | "ready" | "confident";
+
+// Question source types
+export type QuestionSourceType = "exam" | "placement" | "comprehension" | "flashcard" | "video";
+
+// Skill types
+export type SkillType = "vocabulary" | "grammar" | "reading" | "listening" | "writing" | "speaking";
 
 // ============================================
 // VALIDATORS
@@ -125,6 +131,52 @@ export const ratingValidator = v.union(
   v.literal("easy")
 );
 
+// Readiness levels for exam preparation
+export const readinessLevelValidator = v.union(
+  v.literal("not_ready"),
+  v.literal("almost_ready"),
+  v.literal("ready"),
+  v.literal("confident")
+);
+
+// Question source types
+export const questionSourceTypeValidator = v.union(
+  v.literal("exam"),
+  v.literal("placement"),
+  v.literal("comprehension"),
+  v.literal("flashcard"),
+  v.literal("video")
+);
+
+// Skill types
+export const skillTypeValidator = v.union(
+  v.literal("vocabulary"),
+  v.literal("grammar"),
+  v.literal("reading"),
+  v.literal("listening"),
+  v.literal("writing"),
+  v.literal("speaking")
+);
+
+// Question types for exams
+export const examQuestionTypeValidator = v.union(
+  v.literal("multiple_choice"),
+  v.literal("short_answer"),
+  v.literal("essay"),
+  v.literal("translation"),
+  v.literal("fill_blank"),
+  v.literal("matching")
+);
+
+// Exam section types
+export const examSectionTypeValidator = v.union(
+  v.literal("reading"),
+  v.literal("listening"),
+  v.literal("vocabulary"),
+  v.literal("grammar"),
+  v.literal("writing")
+);
+
 export default defineSchema({
   // ============================================
   // USER PROFILE
@@ -158,11 +210,12 @@ export default defineSchema({
     currentStreak: v.optional(v.number()), // Current consecutive days of activity
     longestStreak: v.optional(v.number()), // Personal best streak
     lastActivityDate: v.optional(v.string()), // YYYY-MM-DD format
+    // Stripe customer ID (pre-created for faster checkout)
+    stripeCustomerId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_clerk_id", ["clerkId"])
-    .index("by_email", ["email"]),
+    .index("by_clerk_id", ["clerkId"]),
 
   // ============================================
   // VOCABULARY SYSTEM
@@ -213,12 +266,10 @@ export default defineSchema({
     userId: v.string(),
     vocabularyId: v.id("vocabulary"),
 
-    // Card content
-    sentence: v.string(), // AI-generated example sentence
-    sentenceTranslation: v.string(),
-    audioUrl: v.optional(v.string()), // TTS audio of sentence
-    wordAudioUrl: v.optional(v.string()), // TTS audio of just the word
-    imageUrl: v.optional(v.string()), // AI-generated image for the word
+    // References to content libraries
+    sentenceId: v.optional(v.id("sentences")), // Current sentence for this card
+    imageId: v.optional(v.id("images")), // Current image (optional)
+    // Word audio is looked up by word+language from wordAudio table
 
     // FSRS algorithm fields
     state: cardStateValidator,
@@ -230,10 +281,6 @@ export default defineSchema({
     reps: v.number(), // Number of reviews
     lapses: v.number(), // Number of times forgotten
     lastReview: v.optional(v.number()), // Last review timestamp
-
-    // Sentence refresh
-    sentenceGeneratedAt: v.number(),
-    nextRefreshAt: v.optional(v.number()), // When to regenerate sentence
 
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -258,8 +305,7 @@ export default defineSchema({
     reviewedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_flashcard", ["flashcardId"])
-    .index("by_vocabulary", ["vocabularyId"]),
+    .index("by_flashcard", ["flashcardId"]),
 
   // ============================================
   // USER SENTENCES (Output Practice)
@@ -291,7 +337,6 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_vocabulary", ["vocabularyId"])
     .index("by_user_and_vocabulary", ["userId", "vocabularyId"]),
 
   // ============================================
@@ -337,8 +382,12 @@ export default defineSchema({
     .index("by_user_and_language", ["userId", "language"]),
 
   // ============================================
-  // USER SETTINGS (existing, enhanced)
+  // USER SETTINGS - DEPRECATED
   // ============================================
+  // @deprecated: Migrated to userPreferences table.
+  // Run migration: npx convex run migrations/settingsMigration:migrateAllSettings
+  // Then run cleanup: npx convex run migrations/settingsMigration:cleanupOldTables
+  // After migration verified, remove this table definition.
   userSettings: defineTable({
     userId: v.string(),
 
@@ -360,6 +409,57 @@ export default defineSchema({
     // Notification settings
     reviewReminderEnabled: v.optional(v.boolean()),
     reviewReminderTime: v.optional(v.string()), // HH:MM format
+  }).index("by_user", ["userId"]),
+
+  // ============================================
+  // USER PREFERENCES (consolidated settings)
+  // ============================================
+  // Merges: userSettings, fsrsSettings, contentPreferences
+  userPreferences: defineTable({
+    userId: v.string(),
+
+    // Display & UI (from userSettings)
+    display: v.object({
+      showFurigana: v.boolean(),
+      theme: v.optional(v.string()), // "light" | "dark" | "system"
+      fontSize: v.optional(v.string()), // "small" | "medium" | "large"
+    }),
+
+    // Audio settings (from userSettings)
+    audio: v.object({
+      autoplay: v.optional(v.boolean()),
+      highlightMode: v.optional(v.string()), // "word" | "sentence"
+      speed: v.optional(v.number()), // 0.5 to 2.0
+    }),
+
+    // SRS settings (merged from userSettings + fsrsSettings)
+    srs: v.object({
+      dailyReviewGoal: v.optional(v.number()), // Target cards per day
+      newCardsPerDay: v.optional(v.number()), // Max new cards per day
+      sentenceRefreshDays: v.optional(v.number()), // Days before refreshing sentences
+      desiredRetention: v.optional(v.number()), // 0.80 to 0.97 (from fsrsSettings)
+      maximumInterval: v.optional(v.number()), // Max days between reviews
+      customWeights: v.optional(v.array(v.number())), // 17 FSRS weights
+      preset: v.optional(v.string()), // "default" | "aggressive" | "relaxed" | "custom"
+    }),
+
+    // Content preferences (from contentPreferences)
+    content: v.optional(v.object({
+      interests: v.optional(v.array(v.string())), // ["anime", "cooking", "travel"]
+      tonePreference: v.optional(v.string()), // "casual" | "formal" | "humorous"
+      ageAppropriate: v.optional(v.string()), // "all_ages" | "teen" | "adult"
+      culturalFocus: v.optional(v.array(v.string())), // ["traditional", "modern"]
+      learningGoal: v.optional(v.string()), // "jlpt_prep" | "travel" | "business"
+      avoidTopics: v.optional(v.array(v.string())), // ["politics", "religion"]
+    })),
+
+    // Notification settings (from userSettings)
+    notifications: v.optional(v.object({
+      reviewReminderEnabled: v.optional(v.boolean()),
+      reviewReminderTime: v.optional(v.string()), // HH:MM format
+    })),
+
+    updatedAt: v.number(),
   }).index("by_user", ["userId"]),
 
   // ============================================
@@ -590,13 +690,13 @@ export default defineSchema({
     startedAt: v.number(),
     completedAt: v.optional(v.number()),
   })
-    .index("by_user", ["userId"])
-    .index("by_user_and_language", ["userId", "language"])
-    .index("by_status", ["status"]),
+    .index("by_user_and_language", ["userId", "language"]),
 
   // ============================================
   // GRADING PROFILES (level-specific thresholds)
   // ============================================
+  // @deprecated: Moved to constants in lib/gradingProfiles.ts
+  // Table can be removed from schema after verifying placementTest.ts works
   gradingProfiles: defineTable({
     language: languageValidator,
     level: v.string(), // "N5", "A1", etc.
@@ -613,8 +713,66 @@ export default defineSchema({
     storyDifficultyMin: v.optional(v.string()),
     storyDifficultyMax: v.optional(v.string()),
   })
-    .index("by_language", ["language"])
     .index("by_language_and_level", ["language", "level"]),
+
+  // ============================================
+  // CONTENT LIBRARIES
+  // ============================================
+  // Shared pools of sentences, images, and word audio
+  // Multiple entries per word allow variety and swapping
+
+  // Sentence library - multiple sentences per word at various difficulty levels
+  sentences: defineTable({
+    word: v.string(),
+    language: languageValidator, // Language the sentence is written in
+    difficulty: v.number(), // 1-6 scale (N5-N1 / A1-C2)
+
+    sentence: v.string(),
+    // Translations keyed by language code
+    translations: v.object({
+      en: v.optional(v.string()),
+      ja: v.optional(v.string()),
+      fr: v.optional(v.string()),
+      es: v.optional(v.string()),
+      zh: v.optional(v.string()),
+    }),
+    audioUrl: v.optional(v.string()), // TTS audio of the sentence
+
+    // Source tracking
+    model: v.string(), // AI model that generated this (e.g., "gemini-2.0-flash", "user")
+    createdBy: v.optional(v.string()), // userId if user-submitted, undefined for system
+    createdAt: v.number(),
+  })
+    .index("by_word_language", ["word", "language"]),
+
+  // Image library - multiple images per word for variety
+  images: defineTable({
+    word: v.string(),
+    language: languageValidator,
+
+    imageUrl: v.string(),
+    style: v.optional(v.string()), // "realistic", "illustration", "icon", etc.
+
+    // Source tracking
+    model: v.string(), // AI model that generated this (e.g., "dall-e-3", "user")
+    createdBy: v.optional(v.string()), // userId if user-submitted, undefined for system
+    createdAt: v.number(),
+  })
+    .index("by_word_language", ["word", "language"]),
+
+  // Word audio library - pronunciation of individual words
+  wordAudio: defineTable({
+    word: v.string(),
+    language: languageValidator,
+
+    audioUrl: v.string(),
+
+    // Source tracking
+    model: v.string(), // TTS model used (e.g., "gemini-2.5-flash-preview-tts", "user")
+    createdBy: v.optional(v.string()), // userId if user-submitted, undefined for system
+    createdAt: v.number(),
+  })
+    .index("by_word_language", ["word", "language"]),
 
   // ============================================
   // PREMADE VOCABULARY (Shared decks)
@@ -632,31 +790,16 @@ export default defineSchema({
     definitions: v.array(v.string()),
     partOfSpeech: v.optional(v.string()),
 
-    // Pre-generated content
-    sentence: v.optional(v.string()),
-    sentenceTranslation: v.optional(v.string()),
-    audioUrl: v.optional(v.string()), // Sentence audio
-    wordAudioUrl: v.optional(v.string()), // Word-only audio
-    imageUrl: v.optional(v.string()),
-
-    // Generation status
-    generationStatus: v.union(
-      v.literal("pending"), // Not yet generated
-      v.literal("generating"), // In batch job
-      v.literal("complete"), // All content generated
-      v.literal("failed") // Generation failed
-    ),
-    batchJobId: v.optional(v.id("batchJobs")), // Current batch job
+    // References to content libraries
+    sentenceId: v.optional(v.id("sentences")), // Current sentence for this deck entry
+    imageId: v.optional(v.id("images")), // Current image
+    // Word audio is looked up by word+language from wordAudio table
 
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_deck", ["deckId"])
-    .index("by_deck_and_level", ["deckId", "level"])
-    .index("by_language", ["language"])
-    .index("by_language_and_level", ["language", "level"])
-    .index("by_generation_status", ["generationStatus"])
-    .index("by_batch_job", ["batchJobId"]),
+    .index("by_word_language", ["word", "language"]),
 
   // Premade deck metadata
   premadeDecks: defineTable({
@@ -684,7 +827,6 @@ export default defineSchema({
     ownerUserId: v.optional(v.string()), // User who owns this personal deck
   })
     .index("by_deck_id", ["deckId"])
-    .index("by_language", ["language"])
     .index("by_language_and_published", ["language", "isPublished"])
     .index("by_owner", ["ownerUserId"]),
 
@@ -757,7 +899,6 @@ export default defineSchema({
     completedAt: v.optional(v.number()),
   })
     .index("by_status", ["status"])
-    .index("by_deck", ["deckId"])
     .index("by_google_job", ["googleBatchJobName"]),
 
   // ============================================
@@ -799,4 +940,399 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_language", ["language"])
     .index("by_language_and_level", ["language", "level"]),
+
+  // ============================================
+  // VIDEO QUESTIONS (by difficulty level)
+  // ============================================
+  videoQuestions: defineTable({
+    videoId: v.string(), // YouTube video ID
+    difficulty: v.number(), // 1-6 (maps to N5-N1/A1-C2)
+    language: languageValidator,
+
+    questions: v.array(
+      v.object({
+        questionId: v.string(),
+        type: v.union(
+          v.literal("multiple_choice"),
+          v.literal("translation"),
+          v.literal("short_answer"),
+          v.literal("inference"),
+          v.literal("listening"), // Video-specific
+          v.literal("grammar"),
+          v.literal("opinion")
+        ),
+        question: v.string(),
+        questionTranslation: v.optional(v.string()),
+        options: v.optional(v.array(v.string())),
+        correctAnswer: v.optional(v.string()),
+        rubric: v.optional(v.string()),
+        timestamp: v.optional(v.number()), // Related video timestamp
+        points: v.number(),
+      })
+    ),
+
+    generatedAt: v.number(),
+  })
+    .index("by_video_and_difficulty", ["videoId", "difficulty"])
+    .index("by_video", ["videoId"]),
+
+  // ============================================
+  // UNIFIED LEARNER MODEL
+  // ============================================
+
+  // Learner profile - unified view of user's understanding per language
+  learnerProfile: defineTable({
+    userId: v.string(),
+    language: languageValidator,
+    examType: v.optional(examTypeValidator), // Primary target exam
+
+    // Overall ability (IRT-style, updated continuously)
+    abilityEstimate: v.number(), // -3 to +3 scale
+    abilityConfidence: v.number(), // Standard error
+
+    // Skill breakdown (0-100 scale)
+    skills: v.object({
+      vocabulary: v.number(),
+      grammar: v.number(),
+      reading: v.number(),
+      listening: v.number(),
+      writing: v.number(),
+      speaking: v.number(), // From shadowing practice
+    }),
+
+    // Weak areas (auto-detected from mistakes)
+    weakAreas: v.array(v.object({
+      skill: v.string(), // "grammar"
+      topic: v.string(), // "passive voice"
+      score: v.number(), // 0-100
+      lastTestedAt: v.number(),
+      questionCount: v.number(), // Sample size
+    })),
+
+    // Vocabulary coverage for target level
+    vocabCoverage: v.object({
+      targetLevel: v.string(), // "N3"
+      totalWords: v.number(), // Words in level
+      known: v.number(), // Mastered
+      learning: v.number(), // In progress
+      unknown: v.number(), // Not started
+    }),
+
+    // Readiness prediction
+    readiness: v.object({
+      level: readinessLevelValidator, // "almost_ready"
+      predictedScore: v.optional(v.number()),
+      confidence: v.number(),
+    }),
+
+    // FSRS performance metrics
+    fsrsMetrics: v.optional(v.object({
+      actualRetention: v.number(), // Measured from reviews
+      predictedRetention: v.number(), // From FSRS model
+      reviewsPerDay: v.number(), // Average daily load
+      lastOptimizedAt: v.optional(v.number()),
+    })),
+
+    // Time tracking
+    totalStudyMinutes: v.number(),
+    lastActivityAt: v.optional(v.number()), // Last time user did any learning activity
+    // NOTE: Streak data lives in `users` table (currentStreak, longestStreak, lastActivityDate)
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_language", ["userId", "language"]),
+
+  // Question history - every question answered for pattern analysis
+  questionHistory: defineTable({
+    userId: v.string(),
+    language: languageValidator,
+
+    // Question source
+    sourceType: questionSourceTypeValidator, // "exam" | "placement" | "comprehension" | "flashcard"
+    sourceId: v.optional(v.string()), // Reference to source
+
+    // FULL QUESTION CONTENT (stored for re-grading)
+    questionContent: v.object({
+      questionText: v.string(),
+      questionType: v.string(), // "multiple_choice" | "short_answer" | "essay"
+      options: v.optional(v.array(v.string())),
+      correctAnswer: v.optional(v.string()),
+      acceptableAnswers: v.optional(v.array(v.string())),
+      rubric: v.optional(v.string()), // For essay grading
+      passageText: v.optional(v.string()), // Reading context
+      audioUrl: v.optional(v.string()), // Listening context
+    }),
+
+    // USER'S RAW ANSWER (stored for re-grading)
+    userAnswer: v.string(), // Exactly what the user submitted
+    responseTimeMs: v.optional(v.number()),
+
+    // Multi-skill tagging
+    skills: v.array(v.object({
+      skill: v.string(), // "vocabulary" | "grammar" | "reading" | etc.
+      weight: v.number(), // 0-1, how much this Q tests this skill
+    })),
+    topics: v.optional(v.array(v.string())), // ["passive voice", "N3 kanji"]
+    difficulty: v.optional(v.number()), // IRT difficulty parameter
+
+    // CURRENT GRADING (can be re-computed)
+    grading: v.object({
+      isCorrect: v.boolean(),
+      score: v.optional(v.number()), // 0-1 for partial credit
+      modelUsed: v.optional(v.string()), // "gemini-2.0-flash" | "claude-3-haiku"
+      gradedAt: v.number(),
+      feedback: v.optional(v.string()), // AI explanation
+      detailedScores: v.optional(v.object({
+        grammar: v.optional(v.number()),
+        usage: v.optional(v.number()),
+        naturalness: v.optional(v.number()),
+      })),
+    }),
+
+    // GRADING HISTORY (for model comparison)
+    gradingHistory: v.optional(v.array(v.object({
+      modelUsed: v.string(),
+      isCorrect: v.boolean(),
+      score: v.optional(v.number()),
+      gradedAt: v.number(),
+    }))),
+
+    answeredAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_time", ["userId", "answeredAt"]),
+
+  // Daily progress - time-series data for progress charts
+  dailyProgress: defineTable({
+    userId: v.string(),
+    date: v.string(), // "2024-01-15"
+    language: languageValidator,
+
+    // Daily metrics
+    studyMinutes: v.number(),
+    cardsReviewed: v.number(),
+    cardsCorrect: v.number(),
+    questionsAnswered: v.number(),
+    questionsCorrect: v.number(),
+    wordsLearned: v.number(),
+    contentConsumed: v.number(), // Stories/videos
+
+    // Skill snapshots (for progress charts)
+    skillSnapshot: v.object({
+      vocabulary: v.number(),
+      grammar: v.number(),
+      reading: v.number(),
+      listening: v.number(),
+      writing: v.number(),
+    }),
+
+    createdAt: v.number(),
+  })
+    .index("by_user_language_date", ["userId", "language", "date"]),
+
+  // Topic taxonomy - structured tags for questions and content
+  topicTaxonomy: defineTable({
+    language: languageValidator,
+
+    // Hierarchical path
+    category: v.string(), // "grammar" | "vocabulary" | "reading" | "listening" | "writing"
+    subcategory: v.string(), // "verb_forms" | "particles" | "kanji" | ...
+    topic: v.string(), // "passive" | "causative" | "te_form" | ...
+
+    // Metadata
+    displayName: v.string(), // "Passive Voice (受身形)"
+    description: v.optional(v.string()),
+    level: v.optional(v.string()), // "N5" | "N4" | ... (if level-specific)
+
+    // For ML
+    prerequisites: v.optional(v.array(v.id("topicTaxonomy"))), // Topics to learn first
+
+    createdAt: v.number(),
+  }),
+
+  // Content preferences - user interests for personalized content
+  // @deprecated: Migrated to userPreferences.content
+  // Remove after running migration
+  contentPreferences: defineTable({
+    userId: v.string(),
+    language: v.optional(languageValidator), // null = applies to all languages
+
+    // Topic interests (for sentence/story generation)
+    interests: v.array(v.string()), // ["anime", "cooking", "travel", "business"]
+
+    // Content style
+    tonePreference: v.optional(v.string()), // "casual" | "formal" | "humorous"
+    ageAppropriate: v.optional(v.string()), // "all_ages" | "teen" | "adult"
+
+    // Cultural focus (for Japanese)
+    culturalFocus: v.optional(v.array(v.string())), // ["traditional", "modern", "pop_culture"]
+
+    // Learning context
+    learningGoal: v.optional(v.string()), // "jlpt_prep" | "travel" | "business" | "anime"
+
+    // Avoid topics (sensitive)
+    avoidTopics: v.optional(v.array(v.string())), // ["politics", "religion", ...]
+
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"]),
+
+  // FSRS settings - user-configurable spaced repetition settings
+  // @deprecated: Migrated to userPreferences.srs
+  // Remove after running migration
+  fsrsSettings: defineTable({
+    userId: v.string(),
+    language: v.optional(languageValidator),
+
+    // User-facing settings
+    desiredRetention: v.number(), // 0.80 to 0.97 (default: 0.90)
+    dailyNewCards: v.number(), // How many new cards per day
+    maximumInterval: v.number(), // Max days between reviews
+
+    // Auto-optimized weights (optional override)
+    customWeights: v.optional(v.array(v.number())), // 17 FSRS weights
+
+    // Preset
+    preset: v.optional(v.string()), // "default" | "aggressive" | "relaxed" | "custom"
+
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"]),
+
+  // ============================================
+  // PRACTICE EXAMS
+  // ============================================
+
+  // Exam templates - structure definitions for reusable exams
+  examTemplates: defineTable({
+    examType: examTypeValidator,
+    language: languageValidator,
+    title: v.string(),
+    description: v.optional(v.string()),
+    source: v.optional(v.string()), // PDF filename or official source
+    year: v.optional(v.number()),
+    sections: v.array(v.object({
+      type: examSectionTypeValidator,
+      title: v.string(),
+      timeLimitMinutes: v.optional(v.number()),
+      questionCount: v.number(),
+    })),
+    totalTimeLimitMinutes: v.optional(v.number()),
+    passingScore: v.optional(v.number()), // Percentage needed to pass
+    isPublished: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_exam_type", ["examType"])
+    .index("by_language", ["language"])
+    .index("by_published", ["isPublished"]),
+
+  // Question bank - stores all digitized questions
+  examQuestions: defineTable({
+    templateId: v.optional(v.id("examTemplates")),
+    examType: examTypeValidator,
+    language: languageValidator,
+    sectionType: examSectionTypeValidator,
+
+    // Content
+    questionText: v.string(),
+    passageText: v.optional(v.string()), // For reading comprehension
+    passageAudioUrl: v.optional(v.string()), // For listening sections
+
+    // Answer format
+    questionType: examQuestionTypeValidator,
+    options: v.optional(v.array(v.string())), // For multiple choice
+    correctAnswer: v.string(),
+    acceptableAnswers: v.optional(v.array(v.string())), // Alternative correct answers
+    explanation: v.optional(v.string()), // Why this is correct
+    rubric: v.optional(v.string()), // For essay grading
+
+    // Metadata
+    difficulty: v.optional(v.number()), // IRT difficulty parameter
+    points: v.number(),
+    source: v.optional(v.string()), // PDF page reference
+
+    // Topic tagging for analytics
+    topicIds: v.optional(v.array(v.id("topicTaxonomy"))),
+
+    createdAt: v.number(),
+  })
+    .index("by_template", ["templateId"])
+    .index("by_exam_section", ["examType", "sectionType"]),
+
+  // User exam attempts - tracks each exam session
+  examAttempts: defineTable({
+    userId: v.string(),
+    templateId: v.id("examTemplates"),
+    examType: examTypeValidator,
+    language: languageValidator,
+
+    // Attempt status
+    status: v.union(
+      v.literal("in_progress"),
+      v.literal("completed"),
+      v.literal("abandoned")
+    ),
+
+    // Questions for this attempt (subset of question bank)
+    questions: v.array(v.object({
+      questionId: v.id("examQuestions"),
+      userAnswer: v.optional(v.string()),
+      isCorrect: v.optional(v.boolean()),
+      aiScore: v.optional(v.number()), // For essay/short answer
+      aiFeedback: v.optional(v.string()),
+      earnedPoints: v.optional(v.number()),
+      answeredAt: v.optional(v.number()),
+    })),
+
+    // Section progress
+    currentSection: v.number(), // Index of current section
+    currentQuestion: v.number(), // Index within section
+
+    // Timing
+    timeLimitMinutes: v.optional(v.number()),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+    timeSpentSeconds: v.optional(v.number()),
+
+    // Scoring
+    totalPoints: v.number(),
+    earnedPoints: v.optional(v.number()),
+    percentScore: v.optional(v.number()),
+    passed: v.optional(v.boolean()),
+
+    // Section breakdown
+    sectionScores: v.optional(v.array(v.object({
+      sectionType: examSectionTypeValidator,
+      totalPoints: v.number(),
+      earnedPoints: v.number(),
+      percentScore: v.number(),
+    }))),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_exam", ["userId", "examType"])
+    .index("by_template", ["templateId"]),
+
+  // User exam analytics - aggregated stats per exam type
+  examAnalytics: defineTable({
+    userId: v.string(),
+    examType: examTypeValidator,
+    totalAttempts: v.number(),
+    averageScore: v.number(),
+    highestScore: v.number(),
+    sectionScores: v.object({
+      reading: v.optional(v.number()),
+      listening: v.optional(v.number()),
+      vocabulary: v.optional(v.number()),
+      grammar: v.optional(v.number()),
+      writing: v.optional(v.number()),
+    }),
+    weakAreas: v.optional(v.array(v.string())),
+    lastAttemptAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_exam", ["userId", "examType"]),
 });

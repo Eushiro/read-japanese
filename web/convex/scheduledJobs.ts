@@ -7,20 +7,20 @@ import { v } from "convex/values";
 // ============================================
 
 // Get flashcards that need sentence refresh
+// Note: Sentence refresh is now handled differently with the content library
+// Flashcards can have their sentences swapped from the sentence pool
 export const getFlashcardsNeedingRefresh = internalQuery({
   args: {
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
     const limit = args.limit ?? 50;
 
-    // Get all flashcards where nextRefreshAt is in the past
-    const allFlashcards = await ctx.db.query("flashcards").collect();
-
-    const needsRefresh = allFlashcards
-      .filter((card) => card.nextRefreshAt && card.nextRefreshAt <= now)
-      .slice(0, limit);
+    // With the content library, we don't auto-refresh sentences
+    // Instead, users can swap sentences from the pool
+    // This is kept for backwards compatibility but will return empty
+    const needsRefresh: typeof allFlashcards = [];
+    const allFlashcards = await ctx.db.query("flashcards").take(0);
 
     // Get vocabulary for each flashcard
     const flashcardsWithVocab = await Promise.all(
@@ -35,22 +35,48 @@ export const getFlashcardsNeedingRefresh = internalQuery({
 });
 
 // Update a flashcard's sentence after refresh
+// Now creates a new sentence in the content library
 export const updateFlashcardSentence = internalMutation({
   args: {
     flashcardId: v.id("flashcards"),
     sentence: v.string(),
     sentenceTranslation: v.string(),
-    refreshIntervalDays: v.number(),
+    refreshIntervalDays: v.number(), // Kept for API compatibility but not used
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const nextRefreshAt = now + args.refreshIntervalDays * 24 * 60 * 60 * 1000;
+
+    const flashcard = await ctx.db.get(args.flashcardId);
+    if (!flashcard) {
+      throw new Error("Flashcard not found");
+    }
+
+    const vocab = await ctx.db.get(flashcard.vocabularyId);
+    if (!vocab) {
+      throw new Error("Vocabulary not found");
+    }
+
+    // Create new sentence in content library
+    const difficultyMap: Record<string, number> = {
+      N5: 1, N4: 2, N3: 3, N2: 4, N1: 5,
+      A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6,
+    };
+    const difficulty = vocab.examLevel ? difficultyMap[vocab.examLevel] ?? 3 : 3;
+
+    const sentenceId = await ctx.db.insert("sentences", {
+      word: vocab.word,
+      language: vocab.language,
+      difficulty,
+      sentence: args.sentence,
+      translations: {
+        en: args.sentenceTranslation,
+      },
+      model: "gemini-3-flash",
+      createdAt: now,
+    });
 
     await ctx.db.patch(args.flashcardId, {
-      sentence: args.sentence,
-      sentenceTranslation: args.sentenceTranslation,
-      sentenceGeneratedAt: now,
-      nextRefreshAt,
+      sentenceId,
       updatedAt: now,
     });
   },

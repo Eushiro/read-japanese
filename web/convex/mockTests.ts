@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { languageValidator, examTypeValidator } from "./schema";
 
 // Question type validator
@@ -230,16 +231,28 @@ export const grade = mutation({
     if (!test) throw new Error("Test not found");
 
     let earnedPoints = 0;
-    const sections = test.sections.map((section) => ({
-      ...section,
-      questions: section.questions.map((question) => {
+    let totalQuestions = 0;
+    let correctQuestions = 0;
+
+    // Track section scores for learner model
+    const sectionScores: Record<string, { earned: number; total: number }> = {};
+
+    const sections = test.sections.map((section) => {
+      let sectionEarned = 0;
+      let sectionTotal = 0;
+
+      const gradedQuestions = section.questions.map((question) => {
         let isCorrect = false;
         let earned = 0;
+        totalQuestions++;
+        sectionTotal += question.points;
 
         if (question.type === "multiple_choice" && question.correctAnswer) {
           isCorrect = question.userAnswer === question.correctAnswer;
           earned = isCorrect ? question.points : 0;
           earnedPoints += earned;
+          sectionEarned += earned;
+          if (isCorrect) correctQuestions++;
         } else if (question.type === "short_answer" && question.correctAnswer) {
           // Simple string comparison for short answers
           isCorrect =
@@ -247,6 +260,8 @@ export const grade = mutation({
             question.correctAnswer.toLowerCase().trim();
           earned = isCorrect ? question.points : 0;
           earnedPoints += earned;
+          sectionEarned += earned;
+          if (isCorrect) correctQuestions++;
         }
         // Essay questions need manual/AI grading
 
@@ -255,8 +270,15 @@ export const grade = mutation({
           isCorrect,
           earnedPoints: earned,
         };
-      }),
-    }));
+      });
+
+      sectionScores[section.type] = { earned: sectionEarned, total: sectionTotal };
+
+      return {
+        ...section,
+        questions: gradedQuestions,
+      };
+    });
 
     const percentScore = Math.round((earnedPoints / test.totalPoints) * 100);
 
@@ -266,6 +288,33 @@ export const grade = mutation({
       percentScore,
       completedAt: Date.now(),
       updatedAt: Date.now(),
+    });
+
+    // Update learner profile with exam results
+    const sectionScoresForProfile: {
+      reading?: number;
+      listening?: number;
+      vocabulary?: number;
+      grammar?: number;
+      writing?: number;
+    } = {};
+
+    for (const [sectionType, scores] of Object.entries(sectionScores)) {
+      if (scores.total > 0) {
+        const sectionPercent = Math.round((scores.earned / scores.total) * 100);
+        if (sectionType === "reading") sectionScoresForProfile.reading = sectionPercent;
+        else if (sectionType === "listening") sectionScoresForProfile.listening = sectionPercent;
+        else if (sectionType === "vocabulary") sectionScoresForProfile.vocabulary = sectionPercent;
+        else if (sectionType === "writing") sectionScoresForProfile.writing = sectionPercent;
+      }
+    }
+
+    await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromExamInternal, {
+      userId: test.userId,
+      language: test.language,
+      sectionScores: sectionScoresForProfile,
+      questionsAnswered: totalQuestions,
+      questionsCorrect: correctQuestions,
     });
 
     return { earnedPoints, totalPoints: test.totalPoints, percentScore };

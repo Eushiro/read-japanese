@@ -1,0 +1,1303 @@
+import { v } from "convex/values";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
+import { languageValidator, readinessLevelValidator, questionSourceTypeValidator } from "./schema";
+
+// ============================================
+// TYPES
+// ============================================
+
+type SkillScores = {
+  vocabulary: number;
+  grammar: number;
+  reading: number;
+  listening: number;
+  writing: number;
+  speaking: number;
+};
+
+type WeakArea = {
+  skill: string;
+  topic: string;
+  score: number;
+  lastTestedAt: number;
+  questionCount: number;
+};
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+function calculateReadinessLevel(
+  skills: SkillScores,
+  vocabCoverage: { known: number; totalWords: number }
+): "not_ready" | "almost_ready" | "ready" | "confident" {
+  const avgSkill = (skills.vocabulary + skills.grammar + skills.reading + skills.listening) / 4;
+  const vocabPercent = vocabCoverage.totalWords > 0
+    ? (vocabCoverage.known / vocabCoverage.totalWords) * 100
+    : 0;
+
+  if (avgSkill >= 90 && vocabPercent >= 90) return "confident";
+  if (avgSkill >= 80 && vocabPercent >= 80) return "ready";
+  if (avgSkill >= 60 && vocabPercent >= 60) return "almost_ready";
+  return "not_ready";
+}
+
+function updateSkillScore(
+  currentScore: number,
+  newScore: number,
+  sampleSize: number
+): number {
+  // Weighted average: give more weight to existing score as sample size increases
+  const existingWeight = Math.min(0.8, sampleSize / 100);
+  const newWeight = 1 - existingWeight;
+  return Math.round(currentScore * existingWeight + newScore * newWeight);
+}
+
+function getDefaultProfile(userId: string, language: string) {
+  const now = Date.now();
+  return {
+    userId,
+    language: language as "japanese" | "english" | "french",
+    abilityEstimate: 0,
+    abilityConfidence: 1.0,
+    skills: {
+      vocabulary: 50,
+      grammar: 50,
+      reading: 50,
+      listening: 50,
+      writing: 50,
+      speaking: 50,
+    },
+    weakAreas: [],
+    vocabCoverage: {
+      targetLevel: "",
+      totalWords: 0,
+      known: 0,
+      learning: 0,
+      unknown: 0,
+    },
+    readiness: {
+      level: "not_ready" as const,
+      confidence: 0,
+    },
+    totalStudyMinutes: 0,
+    // NOTE: Streak data lives in `users` table, not here
+    updatedAt: now,
+  };
+}
+
+// ============================================
+// QUERIES
+// ============================================
+
+// Get learner profile for a user and language
+export const getProfile = query({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+  },
+});
+
+// Get all profiles for a user (all languages)
+export const getAllProfiles = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+  },
+});
+
+// Get weak areas for a user
+export const getWeakAreas = query({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) return [];
+
+    // Sort by score (lowest first) and return limited results
+    const sorted = [...profile.weakAreas].sort((a, b) => a.score - b.score);
+    return sorted.slice(0, args.limit ?? 10);
+  },
+});
+
+// Get readiness prediction for an exam type
+export const getReadiness = query({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      return {
+        level: "not_ready" as const,
+        predictedScore: null,
+        confidence: 0,
+        skills: null,
+        vocabCoverage: null,
+      };
+    }
+
+    return {
+      level: profile.readiness.level,
+      predictedScore: profile.readiness.predictedScore,
+      confidence: profile.readiness.confidence,
+      skills: profile.skills,
+      vocabCoverage: profile.vocabCoverage,
+    };
+  },
+});
+
+// Get daily progress history
+export const getDailyProgress = query({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    days: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - args.days);
+    const startDateStr = startDate.toISOString().split("T")[0];
+
+    const progress = await ctx.db
+      .query("dailyProgress")
+      .withIndex("by_user_language_date", (q) =>
+        q.eq("userId", args.userId)
+          .eq("language", args.language)
+          .gte("date", startDateStr)
+      )
+      .collect();
+
+    return progress.sort((a, b) => a.date.localeCompare(b.date));
+  },
+});
+
+// Get question history for a user
+export const getQuestionHistory = query({
+  args: {
+    userId: v.string(),
+    limit: v.optional(v.number()),
+    sourceType: v.optional(questionSourceTypeValidator),
+  },
+  handler: async (ctx, args) => {
+    let query = ctx.db
+      .query("questionHistory")
+      .withIndex("by_user_time", (q) => q.eq("userId", args.userId))
+      .order("desc");
+
+    const results = await query.take(args.limit ?? 50);
+
+    if (args.sourceType) {
+      return results.filter(q => q.sourceType === args.sourceType);
+    }
+
+    return results;
+  },
+});
+
+// Internal query for getting profile
+export const getProfileInternal = internalQuery({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+  },
+});
+
+// ============================================
+// MUTATIONS
+// ============================================
+
+// Create or get learner profile
+export const getOrCreateProfile = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (existing) return existing._id;
+
+    const profile = getDefaultProfile(args.userId, args.language);
+    return await ctx.db.insert("learnerProfile", profile);
+  },
+});
+
+// Update profile after flashcard reviews
+export const updateFromFlashcards = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    cardsReviewed: v.number(),
+    cardsCorrect: v.number(),
+    studyMinutes: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Get or create profile
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    // Calculate new vocabulary score
+    const accuracy = args.cardsReviewed > 0
+      ? (args.cardsCorrect / args.cardsReviewed) * 100
+      : profile.skills.vocabulary;
+
+    const newVocabScore = updateSkillScore(
+      profile.skills.vocabulary,
+      accuracy,
+      args.cardsReviewed
+    );
+
+    const newSkills = { ...profile.skills, vocabulary: newVocabScore };
+    const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
+
+    // Update profile
+    await ctx.db.patch(profile._id, {
+      skills: newSkills,
+      readiness: {
+        ...profile.readiness,
+        level: newReadiness,
+      },
+      totalStudyMinutes: profile.totalStudyMinutes + (args.studyMinutes ?? 0),
+      lastActivityAt: now,
+      updatedAt: now,
+    });
+
+    // Update daily progress
+    await updateDailyProgressInternal(ctx, {
+      userId: args.userId,
+      language: args.language,
+      cardsReviewed: args.cardsReviewed,
+      cardsCorrect: args.cardsCorrect,
+      studyMinutes: args.studyMinutes ?? 0,
+    });
+  },
+});
+
+// Update profile after exam
+export const updateFromExam = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    sectionScores: v.object({
+      reading: v.optional(v.number()),
+      listening: v.optional(v.number()),
+      vocabulary: v.optional(v.number()),
+      grammar: v.optional(v.number()),
+      writing: v.optional(v.number()),
+    }),
+    weakTopics: v.optional(v.array(v.object({
+      skill: v.string(),
+      topic: v.string(),
+      score: v.number(),
+    }))),
+    questionsAnswered: v.number(),
+    questionsCorrect: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Get or create profile
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    // Update skill scores from section scores
+    const newSkills = { ...profile.skills };
+    if (args.sectionScores.reading !== undefined) {
+      newSkills.reading = updateSkillScore(profile.skills.reading, args.sectionScores.reading, 10);
+    }
+    if (args.sectionScores.listening !== undefined) {
+      newSkills.listening = updateSkillScore(profile.skills.listening, args.sectionScores.listening, 10);
+    }
+    if (args.sectionScores.vocabulary !== undefined) {
+      newSkills.vocabulary = updateSkillScore(profile.skills.vocabulary, args.sectionScores.vocabulary, 10);
+    }
+    if (args.sectionScores.grammar !== undefined) {
+      newSkills.grammar = updateSkillScore(profile.skills.grammar, args.sectionScores.grammar, 10);
+    }
+    if (args.sectionScores.writing !== undefined) {
+      newSkills.writing = updateSkillScore(profile.skills.writing, args.sectionScores.writing, 10);
+    }
+
+    // Update weak areas
+    let newWeakAreas = [...profile.weakAreas];
+    if (args.weakTopics) {
+      for (const topic of args.weakTopics) {
+        const existingIndex = newWeakAreas.findIndex(
+          w => w.skill === topic.skill && w.topic === topic.topic
+        );
+
+        if (existingIndex >= 0) {
+          // Update existing weak area
+          newWeakAreas[existingIndex] = {
+            ...newWeakAreas[existingIndex],
+            score: updateSkillScore(newWeakAreas[existingIndex].score, topic.score, 5),
+            lastTestedAt: now,
+            questionCount: newWeakAreas[existingIndex].questionCount + 1,
+          };
+        } else if (topic.score < 70) {
+          // Add new weak area if score is below threshold
+          newWeakAreas.push({
+            skill: topic.skill,
+            topic: topic.topic,
+            score: topic.score,
+            lastTestedAt: now,
+            questionCount: 1,
+          });
+        }
+      }
+
+      // Remove weak areas that are now strong (score > 80)
+      newWeakAreas = newWeakAreas.filter(w => w.score < 80);
+    }
+
+    const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
+
+    // Update profile
+    await ctx.db.patch(profile._id, {
+      skills: newSkills,
+      weakAreas: newWeakAreas,
+      readiness: {
+        ...profile.readiness,
+        level: newReadiness,
+      },
+      lastActivityAt: now,
+      updatedAt: now,
+    });
+
+    // Update daily progress
+    await updateDailyProgressInternal(ctx, {
+      userId: args.userId,
+      language: args.language,
+      questionsAnswered: args.questionsAnswered,
+      questionsCorrect: args.questionsCorrect,
+    });
+  },
+});
+
+// Update profile after comprehension quiz
+export const updateFromComprehension = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    readingScore: v.optional(v.number()),
+    listeningScore: v.optional(v.number()),
+    questionsAnswered: v.number(),
+    questionsCorrect: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Get or create profile
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    const newSkills = { ...profile.skills };
+    if (args.readingScore !== undefined) {
+      newSkills.reading = updateSkillScore(profile.skills.reading, args.readingScore, 5);
+    }
+    if (args.listeningScore !== undefined) {
+      newSkills.listening = updateSkillScore(profile.skills.listening, args.listeningScore, 5);
+    }
+
+    const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
+
+    await ctx.db.patch(profile._id, {
+      skills: newSkills,
+      readiness: {
+        ...profile.readiness,
+        level: newReadiness,
+      },
+      lastActivityAt: now,
+      updatedAt: now,
+    });
+
+    // Update daily progress
+    await updateDailyProgressInternal(ctx, {
+      userId: args.userId,
+      language: args.language,
+      questionsAnswered: args.questionsAnswered,
+      questionsCorrect: args.questionsCorrect,
+      contentConsumed: 1,
+    });
+  },
+});
+
+// Update profile after sentence practice
+export const updateFromSentencePractice = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    grammarScore: v.number(),
+    usageScore: v.number(),
+    naturalnessScore: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Get or create profile
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    // Weighted average of the scores
+    const writingScore = (args.grammarScore * 0.4 + args.usageScore * 0.3 + args.naturalnessScore * 0.3);
+
+    const newSkills = {
+      ...profile.skills,
+      grammar: updateSkillScore(profile.skills.grammar, args.grammarScore, 3),
+      writing: updateSkillScore(profile.skills.writing, writingScore, 3),
+    };
+
+    const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
+
+    await ctx.db.patch(profile._id, {
+      skills: newSkills,
+      readiness: {
+        ...profile.readiness,
+        level: newReadiness,
+      },
+      lastActivityAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+// Update profile after shadowing practice
+export const updateFromShadowing = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    accuracyScore: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Get or create profile
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    const newSkills = {
+      ...profile.skills,
+      speaking: updateSkillScore(profile.skills.speaking, args.accuracyScore, 3),
+    };
+
+    await ctx.db.patch(profile._id, {
+      skills: newSkills,
+      lastActivityAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+// Update vocabulary coverage
+export const updateVocabCoverage = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    targetLevel: v.string(),
+    totalWords: v.number(),
+    known: v.number(),
+    learning: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Get or create profile
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    const vocabCoverage = {
+      targetLevel: args.targetLevel,
+      totalWords: args.totalWords,
+      known: args.known,
+      learning: args.learning,
+      unknown: args.totalWords - args.known - args.learning,
+    };
+
+    const newReadiness = calculateReadinessLevel(profile.skills, vocabCoverage);
+
+    await ctx.db.patch(profile._id, {
+      vocabCoverage,
+      readiness: {
+        ...profile.readiness,
+        level: newReadiness,
+      },
+      updatedAt: now,
+    });
+  },
+});
+
+// Record a question to history
+export const recordQuestion = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    sourceType: questionSourceTypeValidator,
+    sourceId: v.optional(v.string()),
+    questionContent: v.object({
+      questionText: v.string(),
+      questionType: v.string(),
+      options: v.optional(v.array(v.string())),
+      correctAnswer: v.optional(v.string()),
+      acceptableAnswers: v.optional(v.array(v.string())),
+      rubric: v.optional(v.string()),
+      passageText: v.optional(v.string()),
+      audioUrl: v.optional(v.string()),
+    }),
+    userAnswer: v.string(),
+    responseTimeMs: v.optional(v.number()),
+    skills: v.array(v.object({
+      skill: v.string(),
+      weight: v.number(),
+    })),
+    topics: v.optional(v.array(v.string())),
+    difficulty: v.optional(v.number()),
+    grading: v.object({
+      isCorrect: v.boolean(),
+      score: v.optional(v.number()),
+      modelUsed: v.optional(v.string()),
+      feedback: v.optional(v.string()),
+      detailedScores: v.optional(v.object({
+        grammar: v.optional(v.number()),
+        usage: v.optional(v.number()),
+        naturalness: v.optional(v.number()),
+      })),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    return await ctx.db.insert("questionHistory", {
+      userId: args.userId,
+      language: args.language,
+      sourceType: args.sourceType,
+      sourceId: args.sourceId,
+      questionContent: args.questionContent,
+      userAnswer: args.userAnswer,
+      responseTimeMs: args.responseTimeMs,
+      skills: args.skills,
+      topics: args.topics,
+      difficulty: args.difficulty,
+      grading: {
+        ...args.grading,
+        gradedAt: now,
+      },
+      answeredAt: now,
+    });
+  },
+});
+
+// ============================================
+// INTERNAL MUTATIONS
+// ============================================
+
+// Internal helper for updating daily progress
+async function updateDailyProgressInternal(
+  ctx: { db: any },
+  args: {
+    userId: string;
+    language: "japanese" | "english" | "french";
+    cardsReviewed?: number;
+    cardsCorrect?: number;
+    questionsAnswered?: number;
+    questionsCorrect?: number;
+    wordsLearned?: number;
+    contentConsumed?: number;
+    studyMinutes?: number;
+  }
+) {
+  const now = Date.now();
+  const today = new Date().toISOString().split("T")[0];
+
+  // Get existing progress for today
+  const existing = await ctx.db
+    .query("dailyProgress")
+    .withIndex("by_user_language_date", (q: any) =>
+      q.eq("userId", args.userId)
+        .eq("language", args.language)
+        .eq("date", today)
+    )
+    .first();
+
+  if (existing) {
+    // Update existing record
+    await ctx.db.patch(existing._id, {
+      cardsReviewed: existing.cardsReviewed + (args.cardsReviewed ?? 0),
+      cardsCorrect: existing.cardsCorrect + (args.cardsCorrect ?? 0),
+      questionsAnswered: existing.questionsAnswered + (args.questionsAnswered ?? 0),
+      questionsCorrect: existing.questionsCorrect + (args.questionsCorrect ?? 0),
+      wordsLearned: existing.wordsLearned + (args.wordsLearned ?? 0),
+      contentConsumed: existing.contentConsumed + (args.contentConsumed ?? 0),
+      studyMinutes: existing.studyMinutes + (args.studyMinutes ?? 0),
+    });
+  } else {
+    // Create new record
+    // Get current skill snapshot from learner profile
+    const profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q: any) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    const skillSnapshot = profile?.skills ?? {
+      vocabulary: 50,
+      grammar: 50,
+      reading: 50,
+      listening: 50,
+      writing: 50,
+    };
+
+    await ctx.db.insert("dailyProgress", {
+      userId: args.userId,
+      date: today,
+      language: args.language,
+      studyMinutes: args.studyMinutes ?? 0,
+      cardsReviewed: args.cardsReviewed ?? 0,
+      cardsCorrect: args.cardsCorrect ?? 0,
+      questionsAnswered: args.questionsAnswered ?? 0,
+      questionsCorrect: args.questionsCorrect ?? 0,
+      wordsLearned: args.wordsLearned ?? 0,
+      contentConsumed: args.contentConsumed ?? 0,
+      skillSnapshot,
+      createdAt: now,
+    });
+  }
+}
+
+// Internal mutation for updating profile from other modules
+export const updateProfileInternal = internalMutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    skill: v.string(),
+    score: v.number(),
+    sampleSize: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    const skillKey = args.skill as keyof SkillScores;
+    if (skillKey in profile.skills) {
+      const newSkills = {
+        ...profile.skills,
+        [skillKey]: updateSkillScore(
+          profile.skills[skillKey],
+          args.score,
+          args.sampleSize ?? 1
+        ),
+      };
+
+      const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
+
+      await ctx.db.patch(profile._id, {
+        skills: newSkills,
+        readiness: {
+          ...profile.readiness,
+          level: newReadiness,
+        },
+        lastActivityAt: now,
+        updatedAt: now,
+      });
+    }
+  },
+});
+
+// ============================================
+// CONTENT PREFERENCES (reads from userPreferences table)
+// ============================================
+
+// Get content preferences for a user
+export const getContentPreferences = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const prefs = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (!prefs?.content) {
+      return null;
+    }
+
+    // Return in legacy format for backwards compatibility
+    return {
+      userId: prefs.userId,
+      interests: prefs.content.interests ?? [],
+      tonePreference: prefs.content.tonePreference,
+      ageAppropriate: prefs.content.ageAppropriate,
+      culturalFocus: prefs.content.culturalFocus,
+      learningGoal: prefs.content.learningGoal,
+      avoidTopics: prefs.content.avoidTopics,
+      updatedAt: prefs.updatedAt,
+    };
+  },
+});
+
+// Update content preferences
+export const updateContentPreferences = mutation({
+  args: {
+    userId: v.string(),
+    language: v.optional(languageValidator),
+    interests: v.optional(v.array(v.string())),
+    tonePreference: v.optional(v.string()),
+    ageAppropriate: v.optional(v.string()),
+    culturalFocus: v.optional(v.array(v.string())),
+    learningGoal: v.optional(v.string()),
+    avoidTopics: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    const existing = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (existing) {
+      const currentContent = existing.content ?? {};
+      await ctx.db.patch(existing._id, {
+        content: {
+          interests: args.interests ?? currentContent.interests ?? [],
+          tonePreference: args.tonePreference ?? currentContent.tonePreference,
+          ageAppropriate: args.ageAppropriate ?? currentContent.ageAppropriate,
+          culturalFocus: args.culturalFocus ?? currentContent.culturalFocus,
+          learningGoal: args.learningGoal ?? currentContent.learningGoal,
+          avoidTopics: args.avoidTopics ?? currentContent.avoidTopics,
+        },
+        updatedAt: now,
+      });
+      return existing._id;
+    } else {
+      // Create new userPreferences with content
+      return await ctx.db.insert("userPreferences", {
+        userId: args.userId,
+        display: { showFurigana: true, theme: "system", fontSize: "medium" },
+        audio: { autoplay: false, highlightMode: "sentence", speed: 1.0 },
+        srs: { dailyReviewGoal: 50, newCardsPerDay: 20, sentenceRefreshDays: 30, desiredRetention: 0.9, maximumInterval: 365, preset: "default" },
+        content: {
+          interests: args.interests ?? [],
+          tonePreference: args.tonePreference,
+          ageAppropriate: args.ageAppropriate,
+          culturalFocus: args.culturalFocus,
+          learningGoal: args.learningGoal,
+          avoidTopics: args.avoidTopics,
+        },
+        notifications: { reviewReminderEnabled: false, reviewReminderTime: "09:00" },
+        updatedAt: now,
+      });
+    }
+  },
+});
+
+// ============================================
+// FSRS SETTINGS (reads from userPreferences table)
+// ============================================
+
+// Get FSRS settings for a user
+export const getFsrsSettings = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const prefs = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (!prefs) {
+      // Return defaults
+      return {
+        userId: args.userId,
+        desiredRetention: 0.9,
+        dailyNewCards: 10,
+        maximumInterval: 365,
+        preset: "default",
+      };
+    }
+
+    // Return in legacy format for backwards compatibility
+    return {
+      userId: prefs.userId,
+      desiredRetention: prefs.srs.desiredRetention ?? 0.9,
+      dailyNewCards: prefs.srs.newCardsPerDay ?? 10,
+      maximumInterval: prefs.srs.maximumInterval ?? 365,
+      customWeights: prefs.srs.customWeights,
+      preset: prefs.srs.preset ?? "default",
+      updatedAt: prefs.updatedAt,
+    };
+  },
+});
+
+// Update FSRS settings
+export const updateFsrsSettings = mutation({
+  args: {
+    userId: v.string(),
+    language: v.optional(languageValidator),
+    desiredRetention: v.optional(v.number()),
+    dailyNewCards: v.optional(v.number()),
+    maximumInterval: v.optional(v.number()),
+    customWeights: v.optional(v.array(v.number())),
+    preset: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    const existing = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        srs: {
+          ...existing.srs,
+          ...(args.desiredRetention !== undefined && { desiredRetention: args.desiredRetention }),
+          ...(args.dailyNewCards !== undefined && { newCardsPerDay: args.dailyNewCards }),
+          ...(args.maximumInterval !== undefined && { maximumInterval: args.maximumInterval }),
+          ...(args.customWeights !== undefined && { customWeights: args.customWeights }),
+          ...(args.preset !== undefined && { preset: args.preset }),
+        },
+        updatedAt: now,
+      });
+      return existing._id;
+    } else {
+      // Create new userPreferences with FSRS settings
+      return await ctx.db.insert("userPreferences", {
+        userId: args.userId,
+        display: { showFurigana: true, theme: "system", fontSize: "medium" },
+        audio: { autoplay: false, highlightMode: "sentence", speed: 1.0 },
+        srs: {
+          dailyReviewGoal: 50,
+          newCardsPerDay: args.dailyNewCards ?? 10,
+          sentenceRefreshDays: 30,
+          desiredRetention: args.desiredRetention ?? 0.9,
+          maximumInterval: args.maximumInterval ?? 365,
+          customWeights: args.customWeights,
+          preset: args.preset ?? "default",
+        },
+        notifications: { reviewReminderEnabled: false, reviewReminderTime: "09:00" },
+        updatedAt: now,
+      });
+    }
+  },
+});
+
+// ============================================
+// INTERNAL MUTATIONS FOR CROSS-MODULE CALLS
+// ============================================
+
+// Internal: Update profile after flashcard reviews
+export const updateFromFlashcardsInternal = internalMutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    cardsReviewed: v.number(),
+    cardsCorrect: v.number(),
+    studyMinutes: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    const accuracy = args.cardsReviewed > 0
+      ? (args.cardsCorrect / args.cardsReviewed) * 100
+      : profile.skills.vocabulary;
+
+    const newVocabScore = updateSkillScore(
+      profile.skills.vocabulary,
+      accuracy,
+      args.cardsReviewed
+    );
+
+    const newSkills = { ...profile.skills, vocabulary: newVocabScore };
+    const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
+
+    await ctx.db.patch(profile._id, {
+      skills: newSkills,
+      readiness: {
+        ...profile.readiness,
+        level: newReadiness,
+      },
+      totalStudyMinutes: profile.totalStudyMinutes + (args.studyMinutes ?? 0),
+      lastActivityAt: now,
+      updatedAt: now,
+    });
+
+    await updateDailyProgressInternal(ctx, {
+      userId: args.userId,
+      language: args.language,
+      cardsReviewed: args.cardsReviewed,
+      cardsCorrect: args.cardsCorrect,
+      studyMinutes: args.studyMinutes ?? 0,
+    });
+  },
+});
+
+// Internal: Update profile after exam
+export const updateFromExamInternal = internalMutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    sectionScores: v.object({
+      reading: v.optional(v.number()),
+      listening: v.optional(v.number()),
+      vocabulary: v.optional(v.number()),
+      grammar: v.optional(v.number()),
+      writing: v.optional(v.number()),
+    }),
+    weakTopics: v.optional(v.array(v.object({
+      skill: v.string(),
+      topic: v.string(),
+      score: v.number(),
+    }))),
+    questionsAnswered: v.number(),
+    questionsCorrect: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    const newSkills = { ...profile.skills };
+    if (args.sectionScores.reading !== undefined) {
+      newSkills.reading = updateSkillScore(profile.skills.reading, args.sectionScores.reading, 10);
+    }
+    if (args.sectionScores.listening !== undefined) {
+      newSkills.listening = updateSkillScore(profile.skills.listening, args.sectionScores.listening, 10);
+    }
+    if (args.sectionScores.vocabulary !== undefined) {
+      newSkills.vocabulary = updateSkillScore(profile.skills.vocabulary, args.sectionScores.vocabulary, 10);
+    }
+    if (args.sectionScores.grammar !== undefined) {
+      newSkills.grammar = updateSkillScore(profile.skills.grammar, args.sectionScores.grammar, 10);
+    }
+    if (args.sectionScores.writing !== undefined) {
+      newSkills.writing = updateSkillScore(profile.skills.writing, args.sectionScores.writing, 10);
+    }
+
+    let newWeakAreas = [...profile.weakAreas];
+    if (args.weakTopics) {
+      for (const topic of args.weakTopics) {
+        const existingIndex = newWeakAreas.findIndex(
+          w => w.skill === topic.skill && w.topic === topic.topic
+        );
+
+        if (existingIndex >= 0) {
+          newWeakAreas[existingIndex] = {
+            ...newWeakAreas[existingIndex],
+            score: updateSkillScore(newWeakAreas[existingIndex].score, topic.score, 5),
+            lastTestedAt: now,
+            questionCount: newWeakAreas[existingIndex].questionCount + 1,
+          };
+        } else if (topic.score < 70) {
+          newWeakAreas.push({
+            skill: topic.skill,
+            topic: topic.topic,
+            score: topic.score,
+            lastTestedAt: now,
+            questionCount: 1,
+          });
+        }
+      }
+      newWeakAreas = newWeakAreas.filter(w => w.score < 80);
+    }
+
+    const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
+
+    await ctx.db.patch(profile._id, {
+      skills: newSkills,
+      weakAreas: newWeakAreas,
+      readiness: {
+        ...profile.readiness,
+        level: newReadiness,
+      },
+      lastActivityAt: now,
+      updatedAt: now,
+    });
+
+    await updateDailyProgressInternal(ctx, {
+      userId: args.userId,
+      language: args.language,
+      questionsAnswered: args.questionsAnswered,
+      questionsCorrect: args.questionsCorrect,
+    });
+  },
+});
+
+// Internal: Update profile after comprehension quiz
+export const updateFromComprehensionInternal = internalMutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    readingScore: v.optional(v.number()),
+    listeningScore: v.optional(v.number()),
+    questionsAnswered: v.number(),
+    questionsCorrect: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    const newSkills = { ...profile.skills };
+    if (args.readingScore !== undefined) {
+      newSkills.reading = updateSkillScore(profile.skills.reading, args.readingScore, 5);
+    }
+    if (args.listeningScore !== undefined) {
+      newSkills.listening = updateSkillScore(profile.skills.listening, args.listeningScore, 5);
+    }
+
+    const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
+
+    await ctx.db.patch(profile._id, {
+      skills: newSkills,
+      readiness: {
+        ...profile.readiness,
+        level: newReadiness,
+      },
+      lastActivityAt: now,
+      updatedAt: now,
+    });
+
+    await updateDailyProgressInternal(ctx, {
+      userId: args.userId,
+      language: args.language,
+      questionsAnswered: args.questionsAnswered,
+      questionsCorrect: args.questionsCorrect,
+      contentConsumed: 1,
+    });
+  },
+});
+
+// Internal: Update profile after sentence practice
+export const updateFromSentencePracticeInternal = internalMutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    grammarScore: v.number(),
+    usageScore: v.number(),
+    naturalnessScore: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    const writingScore = (args.grammarScore * 0.4 + args.usageScore * 0.3 + args.naturalnessScore * 0.3);
+
+    const newSkills = {
+      ...profile.skills,
+      grammar: updateSkillScore(profile.skills.grammar, args.grammarScore, 3),
+      writing: updateSkillScore(profile.skills.writing, writingScore, 3),
+    };
+
+    const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
+
+    await ctx.db.patch(profile._id, {
+      skills: newSkills,
+      readiness: {
+        ...profile.readiness,
+        level: newReadiness,
+      },
+      lastActivityAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+// Internal: Update profile after shadowing practice
+export const updateFromShadowingInternal = internalMutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    accuracyScore: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    const newSkills = {
+      ...profile.skills,
+      speaking: updateSkillScore(profile.skills.speaking, args.accuracyScore, 3),
+    };
+
+    await ctx.db.patch(profile._id, {
+      skills: newSkills,
+      lastActivityAt: now,
+      updatedAt: now,
+    });
+  },
+});

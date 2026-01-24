@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { languageValidator } from "./schema";
 import type { Doc, Id } from "./_generated/dataModel";
 
@@ -291,11 +292,24 @@ export const complete = mutation({
     );
     const percentScore = Math.round((earnedScore / comprehension.totalScore) * 100);
 
+    // Count correct and total questions
+    const questionsAnswered = comprehension.questions.filter(q => q.userAnswer !== undefined).length;
+    const questionsCorrect = comprehension.questions.filter(q => q.isCorrect === true).length;
+
     await ctx.db.patch(args.comprehensionId, {
       earnedScore,
       percentScore,
       completedAt: Date.now(),
       updatedAt: Date.now(),
+    });
+
+    // Update learner profile with comprehension results
+    await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromComprehensionInternal, {
+      userId: comprehension.userId,
+      language: comprehension.language,
+      readingScore: percentScore, // Story comprehension primarily tests reading
+      questionsAnswered,
+      questionsCorrect,
     });
 
     return {

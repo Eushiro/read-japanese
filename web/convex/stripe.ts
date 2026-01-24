@@ -22,13 +22,19 @@ if (PRICE_IDS.basic) TIER_FROM_PRICE[PRICE_IDS.basic] = "basic";
 if (PRICE_IDS.pro) TIER_FROM_PRICE[PRICE_IDS.pro] = "pro";
 if (PRICE_IDS.unlimited) TIER_FROM_PRICE[PRICE_IDS.unlimited] = "unlimited";
 
+// Cache Stripe instance to avoid re-initialization
+let stripeInstance: Stripe | null = null;
+
 function getStripe(): Stripe {
+  if (stripeInstance) return stripeInstance;
+
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {
     console.error("[Stripe] STRIPE_SECRET_KEY environment variable is not set in Convex dashboard");
     throw new Error("Payment system is not configured. Please contact support.");
   }
-  return new Stripe(key);
+  stripeInstance = new Stripe(key);
+  return stripeInstance;
 }
 
 function getTierFromPriceId(priceId: string): "basic" | "pro" | "unlimited" | null {
@@ -45,6 +51,68 @@ function getMissingPriceIds(): string[] {
 }
 
 // ============================================
+// CUSTOMER PRE-CREATION (for faster checkout)
+// ============================================
+
+// Create Stripe customer during onboarding (before checkout)
+// This removes one API call from the checkout flow
+export const ensureStripeCustomer = action({
+  args: {
+    userId: v.string(),
+    email: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ customerId: string | null }> => {
+    try {
+      // Check if user already has a customer ID
+      const user = await ctx.runQuery(internal.stripeHelpers.getUserByClerkId, {
+        clerkId: args.userId,
+      });
+
+      if (user?.stripeCustomerId) {
+        console.log(`[Stripe] User ${args.userId} already has customer ID`);
+        return { customerId: user.stripeCustomerId };
+      }
+
+      // Also check subscription table (backwards compat)
+      const existingSub = await ctx.runQuery(internal.stripeHelpers.getSubscriptionByUserId, {
+        userId: args.userId,
+      });
+
+      if (existingSub?.stripeCustomerId) {
+        // Migrate customer ID to user table
+        await ctx.runMutation(internal.stripeHelpers.saveStripeCustomerId, {
+          clerkId: args.userId,
+          stripeCustomerId: existingSub.stripeCustomerId,
+        });
+        return { customerId: existingSub.stripeCustomerId };
+      }
+
+      // Create new Stripe customer
+      const stripe = getStripe();
+      console.log(`[Stripe] Pre-creating customer for user ${args.userId}`);
+
+      const customer = await stripe.customers.create({
+        email: args.email,
+        metadata: { userId: args.userId },
+      });
+
+      // Save to user table
+      await ctx.runMutation(internal.stripeHelpers.saveStripeCustomerId, {
+        clerkId: args.userId,
+        stripeCustomerId: customer.id,
+      });
+
+      console.log(`[Stripe] Pre-created customer ${customer.id}`);
+      return { customerId: customer.id };
+    } catch (error) {
+      // Don't fail onboarding if Stripe customer creation fails
+      console.error("[Stripe] Error pre-creating customer:", error);
+      return { customerId: null };
+    }
+  },
+});
+
+// ============================================
 // CHECKOUT ACTIONS
 // ============================================
 
@@ -57,59 +125,89 @@ export const createCheckoutSession = action({
     cancelUrl: v.string(),
   },
   handler: async (ctx, args): Promise<{ sessionId: string; url: string | null }> => {
-    // Log missing configuration for debugging
-    const missingPrices = getMissingPriceIds();
-    if (missingPrices.length > 0) {
-      console.error(`[Stripe] Missing price IDs in Convex env vars: ${missingPrices.join(", ")}`);
-    }
+    try {
+      // Log missing configuration for debugging
+      const missingPrices = getMissingPriceIds();
+      if (missingPrices.length > 0) {
+        console.error(`[Stripe] Missing price IDs in Convex env vars: ${missingPrices.join(", ")}`);
+      }
 
-    const priceId = PRICE_IDS[args.tier];
-    if (!priceId) {
-      console.error(`[Stripe] STRIPE_PRICE_${args.tier.toUpperCase()} is not set in Convex dashboard`);
-      throw new Error(`Subscription for ${args.tier} tier is not available. Please contact support.`);
-    }
+      const priceId = PRICE_IDS[args.tier];
+      if (!priceId) {
+        console.error(`[Stripe] STRIPE_PRICE_${args.tier.toUpperCase()} is not set in Convex dashboard`);
+        throw new Error(`Subscription for ${args.tier} tier is not available. Please contact support.`);
+      }
 
-    // Initialize Stripe (will throw user-friendly error if key is missing)
-    const stripe = getStripe();
+      // Initialize Stripe (will throw user-friendly error if key is missing)
+      const stripe = getStripe();
 
-    // Check if user already has a Stripe customer ID
-    const existingSub = await ctx.runQuery(internal.stripeHelpers.getSubscriptionByUserId, {
-      userId: args.userId,
-    });
-
-    let customerId: string | undefined = existingSub?.stripeCustomerId ?? undefined;
-
-    // Create customer if doesn't exist
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        metadata: { userId: args.userId },
+      // Check user table first for pre-created customer ID
+      const user = await ctx.runQuery(internal.stripeHelpers.getUserByClerkId, {
+        clerkId: args.userId,
       });
-      customerId = customer.id;
-    }
 
-    // Create checkout session
-    const checkoutSession = await stripe.checkout.sessions.create({
-      customer: customerId,
-      mode: "subscription",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
+      let customerId: string | undefined = user?.stripeCustomerId ?? undefined;
+
+      // Fallback: check subscription table (backwards compat)
+      if (!customerId) {
+        const existingSub = await ctx.runQuery(internal.stripeHelpers.getSubscriptionByUserId, {
+          userId: args.userId,
+        });
+        customerId = existingSub?.stripeCustomerId ?? undefined;
+      }
+
+      // Create customer only if not pre-created (shouldn't happen often)
+      if (!customerId) {
+        console.log(`[Stripe] Customer not pre-created, creating now for user ${args.userId}`);
+        const customer = await stripe.customers.create({
+          metadata: { userId: args.userId },
+        });
+        customerId = customer.id;
+
+        // Save for future use
+        await ctx.runMutation(internal.stripeHelpers.saveStripeCustomerId, {
+          clerkId: args.userId,
+          stripeCustomerId: customerId,
+        });
+        console.log(`[Stripe] Created customer ${customerId}`);
+      } else {
+        console.log(`[Stripe] Using pre-created customer ${customerId}`);
+      }
+
+      console.log(`[Stripe] Creating checkout session for tier ${args.tier}, price ${priceId}`);
+
+      // Create checkout session
+      const checkoutSession = await stripe.checkout.sessions.create({
+        customer: customerId,
+        mode: "subscription",
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        success_url: args.successUrl,
+        cancel_url: args.cancelUrl,
+        subscription_data: {
+          metadata: { userId: args.userId },
         },
-      ],
-      success_url: args.successUrl,
-      cancel_url: args.cancelUrl,
-      subscription_data: {
-        metadata: { userId: args.userId },
-      },
-      metadata: {
-        userId: args.userId,
-        tier: args.tier,
-      },
-    });
+        metadata: {
+          userId: args.userId,
+          tier: args.tier,
+        },
+      });
 
-    return { sessionId: checkoutSession.id, url: checkoutSession.url };
+      console.log(`[Stripe] Checkout session created: ${checkoutSession.id}`);
+      return { sessionId: checkoutSession.id, url: checkoutSession.url };
+    } catch (error) {
+      console.error("[Stripe] Error creating checkout session:", error);
+      if (error instanceof Error) {
+        // Re-throw with more context
+        throw new Error(`Checkout failed: ${error.message}`);
+      }
+      throw error;
+    }
   },
 });
 

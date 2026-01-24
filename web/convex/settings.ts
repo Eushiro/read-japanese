@@ -23,37 +23,38 @@ const DEFAULT_SETTINGS = {
   reviewReminderTime: "09:00",
 };
 
-// Get user settings
+// Get user settings (reads from userPreferences table)
 export const get = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
-    const settings = await ctx.db
-      .query("userSettings")
+    const prefs = await ctx.db
+      .query("userPreferences")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
 
     // Return defaults if no settings exist
-    if (!settings) {
+    if (!prefs) {
       return DEFAULT_SETTINGS;
     }
 
+    // Flatten nested structure back to original flat API for backwards compatibility
     return {
-      showFurigana: settings.showFurigana,
-      theme: settings.theme ?? DEFAULT_SETTINGS.theme,
-      fontSize: settings.fontSize ?? DEFAULT_SETTINGS.fontSize,
-      autoplayAudio: settings.autoplayAudio ?? DEFAULT_SETTINGS.autoplayAudio,
-      audioHighlightMode: settings.audioHighlightMode ?? DEFAULT_SETTINGS.audioHighlightMode,
-      audioSpeed: settings.audioSpeed ?? DEFAULT_SETTINGS.audioSpeed,
-      dailyReviewGoal: settings.dailyReviewGoal ?? DEFAULT_SETTINGS.dailyReviewGoal,
-      newCardsPerDay: settings.newCardsPerDay ?? DEFAULT_SETTINGS.newCardsPerDay,
-      sentenceRefreshDays: settings.sentenceRefreshDays ?? DEFAULT_SETTINGS.sentenceRefreshDays,
-      reviewReminderEnabled: settings.reviewReminderEnabled ?? DEFAULT_SETTINGS.reviewReminderEnabled,
-      reviewReminderTime: settings.reviewReminderTime ?? DEFAULT_SETTINGS.reviewReminderTime,
+      showFurigana: prefs.display.showFurigana,
+      theme: prefs.display.theme ?? DEFAULT_SETTINGS.theme,
+      fontSize: prefs.display.fontSize ?? DEFAULT_SETTINGS.fontSize,
+      autoplayAudio: prefs.audio.autoplay ?? DEFAULT_SETTINGS.autoplayAudio,
+      audioHighlightMode: prefs.audio.highlightMode ?? DEFAULT_SETTINGS.audioHighlightMode,
+      audioSpeed: prefs.audio.speed ?? DEFAULT_SETTINGS.audioSpeed,
+      dailyReviewGoal: prefs.srs.dailyReviewGoal ?? DEFAULT_SETTINGS.dailyReviewGoal,
+      newCardsPerDay: prefs.srs.newCardsPerDay ?? DEFAULT_SETTINGS.newCardsPerDay,
+      sentenceRefreshDays: prefs.srs.sentenceRefreshDays ?? DEFAULT_SETTINGS.sentenceRefreshDays,
+      reviewReminderEnabled: prefs.notifications?.reviewReminderEnabled ?? DEFAULT_SETTINGS.reviewReminderEnabled,
+      reviewReminderTime: prefs.notifications?.reviewReminderTime ?? DEFAULT_SETTINGS.reviewReminderTime,
     };
   },
 });
 
-// Update user settings
+// Update user settings (writes to userPreferences table)
 export const update = mutation({
   args: {
     userId: v.string(),
@@ -71,36 +72,83 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const { userId, ...updates } = args;
+    const now = Date.now();
 
-    // Filter out undefined values
-    const filteredUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([_, v]) => v !== undefined)
-    );
-
-    // Find existing settings
+    // Find existing preferences
     const existing = await ctx.db
-      .query("userSettings")
+      .query("userPreferences")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
 
     if (existing) {
-      // Update existing settings
-      await ctx.db.patch(existing._id, filteredUpdates);
+      // Build update object for nested structure
+      const patchData: Record<string, unknown> = { updatedAt: now };
+
+      // Display updates
+      if (updates.showFurigana !== undefined || updates.theme !== undefined || updates.fontSize !== undefined) {
+        patchData.display = {
+          showFurigana: updates.showFurigana ?? existing.display.showFurigana,
+          theme: updates.theme ?? existing.display.theme,
+          fontSize: updates.fontSize ?? existing.display.fontSize,
+        };
+      }
+
+      // Audio updates
+      if (updates.autoplayAudio !== undefined || updates.audioHighlightMode !== undefined || updates.audioSpeed !== undefined) {
+        patchData.audio = {
+          autoplay: updates.autoplayAudio ?? existing.audio.autoplay,
+          highlightMode: updates.audioHighlightMode ?? existing.audio.highlightMode,
+          speed: updates.audioSpeed ?? existing.audio.speed,
+        };
+      }
+
+      // SRS updates (only the userSettings portion - FSRS settings are handled separately)
+      if (updates.dailyReviewGoal !== undefined || updates.newCardsPerDay !== undefined || updates.sentenceRefreshDays !== undefined) {
+        patchData.srs = {
+          ...existing.srs,
+          dailyReviewGoal: updates.dailyReviewGoal ?? existing.srs.dailyReviewGoal,
+          newCardsPerDay: updates.newCardsPerDay ?? existing.srs.newCardsPerDay,
+          sentenceRefreshDays: updates.sentenceRefreshDays ?? existing.srs.sentenceRefreshDays,
+        };
+      }
+
+      // Notification updates
+      if (updates.reviewReminderEnabled !== undefined || updates.reviewReminderTime !== undefined) {
+        patchData.notifications = {
+          reviewReminderEnabled: updates.reviewReminderEnabled ?? existing.notifications?.reviewReminderEnabled,
+          reviewReminderTime: updates.reviewReminderTime ?? existing.notifications?.reviewReminderTime,
+        };
+      }
+
+      await ctx.db.patch(existing._id, patchData);
     } else {
-      // Create new settings with defaults
-      await ctx.db.insert("userSettings", {
+      // Create new preferences with defaults
+      await ctx.db.insert("userPreferences", {
         userId,
-        showFurigana: updates.showFurigana ?? DEFAULT_SETTINGS.showFurigana,
-        theme: updates.theme ?? DEFAULT_SETTINGS.theme,
-        fontSize: updates.fontSize ?? DEFAULT_SETTINGS.fontSize,
-        autoplayAudio: updates.autoplayAudio ?? DEFAULT_SETTINGS.autoplayAudio,
-        audioHighlightMode: updates.audioHighlightMode ?? DEFAULT_SETTINGS.audioHighlightMode,
-        audioSpeed: updates.audioSpeed ?? DEFAULT_SETTINGS.audioSpeed,
-        dailyReviewGoal: updates.dailyReviewGoal ?? DEFAULT_SETTINGS.dailyReviewGoal,
-        newCardsPerDay: updates.newCardsPerDay ?? DEFAULT_SETTINGS.newCardsPerDay,
-        sentenceRefreshDays: updates.sentenceRefreshDays ?? DEFAULT_SETTINGS.sentenceRefreshDays,
-        reviewReminderEnabled: updates.reviewReminderEnabled ?? DEFAULT_SETTINGS.reviewReminderEnabled,
-        reviewReminderTime: updates.reviewReminderTime ?? DEFAULT_SETTINGS.reviewReminderTime,
+        display: {
+          showFurigana: updates.showFurigana ?? DEFAULT_SETTINGS.showFurigana,
+          theme: updates.theme ?? DEFAULT_SETTINGS.theme,
+          fontSize: updates.fontSize ?? DEFAULT_SETTINGS.fontSize,
+        },
+        audio: {
+          autoplay: updates.autoplayAudio ?? DEFAULT_SETTINGS.autoplayAudio,
+          highlightMode: updates.audioHighlightMode ?? DEFAULT_SETTINGS.audioHighlightMode,
+          speed: updates.audioSpeed ?? DEFAULT_SETTINGS.audioSpeed,
+        },
+        srs: {
+          dailyReviewGoal: updates.dailyReviewGoal ?? DEFAULT_SETTINGS.dailyReviewGoal,
+          newCardsPerDay: updates.newCardsPerDay ?? DEFAULT_SETTINGS.newCardsPerDay,
+          sentenceRefreshDays: updates.sentenceRefreshDays ?? DEFAULT_SETTINGS.sentenceRefreshDays,
+          // FSRS defaults
+          desiredRetention: 0.9,
+          maximumInterval: 365,
+          preset: "default",
+        },
+        notifications: {
+          reviewReminderEnabled: updates.reviewReminderEnabled ?? DEFAULT_SETTINGS.reviewReminderEnabled,
+          reviewReminderTime: updates.reviewReminderTime ?? DEFAULT_SETTINGS.reviewReminderTime,
+        },
+        updatedAt: now,
       });
     }
   },
@@ -111,23 +159,33 @@ export const reset = mutation({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
     const existing = await ctx.db
-      .query("userSettings")
+      .query("userPreferences")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        showFurigana: DEFAULT_SETTINGS.showFurigana,
-        theme: DEFAULT_SETTINGS.theme,
-        fontSize: DEFAULT_SETTINGS.fontSize,
-        autoplayAudio: DEFAULT_SETTINGS.autoplayAudio,
-        audioHighlightMode: DEFAULT_SETTINGS.audioHighlightMode,
-        audioSpeed: DEFAULT_SETTINGS.audioSpeed,
-        dailyReviewGoal: DEFAULT_SETTINGS.dailyReviewGoal,
-        newCardsPerDay: DEFAULT_SETTINGS.newCardsPerDay,
-        sentenceRefreshDays: DEFAULT_SETTINGS.sentenceRefreshDays,
-        reviewReminderEnabled: DEFAULT_SETTINGS.reviewReminderEnabled,
-        reviewReminderTime: DEFAULT_SETTINGS.reviewReminderTime,
+        display: {
+          showFurigana: DEFAULT_SETTINGS.showFurigana,
+          theme: DEFAULT_SETTINGS.theme,
+          fontSize: DEFAULT_SETTINGS.fontSize,
+        },
+        audio: {
+          autoplay: DEFAULT_SETTINGS.autoplayAudio,
+          highlightMode: DEFAULT_SETTINGS.audioHighlightMode,
+          speed: DEFAULT_SETTINGS.audioSpeed,
+        },
+        srs: {
+          ...existing.srs, // Keep FSRS settings
+          dailyReviewGoal: DEFAULT_SETTINGS.dailyReviewGoal,
+          newCardsPerDay: DEFAULT_SETTINGS.newCardsPerDay,
+          sentenceRefreshDays: DEFAULT_SETTINGS.sentenceRefreshDays,
+        },
+        notifications: {
+          reviewReminderEnabled: DEFAULT_SETTINGS.reviewReminderEnabled,
+          reviewReminderTime: DEFAULT_SETTINGS.reviewReminderTime,
+        },
+        updatedAt: Date.now(),
       });
     }
   },

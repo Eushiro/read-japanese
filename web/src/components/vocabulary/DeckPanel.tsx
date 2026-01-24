@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -17,7 +18,6 @@ import {
   Pause,
   CheckCircle2,
   Plus,
-  Minus,
   PenLine,
   Zap,
 } from "lucide-react";
@@ -390,35 +390,19 @@ function DeckCard({ subscription, isSelected, onSelect, isActive, onActivate, on
             <div className="mt-2 pt-2 border-t border-border/50">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs text-foreground-muted">New cards/day</span>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const newValue = Math.max(5, localDailyCards - 5);
-                      setLocalDailyCards(newValue);
-                      updateDailyLimit({ userId, deckId: subscription.deckId, dailyNewCards: newValue });
-                    }}
-                    disabled={localDailyCards <= 5}
-                    className="p-1 rounded border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <Minus className="w-3 h-3" />
-                  </button>
-                  <span className="w-6 text-center text-sm font-medium text-foreground">
-                    {localDailyCards}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const newValue = Math.min(30, localDailyCards + 5);
-                      setLocalDailyCards(newValue);
-                      updateDailyLimit({ userId, deckId: subscription.deckId, dailyNewCards: newValue });
-                    }}
-                    disabled={localDailyCards >= 30}
-                    className="p-1 rounded border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <Plus className="w-3 h-3" />
-                  </button>
-                </div>
+                <Input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={localDailyCards}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => {
+                    const newValue = Math.max(1, Math.min(50, parseInt(e.target.value) || 1));
+                    setLocalDailyCards(newValue);
+                    updateDailyLimit({ userId, deckId: subscription.deckId, dailyNewCards: newValue });
+                  }}
+                  className="w-16 h-7 text-center text-sm"
+                />
               </div>
             </div>
           )}

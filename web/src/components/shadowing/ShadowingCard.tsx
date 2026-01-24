@@ -128,6 +128,7 @@ export function ShadowingCard({
   const recorder = useAudioRecorder();
   const evaluateShadowing = useAction(api.ai.evaluateShadowing);
   const submitShadowing = useMutation(api.shadowing.submit);
+  const storeUserAudio = useMutation(api.shadowing.storeUserAudio);
 
   const language = flashcard.vocabulary?.language ?? "japanese";
 
@@ -173,6 +174,35 @@ export function ShadowingCard({
       // Convert webm to WAV for API compatibility
       const audioBase64 = await convertToWav(blob);
 
+      // Upload user's recording to Convex storage for bulk analysis later
+      // The WAV is already compressed (16kHz mono, ~32KB/sec)
+      let userAudioStorageId: string | undefined;
+      try {
+        // Get upload URL from Convex
+        const { uploadUrl } = await storeUserAudio({ userId });
+
+        // Convert WAV base64 back to blob for upload
+        const wavBytes = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0));
+        const wavBlob = new Blob([wavBytes], { type: "audio/wav" });
+
+        // Upload to Convex storage
+        const uploadResponse = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": "audio/wav" },
+          body: wavBlob,
+        });
+
+        if (uploadResponse.ok) {
+          const { storageId } = await uploadResponse.json();
+          userAudioStorageId = storageId;
+        } else {
+          console.warn("Failed to upload user audio, continuing without storage");
+        }
+      } catch (uploadError) {
+        console.warn("Failed to upload user audio:", uploadError);
+        // Continue without storing - don't block the user experience
+      }
+
       // Call AI to evaluate
       const result = await evaluateShadowing({
         targetText: flashcard.sentence,
@@ -192,8 +222,9 @@ export function ShadowingCard({
         feedbackAudioUrl,
       });
 
-      // Save to database (don't store feedbackAudioUrl - too large for Convex field limit)
-      const submitData = {
+      // Save to database with user audio storage ID for bulk analysis
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const submitData: any = {
         userId,
         flashcardId: flashcard._id,
         vocabularyId: flashcard.vocabularyId,
@@ -202,10 +233,15 @@ export function ShadowingCard({
         feedbackText: result.feedbackText,
         accuracyScore: result.accuracyScore,
       };
+      // Add storage ID if we successfully uploaded
+      if (userAudioStorageId) {
+        submitData.userAudioStorageId = userAudioStorageId;
+      }
       console.log("Submitting shadowing data:", {
         ...submitData,
         feedbackTextLength: result.feedbackText.length,
         targetTextLength: flashcard.sentence.length,
+        hasUserAudio: !!userAudioStorageId,
       });
       await submitShadowing(submitData);
 

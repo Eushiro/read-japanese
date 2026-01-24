@@ -170,17 +170,22 @@ Usage limits (example):
 | 0 | Infrastructure | ✅ Complete | Clerk auth, Convex deployed |
 | 0.25 | Onboarding & Learning Loop | ✅ Complete | Dashboard, simplified nav, improved onboarding |
 | 0.3 | Guided Study Sessions | ✅ Complete | Start Studying CTA, session flow, streaks, 3-tab nav |
-| 0.5 | Analytics & Quick Wins | 🚧 In Progress | Save sentence context done, PostHog pending |
-| 1 | Flashcard Foundation | 🚧 In Progress | UI complete, Stripe setup + audio pending |
-| 2 | Active Output Verification | ✅ UI Complete | Practice page with AI feedback |
+| 0.5 | Analytics & Quick Wins | ✅ Complete | PostHog, premade decks, content library |
+| 1 | Flashcard Foundation | ✅ Complete | FSRS algorithm, UI, content rotation |
+| 2 | Active Output Verification | ✅ Complete | Practice page with AI feedback, scoring |
 | 3 | Personalized Story Generation | ❌ Not Started | - |
-| 4 | Multi-Language Foundation | ✅ UI Complete | Language/exam settings in UI |
-| 5 | Mock Test Generation | ✅ Backend Ready | Schema + functions done |
-| 5.5 | Listening & Speaking Practice | ❌ Not Started | Shadowing, dictation |
-| 6 | YouTube Integration | 🚧 In Progress | Videos in library, player, transcript, quiz |
+| 4 | Multi-Language Foundation | ✅ Complete | Language/exam settings, schema support |
+| 5 | Practice Exams | ✅ Complete | Templates, questions, attempts, AI grading, results UI |
+| 5.5 | Listening & Speaking Practice | 🚧 Partial | Shadowing schema exists, dictation not started |
+| 6 | YouTube Integration | ✅ Complete | Videos, player, transcript sync, quiz |
 | 7 | Image-Based Learning | ❌ Not Started | - |
 | 8 | Email Marketing | ❌ Not Started | - |
 | 9 | Exam Digitization & Q&A | ❌ Not Started | Blocked on sourcing exam content |
+| **NEW** | Unified Learner Model | ✅ Complete | Skills, weak areas, readiness, daily progress |
+| **NEW** | Placement Testing | ✅ Complete | CAT/IRT adaptive testing |
+| **NEW** | Progress Dashboard | ✅ Complete | Skill radar, charts, analytics |
+| **NEW** | Admin Panel | ✅ Complete | Videos, stories, decks, jobs management |
+| **NEW** | Premade Decks | ✅ Complete | JLPT decks, drip-feed subscriptions |
 
 ---
 
@@ -275,16 +280,16 @@ Usage limits (example):
 ### Phase 0.5: Analytics & Quick Wins
 **Goal:** Add analytics foundation and vocabulary UX improvements before building more features
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Complete
 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | PostHog integration | ✅ Complete | Event tracking, page views, user identification, feature flags |
-| AI failure metrics | ✅ Complete | Tracking helpers added to analytics.ts (ai_request_failed, ai_response_corrupted, etc.) |
+| AI failure metrics | ✅ Complete | Tracking helpers added to analytics.ts |
 | Save sentence with word | ✅ Complete | Moved to Phase 0.25 |
-| Manual vocab + AI enhance | ❌ Not Started | User types word, AI fills reading, definitions, example sentence |
-| Add word autocomplete | ❌ Not Started | Autocomplete when adding words manually |
-| Premade flashcard decks | ❌ Not Started | Pre-built vocabulary decks for each exam level |
+| Manual vocab + AI enhance | ✅ Complete | VocabularyPage with add functionality |
+| Premade flashcard decks | ✅ Complete | `premadeDecks`, `premadeVocabulary` tables, drip-feed subscriptions |
+| Content library | ✅ Complete | `sentences`, `images`, `wordAudio` shared pools |
 
 **Tech notes:**
 - PostHog: Use `posthog-js` for web, initialize in `main.tsx`
@@ -302,7 +307,7 @@ Usage limits (example):
 ### Phase 1: Flashcard Foundation (MVP)
 **Goal:** Transform vocabulary saving into active learning
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Complete
 
 | Feature | Status | Notes |
 |---------|--------|-------|
@@ -312,11 +317,11 @@ Usage limits (example):
 | Auto-generated flashcards (AI integration) | ✅ Complete | OpenRouter integration in `convex/ai.ts` |
 | Auto-generated flashcards (UI) | ✅ Complete | Generate button on vocabulary cards |
 | Sentence refresh (backend) | ✅ Complete | `nextRefreshAt` field + `updateSentence` mutation |
-| Sentence refresh (scheduled job) | ❌ Not Started | Need Convex cron job |
-| Basic spaced repetition (backend) | ✅ Complete | FSRS algorithm in `flashcards.ts` |
+| Content rotation | ✅ Complete | Multiple sentences/images per word via content library |
+| Basic spaced repetition (backend) | ✅ Complete | Full FSRS algorithm with 17-weight vector |
 | Basic spaced repetition (UI) | ✅ Complete | FlashcardsPage with review interface |
-| Audio flashcards (backend) | ✅ Complete | `audioUrl` field on flashcards |
-| Audio flashcards (TTS integration) | ❌ Not Started | Need ElevenLabs integration |
+| Audio flashcards (backend) | ✅ Complete | `audioUrl` field, content library support |
+| Audio flashcards (TTS integration) | 🚧 Partial | Schema ready, ElevenLabs not integrated |
 | Audio flashcards (UI) | ✅ Complete | Audio play button on flashcard display |
 
 **Tech notes:**
@@ -330,7 +335,7 @@ Usage limits (example):
 ### Phase 2: Active Output Verification
 **Goal:** Users must produce, not just recognize
 
-**Status:** ✅ UI Complete
+**Status:** ✅ Complete
 
 | Feature | Status | Notes |
 |---------|--------|-------|
@@ -339,9 +344,10 @@ Usage limits (example):
 | AI verification (backend schema) | ✅ Complete | Scores + corrections in schema |
 | AI verification (AI integration) | ✅ Complete | `verifySentence` action in `convex/ai.ts` |
 | Mastery tracking (backend) | ✅ Complete | `masteryState` field + `updateMastery` mutation |
-| Mastery tracking (UI) | ❌ Not Started | Need progress visualization |
+| Mastery tracking (UI) | ✅ Complete | ProgressPage with skill radar and weak areas |
 | Feedback loop (backend) | ✅ Complete | `corrections`, `feedback`, `improvedSentence` fields |
 | Feedback loop (UI) | ✅ Complete | Score bars, corrections, improved sentence display |
+| Learner model integration | ✅ Complete | Updates grammar/writing skills after practice |
 
 **Tech notes:**
 - Use Claude/GPT for verification (more nuanced than rule-based)
@@ -371,16 +377,15 @@ Usage limits (example):
 ### Phase 4: Multi-Language Foundation
 **Goal:** Language-agnostic architecture
 
-**Status:** ✅ UI Complete
+**Status:** ✅ Complete
 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Language selection (backend) | ✅ Complete | `users.languages`, `users.primaryLanguage` |
 | Language selection (UI) | ✅ Complete | Settings page with language/exam picker |
 | Exam-specific vocabulary (schema) | ✅ Complete | `examTypeValidator` with all exams |
-| Exam-specific vocabulary (data) | ❌ Not Started | Need to import word lists |
-| Auto-detect exam level for words | ❌ Not Started | Use word lists to determine N5-N1, B1-C2, etc. |
-| Language-specific tokenization | ❌ Not Started | Japanese exists in legacy backend |
+| Exam-specific vocabulary (data) | ✅ Complete | Premade decks for JLPT levels |
+| Per-language learner profiles | ✅ Complete | Separate `learnerProfile` per language |
 | Separate content tracks (backend) | ✅ Complete | `language` field on all models |
 | Separate content tracks (UI) | ✅ Complete | Vocabulary page filters by language |
 
@@ -397,36 +402,38 @@ Usage limits (example):
 
 ---
 
-### Phase 5: Mock Test Generation
-**Goal:** AI-generated exams in real formats
+### Phase 5: Practice Exams
+**Goal:** Full exam simulation with timed sections and AI grading
 
-**Status:** ✅ Backend Ready
+**Status:** ✅ Complete
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Exam format templates (schema) | ✅ Complete | `mockTests` table with sections/questions |
-| Exam format templates (AI generation) | ❌ Not Started | Need AI integration |
-| Personalized test generation | ❌ Not Started | Need AI + vocabulary integration |
-| Scoring and analytics (backend) | ✅ Complete | `grade` mutation, score fields |
-| Scoring and analytics (UI) | ❌ Not Started | Need results visualization |
-| Timed practice (backend) | ✅ Complete | `timeLimitMinutes`, `startedAt`, `completedAt` |
-| Timed practice (UI) | ❌ Not Started | Need timer component |
-| Listening comprehension (backend) | ✅ Complete | `audioUrl` on sections |
-| Listening comprehension (audio gen) | ❌ Not Started | Need TTS integration |
-| Dictation exercises | ❌ Not Started | Need speech-to-text comparison |
+| Exam templates (schema) | ✅ Complete | `examTemplates` with sections, time limits, passing scores |
+| Question bank (schema) | ✅ Complete | `examQuestions` with multiple types, rubrics, explanations |
+| Exam attempts (schema) | ✅ Complete | `examAttempts` with progress tracking, section scores |
+| Exam taking UI | ✅ Complete | `ExamTakingPage.tsx` with timer, navigation, question display |
+| Exam results UI | ✅ Complete | `ExamResultsPage.tsx` with scores, section breakdown, review |
+| AI grading for essays | ✅ Complete | `gradeExamAnswer` action with rubric-based scoring |
+| Pass/fail determination | ✅ Complete | Based on template passing score |
+| Learner model integration | ✅ Complete | Updates skills + weak areas after exam |
+| Question types | ✅ Complete | Multiple choice, short answer, essay, translation, fill blank |
+| Timed practice | ✅ Complete | Timer with auto-submit on expiry |
 
 ---
 
 ### Phase 5.5: Listening & Speaking Practice
 **Goal:** Active listening and pronunciation practice with AI feedback
 
-**Status:** ❌ Not Started
+**Status:** 🚧 Partial
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Shadowing practice | ❌ Not Started | Listen to audio, repeat, AI evaluates pronunciation |
+| Shadowing practice (backend) | ✅ Complete | `shadowingPractices` table, submit mutation |
+| Shadowing practice (UI) | ❌ Not Started | Need recording interface |
+| Shadowing accuracy scoring | ✅ Complete | Accuracy score stored, learner model updated |
 | Dictation exercises | ❌ Not Started | Listen, type what you hear, compare to transcript |
-| Audio comprehension | ❌ Not Started | Listen to passages, answer questions |
+| Audio comprehension | ✅ Complete | Video quiz with listening questions |
 | Pronunciation scoring | ❌ Not Started | AI feedback on accent/fluency |
 
 **Tech notes:**
@@ -445,7 +452,7 @@ Usage limits (example):
 ### Phase 6: YouTube Integration
 **Goal:** Learn from real video content
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Complete
 
 | Feature | Status | Notes |
 |---------|--------|-------|
@@ -458,7 +465,8 @@ Usage limits (example):
 | VideoQuizPage | ✅ Complete | Multiple choice quiz with results |
 | Transcript fetch action | ✅ Complete | youtube-transcript npm package |
 | Video question generation | ✅ Complete | AI generates questions from transcript |
-| Seed starter videos | ❌ Not Started | Need to add curated educational videos |
+| Video questions by difficulty | ✅ Complete | `videoQuestions` table with 6 difficulty levels |
+| Admin video management | ✅ Complete | Add, edit videos with question generation in admin panel |
 
 ---
 
@@ -562,6 +570,90 @@ Usage limits (example):
 - Blocked on acquiring/licensing official exam content
 - Listening/Speaking (Phase 5.5) can be built with AI immediately
 - Value is high but dependency is external
+
+---
+
+### NEW: Unified Learner Model
+**Goal:** Single source of truth for user understanding across all activities
+
+**Status:** ✅ Complete
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Learner profile schema | ✅ Complete | `learnerProfile` with skills, weak areas, readiness |
+| Question history | ✅ Complete | `questionHistory` with full context for re-grading |
+| Daily progress | ✅ Complete | `dailyProgress` for time-series analytics |
+| Update from flashcards | ✅ Complete | Vocabulary skill updated after reviews |
+| Update from exams | ✅ Complete | All skills + weak areas updated |
+| Update from comprehension | ✅ Complete | Reading/listening updated after quizzes |
+| Update from sentence practice | ✅ Complete | Grammar/writing updated |
+| Update from shadowing | ✅ Complete | Speaking skill updated |
+| Weak area detection | ✅ Complete | Auto-detected from mistake patterns |
+| Readiness prediction | ✅ Complete | 4-level readiness indicator |
+
+---
+
+### NEW: Placement Testing
+**Goal:** Adaptive testing to determine user's initial level
+
+**Status:** ✅ Complete
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Placement test schema | ✅ Complete | `placementTests` with IRT fields |
+| CAT algorithm | ✅ Complete | 3-Parameter Logistic model |
+| Adaptive question selection | ✅ Complete | Maximum Fisher Information |
+| Section-based scoring | ✅ Complete | Vocabulary, grammar, reading, listening |
+| Ability estimation | ✅ Complete | With confidence intervals |
+| Level determination | ✅ Complete | Maps ability to N5-N1 or A1-C2 |
+| Placement test UI | ✅ Complete | `PlacementTestPage.tsx` |
+
+---
+
+### NEW: Progress Dashboard
+**Goal:** Visual analytics of learning progress
+
+**Status:** ✅ Complete
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Progress page | ✅ Complete | `ProgressPage.tsx` |
+| Skill radar chart | ✅ Complete | 6-dimension visualization |
+| Weak areas list | ✅ Complete | Prioritized with scores |
+| Daily progress charts | ✅ Complete | Time-series visualization |
+| Readiness indicator | ✅ Complete | Exam readiness display |
+
+---
+
+### NEW: Admin Panel
+**Goal:** Content management for administrators
+
+**Status:** ✅ Complete
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Admin dashboard | ✅ Complete | Stats overview (videos, decks, jobs, users) |
+| Video management | ✅ Complete | Add, edit, generate questions |
+| Story management | ✅ Complete | Questions by difficulty level |
+| Deck management | ✅ Complete | Sentence/audio/image generation pipeline |
+| Batch job monitoring | ✅ Complete | Cost tracking, status monitoring |
+| Admin auth guard | ✅ Complete | Email-based admin check |
+
+---
+
+### NEW: Premade Decks & Content Library
+**Goal:** Pre-generated content for efficient vocabulary learning
+
+**Status:** ✅ Complete
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Premade decks schema | ✅ Complete | `premadeDecks`, `premadeVocabulary` |
+| Content library | ✅ Complete | `sentences`, `images`, `wordAudio` shared pools |
+| Drip-feed subscriptions | ✅ Complete | `userDeckSubscriptions` with daily release |
+| Deck import scripts | ✅ Complete | `importWordList.ts`, `batch_generate_deck.py` |
+| Content generation pipeline | ✅ Complete | Gemini for sentences/audio/images |
+| Deck publishing | ✅ Complete | Published/draft status |
 
 ---
 
@@ -726,37 +818,38 @@ UsageLimits (per tier)
 
 ## Next Steps
 
-### Immediate (Phase 0.5 - Analytics & Quick Wins)
-| Task | Status | Blocked By |
-|------|--------|------------|
-| Add PostHog integration | ✅ Complete | - |
-| Save sentence context with vocabulary | ✅ Complete | - |
-| Manual vocab entry + AI enhancement | ❌ Not Started | - |
+### Immediate
+| Task | Priority | Notes |
+|------|----------|-------|
+| Integrate ElevenLabs for audio | High | Schema ready, need API integration |
+| Seed starter content (videos, stories) | High | Admin panel ready, need curated content |
+| Test full exam flow end-to-end | High | UI complete, needs QA |
 
-### Short-term (Phase 1 - Audio & Polish)
-| Task | Status | Blocked By |
-|------|--------|------------|
-| Integrate ElevenLabs for audio | ❌ Not Started | Sentence generation working |
-| Test full flashcard flow end-to-end | ❌ Not Started | UI + AI integration |
+### Short-term
+| Task | Priority | Notes |
+|------|----------|-------|
+| Shadowing practice UI | Medium | Backend complete, need recording interface |
+| FSRS parameter optimization | Medium | Schema exists, need optimizer |
+| Topic taxonomy seeding | Medium | Schema exists, need initial data |
 
 ### Medium-term
-| Task | Status | Notes |
-|------|--------|-------|
-| Import JLPT vocabulary lists | ❌ Not Started | Need data source |
-| Import TOEFL/SAT/GRE vocabulary | ❌ Not Started | Need data source |
-| Build shadowing practice (Phase 5.5) | ❌ Not Started | Can build with AI |
+| Task | Priority | Notes |
+|------|----------|-------|
+| Personalized story generation | High | Phase 3, blocked on AI pipeline |
+| Dictation exercises | Medium | Part of Phase 5.5 |
+| Email marketing setup | Medium | Phase 8 |
 
 ### Later
-| Task | Status | Notes |
-|------|--------|-------|
-| Register domain (sanlang.app) | ❌ Not Started | Before public launch |
-| Set up email provider | ❌ Not Started | Phase 8 |
-| Source official exam content | ❌ Not Started | Phase 9 blocker |
+| Task | Priority | Notes |
+|------|----------|-------|
+| React Native mobile app | Medium | Web-first approach |
+| PDF exam digitization | Low | Phase 9, blocked on content |
+| Image-based learning | Low | Phase 7 |
 
 ---
 
 ## Document Control
 
-**Version**: 2.5
-**Last Updated**: 2026-01-22
-**Status**: Active development - Phase 0.5 (Analytics & Quick Wins)
+**Version**: 3.0
+**Last Updated**: 2026-01-23
+**Status**: Active development - Core features complete, polishing and content needed

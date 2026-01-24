@@ -56,6 +56,154 @@ Use this format in the roadmap:
 
 ---
 
+## Development Guidelines
+
+### 1. Reuse Existing Components
+
+**Always check for existing components before creating new ones.**
+
+**UI Components (`web/src/components/ui/`):**
+- `Button`, `Card`, `Tabs`, `Progress`, `Alert`, `Table`, `Label`, `Separator`
+- `DropdownMenu`, `Collapsible`, `Textarea`, `Chart`
+- These are shadcn/ui components - use them instead of creating custom ones
+
+**Feature Components:**
+- `web/src/components/vocabulary/` - VocabularyCard, DeckPanel, word display
+- `web/src/components/flashcards/` - FlashcardDisplay, review interface
+- `web/src/components/progress/` - SkillRadar, ProgressChart, WeakAreasList
+- `web/src/components/session/` - SessionProgress, SessionReview, SessionComplete
+- `web/src/components/reader/` - ReaderView, WordPopup, ChapterNav
+- `web/src/components/admin/` - AdminLayout, AdminSidebar
+
+**Before creating a new component:**
+1. Search `web/src/components/` for similar functionality
+2. Check if an existing component can be extended with props
+3. If truly new, place in appropriate subdirectory
+
+### 2. Create Shared Abstractions
+
+**Backend patterns to follow:**
+
+```typescript
+// Learner model integration - call after any learning activity
+import { internal } from "./_generated/api";
+
+// After flashcard reviews:
+await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromFlashcardsInternal, {...});
+
+// After exams:
+await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromExamInternal, {...});
+
+// After comprehension quizzes:
+await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromComprehensionInternal, {...});
+
+// After sentence practice:
+await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromSentencePracticeInternal, {...});
+```
+
+**Content library pattern - use shared pools:**
+```typescript
+// Instead of storing content directly on flashcards/vocabulary:
+// ❌ flashcard.sentence, flashcard.imageUrl, flashcard.audioUrl
+
+// Use content library references:
+// ✅ sentences table, images table, wordAudio table
+// Link via sentenceId, imageId, wordAudioId
+```
+
+**Question patterns:**
+- Use `storyQuestions` / `videoQuestions` for cached questions by difficulty (1-6)
+- Use `examQuestions` for exam question bank
+- Use `questionHistory` to record all answered questions
+
+### 3. Add Analytics to New Features
+
+**All analytics go through the shared abstraction in `web/src/lib/analytics.ts`.**
+
+This allows us to swap providers (PostHog → Amplitude, etc.) without changing feature code.
+
+```typescript
+import { trackEvent, AnalyticsEvents } from '@/lib/analytics';
+
+function MyNewFeature() {
+  // Track feature usage
+  trackEvent('feature_name_started', {
+    language: 'japanese',
+    level: 'N3',
+  });
+
+  // Track completion
+  trackEvent('feature_name_completed', {
+    duration_seconds: 120,
+    score: 85,
+  });
+
+  // Use predefined event names when available
+  trackEvent(AnalyticsEvents.FLASHCARD_RATED, { rating: 'good' });
+}
+```
+
+**DO NOT use PostHog directly:**
+```typescript
+// ❌ Wrong - direct PostHog usage bypasses abstraction
+import { usePostHog } from 'posthog-js/react';
+posthog.capture('event', {...});
+
+// ✅ Correct - use the abstraction
+import { trackEvent } from '@/lib/analytics';
+trackEvent('event', {...});
+```
+
+**Standard events to track:**
+- `{feature}_started` - User begins the feature
+- `{feature}_completed` - User finishes successfully
+- `{feature}_abandoned` - User leaves without completing
+- `{feature}_error` - Something went wrong
+
+**AI-specific tracking (helpers already exist):**
+```typescript
+import { trackAIRequest, trackAISuccess, trackAIError } from '@/lib/analytics';
+
+// Track AI requests
+trackAIRequest('sentence_generation', 'gemini-2.0-flash', { word_count: 5 });
+
+// Track success with latency
+trackAISuccess('sentence_generation', 'gemini-2.0-flash', 1500);
+
+// Track failures
+trackAIError('sentence_generation', 'gemini-2.0-flash', 'timeout');
+```
+
+**Adding new event types:** Add to `AnalyticsEvents` in `analytics.ts` to keep events consistent.
+
+### 4. Integrate with Learner Model
+
+**Any feature that assesses user knowledge should update the learner model.**
+
+New quiz/assessment features must:
+1. Record questions to `questionHistory` via `learnerModel.recordQuestion`
+2. Update relevant skills via the appropriate `updateFrom*` function
+3. Include skill weights if the question tests multiple skills
+
+```typescript
+// Example: New comprehension feature
+await ctx.runMutation(internal.learnerModel.recordQuestion, {
+  userId,
+  language: "japanese",
+  sourceType: "my_new_feature",
+  sourceId: featureId,
+  questionContent: { questionText, questionType, correctAnswer },
+  userAnswer,
+  skills: [
+    { skill: "reading", weight: 0.7 },
+    { skill: "vocabulary", weight: 0.3 },
+  ],
+  grading: { isCorrect, score, gradedAt: Date.now() },
+});
+```
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -111,23 +259,97 @@ cd backend && source venv/bin/activate && python run.py
 ### Convex (`web/convex/`)
 - **Schema**: `schema.ts` - All table definitions with validators
 - **Functions**: One file per domain:
-  - `vocabulary.ts` - Word management with mastery tracking
-  - `flashcards.ts` - SRS with FSRS algorithm
-  - `subscriptions.ts` - Tier management + usage tracking
-  - `userSentences.ts` - Output practice + AI verification
-  - `mockTests.ts` - Exam generation + grading
-  - `users.ts` - User profile management
-  - `settings.ts` - User preferences
-  - `progress.ts` - Reading progress
+
+**Core Learning:**
+- `vocabulary.ts` - Word management with mastery tracking
+- `flashcards.ts` - SRS with FSRS algorithm (17-weight vector)
+- `userSentences.ts` - Output practice + AI verification
+- `learnerModel.ts` - Unified skill tracking, weak areas, readiness
+
+**Assessment:**
+- `examTemplates.ts` - Exam structure definitions
+- `examQuestions.ts` - Question bank CRUD
+- `examAttempts.ts` - Exam sessions, AI grading, scoring
+- `placementTest.ts` - CAT/IRT adaptive testing
+- `mockTests.ts` - AI-generated practice tests
+
+**Content:**
+- `premadeDecks.ts` - Pre-built vocabulary decks
+- `premadeVocabulary.ts` - Words in premade decks (deprecated, merged)
+- `contentLibrary.ts` - Shared sentences, images, audio pools
+- `youtubeContent.ts` - Video metadata and transcripts
+- `storyQuestions.ts` / `videoQuestions.ts` - Questions by difficulty
+
+**User & Settings:**
+- `users.ts` - Profile, languages, streaks
+- `settings.ts` - User preferences
+- `subscriptions.ts` - Tier management + usage tracking
+
+**AI:**
+- `ai.ts` - AI model routing, sentence generation, verification, grading
+
 - **Auth**: `auth.config.ts` - Clerk JWT configuration
 
 ### Key Data Models
+
+**Learning:**
 - `vocabulary` - Words with language, mastery state, source tracking
-- `flashcards` - SRS cards with FSRS algorithm fields
+- `flashcards` - SRS cards with FSRS fields (stability, difficulty, due date)
 - `userSentences` - User output with AI verification scores
+- `learnerProfile` - Unified skills (0-100), weak areas, readiness per language
+- `questionHistory` - All questions answered with full context for re-grading
+- `dailyProgress` - Time-series daily metrics for charts
+
+**Assessment:**
+- `examTemplates` - Exam structures with sections and time limits
+- `examQuestions` - Question bank with multiple types and rubrics
+- `examAttempts` - User exam sessions with section scores
+- `placementTests` - CAT sessions with ability estimates
+
+**Content:**
+- `premadeDecks` - Deck metadata (JLPT N5-N1, etc.)
+- `sentences` / `images` / `wordAudio` - Content library pools
+- `youtubeContent` - Videos with transcripts and questions
+
+**User:**
+- `users` - Profile, languages, target exams, streaks
 - `subscriptions` - Tier (free/basic/pro/unlimited) + status
 - `usageRecords` - Monthly usage counters per action type
-- `mockTests` - Generated exams with sections and questions
+
+### Admin Panel (`/admin/*`)
+The admin panel is integrated into the main web app at `/admin/*` routes. Only users with admin email (hardcoded in `web/src/lib/admin.ts`) can access these pages.
+
+**Routes:**
+- `/admin` - Dashboard with stats overview (videos, decks, jobs, users)
+- `/admin/videos` - Video management (list, add, edit YouTube videos)
+- `/admin/videos/:id` - Video form with difficulty-based questions (1-6)
+- `/admin/stories` - Story listing with question status per difficulty
+- `/admin/stories/:storyId` - Story question editor
+- `/admin/decks` - Flashcard deck pipeline (sentence/audio/image generation)
+- `/admin/decks/:deckId` - Deck detail with generation controls
+- `/admin/jobs` - Batch job monitoring
+- `/admin/config` - AI models reference and CLI commands
+
+**Key Files:**
+- `web/src/lib/admin.ts` - Admin email check (`isAdmin()`)
+- `web/src/components/admin/AdminLayout.tsx` - Layout with sidebar and auth guard
+- `web/src/pages/admin/*.tsx` - Admin page components
+- `web/convex/admin.ts` - Admin stats query
+- `web/convex/videoQuestions.ts` - Video questions by difficulty
+- `web/convex/storyQuestions.ts` - Story questions by difficulty
+
+**Difficulty Levels (1-6):**
+Both videos and stories support questions at 6 difficulty levels:
+- Level 1-2: N5-N4 / A1-A2 (beginner)
+- Level 3-4: N3-N2 / B1-B2 (intermediate)
+- Level 5-6: N1+ / C1-C2 (advanced)
+
+**Local Batch Server:**
+For triggering Python batch generation from the UI, run:
+```bash
+cd backend && python run_admin.py
+# Server at http://localhost:8001
+```
 
 ---
 
@@ -149,22 +371,28 @@ CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-domain.clerk.accounts.dev
 
 ## Current Implementation Status
 
-### ✅ Completed
-- Convex schema with all SanLang data models
-- Convex functions for vocabulary, flashcards, subscriptions, mock tests
-- FSRS-based spaced repetition algorithm
-- Usage tracking with tier limits (mocked)
-- Basic Clerk integration started
+### ✅ Core Features Complete
+- **Auth**: Clerk fully integrated with Convex JWT
+- **Vocabulary**: Full CRUD, mastery tracking, source tracking
+- **Flashcards**: FSRS algorithm (17-weight), content rotation, review UI
+- **Practice Exams**: Templates, question bank, attempts, AI grading, results UI
+- **Placement Testing**: CAT/IRT adaptive testing with level determination
+- **Learner Model**: Unified skill tracking, weak areas, readiness prediction
+- **Progress Dashboard**: Skill radar, daily progress, analytics
+- **YouTube Integration**: Player, transcript sync, comprehension questions
+- **Premade Decks**: JLPT decks, drip-feed subscriptions, content library
+- **Admin Panel**: Video/story/deck management, batch job monitoring
+- **Output Practice**: AI verification with grammar/usage/naturalness scoring
 
-### 🚧 In Progress
-- Clerk auth migration (replacing Firebase)
+### 🚧 Partial / In Progress
+- **Audio generation**: Schema ready, ElevenLabs not integrated
+- **Shadowing**: Backend complete, UI not started
+- **Topic taxonomy**: Schema exists, needs seeding
 
 ### ❌ Not Started
-- Flashcard UI
-- Vocabulary input UI
-- AI sentence generation integration
-- AI verification integration
-- Email marketing setup
+- Personalized story generation
+- Email marketing
+- Mobile app (React Native)
 
 ---
 
@@ -442,7 +670,13 @@ batchJobs           → Tracks generation jobs and costs
 | File | Purpose |
 |------|---------|
 | `ROADMAP.md` | Project vision, phases, and progress tracking |
-| `PRD.md` | Original product requirements (legacy reference) |
+| `PRD.md` | Product requirements and feature documentation |
 | `web/convex/schema.ts` | All Convex table definitions |
+| `web/convex/learnerModel.ts` | Unified skill tracking - integrate new assessments here |
+| `web/convex/ai.ts` | AI model routing - add new AI features here |
 | `web/src/main.tsx` | App entry with providers |
+| `web/src/router.tsx` | All routes - add new pages here |
 | `web/src/contexts/AuthContext.tsx` | Auth state wrapper |
+| `web/src/lib/analytics.ts` | Analytics abstraction layer - ALL tracking goes through here |
+| `web/src/lib/admin.ts` | Admin email check |
+| `web/src/components/ui/` | Reusable UI components (shadcn/ui) |

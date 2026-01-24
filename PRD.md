@@ -1,425 +1,374 @@
-# Product Requirements Document: Japanese Graded Reader iPad App
+# Product Requirements Document: SanLang
 
 ## Executive Summary
 
-An iPad application that helps learners improve their Japanese reading comprehension through AI-generated and curated graded stories tailored to JLPT proficiency levels (N5–N1). Stories are presented as **chapter-based narratives** with **images, audio narration, thumbnails**, interactive word definitions, and integrated vocabulary review tools. The app supports **accounts, monetization**, and both **pre-generated and automatically generated long-form content**, including **anthologies**.
+**SanLang** is a multi-language exam prep platform with AI-powered personalization. The platform helps learners prepare for language proficiency exams (JLPT, TOEFL, DELF/DALF, and more) through a unified learning system that combines reading, listening, vocabulary building, active output practice, and timed practice exams.
+
+The platform features a **unified learner model** that tracks understanding across all activities, identifies weak areas, and predicts exam readiness. AI powers sentence generation, answer verification, and essay grading to provide personalized feedback at scale.
 
 ---
 
 ## Vision
 
-Create an engaging, scalable, and sustainable Japanese reading platform that combines graded content, long-form storytelling, and modern AI capabilities to support learners from beginner to advanced levels.
+Create an intelligent, adaptive language learning platform where every activity contributes to a unified understanding of what the learner knows, enabling truly personalized exam preparation.
 
 ---
 
 ## Target Users
 
-- **Primary**: Japanese language learners (JLPT N5–N1)
-- **Secondary**: Self-studiers seeking extensive reading practice
-- **Tertiary**: JLPT exam candidates
-- **Power users**: Advanced learners interested in long-form stories and anthologies
+- **Primary**: Language learners preparing for proficiency exams (JLPT, TOEFL, DELF/DALF, TCF)
+- **Secondary**: Self-studiers seeking structured vocabulary and reading practice
+- **Tertiary**: Students wanting AI-powered writing feedback
 
 ---
 
-## Success Metrics
+## Supported Languages & Exams
 
-- Daily / Monthly active users (DAU / MAU)
-- Day-7 and Day-30 retention
-- Stories and chapters completed per user
-- Time spent reading and listening
-- Words saved and reviewed
-- Subscription conversion rate
-- Churn rate
+| Language | Target Exams | Levels | Status |
+|----------|--------------|--------|--------|
+| **Japanese** | JLPT | N5, N4, N3, N2, N1 | ✅ Full Support |
+| **English** | TOEFL, SAT, GRE | - | ✅ Schema Ready |
+| **French** | DELF, DALF, TCF | A1-C2 | ✅ Schema Ready |
 
 ---
 
 ## Core Features
 
-### 1. JLPT-Leveled Story Library
+### 1. Unified Learner Model
 
-**Description**: A library of graded stories organized by JLPT level, including short stories, long-form stories, and anthologies.
-
-**Requirements**:
-
-- Stories categorized by JLPT levels: N5, N4, N3, N2, N1
-- Story types:
-
-  - Short stories
-  - Long-form stories (multi-chapter)
-  - Anthologies (collections of thematically related stories)
-
-- Each level contains:
-
-  - 20–50 short stories at launch
-  - 5–10 long-form stories (5–20 chapters each)
-
-**Length Guidelines (per story, total)**:
-
-- N5: 800–1,500 characters (2–4 chapters)
-- N4: 1,500–2,500 characters (3–5 chapters)
-- N3: 2,500–4,000 characters (5–8 chapters)
-- N2: 4,000–5,000 characters (8–10 chapters)
-- N1: 4,500–5,500 characters (8–12 chapters, ~10 minutes max)
-
-**Chapter Length Guidelines**:
-
-- N5: 200–300 characters
-- N4: 300–400 characters
-- N3: 400–500 characters
-- N2: 450–550 characters
-- N1: 500–600 characters
-
-**Story Metadata**:
-
-- Title (Japanese + English)
-- JLPT level
-- Story type (short / long / anthology)
-- Chapter count
-- Estimated reading time
-- Grammar points covered
-- Vocabulary count
-- Topic / genre
-- Thumbnail image
-
----
-
-### 2. Chapter-Based Story Structure
-
-**Description**: Stories are broken into chapters to support longer reading sessions and progressive learning.
-
-**Requirements**:
-
-- Every story consists of one or more chapters
-- Each chapter:
-
-  - Has a title
-  - Includes at least one illustration
-  - Has its own audio narration
-
-- Chapter progress is saved automatically
-- Users can resume reading from last completed chapter
-
----
-
-### 3. Interactive Reading Interface
-
-**Description**: A focused, customizable reading experience.
-
-**Requirements**:
-
-- Large, readable Japanese text
-- Tap-to-define for any word
-- Definition popup:
-
-  - Dictionary form
-  - Reading (hiragana)
-  - English meaning
-  - Part of speech
-  - Example sentence (optional)
-  - Add to review button
-
-- Furigana toggle (N5–N3 default ON)
-- Adjustable text size and line spacing
-- **Dark mode** and light mode
-- Chapter navigation
-- Reading progress indicator (chapter + story)
-
----
-
-### 4. Images, Thumbnails, and Visuals
-
-**Description**: Visuals enhance comprehension and engagement.
-
-**Requirements**:
-
-- **Story thumbnail** used in library and discovery views
-- **At least one image per chapter**
-- Style-consistent illustrations across levels
-- Images placed at natural narrative breaks
-
-**Technical Notes**:
-
-- Pre-generated and cached
-- Optimized for iPad screen sizes
-
----
-
-### 5. Audio Narration
-
-**Description**: Native-quality Japanese audio for immersive listening that follows the text continuously.
-
-**Requirements**:
-
-- **One continuous audio narration per story** (not per chapter)
-- Chapters act as logical markers within a single audio track
-- Playback controls: play/pause, seek, speed (0.5×–1.5×)
-- **Automatic scrolling synced to narration**
-- Current sentence or paragraph is visually highlighted during playback
-- **Currently spoken word is highlighted in real time**
-- User can tap text to jump to that position in the audio
-- When tapping a word, user can select **“Start reading from here”** to seek audio playback to that word
-- Audio playback continues seamlessly across chapters
-
-**Premium Features**:
-
-- Offline audio download
-
----
-
-### 6. Automatic Story Generation
-
-**Description**: AI-powered system to generate new content dynamically.
+**Description**: A single source of truth for user understanding, updated after every learning activity.
 
 **Capabilities**:
+- Per-language skill tracking (Vocabulary, Grammar, Reading, Listening, Writing, Speaking)
+- Weak area detection from mistake patterns
+- Exam readiness prediction (Not Ready → Almost Ready → Ready → Confident)
+- Daily progress tracking for analytics and streaks
+- Question history with full context for re-grading
 
-- Generate stories by:
+**Data Model**:
+```
+learnerProfile
+├── userId, language
+├── abilityEstimate (-3 to +3 IRT scale)
+├── skills: { vocabulary, grammar, reading, listening, writing, speaking } (0-100)
+├── weakAreas: [{ skill, topic, score, lastTestedAt, questionCount }]
+├── vocabCoverage: { targetLevel, totalWords, known, learning, unknown }
+├── readiness: { level, predictedScore, confidence }
+├── fsrsMetrics: { actualRetention, predictedRetention, reviewsPerDay }
+└── streak, totalStudyMinutes, lastActivityAt
+```
 
-  - JLPT level
-  - Length (short / long)
-  - Topic or genre
-
-- Automatically:
-
-  - Split into chapters
-  - Generate chapter images
-  - Generate audio narration
-  - Attach metadata
-
-**Constraints**:
-
-- Generation may be:
-
-  - Limited for free users
-  - Unlimited or higher-quality for premium users
-
-- Human-reviewed content may be marked as “Editor’s Pick”
-
----
-
-### 7. Vocabulary Review System
-
-_(Unchanged in core functionality, applies across chapters and long stories)_
-
-- Word List
-- SRS with spaced repetition
-- Statistics and mastery tracking
+**Integration Points**:
+- Flashcard reviews → update vocabulary skill
+- Exam completion → update all skills + weak areas
+- Comprehension quizzes → update reading/listening
+- Sentence practice → update grammar/writing
+- Shadowing → update speaking
 
 ---
 
-### 8. Accounts & Sync
+### 2. FSRS Flashcard System
 
-**Description**: Persistent user identity and cross-device support.
+**Description**: Industry-standard spaced repetition using the FSRS algorithm (same as Anki).
 
-**Requirements**:
+**Features**:
+- Full FSRS implementation with 17-weight parameter vector
+- Card states: New → Learning → Review → Relearning
+- Stability and difficulty calculations per card
+- Content rotation (multiple sentences, images, audio per word)
+- Customizable retention targets (80-97%)
 
-- Account required to use the app
-- Account creation via:
-
-  - Apple ID
-  - Email/password
-
-- Cloud sync for:
-
-  - Reading progress
-  - Word lists and SRS state
-  - Purchased content
-
-- No guest or local-only mode
+**Content Sources**:
+- AI-generated example sentences at user's level
+- Pre-generated audio (word pronunciation + sentence)
+- AI-generated context images
+- Content library with shared pools for efficiency
 
 ---
 
-### 9. Monetization
+### 3. Practice Exams
 
-**Primary Model: Subscription (Freemium)**
+**Description**: Full exam simulation with timed sections and AI grading.
 
-**Free Tier**:
+**Features**:
+- Exam templates with configurable sections and time limits
+- Question bank supporting multiple types:
+  - Multiple choice
+  - Short answer
+  - Essay/composition
+  - Translation
+  - Fill-in-the-blank
+  - Matching
+- AI grading for essays with detailed feedback
+- Section-by-section score breakdown
+- Pass/fail determination based on exam-specific thresholds
+- Per-question review with explanations
 
-- Access to a small set of sample stories per JLPT level
-- Limited number of chapters
-- Limited daily SRS reviews
-- No offline access
-- No export features
-
-**Premium Subscription**:
-
-- Full story library
-- All long-form stories and anthologies
-- Unlimited SRS reviews
-- Automatic story generation
-- Offline access
-- Export vocabulary to Anki / CSV
-- Early access to new content
-
-**Optional Add-ons**:
-
-- One-time purchase anthologies
-- Special themed story packs
+**Question Sources**:
+- AI-generated questions from vocabulary
+- Digitized questions from official practice materials (future)
 
 ---
 
-### 10. Progress Tracking
+### 4. Placement Testing
 
-**Enhancements**:
+**Description**: CAT-style adaptive testing to determine user's initial level.
 
-- Track chapter-level completion
-- Long-story completion badges
-- Anthology completion milestones
-- **"End of story"**:
-
-  - At the end of a story, have 3 recommended next stories to read as cards with thumbnails, title, level etc.
-  - Story stats (time spent, words saved, comprehension score if applicable)
-  - Recommendation logic (v1):
-    - Same JLPT level
-    - Similar length or slightly longer
-    - Shared topic or genre
-  - Recommendation logic (future):
-    - Based on known / unknown word overlap
-    - User reading history and preferences
-    - Gradual difficulty progression
+**Features**:
+- Item Response Theory (IRT) with 3-Parameter Logistic model
+- Adaptive question selection for maximum information gain
+- Section-based scoring (Vocabulary, Grammar, Reading, Listening)
+- Ability estimation with confidence intervals
+- Automatic level determination (N5-N1 or A1-C2)
 
 ---
 
-## MVP Scope (Updated)
+### 5. Vocabulary Management
 
-**Must Have**:
+**Description**: Personal vocabulary with multiple input methods and mastery tracking.
 
-- Chapter-based stories
-- Images and audio for every chapter
-- Story thumbnails
-- Dark mode
-- Accounts (Apple ID)
-- Basic monetization infrastructure
-
-**Should Have**:
-
-- Long-form stories
-- One anthology per level
-
-**Future**:
-
-- Fully dynamic story generation
-- Community-curated anthologies
+**Features**:
+- Source tracking (story, manual, import, YouTube, mistake)
+- Mastery states: New → Learning → Tested → Mastered
+- Auto-generated flashcards with AI sentences
+- Import from premade decks (JLPT N5-N1, CEFR levels)
+- Drip-feed subscriptions for gradual vocabulary release
 
 ---
 
-### 11. Story Import & Processing
+### 6. Active Output Practice
 
-**Description**: Allow users to upload Japanese text and automatically convert it to the app's tokenized format for reading.
+**Description**: Users produce sentences using target vocabulary with AI verification.
 
-**Requirements**:
-
-- Upload interface:
-  - Text input field (paste text)
-  - File upload (.txt, .json)
-  - URL input (web article)
-
-- Processing pipeline:
-  - Parse Japanese text
-  - Tokenize into words/morphemes
-  - Add furigana (reading annotations)
-  - Identify base forms and parts of speech
-  - Break into appropriate segments (paragraphs/dialogue)
-  - Generate chapter structure if text is long enough
-  - Estimate JLPT level based on vocabulary/grammar
-
-- User controls:
-  - Manual JLPT level selection
-  - Chapter boundary editing
-  - Metadata input (title, author, genre, tags)
-  - Preview before saving
-
-- Output:
-  - Converts to app's JSON format
-  - Saves to user's custom story library
-  - Available in "My Stories" section
-
-**Technical Notes**:
-
-- Use morphological analysis (MeCab or similar) for tokenization
-- API integration for furigana generation
-- Validate JSON structure before saving
-- Store in user's cloud storage/account
-
-**Use Cases**:
-
-- Teachers uploading custom content for students
-- Advanced learners importing native materials
-- Users wanting to read specific articles/stories
-- Creating personalized reading material
+**Features**:
+- Select a word, write a sentence using it
+- AI verification scoring:
+  - Grammar correctness (0-100)
+  - Usage appropriateness (0-100)
+  - Naturalness (0-100)
+- Detailed corrections with explanations
+- Suggested improved sentences
+- Mistakes auto-added to vocabulary
 
 ---
 
-## Open Questions
+### 7. Reading & Comprehension
 
-1. Pricing tiers and regional pricing
-2. Limits on AI-generated content
-3. Editorial vs fully automated content balance
+**Description**: Graded stories with interactive reading and comprehension quizzes.
+
+**Features**:
+- Stories organized by proficiency level
+- Tap-to-define for any word (dictionary lookup)
+- Save words to vocabulary while reading
+- Source sentence context preserved
+- AI-generated comprehension questions at 6 difficulty levels
+- Multiple question types with scoring
 
 ---
+
+### 8. YouTube Integration
+
+**Description**: Learn from real video content with transcripts and comprehension.
+
+**Features**:
+- Embedded YouTube player
+- Synchronized transcript scrolling
+- AI-generated comprehension questions
+- Vocabulary extraction from transcripts
+- Level-appropriate question variations
+
+---
+
+### 9. Shadowing Practice
+
+**Description**: Pronunciation practice with AI feedback.
+
+**Features**:
+- Listen to target audio
+- Record user's attempt
+- AI accuracy scoring
+- Feedback on pronunciation
+- Updates speaking skill in learner model
+
+---
+
+### 10. Premade Vocabulary Decks
+
+**Description**: Pre-generated content for common vocabulary lists.
+
+**Features**:
+- JLPT N5-N1 complete vocabulary sets
+- Pre-generated sentences, audio, and images
+- Drip-feed subscription model (X cards/day)
+- Progress tracking per deck
+- Content reuse across decks for efficiency
+
+---
+
+### 11. Progress Tracking
+
+**Description**: Visual analytics of learning progress.
+
+**Features**:
+- Skill radar chart (6 dimensions)
+- Daily activity graphs
+- Streak tracking with calendar view
+- Weak areas list with remediation suggestions
+- Exam readiness indicators
+
+---
+
+### 12. Admin Panel
+
+**Description**: Content management for platform administrators.
+
+**Features**:
+- Video management (add, edit, generate questions)
+- Story management with difficulty-based questions
+- Flashcard deck pipeline (sentence/audio/image generation)
+- Batch job monitoring with cost tracking
+- AI model configuration reference
 
 ---
 
 ## Implementation Status
 
-### Completed Features ✅
+### ✅ Completed Features
+
+| Feature | Backend | UI | Notes |
+|---------|---------|-----|-------|
+| Unified Learner Model | ✅ | ✅ | Full schema, queries, mutations, integration |
+| FSRS Flashcards | ✅ | ✅ | 17-weight algorithm, content rotation |
+| Practice Exams | ✅ | ✅ | Templates, questions, attempts, AI grading |
+| Placement Testing | ✅ | ✅ | IRT/CAT with level determination |
+| Vocabulary Management | ✅ | ✅ | CRUD, mastery, import |
+| Active Output Practice | ✅ | ✅ | AI verification with scores |
+| Reading & Comprehension | ✅ | ✅ | Stories, tap-to-define, quizzes |
+| YouTube Integration | ✅ | ✅ | Player, transcript, questions |
+| Premade Decks | ✅ | ✅ | Drip-feed subscriptions |
+| Progress Dashboard | ✅ | ✅ | Skill radar, daily progress |
+| Guided Study Sessions | ✅ | ✅ | Review → Input → Output flow |
+| Admin Panel | ✅ | ✅ | Videos, stories, decks, jobs |
+| Clerk Auth | ✅ | ✅ | JWT integration with Convex |
+| Multi-Language Schema | ✅ | ✅ | Japanese, English, French |
+| Content Library | ✅ | - | Shared sentences, images, audio |
+
+### 🚧 In Progress
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **JLPT-Leveled Story Library** | ✅ Complete | Stories organized by N5-N1 levels |
-| **Chapter-Based Story Structure** | ✅ Complete | Multi-chapter stories with images |
-| **Interactive Reading Interface** | ✅ Complete | Tap-to-define, definitions via Jisho.org |
-| **Furigana Support** | ✅ Complete | Toggle on/off per user preference |
-| **Dark Mode** | ✅ Complete | System/Light/Dark theme options |
-| **Custom Fonts** | ✅ Complete | 4 Japanese fonts (System, Hiragino Sans, Mincho, Rounded) |
-| **Adjustable Text Size** | ✅ Complete | 14-32pt range |
-| **Two Reading Modes** | ✅ Complete | Paged (swipe) + Continuous (scroll) |
-| **Auto-Scroll** | ✅ Complete | Long-press to activate, configurable speed |
-| **Story Thumbnails** | ✅ Complete | Cover images in library view |
-| **Chapter Images** | ✅ Complete | AI-generated images per chapter |
-| **Reading Progress** | ✅ Complete | Auto-save, resume, completion tracking |
-| **Story Recommendations** | ✅ Complete | 3 suggestions at end of story |
-| **Vocabulary System** | ✅ Complete | Save words, view list, filter/sort |
-| **Premium Subscription (Mock)** | ✅ Complete | Lock stories, paywall, toggle in debug |
-| **Offline Caching** | ✅ Complete | Story data cached for offline reading |
-| **Image Generation Pipeline** | ✅ Complete | DALL-E 3 integration for chapter art |
-| **Romaji Search** | ✅ Complete | Search Japanese with romaji input |
-| **Story Refresh** | ✅ Complete | Pull-to-refresh with cache management |
+| Audio Generation | Backend ready | ElevenLabs integration pending |
+| FSRS Parameter Optimization | Schema ready | Optimizer not implemented |
+| Topic Taxonomy | Schema exists | Needs seeding |
 
-### In Progress 🚧
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| **Audio Narration** | 🚧 Partial | Backend pipeline exists, not all stories have audio |
-| **Audio Highlighting** | 🚧 Planned | Sentence sync stored in data model |
-| **Account System** | 🚧 Partial | Google Sign-In UI exists, sync not implemented |
-
-### Not Started ❌
+### ❌ Not Started
 
 | Feature | Priority | Notes |
 |---------|----------|-------|
-| **iOS Share Sheet Import** | High | Share any webpage → tokenized story with images |
-| **Personalized Story Generation** | High | AI generates stories tailored to user's level & interests |
-| **Instant Sentence Mining** | High | One-tap sentence save with Anki export |
-| **Real Payment Integration** | High | Currently using mock subscription |
-| **Audio Voice Selection** | Medium | AI-selected voices per story |
-| **Story Generation UI** | Medium | Backend exists, needs mobile/web GUI |
-| **Story Ratings** | Low | Like/dislike system |
-| **Popularity Sorting** | Low | Sort by user engagement |
+| Personalized Story Generation | High | Stories from user's vocabulary |
+| Shadowing with Speech Recognition | High | Currently accuracy scoring only |
+| Email Marketing | Medium | Resend/Loops integration |
+| Mobile App (React Native) | Medium | Web-first approach |
+| PDF Exam Extraction | Low | Blocked on sourcing materials |
 
 ---
 
-## Known Issues
+## Tech Stack
 
-| Issue | Severity | Description |
-|-------|----------|-------------|
-| Word tap in continuous mode | Medium | Tapping words doesn't always register in continuous scroll mode |
-| Furigana accuracy | Low | Some stories have incorrect furigana annotations |
-| Audio timing sync | Medium | Word-level highlighting not yet implemented |
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | React 19 + Vite + TailwindCSS v4 |
+| **Routing** | TanStack Router |
+| **Backend** | Convex (database + serverless functions) |
+| **Auth** | Clerk |
+| **AI** | OpenRouter (Claude, GPT), Gemini |
+| **Audio** | ElevenLabs TTS (planned) |
+| **Images** | DALL-E 3, Gemini Image |
+| **Algorithms** | FSRS (spaced repetition), IRT (adaptive testing) |
+
+---
+
+## Architecture
+
+### Data Models (Convex Schema)
+
+**Learning Core:**
+- `users` - Profile, languages, target exams, streaks
+- `vocabulary` - Words with mastery tracking
+- `flashcards` - SRS cards with FSRS fields
+- `flashcardReviews` - Review history
+- `userSentences` - Output practice with AI scoring
+- `shadowingPractices` - Pronunciation practice
+
+**Content:**
+- `stories` - Graded reading content
+- `youtubeContent` - Videos with transcripts
+- `storyQuestions` / `videoQuestions` - Comprehension questions
+- `premadeDecks` / `premadeVocabulary` - Pre-built vocab sets
+- `sentences` / `images` / `wordAudio` - Content libraries
+
+**Assessment:**
+- `placementTests` - CAT sessions
+- `examTemplates` - Exam structures
+- `examQuestions` - Question bank
+- `examAttempts` - User exam sessions
+- `mockTests` - AI-generated practice tests
+
+**Analytics:**
+- `learnerProfile` - Unified skill tracking
+- `questionHistory` - All questions answered
+- `dailyProgress` - Time-series metrics
+- `readingProgress` - Story completion
+
+**Settings:**
+- `userSettings` - Preferences
+- `subscriptions` - Tier management
+- `usageRecords` - Monthly usage
+- `fsrsSettings` - SRS customization
+- `contentPreferences` - Interest personalization
+
+---
+
+## Future Direction
+
+### ML Opportunities
+
+The learner model collects rich data enabling:
+
+1. **Adaptive Question Selection** - Extend CAT/IRT to all assessments
+2. **Content Recommendation** - Suggest stories/videos based on vocabulary overlap
+3. **Personalized FSRS** - User-specific forgetting curves
+4. **Weak Area Detection** - Pattern recognition in mistakes
+5. **Learning Path Optimization** - Prerequisite-aware curriculum
+
+### Content Expansion
+
+1. **PDF Exam Digitization** - Extract questions from official practice materials
+2. **Personalized Stories** - AI-generated stories using user's vocabulary
+3. **Listening Dictation** - Type what you hear exercises
+4. **Writing Prompts** - Essay practice with AI grading
+
+### Platform Expansion
+
+1. **React Native Mobile App** - iOS and Android
+2. **Offline Mode** - Download content for offline study
+3. **Social Features** - Study groups, leaderboards
+
+---
+
+## Success Metrics
+
+- Daily/Monthly active users (DAU/MAU)
+- Day-7 and Day-30 retention
+- Words mastered per user
+- Exam readiness achievement rate
+- Practice exam completion rate
+- Subscription conversion rate
 
 ---
 
 ## Document Control
 
-**Version**: 1.2
-**Last Updated**: 2026-01-12
-**Status**: Updated with implementation status and known issues
+**Version**: 2.0
+**Last Updated**: 2026-01-23
+**Status**: Active development

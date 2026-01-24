@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
@@ -18,9 +18,12 @@ import {
   BookOpen,
   Video,
   TrendingUp,
+  Target,
 } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { buildSessionPlan, getSessionDescription, DURATION_OPTIONS } from "@/lib/sessionPlanner";
+import { getRandomStudyPhrase } from "@/lib/studyPhrases";
+import { LANGUAGES } from "@/lib/languages";
 
 export function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -61,6 +64,17 @@ export function DashboardPage() {
 
   // Fetch videos for recommendations
   const primaryLanguage = userProfile?.primaryLanguage ?? "japanese";
+
+  // Get language info and random study phrase (stable per page load)
+  const languageInfo = LANGUAGES.find((l) => l.value === primaryLanguage);
+  const studyPhrase = useMemo(
+    () => getRandomStudyPhrase(primaryLanguage),
+    [primaryLanguage]
+  );
+
+  // Check if user needs placement test for their primary language
+  const needsPlacementTest = userProfile && !userProfile.proficiencyLevels?.[primaryLanguage as keyof typeof userProfile.proficiencyLevels];
+
   const videos = useQuery(
     api.youtubeContent.list,
     { language: primaryLanguage }
@@ -109,7 +123,11 @@ export function DashboardPage() {
 
   // Handle start studying
   const handleStartStudying = () => {
-    navigate({ to: "/study-session" });
+    if (needsPlacementTest) {
+      navigate({ to: "/placement-test", search: { language: primaryLanguage } });
+    } else {
+      navigate({ to: "/study-session" });
+    }
   };
 
   // Only show skeleton on initial auth load, not during navigation
@@ -165,7 +183,7 @@ export function DashboardPage() {
             <div className="relative">
               {isPreviewMode ? (
                 <PreviewStartStudying />
-              ) : (
+              ) : needsPlacementTest ? (
                 <>
                   <div className="text-center mb-6">
                     <button
@@ -173,8 +191,39 @@ export function DashboardPage() {
                       className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                     >
                       <span className="flex items-center justify-center gap-3">
+                        <Target className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                        Start Placement Test
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Placement test explanation */}
+                  <div className="text-center">
+                    <p className="text-foreground font-medium mb-2">
+                      Let's find your starting level
+                    </p>
+                    <p className="text-sm text-foreground-muted max-w-md mx-auto">
+                      Take a quick adaptive test (10-15 questions) to personalize your learning path.
+                      The test adjusts to your skill level as you answer.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-center mb-6">
+                    {/* Language badge */}
+                    <div className="flex justify-center mb-3">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted/50 text-sm text-foreground-muted">
+                        {languageInfo?.flag} {languageInfo?.label}
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleStartStudying}
+                      className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                    >
+                      <span className="flex items-center justify-center gap-3">
                         <Play className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                        Start Studying
+                        {studyPhrase}
                       </span>
                     </button>
                   </div>

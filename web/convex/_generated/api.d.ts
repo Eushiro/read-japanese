@@ -8,14 +8,24 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as ai from "../ai.js";
 import type * as aiHelpers from "../aiHelpers.js";
 import type * as batchJobs from "../batchJobs.js";
+import type * as contentLibrary from "../contentLibrary.js";
 import type * as crons from "../crons.js";
+import type * as examAttempts from "../examAttempts.js";
+import type * as examQuestions from "../examQuestions.js";
+import type * as examTemplates from "../examTemplates.js";
 import type * as flashcards from "../flashcards.js";
 import type * as http from "../http.js";
+import type * as learnerModel from "../learnerModel.js";
+import type * as lib_gradingProfiles from "../lib/gradingProfiles.js";
 import type * as lib_helpers from "../lib/helpers.js";
+import type * as lib_models from "../lib/models.js";
 import type * as lib_paymentTypes from "../lib/paymentTypes.js";
+import type * as lib_storage from "../lib/storage.js";
+import type * as migrations_settingsMigration from "../migrations/settingsMigration.js";
 import type * as mockTests from "../mockTests.js";
 import type * as payments from "../payments.js";
 import type * as placementTest from "../placementTest.js";
@@ -33,6 +43,7 @@ import type * as userDeckSubscriptions from "../userDeckSubscriptions.js";
 import type * as userSentences from "../userSentences.js";
 import type * as users from "../users.js";
 import type * as videoData from "../videoData.js";
+import type * as videoQuestions from "../videoQuestions.js";
 import type * as vocabulary from "../vocabulary.js";
 import type * as youtubeContent from "../youtubeContent.js";
 
@@ -43,14 +54,24 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   ai: typeof ai;
   aiHelpers: typeof aiHelpers;
   batchJobs: typeof batchJobs;
+  contentLibrary: typeof contentLibrary;
   crons: typeof crons;
+  examAttempts: typeof examAttempts;
+  examQuestions: typeof examQuestions;
+  examTemplates: typeof examTemplates;
   flashcards: typeof flashcards;
   http: typeof http;
+  learnerModel: typeof learnerModel;
+  "lib/gradingProfiles": typeof lib_gradingProfiles;
   "lib/helpers": typeof lib_helpers;
+  "lib/models": typeof lib_models;
   "lib/paymentTypes": typeof lib_paymentTypes;
+  "lib/storage": typeof lib_storage;
+  "migrations/settingsMigration": typeof migrations_settingsMigration;
   mockTests: typeof mockTests;
   payments: typeof payments;
   placementTest: typeof placementTest;
@@ -68,6 +89,7 @@ declare const fullApi: ApiFromModules<{
   userSentences: typeof userSentences;
   users: typeof users;
   videoData: typeof videoData;
+  videoQuestions: typeof videoQuestions;
   vocabulary: typeof vocabulary;
   youtubeContent: typeof youtubeContent;
 }>;

@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Crown, User, LogOut, Loader2, CreditCard, Zap, Check, Globe, GraduationCap, Sparkles, Brain, ChevronRight, BookOpen, Layers, PenLine, Compass } from "lucide-react";
+import { Moon, Sun, Monitor, Volume2, Eye, EyeOff, Crown, User, LogOut, CreditCard, Zap, Check, Globe, GraduationCap, Sparkles, Brain, ChevronRight, BookOpen, Layers, PenLine, Compass } from "lucide-react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useSettings } from "@/hooks/useSettings";
 import { useTheme } from "@/components/ThemeProvider";
@@ -110,7 +110,7 @@ export function SettingsPage() {
   };
 
   const handleUpgrade = async (tier: "basic" | "pro" | "unlimited") => {
-    if (!user) return;
+    if (!user || checkoutLoading) return;
 
     trackEvent(events.UPGRADE_CLICKED, {
       tier,
@@ -724,11 +724,10 @@ export function SettingsPage() {
                       </ul>
                       <Button
                         variant="outline"
-                        className="w-full"
+                        className={`w-full ${checkoutLoading === "basic" ? "btn-loading-gradient" : ""}`}
                         onClick={() => handleUpgrade("basic")}
-                        disabled={checkoutLoading === "basic"}
-                      >
-                        {checkoutLoading === "basic" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Basic"}
+                                              >
+                        Get Basic
                       </Button>
                     </div>
 
@@ -756,11 +755,10 @@ export function SettingsPage() {
                         <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> 10 mock tests/month</li>
                       </ul>
                       <Button
-                        className="w-full"
+                        className={`w-full ${checkoutLoading === "pro" ? "btn-loading-gradient" : ""}`}
                         onClick={() => handleUpgrade("pro")}
-                        disabled={checkoutLoading === "pro"}
-                      >
-                        {checkoutLoading === "pro" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Pro"}
+                                              >
+                        Get Pro
                       </Button>
                     </div>
 
@@ -784,11 +782,10 @@ export function SettingsPage() {
                       </ul>
                       <Button
                         variant="outline"
-                        className="w-full border-purple-500/30 hover:bg-purple-500/10"
+                        className={`w-full border-purple-500/30 hover:bg-purple-500/10 ${checkoutLoading === "unlimited" ? "btn-loading-gradient" : ""}`}
                         onClick={() => handleUpgrade("unlimited")}
-                        disabled={checkoutLoading === "unlimited"}
-                      >
-                        {checkoutLoading === "unlimited" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Unlimited"}
+                                              >
+                        Get Unlimited
                       </Button>
                     </div>
                   </div>

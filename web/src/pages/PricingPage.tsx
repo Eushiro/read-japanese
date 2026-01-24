@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { Loader2, Crown, Zap, Sparkles, Check, X, Brain, PenLine, BookOpen, Mic } from "lucide-react";
+import { Crown, Zap, Sparkles, Check, X, Brain, PenLine, BookOpen, Mic } from "lucide-react";
 import { useAuth, SignInButton } from "@/contexts/AuthContext";
 
 export function PricingPage() {
@@ -11,7 +11,7 @@ export function PricingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   const handleUpgrade = async (tier: "basic" | "pro" | "unlimited") => {
-    if (!user) return;
+    if (!user || checkoutLoading) return;
     setCheckoutLoading(tier);
     try {
       const result = await createCheckout({
@@ -189,15 +189,10 @@ export function PricingPage() {
               {isAuthenticated ? (
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className={`w-full ${checkoutLoading === "basic" ? "btn-loading-gradient" : ""}`}
                   onClick={() => handleUpgrade("basic")}
-                  disabled={checkoutLoading === "basic"}
-                >
-                  {checkoutLoading === "basic" ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    "Get Basic"
-                  )}
+                                  >
+                  Get Basic
                 </Button>
               ) : (
                 <SignInButton mode="modal">
@@ -264,15 +259,10 @@ export function PricingPage() {
             <div className="mt-6">
               {isAuthenticated ? (
                 <Button
-                  className="w-full"
+                  className={`w-full ${checkoutLoading === "pro" ? "btn-loading-gradient" : ""}`}
                   onClick={() => handleUpgrade("pro")}
-                  disabled={checkoutLoading === "pro"}
-                >
-                  {checkoutLoading === "pro" ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    "Get Pro"
-                  )}
+                                  >
+                  Get Pro
                 </Button>
               ) : (
                 <SignInButton mode="modal">
@@ -329,15 +319,10 @@ export function PricingPage() {
               {isAuthenticated ? (
                 <Button
                   variant="outline"
-                  className="w-full border-purple-500/30 hover:bg-purple-500/10"
+                  className={`w-full border-purple-500/30 hover:bg-purple-500/10 ${checkoutLoading === "unlimited" ? "btn-loading-gradient" : ""}`}
                   onClick={() => handleUpgrade("unlimited")}
-                  disabled={checkoutLoading === "unlimited"}
-                >
-                  {checkoutLoading === "unlimited" ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    "Get Unlimited"
-                  )}
+                                  >
+                  Get Unlimited
                 </Button>
               ) : (
                 <SignInButton mode="modal">

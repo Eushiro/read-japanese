@@ -15,6 +15,38 @@ export const getSubscriptionByUserId = internalQuery({
   },
 });
 
+// Get user by Clerk ID (to check for pre-created Stripe customer)
+export const getUserByClerkId = internalQuery({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+  },
+});
+
+// Save Stripe customer ID to user (called during onboarding)
+export const saveStripeCustomerId = internalMutation({
+  args: {
+    clerkId: v.string(),
+    stripeCustomerId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (user) {
+      await ctx.db.patch(user._id, {
+        stripeCustomerId: args.stripeCustomerId,
+        updatedAt: Date.now(),
+      });
+    }
+  },
+});
+
 export const getSubscriptionByStripeCustomer = internalQuery({
   args: { stripeCustomerId: v.string() },
   handler: async (ctx, args) => {

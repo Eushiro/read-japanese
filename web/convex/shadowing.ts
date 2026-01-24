@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { languageValidator } from "./schema";
 
 // ============================================
@@ -45,7 +46,7 @@ export const getStats = query({
 });
 
 /**
- * Get flashcards suitable for shadowing (must have audio)
+ * Get flashcards suitable for shadowing (must have sentence with audio)
  */
 export const getCardsForShadowing = query({
   args: {
@@ -58,8 +59,16 @@ export const getCardsForShadowing = query({
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
 
-    // Filter for cards that have audio
-    const cardsWithAudio = cards.filter((card) => card.audioUrl);
+    // Filter for cards that have a sentence with audio
+    const cardsWithAudioPromises = cards.map(async (card) => {
+      if (!card.sentenceId) return null;
+      const sentence = await ctx.db.get(card.sentenceId);
+      if (!sentence?.audioUrl) return null;
+      return { card, sentence };
+    });
+
+    const results = await Promise.all(cardsWithAudioPromises);
+    const cardsWithAudio = results.filter((r): r is { card: typeof cards[0]; sentence: NonNullable<typeof results[0]>["sentence"] } => r !== null);
 
     // Shuffle and take limit
     const shuffled = cardsWithAudio.sort(() => Math.random() - 0.5);
@@ -67,9 +76,14 @@ export const getCardsForShadowing = query({
 
     // Fetch associated vocabulary for each card
     const cardsWithVocab = await Promise.all(
-      selected.map(async (card) => {
+      selected.map(async ({ card, sentence }) => {
         const vocab = await ctx.db.get(card.vocabularyId);
-        return { ...card, vocabulary: vocab };
+        return {
+          ...card,
+          sentence: sentence.sentence,
+          audioUrl: sentence.audioUrl,
+          vocabulary: vocab,
+        };
       })
     );
 
@@ -148,6 +162,13 @@ export const submit = mutation({
       feedbackText: args.feedbackText,
       accuracyScore: args.accuracyScore,
       createdAt: Date.now(),
+    });
+
+    // Update learner profile with speaking practice score
+    await ctx.scheduler.runAfter(0, internal.learnerModel.updateFromShadowingInternal, {
+      userId: args.userId,
+      language: args.targetLanguage,
+      accuracyScore: args.accuracyScore,
     });
 
     return practiceId;
