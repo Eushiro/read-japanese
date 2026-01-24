@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { internalMutation,mutation, query } from "./_generated/server";
 import { getGradingProfile as getGradingProfileConstant } from "./lib/gradingProfiles";
-import { languageValidator } from "./schema";
+import { languageValidator, type Language } from "./schema";
 
 // ============================================
 // LEVEL DEFINITIONS

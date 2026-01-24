@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
+import { Doc } from "./_generated/dataModel";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
 
 // ============================================
@@ -18,7 +19,7 @@ export const getFlashcardsNeedingRefresh = internalQuery({
     // With the content library, we don't auto-refresh sentences
     // Instead, users can swap sentences from the pool
     // This is kept for backwards compatibility but will return empty
-    const needsRefresh: Awaited<ReturnType<typeof ctx.db.query>>[] = [];
+    const needsRefresh: Doc<"flashcards">[] = [];
     // const allFlashcards = await ctx.db.query("flashcards").take(0);
 
     // Get vocabulary for each flashcard

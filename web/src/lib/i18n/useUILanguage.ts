@@ -40,9 +40,7 @@ export function useUILanguage(): UseUILanguageReturn {
 
       setIsChanging(true);
       try {
-        setUILanguage(lang);
-        // Small delay to allow UI to update smoothly
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        await setUILanguage(lang);
       } finally {
         setIsChanging(false);
       }

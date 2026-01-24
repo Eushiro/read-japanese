@@ -20,14 +20,14 @@ export function getUILanguage(): UILanguage {
  * Set the UI language
  * Persists to localStorage and updates i18n
  */
-export function setUILanguage(lang: UILanguage): void {
+export async function setUILanguage(lang: UILanguage): Promise<void> {
   if (!SUPPORTED_LANGUAGES.includes(lang)) {
     console.warn(`[i18n] Unsupported language: ${lang}, falling back to ${DEFAULT_LANGUAGE}`);
     lang = DEFAULT_LANGUAGE;
   }
 
   localStorage.setItem(STORAGE_KEY, lang);
-  i18n.changeLanguage(lang);
+  await i18n.changeLanguage(lang);
 }
 
 /**
@@ -55,14 +55,14 @@ export function detectBrowserLanguage(): UILanguage {
 /**
  * Initialize language from stored preference or browser detection
  */
-export function initializeLanguage(): UILanguage {
+export async function initializeLanguage(): Promise<UILanguage> {
   const stored = getStoredLanguage();
   if (stored) {
-    i18n.changeLanguage(stored);
+    await i18n.changeLanguage(stored);
     return stored;
   }
 
   const detected = detectBrowserLanguage();
-  setUILanguage(detected);
+  await setUILanguage(detected);
   return detected;
 }
