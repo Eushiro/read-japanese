@@ -41,10 +41,12 @@ import { LibraryPage } from "@/pages/LibraryPage";
 import { PlacementTestPage } from "@/pages/PlacementTestPage";
 import { PracticePage } from "@/pages/PracticePage";
 import { PricingPage } from "@/pages/PricingPage";
+import { PrivacyPage } from "@/pages/PrivacyPage";
 import { ProgressPage } from "@/pages/ProgressPage";
 import { ReaderPage } from "@/pages/ReaderPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { StudySessionPage } from "@/pages/StudySessionPage";
+import { TermsPage } from "@/pages/TermsPage";
 import { UsageHistoryPage } from "@/pages/UsageHistoryPage";
 import { VideoPage } from "@/pages/VideoPage";
 import { VideoQuizPage } from "@/pages/VideoQuizPage";
@@ -393,6 +395,19 @@ const progressRoute = createRoute({
   component: ProgressPage,
 });
 
+// Legal pages
+const privacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/privacy",
+  component: PrivacyPage,
+});
+
+const termsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/terms",
+  component: TermsPage,
+});
+
 // Admin routes - wrapped in AdminLayout which handles auth
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -484,6 +499,9 @@ const routeTree = rootRoute.addChildren([
   examTakingRoute,
   examResultsRoute,
   progressRoute,
+  // Legal pages
+  privacyRoute,
+  termsRoute,
   // Admin routes
   adminRoute.addChildren([
     adminDashboardRoute,

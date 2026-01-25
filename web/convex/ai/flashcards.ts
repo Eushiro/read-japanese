@@ -8,6 +8,8 @@ import { action, internalAction } from "../_generated/server";
 import { uploadAudio, uploadImage } from "../lib/storage";
 import {
   callWithRetry,
+  type CallWithRetryResult,
+  callWithRetryTracked,
   type GeneratedSentence,
   type JsonSchema,
   languageNames,
@@ -115,6 +117,93 @@ Provide translations in all 4 languages: English, Japanese, French, and Chinese 
   });
 }
 
+// Tracked version that returns usage data for cost monitoring
+export async function generateSentenceHelperTracked(args: {
+  word: string;
+  reading?: string;
+  definitions: string[];
+  language: Language;
+  examLevel?: string;
+}): Promise<CallWithRetryResult<GeneratedSentence>> {
+  const languageName = languageNames[args.language];
+  const definitionList = args.definitions.join(", ");
+  const readingInfo = args.reading ? ` (reading: ${args.reading})` : "";
+  const levelInfo = args.examLevel ? ` at ${args.examLevel} level` : "";
+
+  const systemPrompt = `You are a language learning assistant that creates natural, contextual example sentences for vocabulary study. Your sentences should:
+1. Be natural and commonly used in everyday situations
+2. Clearly demonstrate the meaning of the target word
+3. Be appropriate for the learner's level
+4. Be memorable and interesting
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "sentence": "the example sentence in ${languageName}",
+  "translations": {
+    "en": "English translation",
+    "ja": "Japanese translation (日本語訳)",
+    "fr": "French translation (traduction française)",
+    "zh": "Chinese translation (中文翻译)"
+  }
+}`;
+
+  const prompt = `Create an example sentence for the ${languageName} word "${args.word}"${readingInfo}${levelInfo}.
+
+The word means: ${definitionList}
+
+Generate a natural, memorable sentence that clearly shows how to use this word. The sentence should be appropriate for language learners${levelInfo}.
+
+Provide translations in all 4 languages: English, Japanese, French, and Chinese (Simplified).`;
+
+  const sentenceSchema: JsonSchema = {
+    name: "example_sentence",
+    schema: {
+      type: "object",
+      properties: {
+        sentence: { type: "string", description: "The example sentence in the target language" },
+        translations: {
+          type: "object",
+          description: "Translations in all UI languages",
+          properties: {
+            en: { type: "string", description: "English translation" },
+            ja: { type: "string", description: "Japanese translation" },
+            fr: { type: "string", description: "French translation" },
+            zh: { type: "string", description: "Chinese (Simplified) translation" },
+          },
+          required: ["en", "ja", "fr", "zh"],
+          additionalProperties: false,
+        },
+      },
+      required: ["sentence", "translations"],
+      additionalProperties: false,
+    },
+  };
+
+  return callWithRetryTracked<GeneratedSentence>({
+    prompt,
+    systemPrompt,
+    maxTokens: 800,
+    jsonSchema: sentenceSchema,
+    parse: (response) => {
+      const parsed = parseJson<RawGeneratedSentence>(response);
+      return {
+        sentence: parsed.sentence,
+        translation: parsed.translations.en ?? "",
+        translations: parsed.translations,
+      };
+    },
+    validate: (parsed) => {
+      if (!parsed.sentence || !parsed.translations) {
+        return "Missing sentence or translations";
+      }
+      if (!parsed.translations.en) {
+        return "Missing English translation";
+      }
+      return null;
+    },
+  });
+}
+
 // Generate an example sentence for a vocabulary word (public action)
 export const generateSentence = action({
   args: {
@@ -186,13 +275,26 @@ export const generateFlashcard = action({
       metadata: { word: vocab.word, vocabularyId: args.vocabularyId },
     });
 
-    // Generate the sentence using the helper function
-    const generated = await generateSentenceHelper({
+    // Generate the sentence using the tracked helper
+    const { result: generated, usage } = await generateSentenceHelperTracked({
       word: vocab.word,
       reading: vocab.reading ?? undefined,
       definitions: vocab.definitions,
       language: vocab.language,
       examLevel: vocab.examLevel ?? undefined,
+    });
+
+    // Log AI usage for cost tracking
+    await ctx.runMutation(internal.aiUsage.log, {
+      userId: vocab.userId,
+      action: "sentence_generation",
+      model: usage.model,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      totalTokens: usage.totalTokens,
+      latencyMs: usage.latencyMs,
+      success: true,
+      metadata: { word: vocab.word, language: vocab.language },
     });
 
     // Create or update the flashcard
@@ -412,7 +514,7 @@ Provide detailed feedback and corrections if needed.`;
     };
 
     try {
-      return await callWithRetry<VerificationResult>({
+      const { result, usage } = await callWithRetryTracked<VerificationResult>({
         prompt,
         systemPrompt,
         maxTokens: 1000,
@@ -425,7 +527,31 @@ Provide detailed feedback and corrections if needed.`;
           return null;
         },
       });
-    } catch {
+
+      // Log AI usage for cost tracking
+      await ctx.runMutation(internal.aiUsage.log, {
+        userId: identity.subject,
+        action: "sentence_verification",
+        model: usage.model,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        totalTokens: usage.totalTokens,
+        latencyMs: usage.latencyMs,
+        success: true,
+        metadata: { targetWord: args.targetWord, language: args.language },
+      });
+
+      return result;
+    } catch (error) {
+      // Log failed attempt
+      await ctx.runMutation(internal.aiUsage.logError, {
+        userId: identity.subject,
+        action: "sentence_verification",
+        model: "unknown",
+        error: error instanceof Error ? error.message : "Unknown error",
+        metadata: { targetWord: args.targetWord, language: args.language },
+      });
+
       // Return a default response if all retries fail
       return {
         isCorrect: false,

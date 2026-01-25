@@ -1,6 +1,7 @@
 import "./index.css";
 
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import * as Sentry from "@sentry/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { ConvexReactClient } from "convex/react";
@@ -15,6 +16,26 @@ import { ReviewSessionProvider } from "./contexts/ReviewSessionContext";
 import { StudySessionProvider } from "./contexts/StudySessionContext";
 import { TranslationProvider } from "./lib/i18n";
 import { router } from "./router.tsx";
+
+// Initialize Sentry for error tracking (production only)
+if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration({
+        maskAllText: true,
+        blockAllMedia: true,
+      }),
+    ],
+    // Performance monitoring
+    tracesSampleRate: 0.1, // 10% of transactions
+    // Session replay - capture on errors
+    replaysSessionSampleRate: 0,
+    replaysOnErrorSampleRate: 1.0,
+  });
+}
 
 // Register service worker for offline caching of audio/images
 if ("serviceWorker" in navigator && import.meta.env.PROD) {

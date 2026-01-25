@@ -303,8 +303,18 @@ export function LandingPage() {
 
       {/* Footer */}
       <footer className="py-8 border-t border-border">
-        <div className="container mx-auto px-4 sm:px-6 text-center text-foreground-muted text-sm">
-          <p>{t("landing.footer.tagline")}</p>
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-foreground-muted">
+            <p>{t("landing.footer.tagline")}</p>
+            <div className="flex items-center gap-6">
+              <Link to="/privacy" className="hover:text-foreground transition-colors">
+                Privacy Policy
+              </Link>
+              <Link to="/terms" className="hover:text-foreground transition-colors">
+                Terms of Service
+              </Link>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

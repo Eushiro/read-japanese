@@ -574,6 +574,29 @@ export default defineSchema({
     .index("by_user_and_date", ["userId", "createdAt"]),
 
   // ============================================
+  // AI USAGE TRACKING (cost monitoring)
+  // ============================================
+  // Tracks actual AI API costs for monitoring and optimization
+  aiUsage: defineTable({
+    userId: v.optional(v.string()), // Optional for system-level generation
+    action: v.string(), // "sentence", "feedback", "tts", "image", "comprehension", etc.
+    model: v.string(), // "google/gemini-3-flash-preview", "anthropic/claude-haiku-4.5"
+    inputTokens: v.number(),
+    outputTokens: v.number(),
+    totalTokens: v.number(),
+    estimatedCostCents: v.number(), // Cost in cents (e.g., 0.15 = $0.0015)
+    latencyMs: v.optional(v.number()), // Response time
+    success: v.boolean(),
+    error: v.optional(v.string()), // Error message if failed
+    metadata: v.optional(v.any()), // { word, language, etc. }
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_action", ["action"])
+    .index("by_model", ["model"])
+    .index("by_date", ["createdAt"]),
+
+  // ============================================
   // MOCK TESTS
   // ============================================
   mockTests: defineTable({

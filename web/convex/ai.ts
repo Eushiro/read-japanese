@@ -8,8 +8,12 @@
 
 // Core utilities and shared interfaces
 export {
+  calculateCostCents,
   callOpenRouter,
+  callOpenRouterWithUsage,
   callWithRetry,
+  type CallWithRetryResult,
+  callWithRetryTracked,
   cleanJsonResponse,
   DEFAULT_MODEL,
   type GeneratedSentence,
@@ -39,6 +43,7 @@ export {
   generateFlashcardWithAudio,
   generateSentence,
   generateSentenceHelper,
+  generateSentenceHelperTracked,
   generateSentenceInternal,
   refreshFlashcardSentence,
   verifySentence,
