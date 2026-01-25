@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useT } from "@/lib/i18n";
+import type { Language } from "@/lib/languages";
 import { getLevelVariant } from "@/lib/levels";
 
 import { api } from "../../../convex/_generated/api";
@@ -21,7 +22,7 @@ interface DeckPickerModalProps {
   userId: string;
   isOpen: boolean;
   onClose: () => void;
-  defaultLanguage?: "japanese" | "english" | "french";
+  defaultLanguage?: Language;
 }
 
 const ALL_LANGUAGES = [
@@ -108,7 +109,7 @@ export function DeckPickerModal({
     setDailyCards((prev) => Math.max(5, Math.min(30, prev + delta)));
   };
 
-  const handleLanguageChange = (lang: "japanese" | "english" | "french") => {
+  const handleLanguageChange = (lang: Language) => {
     setSelectedLanguage(lang);
     setSelectedDeckId(null);
   };

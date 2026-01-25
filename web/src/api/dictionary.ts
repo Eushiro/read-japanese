@@ -1,3 +1,5 @@
+import type { Language } from "@/lib/languages";
+
 import { apiClient } from "./client";
 
 // Simplified dictionary entry for the popup
@@ -15,7 +17,7 @@ interface DictionaryResponse {
 // Look up a word using our local dictionaries (exact match)
 export async function lookupWord(
   word: string,
-  language: "japanese" | "english" | "french" = "japanese"
+  language: Language = "japanese"
 ): Promise<DictionaryEntry | null> {
   try {
     const response = await apiClient.get<DictionaryResponse>(
@@ -38,7 +40,7 @@ export async function lookupWord(
 // Uses local dictionaries: jamdict for Japanese, WordNet for English, Free Dictionary API for French
 export async function searchDictionary(
   query: string,
-  language: "japanese" | "english" | "french" = "japanese",
+  language: Language = "japanese",
   limit: number = 10
 ): Promise<DictionaryEntry[]> {
   if (!query.trim()) return [];

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useT, useUILanguage } from "@/lib/i18n";
+import type { Language } from "@/lib/languages";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -101,7 +102,7 @@ interface FlashcardWithVocab {
     word: string;
     reading?: string | null;
     definitions: string[];
-    language: "japanese" | "english" | "french";
+    language: Language;
   } | null;
 }
 

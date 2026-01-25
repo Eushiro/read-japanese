@@ -1,3 +1,5 @@
+import type { Language } from "@/lib/languages";
+
 // JLPT Level types (Japanese)
 export type JLPTLevel = "N5" | "N4" | "N3" | "N2" | "N1";
 
@@ -214,7 +216,7 @@ export function testLevelToDifficultyLevel(testLevel: string): number {
  */
 export function difficultyLevelToTestLevel(
   difficulty: number,
-  language: "japanese" | "english" | "french"
+  language: Language
 ): string {
   if (language === "japanese") {
     const jlpt = ["N5", "N4", "N3", "N2", "N1"];

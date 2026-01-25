@@ -152,13 +152,18 @@ export function PlacementTestPage() {
     }
   }, [existingTest]);
 
+  // Ref to hold the latest generateNextQuestion function
+  const generateNextQuestionRef = useRef<
+    (tid: Id<"placementTests">, afterIndex: number, isPreGeneration?: boolean) => Promise<void>
+  >(() => Promise.resolve());
+
   // Wrap preGenerateNextQuestion in useCallback for use in effect
   const preGenerateNextQuestionCallback = useCallback(
     async (tid: Id<"placementTests">, forIndex: number) => {
       // Don't pre-generate if already doing so or if next question is ready
       if (isPreGenerating || nextQuestionReady) return;
 
-      await generateNextQuestion(tid, forIndex, true);
+      await generateNextQuestionRef.current(tid, forIndex, true);
     },
     [isPreGenerating, nextQuestionReady]
   );
@@ -271,6 +276,11 @@ export function PlacementTestPage() {
       }
     }
   };
+
+  // Keep ref updated with latest generateNextQuestion
+  useEffect(() => {
+    generateNextQuestionRef.current = generateNextQuestion;
+  });
 
   // Pre-generate the next question while user is answering current one
   const preGenerateNextQuestion = async (tid: Id<"placementTests">, forIndex: number) => {

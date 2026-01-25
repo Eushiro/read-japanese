@@ -161,6 +161,7 @@ export function VocabularyPage() {
 
   // Add daily cards mutation
   const addDailyCards = useMutation(api.userDeckSubscriptions.addDailyCards);
+  const hasTrackedPageViewRef = useRef(false);
 
   // Trigger daily card drip on page load
   useEffect(() => {
@@ -170,17 +171,6 @@ export function VocabularyPage() {
       });
     }
   }, [isAuthenticated, userId, addDailyCards]);
-
-  // Track page view
-  useEffect(() => {
-    if (isAuthenticated) {
-      trackEvent(events.VOCABULARY_VIEWED, {
-        word_count: vocabulary?.length ?? 0,
-        language_filter: languageFilter,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally track only on initial auth
-  }, [isAuthenticated]);
 
   // Get personal deck to distinguish from premade decks
   const personalDeck = useQuery(
@@ -228,6 +218,18 @@ export function VocabularyPage() {
     premadeDeckVocabulary,
     premadeAllVocabulary,
   ]);
+
+  // Track page view (placed after vocabulary is defined)
+  useEffect(() => {
+    if (hasTrackedPageViewRef.current) return;
+    if (isAuthenticated) {
+      hasTrackedPageViewRef.current = true;
+      trackEvent(events.VOCABULARY_VIEWED, {
+        word_count: vocabulary?.length ?? 0,
+        language_filter: languageFilter,
+      });
+    }
+  }, [isAuthenticated, trackEvent, events, vocabulary?.length, languageFilter]);
 
   // Check if viewing premade content (for display adaptation)
   const isViewingPremade = !isPersonalDeckSelected;
@@ -335,15 +337,15 @@ export function VocabularyPage() {
   // Track search with debounce
   useEffect(() => {
     if (!searchTerm.trim()) return;
+    const resultCount = sortedVocabulary.length; // capture at effect run time
     const timeout = setTimeout(() => {
       trackEvent(events.VOCABULARY_SEARCHED, {
         search_term: searchTerm,
-        result_count: sortedVocabulary.length,
+        result_count: resultCount,
       });
     }, 500);
     return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Track only on search term change, not result changes
-  }, [searchTerm]);
+  }, [searchTerm, sortedVocabulary.length, trackEvent, events]);
 
   const handleRemove = async (id: string) => {
     try {

@@ -33,13 +33,17 @@ bun run check-i18n || exit 1
 echo "Checking Convex types..."
 bunx convex typecheck || exit 1
 
-# 7. Run smoke tests
+# 7. Check for pattern violations (hardcoded languages, etc.)
+echo "Checking code patterns..."
+bun run check-patterns || exit 1
+
+# 8. Run smoke tests
 echo "Running tests..."
 bun test || exit 1
 
 cd ..
 
-# 8. Python linting with Ruff (if backend files changed)
+# 9. Python linting with Ruff (if backend files changed)
 if echo "$STAGED_FILES" | grep -q "^backend/"; then
     echo "Linting Python with Ruff..."
     cd backend
@@ -51,7 +55,7 @@ if echo "$STAGED_FILES" | grep -q "^backend/"; then
     cd ..
 fi
 
-# 9. Claude Code review (blocking)
+# 10. Claude Code review (blocking)
 echo "Running Claude Code review..."
 
 # Get staged diff

@@ -25,6 +25,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useStory } from "@/hooks/useStory";
 import { useT } from "@/lib/i18n";
+import type { Language } from "@/lib/languages";
 import { difficultyLevelToTestLevel, testLevelToDifficultyLevel } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
@@ -160,19 +161,64 @@ export function ComprehensionPage() {
         return;
       }
 
+      // Inline helper functions to avoid stale closures
+      const computeStoryContent = () => {
+        const chapters = story.chapters || [];
+        return chapters
+          .map((chapter) => {
+            const segments = chapter.segments || chapter.content || [];
+            return segments
+              .map((s) => {
+                if (s.tokens && s.tokens.length > 0) {
+                  return s.tokens.map((t) => t.surface).join("");
+                }
+                return s.text || "";
+              })
+              .join(" ");
+          })
+          .join("\n\n");
+      };
+
+      const computeLanguage = (): Language => {
+        const level = story.metadata.level;
+        if (level.startsWith("N")) return "japanese";
+        if (story.id.includes("french") || story.id.includes("fr_")) return "french";
+        if (story.id.includes("english") || story.id.includes("en_")) return "english";
+        return "english";
+      };
+
+      const computeUserDifficulty = (language: Language): number => {
+        const proficiency =
+          userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
+        if (proficiency?.level) {
+          return testLevelToDifficultyLevel(proficiency.level);
+        }
+        return 3;
+      };
+
+      const computeUserDisplayLevel = (language: Language): string => {
+        const proficiency =
+          userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
+        if (proficiency?.level) {
+          return proficiency.level;
+        }
+        return difficultyLevelToTestLevel(3, language);
+      };
+
       const doGenerate = async () => {
         setIsGenerating(true);
         try {
-          const storyContent = getStoryContent();
-          const difficulty = getUserDifficulty();
+          const storyContent = computeStoryContent();
+          const language = computeLanguage();
+          const difficulty = computeUserDifficulty(language);
           const result = await generateQuestions({
             storyId,
             storyTitle: story.metadata.title,
             storyContent,
-            language: getLanguage(),
+            language,
             userId,
             difficulty,
-            userLevel: getUserDisplayLevel(),
+            userLevel: computeUserDisplayLevel(language),
           });
           setLocalQuestions(result.questions as Question[]);
         } catch (error) {
@@ -183,9 +229,6 @@ export function ComprehensionPage() {
       };
       doGenerate();
     }
-    // Note: getStoryContent, getLanguage, getUserDifficulty, getUserDisplayLevel are
-    // defined inside the component and capture story/userProfile - they're stable for
-    // a given render. The hasAutoStarted guard prevents re-runs.
   }, [
     hasAutoStarted,
     subscription,
@@ -221,7 +264,7 @@ export function ComprehensionPage() {
   };
 
   // Derive language from story level
-  const getLanguage = (): "japanese" | "english" | "french" => {
+  const getLanguage = (): Language => {
     if (!story) return "japanese";
     const level = story.metadata.level;
     // JLPT levels (N5-N1) are Japanese

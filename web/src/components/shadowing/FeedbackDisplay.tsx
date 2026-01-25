@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
+import type { Language } from "@/lib/languages";
 
 interface FeedbackDisplayProps {
   accuracyScore: number;
@@ -10,7 +11,7 @@ interface FeedbackDisplayProps {
   feedbackAudioUrl?: string | null;
   userRecordingUrl?: string | null;
   targetText: string;
-  language: "japanese" | "english" | "french";
+  language: Language;
 }
 
 export function FeedbackDisplay({

@@ -1,6 +1,7 @@
 import { CheckCircle2, XCircle } from "lucide-react";
 
 import { useT } from "@/lib/i18n";
+import type { Language } from "@/lib/languages";
 
 export type QuestionType =
   | "multiple_choice"
@@ -43,7 +44,7 @@ export interface QuestionDisplayProps {
   };
 
   // Language for font styling
-  language?: "japanese" | "english" | "french";
+  language?: Language;
 }
 
 // Get display label for question type

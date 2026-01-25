@@ -10,8 +10,10 @@ The repository uses **Husky** for pre-commit hooks that enforce code quality.
 4. **ESLint** - Runs on staged `.ts/.tsx` files, fails on any warnings or errors
 5. **i18n validation** - Ensures all translation files have matching keys
 6. **Convex typecheck** - Validates Convex functions and schema types
-7. **Smoke tests** - Runs `bun test` to verify critical paths aren't broken
-8. **Claude Code review** - AI review checks for bugs, security issues, and guideline violations
+7. **Pattern validation** - Checks for hardcoded language types (use `Language` from `@/lib/languages`)
+8. **Smoke tests** - Runs `bun test` to verify critical paths aren't broken
+9. **Python linting** - Ruff check/format on backend files (if changed)
+10. **Claude Code review** - AI review checks for bugs, security issues, and guideline violations
 
 ## What runs on commit message (commit-msg)
 
@@ -51,6 +53,10 @@ Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
 
 **Tests failed:** Fix the failing tests. Run `bun test` to see details.
 
+**Pattern violations:** Use proper types instead of hardcoding:
+- Use `Language` type from `@/lib/languages` instead of `"japanese" | "english" | "french"`
+- Run `bun run check-patterns` to see details
+
 **Claude Code review blocked:** The review found issues that need attention:
 - `BLOCKER:` - Fix the code issue described
 - `UPDATE_DOCS:` - Add missing documentation, then re-commit
@@ -74,6 +80,7 @@ bun run format:check   # Prettier (check only)
 bun run format         # Prettier (auto-fix)
 bun run check-i18n     # Translation keys
 bun run check-secrets  # Secret detection
+bun run check-patterns # Pattern validation
 bun test               # Smoke tests
 ```
 

@@ -38,9 +38,11 @@ export interface VideoQuestion {
   timestamp?: number;
 }
 
+import type { Language } from "./schema";
+
 export interface VideoData {
   videoId: string;
-  language: "japanese" | "english" | "french";
+  language: Language;
   level: string;
   title: string;
   description: string;

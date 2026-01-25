@@ -17,6 +17,7 @@ import { useAIAction } from "@/hooks/useAIAction";
 import { useSettings } from "@/hooks/useSettings";
 import { useStory } from "@/hooks/useStory";
 import { useT } from "@/lib/i18n";
+import type { Language } from "@/lib/languages";
 import type { ProficiencyLevel, Token } from "@/types/story";
 import { difficultyLevelToTestLevel, testLevelToDifficultyLevel } from "@/types/story";
 
@@ -121,8 +122,7 @@ export function ReaderPage() {
         console.error("Failed to track story reading usage:", err);
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only track once per story load, not on every dep change
-  }, [story?.id, isAuthenticated, subscription?.tier]);
+  }, [story, isAuthenticated, subscription?.tier, trackEvent, events, storyId, incrementUsage, userId]);
 
   // Get settings from Convex
   const { settings, setShowFurigana } = useSettings();
@@ -171,7 +171,7 @@ export function ReaderPage() {
     };
 
     // Derive language from story level
-    const getLanguage = (): "japanese" | "english" | "french" => {
+    const getLanguage = (): Language => {
       const level = story.metadata.level;
       if (level.startsWith("N")) return "japanese";
       if (story.id.includes("french") || story.id.includes("fr_")) return "french";
