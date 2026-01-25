@@ -3,7 +3,7 @@
  * Abstracts language switching with optional Convex persistence for authenticated users
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { setUILanguage } from "./language";
@@ -70,14 +70,17 @@ export function useSyncUILanguage(
 ): UseUILanguageReturn {
   const { language, setLanguage: setLocalLanguage, isChanging } = useUILanguage();
   const [isSyncing, setIsSyncing] = useState(false);
+  const syncedUserRef = useRef<string | undefined>(undefined);
 
   // Sync from Convex to local when user logs in
   useEffect(() => {
-    if (userId && userPreferredLanguage && userPreferredLanguage !== language) {
-      setLocalLanguage(userPreferredLanguage);
+    if (userId && userPreferredLanguage && syncedUserRef.current !== userId) {
+      syncedUserRef.current = userId;
+      if (userPreferredLanguage !== language) {
+        setLocalLanguage(userPreferredLanguage);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only sync on login, not on local language changes
-  }, [userId, userPreferredLanguage]);
+  }, [userId, userPreferredLanguage, language, setLocalLanguage]);
 
   const setLanguage = useCallback(
     async (lang: UILanguage) => {

@@ -1,5 +1,6 @@
 import js from '@eslint/js'
 import globals from 'globals'
+import reactCompiler from 'eslint-plugin-react-compiler'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
@@ -18,6 +19,7 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     plugins: {
+      'react-compiler': reactCompiler,
       'simple-import-sort': simpleImportSort,
     },
     languageOptions: {
@@ -25,6 +27,9 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
+      // React Compiler - warn on patterns that prevent optimization
+      'react-compiler/react-compiler': 'error',
+
       // Import sorting - auto-fixable
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',

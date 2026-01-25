@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { ChevronLeft, ChevronRight, Clock, Flag, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
@@ -49,6 +49,9 @@ export function ExamTakingPage() {
   // Load attempt
   const attempt = useQuery(api.examAttempts.get, attemptId ? { attemptId } : "skip");
 
+  // Ref to always have the latest handleComplete for timer callback
+  const handleCompleteRef = useRef<() => Promise<void>>(() => Promise.resolve());
+
   // Start or resume exam
   useEffect(() => {
     if (!isAuthenticated || !user || !template) return;
@@ -90,15 +93,14 @@ export function ExamTakingPage() {
       setTimeLeft(Math.floor(remaining / 1000));
 
       if (remaining <= 0) {
-        // Time's up - auto submit
-        handleComplete();
+        // Time's up - auto submit (use ref to get latest handleComplete)
+        handleCompleteRef.current();
       }
     };
 
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Timer effect, handleComplete captures current state when called
   }, [attempt, template]);
 
   // Get current question
@@ -206,6 +208,11 @@ export function ExamTakingPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Keep ref updated with latest handleComplete
+  useEffect(() => {
+    handleCompleteRef.current = handleComplete;
+  });
 
   // Format time
   const formatTime = (seconds: number) => {

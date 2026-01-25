@@ -37,14 +37,16 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
   const upsertUser = useMutation(api.users.upsert);
   const ensureStripeCustomer = useAction(api.stripe.ensureStripeCustomer);
   const { trackEvent, events } = useAnalytics();
+  const hasTrackedOnboardingRef = useRef(false);
 
   // Track onboarding started
   useEffect(() => {
+    if (hasTrackedOnboardingRef.current) return;
+    hasTrackedOnboardingRef.current = true;
     trackEvent(events.ONBOARDING_STARTED, {
       user_id: userId,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally run only on mount
-  }, []);
+  }, [trackEvent, events, userId]);
 
   // Pre-select detected language on mount
   useEffect(() => {

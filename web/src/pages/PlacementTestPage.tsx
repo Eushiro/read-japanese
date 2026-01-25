@@ -1,7 +1,7 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft, Brain, ChevronRight, Loader2, RotateCcw, Target, Trophy } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { QuestionDisplay, QuestionNavigation } from "@/components/quiz";
 import { Badge } from "@/components/ui/badge";
@@ -152,6 +152,17 @@ export function PlacementTestPage() {
     }
   }, [existingTest]);
 
+  // Wrap preGenerateNextQuestion in useCallback for use in effect
+  const preGenerateNextQuestionCallback = useCallback(
+    async (tid: Id<"placementTests">, forIndex: number) => {
+      // Don't pre-generate if already doing so or if next question is ready
+      if (isPreGenerating || nextQuestionReady) return;
+
+      await generateNextQuestion(tid, forIndex, true);
+    },
+    [isPreGenerating, nextQuestionReady]
+  );
+
   // Pre-generate next question when current question is displayed
   useEffect(() => {
     if (
@@ -162,10 +173,17 @@ export function PlacementTestPage() {
       !isPreGenerating &&
       !showFeedback
     ) {
-      preGenerateNextQuestion(testId, currentQuestionIndex + 1);
+      preGenerateNextQuestionCallback(testId, currentQuestionIndex + 1);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- preGenerateNextQuestion uses values already in deps
-  }, [testId, currentQuestionIndex, currentTest, nextQuestionReady, isPreGenerating, showFeedback]);
+  }, [
+    testId,
+    currentQuestionIndex,
+    currentTest,
+    nextQuestionReady,
+    isPreGenerating,
+    showFeedback,
+    preGenerateNextQuestionCallback,
+  ]);
 
   // Reset scroll position when viewing a different question
   useEffect(() => {

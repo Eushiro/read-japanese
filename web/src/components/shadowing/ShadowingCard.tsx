@@ -150,8 +150,7 @@ export function ShadowingCard({ flashcard, userId, onNext }: ShadowingCardProps)
       targetAudioRef.current.pause();
       targetAudioRef.current.currentTime = 0;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Reset state when flashcard changes, recorder reference is stable
-  }, [flashcard._id]);
+  }, [flashcard._id, recorder]);
 
   const playTargetAudio = () => {
     if (!flashcard.audioUrl || !targetAudioRef.current) return;
