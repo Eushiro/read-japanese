@@ -33,3 +33,8 @@ dist-ssr
 .playwright-mcp/
 page-*.png
 page-*.jpeg
+
+# Lockfiles (we use bun.lock)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
