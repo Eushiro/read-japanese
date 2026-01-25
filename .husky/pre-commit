@@ -39,7 +39,19 @@ bun test || exit 1
 
 cd ..
 
-# 8. Claude Code review (blocking)
+# 8. Python linting with Ruff (if backend files changed)
+if echo "$STAGED_FILES" | grep -q "^backend/"; then
+    echo "Linting Python with Ruff..."
+    cd backend
+    ruff check . || exit 1
+    ruff format --check . || exit 1
+
+    echo "Checking backend patterns..."
+    python scripts/lint_patterns.py || exit 1
+    cd ..
+fi
+
+# 9. Claude Code review (blocking)
 echo "Running Claude Code review..."
 
 # Get staged diff
