@@ -104,7 +104,33 @@ export const listAllDecks = query({
 // VOCABULARY QUERIES
 // ============================================
 
-// Get vocabulary items for a deck
+// Helper to resolve content for a vocabulary item
+// Returns flat fields that the frontend expects
+import type { Doc } from "./_generated/dataModel";
+import type { DatabaseReader } from "./_generated/server";
+
+async function resolveVocabularyContent(db: DatabaseReader, item: Doc<"premadeVocabulary">) {
+  const [sentenceDoc, imageDoc, wordAudioDoc] = await Promise.all([
+    item.sentenceId ? db.get(item.sentenceId) : null,
+    item.imageId ? db.get(item.imageId) : null,
+    db
+      .query("wordAudio")
+      .withIndex("by_word_language", (q) => q.eq("word", item.word).eq("language", item.language))
+      .first(),
+  ]);
+
+  return {
+    ...item,
+    // Flat fields for frontend
+    sentence: sentenceDoc?.sentence,
+    sentenceTranslation: sentenceDoc?.translations?.en,
+    audioUrl: sentenceDoc?.audioUrl,
+    wordAudioUrl: wordAudioDoc?.audioUrl,
+    imageUrl: imageDoc?.imageUrl,
+  };
+}
+
+// Get vocabulary items for a deck (with resolved content)
 export const getVocabularyForDeck = query({
   args: {
     deckId: v.string(),
@@ -116,11 +142,14 @@ export const getVocabularyForDeck = query({
       .withIndex("by_deck", (q) => q.eq("deckId", args.deckId))
       .collect();
 
-    return args.limit ? items.slice(0, args.limit) : items;
+    const limited = args.limit ? items.slice(0, args.limit) : items;
+
+    // Resolve content for each item
+    return Promise.all(limited.map((item) => resolveVocabularyContent(ctx.db, item)));
   },
 });
 
-// Get all vocabulary from all decks the user is subscribed to
+// Get all vocabulary from all decks the user is subscribed to (with resolved content)
 export const getAllSubscribedVocabulary = query({
   args: {
     userId: v.string(),
@@ -157,7 +186,10 @@ export const getAllSubscribedVocabulary = query({
       return true;
     });
 
-    return args.limit ? flattened.slice(0, args.limit) : flattened;
+    const limited = args.limit ? flattened.slice(0, args.limit) : flattened;
+
+    // Resolve content for each item
+    return Promise.all(limited.map((item) => resolveVocabularyContent(ctx.db, item)));
   },
 });
 
