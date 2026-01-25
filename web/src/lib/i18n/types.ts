@@ -18,12 +18,11 @@ export const UI_LANGUAGES: {
   value: UILanguage;
   label: string;
   nativeName: string;
-  flag: string;
 }[] = [
-  { value: "en", label: "English", nativeName: "English", flag: "🇺🇸" },
-  { value: "fr", label: "French", nativeName: "Français", flag: "🇫🇷" },
-  { value: "ja", label: "Japanese", nativeName: "日本語", flag: "🇯🇵" },
-  { value: "zh", label: "Chinese", nativeName: "中文", flag: "🇨🇳" },
+  { value: "en", label: "English", nativeName: "English" },
+  { value: "fr", label: "French", nativeName: "Français" },
+  { value: "ja", label: "Japanese", nativeName: "日本語" },
+  { value: "zh", label: "Chinese", nativeName: "中文" },
 ];
 
 export const DEFAULT_LANGUAGE: UILanguage = "en";

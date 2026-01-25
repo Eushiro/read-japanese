@@ -290,13 +290,13 @@ const libraryRoute = createRoute({
 
 const readerRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/read/$storyId",
+  path: "/read/$language/$storyId",
   component: ReaderPage,
 });
 
 const comprehensionRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/comprehension/$storyId",
+  path: "/comprehension/$language/$storyId",
   component: ComprehensionPage,
 });
 
@@ -460,7 +460,7 @@ const adminStoriesRoute = createRoute({
 
 const adminStoryQuestionsRoute = createRoute({
   getParentRoute: () => adminRoute,
-  path: "/stories/$storyId",
+  path: "/stories/$language/$storyId",
   component: StoryQuestionsPage,
 });
 

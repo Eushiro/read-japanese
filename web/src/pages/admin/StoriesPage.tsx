@@ -391,7 +391,8 @@ export function StoriesPage() {
     return stories.filter(
       (s) =>
         s.title.toLowerCase().includes(term) ||
-        s.titleJapanese?.toLowerCase().includes(term) ||
+        s.titleTranslations.ja.toLowerCase().includes(term) ||
+        s.titleTranslations.en.toLowerCase().includes(term) ||
         s.id.toLowerCase().includes(term) ||
         s.genre.toLowerCase().includes(term)
     );
@@ -487,9 +488,9 @@ export function StoriesPage() {
                           <TableCell>
                             <div>
                               <p className="font-medium">{story.title}</p>
-                              {story.titleJapanese && (
+                              {story.language !== "english" && (
                                 <p className="text-sm text-foreground-muted">
-                                  {story.titleJapanese}
+                                  {story.titleTranslations.en}
                                 </p>
                               )}
                               <p className="text-xs text-foreground-muted font-mono">{story.id}</p>
@@ -528,14 +529,17 @@ export function StoriesPage() {
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Button variant="ghost" size="sm" asChild title="Edit Questions">
-                                <Link to="/admin/stories/$storyId" params={{ storyId: story.id }}>
+                                <Link
+                                  to="/admin/stories/$language/$storyId"
+                                  params={{ language: story.language, storyId: story.id }}
+                                >
                                   <BookOpen className="w-4 h-4" />
                                 </Link>
                               </Button>
                               <Button variant="ghost" size="sm" asChild title="Open Story">
                                 <Link
-                                  to="/read/$storyId"
-                                  params={{ storyId: story.id }}
+                                  to="/read/$language/$storyId"
+                                  params={{ language: story.language, storyId: story.id }}
                                   target="_blank"
                                 >
                                   <ArrowRight className="w-4 h-4" />

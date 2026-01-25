@@ -8,8 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useT } from "@/lib/i18n";
 import type { ContentLanguage } from "@/lib/contentLanguages";
+import { useT } from "@/lib/i18n";
 import {
   CEFR_LEVELS,
   type CEFRLevel,

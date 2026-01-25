@@ -109,11 +109,7 @@ export function JobsPage() {
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Switch
-              id="autoRefresh"
-              checked={autoRefresh}
-              onCheckedChange={setAutoRefresh}
-            />
+            <Switch id="autoRefresh" checked={autoRefresh} onCheckedChange={setAutoRefresh} />
             <Label htmlFor="autoRefresh" className="text-sm cursor-pointer">
               Auto-refresh
             </Label>

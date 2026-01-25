@@ -13,7 +13,13 @@ import { Paywall } from "@/components/Paywall";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
@@ -123,7 +129,11 @@ export function GeneratePage() {
       });
 
       if (status.status === "completed" && status.story_id) {
-        navigate({ to: "/read/$storyId", params: { storyId: status.story_id } });
+        // Generated stories are currently Japanese-only (JLPT levels)
+        navigate({
+          to: "/read/$language/$storyId",
+          params: { language: "japanese", storyId: status.story_id },
+        });
       } else if (status.status === "failed") {
         throw new Error(status.error || t("generate.errors.generationFailed"));
       }

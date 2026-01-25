@@ -39,7 +39,6 @@ export function UILanguageSwitcher({ className, showLabel = true }: UILanguageSw
         <SelectContent>
           {UI_LANGUAGES.map((lang) => (
             <SelectItem key={lang.value} value={lang.value}>
-              <span className="mr-2">{lang.flag}</span>
               {showLabel ? lang.label : lang.nativeName}
             </SelectItem>
           ))}
@@ -64,12 +63,11 @@ export function UILanguageSwitcherCompact({ className }: { className?: string })
     >
       <SelectTrigger className={`w-auto gap-1.5 ${className}`}>
         <Globe className="w-4 h-4" />
-        <span>{currentLang?.flag}</span>
+        <span>{currentLang?.nativeName}</span>
       </SelectTrigger>
       <SelectContent>
         {UI_LANGUAGES.map((lang) => (
           <SelectItem key={lang.value} value={lang.value}>
-            <span className="mr-2">{lang.flag}</span>
             {lang.nativeName}
           </SelectItem>
         ))}

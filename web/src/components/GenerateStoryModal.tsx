@@ -15,7 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
@@ -116,7 +122,11 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
 
       if (status.status === "completed" && status.story_id) {
         onClose();
-        navigate({ to: "/read/$storyId", params: { storyId: status.story_id } });
+        // Generated stories are currently Japanese-only (JLPT levels)
+        navigate({
+          to: "/read/$language/$storyId",
+          params: { language: "japanese", storyId: status.story_id },
+        });
       } else if (status.status === "failed") {
         throw new Error(status.error || "Generation failed");
       }
@@ -322,7 +332,7 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
           </ScrollArea>
 
           {/* Footer */}
-          <DialogFooter className="p-4 border-t border-border bg-muted/30 flex-col gap-2">
+          <DialogFooter className="p-4 border-t border-border bg-muted/30 sm:flex-col sm:items-stretch gap-2">
             <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
               {isGenerating ? (
                 <>

@@ -100,19 +100,16 @@ export function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
             <LanguageCard
-              flag="🇯🇵"
               language={t("landing.exams.japanese")}
               exams={["JLPT N5", "JLPT N4", "JLPT N3", "JLPT N2", "JLPT N1"]}
               color="red"
             />
             <LanguageCard
-              flag="🇬🇧"
               language={t("landing.exams.english")}
               exams={["TOEFL", "SAT", "GRE"]}
               color="blue"
             />
             <LanguageCard
-              flag="🇫🇷"
               language={t("landing.exams.french")}
               exams={["DELF A1-B2", "DALF C1-C2", "TCF"]}
               color="purple"
@@ -482,7 +479,6 @@ function ComparisonCard({ title, isUs, items }: ComparisonCardProps) {
 }
 
 interface LanguageCardProps {
-  flag: string;
   language: string;
   exams: string[];
   color: "red" | "blue" | "purple";
@@ -509,17 +505,12 @@ const colorClasses = {
   },
 };
 
-function LanguageCard({ flag, language, exams, color }: LanguageCardProps) {
+function LanguageCard({ language, exams, color }: LanguageCardProps) {
   const colors = colorClasses[color];
   return (
     <div
       className={`flex flex-col items-center gap-4 px-6 py-8 rounded-xl bg-gradient-to-br ${colors.gradient} border ${colors.border} transition-all hover:scale-[1.02]`}
     >
-      <div
-        className={`w-16 h-16 rounded-2xl ${colors.iconBg} flex items-center justify-center text-4xl`}
-      >
-        {flag}
-      </div>
       <div className="text-center">
         <div className="font-bold text-foreground text-lg mb-3">{language}</div>
         <div className="flex flex-wrap justify-center gap-1.5">

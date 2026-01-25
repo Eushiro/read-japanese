@@ -41,8 +41,8 @@ export function StoryCard({
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const handleMouseEnter = useCallback(() => {
-    prefetchStory(story.id);
-  }, [story.id]);
+    prefetchStory(story.id, story.language);
+  }, [story.id, story.language]);
 
   return (
     <article
@@ -108,15 +108,17 @@ export function StoryCard({
 
       {/* Content */}
       <div className="p-4">
-        {/* Title */}
+        {/* Title - primary title with English translation for non-English stories */}
         <h3
           className="font-semibold text-base text-foreground line-clamp-1 group-hover:text-accent transition-colors"
-          style={{ fontFamily: "var(--font-japanese)" }}
+          style={{ fontFamily: story.language === "japanese" ? "var(--font-japanese)" : undefined }}
         >
-          {story.titleJapanese || story.title}
+          {story.title}
         </h3>
-        {story.titleJapanese && (
-          <p className="text-sm text-foreground-muted line-clamp-1 mt-0.5">{story.title}</p>
+        {story.language !== "english" && (
+          <p className="text-sm text-foreground-muted line-clamp-1 mt-0.5">
+            {story.titleTranslations.en}
+          </p>
         )}
 
         {/* Meta Info */}

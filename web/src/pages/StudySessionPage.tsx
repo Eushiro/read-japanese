@@ -69,6 +69,7 @@ export function StudySessionPage() {
           type: "video" as const,
           id: firstVideo._id,
           title: firstVideo.title,
+          language: firstVideo.language,
           duration: firstVideo.duration,
         }
       : null;
@@ -310,6 +311,7 @@ function ActivityRenderer({
           contentType={activity.contentType}
           contentId={activity.contentId}
           title={activity.title}
+          language={activity.language}
           onComplete={() => {
             onRecordContent({ type: activity.contentType, title: activity.title });
             onComplete();
