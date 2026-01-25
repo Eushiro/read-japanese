@@ -8,7 +8,7 @@
  * Run: bun run scripts/lint-patterns.ts
  */
 
-import { readFileSync, readdirSync, statSync } from "fs";
+import { readdirSync, readFileSync, statSync } from "fs";
 import { join, relative } from "path";
 
 // Files that are allowed to have the patterns we're checking for

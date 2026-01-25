@@ -2,7 +2,11 @@
 /**
  * Validates that all translation files have the same keys.
  * Compares each locale against English (en) as the reference.
- * Also checks for unused translation keys in the codebase.
+ *
+ * Checks performed:
+ * 1. Keys match across all locale files (always runs, blocking)
+ * 2. Keys used in code exist in translation files (always runs, blocking)
+ * 3. Unused keys in translation files (--check-unused flag, informational)
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "fs";
@@ -147,7 +151,13 @@ function main() {
 
   console.log("✓ All translation files have matching keys");
 
-  // Check for unused keys if --check-unused flag is passed
+  // Check for missing keys (used in code but not defined) - always runs, blocking
+  const missingKeysResult = checkMissingKeys(referenceDir, namespaces);
+  if (missingKeysResult.hasMissing) {
+    process.exit(1);
+  }
+
+  // Check for unused keys if --check-unused flag is passed (informational only)
   if (process.argv.includes("--check-unused")) {
     checkUnusedKeys(referenceDir, namespaces);
   }
@@ -200,6 +210,80 @@ function extractUsedKeys(content: string): string[] {
   }
 
   return keys;
+}
+
+/**
+ * Check for missing translation keys (used in code but not defined)
+ * Returns { hasMissing: boolean } - blocking check
+ */
+function checkMissingKeys(
+  referenceDir: string,
+  namespaces: string[]
+): { hasMissing: boolean } {
+  const srcDir = join(import.meta.dir, "../src");
+  const sourceFiles = getAllFiles(srcDir, [".tsx", ".ts"]);
+
+  // Collect all used keys from source files
+  const usedKeys = new Set<string>();
+  for (const file of sourceFiles) {
+    const content = readFileSync(file, "utf-8");
+    const keys = extractUsedKeys(content);
+    keys.forEach((k) => usedKeys.add(k));
+  }
+
+  // Collect all defined keys from reference locale (with namespace prefix)
+  const definedKeys = new Set<string>();
+  for (const namespace of namespaces) {
+    const refPath = join(referenceDir, `${namespace}.json`);
+    const refContent = JSON.parse(readFileSync(refPath, "utf-8"));
+    const keys = getAllKeys(refContent);
+    // Add namespace prefix to match how keys are used in code: t('namespace.key')
+    keys.forEach((k) => definedKeys.add(`${namespace}.${k}`));
+  }
+
+  // Find missing keys (used in code but not defined)
+  const missingKeys = [...usedKeys].filter((k) => {
+    // Skip keys that look like dynamic/computed keys (contain variables)
+    if (k.includes("${") || k.includes("{{")) return false;
+
+    // Skip keys that end with "." (incomplete dynamic keys like "library.languages.")
+    if (k.endsWith(".")) return false;
+
+    // Skip keys that look like array indices (e.g., "pricing.tiers.pro.features.4")
+    if (/\.\d+$/.test(k)) return false;
+
+    // Check if the exact key is defined
+    if (definedKeys.has(k)) return false;
+
+    // Check for plural forms - if any variant is defined, consider it defined
+    const baseKey = getBaseKey(k);
+    if (baseKey !== k && definedKeys.has(baseKey)) return false;
+
+    for (const suffix of PLURAL_SUFFIXES) {
+      if (definedKeys.has(k + suffix)) return false;
+    }
+
+    // Check if the namespace exists (skip keys for unknown namespaces - likely dynamic)
+    const dotIndex = k.indexOf(".");
+    if (dotIndex === -1) return false; // No namespace, skip
+    const namespace = k.substring(0, dotIndex);
+    if (!namespaces.includes(namespace)) return false; // Unknown namespace, skip
+
+    return true;
+  });
+
+  if (missingKeys.length > 0) {
+    console.error(`\n✗ Found ${missingKeys.length} missing translation key(s):`);
+    missingKeys.sort().forEach((k) => console.error(`  - ${k}`));
+    console.error(
+      "\nThese keys are used in code but not defined in translation files."
+    );
+    console.error("Add them to the English (en) locale files first, then sync to other locales.");
+    return { hasMissing: true };
+  }
+
+  console.log("✓ All translation keys used in code are defined");
+  return { hasMissing: false };
 }
 
 /**

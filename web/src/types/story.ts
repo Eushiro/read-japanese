@@ -214,10 +214,7 @@ export function testLevelToDifficultyLevel(testLevel: string): number {
 /**
  * Convert difficulty level (1-6) back to display label for a given language.
  */
-export function difficultyLevelToTestLevel(
-  difficulty: number,
-  language: Language
-): string {
+export function difficultyLevelToTestLevel(difficulty: number, language: Language): string {
   if (language === "japanese") {
     const jlpt = ["N5", "N4", "N3", "N2", "N1"];
     return jlpt[Math.min(Math.max(difficulty - 1, 0), 4)] ?? "N3";

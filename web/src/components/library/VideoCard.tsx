@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { formatDuration } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { LANGUAGE_COLORS, type Language } from "@/lib/languages";
+import { type Language, LANGUAGE_COLORS } from "@/lib/languages";
 import { getLevelVariant } from "@/lib/levels";
 import { getYoutubeThumbnailUrl, isValidYoutubeId } from "@/lib/youtube";
 

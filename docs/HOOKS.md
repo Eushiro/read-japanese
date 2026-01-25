@@ -8,7 +8,7 @@ The repository uses **Husky** for pre-commit hooks that enforce code quality.
 2. **Prettier** - Auto-formats staged files (non-blocking, just fixes)
 3. **TypeScript** - `tsc --noEmit` catches type errors
 4. **ESLint** - Runs on staged `.ts/.tsx` files, fails on any warnings or errors
-5. **i18n validation** - Ensures all translation files have matching keys
+5. **i18n validation** - Ensures all translation files have matching keys AND all keys used in code exist
 6. **Convex typecheck** - Validates Convex functions and schema types
 7. **Pattern validation** - Checks for hardcoded language types (use `Language` from `@/lib/languages`)
 8. **Smoke tests** - Runs `bun test` to verify critical paths aren't broken
@@ -50,6 +50,11 @@ Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
 - Add missing keys to `ja/`, `fr/`, `zh/` files
 - Remove extra keys that don't exist in English
 - **Translations must be colloquial and natural** - not literal word-for-word. Each language should sound native to its speakers.
+
+**i18n missing keys:** Keys used in code must exist in translation files:
+- Check the error output for the list of missing keys
+- Add the missing keys to English (`en/`) locale files first
+- Then sync to other locales (`ja/`, `fr/`, `zh/`)
 
 **Tests failed:** Fix the failing tests. Run `bun test` to see details.
 
