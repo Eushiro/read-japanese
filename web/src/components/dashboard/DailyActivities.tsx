@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { BookOpen, Brain, ChevronRight, PenLine, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 
 interface DailyActivitiesProps {
@@ -11,6 +12,7 @@ interface DailyActivitiesProps {
     storyId: string;
     storyTitle: string;
     progress: number;
+    language: ContentLanguage;
   } | null;
 }
 
@@ -120,8 +122,8 @@ export function DailyActivities({
         {/* Continue reading */}
         {continueReading && (
           <Link
-            to="/read/$storyId"
-            params={{ storyId: continueReading.storyId }}
+            to="/read/$language/$storyId"
+            params={{ language: continueReading.language, storyId: continueReading.storyId }}
             className="flex items-center justify-between p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 hover:bg-blue-500/10 transition-colors group"
           >
             <div className="flex items-center gap-3">

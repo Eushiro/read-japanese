@@ -3,6 +3,7 @@ import { BookOpen, Loader2, Play, SkipForward } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 
 import { api } from "../../../convex/_generated/api";
@@ -14,6 +15,7 @@ interface SessionInputProps {
   contentType: "story" | "video";
   contentId: string;
   title: string;
+  language: ContentLanguage;
   onComplete: () => void;
   onSkip: () => void;
 }
@@ -22,6 +24,7 @@ export function SessionInput({
   contentType,
   contentId,
   title,
+  language,
   onComplete,
   onSkip,
 }: SessionInputProps) {
@@ -165,6 +168,7 @@ export function SessionInput({
       {contentType === "story" && (
         <EmbeddedStoryReader
           storyId={contentId}
+          language={language}
           isOpen={isContentOpen}
           onClose={handleContentClose}
           onComplete={handleContentComplete}

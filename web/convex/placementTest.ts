@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { internalMutation, mutation, query } from "./_generated/server";
 import { getGradingProfile as getGradingProfileConstant } from "./lib/gradingProfiles";
-import { type Language, languageValidator } from "./schema";
+import { type ContentLanguage, languageValidator } from "./schema";
 
 // ============================================
 // LEVEL DEFINITIONS
@@ -202,7 +202,7 @@ export const getGradingProfile = query({
     level: v.string(),
   },
   handler: async (_ctx, args) => {
-    return getGradingProfileConstant(args.language as Language, args.level);
+    return getGradingProfileConstant(args.language as ContentLanguage, args.level);
   },
 });
 

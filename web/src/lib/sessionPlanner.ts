@@ -1,4 +1,5 @@
 import type { SessionActivity, SessionPlan } from "@/contexts/StudySessionContext";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 
 interface PlannerInput {
   dueCardCount: number;
@@ -8,6 +9,7 @@ interface PlannerInput {
     type: "story" | "video";
     id: string;
     title: string;
+    language: ContentLanguage;
     duration?: number; // in seconds for videos
   } | null;
   selectedDuration: number | null; // null = automatic
@@ -64,6 +66,7 @@ export function buildSessionPlan(input: PlannerInput): SessionPlan {
       contentType: recommendedContent.type,
       contentId: recommendedContent.id,
       title: recommendedContent.title,
+      language: recommendedContent.language,
     });
     const inputTime = Math.min(remainingTime * 0.6, INPUT_BASE_TIME);
     estimatedMinutes += Math.ceil(inputTime);

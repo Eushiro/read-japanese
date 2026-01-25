@@ -5,8 +5,9 @@ import { v } from "convex/values";
 // TYPE EXPORTS (for use in frontend/backend)
 // ============================================
 
-// Supported languages
-export type Language = "japanese" | "english" | "french";
+// Supported content languages (what the user is learning)
+// Note: Separate from UI language (i18n locale)
+export type ContentLanguage = "japanese" | "english" | "french";
 
 // Mastery states for vocabulary items
 export type MasteryState = "new" | "learning" | "tested" | "mastered";
@@ -393,6 +394,52 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_and_date", ["userId", "createdAt"]),
+
+  // ============================================
+  // STORIES (content metadata with R2 URLs)
+  // ============================================
+  stories: defineTable({
+    storyId: v.string(), // Unique identifier (e.g., "n5_first_cafe_001")
+    language: languageValidator, // Content language
+
+    // Primary title (in the story's language)
+    title: v.string(),
+    // Translations of the title (all languages required)
+    titleTranslations: v.object({
+      en: v.string(),
+      ja: v.string(),
+      fr: v.string(),
+      zh: v.string(),
+    }),
+
+    // Metadata
+    level: v.string(), // "N5", "A1", etc.
+    wordCount: v.number(),
+    genre: v.string(),
+    chapterCount: v.number(),
+    isPremium: v.boolean(),
+
+    // Summary (in the story's language)
+    summary: v.string(),
+    // Translations of the summary (all languages required)
+    summaryTranslations: v.object({
+      en: v.string(),
+      ja: v.string(),
+      fr: v.string(),
+      zh: v.string(),
+    }),
+
+    // R2 URLs (direct links to content)
+    storyUrl: v.string(), // Full story JSON: stories/{language}/{storyId}/story.json
+    coverUrl: v.optional(v.string()), // Cover image
+    audioUrl: v.optional(v.string()), // Story audio
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_story_id", ["storyId"])
+    .index("by_language", ["language"])
+    .index("by_language_and_level", ["language", "level"]),
 
   // ============================================
   // READING PROGRESS (existing, enhanced)

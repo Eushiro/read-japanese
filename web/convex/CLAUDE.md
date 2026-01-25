@@ -38,10 +38,11 @@ const audioUrl = await uploadAudio(audioBytes, "audio/mpeg");
 const imageUrl = await uploadImage(imageBytes, "image/webp");
 ```
 
-### 3. Use Shared Language Configuration
+### 3. Use Shared Content Language Configuration
 
 ```typescript
-import { LANGUAGES, SUPPORTED_LANGUAGE_CODES } from "@/lib/languages";
+import { LANGUAGES, SUPPORTED_LANGUAGE_CODES } from "@/lib/contentLanguages";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 ```
 
 ### 4. Node.js Runtime
@@ -78,4 +79,4 @@ convex/
 - Upload files directly to R2 without storage abstraction
 - Store audio as WAV or images as PNG
 - Import Node.js modules without `"use node"` directive
-- Hardcode language lists (use `@/lib/languages`)
+- Hardcode content language lists (use `@/lib/contentLanguages`)

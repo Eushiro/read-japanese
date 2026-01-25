@@ -36,12 +36,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 
 import { api } from "../../../convex/_generated/api";
 
-type Language = "japanese" | "english" | "french";
-
-const LEVELS_BY_LANGUAGE: Record<Language, string[]> = {
+const LEVELS_BY_LANGUAGE: Record<ContentLanguage, string[]> = {
   japanese: ["N5", "N4", "N3", "N2", "N1"],
   english: ["A1", "A2", "B1", "B2", "C1", "C2"],
   french: ["A1", "A2", "B1", "B2", "C1", "C2"],
@@ -96,7 +95,7 @@ export function DecksPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deckName, setDeckName] = useState("");
   const [deckId, setDeckId] = useState("");
-  const [language, setLanguage] = useState<Language>("japanese");
+  const [language, setLanguage] = useState<ContentLanguage>("japanese");
   const [level, setLevel] = useState("N5");
   const [description, setDescription] = useState("");
   const [csvContent, setCsvContent] = useState("");
@@ -271,8 +270,8 @@ export function DecksPage() {
                   <Select
                     value={language}
                     onValueChange={(v) => {
-                      setLanguage(v as Language);
-                      setLevel(LEVELS_BY_LANGUAGE[v as Language][0]);
+                      setLanguage(v as ContentLanguage);
+                      setLevel(LEVELS_BY_LANGUAGE[v as ContentLanguage][0]);
                     }}
                   >
                     <SelectTrigger>

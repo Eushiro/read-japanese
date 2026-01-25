@@ -2,8 +2,8 @@ import { AlertCircle, Check, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
-import type { Language } from "@/lib/languages";
 
 interface FeedbackDisplayProps {
   accuracyScore: number;
@@ -11,7 +11,7 @@ interface FeedbackDisplayProps {
   feedbackAudioUrl?: string | null;
   userRecordingUrl?: string | null;
   targetText: string;
-  language: Language;
+  language: ContentLanguage;
 }
 
 export function FeedbackDisplay({

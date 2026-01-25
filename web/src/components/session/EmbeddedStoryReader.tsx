@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/hooks/useSettings";
 import { useStory } from "@/hooks/useStory";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import type { ProficiencyLevel, Token } from "@/types/story";
 
 type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
@@ -29,6 +30,7 @@ const levelVariantMap: Record<ProficiencyLevel, BadgeVariant> = {
 
 interface EmbeddedStoryReaderProps {
   storyId: string;
+  language: ContentLanguage;
   isOpen: boolean;
   onClose: () => void;
   onComplete: () => void;
@@ -36,11 +38,12 @@ interface EmbeddedStoryReaderProps {
 
 export function EmbeddedStoryReader({
   storyId,
+  language,
   isOpen,
   onClose,
   onComplete,
 }: EmbeddedStoryReaderProps) {
-  const { story, isLoading, error } = useStory(isOpen ? storyId : undefined);
+  const { story, isLoading, error } = useStory(isOpen ? storyId : undefined, language);
   const { user, isAuthenticated } = useAuth();
   const { settings } = useSettings();
   const showFurigana = settings.showFurigana;

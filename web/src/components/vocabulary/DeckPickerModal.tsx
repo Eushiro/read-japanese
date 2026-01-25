@@ -12,8 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
-import type { Language } from "@/lib/languages";
 import { getLevelVariant } from "@/lib/levels";
 
 import { api } from "../../../convex/_generated/api";
@@ -22,13 +22,13 @@ interface DeckPickerModalProps {
   userId: string;
   isOpen: boolean;
   onClose: () => void;
-  defaultLanguage?: Language;
+  defaultLanguage?: ContentLanguage;
 }
 
 const ALL_LANGUAGES = [
-  { value: "japanese" as const, label: "Japanese", flag: "🇯🇵" },
-  { value: "english" as const, label: "English", flag: "🇬🇧" },
-  { value: "french" as const, label: "French", flag: "🇫🇷" },
+  { value: "japanese" as const, label: "Japanese" },
+  { value: "english" as const, label: "English" },
+  { value: "french" as const, label: "French" },
 ];
 
 export function DeckPickerModal({
@@ -109,7 +109,7 @@ export function DeckPickerModal({
     setDailyCards((prev) => Math.max(5, Math.min(30, prev + delta)));
   };
 
-  const handleLanguageChange = (lang: Language) => {
+  const handleLanguageChange = (lang: ContentLanguage) => {
     setSelectedLanguage(lang);
     setSelectedDeckId(null);
   };
@@ -140,7 +140,6 @@ export function DeckPickerModal({
                     : "text-foreground-muted hover:text-foreground hover:bg-muted"
                 }`}
               >
-                <span className="mr-1.5">{lang.flag}</span>
                 {t(`library.languages.${lang.value}`)}
               </button>
             ))}
@@ -150,7 +149,6 @@ export function DeckPickerModal({
         {/* Single language indicator when only learning one language */}
         {!showLanguageTabs && availableLanguages.length === 1 && (
           <div className="flex items-center gap-2 text-sm text-foreground-muted pb-2">
-            <span>{availableLanguages[0].flag}</span>
             <span>
               {t(`library.languages.${availableLanguages[0].value}`)}{" "}
               {t("vocabulary.deckPicker.decks")}

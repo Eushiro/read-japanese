@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import type { Language } from "../../../convex/schema";
+import type { ContentLanguage } from "../../../convex/schema";
 
 interface Question {
   questionId: string;
@@ -450,7 +450,7 @@ export function VideoFormPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Language *</Label>
-              <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+              <Select value={language} onValueChange={(v) => setLanguage(v as ContentLanguage)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

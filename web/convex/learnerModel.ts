@@ -8,7 +8,7 @@ import {
   query,
 } from "./_generated/server";
 import { getYesterdayString } from "./lib/helpers";
-import { type Language, languageValidator, questionSourceTypeValidator } from "./schema";
+import { type ContentLanguage, languageValidator, questionSourceTypeValidator } from "./schema";
 
 // ============================================
 // TYPES
@@ -706,7 +706,7 @@ async function updateDailyProgressInternal(
   ctx: MutationCtx,
   args: {
     userId: string;
-    language: Language;
+    language: ContentLanguage;
     cardsReviewed?: number;
     cardsCorrect?: number;
     questionsAnswered?: number;

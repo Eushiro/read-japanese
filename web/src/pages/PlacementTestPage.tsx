@@ -9,14 +9,13 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
-type Language = "japanese" | "english" | "french";
-
-const languageFlags: Record<Language, string> = {
+const languageFlags: Record<ContentLanguage, string> = {
   japanese: "\u{1f1ef}\u{1f1f5}",
   english: "\u{1f1ec}\u{1f1e7}",
   french: "\u{1f1eb}\u{1f1f7}",
@@ -40,7 +39,7 @@ export function PlacementTestPage() {
   const t = useT();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const search = useSearch({ strict: false }) as { language?: string };
-  const language = (search.language as Language) || "japanese";
+  const language = (search.language as ContentLanguage) || "japanese";
 
   // Loading phrases that cycle during question generation (translated)
   const loadingPhrases = useMemo(

@@ -2,9 +2,9 @@ import { Clock, Video } from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { type ContentLanguage, LANGUAGE_COLORS } from "@/lib/contentLanguages";
 import { formatDuration } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { type Language, LANGUAGE_COLORS } from "@/lib/languages";
 import { getLevelVariant } from "@/lib/levels";
 import { getYoutubeThumbnailUrl, isValidYoutubeId } from "@/lib/youtube";
 
@@ -15,7 +15,7 @@ export interface VideoItem {
   description?: string;
   thumbnailUrl?: string;
   duration?: number;
-  language: Language;
+  language: ContentLanguage;
   level?: string;
 }
 

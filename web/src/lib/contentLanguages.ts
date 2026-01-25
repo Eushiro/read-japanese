@@ -1,17 +1,20 @@
 /**
- * Shared language and exam configuration
+ * Content language and exam configuration
  *
- * Languages are imported from shared/languages.json to ensure consistency
+ * Content languages are imported from shared/contentLanguages.json to ensure consistency
  * between frontend and backend. To add a new language, update that file.
+ *
+ * Note: This is separate from UI/display language (i18n) which controls the interface language.
+ * ContentLanguage = what the user is learning (Japanese, English, French)
+ * i18n locale = what language the UI is displayed in
  */
 
-import languagesConfig from "../../../shared/languages.json";
+import languagesConfig from "../../../shared/contentLanguages.json";
 
 // Build LANGUAGES array from shared config
 export const LANGUAGES = languagesConfig.supported.map((lang) => ({
   value: lang.code as "japanese" | "english" | "french",
   label: lang.name,
-  flag: lang.flag,
   nativeName: lang.nativeName,
 }));
 
@@ -44,9 +47,9 @@ export const EXAMS_BY_LANGUAGE = {
   ],
 } as const;
 
-export type Language = (typeof LANGUAGES)[number]["value"];
-export type LanguageOption = (typeof LANGUAGES)[number];
-export type ExamOption = (typeof EXAMS_BY_LANGUAGE)[Language][number];
+export type ContentLanguage = (typeof LANGUAGES)[number]["value"];
+export type ContentLanguageOption = (typeof LANGUAGES)[number];
+export type ExamOption = (typeof EXAMS_BY_LANGUAGE)[ContentLanguage][number];
 
 // Language-specific placeholder colors for video thumbnails
 export const LANGUAGE_COLORS: Record<string, { bg: string; text: string }> = {
@@ -56,9 +59,9 @@ export const LANGUAGE_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 /**
- * Detect user's likely target language based on browser locale
+ * Detect user's likely target content language based on browser locale
  */
-export function detectTargetLanguage(): Language {
+export function detectTargetLanguage(): ContentLanguage {
   const browserLang = navigator.language.toLowerCase();
 
   // If browser is in English, they probably want to learn something else
@@ -82,8 +85,8 @@ export function detectTargetLanguage(): Language {
 }
 
 /**
- * Get exams available for a specific language
+ * Get exams available for a specific content language
  */
-export function getExamsForLanguage(language: Language): readonly ExamOption[] {
+export function getExamsForLanguage(language: ContentLanguage): readonly ExamOption[] {
   return EXAMS_BY_LANGUAGE[language];
 }

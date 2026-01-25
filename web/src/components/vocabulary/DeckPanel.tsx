@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { DeckSubscriptionStatus, Language } from "@/lib/convex-types";
+import type { ContentLanguage, DeckSubscriptionStatus } from "@/lib/convex-types";
 import { useT } from "@/lib/i18n";
 
 import { api } from "../../../convex/_generated/api";
@@ -38,7 +38,7 @@ type SubscriptionWithDeck = {
   deck: {
     name: string;
     description: string;
-    language: Language;
+    language: ContentLanguage;
     level: string;
     totalWords: number;
   } | null;

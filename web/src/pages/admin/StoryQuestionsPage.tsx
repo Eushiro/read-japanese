@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 
 import { api } from "../../../convex/_generated/api";
 
@@ -59,8 +60,8 @@ interface Question {
 }
 
 export function StoryQuestionsPage() {
-  const params = useParams({ from: "/admin/stories/$storyId" });
-  const storyId = params.storyId;
+  const params = useParams({ from: "/admin/stories/$language/$storyId" });
+  const { storyId, language } = params;
   const { user } = useAuth();
 
   const [selectedDifficulty, setSelectedDifficulty] = useState(1);
@@ -69,9 +70,9 @@ export function StoryQuestionsPage() {
 
   // Fetch story from backend
   const { data: story, isLoading: storyLoading } = useTanstackQuery({
-    queryKey: ["story", storyId],
-    queryFn: () => getStory(storyId),
-    enabled: !!storyId,
+    queryKey: ["story", language, storyId],
+    queryFn: () => getStory(storyId, language as ContentLanguage),
+    enabled: !!storyId && !!language,
   });
 
   // Fetch all questions for this story

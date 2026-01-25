@@ -3,9 +3,16 @@
  *
  * Loads dictionary JSON files once and searches in memory.
  * Much faster than server round-trips.
+ *
+ * Dictionaries are served from R2 (VITE_R2_PUBLIC_URL) for cost optimization.
  */
 
 import * as wanakana from "wanakana";
+
+import type { ContentLanguage } from "@/lib/contentLanguages";
+
+// R2 base URL from environment, falls back to local /dictionaries for development
+const R2_BASE_URL = import.meta.env.VITE_R2_PUBLIC_URL || "";
 
 export interface DictionaryEntry {
   word: string;
@@ -14,17 +21,15 @@ export interface DictionaryEntry {
   partOfSpeech?: string;
 }
 
-type Language = "japanese" | "english" | "french";
-
 // Cache for loaded dictionaries
-const cache: Record<Language, DictionaryEntry[] | null> = {
+const cache: Record<ContentLanguage, DictionaryEntry[] | null> = {
   japanese: null,
   english: null,
   french: null,
 };
 
 // Loading promises to prevent duplicate fetches
-const loadingPromises: Record<Language, Promise<DictionaryEntry[]> | null> = {
+const loadingPromises: Record<ContentLanguage, Promise<DictionaryEntry[]> | null> = {
   japanese: null,
   english: null,
   french: null,
@@ -36,7 +41,7 @@ const loadingPromises: Record<Language, Promise<DictionaryEntry[]> | null> = {
  * English/French format: [word, [meanings], pos?]
  * Japanese format: [word, reading, [meanings]]
  */
-function parseEntries(data: unknown[], language: Language): DictionaryEntry[] {
+function parseEntries(data: unknown[], language: ContentLanguage): DictionaryEntry[] {
   if (language === "japanese") {
     // Japanese: [word, reading, [meanings]]
     return data.map((item) => {
@@ -64,7 +69,7 @@ function parseEntries(data: unknown[], language: Language): DictionaryEntry[] {
 /**
  * Load dictionary for a language (lazy, cached)
  */
-export async function loadDictionary(language: Language): Promise<DictionaryEntry[]> {
+export async function loadDictionary(language: ContentLanguage): Promise<DictionaryEntry[]> {
   // Return cached if available
   if (cache[language]) {
     return cache[language]!;
@@ -77,8 +82,11 @@ export async function loadDictionary(language: Language): Promise<DictionaryEntr
 
   // Start loading
   const langCode = language === "japanese" ? "ja" : language === "english" ? "en" : "fr";
+  const dictionaryUrl = R2_BASE_URL
+    ? `${R2_BASE_URL}/dictionaries/${langCode}.json`
+    : `/dictionaries/${langCode}.json`;
 
-  loadingPromises[language] = fetch(`/dictionaries/${langCode}.json`)
+  loadingPromises[language] = fetch(dictionaryUrl)
     .then((res) => {
       if (!res.ok) {
         throw new Error(`Failed to load ${language} dictionary: ${res.status}`);
@@ -106,7 +114,7 @@ export async function loadDictionary(language: Language): Promise<DictionaryEntr
 /**
  * Preload dictionary (call when modal opens)
  */
-export function preloadDictionary(language: Language): void {
+export function preloadDictionary(language: ContentLanguage): void {
   loadDictionary(language).catch(() => {
     // Ignore errors during preload
   });
@@ -143,7 +151,7 @@ function getJapaneseSearchTerms(query: string): string[] {
  */
 export async function searchClientDictionary(
   query: string,
-  language: Language,
+  language: ContentLanguage,
   limit: number = 10
 ): Promise<DictionaryEntry[]> {
   if (!query.trim()) return [];
@@ -180,13 +188,13 @@ export async function searchClientDictionary(
 /**
  * Check if dictionary is loaded for a language
  */
-export function isDictionaryLoaded(language: Language): boolean {
+export function isDictionaryLoaded(language: ContentLanguage): boolean {
   return cache[language] !== null;
 }
 
 /**
  * Get dictionary loading status
  */
-export function isDictionaryLoading(language: Language): boolean {
+export function isDictionaryLoading(language: ContentLanguage): boolean {
   return loadingPromises[language] !== null;
 }

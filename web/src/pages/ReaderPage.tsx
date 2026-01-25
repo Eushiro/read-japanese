@@ -16,8 +16,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useSettings } from "@/hooks/useSettings";
 import { useStory } from "@/hooks/useStory";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
-import type { Language } from "@/lib/languages";
 import type { ProficiencyLevel, Token } from "@/types/story";
 import { difficultyLevelToTestLevel, testLevelToDifficultyLevel } from "@/types/story";
 
@@ -40,10 +40,10 @@ const levelVariantMap: Record<ProficiencyLevel, BadgeVariant> = {
 };
 
 export function ReaderPage() {
-  const { storyId } = useParams({ from: "/read/$storyId" });
+  const { storyId, language } = useParams({ from: "/read/$language/$storyId" });
   const navigate = useNavigate();
   const t = useT();
-  const { story, isLoading, error } = useStory(storyId);
+  const { story, isLoading, error } = useStory(storyId, language as ContentLanguage);
   const { user, isAuthenticated } = useAuth();
   const { trackEvent, events } = useAnalytics();
   const userId = user?.id ?? "anonymous";
@@ -180,7 +180,7 @@ export function ReaderPage() {
     };
 
     // Derive language from story level
-    const getLanguage = (): Language => {
+    const getLanguage = (): ContentLanguage => {
       const level = story.metadata.level;
       if (level.startsWith("N")) return "japanese";
       if (story.id.includes("french") || story.id.includes("fr_")) return "french";
@@ -323,8 +323,11 @@ export function ReaderPage() {
       setShowPaywall(true);
       return;
     }
-    navigate({ to: "/comprehension/$storyId", params: { storyId: story?.id ?? storyId } });
-  }, [isPremiumUser, navigate, story?.id, storyId]);
+    navigate({
+      to: "/comprehension/$language/$storyId",
+      params: { language, storyId: story?.id ?? storyId },
+    });
+  }, [isPremiumUser, navigate, story?.id, storyId, language]);
 
   const handleTokenClick = useCallback(
     (token: Token, event: React.MouseEvent, segmentText?: string) => {

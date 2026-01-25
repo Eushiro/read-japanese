@@ -29,13 +29,13 @@ interface RawGeneratedSentence {
 }
 
 // Helper function to generate sentence (not a Convex action)
-import type { Language } from "../schema";
+import type { ContentLanguage } from "../schema";
 
 export async function generateSentenceHelper(args: {
   word: string;
   reading?: string;
   definitions: string[];
-  language: Language;
+  language: ContentLanguage;
   examLevel?: string;
 }): Promise<GeneratedSentence> {
   const languageName = languageNames[args.language];
@@ -122,7 +122,7 @@ export async function generateSentenceHelperTracked(args: {
   word: string;
   reading?: string;
   definitions: string[];
-  language: Language;
+  language: ContentLanguage;
   examLevel?: string;
 }): Promise<CallWithRetryResult<GeneratedSentence>> {
   const languageName = languageNames[args.language];

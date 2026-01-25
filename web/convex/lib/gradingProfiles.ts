@@ -1,4 +1,4 @@
-import type { Language } from "../schema";
+import type { ContentLanguage } from "../schema";
 
 /**
  * Grading profiles define level-specific thresholds for sentence verification.
@@ -6,7 +6,7 @@ import type { Language } from "../schema";
  */
 
 export interface GradingProfile {
-  language: Language;
+  language: ContentLanguage;
   level: string;
   grammarPassThreshold: number;
   usagePassThreshold: number;
@@ -199,7 +199,7 @@ const FRENCH_PROFILES: Record<string, GradingProfile> = {
 };
 
 // Combined lookup
-export const GRADING_PROFILES: Record<Language, Record<string, GradingProfile>> = {
+export const GRADING_PROFILES: Record<ContentLanguage, Record<string, GradingProfile>> = {
   japanese: JAPANESE_PROFILES,
   english: ENGLISH_PROFILES,
   french: FRENCH_PROFILES,
@@ -209,13 +209,13 @@ export const GRADING_PROFILES: Record<Language, Record<string, GradingProfile>> 
  * Get grading profile for a language and level
  * @returns GradingProfile or null if not found
  */
-export function getGradingProfile(language: Language, level: string): GradingProfile | null {
+export function getGradingProfile(language: ContentLanguage, level: string): GradingProfile | null {
   return GRADING_PROFILES[language]?.[level] ?? null;
 }
 
 /**
  * Get all levels for a language
  */
-export function getLevelsForLanguage(language: Language): string[] {
+export function getLevelsForLanguage(language: ContentLanguage): string[] {
   return Object.keys(GRADING_PROFILES[language] ?? {});
 }

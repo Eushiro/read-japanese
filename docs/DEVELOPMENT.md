@@ -305,15 +305,19 @@ await ctx.runAction(internal.lib.generation.generateSentenceForWord, {
 
 ---
 
-## 7. Use Shared Language Configuration
+## 7. Use Shared Content Language Configuration
 
-**All language support is defined in `shared/languages.json`** - the single source of truth for both frontend and backend.
+**All content language support is defined in `shared/contentLanguages.json`** - the single source of truth for both frontend and backend.
 
-**In the frontend (`web/src/lib/languages.ts`):**
+Note: "Content language" refers to the language the user is learning (Japanese, English, French), which is separate from the UI language (i18n locale) that controls how the interface is displayed.
+
+**In the frontend (`web/src/lib/contentLanguages.ts`):**
 ```typescript
-import { LANGUAGES, SUPPORTED_LANGUAGE_CODES, TRANSLATION_TARGETS } from "@/lib/languages";
+import { LANGUAGES, SUPPORTED_LANGUAGE_CODES, TRANSLATION_TARGETS } from "@/lib/contentLanguages";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 
-// LANGUAGES = [{value: "japanese", label: "Japanese", flag: "🇯🇵", ...}, ...]
+// ContentLanguage = "japanese" | "english" | "french" (what user is learning)
+// LANGUAGES = [{value: "japanese", label: "Japanese", nativeName: "日本語", ...}, ...]
 // SUPPORTED_LANGUAGE_CODES = ["japanese", "english", "french"]
 // TRANSLATION_TARGETS = ["english", "japanese", "french"]
 ```
@@ -336,14 +340,14 @@ iso_codes = [CODE_TO_ISO[lang] for lang in targets]  # Returns ["en", "fr"]
 
 **DO NOT:**
 - Hardcode language lists - always import from the shared config
-- Add languages without updating `shared/languages.json`
+- Add languages without updating `shared/contentLanguages.json`
 - Define local `LANGUAGE_NAMES` or similar mappings that duplicate the config
 
-**Adding a new language:**
-1. Add to `shared/languages.json` with all required fields
+**Adding a new content language:**
+1. Add to `shared/contentLanguages.json` with all required fields
 2. Run `cd web && bun run typecheck` to verify TypeScript
 3. Add i18n locale files in `web/src/lib/i18n/locales/<isoCode>/`
-4. Update `EXAMS_BY_LANGUAGE` in `web/src/lib/languages.ts` if applicable
+4. Update `EXAMS_BY_LANGUAGE` in `web/src/lib/contentLanguages.ts` if applicable
 
 See `shared/README.md` for full documentation.
 

@@ -1,4 +1,4 @@
-import type { Language } from "@/lib/languages";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 
 // JLPT Level types (Japanese)
 export type JLPTLevel = "N5" | "N4" | "N3" | "N2" | "N1";
@@ -127,16 +127,25 @@ export interface Story {
   grammarPoints?: string[];
 }
 
+// Translation object for multi-language content (all languages required)
+export interface Translations {
+  en: string;
+  ja: string;
+  fr: string;
+  zh: string;
+}
+
 // Story list item (summary for library view)
 export interface StoryListItem {
   id: string;
+  language: ContentLanguage;
   title: string;
-  titleJapanese?: string;
+  titleTranslations: Translations;
   level: ProficiencyLevel;
   wordCount: number;
   genre: string;
   summary: string;
-  summaryJapanese?: string;
+  summaryTranslations: Translations;
   coverImageURL?: string;
   audioURL?: string;
   chapterCount: number;
@@ -214,7 +223,7 @@ export function testLevelToDifficultyLevel(testLevel: string): number {
 /**
  * Convert difficulty level (1-6) back to display label for a given language.
  */
-export function difficultyLevelToTestLevel(difficulty: number, language: Language): string {
+export function difficultyLevelToTestLevel(difficulty: number, language: ContentLanguage): string {
   if (language === "japanese") {
     const jlpt = ["N5", "N4", "N3", "N2", "N1"];
     return jlpt[Math.min(Math.max(difficulty - 1, 0), 4)] ?? "N3";

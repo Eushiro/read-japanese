@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useT } from "@/lib/i18n";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import {
   CEFR_LEVELS,
   type CEFRLevel,
@@ -17,12 +18,10 @@ import {
   type ProficiencyLevel,
 } from "@/types/story";
 
-type Language = "japanese" | "english" | "french";
-
 interface LevelFilterProps {
   selectedLevel: ProficiencyLevel | null;
   onSelectLevel: (level: ProficiencyLevel | null) => void;
-  languages?: Language[];
+  languages?: ContentLanguage[];
 }
 
 export function LevelFilter({ selectedLevel, onSelectLevel, languages }: LevelFilterProps) {

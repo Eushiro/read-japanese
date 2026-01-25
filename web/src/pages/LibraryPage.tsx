@@ -19,18 +19,11 @@ import {
 } from "@/components/ui/select";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { type SortOption, sortStories, useFilteredStories, useStories } from "@/hooks/useStories";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 import type { ProficiencyLevel, StoryListItem } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
-
-type Language = "japanese" | "english" | "french";
-
-const LANGUAGE_FLAGS: Record<Language, string> = {
-  japanese: "🇯🇵",
-  english: "🇬🇧",
-  french: "🇫🇷",
-};
 
 type ContentFilter = "all" | "stories" | "videos";
 
@@ -41,7 +34,7 @@ export function LibraryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<ProficiencyLevel | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("level-asc");
-  const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<ContentLanguage | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [contentFilter, setContentFilter] = useState<ContentFilter>("all");
@@ -71,7 +64,7 @@ export function LibraryPage() {
     setSelectedLevel(null);
   }, [selectedLanguage]);
 
-  const userLanguages = userProfile?.languages as Language[] | undefined;
+  const userLanguages = userProfile?.languages as ContentLanguage[] | undefined;
   const hasMultipleLanguages = userLanguages && userLanguages.length > 1;
 
   const { data: stories, isLoading: isLoadingStories, error } = useStories();
@@ -113,7 +106,10 @@ export function LibraryPage() {
       setShowPaywall(true);
       return;
     }
-    navigate({ to: "/read/$storyId", params: { storyId: story.id } });
+    navigate({
+      to: "/read/$language/$storyId",
+      params: { language: story.language, storyId: story.id },
+    });
   };
 
   const handleVideoClick = (video: VideoItem) => {
@@ -215,7 +211,7 @@ export function LibraryPage() {
               <Select
                 value={selectedLanguage ?? "all"}
                 onValueChange={(value) =>
-                  setSelectedLanguage(value === "all" ? null : (value as Language))
+                  setSelectedLanguage(value === "all" ? null : (value as ContentLanguage))
                 }
               >
                 <SelectTrigger className="w-[130px]">
@@ -225,7 +221,7 @@ export function LibraryPage() {
                   <SelectItem value="all">{t("library.filters.allLanguages")}</SelectItem>
                   {userLanguages.map((lang) => (
                     <SelectItem key={lang} value={lang}>
-                      {LANGUAGE_FLAGS[lang]} {t(`library.languages.${lang}`)}
+                      {t(`library.languages.${lang}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -1,6 +1,6 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import type { Language } from "../schema";
+import type { ContentLanguage } from "../schema";
 
 /**
  * Content Reuse Helpers
@@ -21,7 +21,7 @@ import type { Language } from "../schema";
 export async function findSentencesForWord(
   ctx: QueryCtx | MutationCtx,
   word: string,
-  language: Language
+  language: ContentLanguage
 ): Promise<Doc<"sentences">[]> {
   return await ctx.db
     .query("sentences")
@@ -38,7 +38,7 @@ export async function findUnseenSentence(
   userId: string,
   vocabularyId: Id<"vocabulary">,
   word: string,
-  language: Language
+  language: ContentLanguage
 ): Promise<Doc<"sentences"> | null> {
   // Get all available sentences for this word
   const sentences = await findSentencesForWord(ctx, word, language);
@@ -75,7 +75,7 @@ export async function findUnseenSentence(
 export async function findSentenceByDifficulty(
   ctx: QueryCtx | MutationCtx,
   word: string,
-  language: Language,
+  language: ContentLanguage,
   difficulty: number
 ): Promise<Doc<"sentences"> | null> {
   const sentences = await findSentencesForWord(ctx, word, language);
@@ -103,7 +103,7 @@ export async function findSentenceByDifficulty(
 export async function findImagesForWord(
   ctx: QueryCtx | MutationCtx,
   word: string,
-  language: Language
+  language: ContentLanguage
 ): Promise<Doc<"images">[]> {
   return await ctx.db
     .query("images")
@@ -119,7 +119,7 @@ export async function findUnseenImage(
   userId: string,
   vocabularyId: Id<"vocabulary">,
   word: string,
-  language: Language
+  language: ContentLanguage
 ): Promise<Doc<"images"> | null> {
   const images = await findImagesForWord(ctx, word, language);
 
@@ -155,7 +155,7 @@ export async function findUnseenImage(
 export async function findWordAudio(
   ctx: QueryCtx | MutationCtx,
   word: string,
-  language: Language
+  language: ContentLanguage
 ): Promise<Doc<"wordAudio"> | null> {
   return await ctx.db
     .query("wordAudio")
@@ -261,7 +261,7 @@ export async function storeSentence(
   ctx: MutationCtx,
   params: {
     word: string;
-    language: Language;
+    language: ContentLanguage;
     difficulty: number;
     sentence: string;
     translations: {
@@ -296,7 +296,7 @@ export async function storeImage(
   ctx: MutationCtx,
   params: {
     word: string;
-    language: Language;
+    language: ContentLanguage;
     imageUrl: string;
     style?: string;
     model: string;
@@ -321,7 +321,7 @@ export async function storeWordAudio(
   ctx: MutationCtx,
   params: {
     word: string;
-    language: Language;
+    language: ContentLanguage;
     audioUrl: string;
     model: string;
     createdBy?: string;

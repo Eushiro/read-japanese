@@ -37,6 +37,27 @@ When working on roadmap items:
 
 ---
 
+## TypeScript: Avoid Default Parameter Values
+
+**Require callers to be explicit and intentional.** Do not use default parameter values in function signatures.
+
+```typescript
+// Bad - default values hide intent
+function fetchStories(limit = 10, includeArchived = false) { ... }
+
+// Good - callers must be explicit
+function fetchStories(limit: number, includeArchived: boolean) { ... }
+```
+
+This applies to:
+- Function parameters
+- Destructured object parameters
+- React component props
+
+**Exception**: Only use defaults when there's a truly universal default that callers should never need to think about.
+
+---
+
 ## Development Guidelines
 
 See **`docs/DEVELOPMENT.md`** for detailed patterns on:
@@ -46,7 +67,7 @@ See **`docs/DEVELOPMENT.md`** for detailed patterns on:
 - Analytics integration (`web/src/lib/analytics.ts`)
 - Learner model integration for assessments
 - Centralized AI generation functions (`web/convex/lib/generation.ts`)
-- Shared language configuration (`shared/languages.json`)
+- Shared language configuration (`shared/contentLanguages.json`)
 - Media compression standards (MP3/WebP)
 - Batch API usage for bulk generation
 - JSON schemas for AI structured output
@@ -217,7 +238,7 @@ CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-domain.clerk.accounts.dev
 | `docs/ARCHITECTURE.md` | System architecture and data models |
 | `docs/TASKS.md` | Step-by-step admin and content tasks |
 | `docs/HOOKS.md` | Pre-commit hooks and validation |
-| `shared/languages.json` | Supported languages (shared between frontend/backend) |
+| `shared/contentLanguages.json` | Supported languages (shared between frontend/backend) |
 | `web/convex/schema.ts` | All Convex table definitions |
 | `web/convex/learnerModel.ts` | Unified skill tracking |
 | `web/convex/ai.ts` | AI model routing |

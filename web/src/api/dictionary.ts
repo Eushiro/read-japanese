@@ -1,4 +1,4 @@
-import type { Language } from "@/lib/languages";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 
 import { apiClient } from "./client";
 
@@ -17,7 +17,7 @@ interface DictionaryResponse {
 // Look up a word using our local dictionaries (exact match)
 export async function lookupWord(
   word: string,
-  language: Language = "japanese"
+  language: ContentLanguage = "japanese"
 ): Promise<DictionaryEntry | null> {
   try {
     const response = await apiClient.get<DictionaryResponse>(
@@ -40,7 +40,7 @@ export async function lookupWord(
 // Uses local dictionaries: jamdict for Japanese, WordNet for English, Free Dictionary API for French
 export async function searchDictionary(
   query: string,
-  language: Language = "japanese",
+  language: ContentLanguage = "japanese",
   limit: number = 10
 ): Promise<DictionaryEntry[]> {
   if (!query.trim()) return [];

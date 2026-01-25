@@ -1,62 +1,57 @@
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import type { ProficiencyLevel, Story, StoryListItem } from "@/types/story";
 
-import apiClient from "./client";
+// R2 base URL from environment, falls back to empty for local development
+const R2_BASE_URL = import.meta.env.VITE_R2_PUBLIC_URL || "";
 
-// Backend story types (with jlptLevel instead of level)
-interface BackendStoryListItem extends Omit<StoryListItem, "level"> {
-  jlptLevel: string;
+// Manifest type for story listings
+interface StoryManifest {
+  stories: StoryListItem[];
+  generatedAt: string;
 }
 
-interface BackendStory extends Omit<Story, "metadata"> {
-  metadata: Omit<Story["metadata"], "level"> & { jlptLevel: string };
-}
-
-// Map backend jlptLevel to frontend level
-function mapStoryListItem(item: BackendStoryListItem): StoryListItem {
-  const { jlptLevel, ...rest } = item;
-  return { ...rest, level: jlptLevel as ProficiencyLevel };
-}
-
-function mapStory(story: BackendStory): Story {
-  const { metadata, ...rest } = story;
-  const { jlptLevel, ...metadataRest } = metadata;
-  return {
-    ...rest,
-    metadata: { ...metadataRest, level: jlptLevel as ProficiencyLevel },
-  };
-}
-
-// List all stories (summary view)
+// List all stories (summary view from manifest)
 export async function listStories(level?: ProficiencyLevel): Promise<StoryListItem[]> {
-  const endpoint = level ? `/api/stories?level=${level}` : "/api/stories";
-  const stories = await apiClient.get<BackendStoryListItem[]>(endpoint);
-  return stories.map(mapStoryListItem);
+  const res = await fetch(`${R2_BASE_URL}/stories/manifest.json`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch story manifest: ${res.status}`);
+  }
+  const manifest: StoryManifest = await res.json();
+
+  if (level) {
+    return manifest.stories.filter((s) => s.level === level);
+  }
+  return manifest.stories;
 }
 
-// Get a single story with full content
-export async function getStory(storyId: string): Promise<Story> {
-  const story = await apiClient.get<BackendStory>(`/api/stories/${storyId}`);
-  return mapStory(story);
+// Get a single story with full content (language/folder-per-story structure)
+export async function getStory(storyId: string, language: ContentLanguage): Promise<Story> {
+  const res = await fetch(`${R2_BASE_URL}/stories/${language}/${storyId}/story.json`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch story ${storyId}: ${res.status}`);
+  }
+  return res.json();
 }
 
-// Reload stories from disk (admin function)
+// Reload stories - no longer needed with R2 (kept for API compatibility)
 export async function reloadStories(): Promise<{ message: string; count: number }> {
-  return apiClient.post<{ message: string; count: number }>("/api/stories/reload");
+  // No-op with R2 - stories are updated via migration script
+  return { message: "Stories are served from R2 and updated via migration script", count: 0 };
 }
 
-// Get cover image URL
+// Get cover image URL - returns URL directly (already absolute from R2/external)
 export function getCoverImageUrl(coverImageURL: string | undefined): string {
-  return apiClient.getAssetUrl(coverImageURL || "");
+  return getAssetUrl(coverImageURL || "");
 }
 
 // Get chapter image URL
 export function getChapterImageUrl(imageURL: string | undefined): string {
-  return apiClient.getAssetUrl(imageURL || "");
+  return getAssetUrl(imageURL || "");
 }
 
 // Get audio URL
 export function getAudioUrl(audioURL: string | undefined): string {
-  return apiClient.getAssetUrl(audioURL || "");
+  return getAssetUrl(audioURL || "");
 }
 
 // Simple in-memory cache for prefetched stories
@@ -97,23 +92,35 @@ export function preloadStoryAssets(story: Story): void {
   }
 }
 
-// Helper to get asset URL (reusing the client method)
+/**
+ * Get asset URL - handles absolute URLs (R2/external) and relative paths
+ */
 function getAssetUrl(path: string): string {
-  return apiClient.getAssetUrl(path);
+  if (!path) return "";
+  // Already absolute URL (http:// or https://)
+  if (path.startsWith("http")) return path;
+  // Relative path - prepend R2 base URL
+  if (R2_BASE_URL) {
+    const base = R2_BASE_URL.endsWith("/") ? R2_BASE_URL.slice(0, -1) : R2_BASE_URL;
+    return `${base}${path.startsWith("/") ? "" : "/"}${path}`;
+  }
+  // No R2 URL configured - return as-is
+  return path;
 }
 
 // Prefetch a story (for hover preloading)
-export function prefetchStory(storyId: string): void {
+export function prefetchStory(storyId: string, language: ContentLanguage): void {
+  const cacheKey = `${language}:${storyId}`;
   // Skip if already cached and fresh
-  const cached = storyCache.get(storyId);
+  const cached = storyCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return;
   }
 
   // Fetch in background (don't await)
-  getStory(storyId)
+  getStory(storyId, language)
     .then((story) => {
-      storyCache.set(storyId, { story, timestamp: Date.now() });
+      storyCache.set(cacheKey, { story, timestamp: Date.now() });
       // Preload assets after caching story data
       preloadStoryAssets(story);
     })
@@ -123,18 +130,19 @@ export function prefetchStory(storyId: string): void {
 }
 
 // Get story from cache or fetch
-export async function getStoryWithCache(storyId: string): Promise<Story> {
-  const cached = storyCache.get(storyId);
+export async function getStoryWithCache(storyId: string, language: ContentLanguage): Promise<Story> {
+  const cacheKey = `${language}:${storyId}`;
+  const cached = storyCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.story;
   }
 
-  const story = await getStory(storyId);
-  storyCache.set(storyId, { story, timestamp: Date.now() });
+  const story = await getStory(storyId, language);
+  storyCache.set(cacheKey, { story, timestamp: Date.now() });
   return story;
 }
 
 // Generic CDN URL helper
 export function getCdnUrl(path: string | undefined): string {
-  return apiClient.getAssetUrl(path || "");
+  return getAssetUrl(path || "");
 }

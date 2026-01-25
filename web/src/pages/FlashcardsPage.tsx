@@ -23,9 +23,9 @@ import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useReviewSession } from "@/contexts/ReviewSessionContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
+import { LANGUAGES } from "@/lib/contentLanguages";
 import type { CardState, Id, Rating } from "@/lib/convex-types";
 import { useT, useUILanguage } from "@/lib/i18n";
-import { LANGUAGES } from "@/lib/languages";
 
 import { api } from "../../convex/_generated/api";
 
@@ -458,7 +458,7 @@ export function FlashcardsPage() {
               </h1>
               {languageInfo && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-sm">
-                  {languageInfo.flag} {languageInfo.label}
+                  {languageInfo.label}
                 </span>
               )}
             </div>

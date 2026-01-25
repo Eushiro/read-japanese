@@ -22,8 +22,8 @@ import { VideoCard, type VideoItem } from "@/components/library/VideoCard";
 import { Paywall } from "@/components/Paywall";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useStories } from "@/hooks/useStories";
+import { LANGUAGES } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
-import { LANGUAGES } from "@/lib/languages";
 import { buildSessionPlan, DURATION_OPTIONS, getSessionDescription } from "@/lib/sessionPlanner";
 import { getRandomStudyPhrase } from "@/lib/studyPhrases";
 import type { StoryListItem } from "@/types/story";
@@ -108,7 +108,10 @@ export function DashboardPage() {
       setShowPaywall(true);
       return;
     }
-    navigate({ to: "/read/$storyId", params: { storyId: story.id } });
+    navigate({
+      to: "/read/$language/$storyId",
+      params: { language: story.language, storyId: story.id },
+    });
   };
 
   // Calculate stats
@@ -124,7 +127,12 @@ export function DashboardPage() {
   // Build session plan
   const firstVideo = videos?.[0];
   const recommendedContent = firstVideo
-    ? { type: "video" as const, id: firstVideo._id, title: firstVideo.title }
+    ? {
+        type: "video" as const,
+        id: firstVideo._id,
+        title: firstVideo.title,
+        language: firstVideo.language,
+      }
     : null;
 
   const sessionPlan = buildSessionPlan({
@@ -229,7 +237,7 @@ export function DashboardPage() {
                     {/* Language badge */}
                     <div className="flex justify-center mb-3">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted/50 text-sm text-foreground-muted">
-                        {languageInfo?.flag} {languageInfo?.label}
+                        {languageInfo?.label}
                       </span>
                     </div>
                     <button

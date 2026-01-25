@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import type { CEFRLevel, JLPTLevel, ProficiencyLevel, StoryListItem } from "@/types/story";
 
 // Simple seeded PRNG for stable-but-varied shuffling
@@ -21,8 +22,6 @@ function shuffleWithSeed<T>(array: T[], seed: number): T[] {
   return shuffled;
 }
 
-type Language = "japanese" | "english" | "french";
-
 // Exam types from Convex schema
 type ExamType =
   | "jlpt_n5"
@@ -43,9 +42,9 @@ type ExamType =
 
 // User profile structure from Convex
 interface UserProfile {
-  languages?: Language[];
+  languages?: ContentLanguage[];
   targetExams?: ExamType[];
-  primaryLanguage?: Language;
+  primaryLanguage?: ContentLanguage;
   proficiencyLevels?: {
     japanese?: { level: string; assessedAt: number };
     english?: { level: string; assessedAt: number };
@@ -101,12 +100,12 @@ function getAdjacentLevels(level: ProficiencyLevel): ProficiencyLevel[] {
 }
 
 // Get level system for a language
-function getLevelSystem(language: Language): "jlpt" | "cefr" {
+function getLevelSystem(language: ContentLanguage): "jlpt" | "cefr" {
   return language === "japanese" ? "jlpt" : "cefr";
 }
 
 // Filter stories by level system
-function filterByLanguage(stories: StoryListItem[], language: Language): StoryListItem[] {
+function filterByLanguage(stories: StoryListItem[], language: ContentLanguage): StoryListItem[] {
   const levelSystem = getLevelSystem(language);
   const validLevels = levelSystem === "jlpt" ? JLPT_ORDER : CEFR_ORDER;
   return stories.filter((s) => validLevels.includes(s.level as JLPTLevel & CEFRLevel));
@@ -121,7 +120,7 @@ export interface RecommendedStoriesResult {
 export function useRecommendedStories(
   allStories: StoryListItem[] | undefined,
   userProfile: UserProfile | null | undefined,
-  language: Language,
+  language: ContentLanguage,
   maxStories: number = 4
 ): RecommendedStoriesResult {
   // Generate a stable random seed once per component instance

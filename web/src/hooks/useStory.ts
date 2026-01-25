@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { getStoryWithCache } from "@/api/stories";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import type { Story } from "@/types/story";
 
 interface UseStoryResult {
@@ -10,7 +11,7 @@ interface UseStoryResult {
   refetch: () => Promise<void>;
 }
 
-export function useStory(storyId: string | undefined): UseStoryResult {
+export function useStory(storyId: string | undefined, language: ContentLanguage): UseStoryResult {
   const [story, setStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -25,14 +26,14 @@ export function useStory(storyId: string | undefined): UseStoryResult {
     setError(null);
 
     try {
-      const data = await getStoryWithCache(storyId);
+      const data = await getStoryWithCache(storyId, language);
       setStory(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Failed to fetch story"));
     } finally {
       setIsLoading(false);
     }
-  }, [storyId]);
+  }, [storyId, language]);
 
   useEffect(() => {
     fetchStory();

@@ -72,8 +72,8 @@ const MASTERY_COLORS: Record<string, string> = {
   mastered: "bg-green-500/10 text-green-600",
 };
 
+import { type ContentLanguage, LANGUAGES } from "@/lib/contentLanguages";
 import type { MasteryState } from "@/lib/convex-types";
-import { type Language, LANGUAGES } from "@/lib/languages";
 
 // Type for vocabulary item used in detail modal (subset of Doc<"vocabulary">)
 type VocabularyItem = {
@@ -139,7 +139,7 @@ type FlashcardWithContent = {
 export function VocabularyPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [languageFilter, setLanguageFilter] = useState<Language | null>(null);
+  const [languageFilter, setLanguageFilter] = useState<ContentLanguage | null>(null);
   const [masteryFilter, setMasteryFilter] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -446,7 +446,7 @@ export function VocabularyPage() {
             <Select
               value={languageFilter ?? "all"}
               onValueChange={(value) =>
-                setLanguageFilter(value === "all" ? null : (value as Language))
+                setLanguageFilter(value === "all" ? null : (value as ContentLanguage))
               }
               disabled={!!selectedDeckId}
             >
@@ -1529,7 +1529,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
   const [word, setWord] = useState("");
   const [reading, setReading] = useState("");
   const [definitions, setDefinitions] = useState("");
-  const [language, setLanguage] = useState<Language>("japanese");
+  const [language, setLanguage] = useState<ContentLanguage>("japanese");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<DictionaryEntry[]>([]);
@@ -1659,7 +1659,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
             <label className="block text-sm font-medium text-foreground mb-1.5">
               {t("vocabulary.addModal.language")}
             </label>
-            <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
+            <Select value={language} onValueChange={(value) => setLanguage(value as ContentLanguage)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select language" />
               </SelectTrigger>

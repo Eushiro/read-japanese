@@ -1,9 +1,17 @@
 import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
 
+import type { ContentLanguage } from "@/lib/contentLanguages";
+
 // Session activity types
 export type SessionActivity =
   | { type: "review"; cardCount: number }
-  | { type: "input"; contentType: "story" | "video"; contentId: string; title: string }
+  | {
+      type: "input";
+      contentType: "story" | "video";
+      contentId: string;
+      title: string;
+      language: ContentLanguage;
+    }
   | { type: "output"; wordCount: number };
 
 // Session plan

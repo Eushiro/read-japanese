@@ -16,8 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { type ContentLanguage, detectTargetLanguage, EXAMS_BY_LANGUAGE, LANGUAGES } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
-import { detectTargetLanguage, EXAMS_BY_LANGUAGE, type Language, LANGUAGES } from "@/lib/languages";
 
 import { api } from "../../convex/_generated/api";
 
@@ -30,7 +30,7 @@ interface OnboardingModalProps {
 
 export function OnboardingModal({ userId, userEmail, userName, onComplete }: OnboardingModalProps) {
   const [step, setStep] = useState(0);
-  const [selectedLanguages, setSelectedLanguages] = useState<Language[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<ContentLanguage[]>([]);
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const startTime = useRef(Date.now());
@@ -56,7 +56,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
     setSelectedLanguages([detected]);
   }, []);
 
-  const handleLanguageToggle = (lang: Language) => {
+  const handleLanguageToggle = (lang: ContentLanguage) => {
     const isRemoving = selectedLanguages.includes(lang);
     setSelectedLanguages((prev) => (isRemoving ? prev.filter((l) => l !== lang) : [...prev, lang]));
     if (!isRemoving) {
@@ -267,7 +267,6 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <span className="text-2xl">{lang.flag}</span>
                             <div>
                               <div className="font-medium text-foreground">{lang.label}</div>
                               <div className="text-sm text-foreground-muted">{lang.nativeName}</div>
@@ -327,7 +326,6 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                     return (
                       <div key={lang}>
                         <div className="text-sm font-medium text-foreground-muted mb-2 flex items-center gap-2">
-                          <span>{langInfo?.flag}</span>
                           {langInfo?.label}
                         </div>
                         <div className="grid grid-cols-2 gap-2">

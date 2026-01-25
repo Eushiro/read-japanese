@@ -3,7 +3,8 @@
  * Custom pattern checker for SanLang web.
  *
  * Enforces patterns documented in docs/DEVELOPMENT.md:
- * 1. Use Language type from @/lib/languages instead of hardcoding language unions
+ * 1. Use ContentLanguage type from @/lib/contentLanguages instead of hardcoding language unions
+ * 2. Use TierId type from @/lib/tiers instead of hardcoding tier unions
  *
  * Run: bun run scripts/lint-patterns.ts
  */
@@ -97,6 +98,18 @@ function checkFile(filePath: string): Violation[] {
       continue;
     }
 
+    // Check for local Language type definitions
+    // This catches patterns like: type Language = "japanese" | "english" | "french"
+    if (LOCAL_LANGUAGE_TYPE_PATTERN.test(trimmed)) {
+      violations.push({
+        file: filePath,
+        line: lineNum + 1,
+        message:
+          'Local Language type definition. Import `ContentLanguage` from "@/lib/contentLanguages" instead.',
+        code: trimmed.substring(0, 80) + (trimmed.length > 80 ? "..." : ""),
+      });
+    }
+
     // Check for hardcoded language union types
     // This catches patterns like: (language: "japanese" | "english" | "french")
     // or (): "japanese" | "english" | "french" =>
@@ -112,7 +125,7 @@ function checkFile(filePath: string): Violation[] {
           file: filePath,
           line: lineNum + 1,
           message:
-            'Hardcoded language union type. Use `Language` type from "@/lib/languages" instead.',
+            'Hardcoded language union type. Use `ContentLanguage` type from "@/lib/contentLanguages" instead.',
           code: trimmed.substring(0, 80) + (trimmed.length > 80 ? "..." : ""),
         });
       }
@@ -198,7 +211,7 @@ function main() {
       console.log(`    > ${v.code}\n`);
     }
 
-    console.log('Import the Language type: import type { Language } from "@/lib/languages";');
+    console.log('Import the ContentLanguage type: import type { ContentLanguage } from "@/lib/contentLanguages";');
     console.log('Import the TierId type: import type { TierId } from "@/lib/tiers";');
     console.log("\nSee docs/DEVELOPMENT.md for correct patterns.");
     process.exit(1);

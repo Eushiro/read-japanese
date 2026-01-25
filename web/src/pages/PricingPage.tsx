@@ -15,7 +15,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
-import { formatPrice, getTier, type PaidTierId } from "@/lib/tiers";
+import { getTier, type PaidTierId } from "@/lib/tiers";
 
 import { api } from "../../convex/_generated/api";
 

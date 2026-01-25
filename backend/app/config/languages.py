@@ -1,8 +1,11 @@
 """
-Language configuration - single source of truth
+Content language configuration - single source of truth
 
-Reads from shared/languages.json to ensure consistency between
+Reads from shared/contentLanguages.json to ensure consistency between
 frontend and backend. To add a new language, update that file.
+
+Note: This is separate from UI/display language (i18n).
+Content language = what the user is learning (Japanese, English, French)
 """
 
 import json
@@ -10,15 +13,15 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 # Path to shared config
-SHARED_CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "shared" / "languages.json"
+SHARED_CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "shared" / "contentLanguages.json"
 
 
 def _load_config() -> dict:
     """Load the shared languages config"""
     if not SHARED_CONFIG_PATH.exists():
         raise FileNotFoundError(
-            f"Shared languages config not found at {SHARED_CONFIG_PATH}. "
-            "Make sure shared/languages.json exists."
+            f"Shared content languages config not found at {SHARED_CONFIG_PATH}. "
+            "Make sure shared/contentLanguages.json exists."
         )
     with open(SHARED_CONFIG_PATH, "r", encoding="utf-8") as f:
         return json.load(f)

@@ -24,8 +24,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useStory } from "@/hooks/useStory";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
-import type { Language } from "@/lib/languages";
 import { difficultyLevelToTestLevel, testLevelToDifficultyLevel } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
@@ -48,13 +48,17 @@ interface Question {
 }
 
 export function ComprehensionPage() {
-  const { storyId } = useParams({ from: "/comprehension/$storyId" });
+  const { storyId, language } = useParams({ from: "/comprehension/$language/$storyId" });
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id ?? "anonymous";
   const t = useT();
 
-  const { story, isLoading: storyLoading, error: storyError } = useStory(storyId);
+  const {
+    story,
+    isLoading: storyLoading,
+    error: storyError,
+  } = useStory(storyId, language as ContentLanguage);
 
   // Get user profile for proficiency level
   const userProfile = useQuery(
@@ -179,7 +183,7 @@ export function ComprehensionPage() {
           .join("\n\n");
       };
 
-      const computeLanguage = (): Language => {
+      const computeLanguage = (): ContentLanguage => {
         const level = story.metadata.level;
         if (level.startsWith("N")) return "japanese";
         if (story.id.includes("french") || story.id.includes("fr_")) return "french";
@@ -187,7 +191,7 @@ export function ComprehensionPage() {
         return "english";
       };
 
-      const computeUserDifficulty = (language: Language): number => {
+      const computeUserDifficulty = (language: ContentLanguage): number => {
         const proficiency =
           userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
         if (proficiency?.level) {
@@ -196,7 +200,7 @@ export function ComprehensionPage() {
         return 3;
       };
 
-      const computeUserDisplayLevel = (language: Language): string => {
+      const computeUserDisplayLevel = (language: ContentLanguage): string => {
         const proficiency =
           userProfile?.proficiencyLevels?.[language as keyof typeof userProfile.proficiencyLevels];
         if (proficiency?.level) {
@@ -264,7 +268,7 @@ export function ComprehensionPage() {
   };
 
   // Derive language from story level
-  const getLanguage = (): Language => {
+  const getLanguage = (): ContentLanguage => {
     if (!story) return "japanese";
     const level = story.metadata.level;
     // JLPT levels (N5-N1) are Japanese
@@ -477,7 +481,9 @@ export function ComprehensionPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate({ to: "/read/$storyId", params: { storyId } })}
+                onClick={() =>
+                  navigate({ to: "/read/$language/$storyId", params: { language, storyId } })
+                }
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
@@ -581,7 +587,9 @@ export function ComprehensionPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate({ to: "/read/$storyId", params: { storyId } })}
+                  onClick={() =>
+                    navigate({ to: "/read/$language/$storyId", params: { language, storyId } })
+                  }
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
@@ -648,7 +656,9 @@ export function ComprehensionPage() {
             <div className="flex gap-4 justify-center">
               <Button
                 variant="outline"
-                onClick={() => navigate({ to: "/read/$storyId", params: { storyId } })}
+                onClick={() =>
+                  navigate({ to: "/read/$language/$storyId", params: { language, storyId } })
+                }
               >
                 <BookOpen className="w-4 h-4 mr-2" />
                 {t("comprehension.navigation.backToStory")}
@@ -745,7 +755,9 @@ export function ComprehensionPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate({ to: "/read/$storyId", params: { storyId } })}
+                onClick={() =>
+                  navigate({ to: "/read/$language/$storyId", params: { language, storyId } })
+                }
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>

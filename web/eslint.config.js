@@ -87,7 +87,7 @@ export default defineConfig([
       ],
     },
   },
-  // i18n linting - warn on hardcoded strings in JSX (excludes admin pages)
+  // i18n linting - error on hardcoded strings in JSX (excludes admin pages)
   {
     files: ['src/**/*.tsx'],
     ignores: ['src/**/admin/**', 'src/components/admin/**', 'src/pages/admin/**'],
@@ -95,7 +95,7 @@ export default defineConfig([
       i18next: i18next,
     },
     rules: {
-      'i18next/no-literal-string': ['warn', {
+      'i18next/no-literal-string': ['error', {
         mode: 'jsx-text-only',
         words: {
           exclude: [
