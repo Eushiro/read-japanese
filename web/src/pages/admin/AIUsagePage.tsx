@@ -1,11 +1,5 @@
 import { useQuery } from "convex/react";
-import {
-  Activity,
-  AlertCircle,
-  DollarSign,
-  TrendingUp,
-  Zap,
-} from "lucide-react";
+import { Activity, AlertCircle, DollarSign, TrendingUp, Zap } from "lucide-react";
 import { useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,9 +78,7 @@ export function AIUsagePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totals.costDollars.toFixed(2)}</div>
-            <p className="text-xs text-foreground-muted">
-              ~${dailyAvg.toFixed(1)}¢/day avg
-            </p>
+            <p className="text-xs text-foreground-muted">~${dailyAvg.toFixed(1)}¢/day avg</p>
           </CardContent>
         </Card>
 
@@ -109,7 +101,9 @@ export function AIUsagePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-foreground-muted">Total Tokens</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground-muted">
+              Total Tokens
+            </CardTitle>
             <Zap className="h-4 w-4 text-foreground-muted" />
           </CardHeader>
           <CardContent>
@@ -128,7 +122,9 @@ export function AIUsagePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-foreground-muted">Avg Cost/Call</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground-muted">
+              Avg Cost/Call
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-foreground-muted" />
           </CardHeader>
           <CardContent>
@@ -258,9 +254,7 @@ export function AIUsagePage() {
                       {user.userId === "system" ? "System" : user.userId.slice(0, 20)}...
                     </span>
                   </div>
-                  <span className="text-sm font-medium">
-                    ${(user.costCents / 100).toFixed(2)}
-                  </span>
+                  <span className="text-sm font-medium">${(user.costCents / 100).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -286,9 +280,7 @@ export function AIUsagePage() {
 }
 
 function formatAction(action: string): string {
-  return action
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return action.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function formatModel(model: string): string {

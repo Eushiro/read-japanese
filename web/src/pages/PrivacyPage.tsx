@@ -33,7 +33,9 @@ export function PrivacyPage() {
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
           <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">1. Information We Collect</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              1. Information We Collect
+            </h2>
             <p className="text-foreground-muted mb-4">
               We collect information you provide directly to us when you:
             </p>
@@ -60,7 +62,9 @@ export function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">3. AI and Data Processing</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              3. AI and Data Processing
+            </h2>
             <p className="text-foreground-muted mb-4">
               Our platform uses AI to enhance your learning experience. This includes:
             </p>
@@ -143,7 +147,9 @@ export function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">9. Changes to This Policy</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              9. Changes to This Policy
+            </h2>
             <p className="text-foreground-muted">
               We may update this privacy policy from time to time. We will notify you of any changes
               by posting the new policy on this page and updating the &ldquo;Last updated&rdquo;

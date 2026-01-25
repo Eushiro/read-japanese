@@ -41,7 +41,9 @@ export function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">2. Description of Service</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              2. Description of Service
+            </h2>
             <p className="text-foreground-muted">
               SanLang is an AI-powered language learning platform that provides vocabulary building,
               flashcards, reading practice, and exam preparation tools for Japanese, English, and
@@ -61,7 +63,9 @@ export function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">4. Subscription and Billing</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              4. Subscription and Billing
+            </h2>
             <p className="text-foreground-muted mb-4">
               SanLang offers free and premium subscription tiers:
             </p>
@@ -115,7 +119,9 @@ export function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">9. Disclaimer of Warranties</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              9. Disclaimer of Warranties
+            </h2>
             <p className="text-foreground-muted">
               SanLang is provided &ldquo;as is&rdquo; without warranties of any kind. We do not
               guarantee that the service will be uninterrupted, error-free, or that it will meet
@@ -125,7 +131,9 @@ export function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">10. Limitation of Liability</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              10. Limitation of Liability
+            </h2>
             <p className="text-foreground-muted">
               To the maximum extent permitted by law, SanLang shall not be liable for any indirect,
               incidental, special, or consequential damages arising from your use of the service.
