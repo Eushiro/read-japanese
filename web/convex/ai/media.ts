@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 
 import { internalAction } from "../_generated/server";
+import { convertPcmToMp3 } from "../lib/audioCompression";
 import { BRAND } from "../lib/brand";
 import { compressToWebp } from "../lib/imageCompression";
 import { uploadAudio, uploadImage } from "../lib/storage";
@@ -80,9 +81,6 @@ export async function generateTTSAudio(
                   voiceName: voice,
                 },
               },
-              audioConfig: {
-                audioEncoding: "MP3",
-              },
             },
           },
         }),
@@ -104,15 +102,22 @@ export async function generateTTSAudio(
       return null;
     }
 
-    // Decode base64 MP3 audio
+    // Decode base64 audio (Gemini returns raw PCM 16-bit 24kHz)
     const binaryString = atob(audioData.data);
-    const audioBytes = new Uint8Array(binaryString.length);
+    const pcmBytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
-      audioBytes[i] = binaryString.charCodeAt(i);
+      pcmBytes[i] = binaryString.charCodeAt(i);
     }
 
+    // Convert PCM to MP3 for browser playback and storage efficiency
+    // Gemini TTS outputs: 24kHz sample rate, 16-bit, mono
+    const mp3Bytes = convertPcmToMp3(pcmBytes, 24000, 1, 128);
+    console.log(
+      `Audio compressed: ${pcmBytes.length} bytes PCM -> ${mp3Bytes.length} bytes MP3 (${Math.round((1 - mp3Bytes.length / pcmBytes.length) * 100)}% savings)`
+    );
+
     return {
-      audioData: audioBytes,
+      audioData: mp3Bytes,
       mimeType: "audio/mpeg",
     };
   } catch (error) {
