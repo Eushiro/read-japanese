@@ -2,7 +2,10 @@ import { Loader2, Mic, MicOff, Square } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
+import { WaveBackground, WaveOrbs } from "@/components/ui/wave-background";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
+
+import { AudioWaveform } from "./AudioWaveform";
 
 const PROCESSING_MESSAGES = [
   "Analyzing your pronunciation...",
@@ -28,6 +31,7 @@ interface AudioRecorderProps {
   duration: number;
   hasPermission: boolean | null;
   error: string | null;
+  analyserNode: AnalyserNode | null;
   onStartRecording: () => void;
   onStopRecording: () => void;
   disabled?: boolean;
@@ -40,6 +44,7 @@ export function AudioRecorder({
   duration,
   hasPermission,
   error,
+  analyserNode,
   onStartRecording,
   onStopRecording,
   disabled = false,
@@ -64,15 +69,20 @@ export function AudioRecorder({
 
   if (isProcessing) {
     return (
-      <div className="flex flex-col items-center gap-4 py-8">
-        <div className="relative">
-          <div className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center">
-            <Loader2 className="w-10 h-10 text-accent animate-spin" />
+      <div className="relative flex flex-col items-center gap-4 py-8 overflow-hidden rounded-xl">
+        {/* Wave background */}
+        <WaveBackground size="card" variant="warm" intensity={2} className="absolute inset-0" />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="relative">
+            <WaveOrbs className="opacity-60" variant="warm" />
+            <Loader2 className="absolute inset-0 m-auto w-6 h-6 text-amber-500 animate-spin" />
           </div>
+          <p className="text-sm font-medium text-foreground transition-opacity duration-300">
+            {processingMessage}
+          </p>
         </div>
-        <p className="text-sm text-foreground-muted transition-opacity duration-300">
-          {processingMessage}
-        </p>
       </div>
     );
   }
@@ -148,6 +158,13 @@ export function AudioRecorder({
           )}
         </button>
       </div>
+
+      {/* Real-time waveform visualization */}
+      {isRecording && (
+        <div className="w-full flex justify-center">
+          <AudioWaveform analyserNode={analyserNode} height={48} width={240} />
+        </div>
+      )}
 
       {/* Duration / Instructions */}
       <div className="text-center">

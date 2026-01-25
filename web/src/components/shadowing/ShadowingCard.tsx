@@ -326,6 +326,7 @@ export function ShadowingCard({ flashcard, userId, onNext }: ShadowingCardProps)
             duration={recorder.duration}
             hasPermission={recorder.hasPermission}
             error={recorder.error}
+            analyserNode={recorder.analyserNode}
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
           />
@@ -337,6 +338,7 @@ export function ShadowingCard({ flashcard, userId, onNext }: ShadowingCardProps)
             duration={0}
             hasPermission={true}
             error={null}
+            analyserNode={null}
             onStartRecording={() => {}}
             onStopRecording={() => {}}
           />

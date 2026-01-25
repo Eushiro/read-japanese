@@ -41,6 +41,7 @@ import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { useFlashcard } from "@/hooks/useFlashcard";
 import {
   type DictionaryEntry,
@@ -72,7 +73,7 @@ const MASTERY_COLORS: Record<string, string> = {
   mastered: "bg-green-500/10 text-green-600",
 };
 
-import { type ContentLanguage, LANGUAGES } from "@/lib/contentLanguages";
+import { type ContentLanguage, contentLanguageMatchesUI, LANGUAGES } from "@/lib/contentLanguages";
 import type { MasteryState } from "@/lib/convex-types";
 
 // Type for vocabulary item used in detail modal (subset of Doc<"vocabulary">)
@@ -156,6 +157,7 @@ export function VocabularyPage() {
   const { user, isAuthenticated } = useAuth();
   const { trackEvent, events } = useAnalytics();
   const t = useT();
+  const { language: uiLang } = useUILanguage();
   const userId = user?.id ?? "anonymous";
   const isAdmin = user?.email === "hiro.ayettey@gmail.com";
 
@@ -192,13 +194,13 @@ export function VocabularyPage() {
 
   const premadeAllVocabulary = useQuery(
     api.premadeDecks.getAllSubscribedVocabulary,
-    isAuthenticated && !selectedDeckId ? { userId } : "skip"
+    isAuthenticated && !selectedDeckId ? { userId, uiLanguage: uiLang } : "skip"
   );
 
   const premadeDeckVocabulary = useQuery(
     api.premadeDecks.getVocabularyForDeck,
     isAuthenticated && selectedDeckId && !isPersonalDeckSelected
-      ? { deckId: selectedDeckId }
+      ? { deckId: selectedDeckId, uiLanguage: uiLang }
       : "skip"
   );
 
@@ -415,8 +417,8 @@ export function VocabularyPage() {
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="sticky top-16 z-40 border-b border-border bg-surface/95 backdrop-blur-md">
+      {/* Search and Filters - Glass styling */}
+      <div className="sticky top-16 z-40 border-b border-border/50 dark:border-white/5 bg-surface/80 dark:bg-black/50 backdrop-blur-xl">
         <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
@@ -796,8 +798,14 @@ function VocabularyCard({
   isPremade = false,
 }: VocabularyCardProps) {
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
   const [isEnhancing, setIsEnhancing] = useState(false);
+  // Hide translation if content language matches UI language
+  const hideRedundantTranslation = contentLanguageMatchesUI(
+    item.language as ContentLanguage,
+    uiLanguage
+  );
 
   // For premade items, content is directly on the item
   // For user vocab, we need to fetch the flashcard
@@ -887,7 +895,7 @@ function VocabularyCard({
   if (compact) {
     return (
       <div
-        className="px-4 py-3 rounded-lg bg-surface border border-border hover:border-foreground-muted/30 transition-all duration-200 animate-fade-in-up cursor-pointer"
+        className="px-4 py-3 rounded-lg bg-surface/80 dark:bg-white/[0.03] backdrop-blur-md border border-border dark:border-white/10 hover:border-foreground-muted/30 dark:hover:border-white/20 dark:hover:shadow-[0_0_15px_rgba(255,132,0,0.08)] transition-all duration-200 animate-fade-in-up cursor-pointer"
         style={{ animationDelay: `${delay}ms` }}
         onClick={onClick}
       >
@@ -969,7 +977,7 @@ function VocabularyCard({
 
   return (
     <div
-      className="p-5 rounded-xl bg-surface border border-border hover:border-foreground-muted/30 transition-all duration-200 animate-fade-in-up cursor-pointer"
+      className="p-5 rounded-xl bg-surface/80 dark:bg-white/[0.03] backdrop-blur-md border border-border dark:border-white/10 hover:border-foreground-muted/30 dark:hover:border-white/20 dark:hover:shadow-[0_0_20px_rgba(255,132,0,0.1)] transition-all duration-200 animate-fade-in-up cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
       style={{ animationDelay: `${delay}ms` }}
       onClick={onClick}
     >
@@ -1126,7 +1134,7 @@ function VocabularyCard({
                     <p className="text-sm text-foreground" style={{ fontFamily: languageFont }}>
                       {content.sentence}
                     </p>
-                    {content.sentenceTranslation && (
+                    {content.sentenceTranslation && !hideRedundantTranslation && (
                       <p className="text-xs text-foreground-muted mt-1 italic">
                         {content.sentenceTranslation}
                       </p>
@@ -1194,6 +1202,11 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
   const userId = user?.id ?? "anonymous";
   const languageFont = item.language === "japanese" ? "var(--font-japanese)" : "inherit";
   const isJapanese = item.language === "japanese";
+  // Hide translation if content language matches UI language
+  const hideRedundantTranslation = contentLanguageMatchesUI(
+    item.language as ContentLanguage,
+    uiLanguage
+  );
 
   // Shadowing state
   const [showShadowing, setShowShadowing] = useState(false);
@@ -1315,22 +1328,16 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, []);
+  // Lock body scroll when modal is open (with scrollbar compensation)
+  useBodyScrollLock();
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
       onClick={onClose}
     >
       <div
-        className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-lg mx-4 animate-fade-in-up max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-surface/95 dark:bg-black/90 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] w-full max-w-lg mx-4 animate-fade-in-up max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button - fixed at top */}
@@ -1387,8 +1394,8 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
               >
                 {flashcard?.sentence || item.sourceContext}
               </p>
-              {/* Sentence Translation - only if available in user's UI language */}
-              {flashcard?.sentenceTranslation && (
+              {/* Sentence Translation - only if available and different from content language */}
+              {flashcard?.sentenceTranslation && !hideRedundantTranslation && (
                 <p className="text-sm text-foreground-muted text-center mt-2 italic">
                   {flashcard.sentenceTranslation}
                 </p>
@@ -1447,6 +1454,7 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
                       duration={recorder.duration}
                       hasPermission={recorder.hasPermission}
                       error={recorder.error}
+                      analyserNode={recorder.analyserNode}
                       onStartRecording={handleStartShadowing}
                       onStopRecording={handleStopShadowing}
                     />
@@ -1526,6 +1534,7 @@ interface AddWordModalProps {
 
 function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordModalProps) {
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
   const [word, setWord] = useState("");
   const [reading, setReading] = useState("");
   const [definitions, setDefinitions] = useState("");
@@ -1535,6 +1544,9 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
   const [suggestions, setSuggestions] = useState<DictionaryEntry[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  // Lock body scroll when modal is open (with scrollbar compensation)
+  useBodyScrollLock();
+
   const { trackEvent, events } = useAnalytics();
   const addWord = useMutation(api.vocabulary.add);
   const generateFlashcardWithAudio = useAIAction(api.ai.generateFlashcardWithAudio);
@@ -1542,8 +1554,8 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
 
   // Preload dictionary when modal opens
   useEffect(() => {
-    preloadDictionary(language);
-  }, [language]);
+    preloadDictionary(language, uiLanguage);
+  }, [language, uiLanguage]);
 
   // Search dictionary on input change (client-side, instant)
   useEffect(() => {
@@ -1557,7 +1569,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
     const timeoutId = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const results = await searchClientDictionary(trimmed, language, 8);
+        const results = await searchClientDictionary(trimmed, language, uiLanguage, 8);
         setSuggestions(results);
       } catch (err) {
         console.error("Search error:", err);
@@ -1568,7 +1580,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
     }, 50);
 
     return () => clearTimeout(timeoutId);
-  }, [word, language]);
+  }, [word, language, uiLanguage]);
 
   // Clear form when language changes
   useEffect(() => {
@@ -1666,7 +1678,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select language" />
               </SelectTrigger>
-              <SelectContent position="popper">
+              <SelectContent position="item-aligned">
                 {LANGUAGES.map((lang) => (
                   <SelectItem key={lang.value} value={lang.value}>
                     {lang.label}

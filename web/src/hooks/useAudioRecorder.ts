@@ -9,6 +9,7 @@ export interface AudioRecorderState {
   audioUrl: string | null;
   error: string | null;
   duration: number; // Recording duration in seconds
+  analyserNode: AnalyserNode | null; // For real-time waveform visualization
 }
 
 export interface AudioRecorderActions {
@@ -35,6 +36,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderActions {
     audioUrl: null,
     error: null,
     duration: 0,
+    analyserNode: null,
   });
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -43,6 +45,8 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderActions {
   const startTimeRef = useRef<number>(0);
   const durationIntervalRef = useRef<number | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserNodeRef = useRef<AnalyserNode | null>(null);
 
   // Keep ref in sync with state for cleanup
   useEffect(() => {
@@ -60,6 +64,9 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderActions {
       }
       if (durationIntervalRef.current) {
         clearInterval(durationIntervalRef.current);
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
       }
     };
   }, []);
@@ -85,6 +92,18 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderActions {
 
       streamRef.current = stream;
       audioChunksRef.current = [];
+
+      // Set up AudioContext and AnalyserNode for real-time waveform visualization
+      const audioContext = new AudioContext();
+      const analyserNode = audioContext.createAnalyser();
+      analyserNode.fftSize = 256;
+      analyserNode.smoothingTimeConstant = 0.8;
+
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyserNode);
+
+      audioContextRef.current = audioContext;
+      analyserNodeRef.current = analyserNode;
 
       // Try to use wav format, fall back to webm
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
@@ -135,6 +154,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderActions {
         audioUrl: null,
         error: null,
         duration: 0,
+        analyserNode,
       }));
     } catch (error) {
       console.error("Error starting recording:", error);
@@ -175,6 +195,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderActions {
           isPaused: false,
           audioBlob,
           audioUrl,
+          analyserNode: null,
         }));
 
         // Stop all tracks
@@ -186,6 +207,13 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderActions {
         if (durationIntervalRef.current) {
           clearInterval(durationIntervalRef.current);
           durationIntervalRef.current = null;
+        }
+
+        // Close audio context
+        if (audioContextRef.current) {
+          audioContextRef.current.close();
+          audioContextRef.current = null;
+          analyserNodeRef.current = null;
         }
 
         resolve(audioBlob);
