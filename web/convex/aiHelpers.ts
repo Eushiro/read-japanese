@@ -423,6 +423,9 @@ export const updatePremadeVocabularyContent = internalMutation({
         createdAt: now,
       });
       updates.sentenceId = sentenceId;
+    } else if (args.audioUrl && premade.sentenceId) {
+      // Update existing sentence with audio URL (when audio is generated separately)
+      await ctx.db.patch(premade.sentenceId, { audioUrl: args.audioUrl });
     }
 
     // Create word audio in content library
