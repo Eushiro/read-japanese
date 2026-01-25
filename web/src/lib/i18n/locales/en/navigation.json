@@ -1,0 +1,10 @@
+{
+  "submitAnswer": "Submit Answer",
+  "nextQuestion": "Next Question",
+  "finishQuiz": "Finish Quiz",
+  "previous": "Previous",
+  "grading": "Grading...",
+  "submitting": "Submitting...",
+  "questionNumber": "Question {{current}} of {{total}}",
+  "answered": "answered"
+}

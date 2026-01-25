@@ -1,0 +1,10 @@
+{
+  "submitAnswer": "Valider la réponse",
+  "nextQuestion": "Question suivante",
+  "finishQuiz": "Terminer le quiz",
+  "previous": "Précédent",
+  "grading": "Correction...",
+  "submitting": "Envoi...",
+  "questionNumber": "Question {{current}} sur {{total}}",
+  "answered": "répondu"
+}

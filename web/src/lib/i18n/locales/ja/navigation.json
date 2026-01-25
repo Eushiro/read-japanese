@@ -1,0 +1,10 @@
+{
+  "submitAnswer": "回答を送信",
+  "nextQuestion": "次の問題",
+  "finishQuiz": "クイズを終了",
+  "previous": "前へ",
+  "grading": "採点中...",
+  "submitting": "送信中...",
+  "questionNumber": "問題 {{current}} / {{total}}",
+  "answered": "回答済み"
+}

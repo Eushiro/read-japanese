@@ -269,22 +269,51 @@ function checkMissingKeys(
       if (definedKeys.has(k + suffix)) return false;
     }
 
-    // Check if the namespace exists (skip keys for unknown namespaces - likely dynamic)
+    // Check if the namespace exists
     const dotIndex = k.indexOf(".");
     if (dotIndex === -1) return false; // No namespace, skip
-    const namespace = k.substring(0, dotIndex);
-    if (!namespaces.includes(namespace)) return false; // Unknown namespace, skip
 
     return true;
   });
 
-  if (missingKeys.length > 0) {
-    console.error(`\n✗ Found ${missingKeys.length} missing translation key(s):`);
-    missingKeys.sort().forEach((k) => console.error(`  - ${k}`));
+  // Separate missing keys into unknown namespaces vs missing keys in known namespaces
+  const unknownNamespaceKeys = missingKeys.filter((k) => {
+    const dotIndex = k.indexOf(".");
+    if (dotIndex === -1) return false;
+    const namespace = k.substring(0, dotIndex);
+    return !namespaces.includes(namespace);
+  });
+
+  const missingInKnownNamespaces = missingKeys.filter((k) => {
+    const dotIndex = k.indexOf(".");
+    if (dotIndex === -1) return false;
+    const namespace = k.substring(0, dotIndex);
+    return namespaces.includes(namespace);
+  });
+
+  let hasErrors = false;
+
+  if (unknownNamespaceKeys.length > 0) {
+    hasErrors = true;
+    console.error(`\n✗ Found ${unknownNamespaceKeys.length} key(s) using unknown namespace(s):`);
+    unknownNamespaceKeys.sort().forEach((k) => {
+      const namespace = k.substring(0, k.indexOf("."));
+      console.error(`  - "${k}" (namespace "${namespace}" does not exist)`);
+    });
+    console.error("\nCreate the missing namespace file(s) in src/lib/i18n/locales/en/");
+  }
+
+  if (missingInKnownNamespaces.length > 0) {
+    hasErrors = true;
+    console.error(`\n✗ Found ${missingInKnownNamespaces.length} missing translation key(s):`);
+    missingInKnownNamespaces.sort().forEach((k) => console.error(`  - ${k}`));
     console.error(
       "\nThese keys are used in code but not defined in translation files."
     );
     console.error("Add them to the English (en) locale files first, then sync to other locales.");
+  }
+
+  if (hasErrors) {
     return { hasMissing: true };
   }
 

@@ -1,0 +1,13 @@
+{
+  "alert": {
+    "critical": {
+      "title": "Crédits presque épuisés",
+      "message": "Il vous reste {{remaining}} crédits. Passez à la version supérieure pour continuer à générer du contenu."
+    },
+    "warning": {
+      "title": "Crédits en baisse",
+      "message": "Il vous reste {{remaining}} crédits ce mois-ci."
+    },
+    "upgrade": "Passer à la version supérieure"
+  }
+}

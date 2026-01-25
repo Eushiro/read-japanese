@@ -1,0 +1,13 @@
+{
+  "alert": {
+    "critical": {
+      "title": "积分即将用尽",
+      "message": "您还剩 {{remaining}} 积分。升级以继续生成内容。"
+    },
+    "warning": {
+      "title": "积分不足",
+      "message": "本月剩余 {{remaining}} 积分。"
+    },
+    "upgrade": "升级获取更多"
+  }
+}
