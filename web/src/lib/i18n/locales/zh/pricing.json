@@ -34,7 +34,7 @@
       "cta": "当前方案"
     },
     "plus": {
-      "description": "适合日常学习者",
+      "description": "按自己的节奏学习",
       "features": {
         "0": "每月500 AI额度",
         "1": "免费版全部功能",
@@ -45,7 +45,7 @@
       "cta": "获取Plus"
     },
     "pro": {
-      "description": "适合认真学习者",
+      "description": "无限制学习",
       "features": {
         "0": "每月2,000 AI额度",
         "1": "Plus全部功能",

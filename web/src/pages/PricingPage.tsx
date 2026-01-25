@@ -113,7 +113,6 @@ export function PricingPage() {
         t("pricing.tiers.pro.features.1"),
         t("pricing.tiers.pro.features.2"),
         t("pricing.tiers.pro.features.3"),
-        t("pricing.tiers.pro.features.4"),
       ],
       borderClass: "border-accent/50",
       bgClass: "bg-accent/5",

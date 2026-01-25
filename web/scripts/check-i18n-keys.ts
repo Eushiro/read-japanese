@@ -195,8 +195,8 @@ function getAllFiles(dir: string, extensions: string[]): string[] {
 function extractUsedKeys(content: string): string[] {
   const keys: string[] = [];
 
-  // Match t("key"), t('key'), t(`key`)
-  const tFunctionRegex = /\bt\s*\(\s*["'`]([^"'`]+)["'`]/g;
+  // Match t("key") and t('key') - skip template literals as they're dynamic
+  const tFunctionRegex = /\bt\s*\(\s*["']([^"']+)["']/g;
   let match;
   while ((match = tFunctionRegex.exec(content)) !== null) {
     keys.push(match[1]);
@@ -246,11 +246,8 @@ function checkMissingKeys(
     // Skip keys that look like dynamic/computed keys (contain variables)
     if (k.includes("${") || k.includes("{{")) return false;
 
-    // Skip keys that end with "." (incomplete dynamic keys like "library.languages.")
+    // Skip incomplete keys from string concatenation like t("prefix." + variable)
     if (k.endsWith(".")) return false;
-
-    // Skip keys that look like array indices (e.g., "pricing.tiers.pro.features.4")
-    if (/\.\d+$/.test(k)) return false;
 
     // Check if the exact key is defined
     if (definedKeys.has(k)) return false;

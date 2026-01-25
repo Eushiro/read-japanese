@@ -34,7 +34,7 @@
       "cta": "現在のプラン"
     },
     "plus": {
-      "description": "定期的な学習者向け",
+      "description": "自分のペースで学ぶ",
       "features": {
         "0": "月500 AIクレジット",
         "1": "無料プランのすべて",
@@ -45,7 +45,7 @@
       "cta": "Plusを取得"
     },
     "pro": {
-      "description": "本格的な学習者向け",
+      "description": "制限なく学ぶ",
       "features": {
         "0": "月2,000 AIクレジット",
         "1": "Plusのすべて",

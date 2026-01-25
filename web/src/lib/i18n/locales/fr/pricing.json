@@ -34,7 +34,7 @@
       "cta": "Forfait actuel"
     },
     "plus": {
-      "description": "Pour les apprenants réguliers",
+      "description": "Apprenez à votre rythme",
       "features": {
         "0": "500 crédits IA/mois",
         "1": "Tout du forfait Gratuit",
@@ -45,7 +45,7 @@
       "cta": "Obtenir Plus"
     },
     "pro": {
-      "description": "Pour les apprenants sérieux",
+      "description": "Apprenez sans limites",
       "features": {
         "0": "2 000 crédits IA/mois",
         "1": "Tout du forfait Plus",
