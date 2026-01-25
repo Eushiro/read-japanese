@@ -122,7 +122,16 @@ export function ReaderPage() {
         console.error("Failed to track story reading usage:", err);
       });
     }
-  }, [story, isAuthenticated, subscription?.tier, trackEvent, events, storyId, incrementUsage, userId]);
+  }, [
+    story,
+    isAuthenticated,
+    subscription?.tier,
+    trackEvent,
+    events,
+    storyId,
+    incrementUsage,
+    userId,
+  ]);
 
   // Get settings from Convex
   const { settings, setShowFurigana } = useSettings();
@@ -227,18 +236,39 @@ export function ReaderPage() {
     userProfile,
   ]);
 
-  // Auto-advance chapters based on audio time (skip if user manually navigated)
+  // Use refs to access latest values in the time update callback without causing re-renders
+  const chaptersRef = useRef(chapters);
+  const currentChapterIndexRef = useRef(currentChapterIndex);
+  const manualNavigationRef = useRef(manualNavigation);
+
+  // Keep refs in sync
   useEffect(() => {
-    if (!chapters.length || audioTime === 0 || manualNavigation) return;
+    chaptersRef.current = chapters;
+  }, [chapters]);
+  useEffect(() => {
+    currentChapterIndexRef.current = currentChapterIndex;
+  }, [currentChapterIndex]);
+  useEffect(() => {
+    manualNavigationRef.current = manualNavigation;
+  }, [manualNavigation]);
+
+  // Handle audio time updates - this callback is called by the external audio system
+  const handleTimeUpdate = useCallback((newTime: number) => {
+    setAudioTime(newTime);
+
+    const currentChapters = chaptersRef.current;
+    const currentIdx = currentChapterIndexRef.current;
+    const isManualNav = manualNavigationRef.current;
+
+    if (!currentChapters.length || newTime === 0) return;
 
     // Find which chapter contains the current audio time
-    for (let i = 0; i < chapters.length; i++) {
-      const chapter = chapters[i];
+    for (let i = 0; i < currentChapters.length; i++) {
+      const chapter = currentChapters[i];
       const segments = chapter.segments || chapter.content || [];
 
       if (segments.length === 0) continue;
 
-      // Get the time range for this chapter
       const firstSegmentWithTime = segments.find((s) => s.audioStartTime !== undefined);
       const lastSegmentWithTime = [...segments].reverse().find((s) => s.audioEndTime !== undefined);
 
@@ -247,37 +277,20 @@ export function ReaderPage() {
       const chapterStart = firstSegmentWithTime.audioStartTime!;
       const chapterEnd = lastSegmentWithTime.audioEndTime!;
 
-      // Check if audio time falls within this chapter
-      if (audioTime >= chapterStart && audioTime <= chapterEnd) {
-        if (i !== currentChapterIndex) {
+      if (newTime >= chapterStart && newTime <= chapterEnd) {
+        // If in manual navigation mode, check if audio has caught up to re-enable auto-advance
+        if (isManualNav && i === currentIdx) {
+          setManualNavigation(false);
+        }
+        // Auto-advance chapters (skip if user manually navigated)
+        if (!isManualNav && i !== currentIdx) {
           setCurrentChapterIndex(i);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
         break;
       }
     }
-  }, [audioTime, chapters, currentChapterIndex, manualNavigation]);
-
-  // Re-enable auto-advance when audio catches up to manually selected chapter
-  useEffect(() => {
-    if (!manualNavigation || !chapters.length) return;
-
-    const currentChapter = chapters[currentChapterIndex];
-    const segments = currentChapter?.segments || currentChapter?.content || [];
-    if (segments.length === 0) return;
-
-    const firstSegmentWithTime = segments.find((s) => s.audioStartTime !== undefined);
-    const lastSegmentWithTime = [...segments].reverse().find((s) => s.audioEndTime !== undefined);
-    if (!firstSegmentWithTime || !lastSegmentWithTime) return;
-
-    // If audio time is now within the manually selected chapter, re-enable auto-advance
-    if (
-      audioTime >= firstSegmentWithTime.audioStartTime! &&
-      audioTime <= lastSegmentWithTime.audioEndTime!
-    ) {
-      setManualNavigation(false);
-    }
-  }, [audioTime, chapters, currentChapterIndex, manualNavigation]);
+  }, []);
 
   const handlePreviousChapter = useCallback(() => {
     if (currentChapterIndex > 0) {
@@ -495,7 +508,7 @@ export function ReaderPage() {
                 <div className="hidden sm:block">
                   <AudioPlayer
                     src={getAudioUrl(story.metadata.audioURL)}
-                    onTimeUpdate={setAudioTime}
+                    onTimeUpdate={handleTimeUpdate}
                   />
                 </div>
               )}
@@ -527,7 +540,10 @@ export function ReaderPage() {
           {/* Mobile Audio Player (shown below header on small screens) */}
           {story.metadata.audioURL && (
             <div className="sm:hidden mt-3">
-              <AudioPlayer src={getAudioUrl(story.metadata.audioURL)} onTimeUpdate={setAudioTime} />
+              <AudioPlayer
+                src={getAudioUrl(story.metadata.audioURL)}
+                onTimeUpdate={handleTimeUpdate}
+              />
             </div>
           )}
         </div>
