@@ -29,7 +29,7 @@
     "correct": "correct",
     "accuracy": "accuracy",
     "startLearning": "Start Learning at {{level}}",
-    "backToSettings": "Back to Settings"
+    "backToDashboard": "Back to Dashboard"
   },
   "start": {
     "title": "{{language}} Placement Test",

@@ -29,7 +29,7 @@
     "correct": "正确",
     "accuracy": "正确率",
     "startLearning": "从 {{level}} 开始学习",
-    "backToSettings": "返回设置"
+    "backToDashboard": "返回仪表板"
   },
   "start": {
     "title": "{{language}}水平测试",

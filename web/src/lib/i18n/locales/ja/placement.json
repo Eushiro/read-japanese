@@ -29,7 +29,7 @@
     "correct": "正解",
     "accuracy": "正解率",
     "startLearning": "{{level}}から学習を開始",
-    "backToSettings": "設定に戻る"
+    "backToDashboard": "ダッシュボードに戻る"
   },
   "start": {
     "title": "{{language}} レベルテスト",

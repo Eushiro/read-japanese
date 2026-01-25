@@ -231,6 +231,15 @@ function checkMissingKeys(
     keys.forEach((k) => usedKeys.add(k));
   }
 
+  // Check for keys using colon separator instead of dot (wrong format)
+  const colonKeys = [...usedKeys].filter((k) => k.includes(":"));
+  if (colonKeys.length > 0) {
+    console.error(`\n✗ Found ${colonKeys.length} key(s) using colon separator instead of dot:`);
+    colonKeys.sort().forEach((k) => console.error(`  - "${k}" should be "${k.replace(":", ".")}"`));
+    console.error("\nUse dot (.) as namespace separator, not colon (:).");
+    return { hasMissing: true };
+  }
+
   // Collect all defined keys from reference locale (with namespace prefix)
   const definedKeys = new Set<string>();
   for (const namespace of namespaces) {

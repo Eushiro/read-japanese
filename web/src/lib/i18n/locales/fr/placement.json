@@ -29,7 +29,7 @@
     "correct": "correctes",
     "accuracy": "précision",
     "startLearning": "Commencer l'apprentissage au niveau {{level}}",
-    "backToSettings": "Retour aux paramètres"
+    "backToDashboard": "Retour au tableau de bord"
   },
   "start": {
     "title": "Test de niveau {{language}}",

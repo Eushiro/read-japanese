@@ -49,7 +49,7 @@ export interface QuestionDisplayProps {
 
 // Get display label for question type
 function getTypeLabel(type: QuestionType, t: ReturnType<typeof useT>): string {
-  return t(`comprehension:questionTypes.${type}`) || type;
+  return t(`comprehension.questionTypes.${type}`) || type;
 }
 
 // Get color for question type badge
@@ -104,7 +104,7 @@ export function QuestionDisplay({
         </span>
         {points !== undefined && (
           <span className="text-xs text-foreground-muted">
-            {t("comprehension:questionDisplay.points", { count: points })}
+            {t("comprehension.questionDisplay.points", { count: points })}
           </span>
         )}
         {metadata?.level && (
@@ -253,10 +253,10 @@ function TextAnswerInput({ type, value, onChange, isDisabled, t }: TextAnswerInp
   const rows = type === "essay" || type === "opinion" ? 6 : 3;
   const placeholder =
     type === "essay" || type === "opinion"
-      ? t("comprehension:questionDisplay.placeholders.essay")
+      ? t("comprehension.questionDisplay.placeholders.essay")
       : type === "translation"
-        ? t("comprehension:questionDisplay.placeholders.translation")
-        : t("comprehension:questionDisplay.placeholders.default");
+        ? t("comprehension.questionDisplay.placeholders.translation")
+        : t("comprehension.questionDisplay.placeholders.default");
 
   return (
     <textarea
@@ -295,7 +295,7 @@ function FeedbackDisplay({ correctAnswer, aiFeedback, aiScore, type, t }: Feedba
         <div className="p-3 rounded-lg bg-muted/50 border border-border">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-foreground">
-              {t("comprehension:questionDisplay.feedback.score")}
+              {t("comprehension.questionDisplay.feedback.score")}
             </span>
             <span
               className={`text-sm font-bold ${
@@ -321,8 +321,8 @@ function FeedbackDisplay({ correctAnswer, aiFeedback, aiScore, type, t }: Feedba
         <div className="p-3 rounded-lg bg-muted/50 border border-border">
           <p className="text-sm font-medium text-foreground mb-1">
             {type === "short_answer" || type === "translation" || type === "grammar"
-              ? t("comprehension:questionDisplay.feedback.expectedAnswer")
-              : t("comprehension:questionDisplay.feedback.possibleAnswer")}
+              ? t("comprehension.questionDisplay.feedback.expectedAnswer")
+              : t("comprehension.questionDisplay.feedback.possibleAnswer")}
           </p>
           <p className="text-sm text-foreground-muted">{correctAnswer}</p>
         </div>
@@ -332,7 +332,7 @@ function FeedbackDisplay({ correctAnswer, aiFeedback, aiScore, type, t }: Feedba
       {aiFeedback && (
         <div className="p-3 rounded-lg bg-muted/50 border border-border">
           <p className="text-sm font-medium text-foreground mb-1">
-            {t("comprehension:questionDisplay.feedback.feedback")}
+            {t("comprehension.questionDisplay.feedback.feedback")}
           </p>
           <p className="text-sm text-foreground-muted">{aiFeedback}</p>
         </div>
