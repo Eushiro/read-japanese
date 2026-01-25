@@ -11,6 +11,7 @@ import brandConfig from "../../../../shared/brand.json";
 // Import translation files
 import enCommon from "./locales/en/common.json";
 import enComprehension from "./locales/en/comprehension.json";
+import enCredits from "./locales/en/credits.json";
 import enDashboard from "./locales/en/dashboard.json";
 import enExamResults from "./locales/en/examResults.json";
 import enExams from "./locales/en/exams.json";
@@ -20,6 +21,7 @@ import enGenerate from "./locales/en/generate.json";
 import enLanding from "./locales/en/landing.json";
 import enLearn from "./locales/en/learn.json";
 import enLibrary from "./locales/en/library.json";
+import enNavigation from "./locales/en/navigation.json";
 import enOnboarding from "./locales/en/onboarding.json";
 import enPaywall from "./locales/en/paywall.json";
 import enPlacement from "./locales/en/placement.json";
@@ -37,6 +39,7 @@ import enVideoQuiz from "./locales/en/videoQuiz.json";
 import enVocabulary from "./locales/en/vocabulary.json";
 import frCommon from "./locales/fr/common.json";
 import frComprehension from "./locales/fr/comprehension.json";
+import frCredits from "./locales/fr/credits.json";
 import frDashboard from "./locales/fr/dashboard.json";
 import frExamResults from "./locales/fr/examResults.json";
 import frExams from "./locales/fr/exams.json";
@@ -46,6 +49,7 @@ import frGenerate from "./locales/fr/generate.json";
 import frLanding from "./locales/fr/landing.json";
 import frLearn from "./locales/fr/learn.json";
 import frLibrary from "./locales/fr/library.json";
+import frNavigation from "./locales/fr/navigation.json";
 import frOnboarding from "./locales/fr/onboarding.json";
 import frPaywall from "./locales/fr/paywall.json";
 import frPlacement from "./locales/fr/placement.json";
@@ -63,6 +67,7 @@ import frVideoQuiz from "./locales/fr/videoQuiz.json";
 import frVocabulary from "./locales/fr/vocabulary.json";
 import jaCommon from "./locales/ja/common.json";
 import jaComprehension from "./locales/ja/comprehension.json";
+import jaCredits from "./locales/ja/credits.json";
 import jaDashboard from "./locales/ja/dashboard.json";
 import jaExamResults from "./locales/ja/examResults.json";
 import jaExams from "./locales/ja/exams.json";
@@ -72,6 +77,7 @@ import jaGenerate from "./locales/ja/generate.json";
 import jaLanding from "./locales/ja/landing.json";
 import jaLearn from "./locales/ja/learn.json";
 import jaLibrary from "./locales/ja/library.json";
+import jaNavigation from "./locales/ja/navigation.json";
 import jaOnboarding from "./locales/ja/onboarding.json";
 import jaPaywall from "./locales/ja/paywall.json";
 import jaPlacement from "./locales/ja/placement.json";
@@ -89,6 +95,7 @@ import jaVideoQuiz from "./locales/ja/videoQuiz.json";
 import jaVocabulary from "./locales/ja/vocabulary.json";
 import zhCommon from "./locales/zh/common.json";
 import zhComprehension from "./locales/zh/comprehension.json";
+import zhCredits from "./locales/zh/credits.json";
 import zhDashboard from "./locales/zh/dashboard.json";
 import zhExamResults from "./locales/zh/examResults.json";
 import zhExams from "./locales/zh/exams.json";
@@ -98,6 +105,7 @@ import zhGenerate from "./locales/zh/generate.json";
 import zhLanding from "./locales/zh/landing.json";
 import zhLearn from "./locales/zh/learn.json";
 import zhLibrary from "./locales/zh/library.json";
+import zhNavigation from "./locales/zh/navigation.json";
 import zhOnboarding from "./locales/zh/onboarding.json";
 import zhPaywall from "./locales/zh/paywall.json";
 import zhPlacement from "./locales/zh/placement.json";
@@ -118,8 +126,10 @@ import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from "./types";
 const resources = {
   en: {
     common: enCommon,
+    credits: enCredits,
     dashboard: enDashboard,
     landing: enLanding,
+    navigation: enNavigation,
     settings: enSettings,
     vocabulary: enVocabulary,
     flashcards: enFlashcards,
@@ -146,8 +156,10 @@ const resources = {
   },
   fr: {
     common: frCommon,
+    credits: frCredits,
     dashboard: frDashboard,
     landing: frLanding,
+    navigation: frNavigation,
     settings: frSettings,
     vocabulary: frVocabulary,
     flashcards: frFlashcards,
@@ -174,8 +186,10 @@ const resources = {
   },
   ja: {
     common: jaCommon,
+    credits: jaCredits,
     dashboard: jaDashboard,
     landing: jaLanding,
+    navigation: jaNavigation,
     settings: jaSettings,
     vocabulary: jaVocabulary,
     flashcards: jaFlashcards,
@@ -202,8 +216,10 @@ const resources = {
   },
   zh: {
     common: zhCommon,
+    credits: zhCredits,
     dashboard: zhDashboard,
     landing: zhLanding,
+    navigation: zhNavigation,
     settings: zhSettings,
     vocabulary: zhVocabulary,
     flashcards: zhFlashcards,
@@ -242,8 +258,10 @@ i18n
     defaultNS: "common",
     ns: [
       "common",
+      "credits",
       "dashboard",
       "landing",
+      "navigation",
       "settings",
       "vocabulary",
       "flashcards",

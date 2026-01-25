@@ -151,6 +151,12 @@ function main() {
 
   console.log("✓ All translation files have matching keys");
 
+  // Check that all namespaces are registered in i18n config
+  const configResult = checkNamespacesInConfig(namespaces);
+  if (configResult.hasErrors) {
+    process.exit(1);
+  }
+
   // Check for missing keys (used in code but not defined) - always runs, blocking
   const missingKeysResult = checkMissingKeys(referenceDir, namespaces);
   if (missingKeysResult.hasMissing) {
@@ -161,6 +167,49 @@ function main() {
   if (process.argv.includes("--check-unused")) {
     checkUnusedKeys(referenceDir, namespaces);
   }
+}
+
+/**
+ * Check that all namespace files are registered in i18n config
+ */
+function checkNamespacesInConfig(namespaces: string[]): { hasErrors: boolean } {
+  const configPath = join(import.meta.dir, "../src/lib/i18n/config.ts");
+  const configContent = readFileSync(configPath, "utf-8");
+
+  // Extract the ns array from config - look for ns: [...] pattern
+  const nsArrayMatch = configContent.match(/ns:\s*\[([\s\S]*?)\]/);
+  if (!nsArrayMatch) {
+    console.error("\n✗ Could not find ns array in i18n config");
+    return { hasErrors: true };
+  }
+
+  // Parse the namespace strings from the array
+  const nsArrayContent = nsArrayMatch[1];
+  const registeredNamespaces = new Set<string>();
+  const nsMatches = nsArrayContent.matchAll(/"([^"]+)"/g);
+  for (const match of nsMatches) {
+    registeredNamespaces.add(match[1]);
+  }
+
+  // Find namespaces that exist as files but aren't registered
+  const unregisteredNamespaces = namespaces.filter((ns) => !registeredNamespaces.has(ns));
+
+  if (unregisteredNamespaces.length > 0) {
+    console.error(
+      `\n✗ Found ${unregisteredNamespaces.length} namespace(s) not registered in i18n config:`
+    );
+    unregisteredNamespaces.sort().forEach((ns) => {
+      console.error(`  - "${ns}" (file exists but not in config.ts)`);
+    });
+    console.error("\nAdd these namespaces to src/lib/i18n/config.ts:");
+    console.error("  1. Import the JSON files for all locales");
+    console.error("  2. Add to the resources object for each language");
+    console.error("  3. Add to the ns array");
+    return { hasErrors: true };
+  }
+
+  console.log("✓ All namespaces are registered in i18n config");
+  return { hasErrors: false };
 }
 
 /**
