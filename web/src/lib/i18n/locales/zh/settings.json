@@ -112,5 +112,16 @@
     "title": "关于",
     "version": "SanLang v1.0.0",
     "description": "AI驱动的个性化备考"
+  },
+  "credits": {
+    "title": "积分",
+    "viewHistory": "查看历史",
+    "description": "跟踪您的月度积分使用情况",
+    "creditsUsed": "积分已使用",
+    "resets": "{{date}}重置",
+    "tier": "方案",
+    "upgradeTitle": "需要更多积分？",
+    "upgradeDescription": "升级您的方案以获得更多月度积分。",
+    "upgrade": "升级"
   }
 }

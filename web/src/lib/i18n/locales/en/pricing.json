@@ -18,6 +18,9 @@
   "mostPopular": "Most Popular",
   "billedAnnually": "Billed annually",
   "creditsPerMonth": "credits/mo",
+  "currentPlan": "Current Plan",
+  "getStarted": "Get Started",
+  "upgrade": "Upgrade to {{tier}}",
   "tiers": {
     "free": {
       "description": "Get started with the basics",
@@ -63,7 +66,8 @@
       "comprehension": "Quiz grading",
       "audio": "Audio generation",
       "shadowing": "Shadowing session"
-    }
+    },
+    "footer": "Credits reset monthly. Unused credits don't roll over."
   },
   "faq": {
     "title": "Frequently Asked Questions",

@@ -9,6 +9,9 @@
     "signIn": "Se connecter",
     "signOut": "Se d\u00e9connecter"
   },
+  "buttons": {
+    "continue": "Continuer"
+  },
   "actions": {
     "save": "Enregistrer",
     "cancel": "Annuler",

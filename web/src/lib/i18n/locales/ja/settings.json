@@ -127,5 +127,16 @@
     "title": "このアプリについて",
     "version": "SanLang v1.0.0",
     "description": "AIを活用したパーソナライズ学習"
+  },
+  "credits": {
+    "title": "クレジット",
+    "viewHistory": "履歴を見る",
+    "description": "月間クレジット使用状況を確認",
+    "creditsUsed": "クレジット使用済み",
+    "resets": "{{date}}にリセット",
+    "tier": "プラン",
+    "upgradeTitle": "もっとクレジットが必要ですか？",
+    "upgradeDescription": "プランをアップグレードして月間クレジットを増やしましょう。",
+    "upgrade": "アップグレード"
   }
 }

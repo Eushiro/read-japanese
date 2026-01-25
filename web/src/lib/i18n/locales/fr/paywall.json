@@ -1,0 +1,13 @@
+{
+  "outOfCredits": "Crédits épuisés",
+  "upgradeRequired": "Mise à niveau requise",
+  "outOfCreditsMessage": "Vous avez utilisé vos {{limit}} crédits ce mois-ci.",
+  "actionMessage": "Passez à la version supérieure pour {{action}} et débloquer plus de fonctionnalités.",
+  "genericMessage": "Améliorez votre forfait pour accéder à cette fonctionnalité.",
+  "currentPlan": "Forfait actuel",
+  "creditsRemaining": "Crédits restants",
+  "signInPrompt": "Connectez-vous pour suivre votre utilisation et accéder à plus de fonctionnalités.",
+  "signIn": "Se connecter",
+  "viewAllPlans": "Voir tous les forfaits",
+  "viewUsage": "Voir les détails d'utilisation"
+}

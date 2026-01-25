@@ -1,0 +1,13 @@
+{
+  "outOfCredits": "积分不足",
+  "upgradeRequired": "需要升级",
+  "outOfCreditsMessage": "您本月已用完{{limit}}积分。",
+  "actionMessage": "升级以{{action}}并解锁更多功能。",
+  "genericMessage": "升级您的方案以访问此功能。",
+  "currentPlan": "当前方案",
+  "creditsRemaining": "剩余积分",
+  "signInPrompt": "登录以跟踪您的使用情况并访问更多功能。",
+  "signIn": "登录",
+  "viewAllPlans": "查看所有方案",
+  "viewUsage": "查看使用详情"
+}

@@ -20,6 +20,7 @@ import enLanding from "./locales/en/landing.json";
 import enLearn from "./locales/en/learn.json";
 import enLibrary from "./locales/en/library.json";
 import enOnboarding from "./locales/en/onboarding.json";
+import enPaywall from "./locales/en/paywall.json";
 import enPlacement from "./locales/en/placement.json";
 import enPractice from "./locales/en/practice.json";
 import enPricing from "./locales/en/pricing.json";
@@ -44,6 +45,7 @@ import frLanding from "./locales/fr/landing.json";
 import frLearn from "./locales/fr/learn.json";
 import frLibrary from "./locales/fr/library.json";
 import frOnboarding from "./locales/fr/onboarding.json";
+import frPaywall from "./locales/fr/paywall.json";
 import frPlacement from "./locales/fr/placement.json";
 import frPractice from "./locales/fr/practice.json";
 import frPricing from "./locales/fr/pricing.json";
@@ -68,6 +70,7 @@ import jaLanding from "./locales/ja/landing.json";
 import jaLearn from "./locales/ja/learn.json";
 import jaLibrary from "./locales/ja/library.json";
 import jaOnboarding from "./locales/ja/onboarding.json";
+import jaPaywall from "./locales/ja/paywall.json";
 import jaPlacement from "./locales/ja/placement.json";
 import jaPractice from "./locales/ja/practice.json";
 import jaPricing from "./locales/ja/pricing.json";
@@ -92,6 +95,7 @@ import zhLanding from "./locales/zh/landing.json";
 import zhLearn from "./locales/zh/learn.json";
 import zhLibrary from "./locales/zh/library.json";
 import zhOnboarding from "./locales/zh/onboarding.json";
+import zhPaywall from "./locales/zh/paywall.json";
 import zhPlacement from "./locales/zh/placement.json";
 import zhPractice from "./locales/zh/practice.json";
 import zhPricing from "./locales/zh/pricing.json";
@@ -130,6 +134,7 @@ const resources = {
     reader: enReader,
     studySession: enStudySession,
     onboarding: enOnboarding,
+    paywall: enPaywall,
     quiz: enQuiz,
     shadowing: enShadowing,
   },
@@ -156,6 +161,7 @@ const resources = {
     reader: frReader,
     studySession: frStudySession,
     onboarding: frOnboarding,
+    paywall: frPaywall,
     quiz: frQuiz,
     shadowing: frShadowing,
   },
@@ -182,6 +188,7 @@ const resources = {
     reader: jaReader,
     studySession: jaStudySession,
     onboarding: jaOnboarding,
+    paywall: jaPaywall,
     quiz: jaQuiz,
     shadowing: jaShadowing,
   },
@@ -208,6 +215,7 @@ const resources = {
     reader: zhReader,
     studySession: zhStudySession,
     onboarding: zhOnboarding,
+    paywall: zhPaywall,
     quiz: zhQuiz,
     shadowing: zhShadowing,
   },
@@ -246,6 +254,7 @@ i18n
       "reader",
       "studySession",
       "onboarding",
+      "paywall",
       "quiz",
       "shadowing",
     ],

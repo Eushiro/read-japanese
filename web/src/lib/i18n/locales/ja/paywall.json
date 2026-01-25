@@ -1,0 +1,13 @@
+{
+  "outOfCredits": "クレジット不足",
+  "upgradeRequired": "アップグレードが必要です",
+  "outOfCreditsMessage": "今月の{{limit}}クレジットをすべて使用しました。",
+  "actionMessage": "{{action}}するにはアップグレードしてください。",
+  "genericMessage": "この機能を利用するにはプランをアップグレードしてください。",
+  "currentPlan": "現在のプラン",
+  "creditsRemaining": "残りクレジット",
+  "signInPrompt": "ログインして使用状況を確認し、より多くの機能にアクセスしましょう。",
+  "signIn": "ログイン",
+  "viewAllPlans": "すべてのプランを見る",
+  "viewUsage": "使用状況の詳細"
+}

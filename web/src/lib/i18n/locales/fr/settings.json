@@ -127,5 +127,16 @@
     "title": "À propos",
     "version": "SanLang v1.0.0",
     "description": "Préparation aux examens personnalisée par IA"
+  },
+  "credits": {
+    "title": "Crédits",
+    "viewHistory": "Voir l'historique",
+    "description": "Suivez votre utilisation mensuelle de crédits",
+    "creditsUsed": "crédits utilisés",
+    "resets": "Réinitialisation le {{date}}",
+    "tier": "forfait",
+    "upgradeTitle": "Besoin de plus de crédits ?",
+    "upgradeDescription": "Améliorez votre forfait pour plus de crédits mensuels.",
+    "upgrade": "Améliorer"
   }
 }

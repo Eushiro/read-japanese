@@ -18,6 +18,9 @@
   "mostPopular": "Le plus populaire",
   "billedAnnually": "Facturé annuellement",
   "creditsPerMonth": "crédits/mois",
+  "currentPlan": "Forfait actuel",
+  "getStarted": "Commencer",
+  "upgrade": "Passer à {{tier}}",
   "tiers": {
     "free": {
       "description": "Commencez avec les bases",
@@ -63,7 +66,8 @@
       "comprehension": "Notation de quiz",
       "audio": "Génération audio",
       "shadowing": "Session de shadowing"
-    }
+    },
+    "footer": "Les crédits sont réinitialisés mensuellement. Les crédits non utilisés ne sont pas reportés."
   },
   "faq": {
     "title": "Questions fréquemment posées",

@@ -9,6 +9,9 @@
     "signIn": "Sign In",
     "signOut": "Sign Out"
   },
+  "buttons": {
+    "continue": "Continue"
+  },
   "actions": {
     "save": "Save",
     "cancel": "Cancel",

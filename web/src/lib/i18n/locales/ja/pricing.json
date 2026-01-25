@@ -18,6 +18,9 @@
   "mostPopular": "人気No.1",
   "billedAnnually": "年間一括払い",
   "creditsPerMonth": "クレジット/月",
+  "currentPlan": "現在のプラン",
+  "getStarted": "始める",
+  "upgrade": "{{tier}}にアップグレード",
   "tiers": {
     "free": {
       "description": "基本機能から始める",
@@ -63,7 +66,8 @@
       "comprehension": "クイズ採点",
       "audio": "音声生成",
       "shadowing": "シャドーイングセッション"
-    }
+    },
+    "footer": "クレジットは毎月リセットされます。未使用のクレジットは繰り越されません。"
   },
   "faq": {
     "title": "よくある質問",

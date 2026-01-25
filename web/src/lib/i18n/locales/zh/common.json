@@ -9,6 +9,9 @@
     "signIn": "\u767b\u5f55",
     "signOut": "\u9000\u51fa"
   },
+  "buttons": {
+    "continue": "\u7ee7\u7eed"
+  },
   "actions": {
     "save": "\u4fdd\u5b58",
     "cancel": "\u53d6\u6d88",

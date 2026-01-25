@@ -127,5 +127,16 @@
     "title": "About",
     "version": "SanLang v1.0.0",
     "description": "Personalized exam prep powered by AI"
+  },
+  "credits": {
+    "title": "Credits",
+    "viewHistory": "View History",
+    "description": "Track your monthly credit usage",
+    "creditsUsed": "credits used",
+    "resets": "Resets {{date}}",
+    "tier": "tier",
+    "upgradeTitle": "Need more credits?",
+    "upgradeDescription": "Upgrade your plan for more monthly credits.",
+    "upgrade": "Upgrade"
   }
 }
