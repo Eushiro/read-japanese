@@ -2,7 +2,7 @@
   "outOfCredits": "Crédits épuisés",
   "upgradeRequired": "Mise à niveau requise",
   "outOfCreditsMessage": "Vous avez utilisé vos {{limit}} crédits ce mois-ci.",
-  "actionMessage": "Passez à la version supérieure pour {{action}} et débloquer plus de fonctionnalités.",
+  "actionMessage": "Passez à la version supérieure pour débloquer {{action}} et plus de fonctionnalités.",
   "genericMessage": "Améliorez votre forfait pour accéder à cette fonctionnalité.",
   "currentPlan": "Forfait actuel",
   "creditsRemaining": "Crédits restants",

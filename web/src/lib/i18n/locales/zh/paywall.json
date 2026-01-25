@@ -2,7 +2,7 @@
   "outOfCredits": "积分不足",
   "upgradeRequired": "需要升级",
   "outOfCreditsMessage": "您本月已用完{{limit}}积分。",
-  "actionMessage": "升级以{{action}}并解锁更多功能。",
+  "actionMessage": "升级以解锁{{action}}和更多功能。",
   "genericMessage": "升级您的方案以访问此功能。",
   "currentPlan": "当前方案",
   "creditsRemaining": "剩余积分",

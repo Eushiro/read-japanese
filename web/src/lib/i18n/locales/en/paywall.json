@@ -2,7 +2,7 @@
   "outOfCredits": "Out of Credits",
   "upgradeRequired": "Upgrade Required",
   "outOfCreditsMessage": "You've used all {{limit}} credits this month.",
-  "actionMessage": "Upgrade to {{action}} and unlock more features.",
+  "actionMessage": "Upgrade to unlock {{action}} and more features.",
   "genericMessage": "Upgrade your plan to access this feature.",
   "currentPlan": "Current Plan",
   "creditsRemaining": "Credits Remaining",
