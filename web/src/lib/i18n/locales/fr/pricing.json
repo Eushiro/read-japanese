@@ -10,130 +10,78 @@
     "comprehension": "Compréhension",
     "audioSupport": "Support audio"
   },
+  "monthly": "Mensuel",
+  "annual": "Annuel",
+  "year": "an",
+  "month": "mois",
+  "save17": "Économisez 17%",
+  "mostPopular": "Le plus populaire",
+  "billedAnnually": "Facturé annuellement",
+  "creditsPerMonth": "crédits/mois",
   "tiers": {
     "free": {
-      "name": "Gratuit",
-      "price": "0 $",
-      "period": "/mois",
       "description": "Commencez avec les bases",
-      "features": [
-        "Decks de vocabulaire prédéfinis",
-        "Révisions de flashcards de base",
-        "5 sessions de lecture/mois"
-      ],
-      "noFeatures": ["Pas de feedback IA", "Pas de génération de phrases IA"],
+      "features": {
+        "0": "50 crédits IA/mois",
+        "1": "Decks de vocabulaire prédéfinis",
+        "2": "Révisions de flashcards de base",
+        "3": "Sessions de lecture limitées"
+      },
       "currentPlan": "Forfait actuel",
-      "cta": "Commencer"
+      "cta": "Forfait actuel"
     },
-    "basic": {
-      "name": "Basique",
-      "price": "5 $",
-      "period": "/mois",
+    "plus": {
       "description": "Pour les apprenants réguliers",
-      "features": [
-        "Tout du forfait Gratuit",
-        "<strong>200</strong> feedbacks IA/mois",
-        "<strong>100</strong> générations audio",
-        "20 sessions de lecture/mois",
-        "Quiz de compréhension IA"
-      ],
-      "cta": "Obtenir Basique"
+      "features": {
+        "0": "500 crédits IA/mois",
+        "1": "Tout du forfait Gratuit",
+        "2": "Decks personnalisés illimités",
+        "3": "Suivi de progression",
+        "4": "Génération audio"
+      },
+      "cta": "Obtenir Plus"
     },
     "pro": {
-      "name": "Pro",
-      "badge": "Le plus populaire",
-      "price": "15 $",
-      "period": "/mois",
       "description": "Pour les apprenants sérieux",
-      "features": [
-        "Tout du forfait Basique",
-        "<strong>1 000</strong> feedbacks IA/mois",
-        "<strong>500</strong> générations audio",
-        "<strong>100</strong> sessions de lecture",
-        "<strong>3 000</strong> flashcards/mois"
-      ],
+      "features": {
+        "0": "2 000 crédits IA/mois",
+        "1": "Tout du forfait Plus",
+        "2": "Support prioritaire",
+        "3": "Accès anticipé aux fonctionnalités"
+      },
       "cta": "Obtenir Pro"
-    },
-    "power": {
-      "name": "Power",
-      "price": "45 $",
-      "period": "/mois",
-      "description": "5x Pro pour les utilisateurs intensifs",
-      "features": [
-        "Tout du forfait Pro",
-        "<strong>5 000</strong> feedbacks IA/mois",
-        "<strong>2 500</strong> générations audio",
-        "<strong>15 000</strong> flashcards/mois",
-        "Support prioritaire"
-      ],
-      "cta": "Obtenir Power"
+    }
+  },
+  "creditCosts": {
+    "title": "Comment fonctionnent les crédits",
+    "action": "Action",
+    "credits": "Crédits",
+    "plusUpTo": "Plus (jusqu'à)",
+    "actions": {
+      "flashcard": "Phrase IA pour flashcard",
+      "feedback": "Correction d'écriture",
+      "comprehension": "Notation de quiz",
+      "audio": "Génération audio",
+      "shadowing": "Session de shadowing"
     }
   },
   "faq": {
     "title": "Questions fréquemment posées",
-    "questions": [
-      {
-        "question": "Qu'est-ce que le feedback IA ?",
-        "answer": "Le feedback IA comprend les corrections d'écriture, la notation des quiz de compréhension et la génération de phrases pour les flashcards. Chaque fois que vous recevez un feedback sur votre écriture ou générez de nouvelles phrases d'exemple, cela utilise un crédit IA."
-      },
-      {
-        "question": "Les decks de vocabulaire prédéfinis sont-ils gratuits ?",
-        "answer": "Oui ! Tous les decks de vocabulaire prédéfinis (JLPT N5-N1, etc.) sont gratuits avec les révisions de flashcards de base. Les fonctionnalités premium comme la génération de phrases IA et le feedback d'écriture nécessitent un forfait payant."
-      },
-      {
-        "question": "Puis-je changer de forfait à tout moment ?",
-        "answer": "Oui ! Vous pouvez passer à un forfait supérieur ou inférieur à tout moment. Les changements prennent effet immédiatement et nous calculons les différences au prorata."
-      },
-      {
-        "question": "Quels modes de paiement acceptez-vous ?",
-        "answer": "Nous acceptons toutes les principales cartes de crédit, cartes de débit et Apple Pay via notre processeur de paiement sécurisé, Stripe."
-      }
-    ]
-  },
-  "paywall": {
-    "defaultTitle": "Passez à un forfait supérieur",
-    "defaultDescription": "Débloquez les fonctionnalités IA pour accélérer votre apprentissage.",
-    "recommended": "Recommandé",
-    "current": "Actuel",
-    "signInPrompt": "Connectez-vous pour voir les tarifs et passer à un forfait supérieur.",
-    "signInButton": "Se connecter pour continuer",
-    "getCta": "Obtenir {{tier}}",
-    "features": {
-      "flashcards": {
-        "title": "Débloquer les phrases IA",
-        "description": "Générez de nouvelles phrases d'exemple pour vos flashcards avec l'IA."
-      },
-      "sentences": {
-        "title": "Débloquer le feedback IA",
-        "description": "Obtenez des corrections grammaticales et des suggestions détaillées."
-      },
-      "comprehension": {
-        "title": "Débloquer la compréhension IA",
-        "description": "Générez des questions de compréhension et obtenez une notation par l'IA."
-      },
-      "stories": {
-        "title": "Débloquer les histoires premium",
-        "description": "Accédez à notre bibliothèque complète de lectures graduées."
-      },
-      "shadowing": {
-        "title": "Débloquer la pratique du shadowing",
-        "description": "Pratiquez l'oral avec un feedback de prononciation par l'IA."
-      },
-      "images": {
-        "title": "Débloquer les images IA",
-        "description": "Générez des images personnalisées pour vos cartes de vocabulaire."
-      }
+    "whatAreCredits": {
+      "q": "Que sont les crédits ?",
+      "a": "Les crédits sont utilisés pour les fonctionnalités IA comme la génération de phrases, la correction d'écriture, l'audio et le shadowing. Les différentes actions coûtent un nombre différent de crédits. Les crédits sont réinitialisés mensuellement."
     },
-    "comparison": {
-      "premiumStories": "Histoires premium",
-      "aiWritingFeedback": "Feedback d'écriture IA",
-      "audioGeneration": "Génération audio",
-      "readingSessions": "Sessions de lecture",
-      "flashcardGeneration": "Génération de flashcards",
-      "shadowingPractice": "Pratique du shadowing",
-      "aiImageGeneration": "Génération d'images IA",
-      "comprehensionQuizzes": "Quiz de compréhension",
-      "prioritySupport": "Support prioritaire"
+    "premadeDecks": {
+      "q": "Les decks de vocabulaire prédéfinis sont-ils gratuits ?",
+      "a": "Oui ! Tous les decks prédéfinis (JLPT N5-N1, niveaux CECR, etc.) sont gratuits avec les révisions de base. Les fonctionnalités IA comme la génération de phrases utilisent des crédits."
+    },
+    "changePlans": {
+      "q": "Puis-je changer de forfait à tout moment ?",
+      "a": "Oui ! Vous pouvez passer à un forfait supérieur ou inférieur à tout moment. Les changements prennent effet immédiatement."
+    },
+    "rollOver": {
+      "q": "Les crédits sont-ils reportés ?",
+      "a": "Non, les crédits sont réinitialisés au début de chaque période de facturation. Utilisez-les ou perdez-les !"
     }
   }
 }

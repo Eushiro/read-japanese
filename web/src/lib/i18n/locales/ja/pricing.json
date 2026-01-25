@@ -10,126 +10,78 @@
     "comprehension": "読解問題",
     "audioSupport": "音声サポート"
   },
+  "monthly": "月額",
+  "annual": "年額",
+  "year": "年",
+  "month": "月",
+  "save17": "17%オフ",
+  "mostPopular": "人気No.1",
+  "billedAnnually": "年間一括払い",
+  "creditsPerMonth": "クレジット/月",
   "tiers": {
     "free": {
-      "name": "無料",
-      "price": "$0",
-      "period": "/月",
       "description": "基本機能から始める",
-      "features": ["既製の語彙デッキ", "基本的なフラッシュカード復習", "月5回の読解セッション"],
-      "noFeatures": ["AIフィードバックなし", "AI文章生成なし"],
+      "features": {
+        "0": "月50 AIクレジット",
+        "1": "既製の語彙デッキ",
+        "2": "基本的なフラッシュカード復習",
+        "3": "限定的な読解セッション"
+      },
       "currentPlan": "現在のプラン",
-      "cta": "始める"
+      "cta": "現在のプラン"
     },
-    "basic": {
-      "name": "ベーシック",
-      "price": "$5",
-      "period": "/月",
+    "plus": {
       "description": "定期的な学習者向け",
-      "features": [
-        "無料プランのすべて",
-        "<strong>200</strong> AIフィードバック/月",
-        "<strong>100</strong> 音声生成",
-        "月20回の読解セッション",
-        "AI読解クイズ"
-      ],
-      "cta": "ベーシックを取得"
+      "features": {
+        "0": "月500 AIクレジット",
+        "1": "無料プランのすべて",
+        "2": "無制限のカスタムデッキ",
+        "3": "進捗トラッキング",
+        "4": "音声生成"
+      },
+      "cta": "Plusを取得"
     },
     "pro": {
-      "name": "プロ",
-      "badge": "人気No.1",
-      "price": "$15",
-      "period": "/月",
       "description": "本格的な学習者向け",
-      "features": [
-        "ベーシックのすべて",
-        "<strong>1,000</strong> AIフィードバック/月",
-        "<strong>500</strong> 音声生成",
-        "<strong>100</strong> 読解セッション",
-        "<strong>3,000</strong> フラッシュカード/月"
-      ],
-      "cta": "プロを取得"
-    },
-    "power": {
-      "name": "パワー",
-      "price": "$45",
-      "period": "/月",
-      "description": "プロの5倍、ヘビーユーザー向け",
-      "features": [
-        "プロのすべて",
-        "<strong>5,000</strong> AIフィードバック/月",
-        "<strong>2,500</strong> 音声生成",
-        "<strong>15,000</strong> フラッシュカード/月",
-        "優先サポート"
-      ],
-      "cta": "パワーを取得"
+      "features": {
+        "0": "月2,000 AIクレジット",
+        "1": "Plusのすべて",
+        "2": "優先サポート",
+        "3": "新機能への早期アクセス"
+      },
+      "cta": "Proを取得"
+    }
+  },
+  "creditCosts": {
+    "title": "クレジットの仕組み",
+    "action": "アクション",
+    "credits": "クレジット",
+    "plusUpTo": "Plus（最大）",
+    "actions": {
+      "flashcard": "AI文章生成",
+      "feedback": "作文添削",
+      "comprehension": "クイズ採点",
+      "audio": "音声生成",
+      "shadowing": "シャドーイングセッション"
     }
   },
   "faq": {
     "title": "よくある質問",
-    "questions": [
-      {
-        "question": "AIフィードバックとは何ですか？",
-        "answer": "AIフィードバックには、作文添削、読解クイズの採点、フラッシュカード用の文章生成が含まれます。作文にフィードバックを受けたり、新しい例文を生成するたびに、AIクレジットを1つ使用します。"
-      },
-      {
-        "question": "既製の語彙デッキは無料ですか？",
-        "answer": "はい！すべての既製語彙デッキ（JLPT N5-N1など）は、基本的なフラッシュカード復習で無料で使用できます。AI文章生成や作文添削などのプレミアム機能には有料プランが必要です。"
-      },
-      {
-        "question": "いつでもプランを変更できますか？",
-        "answer": "はい！いつでもプランをアップグレードまたはダウングレードできます。変更はすぐに反映され、差額は日割り計算されます。"
-      },
-      {
-        "question": "どのような支払い方法を受け付けていますか？",
-        "answer": "安全な決済プロセッサStripeを通じて、主要なクレジットカード、デビットカード、Apple Payを受け付けています。"
-      }
-    ]
-  },
-  "paywall": {
-    "defaultTitle": "プランをアップグレード",
-    "defaultDescription": "AI機能をアンロックして学習を加速しましょう。",
-    "recommended": "おすすめ",
-    "current": "現在",
-    "signInPrompt": "料金とアップグレードを確認するにはログインしてください。",
-    "signInButton": "ログインして続ける",
-    "getCta": "{{tier}}を取得",
-    "features": {
-      "flashcards": {
-        "title": "AI文章生成をアンロック",
-        "description": "AIでフラッシュカード用の新しい例文を生成。"
-      },
-      "sentences": {
-        "title": "AI添削をアンロック",
-        "description": "文法修正と提案を含む詳細な作文フィードバックを取得。"
-      },
-      "comprehension": {
-        "title": "AI読解をアンロック",
-        "description": "読解問題を生成し、AIによる採点を受ける。"
-      },
-      "stories": {
-        "title": "プレミアムストーリーをアンロック",
-        "description": "グレード別読み物の完全ライブラリにアクセス。"
-      },
-      "shadowing": {
-        "title": "シャドーイング練習をアンロック",
-        "description": "AI発音フィードバックでスピーキング練習。"
-      },
-      "images": {
-        "title": "AI画像生成をアンロック",
-        "description": "語彙カード用のカスタム画像を生成。"
-      }
+    "whatAreCredits": {
+      "q": "クレジットとは何ですか？",
+      "a": "クレジットは、文章生成、作文添削、音声、シャドーイングなどのAI機能に使用されます。異なるアクションには異なる数のクレジットがかかります。クレジットは毎月リセットされます。"
     },
-    "comparison": {
-      "premiumStories": "プレミアムストーリー",
-      "aiWritingFeedback": "AI作文添削",
-      "audioGeneration": "音声生成",
-      "readingSessions": "読解セッション",
-      "flashcardGeneration": "フラッシュカード生成",
-      "shadowingPractice": "シャドーイング練習",
-      "aiImageGeneration": "AI画像生成",
-      "comprehensionQuizzes": "読解クイズ",
-      "prioritySupport": "優先サポート"
+    "premadeDecks": {
+      "q": "既製の語彙デッキは無料ですか？",
+      "a": "はい！すべての既製デッキ（JLPT N5-N1、CEFRレベルなど）は基本復習で無料です。文章生成などのAI機能はクレジットを使用します。"
+    },
+    "changePlans": {
+      "q": "いつでもプランを変更できますか？",
+      "a": "はい！いつでもプランをアップグレードまたはダウングレードできます。変更はすぐに反映されます。"
+    },
+    "rollOver": {
+      "q": "クレジットは繰り越されますか？",
+      "a": "いいえ、クレジットは各請求期間の開始時にリセットされます。使い切らないと失効します！"
     }
   }
 }

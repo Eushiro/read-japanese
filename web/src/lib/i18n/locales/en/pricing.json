@@ -10,130 +10,78 @@
     "comprehension": "Comprehension",
     "audioSupport": "Audio Support"
   },
+  "monthly": "Monthly",
+  "annual": "Annual",
+  "year": "year",
+  "month": "mo",
+  "save17": "Save 17%",
+  "mostPopular": "Most Popular",
+  "billedAnnually": "Billed annually",
+  "creditsPerMonth": "credits/mo",
   "tiers": {
     "free": {
-      "name": "Free",
-      "price": "$0",
-      "period": "/mo",
       "description": "Get started with the basics",
-      "features": [
-        "Premade vocabulary decks",
-        "Basic flashcard reviews",
-        "5 reading sessions/month"
-      ],
-      "noFeatures": ["No AI feedback", "No AI sentence generation"],
-      "currentPlan": "Current plan",
-      "cta": "Get Started"
+      "features": {
+        "0": "50 AI credits/month",
+        "1": "Premade vocabulary decks",
+        "2": "Basic flashcard reviews",
+        "3": "Limited reading sessions"
+      },
+      "currentPlan": "Current Plan",
+      "cta": "Current Plan"
     },
-    "basic": {
-      "name": "Basic",
-      "price": "$5",
-      "period": "/mo",
+    "plus": {
       "description": "For regular learners",
-      "features": [
-        "Everything in Free",
-        "<strong>200</strong> AI feedback/month",
-        "<strong>100</strong> audio generations",
-        "20 reading sessions/month",
-        "AI comprehension quizzes"
-      ],
-      "cta": "Get Basic"
+      "features": {
+        "0": "500 AI credits/month",
+        "1": "Everything in Free",
+        "2": "Unlimited custom decks",
+        "3": "Progress tracking",
+        "4": "Audio generation"
+      },
+      "cta": "Get Plus"
     },
     "pro": {
-      "name": "Pro",
-      "badge": "Most Popular",
-      "price": "$15",
-      "period": "/mo",
       "description": "For serious learners",
-      "features": [
-        "Everything in Basic",
-        "<strong>1,000</strong> AI feedback/month",
-        "<strong>500</strong> audio generations",
-        "<strong>100</strong> reading sessions",
-        "<strong>3,000</strong> flashcards/month"
-      ],
+      "features": {
+        "0": "2,000 AI credits/month",
+        "1": "Everything in Plus",
+        "2": "Priority support",
+        "3": "Early access to features"
+      },
       "cta": "Get Pro"
-    },
-    "power": {
-      "name": "Power",
-      "price": "$45",
-      "period": "/mo",
-      "description": "5x Pro for power users",
-      "features": [
-        "Everything in Pro",
-        "<strong>5,000</strong> AI feedback/month",
-        "<strong>2,500</strong> audio generations",
-        "<strong>15,000</strong> flashcards/month",
-        "Priority support"
-      ],
-      "cta": "Get Power"
+    }
+  },
+  "creditCosts": {
+    "title": "How Credits Work",
+    "action": "Action",
+    "credits": "Credits",
+    "plusUpTo": "Plus (up to)",
+    "actions": {
+      "flashcard": "AI flashcard sentence",
+      "feedback": "Writing feedback",
+      "comprehension": "Quiz grading",
+      "audio": "Audio generation",
+      "shadowing": "Shadowing session"
     }
   },
   "faq": {
     "title": "Frequently Asked Questions",
-    "questions": [
-      {
-        "question": "What is AI feedback?",
-        "answer": "AI feedback includes writing corrections, comprehension quiz grading, and sentence generation for flashcards. Each time you get feedback on your writing or generate new example sentences, it uses one AI credit."
-      },
-      {
-        "question": "Are the premade vocabulary decks free?",
-        "answer": "Yes! All premade vocabulary decks (JLPT N5-N1, etc.) are free to use with basic flashcard reviews. Premium features like AI sentence generation and writing feedback require a paid plan."
-      },
-      {
-        "question": "Can I change plans anytime?",
-        "answer": "Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any differences."
-      },
-      {
-        "question": "What payment methods do you accept?",
-        "answer": "We accept all major credit cards, debit cards, and Apple Pay through our secure payment processor, Stripe."
-      }
-    ]
-  },
-  "paywall": {
-    "defaultTitle": "Upgrade Your Plan",
-    "defaultDescription": "Unlock AI-powered features to accelerate your learning.",
-    "recommended": "Recommended",
-    "current": "Current",
-    "signInPrompt": "Sign in to view pricing and upgrade.",
-    "signInButton": "Sign In to Continue",
-    "getCta": "Get {{tier}}",
-    "features": {
-      "flashcards": {
-        "title": "Upgrade for AI Sentences",
-        "description": "Generate new example sentences for your flashcards with AI."
-      },
-      "sentences": {
-        "title": "Upgrade for AI Feedback",
-        "description": "Get detailed feedback on your writing with grammar corrections and suggestions."
-      },
-      "comprehension": {
-        "title": "Upgrade for AI Comprehension",
-        "description": "Generate comprehension questions and get AI-powered grading on your answers."
-      },
-      "stories": {
-        "title": "Unlock Premium Stories",
-        "description": "Access our full library of graded reading content."
-      },
-      "shadowing": {
-        "title": "Unlock Shadowing Practice",
-        "description": "Practice speaking with AI-powered pronunciation feedback."
-      },
-      "images": {
-        "title": "Unlock AI Images",
-        "description": "Generate custom images for your vocabulary cards."
-      }
+    "whatAreCredits": {
+      "q": "What are credits?",
+      "a": "Credits are used for AI-powered features like generating sentences, writing feedback, audio, and shadowing. Different actions cost different amounts of credits. Credits reset monthly."
     },
-    "comparison": {
-      "premiumStories": "Premium Stories",
-      "aiWritingFeedback": "AI Writing Feedback",
-      "audioGeneration": "Audio Generation",
-      "readingSessions": "Reading Sessions",
-      "flashcardGeneration": "Flashcard Generation",
-      "shadowingPractice": "Shadowing Practice",
-      "aiImageGeneration": "AI Image Generation",
-      "comprehensionQuizzes": "Comprehension Quizzes",
-      "prioritySupport": "Priority Support"
+    "premadeDecks": {
+      "q": "Are the premade vocabulary decks free?",
+      "a": "Yes! All premade vocabulary decks (JLPT N5-N1, CEFR levels, etc.) are free to use with basic reviews. AI features like sentence generation use credits."
+    },
+    "changePlans": {
+      "q": "Can I change plans anytime?",
+      "a": "Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately."
+    },
+    "rollOver": {
+      "q": "Do credits roll over?",
+      "a": "No, credits reset at the start of each billing period. Use them or lose them!"
     }
   }
 }

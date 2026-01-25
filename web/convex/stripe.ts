@@ -10,34 +10,34 @@ import { action } from "./_generated/server";
 // STRIPE CONFIGURATION
 // ============================================
 
-// Price IDs for new unified credit system (Starter/Pro)
+// Price IDs for new unified credit system (Plus/Pro)
 // Set these in Stripe Dashboard and add to Convex env vars
 const PRICE_IDS = {
-  starter_monthly: process.env.STRIPE_PRICE_STARTER,
-  starter_annual: process.env.STRIPE_PRICE_STARTER_ANNUAL,
+  plus_monthly: process.env.STRIPE_PRICE_PLUS,
+  plus_annual: process.env.STRIPE_PRICE_PLUS_ANNUAL,
   pro_monthly: process.env.STRIPE_PRICE_PRO,
   pro_annual: process.env.STRIPE_PRICE_PRO_ANNUAL,
 } as const;
 
 // Legacy price IDs (for existing subscribers - maps to new tiers)
 const LEGACY_PRICE_IDS = {
-  basic: process.env.STRIPE_PRICE_BASIC, // Maps to starter
+  basic: process.env.STRIPE_PRICE_BASIC, // Maps to plus
   pro: process.env.STRIPE_PRICE_PRO,
   power: process.env.STRIPE_PRICE_UNLIMITED, // Maps to pro
 };
 
 // Tier from price ID (reverse lookup)
-type NewTier = "starter" | "pro";
+type NewTier = "plus" | "pro";
 const TIER_FROM_PRICE: Record<string, NewTier> = {};
 
 // Map new prices
-if (PRICE_IDS.starter_monthly) TIER_FROM_PRICE[PRICE_IDS.starter_monthly] = "starter";
-if (PRICE_IDS.starter_annual) TIER_FROM_PRICE[PRICE_IDS.starter_annual] = "starter";
+if (PRICE_IDS.plus_monthly) TIER_FROM_PRICE[PRICE_IDS.plus_monthly] = "plus";
+if (PRICE_IDS.plus_annual) TIER_FROM_PRICE[PRICE_IDS.plus_annual] = "plus";
 if (PRICE_IDS.pro_monthly) TIER_FROM_PRICE[PRICE_IDS.pro_monthly] = "pro";
 if (PRICE_IDS.pro_annual) TIER_FROM_PRICE[PRICE_IDS.pro_annual] = "pro";
 
 // Map legacy prices to new tiers for existing subscribers
-if (LEGACY_PRICE_IDS.basic) TIER_FROM_PRICE[LEGACY_PRICE_IDS.basic] = "starter";
+if (LEGACY_PRICE_IDS.basic) TIER_FROM_PRICE[LEGACY_PRICE_IDS.basic] = "plus";
 if (LEGACY_PRICE_IDS.pro) TIER_FROM_PRICE[LEGACY_PRICE_IDS.pro] = "pro";
 if (LEGACY_PRICE_IDS.power) TIER_FROM_PRICE[LEGACY_PRICE_IDS.power] = "pro";
 
@@ -63,8 +63,8 @@ function getTierFromPriceId(priceId: string): NewTier | null {
 // Helper to check which env vars are missing
 function getMissingPriceIds(): string[] {
   const missing: string[] = [];
-  if (!PRICE_IDS.starter_monthly) missing.push("STRIPE_PRICE_STARTER");
-  if (!PRICE_IDS.starter_annual) missing.push("STRIPE_PRICE_STARTER_ANNUAL");
+  if (!PRICE_IDS.plus_monthly) missing.push("STRIPE_PRICE_PLUS");
+  if (!PRICE_IDS.plus_annual) missing.push("STRIPE_PRICE_PLUS_ANNUAL");
   if (!PRICE_IDS.pro_monthly) missing.push("STRIPE_PRICE_PRO");
   if (!PRICE_IDS.pro_annual) missing.push("STRIPE_PRICE_PRO_ANNUAL");
   return missing;
@@ -140,7 +140,7 @@ export const ensureStripeCustomer = action({
 export const createCheckoutSession = action({
   args: {
     userId: v.string(),
-    tier: v.union(v.literal("starter"), v.literal("pro")),
+    tier: v.union(v.literal("plus"), v.literal("pro")),
     billingPeriod: v.optional(v.union(v.literal("monthly"), v.literal("annual"))),
     successUrl: v.string(),
     cancelUrl: v.string(),
@@ -274,7 +274,7 @@ export const createPortalSession = action({
 
 // Determine billing period from price ID
 function getBillingPeriodFromPriceId(priceId: string): "monthly" | "annual" {
-  if (priceId === PRICE_IDS.starter_annual || priceId === PRICE_IDS.pro_annual) {
+  if (priceId === PRICE_IDS.plus_annual || priceId === PRICE_IDS.pro_annual) {
     return "annual";
   }
   return "monthly";

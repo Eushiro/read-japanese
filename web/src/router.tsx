@@ -8,7 +8,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { BookOpen, CreditCard, Crown, Home, Shield, Sparkles, User, Zap } from "lucide-react";
+import { BookOpen, CreditCard, Crown, Home, Shield, User, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
 // Admin pages
@@ -191,20 +191,12 @@ function Navigation() {
               <Link
                 to="/settings"
                 className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold transition-all hover:scale-105 ${
-                  tier === "power"
-                    ? "bg-gradient-to-r from-purple-500/20 to-purple-600/20 text-purple-400 border border-purple-500/30"
-                    : tier === "pro"
-                      ? "bg-gradient-to-r from-accent/20 to-accent/30 text-accent border border-accent/30"
-                      : "bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-400 border border-blue-500/30"
+                  tier === "pro"
+                    ? "bg-gradient-to-r from-accent/20 to-accent/30 text-accent border border-accent/30"
+                    : "bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-400 border border-blue-500/30"
                 }`}
               >
-                {tier === "power" ? (
-                  <Sparkles className="w-3 h-3" />
-                ) : tier === "pro" ? (
-                  <Crown className="w-3 h-3" />
-                ) : (
-                  <Zap className="w-3 h-3" />
-                )}
+                {tier === "pro" ? <Crown className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
                 <span className="hidden sm:inline capitalize">{tier}</span>
               </Link>
             )}
@@ -513,9 +505,6 @@ export const router = createRouter({
   defaultPreload: "intent",
   // Always scroll to top on navigation - prevents scroll position from persisting
   scrollRestoration: true,
-  defaultOnScrollRestoration: () => {
-    window.scrollTo(0, 0);
-  },
 });
 
 // Type registration

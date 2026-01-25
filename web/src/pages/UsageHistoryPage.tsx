@@ -1,4 +1,3 @@
-import { api } from "@convex/_generated/api";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ArrowLeft, CreditCard, History, TrendingUp } from "lucide-react";
@@ -18,6 +17,8 @@ import {
 } from "@/components/ui/table";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
+
+import { api } from "../../convex/_generated/api";
 
 // Action type labels
 const ACTION_LABELS: Record<string, string> = {
@@ -53,7 +54,7 @@ export function UsageHistoryPage() {
 
   const transactions = useQuery(
     api.subscriptions.getCreditTransactions,
-    user?.clerkId ? { userId: user.clerkId, limit: 100 } : "skip"
+    user?.id ? { userId: user.id, limit: 100 } : "skip"
   );
 
   const formattedResetDate = resetDate

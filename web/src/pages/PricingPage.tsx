@@ -41,7 +41,7 @@ export function PricingPage() {
   );
   const currentTier = subscription?.tier ?? "free";
 
-  const handleUpgrade = async (tier: "starter" | "pro") => {
+  const handleUpgrade = async (tier: "plus" | "pro") => {
     if (!user || checkoutLoading) return;
     setCheckoutLoading(tier);
     try {
@@ -71,31 +71,31 @@ export function PricingPage() {
       iconColor: "text-slate-400",
       price: { monthly: 0, annual: 0 },
       credits: 50,
-      description: t("pricing.tiers.free.description", "Get started with the basics"),
+      description: t("pricing.tiers.free.description"),
       features: [
-        t("pricing.tiers.free.features.0", "50 AI credits/month"),
-        t("pricing.tiers.free.features.1", "Premade vocabulary decks"),
-        t("pricing.tiers.free.features.2", "Basic flashcard reviews"),
-        t("pricing.tiers.free.features.3", "Graded reading library"),
+        t("pricing.tiers.free.features.0"),
+        t("pricing.tiers.free.features.1"),
+        t("pricing.tiers.free.features.2"),
+        t("pricing.tiers.free.features.3"),
       ],
       borderClass: "border-border",
       bgClass: "bg-surface",
     },
     {
-      id: "starter",
-      name: "Starter",
+      id: "plus",
+      name: "Plus",
       icon: Sparkles,
       iconColor: "text-blue-500",
       price: { monthly: 7.99, annual: 79.99 },
       credits: 500,
       popular: true,
-      description: t("pricing.tiers.starter.description", "For regular learners"),
+      description: t("pricing.tiers.plus.description"),
       features: [
-        t("pricing.tiers.starter.features.0", "500 AI credits/month"),
-        t("pricing.tiers.starter.features.1", "Everything in Free"),
-        t("pricing.tiers.starter.features.2", "AI writing feedback"),
-        t("pricing.tiers.starter.features.3", "Audio generation"),
-        t("pricing.tiers.starter.features.4", "Progress tracking"),
+        t("pricing.tiers.plus.features.0"),
+        t("pricing.tiers.plus.features.1"),
+        t("pricing.tiers.plus.features.2"),
+        t("pricing.tiers.plus.features.3"),
+        t("pricing.tiers.plus.features.4"),
       ],
       borderClass: "border-blue-500/50",
       bgClass: "bg-blue-500/5",
@@ -107,13 +107,13 @@ export function PricingPage() {
       iconColor: "text-accent",
       price: { monthly: 17.99, annual: 179.99 },
       credits: 2000,
-      description: t("pricing.tiers.pro.description", "For serious learners"),
+      description: t("pricing.tiers.pro.description"),
       features: [
-        t("pricing.tiers.pro.features.0", "2,000 AI credits/month"),
-        t("pricing.tiers.pro.features.1", "Everything in Starter"),
-        t("pricing.tiers.pro.features.2", "Shadowing practice"),
-        t("pricing.tiers.pro.features.3", "Priority support"),
-        t("pricing.tiers.pro.features.4", "Early access to features"),
+        t("pricing.tiers.pro.features.0"),
+        t("pricing.tiers.pro.features.1"),
+        t("pricing.tiers.pro.features.2"),
+        t("pricing.tiers.pro.features.3"),
+        t("pricing.tiers.pro.features.4"),
       ],
       borderClass: "border-accent/50",
       bgClass: "bg-accent/5",
@@ -134,20 +134,17 @@ export function PricingPage() {
                 <Crown className="w-5 h-5 text-purple-400" />
               </div>
               <span className="text-sm font-semibold text-purple-400 uppercase tracking-wider">
-                {t("pricing.hero.badge", "Simple Pricing")}
+                {t("pricing.hero.badge")}
               </span>
             </div>
             <h1
               className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {t("pricing.hero.title", "Unlock AI-Powered Learning")}
+              {t("pricing.hero.title")}
             </h1>
             <p className="text-lg text-foreground max-w-2xl mx-auto">
-              {t(
-                "pricing.hero.subtitle",
-                "One simple credit system for all AI features. Mix and match however you learn best."
-              )}
+              {t("pricing.hero.subtitle")}
             </p>
           </div>
         </div>
@@ -161,33 +158,25 @@ export function PricingPage() {
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
               <Brain className="w-5 h-5 text-accent" />
             </div>
-            <span className="text-sm text-foreground">
-              {t("pricing.features.srsFlashcards", "AI Flashcards")}
-            </span>
+            <span className="text-sm text-foreground">{t("pricing.features.srsFlashcards")}</span>
           </div>
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
               <PenLine className="w-5 h-5 text-accent" />
             </div>
-            <span className="text-sm text-foreground">
-              {t("pricing.features.writingFeedback", "Writing Feedback")}
-            </span>
+            <span className="text-sm text-foreground">{t("pricing.features.writingFeedback")}</span>
           </div>
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-accent" />
             </div>
-            <span className="text-sm text-foreground">
-              {t("pricing.features.comprehension", "Quiz Grading")}
-            </span>
+            <span className="text-sm text-foreground">{t("pricing.features.comprehension")}</span>
           </div>
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
               <Mic className="w-5 h-5 text-accent" />
             </div>
-            <span className="text-sm text-foreground">
-              {t("pricing.features.audioSupport", "Audio & Shadowing")}
-            </span>
+            <span className="text-sm text-foreground">{t("pricing.features.audioSupport")}</span>
           </div>
         </div>
 
@@ -198,11 +187,11 @@ export function PricingPage() {
             onValueChange={(v) => setBillingPeriod(v as "monthly" | "annual")}
           >
             <TabsList className="bg-muted/50">
-              <TabsTrigger value="monthly">{t("pricing.monthly", "Monthly")}</TabsTrigger>
+              <TabsTrigger value="monthly">{t("pricing.monthly")}</TabsTrigger>
               <TabsTrigger value="annual" className="flex items-center gap-2">
-                {t("pricing.annual", "Annual")}
+                {t("pricing.annual")}
                 <Badge variant="secondary" className="bg-green-500/20 text-green-600 text-xs">
-                  {t("pricing.save17", "Save 17%")}
+                  {t("pricing.save17")}
                 </Badge>
               </TabsTrigger>
             </TabsList>
@@ -226,9 +215,7 @@ export function PricingPage() {
               >
                 {tier.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-blue-500 text-white">
-                      {t("pricing.mostPopular", "Most Popular")}
-                    </Badge>
+                    <Badge className="bg-blue-500 text-white">{t("pricing.mostPopular")}</Badge>
                   </div>
                 )}
 
@@ -242,21 +229,15 @@ export function PricingPage() {
                       ${price === 0 ? "0" : price.toFixed(2)}
                     </span>
                     <span className="text-foreground-muted">
-                      /
-                      {billingPeriod === "annual"
-                        ? t("pricing.year", "year")
-                        : t("pricing.month", "mo")}
+                      /{billingPeriod === "annual" ? t("pricing.year") : t("pricing.month")}
                     </span>
                   </div>
                   {billingPeriod === "annual" && isPaidTier && (
-                    <p className="text-sm text-green-600 mt-1">
-                      {t("pricing.billedAnnually", "Billed annually")}
-                    </p>
+                    <p className="text-sm text-green-600 mt-1">{t("pricing.billedAnnually")}</p>
                   )}
                   <div className="mt-2">
                     <Badge variant="outline" className="text-xs">
-                      {tier.credits.toLocaleString()}{" "}
-                      {t("pricing.creditsPerMonth", "credits/month")}
+                      {tier.credits.toLocaleString()} {t("pricing.creditsPerMonth")}
                     </Badge>
                   </div>
                   <p className="text-sm text-foreground-muted mt-2">{tier.description}</p>
@@ -266,7 +247,7 @@ export function PricingPage() {
                   {tier.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <Check
-                        className={`w-4 h-4 mt-0.5 shrink-0 ${tier.id === "pro" ? "text-accent" : tier.id === "starter" ? "text-blue-500" : "text-success"}`}
+                        className={`w-4 h-4 mt-0.5 shrink-0 ${tier.id === "pro" ? "text-accent" : tier.id === "plus" ? "text-blue-500" : "text-success"}`}
                       />
                       <span className="text-foreground">{feature}</span>
                     </li>
@@ -276,13 +257,13 @@ export function PricingPage() {
                 <div className="mt-6">
                   {isCurrentPlan ? (
                     <div className="text-center text-sm text-foreground-muted py-2 border border-border rounded-lg">
-                      {t("pricing.currentPlan", "Current plan")}
+                      {t("pricing.currentPlan")}
                     </div>
                   ) : tier.id === "free" ? (
                     !isAuthenticated ? (
                       <SignInButton mode="modal">
                         <Button variant="outline" className="w-full">
-                          {t("pricing.getStarted", "Get Started")}
+                          {t("pricing.getStarted")}
                         </Button>
                       </SignInButton>
                     ) : null
@@ -290,10 +271,10 @@ export function PricingPage() {
                     <Button
                       variant={tier.id === "pro" ? "default" : "outline"}
                       className={`w-full ${checkoutLoading === tier.id ? "btn-loading-gradient" : ""}`}
-                      onClick={() => handleUpgrade(tier.id as "starter" | "pro")}
+                      onClick={() => handleUpgrade(tier.id as "plus" | "pro")}
                       disabled={!!checkoutLoading}
                     >
-                      {t("pricing.upgrade", "Upgrade to {{tier}}", { tier: tier.name })}
+                      {t("pricing.upgrade", { tier: tier.name })}
                     </Button>
                   ) : (
                     <SignInButton mode="modal">
@@ -301,7 +282,7 @@ export function PricingPage() {
                         variant={tier.id === "pro" ? "default" : "outline"}
                         className="w-full"
                       >
-                        {t("pricing.upgrade", "Upgrade to {{tier}}", { tier: tier.name })}
+                        {t("pricing.upgrade", { tier: tier.name })}
                       </Button>
                     </SignInButton>
                   )}
@@ -317,19 +298,15 @@ export function PricingPage() {
             className="text-xl font-bold text-foreground text-center mb-6"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            {t("pricing.creditCosts.title", "How Credits Work")}
+            {t("pricing.creditCosts.title")}
           </h2>
           <div className="bg-surface rounded-xl border border-border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("pricing.creditCosts.action", "Feature")}</TableHead>
-                  <TableHead className="text-center">
-                    {t("pricing.creditCosts.credits", "Credits")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("pricing.creditCosts.starterUpTo", "Starter (up to)")}
-                  </TableHead>
+                  <TableHead>{t("pricing.creditCosts.action")}</TableHead>
+                  <TableHead className="text-center">{t("pricing.creditCosts.credits")}</TableHead>
+                  <TableHead className="text-right">{t("pricing.creditCosts.plusUpTo")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -348,10 +325,7 @@ export function PricingPage() {
             </Table>
           </div>
           <p className="text-center text-sm text-foreground-muted mt-4">
-            {t(
-              "pricing.creditCosts.footer",
-              "Credits reset monthly. Mix and match however you learn best."
-            )}
+            {t("pricing.creditCosts.footer")}
           </p>
         </div>
 
@@ -361,52 +335,30 @@ export function PricingPage() {
             className="text-2xl font-bold text-foreground text-center mb-8"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            {t("pricing.faq.title", "Frequently Asked Questions")}
+            {t("pricing.faq.title")}
           </h2>
           <div className="space-y-6">
             <div className="bg-surface rounded-xl border border-border p-5">
               <h3 className="font-semibold text-foreground mb-2">
-                {t("pricing.faq.whatAreCredits.q", "What are AI credits?")}
+                {t("pricing.faq.whatAreCredits.q")}
               </h3>
-              <p className="text-sm text-foreground-muted">
-                {t(
-                  "pricing.faq.whatAreCredits.a",
-                  "AI credits are a unified currency for all AI-powered features. Each action costs a set number of credits - for example, generating a flashcard sentence costs 1 credit, while audio generation costs 2 credits. This gives you flexibility to use features however suits your learning style."
-                )}
-              </p>
+              <p className="text-sm text-foreground-muted">{t("pricing.faq.whatAreCredits.a")}</p>
             </div>
             <div className="bg-surface rounded-xl border border-border p-5">
               <h3 className="font-semibold text-foreground mb-2">
-                {t("pricing.faq.premadeDecks.q", "Are the premade vocabulary decks free?")}
+                {t("pricing.faq.premadeDecks.q")}
               </h3>
-              <p className="text-sm text-foreground-muted">
-                {t(
-                  "pricing.faq.premadeDecks.a",
-                  "Yes! All premade vocabulary decks (JLPT N5-N1, CEFR levels) are free to access and study. Premium features like AI sentence generation and audio require credits."
-                )}
-              </p>
+              <p className="text-sm text-foreground-muted">{t("pricing.faq.premadeDecks.a")}</p>
             </div>
             <div className="bg-surface rounded-xl border border-border p-5">
               <h3 className="font-semibold text-foreground mb-2">
-                {t("pricing.faq.changePlans.q", "Can I change plans anytime?")}
+                {t("pricing.faq.changePlans.q")}
               </h3>
-              <p className="text-sm text-foreground-muted">
-                {t(
-                  "pricing.faq.changePlans.a",
-                  "Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any differences."
-                )}
-              </p>
+              <p className="text-sm text-foreground-muted">{t("pricing.faq.changePlans.a")}</p>
             </div>
             <div className="bg-surface rounded-xl border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-2">
-                {t("pricing.faq.rollOver.q", "Do unused credits roll over?")}
-              </h3>
-              <p className="text-sm text-foreground-muted">
-                {t(
-                  "pricing.faq.rollOver.a",
-                  "Credits reset at the start of each billing period. We recommend using your credits throughout the month for consistent learning progress."
-                )}
-              </p>
+              <h3 className="font-semibold text-foreground mb-2">{t("pricing.faq.rollOver.q")}</h3>
+              <p className="text-sm text-foreground-muted">{t("pricing.faq.rollOver.a")}</p>
             </div>
           </div>
         </div>

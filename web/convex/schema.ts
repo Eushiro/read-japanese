@@ -33,7 +33,7 @@ export type ExamType =
   | "tcf"; // French
 
 // Subscription tiers (unified credit system)
-export type SubscriptionTier = "free" | "starter" | "pro";
+export type SubscriptionTier = "free" | "plus" | "pro";
 
 // Subscription status
 export type SubscriptionStatus = "active" | "cancelled" | "expired";
@@ -121,7 +121,7 @@ export const examTypeValidator = v.union(
 // Subscription tiers (unified credit system)
 export const subscriptionTierValidator = v.union(
   v.literal("free"),
-  v.literal("starter"),
+  v.literal("plus"),
   v.literal("pro")
 );
 

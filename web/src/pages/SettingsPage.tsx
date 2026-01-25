@@ -81,10 +81,6 @@ export function SettingsPage() {
     api.subscriptions.get,
     isAuthenticated && user ? { userId: user.id } : "skip"
   );
-  const usage = useQuery(
-    api.subscriptions.getUsage,
-    isAuthenticated && user ? { userId: user.id } : "skip"
-  );
   const createCheckout = useAction(api.stripe.createCheckoutSession);
   const createPortal = useAction(api.stripe.createPortalSession);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
@@ -156,7 +152,7 @@ export function SettingsPage() {
     });
   };
 
-  const handleUpgrade = async (tier: "starter" | "pro") => {
+  const handleUpgrade = async (tier: "plus" | "pro") => {
     if (!user || checkoutLoading) return;
 
     trackEvent(events.UPGRADE_CLICKED, {
@@ -380,6 +376,7 @@ export function SettingsPage() {
                 </Link>
                 <Link
                   to="/practice"
+                  search={{ vocabularyId: undefined }}
                   className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/5 transition-all"
                 >
                   <div className="p-2 rounded-lg bg-purple-500/10">
@@ -788,15 +785,16 @@ export function SettingsPage() {
                     </div>
                   </div>
                   {/* Only show Manage button if subscription was created through Stripe */}
-                  {subscription?.stripeCustomerId && (
-                    <Button variant="outline" size="sm" onClick={handleManageSubscription}>
-                      {t("common.actions.manage")}
-                    </Button>
-                  )}
+                  {"stripeCustomerId" in (subscription ?? {}) &&
+                    (subscription as { stripeCustomerId?: string })?.stripeCustomerId && (
+                      <Button variant="outline" size="sm" onClick={handleManageSubscription}>
+                        {t("common.actions.manage")}
+                      </Button>
+                    )}
                 </div>
 
                 {/* Show benefits for paid subscribers */}
-                {subscription?.tier === "starter" && (
+                {subscription?.tier === "plus" && (
                   <ul className="text-sm text-foreground-muted space-y-1.5 pt-3 border-t border-border">
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-blue-500" /> 500 AI credits/month
@@ -837,12 +835,12 @@ export function SettingsPage() {
                     {t("settings.subscription.upgradePlan")}
                   </h3>
                   <div className="grid gap-4">
-                    {/* Starter */}
+                    {/* Plus */}
                     <div className="p-5 rounded-xl border border-border hover:border-blue-500/50 transition-colors">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <Zap className="w-5 h-5 text-blue-500" />
-                          <span className="font-semibold text-foreground text-lg">Starter</span>
+                          <span className="font-semibold text-foreground text-lg">Plus</span>
                         </div>
                         <div className="text-right">
                           <span className="text-2xl font-bold text-foreground">$7.99</span>
@@ -862,10 +860,10 @@ export function SettingsPage() {
                       </ul>
                       <Button
                         variant="outline"
-                        className={`w-full ${checkoutLoading === "starter" ? "btn-loading-gradient" : ""}`}
-                        onClick={() => handleUpgrade("starter")}
+                        className={`w-full ${checkoutLoading === "plus" ? "btn-loading-gradient" : ""}`}
+                        onClick={() => handleUpgrade("plus")}
                       >
-                        Upgrade to Starter
+                        Upgrade to Plus
                       </Button>
                     </div>
 
@@ -891,7 +889,7 @@ export function SettingsPage() {
                           <Check className="w-4 h-4 text-accent" /> 2,000 AI credits/month
                         </li>
                         <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-accent" /> Everything in Starter
+                          <Check className="w-4 h-4 text-accent" /> Everything in Plus
                         </li>
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-accent" /> Priority support
@@ -912,7 +910,7 @@ export function SettingsPage() {
                       to="/pricing"
                       className="text-sm text-accent hover:underline flex items-center justify-center gap-1"
                     >
-                      {t("paywall.viewAllPlans", "View all plans")}
+                      {t("paywall.viewAllPlans")}
                       <ChevronRight className="w-4 h-4" />
                     </Link>
                   </div>
@@ -933,28 +931,27 @@ export function SettingsPage() {
                     className="text-lg font-semibold text-foreground"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
-                    {t("settings.credits.title", "AI Credits")}
+                    {t("settings.credits.title")}
                   </h2>
                 </div>
                 <Link
                   to="/settings/usage"
                   className="text-sm text-accent hover:underline flex items-center gap-1"
                 >
-                  {t("settings.credits.viewHistory", "View history")}
+                  {t("settings.credits.viewHistory")}
                   <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
 
               <p className="text-sm text-foreground-muted mb-4">
-                {t("settings.credits.description", "Track your AI-powered feature usage")}
+                {t("settings.credits.description")}
               </p>
 
               {/* Progress bar */}
               <div className="p-4 rounded-xl bg-muted/50">
                 <div className="flex items-center justify-between text-sm mb-2">
                   <span className="text-foreground">
-                    {creditsUsed} / {creditsLimit}{" "}
-                    {t("settings.credits.creditsUsed", "credits used")}
+                    {creditsUsed} / {creditsLimit} {t("settings.credits.creditsUsed")}
                   </span>
                   <span
                     className={`font-medium ${
@@ -980,7 +977,7 @@ export function SettingsPage() {
                 />
                 <div className="flex items-center justify-between mt-2">
                   <p className="text-xs text-foreground-muted">
-                    {t("settings.credits.resets", "Resets on {{date}}", {
+                    {t("settings.credits.resets", {
                       date: creditsResetDate
                         ? new Date(creditsResetDate).toLocaleDateString(undefined, {
                             month: "long",
@@ -990,7 +987,7 @@ export function SettingsPage() {
                     })}
                   </p>
                   <span className="text-xs text-foreground-muted capitalize">
-                    {creditsTier} {t("settings.credits.tier", "tier")}
+                    {creditsTier} {t("settings.credits.tier")}
                   </span>
                 </div>
               </div>
@@ -1001,102 +998,18 @@ export function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        {t("settings.credits.upgradeTitle", "Need more credits?")}
+                        {t("settings.credits.upgradeTitle")}
                       </p>
                       <p className="text-xs text-foreground-muted">
-                        {t(
-                          "settings.credits.upgradeDescription",
-                          "Upgrade to Starter for 500 credits/month"
-                        )}
+                        {t("settings.credits.upgradeDescription")}
                       </p>
                     </div>
                     <Button asChild size="sm">
-                      <Link to="/pricing">{t("settings.credits.upgrade", "Upgrade")}</Link>
+                      <Link to="/pricing">{t("settings.credits.upgrade")}</Link>
                     </Button>
                   </div>
                 </div>
               )}
-            </section>
-          )}
-
-          {/* Monthly Usage (Legacy) */}
-          {isAuthenticated && user && subscription && usage && (
-            <section className="bg-gradient-to-br from-indigo-500/5 to-surface rounded-2xl border border-indigo-500/20 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-lg bg-indigo-500/15">
-                  <Activity className="w-4 h-4 text-indigo-400" />
-                </div>
-                <h2
-                  className="text-lg font-semibold text-foreground"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {t("settings.usage.title")}
-                </h2>
-              </div>
-
-              <p className="text-sm text-foreground-muted mb-4">
-                {t("settings.usage.description")}
-              </p>
-
-              <div className="space-y-4">
-                {/* AI Verifications */}
-                <UsageProgressBar
-                  label={t("settings.usage.aiChecks")}
-                  description={t("settings.usage.aiChecksDescription")}
-                  used={usage.aiVerifications}
-                  limit={subscription.limits.aiVerificationsPerMonth}
-                  color="indigo"
-                />
-
-                {/* Flashcards */}
-                <UsageProgressBar
-                  label={t("settings.usage.flashcards")}
-                  description={t("settings.usage.flashcardsDescription")}
-                  used={usage.flashcardsGenerated}
-                  limit={subscription.limits.flashcardsPerMonth}
-                  color="blue"
-                />
-
-                {/* Audio */}
-                <UsageProgressBar
-                  label={t("settings.usage.audio")}
-                  description={t("settings.usage.audioDescription")}
-                  used={usage.audioGenerated}
-                  limit={subscription.limits.audioPerMonth}
-                  color="purple"
-                />
-
-                {/* Stories */}
-                <UsageProgressBar
-                  label={t("settings.usage.stories")}
-                  description={t("settings.usage.storiesDescription")}
-                  used={usage.storiesRead}
-                  limit={subscription.limits.storiesPerMonth}
-                  color="emerald"
-                />
-
-                {/* Personalized Stories */}
-                {subscription.limits.personalizedStoriesPerMonth !== 0 && (
-                  <UsageProgressBar
-                    label={t("settings.usage.aiStories")}
-                    description={t("settings.usage.aiStoriesDescription")}
-                    used={usage.personalizedStoriesGenerated}
-                    limit={subscription.limits.personalizedStoriesPerMonth}
-                    color="amber"
-                  />
-                )}
-
-                {/* Mock Tests */}
-                {subscription.limits.mockTestsPerMonth !== 0 && (
-                  <UsageProgressBar
-                    label={t("settings.usage.mockTests")}
-                    description={t("settings.usage.mockTestsDescription")}
-                    used={usage.mockTestsGenerated}
-                    limit={subscription.limits.mockTestsPerMonth}
-                    color="rose"
-                  />
-                )}
-              </div>
             </section>
           )}
 
@@ -1158,7 +1071,7 @@ export function SettingsPage() {
                       if (!user) return;
                       await upsertSubscription({
                         userId: user.id,
-                        tier: value as "free" | "starter" | "pro",
+                        tier: value as "free" | "plus" | "pro",
                       });
                     }}
                   >
@@ -1167,7 +1080,7 @@ export function SettingsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="free">Free (50 credits)</SelectItem>
-                      <SelectItem value="starter">Starter (500 credits)</SelectItem>
+                      <SelectItem value="plus">Plus (500 credits)</SelectItem>
                       <SelectItem value="pro">Pro (2000 credits)</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1281,70 +1194,6 @@ export function SettingsPage() {
           </section>
         </div>
       </div>
-    </div>
-  );
-}
-
-// Usage progress bar component
-function UsageProgressBar({
-  label,
-  description,
-  used,
-  limit,
-  color,
-}: {
-  label: string;
-  description: string;
-  used: number;
-  limit: number;
-  color: "indigo" | "blue" | "purple" | "emerald" | "amber" | "rose";
-}) {
-  const isUnlimited = limit === -1;
-  const percentage = isUnlimited ? 0 : Math.min((used / limit) * 100, 100);
-  const isNearLimit = !isUnlimited && percentage >= 80;
-  const isAtLimit = !isUnlimited && percentage >= 100;
-
-  const colorClasses = {
-    indigo: "bg-indigo-500",
-    blue: "bg-blue-500",
-    purple: "bg-purple-500",
-    emerald: "bg-emerald-500",
-    amber: "bg-amber-500",
-    rose: "bg-rose-500",
-  };
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <div>
-          <span className="text-sm font-medium text-foreground">{label}</span>
-          <span className="text-xs text-foreground-muted ml-2">{description}</span>
-        </div>
-        <span
-          className={`text-sm font-medium ${isAtLimit ? "text-rose-500" : isNearLimit ? "text-amber-500" : "text-foreground-muted"}`}
-        >
-          {isUnlimited ? (
-            <span className="text-accent">Unlimited</span>
-          ) : (
-            <>
-              {used.toLocaleString()} / {limit.toLocaleString()}
-            </>
-          )}
-        </span>
-      </div>
-      {!isUnlimited && (
-        <div className="h-2 bg-muted rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${isAtLimit ? "bg-rose-500" : isNearLimit ? "bg-amber-500" : colorClasses[color]}`}
-            style={{ width: `${percentage}%` }}
-          />
-        </div>
-      )}
-      {isUnlimited && (
-        <div className="h-2 bg-accent/20 rounded-full overflow-hidden">
-          <div className="h-full w-full bg-gradient-to-r from-accent/40 to-accent/60 rounded-full" />
-        </div>
-      )}
     </div>
   );
 }

@@ -11,16 +11,16 @@ import { subscriptionTierValidator } from "./schema";
 //
 // Tier pricing:
 // - Free: $0, 50 credits (loss leader)
-// - Starter: $7.99/mo, 500 credits (94% margin)
+// - Plus: $7.99/mo, 500 credits (94% margin)
 // - Pro: $17.99/mo, 2000 credits (89% margin)
 //
 // Annual plans (17% discount):
-// - Starter: $79.99/year (vs $95.88)
+// - Plus: $79.99/year (vs $95.88)
 // - Pro: $179.99/year (vs $215.88)
 //
 export const TIER_CREDITS = {
   free: 50,
-  starter: 500,
+  plus: 500,
   pro: 2000,
 } as const;
 
@@ -59,7 +59,7 @@ export const TIER_LIMITS = {
     flashcardsPerMonth: 50,
     audioPerMonth: 25,
   },
-  starter: {
+  plus: {
     aiVerificationsPerMonth: 500,
     storiesPerMonth: 500,
     personalizedStoriesPerMonth: 50,

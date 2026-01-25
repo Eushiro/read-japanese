@@ -11,7 +11,7 @@ import { describe, expect, it } from "bun:test";
 // Credit constants (must match convex/subscriptions.ts)
 const TIER_CREDITS = {
   free: 50,
-  starter: 500,
+  plus: 500,
   pro: 2000,
 } as const;
 
@@ -45,17 +45,17 @@ describe("Credit System", () => {
   describe("TIER_CREDITS constants", () => {
     it("has correct limits for each tier", () => {
       expect(TIER_CREDITS.free).toBe(50);
-      expect(TIER_CREDITS.starter).toBe(500);
+      expect(TIER_CREDITS.plus).toBe(500);
       expect(TIER_CREDITS.pro).toBe(2000);
     });
 
     it("tiers increase in value", () => {
-      expect(TIER_CREDITS.starter).toBeGreaterThan(TIER_CREDITS.free);
-      expect(TIER_CREDITS.pro).toBeGreaterThan(TIER_CREDITS.starter);
+      expect(TIER_CREDITS.plus).toBeGreaterThan(TIER_CREDITS.free);
+      expect(TIER_CREDITS.pro).toBeGreaterThan(TIER_CREDITS.plus);
     });
 
     it("all tiers have positive credit limits", () => {
-      const tiers: Tier[] = ["free", "starter", "pro"];
+      const tiers: Tier[] = ["free", "plus", "pro"];
       for (const tier of tiers) {
         expect(TIER_CREDITS[tier]).toBeGreaterThan(0);
       }
@@ -118,8 +118,8 @@ describe("Credit System", () => {
     });
 
     it("calculates percentage correctly at various usage levels", () => {
-      // 50% usage on starter
-      const half = calculateRemainingCredits("starter", 250);
+      // 50% usage on plus
+      const half = calculateRemainingCredits("plus", 250);
       expect(half.percentage).toBe(50);
 
       // 100% usage on free
@@ -130,8 +130,8 @@ describe("Credit System", () => {
   });
 
   describe("business logic validation", () => {
-    it("pro tier provides more credits than starter", () => {
-      expect(TIER_CREDITS.pro).toBeGreaterThan(TIER_CREDITS.starter);
+    it("pro tier provides more credits than plus", () => {
+      expect(TIER_CREDITS.pro).toBeGreaterThan(TIER_CREDITS.plus);
     });
   });
 });

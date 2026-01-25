@@ -11,11 +11,30 @@ interface PaywallProps {
   onClose: () => void;
   /** The action that triggered the paywall (e.g., "generate a sentence") */
   action?: string;
+  /** Alias for action - the feature that triggered the paywall */
+  feature?: string;
+  /** Optional custom title */
+  title?: string;
+  /** Optional custom description */
+  description?: string;
+  /** Required subscription tier for the feature */
+  requiredTier?: string;
   /** Credits required for the action */
   creditsNeeded?: number;
 }
 
-export function Paywall({ isOpen, onClose, action, creditsNeeded = 1 }: PaywallProps) {
+export function Paywall({
+  isOpen,
+  onClose,
+  action,
+  feature,
+  title,
+  description,
+  requiredTier: _requiredTier,
+  creditsNeeded = 1,
+}: PaywallProps) {
+  // Use feature as alias for action
+  const actionText = action || feature;
   const t = useT();
   const { isAuthenticated } = useAuth();
   const { remaining, limit, tier } = useCreditBalance();
@@ -46,38 +65,32 @@ export function Paywall({ isOpen, onClose, action, creditsNeeded = 1 }: PaywallP
             className="text-xl font-bold text-foreground mb-2"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            {isOutOfCredits
-              ? t("paywall.outOfCredits", "Out of Credits")
-              : t("paywall.upgradeRequired", "Upgrade Required")}
+            {title
+              ? title
+              : isOutOfCredits
+                ? t("paywall.outOfCredits")
+                : t("paywall.upgradeRequired")}
           </h3>
 
           {/* Description */}
           <p className="text-foreground-muted mb-6">
-            {isOutOfCredits
-              ? t(
-                  "paywall.outOfCreditsMessage",
-                  "You've used all {{limit}} credits this month. Upgrade for more.",
-                  { limit }
-                )
-              : action
-                ? t("paywall.actionMessage", "You need credits to {{action}}. Upgrade for more.", {
-                    action,
-                  })
-                : t("paywall.genericMessage", "Upgrade your plan to access this feature.")}
+            {description
+              ? description
+              : isOutOfCredits
+                ? t("paywall.outOfCreditsMessage", { limit })
+                : actionText
+                  ? t("paywall.actionMessage", { action: actionText })
+                  : t("paywall.genericMessage")}
           </p>
 
           {/* Current status */}
           <div className="bg-muted/50 rounded-lg p-3 mb-6">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-foreground-muted">
-                {t("paywall.currentPlan", "Current plan:")}
-              </span>
+              <span className="text-foreground-muted">{t("paywall.currentPlan")}</span>
               <span className="font-medium text-foreground capitalize">{tier}</span>
             </div>
             <div className="flex items-center justify-between text-sm mt-1">
-              <span className="text-foreground-muted">
-                {t("paywall.creditsRemaining", "Credits remaining:")}
-              </span>
+              <span className="text-foreground-muted">{t("paywall.creditsRemaining")}</span>
               <span
                 className={`font-medium ${remaining === 0 ? "text-red-500" : "text-foreground"}`}
               >
@@ -89,12 +102,10 @@ export function Paywall({ isOpen, onClose, action, creditsNeeded = 1 }: PaywallP
           {/* Actions */}
           {!isAuthenticated ? (
             <div className="space-y-3">
-              <p className="text-sm text-foreground-muted">
-                {t("paywall.signInPrompt", "Sign in to track your credits and upgrade.")}
-              </p>
+              <p className="text-sm text-foreground-muted">{t("paywall.signInPrompt")}</p>
               <SignInButton mode="modal">
                 <Button className="w-full" size="lg">
-                  {t("paywall.signIn", "Sign In")}
+                  {t("paywall.signIn")}
                 </Button>
               </SignInButton>
             </div>
@@ -107,7 +118,7 @@ export function Paywall({ isOpen, onClose, action, creditsNeeded = 1 }: PaywallP
                     <div className="p-3 rounded-lg border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 transition-colors cursor-pointer">
                       <div className="flex items-center gap-2 mb-1">
                         <Sparkles className="w-4 h-4 text-blue-500" />
-                        <span className="font-semibold text-sm">Starter</span>
+                        <span className="font-semibold text-sm">Plus</span>
                       </div>
                       <p className="text-xs text-foreground-muted">500 credits/mo</p>
                       <p className="text-sm font-bold text-foreground mt-1">$7.99/mo</p>
@@ -129,7 +140,7 @@ export function Paywall({ isOpen, onClose, action, creditsNeeded = 1 }: PaywallP
               {/* View all plans link */}
               <Button asChild variant="outline" className="w-full">
                 <Link to="/pricing" className="flex items-center justify-center gap-2">
-                  {t("paywall.viewAllPlans", "View all plans")}
+                  {t("paywall.viewAllPlans")}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
@@ -139,7 +150,7 @@ export function Paywall({ isOpen, onClose, action, creditsNeeded = 1 }: PaywallP
                 to="/settings/usage"
                 className="block text-sm text-foreground-muted hover:text-foreground text-center"
               >
-                {t("paywall.viewUsage", "View usage history")}
+                {t("paywall.viewUsage")}
               </Link>
             </div>
           )}

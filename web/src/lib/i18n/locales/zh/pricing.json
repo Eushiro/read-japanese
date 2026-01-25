@@ -10,126 +10,78 @@
     "comprehension": "阅读理解",
     "audioSupport": "音频支持"
   },
+  "monthly": "月付",
+  "annual": "年付",
+  "year": "年",
+  "month": "月",
+  "save17": "节省17%",
+  "mostPopular": "最受欢迎",
+  "billedAnnually": "按年计费",
+  "creditsPerMonth": "额度/月",
   "tiers": {
     "free": {
-      "name": "免费版",
-      "price": "$0",
-      "period": "/月",
       "description": "从基础功能开始",
-      "features": ["预设词汇卡组", "基础闪卡复习", "每月5次阅读"],
-      "noFeatures": ["无AI反馈", "无AI造句"],
+      "features": {
+        "0": "每月50 AI额度",
+        "1": "预设词汇卡组",
+        "2": "基础闪卡复习",
+        "3": "有限阅读次数"
+      },
       "currentPlan": "当前方案",
-      "cta": "开始使用"
+      "cta": "当前方案"
     },
-    "basic": {
-      "name": "基础版",
-      "price": "$5",
-      "period": "/月",
+    "plus": {
       "description": "适合日常学习者",
-      "features": [
-        "免费版全部功能",
-        "<strong>200</strong>次AI反馈/月",
-        "<strong>100</strong>次音频生成",
-        "每月20次阅读",
-        "AI阅读理解测验"
-      ],
-      "cta": "获取基础版"
+      "features": {
+        "0": "每月500 AI额度",
+        "1": "免费版全部功能",
+        "2": "无限自定义卡组",
+        "3": "进度追踪",
+        "4": "音频生成"
+      },
+      "cta": "获取Plus"
     },
     "pro": {
-      "name": "专业版",
-      "badge": "最受欢迎",
-      "price": "$15",
-      "period": "/月",
       "description": "适合认真学习者",
-      "features": [
-        "基础版全部功能",
-        "<strong>1,000</strong>次AI反馈/月",
-        "<strong>500</strong>次音频生成",
-        "<strong>100</strong>次阅读",
-        "<strong>3,000</strong>张闪卡/月"
-      ],
-      "cta": "获取专业版"
-    },
-    "power": {
-      "name": "强力版",
-      "price": "$45",
-      "period": "/月",
-      "description": "专业版5倍，适合重度用户",
-      "features": [
-        "专业版全部功能",
-        "<strong>5,000</strong>次AI反馈/月",
-        "<strong>2,500</strong>次音频生成",
-        "<strong>15,000</strong>张闪卡/月",
-        "优先支持"
-      ],
-      "cta": "获取强力版"
+      "features": {
+        "0": "每月2,000 AI额度",
+        "1": "Plus全部功能",
+        "2": "优先支持",
+        "3": "新功能抢先体验"
+      },
+      "cta": "获取Pro"
+    }
+  },
+  "creditCosts": {
+    "title": "额度如何使用",
+    "action": "操作",
+    "credits": "额度",
+    "plusUpTo": "Plus（最多）",
+    "actions": {
+      "flashcard": "AI造句",
+      "feedback": "写作反馈",
+      "comprehension": "测验评分",
+      "audio": "音频生成",
+      "shadowing": "跟读练习"
     }
   },
   "faq": {
     "title": "常见问题",
-    "questions": [
-      {
-        "question": "什么是AI反馈？",
-        "answer": "AI反馈包括写作批改、阅读理解测验评分和闪卡造句。每次获取写作反馈或生成新例句时，都会使用一个AI额度。"
-      },
-      {
-        "question": "预设词汇卡组是免费的吗？",
-        "answer": "是的！所有预设词汇卡组（JLPT N5-N1等）在基础闪卡复习中免费使用。AI造句和写作反馈等高级功能需要付费方案。"
-      },
-      {
-        "question": "可以随时更改方案吗？",
-        "answer": "可以！您可以随时升级或降级方案。更改立即生效，差额将按比例计算。"
-      },
-      {
-        "question": "接受哪些付款方式？",
-        "answer": "我们通过安全支付处理商Stripe接受所有主要信用卡、借记卡和Apple Pay。"
-      }
-    ]
-  },
-  "paywall": {
-    "defaultTitle": "升级您的方案",
-    "defaultDescription": "解锁AI功能，加速您的学习。",
-    "recommended": "推荐",
-    "current": "当前",
-    "signInPrompt": "登录查看定价并升级。",
-    "signInButton": "登录继续",
-    "getCta": "获取{{tier}}",
-    "features": {
-      "flashcards": {
-        "title": "解锁AI造句",
-        "description": "用AI为闪卡生成新例句。"
-      },
-      "sentences": {
-        "title": "解锁AI反馈",
-        "description": "获取详细的写作反馈，包括语法修正和建议。"
-      },
-      "comprehension": {
-        "title": "解锁AI阅读理解",
-        "description": "生成阅读理解题目并获得AI评分。"
-      },
-      "stories": {
-        "title": "解锁高级故事",
-        "description": "访问我们完整的分级阅读库。"
-      },
-      "shadowing": {
-        "title": "解锁跟读练习",
-        "description": "通过AI发音反馈练习口语。"
-      },
-      "images": {
-        "title": "解锁AI图片",
-        "description": "为词汇卡生成自定义图片。"
-      }
+    "whatAreCredits": {
+      "q": "什么是额度？",
+      "a": "额度用于造句、写作反馈、音频和跟读等AI功能。不同操作消耗不同数量的额度。额度每月重置。"
     },
-    "comparison": {
-      "premiumStories": "高级故事",
-      "aiWritingFeedback": "AI写作反馈",
-      "audioGeneration": "音频生成",
-      "readingSessions": "阅读次数",
-      "flashcardGeneration": "闪卡生成",
-      "shadowingPractice": "跟读练习",
-      "aiImageGeneration": "AI图片生成",
-      "comprehensionQuizzes": "阅读理解测验",
-      "prioritySupport": "优先支持"
+    "premadeDecks": {
+      "q": "预设词汇卡组是免费的吗？",
+      "a": "是的！所有预设卡组（JLPT N5-N1、CEFR等级等）基础复习免费。造句等AI功能消耗额度。"
+    },
+    "changePlans": {
+      "q": "可以随时更改方案吗？",
+      "a": "可以！您可以随时升级或降级方案。更改立即生效。"
+    },
+    "rollOver": {
+      "q": "额度会累积吗？",
+      "a": "不会，额度在每个计费周期开始时重置。用完就没了！"
     }
   }
 }

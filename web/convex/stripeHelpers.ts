@@ -67,7 +67,7 @@ export const handleSubscriptionCreated = internalMutation({
     userId: v.string(),
     stripeCustomerId: v.string(),
     stripeSubscriptionId: v.string(),
-    tier: v.union(v.literal("starter"), v.literal("pro")),
+    tier: v.union(v.literal("plus"), v.literal("pro")),
     billingPeriod: v.union(v.literal("monthly"), v.literal("annual")),
     currentPeriodEnd: v.number(),
   },
@@ -110,7 +110,7 @@ export const handleSubscriptionCreated = internalMutation({
 export const handleSubscriptionUpdated = internalMutation({
   args: {
     stripeSubscriptionId: v.string(),
-    tier: v.union(v.literal("starter"), v.literal("pro")),
+    tier: v.union(v.literal("plus"), v.literal("pro")),
     billingPeriod: v.union(v.literal("monthly"), v.literal("annual")),
     status: v.union(v.literal("active"), v.literal("cancelled"), v.literal("expired")),
     currentPeriodEnd: v.number(),

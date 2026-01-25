@@ -1,8 +1,8 @@
-import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
 
 import { useAuth } from "@/contexts/AuthContext";
 
+import { api } from "../../convex/_generated/api";
 import { useCreditBalance } from "./useCreditBalance";
 
 /**
@@ -16,10 +16,10 @@ export function useCreditAlerts() {
   const dismissAlertMutation = useMutation(api.subscriptions.dismissCreditAlert);
 
   const dismissAlert = async (threshold: 80 | 95) => {
-    if (!user?.clerkId) return;
+    if (!user?.id) return;
 
     await dismissAlertMutation({
-      userId: user.clerkId,
+      userId: user.id,
       threshold,
     });
   };

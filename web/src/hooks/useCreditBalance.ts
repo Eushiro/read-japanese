@@ -1,7 +1,8 @@
-import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 
 import { useAuth } from "@/contexts/AuthContext";
+
+import { api } from "../../convex/_generated/api";
 
 /**
  * Hook to get the current user's credit balance
@@ -12,7 +13,7 @@ export function useCreditBalance() {
 
   const balance = useQuery(
     api.subscriptions.getCreditBalance,
-    user?.clerkId ? { userId: user.clerkId } : "skip"
+    user?.id ? { userId: user.id } : "skip"
   );
 
   return {
