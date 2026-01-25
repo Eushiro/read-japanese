@@ -1,8 +1,18 @@
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import type { ProficiencyLevel, Story, StoryListItem } from "@/types/story";
 
-// R2 base URL from environment, falls back to empty for local development
+// R2 base URL from environment
 const R2_BASE_URL = import.meta.env.VITE_R2_PUBLIC_URL || "";
+
+// Validate R2 URL is configured (warn in development, error in production for story fetches)
+function getR2BaseUrl(): string {
+  if (!R2_BASE_URL) {
+    console.warn(
+      "[stories] VITE_R2_PUBLIC_URL is not configured. Story content will not load correctly."
+    );
+  }
+  return R2_BASE_URL;
+}
 
 // Manifest type for story listings
 interface StoryManifest {
@@ -12,11 +22,29 @@ interface StoryManifest {
 
 // List all stories (summary view from manifest)
 export async function listStories(level?: ProficiencyLevel): Promise<StoryListItem[]> {
-  const res = await fetch(`${R2_BASE_URL}/stories/manifest.json`);
+  const baseUrl = getR2BaseUrl();
+  if (!baseUrl) {
+    throw new Error(
+      "Story manifest unavailable: R2 storage is not configured. Please set VITE_R2_PUBLIC_URL."
+    );
+  }
+
+  const url = `${baseUrl}/stories/manifest.json`;
+  const res = await fetch(url);
+
   if (!res.ok) {
     throw new Error(`Failed to fetch story manifest: ${res.status}`);
   }
-  const manifest: StoryManifest = await res.json();
+
+  // Read as text first to detect HTML error pages
+  const text = await res.text();
+  if (text.trim().startsWith("<!") || text.trim().startsWith("<html")) {
+    throw new Error(
+      `Story manifest not found: received HTML instead of JSON. Check that R2 storage is accessible at ${url}`
+    );
+  }
+
+  const manifest: StoryManifest = JSON.parse(text);
 
   if (level) {
     return manifest.stories.filter((s) => s.level === level);
@@ -26,11 +54,29 @@ export async function listStories(level?: ProficiencyLevel): Promise<StoryListIt
 
 // Get a single story with full content (language/folder-per-story structure)
 export async function getStory(storyId: string, language: ContentLanguage): Promise<Story> {
-  const res = await fetch(`${R2_BASE_URL}/stories/${language}/${storyId}/story.json`);
+  const baseUrl = getR2BaseUrl();
+  if (!baseUrl) {
+    throw new Error(
+      "Story content unavailable: R2 storage is not configured. Please set VITE_R2_PUBLIC_URL."
+    );
+  }
+
+  const url = `${baseUrl}/stories/${language}/${storyId}/story.json`;
+  const res = await fetch(url);
+
   if (!res.ok) {
     throw new Error(`Failed to fetch story ${storyId}: ${res.status}`);
   }
-  return res.json();
+
+  // Read as text first to detect HTML error pages
+  const text = await res.text();
+  if (text.trim().startsWith("<!") || text.trim().startsWith("<html")) {
+    throw new Error(
+      `Story not found: received HTML instead of JSON. The story "${storyId}" may not exist at ${url}`
+    );
+  }
+
+  return JSON.parse(text);
 }
 
 // Reload stories - no longer needed with R2 (kept for API compatibility)
