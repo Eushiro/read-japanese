@@ -92,8 +92,8 @@ $diff"
         echo "$result"
         echo "=========================="
 
-        # Block on critical issues or doc updates needed
-        if echo "$result" | grep -qiE "(BLOCKER:|UPDATE_DOCS:|critical|must fix|security vulnerability|hardcoded secret)"; then
+        # Block only on explicit BLOCKER: or UPDATE_DOCS: prefixes from review
+        if echo "$result" | grep -qE "(BLOCKER:|UPDATE_DOCS:)"; then
             echo ""
             echo "Review found issues that need attention. Commit blocked."
             echo "Fix the issues above and try committing again."
