@@ -102,5 +102,13 @@
     "title": "About",
     "version": "{{brandName}} v{{brandVersion}}",
     "description": "Personalized exam prep powered by AI"
+  },
+  "skillTypes": {
+    "vocabulary": "Vocabulary",
+    "grammar": "Grammar",
+    "reading": "Reading",
+    "listening": "Listening",
+    "writing": "Writing",
+    "speaking": "Speaking"
   }
 }

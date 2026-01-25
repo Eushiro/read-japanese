@@ -102,5 +102,13 @@
     "title": "\u00c0 propos",
     "version": "{{brandName}} v{{brandVersion}}",
     "description": "Pr\u00e9paration aux examens personnalis\u00e9e par l'IA"
+  },
+  "skillTypes": {
+    "vocabulary": "Vocabulaire",
+    "grammar": "Grammaire",
+    "reading": "Lecture",
+    "listening": "Écoute",
+    "writing": "Écriture",
+    "speaking": "Expression orale"
   }
 }

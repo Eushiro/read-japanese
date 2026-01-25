@@ -729,7 +729,7 @@ export function PlacementTestPage() {
               isCorrect={viewingQuestion.isCorrect}
               isDisabled={isViewingPastQuestion || showFeedback || isSubmitting}
               metadata={{
-                type: viewingQuestion.type.charAt(0).toUpperCase() + viewingQuestion.type.slice(1),
+                type: t(`common.skillTypes.${viewingQuestion.type}`),
                 level: viewingQuestion.level,
                 badge: isViewingPastQuestion ? t("placement.question.reviewing") : undefined,
               }}
