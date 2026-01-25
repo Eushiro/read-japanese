@@ -3,6 +3,7 @@ import {
   BookOpen,
   ChevronLeft,
   Clock,
+  DollarSign,
   HardDrive,
   Layers,
   LayoutDashboard,
@@ -19,6 +20,7 @@ const navItems = [
   { to: "/admin/decks", label: "Decks", icon: Layers },
   { to: "/admin/jobs", label: "Jobs", icon: Clock },
   { to: "/admin/media", label: "Media", icon: HardDrive },
+  { to: "/admin/ai-usage", label: "AI Usage", icon: DollarSign },
   { to: "/admin/config", label: "Config", icon: Settings },
 ];
 

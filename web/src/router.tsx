@@ -19,6 +19,7 @@ import { isAdmin } from "@/lib/admin";
 import { trackPageView } from "@/lib/analytics";
 import { useT } from "@/lib/i18n";
 import { AdminDashboard } from "@/pages/admin/AdminDashboard";
+import { AIUsagePage } from "@/pages/admin/AIUsagePage";
 import { ConfigPage } from "@/pages/admin/ConfigPage";
 import { DeckDetailPage } from "@/pages/admin/DeckDetailPage";
 import { DecksPage } from "@/pages/admin/DecksPage";
@@ -475,6 +476,12 @@ const adminMediaRoute = createRoute({
   component: MediaPage,
 });
 
+const adminAIUsageRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "/ai-usage",
+  component: AIUsagePage,
+});
+
 // Route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -514,6 +521,7 @@ const routeTree = rootRoute.addChildren([
     adminStoryQuestionsRoute,
     adminConfigRoute,
     adminMediaRoute,
+    adminAIUsageRoute,
   ]),
 ]);
 
