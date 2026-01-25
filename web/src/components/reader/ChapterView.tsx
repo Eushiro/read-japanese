@@ -1,6 +1,7 @@
 import { CheckCircle2 } from "lucide-react";
 
 import { getCdnUrl } from "@/api/stories";
+import { useT } from "@/lib/i18n";
 import type { Chapter, Token } from "@/types/story";
 
 import { FuriganaText } from "./FuriganaText";
@@ -27,6 +28,7 @@ export function ChapterView({
   selectedToken,
   headerAction,
 }: ChapterViewProps) {
+  const t = useT();
   const segments = chapter.segments || chapter.content || [];
   const imageUrl = chapter.imageURL ? getCdnUrl(chapter.imageURL) : null;
 
@@ -36,7 +38,10 @@ export function ChapterView({
       <header className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Chapter {chapterIndex + 1} of {totalChapters}
+            {t("reader.chapter.progress", {
+              current: chapterIndex + 1,
+              total: totalChapters,
+            })}
           </div>
           {headerAction}
         </div>
@@ -99,9 +104,9 @@ export function ChapterView({
                 className="text-lg font-semibold text-foreground"
                 style={{ fontFamily: "var(--font-japanese)" }}
               >
-                おめでとう！
+                {t("reader.complete.congratulations")}
               </p>
-              <p className="text-sm text-foreground-muted mt-1">You've finished the story</p>
+              <p className="text-sm text-foreground-muted mt-1">{t("reader.complete.finished")}</p>
             </div>
           </div>
         </div>

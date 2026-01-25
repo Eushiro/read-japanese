@@ -1,0 +1,33 @@
+{
+  "title": "Usage History",
+  "subtitle": "Track your AI credit usage",
+  "creditsUsed": "Credits used",
+  "creditsRemaining": "Credits remaining",
+  "thisMonth": "This month",
+  "outOf": "out of {{limit}}",
+  "actionsThisMonth": "Actions this month",
+  "credits": "credits",
+  "resetsOn": "Resets on {{date}}",
+  "upgradeForMore": "Upgrade for more credits",
+  "history": "Transaction History",
+  "historyDescription": "Your recent AI credit usage",
+  "noTransactions": "No credit usage yet this month",
+  "date": "Date",
+  "action": "Action",
+  "details": "Details",
+  "free": "Free",
+  "admin": "Admin",
+  "tier": {
+    "free": "Free tier",
+    "basic": "Basic tier",
+    "pro": "Pro tier",
+    "unlimited": "Unlimited tier"
+  },
+  "actions": {
+    "sentence": "Flashcard sentence",
+    "feedback": "Writing feedback",
+    "comprehension": "Quiz grading",
+    "audio": "Audio generation",
+    "shadowing": "Shadowing session"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "title": "使用记录",
+  "subtitle": "跟踪您的AI积分使用情况",
+  "creditsUsed": "已使用积分",
+  "creditsRemaining": "剩余积分",
+  "thisMonth": "本月",
+  "outOf": "共{{limit}}",
+  "actionsThisMonth": "本月操作",
+  "credits": "积分",
+  "resetsOn": "{{date}}重置",
+  "upgradeForMore": "升级获取更多积分",
+  "history": "交易记录",
+  "historyDescription": "您最近的AI积分使用情况",
+  "noTransactions": "本月暂无积分使用记录",
+  "date": "日期",
+  "action": "操作",
+  "details": "详情",
+  "free": "免费",
+  "admin": "管理员",
+  "tier": {
+    "free": "免费版",
+    "basic": "基础版",
+    "pro": "专业版",
+    "unlimited": "无限版"
+  },
+  "actions": {
+    "sentence": "闪卡句子",
+    "feedback": "写作反馈",
+    "comprehension": "测验评分",
+    "audio": "音频生成",
+    "shadowing": "跟读练习"
+  }
+}

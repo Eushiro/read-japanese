@@ -1,0 +1,33 @@
+{
+  "title": "Historique d'utilisation",
+  "subtitle": "Suivez votre utilisation de crédits IA",
+  "creditsUsed": "Crédits utilisés",
+  "creditsRemaining": "Crédits restants",
+  "thisMonth": "Ce mois-ci",
+  "outOf": "sur {{limit}}",
+  "actionsThisMonth": "Actions ce mois-ci",
+  "credits": "crédits",
+  "resetsOn": "Réinitialisation le {{date}}",
+  "upgradeForMore": "Mettre à niveau pour plus de crédits",
+  "history": "Historique des transactions",
+  "historyDescription": "Votre utilisation récente de crédits IA",
+  "noTransactions": "Aucune utilisation de crédit ce mois-ci",
+  "date": "Date",
+  "action": "Action",
+  "details": "Détails",
+  "free": "Gratuit",
+  "admin": "Admin",
+  "tier": {
+    "free": "Forfait gratuit",
+    "basic": "Forfait basique",
+    "pro": "Forfait pro",
+    "unlimited": "Forfait illimité"
+  },
+  "actions": {
+    "sentence": "Phrase flashcard",
+    "feedback": "Correction d'écriture",
+    "comprehension": "Notation de quiz",
+    "audio": "Génération audio",
+    "shadowing": "Session de shadowing"
+  }
+}

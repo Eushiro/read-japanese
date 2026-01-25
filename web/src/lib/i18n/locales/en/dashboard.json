@@ -18,7 +18,10 @@
   },
   "preview": {
     "title": "Your Learning Dashboard",
-    "subtitle": "See how {{brandName}} helps you master vocabulary"
+    "subtitle": "See how {{brandName}} helps you master vocabulary",
+    "startStudying": "Start Studying",
+    "reviewCards": "Review cards, read a story",
+    "signInPrompt": "Sign in to track your progress"
   },
   "stats": {
     "dueCards": "due cards",

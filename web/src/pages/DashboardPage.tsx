@@ -494,6 +494,8 @@ export function DashboardPage() {
 
 // Preview Start Studying for logged-out users
 function PreviewStartStudying() {
+  const t = useT();
+
   return (
     <div className="text-center">
       <div className="mb-6">
@@ -501,13 +503,13 @@ function PreviewStartStudying() {
           <button className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
             <span className="flex items-center justify-center gap-3">
               <Play className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              Start Studying
+              {t("dashboard.preview.startStudying")}
             </span>
           </button>
         </SignInButton>
       </div>
-      <p className="text-foreground font-medium mb-4">Review cards, read a story</p>
-      <p className="text-sm text-foreground">Sign in to track your progress</p>
+      <p className="text-foreground font-medium mb-4">{t("dashboard.preview.reviewCards")}</p>
+      <p className="text-sm text-foreground">{t("dashboard.preview.signInPrompt")}</p>
     </div>
   );
 }

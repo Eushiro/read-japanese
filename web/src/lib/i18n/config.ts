@@ -31,6 +31,7 @@ import enReader from "./locales/en/reader.json";
 import enSettings from "./locales/en/settings.json";
 import enShadowing from "./locales/en/shadowing.json";
 import enStudySession from "./locales/en/studySession.json";
+import enUsage from "./locales/en/usage.json";
 import enVideo from "./locales/en/video.json";
 import enVideoQuiz from "./locales/en/videoQuiz.json";
 import enVocabulary from "./locales/en/vocabulary.json";
@@ -56,6 +57,7 @@ import frReader from "./locales/fr/reader.json";
 import frSettings from "./locales/fr/settings.json";
 import frShadowing from "./locales/fr/shadowing.json";
 import frStudySession from "./locales/fr/studySession.json";
+import frUsage from "./locales/fr/usage.json";
 import frVideo from "./locales/fr/video.json";
 import frVideoQuiz from "./locales/fr/videoQuiz.json";
 import frVocabulary from "./locales/fr/vocabulary.json";
@@ -81,6 +83,7 @@ import jaReader from "./locales/ja/reader.json";
 import jaSettings from "./locales/ja/settings.json";
 import jaShadowing from "./locales/ja/shadowing.json";
 import jaStudySession from "./locales/ja/studySession.json";
+import jaUsage from "./locales/ja/usage.json";
 import jaVideo from "./locales/ja/video.json";
 import jaVideoQuiz from "./locales/ja/videoQuiz.json";
 import jaVocabulary from "./locales/ja/vocabulary.json";
@@ -106,6 +109,7 @@ import zhReader from "./locales/zh/reader.json";
 import zhSettings from "./locales/zh/settings.json";
 import zhShadowing from "./locales/zh/shadowing.json";
 import zhStudySession from "./locales/zh/studySession.json";
+import zhUsage from "./locales/zh/usage.json";
 import zhVideo from "./locales/zh/video.json";
 import zhVideoQuiz from "./locales/zh/videoQuiz.json";
 import zhVocabulary from "./locales/zh/vocabulary.json";
@@ -134,6 +138,7 @@ const resources = {
     generate: enGenerate,
     reader: enReader,
     studySession: enStudySession,
+    usage: enUsage,
     onboarding: enOnboarding,
     paywall: enPaywall,
     quiz: enQuiz,
@@ -161,6 +166,7 @@ const resources = {
     generate: frGenerate,
     reader: frReader,
     studySession: frStudySession,
+    usage: frUsage,
     onboarding: frOnboarding,
     paywall: frPaywall,
     quiz: frQuiz,
@@ -188,6 +194,7 @@ const resources = {
     generate: jaGenerate,
     reader: jaReader,
     studySession: jaStudySession,
+    usage: jaUsage,
     onboarding: jaOnboarding,
     paywall: jaPaywall,
     quiz: jaQuiz,
@@ -215,6 +222,7 @@ const resources = {
     generate: zhGenerate,
     reader: zhReader,
     studySession: zhStudySession,
+    usage: zhUsage,
     onboarding: zhOnboarding,
     paywall: zhPaywall,
     quiz: zhQuiz,
@@ -254,6 +262,7 @@ i18n
       "generate",
       "reader",
       "studySession",
+      "usage",
       "onboarding",
       "paywall",
       "quiz",

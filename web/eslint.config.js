@@ -96,15 +96,25 @@ export default defineConfig([
     },
     rules: {
       'i18next/no-literal-string': ['error', {
-        mode: 'jsx-text-only',
+        mode: 'jsx-only',
+        'jsx-attributes': {
+          include: ['alt', 'aria-label', 'aria-placeholder', 'placeholder', 'title'],
+          exclude: ['className', 'class', 'style', 'href', 'to', 'src', 'name', 'id', 'data-*', 'key', 'type', 'role', 'htmlFor', 'target', 'rel', 'method', 'action', 'variant', 'size', 'asChild', 'mode', 'side', 'align', 'sideOffset', 'alignOffset'],
+        },
         words: {
           exclude: [
-            // Single characters and symbols that don't need translation
-            '/', '|', '-', '•', '→', '←', '×', '+', '&', '@', ':', ',', '.', '!', '?',
+            // Single characters and symbols
+            '/', '|', '-', '•', '→', '←', '×', '+', '&', '@', ':', ',', '.', '!', '?', '*', '#', '~',
             // Technical values
-            'N/A', 'px', 'em', 'rem', '%',
+            'N/A', 'px', 'em', 'rem', '%', 'auto', 'none', 'inherit',
+            // Common technical strings
+            'GET', 'POST', 'PUT', 'DELETE', 'PATCH',
+            // Time formats
+            'HH:mm', 'mm:ss', 'YYYY-MM-DD',
           ],
         },
+        // Ignore object keys and certain patterns
+        'should-validate-template': false,
       }],
     },
   },

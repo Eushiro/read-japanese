@@ -1,0 +1,33 @@
+{
+  "title": "利用履歴",
+  "subtitle": "AIクレジットの利用状況を確認",
+  "creditsUsed": "使用クレジット",
+  "creditsRemaining": "残りクレジット",
+  "thisMonth": "今月",
+  "outOf": "{{limit}}のうち",
+  "actionsThisMonth": "今月のアクション",
+  "credits": "クレジット",
+  "resetsOn": "{{date}}にリセット",
+  "upgradeForMore": "アップグレードしてクレジットを増やす",
+  "history": "取引履歴",
+  "historyDescription": "最近のAIクレジット利用状況",
+  "noTransactions": "今月のクレジット利用はありません",
+  "date": "日付",
+  "action": "アクション",
+  "details": "詳細",
+  "free": "無料",
+  "admin": "管理者",
+  "tier": {
+    "free": "無料プラン",
+    "basic": "ベーシックプラン",
+    "pro": "プロプラン",
+    "unlimited": "無制限プラン"
+  },
+  "actions": {
+    "sentence": "フラッシュカード文",
+    "feedback": "ライティングフィードバック",
+    "comprehension": "クイズ採点",
+    "audio": "音声生成",
+    "shadowing": "シャドーイングセッション"
+  }
+}

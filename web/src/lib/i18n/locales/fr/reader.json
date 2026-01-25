@@ -37,5 +37,12 @@
   "wordPopup": {
     "saveToVocabulary": "Ajouter au vocabulaire",
     "removeFromVocabulary": "Retirer du vocabulaire"
+  },
+  "chapter": {
+    "progress": "Chapitre {{current}} sur {{total}}"
+  },
+  "complete": {
+    "congratulations": "Félicitations !",
+    "finished": "Vous avez terminé l'histoire"
   }
 }

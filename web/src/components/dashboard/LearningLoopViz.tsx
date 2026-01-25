@@ -68,7 +68,7 @@ export function LearningLoopViz({ stats }: LearningLoopVizProps) {
         className="text-lg font-semibold text-foreground mb-6 text-center"
         style={{ fontFamily: "var(--font-display)" }}
       >
-        The Learning Loop
+        {t("dashboard.learningLoop.title")}
       </h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -109,7 +109,7 @@ export function LearningLoopViz({ stats }: LearningLoopVizProps) {
 
       {/* Loop indicator */}
       <div className="flex items-center justify-center mt-4 text-xs text-foreground-muted">
-        <span>Complete the loop to master your language</span>
+        <span>{t("dashboard.learningLoop.completeLoop")}</span>
       </div>
     </div>
   );

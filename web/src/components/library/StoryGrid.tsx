@@ -1,5 +1,6 @@
 import { BookOpen } from "lucide-react";
 
+import { useT } from "@/lib/i18n";
 import type { StoryListItem } from "@/types/story";
 
 import { StoryCard } from "./StoryCard";
@@ -19,6 +20,8 @@ export function StoryGrid({
   onStoryClick,
   isLoading = false,
 }: StoryGridProps) {
+  const t = useT();
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
@@ -35,8 +38,8 @@ export function StoryGrid({
         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
           <BookOpen className="w-8 h-8 opacity-40" />
         </div>
-        <p className="text-lg font-medium text-foreground mb-1">No stories found</p>
-        <p className="text-sm">Try adjusting your filters</p>
+        <p className="text-lg font-medium text-foreground mb-1">{t("library.empty.title")}</p>
+        <p className="text-sm">{t("library.empty.description")}</p>
       </div>
     );
   }

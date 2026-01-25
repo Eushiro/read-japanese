@@ -18,7 +18,10 @@
   },
   "preview": {
     "title": "\u60a8\u7684\u5b66\u4e60\u4eea\u8868\u76d8",
-    "subtitle": "了解{{brandName}}如何帮助您掌握词汇"
+    "subtitle": "了解{{brandName}}如何帮助您掌握词汇",
+    "startStudying": "开始学习",
+    "reviewCards": "复习卡片，阅读故事",
+    "signInPrompt": "登录以追踪进度"
   },
   "stats": {
     "dueCards": "\u5f85\u590d\u4e60\u5361\u7247",

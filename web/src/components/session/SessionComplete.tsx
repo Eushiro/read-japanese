@@ -73,7 +73,11 @@ export function SessionComplete({ results, onContinue, onDone }: SessionComplete
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-foreground-muted">
                     <BookOpen className="w-4 h-4" />
-                    <span>{results.contentConsumed.type === "story" ? "Read" : "Watched"}</span>
+                    <span>
+                      {results.contentConsumed.type === "story"
+                        ? t("studySession.complete.stats.read")
+                        : t("studySession.complete.stats.watched")}
+                    </span>
                   </div>
                   <span className="font-semibold text-foreground truncate max-w-[200px]">
                     {results.contentConsumed.title}
@@ -85,7 +89,7 @@ export function SessionComplete({ results, onContinue, onDone }: SessionComplete
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-foreground-muted">
                     <BookOpen className="w-4 h-4" />
-                    <span>Words added</span>
+                    <span>{t("studySession.complete.stats.wordsAdded")}</span>
                   </div>
                   <span className="font-semibold text-foreground">{results.wordsAdded}</span>
                 </div>
@@ -95,7 +99,7 @@ export function SessionComplete({ results, onContinue, onDone }: SessionComplete
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-foreground-muted">
                     <PenLine className="w-4 h-4" />
-                    <span>Sentences written</span>
+                    <span>{t("studySession.complete.stats.sentencesWritten")}</span>
                   </div>
                   <span className="font-semibold text-foreground">{results.sentencesWritten}</span>
                 </div>
@@ -105,17 +109,15 @@ export function SessionComplete({ results, onContinue, onDone }: SessionComplete
         )}
 
         {/* Encouragement */}
-        <p className="text-foreground-muted mb-8">
-          Great work! Consistent practice is the key to mastery.
-        </p>
+        <p className="text-foreground-muted mb-8">{t("studySession.complete.encouragement")}</p>
 
         {/* Actions */}
         <div className="flex gap-3">
           <Button variant="outline" onClick={onDone} className="flex-1">
-            Done for Today
+            {t("studySession.complete.doneForToday")}
           </Button>
           <Button onClick={onContinue} className="flex-1 gap-2">
-            Continue Studying
+            {t("studySession.complete.continueStudying")}
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>

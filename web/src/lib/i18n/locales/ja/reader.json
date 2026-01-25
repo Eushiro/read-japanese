@@ -37,5 +37,12 @@
   "wordPopup": {
     "saveToVocabulary": "語彙に保存",
     "removeFromVocabulary": "語彙から削除"
+  },
+  "chapter": {
+    "progress": "第{{current}}章 / 全{{total}}章"
+  },
+  "complete": {
+    "congratulations": "おめでとう！",
+    "finished": "ストーリーを読み終えました"
   }
 }

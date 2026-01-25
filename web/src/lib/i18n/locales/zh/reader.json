@@ -37,5 +37,12 @@
   "wordPopup": {
     "saveToVocabulary": "添加到词汇",
     "removeFromVocabulary": "从词汇中删除"
+  },
+  "chapter": {
+    "progress": "第{{current}}章 / 共{{total}}章"
+  },
+  "complete": {
+    "congratulations": "恭喜！",
+    "finished": "您已完成这个故事"
   }
 }

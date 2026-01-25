@@ -18,7 +18,10 @@
   },
   "preview": {
     "title": "Votre tableau de bord",
-    "subtitle": "Découvrez comment {{brandName}} vous aide à maîtriser le vocabulaire"
+    "subtitle": "Découvrez comment {{brandName}} vous aide à maîtriser le vocabulaire",
+    "startStudying": "Commencer à étudier",
+    "reviewCards": "Révisez des cartes, lisez une histoire",
+    "signInPrompt": "Connectez-vous pour suivre vos progrès"
   },
   "stats": {
     "dueCards": "cartes \u00e0 r\u00e9viser",

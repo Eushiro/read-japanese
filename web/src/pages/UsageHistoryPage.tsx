@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ArrowLeft, CreditCard, History, TrendingUp } from "lucide-react";
-import { useTranslation } from "react-i18next";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,17 +16,9 @@ import {
 } from "@/components/ui/table";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
+import { useT } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
-
-// Action type labels
-const ACTION_LABELS: Record<string, string> = {
-  sentence: "Flashcard sentence",
-  feedback: "Writing feedback",
-  comprehension: "Quiz grading",
-  audio: "Audio generation",
-  shadowing: "Shadowing session",
-};
 
 // Action badge colors
 const ACTION_COLORS: Record<string, string> = {
@@ -48,7 +39,7 @@ function formatDate(timestamp: number): string {
 }
 
 export function UsageHistoryPage() {
-  const { t } = useTranslation();
+  const t = useT();
   const { user } = useAuth();
   const { used, remaining, limit, percentage, resetDate, tier } = useCreditBalance();
 
@@ -75,10 +66,8 @@ export function UsageHistoryPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">{t("usage.title", "Usage History")}</h1>
-          <p className="text-muted-foreground text-sm">
-            {t("usage.subtitle", "Track your AI credit usage")}
-          </p>
+          <h1 className="text-2xl font-bold">{t("usage.title")}</h1>
+          <p className="text-muted-foreground text-sm">{t("usage.subtitle")}</p>
         </div>
       </div>
 
@@ -88,38 +77,30 @@ export function UsageHistoryPage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <CreditCard className="text-muted-foreground h-5 w-5" />
-              <span className="text-muted-foreground text-sm">
-                {t("usage.creditsUsed", "Credits used")}
-              </span>
+              <span className="text-muted-foreground text-sm">{t("usage.creditsUsed")}</span>
             </div>
             <div className="mt-2 text-3xl font-bold">{used}</div>
-            <p className="text-muted-foreground text-xs">{t("usage.thisMonth", "This month")}</p>
+            <p className="text-muted-foreground text-xs">{t("usage.thisMonth")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <TrendingUp className="text-muted-foreground h-5 w-5" />
-              <span className="text-muted-foreground text-sm">
-                {t("usage.creditsRemaining", "Credits remaining")}
-              </span>
+              <span className="text-muted-foreground text-sm">{t("usage.creditsRemaining")}</span>
             </div>
             <div className="mt-2 text-3xl font-bold">{remaining}</div>
-            <p className="text-muted-foreground text-xs">
-              {t("usage.outOf", "out of {{limit}}", { limit })}
-            </p>
+            <p className="text-muted-foreground text-xs">{t("usage.outOf", { limit })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <History className="text-muted-foreground h-5 w-5" />
-              <span className="text-muted-foreground text-sm">
-                {t("usage.actionsThisMonth", "Actions this month")}
-              </span>
+              <span className="text-muted-foreground text-sm">{t("usage.actionsThisMonth")}</span>
             </div>
             <div className="mt-2 text-3xl font-bold">{transactions?.length ?? 0}</div>
-            <p className="text-muted-foreground text-xs capitalize">{tier} tier</p>
+            <p className="text-muted-foreground text-xs capitalize">{t(`usage.tier.${tier}`)}</p>
           </CardContent>
         </Card>
       </div>
@@ -129,17 +110,17 @@ export function UsageHistoryPage() {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between text-sm">
             <span>
-              {used} / {limit} {t("usage.credits", "credits")}
+              {used} / {limit} {t("usage.credits")}
             </span>
             <span>{percentage}%</span>
           </div>
           <Progress value={percentage} className="mt-2" />
           <p className="text-muted-foreground mt-2 text-xs">
-            {t("usage.resetsOn", "Resets on {{date}}", { date: formattedResetDate })}
+            {t("usage.resetsOn", { date: formattedResetDate })}
           </p>
           {tier === "free" && (
             <Button asChild className="mt-4" size="sm">
-              <Link to="/pricing">{t("usage.upgradeForMore", "Upgrade for more credits")}</Link>
+              <Link to="/pricing">{t("usage.upgradeForMore")}</Link>
             </Button>
           )}
         </CardContent>
@@ -148,24 +129,22 @@ export function UsageHistoryPage() {
       {/* Transaction table */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("usage.history", "Transaction History")}</CardTitle>
-          <CardDescription>
-            {t("usage.historyDescription", "Your recent AI credit usage")}
-          </CardDescription>
+          <CardTitle>{t("usage.history")}</CardTitle>
+          <CardDescription>{t("usage.historyDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           {!transactions || transactions.length === 0 ? (
             <div className="text-muted-foreground py-8 text-center">
-              {t("usage.noTransactions", "No credit usage yet this month")}
+              {t("usage.noTransactions")}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("usage.date", "Date")}</TableHead>
-                  <TableHead>{t("usage.action", "Action")}</TableHead>
-                  <TableHead>{t("usage.details", "Details")}</TableHead>
-                  <TableHead className="text-right">{t("usage.credits", "Credits")}</TableHead>
+                  <TableHead>{t("usage.date")}</TableHead>
+                  <TableHead>{t("usage.action")}</TableHead>
+                  <TableHead>{t("usage.details")}</TableHead>
+                  <TableHead className="text-right">{t("usage.credits")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -179,7 +158,7 @@ export function UsageHistoryPage() {
                         variant="outline"
                         className={ACTION_COLORS[tx.action] ?? "bg-gray-100"}
                       >
-                        {ACTION_LABELS[tx.action] ?? tx.action}
+                        {t(`usage.actions.${tx.action}`)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground max-w-[200px] truncate">
@@ -191,8 +170,8 @@ export function UsageHistoryPage() {
                     <TableCell className="text-right font-medium">
                       {tx.creditsSpent === 0 ? (
                         <span className="text-green-600">
-                          {t("usage.free", "Free")}
-                          {tx.metadata?.adminBypass && " (Admin)"}
+                          {t("usage.free")}
+                          {tx.metadata?.adminBypass && ` (${t("usage.admin")})`}
                         </span>
                       ) : (
                         <span className="text-red-600">-{tx.creditsSpent}</span>
