@@ -1,6 +1,6 @@
 {
-  "title": "\u5b66\u4e60\u4eea\u8868\u76d8",
-  "welcome": "\u6b22\u8fce\u56de\u6765\uff0c{{name}}\uff01",
+  "title": "学习仪表盘",
+  "welcome": "欢迎回来，{{name}}！",
   "dailyActivities": {
     "title": "今日活动",
     "noActivities": "暂无待办活动。开始阅读故事吧！",
@@ -17,51 +17,51 @@
     "continue": "继续"
   },
   "preview": {
-    "title": "\u60a8\u7684\u5b66\u4e60\u4eea\u8868\u76d8",
+    "title": "您的学习仪表盘",
     "subtitle": "了解{{brandName}}如何帮助您掌握词汇",
     "startStudying": "开始学习",
     "reviewCards": "复习卡片，阅读故事",
     "signInPrompt": "登录以追踪进度"
   },
   "stats": {
-    "dueCards": "\u5f85\u590d\u4e60\u5361\u7247",
-    "words": "\u5355\u8bcd",
-    "streak": "\u5929\u8fde\u7eed",
-    "streak_other": "\u5929\u8fde\u7eed",
-    "wordsLearned": "\u5df2\u5b66\u5355\u8bcd",
-    "minutesToday": "\u4eca\u65e5\u5b66\u4e60\u65f6\u95f4",
-    "accuracy": "\u6b63\u786e\u7387"
+    "dueCards": "待复习卡片",
+    "words": "单词",
+    "streak": "天连续",
+    "streak_other": "天连续",
+    "wordsLearned": "已学单词",
+    "minutesToday": "今日学习时间",
+    "accuracy": "正确率"
   },
   "cta": {
     "startPlacement": "开始分级测试",
     "findLevel": "让我们确定您的起始水平",
     "placementExplainer": "参加快速自适应测试（10-15题），个性化您的学习路径。",
-    "durationQuestion": "\u60a8\u60f3\u5b66\u4e60\u591a\u957f\u65f6\u95f4\uff1f",
-    "noContentYet": "\u8fd8\u6ca1\u6709\u5185\u5bb9",
+    "durationQuestion": "您想学习多长时间？",
+    "noContentYet": "还没有内容",
     "addVocabulary": "添加词汇或浏览图书馆开始。"
   },
   "sections": {
-    "suggestedForYou": "\u4e3a\u60a8\u63a8\u8350",
-    "popularPicks": "\u70ed\u95e8\u9009\u62e9",
-    "stories": "\u6545\u4e8b",
-    "videos": "\u89c6\u9891",
+    "suggestedForYou": "为您推荐",
+    "popularPicks": "热门选择",
+    "stories": "故事",
+    "videos": "视频",
     "browseLibrary": "浏览图书馆",
-    "libraryDescription": "\u9002\u5408\u60a8\u7ea7\u522b\u7684\u6545\u4e8b\u548c\u89c6\u9891",
-    "continueReading": "\u7ee7\u7eed\u9605\u8bfb",
-    "quickActions": "\u5feb\u901f\u64cd\u4f5c",
-    "recentActivity": "\u6700\u8fd1\u6d3b\u52a8"
+    "libraryDescription": "适合您级别的故事和视频",
+    "continueReading": "继续阅读",
+    "quickActions": "快速操作",
+    "recentActivity": "最近活动"
   },
   "signUpCta": {
-    "title": "\u51c6\u5907\u597d\u5f00\u59cb\u5b66\u4e60\u4e86\u5417\uff1f",
-    "subtitle": "\u514d\u8d39\u52a0\u5165\uff0c\u4f7f\u7528AI\u95ea\u5361\u5f00\u59cb\u79ef\u7d2f\u8bcd\u6c47\u3002",
-    "button": "\u514d\u8d39\u8bd5\u7528",
-    "disclaimer": "\u65e0\u9700\u4fe1\u7528\u5361"
+    "title": "准备好开始学习了吗？",
+    "subtitle": "免费加入，使用AI闪卡开始积累词汇。",
+    "button": "免费试用",
+    "disclaimer": "无需信用卡"
   },
   "session": {
-    "startSession": "\u5f00\u59cb\u5b66\u4e60",
-    "sessionComplete": "\u5b66\u4e60\u5b8c\u6210",
-    "greatWork": "\u505a\u5f97\u597d\uff01",
-    "keepItUp": "\u7ee7\u7eed\u52a0\u6cb9\uff01"
+    "startSession": "开始学习",
+    "sessionComplete": "学习完成",
+    "greatWork": "做得好！",
+    "keepItUp": "继续加油！"
   },
   "learningLoop": {
     "title": "学习循环",

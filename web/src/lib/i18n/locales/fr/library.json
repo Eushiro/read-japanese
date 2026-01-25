@@ -40,10 +40,10 @@
     "loadFailed": "Échec du chargement des histoires"
   },
   "empty": {
-    "title": "Aucun contenu trouv\u00e9",
+    "title": "Aucun contenu trouvé",
     "description": "Essayez d'ajuster vos filtres ou votre terme de recherche",
     "noStories": "Pas encore d'histoires",
-    "noVideos": "Pas encore de vid\u00e9os"
+    "noVideos": "Pas encore de vidéos"
   },
   "story": {
     "chapter": "Chapitre {{number}}",
@@ -51,33 +51,33 @@
     "readTime": "{{minutes}} min de lecture",
     "continueReading": "Continuer la lecture",
     "startReading": "Commencer la lecture",
-    "completed": "Termin\u00e9",
+    "completed": "Terminé",
     "inProgress": "En cours",
-    "wordsSaved": "{{count}} mots enregistr\u00e9s"
+    "wordsSaved": "{{count}} mots enregistrés"
   },
   "video": {
     "badge": "Vidéo",
     "duration": "{{minutes}} min",
     "watch": "Regarder",
-    "continueWatching": "Continuer \u00e0 regarder",
+    "continueWatching": "Continuer à regarder",
     "transcript": "Transcription",
     "questions": "{{count}} questions"
   },
   "difficulty": {
-    "beginner": "D\u00e9butant",
-    "elementary": "\u00c9l\u00e9mentaire",
-    "intermediate": "Interm\u00e9diaire",
-    "upperIntermediate": "Interm\u00e9diaire avanc\u00e9",
-    "advanced": "Avanc\u00e9",
+    "beginner": "Débutant",
+    "elementary": "Élémentaire",
+    "intermediate": "Intermédiaire",
+    "upperIntermediate": "Intermédiaire avancé",
+    "advanced": "Avancé",
     "native": "Natif"
   },
   "decks": {
     "title": "Paquets de vocabulaire",
     "browse": "Parcourir les paquets",
     "subscribe": "S'abonner",
-    "subscribed": "Abonn\u00e9",
+    "subscribed": "Abonné",
     "wordsCount": "{{count}} mots",
-    "premadeDecks": "Paquets pr\u00e9d\u00e9finis",
+    "premadeDecks": "Paquets prédéfinis",
     "personalDeck": "Paquet personnel",
     "allWords": "Tous les mots"
   }

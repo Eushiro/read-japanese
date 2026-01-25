@@ -40,36 +40,36 @@
     "loadFailed": "ストーリーの読み込みに失敗しました"
   },
   "empty": {
-    "title": "\u30b3\u30f3\u30c6\u30f3\u30c4\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093",
-    "description": "\u30d5\u30a3\u30eb\u30bf\u30fc\u3084\u691c\u7d22\u8a9e\u3092\u8abf\u6574\u3057\u3066\u307f\u3066\u304f\u3060\u3055\u3044",
-    "noStories": "\u307e\u3060\u30b9\u30c8\u30fc\u30ea\u30fc\u304c\u3042\u308a\u307e\u305b\u3093",
-    "noVideos": "\u307e\u3060\u52d5\u753b\u304c\u3042\u308a\u307e\u305b\u3093"
+    "title": "コンテンツが見つかりません",
+    "description": "フィルターや検索語を調整してみてください",
+    "noStories": "まだストーリーがありません",
+    "noVideos": "まだ動画がありません"
   },
   "story": {
-    "chapter": "\u7b2c{{number}}\u7ae0",
-    "chapters": "{{count}}\u7ae0",
-    "readTime": "{{minutes}}\u5206\u3067\u8aad\u3081\u308b",
-    "continueReading": "\u8aad\u307f\u7d9a\u3051\u308b",
-    "startReading": "\u8aad\u307f\u59cb\u3081\u308b",
-    "completed": "\u5b8c\u4e86",
-    "inProgress": "\u9014\u4e2d",
-    "wordsSaved": "{{count}}\u5358\u8a9e\u4fdd\u5b58\u6e08\u307f"
+    "chapter": "第{{number}}章",
+    "chapters": "{{count}}章",
+    "readTime": "{{minutes}}分で読める",
+    "continueReading": "読み続ける",
+    "startReading": "読み始める",
+    "completed": "完了",
+    "inProgress": "途中",
+    "wordsSaved": "{{count}}単語保存済み"
   },
   "video": {
     "badge": "動画",
-    "duration": "{{minutes}}\u5206",
-    "watch": "\u8996\u8074\u3059\u308b",
-    "continueWatching": "\u7d9a\u304d\u3092\u898b\u308b",
-    "transcript": "\u5b57\u5e55",
-    "questions": "{{count}}\u554f"
+    "duration": "{{minutes}}分",
+    "watch": "視聴する",
+    "continueWatching": "続きを見る",
+    "transcript": "字幕",
+    "questions": "{{count}}問"
   },
   "difficulty": {
-    "beginner": "\u521d\u7d1a",
-    "elementary": "\u521d\u4e2d\u7d1a",
-    "intermediate": "\u4e2d\u7d1a",
-    "upperIntermediate": "\u4e2d\u4e0a\u7d1a",
-    "advanced": "\u4e0a\u7d1a",
-    "native": "\u30cd\u30a4\u30c6\u30a3\u30d6"
+    "beginner": "初級",
+    "elementary": "初中級",
+    "intermediate": "中級",
+    "upperIntermediate": "中上級",
+    "advanced": "上級",
+    "native": "ネイティブ"
   },
   "decks": {
     "title": "語彙デッキ",

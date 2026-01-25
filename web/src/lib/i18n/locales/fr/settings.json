@@ -4,7 +4,7 @@
     "title": "Apparence",
     "light": "Clair",
     "dark": "Sombre",
-    "system": "Syst\u00e8me"
+    "system": "Système"
   },
   "reading": {
     "title": "Lecture",
@@ -16,31 +16,31 @@
     "small": "Petit",
     "medium": "Moyen",
     "large": "Grand",
-    "extraLarge": "Tr\u00e8s grand"
+    "extraLarge": "Très grand"
   },
   "learningTools": {
     "title": "Outils d'apprentissage",
-    "description": "Acc\u00e8s rapide \u00e0 toutes les fonctionnalit\u00e9s",
+    "description": "Accès rapide à toutes les fonctionnalités",
     "learnHub": "Centre d'apprentissage",
     "learnHubDescription": "Tous les outils en un seul endroit",
     "flashcards": "Flashcards",
-    "flashcardsDescription": "R\u00e9p\u00e9tition espac\u00e9e",
+    "flashcardsDescription": "Répétition espacée",
     "vocabulary": "Vocabulaire",
     "vocabularyDescription": "Liste de mots",
     "practice": "Pratique",
-    "practiceDescription": "\u00c9criture de phrases"
+    "practiceDescription": "Écriture de phrases"
   },
   "languages": {
     "title": "Langues et examens",
     "learningLanguages": "Langues que vous apprenez",
-    "targetExams": "Examens vis\u00e9s"
+    "targetExams": "Examens visés"
   },
   "proficiency": {
-    "title": "Niveau de comp\u00e9tence",
-    "description": "Passez un test de niveau adaptatif pour \u00e9valuer votre niveau et obtenir un contenu personnalis\u00e9.",
+    "title": "Niveau de compétence",
+    "description": "Passez un test de niveau adaptatif pour évaluer votre niveau et obtenir un contenu personnalisé.",
     "level": "Niveau",
-    "tested": "test\u00e9 le {{date}}",
-    "notAssessed": "Pas encore \u00e9valu\u00e9",
+    "tested": "testé le {{date}}",
+    "notAssessed": "Pas encore évalué",
     "takeTest": "Passer le test",
     "retake": "Repasser"
   },
@@ -57,9 +57,15 @@
     "mostPopular": "Le plus populaire",
     "perMonth": "/mois",
     "tiers": {
-      "free": { "name": "Gratuit" },
-      "plus": { "name": "Plus" },
-      "pro": { "name": "Pro" }
+      "free": {
+        "name": "Gratuit"
+      },
+      "plus": {
+        "name": "Plus"
+      },
+      "pro": {
+        "name": "Pro"
+      }
     },
     "features": {
       "credits": "{{count}} crédits/mois",
@@ -82,13 +88,13 @@
   },
   "admin": {
     "title": "Admin",
-    "premiumAccess": "Acc\u00e8s Premium",
+    "premiumAccess": "Accès Premium",
     "premiumAccessDescription": "Activer l'abonnement Pro pour les tests",
     "levelOverride": "Forcer le niveau",
-    "levelOverrideDescription": "D\u00e9finir manuellement le niveau pour tester les questions",
-    "showOnboarding": "Afficher l'int\u00e9gration",
-    "showOnboardingDescription": "Pr\u00e9visualiser le flux d'int\u00e9gration",
-    "notSet": "Non d\u00e9fini"
+    "levelOverrideDescription": "Définir manuellement le niveau pour tester les questions",
+    "showOnboarding": "Afficher l'intégration",
+    "showOnboardingDescription": "Prévisualiser le flux d'intégration",
+    "notSet": "Non défini"
   },
   "uiLanguage": {
     "title": "Langue d'affichage",

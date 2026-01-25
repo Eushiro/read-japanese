@@ -1,53 +1,53 @@
 {
-  "title": "\u4e2a\u4eba\u8d44\u6599",
+  "title": "个人资料",
   "appearance": {
-    "title": "\u5916\u89c2",
-    "light": "\u6d45\u8272",
-    "dark": "\u6df1\u8272",
-    "system": "\u7cfb\u7edf"
+    "title": "外观",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "系统"
   },
   "reading": {
-    "title": "\u9605\u8bfb\u8bbe\u7f6e",
-    "showFurigana": "\u663e\u793a\u6ce8\u97f3",
-    "showFuriganaDescription": "\u5728\u6c49\u5b57\u4e0a\u65b9\u663e\u793a\u8bfb\u97f3",
-    "autoplayAudio": "\u81ea\u52a8\u64ad\u653e",
-    "autoplayAudioDescription": "\u81ea\u52a8\u64ad\u653e\u7ae0\u8282\u97f3\u9891",
-    "textSize": "\u5b57\u4f53\u5927\u5c0f",
-    "small": "\u5c0f",
-    "medium": "\u4e2d",
-    "large": "\u5927",
-    "extraLarge": "\u7279\u5927"
+    "title": "阅读设置",
+    "showFurigana": "显示注音",
+    "showFuriganaDescription": "在汉字上方显示读音",
+    "autoplayAudio": "自动播放",
+    "autoplayAudioDescription": "自动播放章节音频",
+    "textSize": "字体大小",
+    "small": "小",
+    "medium": "中",
+    "large": "大",
+    "extraLarge": "特大"
   },
   "learningTools": {
-    "title": "\u5b66\u4e60\u5de5\u5177",
-    "description": "\u5feb\u901f\u8bbf\u95ee\u6240\u6709\u5b66\u4e60\u529f\u80fd",
-    "learnHub": "\u5b66\u4e60\u4e2d\u5fc3",
-    "learnHubDescription": "\u6240\u6709\u5de5\u5177\u96c6\u4e2d\u4e00\u5904",
-    "flashcards": "\u95ea\u5361",
-    "flashcardsDescription": "\u95f4\u9694\u91cd\u590d",
-    "vocabulary": "\u8bcd\u6c47",
-    "vocabularyDescription": "\u5355\u8bcd\u5217\u8868",
-    "practice": "\u7ec3\u4e60",
-    "practiceDescription": "\u53e5\u5b50\u5199\u4f5c"
+    "title": "学习工具",
+    "description": "快速访问所有学习功能",
+    "learnHub": "学习中心",
+    "learnHubDescription": "所有工具集中一处",
+    "flashcards": "闪卡",
+    "flashcardsDescription": "间隔重复",
+    "vocabulary": "词汇",
+    "vocabularyDescription": "单词列表",
+    "practice": "练习",
+    "practiceDescription": "句子写作"
   },
   "languages": {
-    "title": "\u8bed\u8a00\u4e0e\u8003\u8bd5",
-    "learningLanguages": "\u60a8\u6b63\u5728\u5b66\u4e60\u7684\u8bed\u8a00",
-    "targetExams": "\u76ee\u6807\u8003\u8bd5"
+    "title": "语言与考试",
+    "learningLanguages": "您正在学习的语言",
+    "targetExams": "目标考试"
   },
   "proficiency": {
-    "title": "\u6c34\u5e73\u7ea7\u522b",
-    "description": "\u53c2\u52a0\u81ea\u9002\u5e94\u5206\u7ea7\u6d4b\u8bd5\uff0c\u8bc4\u4f30\u60a8\u7684\u7ea7\u522b\u5e76\u83b7\u53d6\u4e2a\u6027\u5316\u5185\u5bb9\u3002",
-    "level": "\u7ea7\u522b",
-    "tested": "\u4e8e{{date}}\u6d4b\u8bd5",
-    "notAssessed": "\u5c1a\u672a\u8bc4\u4f30",
-    "takeTest": "\u53c2\u52a0\u6d4b\u8bd5",
-    "retake": "\u91cd\u65b0\u6d4b\u8bd5"
+    "title": "水平级别",
+    "description": "参加自适应分级测试，评估您的级别并获取个性化内容。",
+    "level": "级别",
+    "tested": "于{{date}}测试",
+    "notAssessed": "尚未评估",
+    "takeTest": "参加测试",
+    "retake": "重新测试"
   },
   "account": {
-    "title": "\u8d26\u6237",
-    "user": "\u7528\u6237",
-    "signInPrompt": "\u767b\u5f55\u4ee5\u5728\u8bbe\u5907\u95f4\u540c\u6b65\u60a8\u7684\u8bcd\u6c47\u548c\u5b66\u4e60\u8fdb\u5ea6\u3002"
+    "title": "账户",
+    "user": "用户",
+    "signInPrompt": "登录以在设备间同步您的词汇和学习进度。"
   },
   "subscription": {
     "title": "订阅",
@@ -57,9 +57,15 @@
     "mostPopular": "最受欢迎",
     "perMonth": "/月",
     "tiers": {
-      "free": { "name": "免费" },
-      "plus": { "name": "Plus" },
-      "pro": { "name": "Pro" }
+      "free": {
+        "name": "免费"
+      },
+      "plus": {
+        "name": "Plus"
+      },
+      "pro": {
+        "name": "Pro"
+      }
     },
     "features": {
       "credits": "{{count}}积分/月",
@@ -81,14 +87,14 @@
     "upgradeTo": "升级到{{tier}}"
   },
   "admin": {
-    "title": "\u7ba1\u7406",
-    "premiumAccess": "\u9ad8\u7ea7\u8bbf\u95ee",
-    "premiumAccessDescription": "\u5207\u6362Pro\u8ba2\u9605\u8fdb\u884c\u6d4b\u8bd5",
-    "levelOverride": "\u7ea7\u522b\u8986\u76d6",
-    "levelOverrideDescription": "\u624b\u52a8\u8bbe\u7f6e\u7ea7\u522b\u4ee5\u6d4b\u8bd5\u9898\u76ee",
-    "showOnboarding": "\u663e\u793a\u5f15\u5bfc",
-    "showOnboardingDescription": "\u9884\u89c8\u5f15\u5bfc\u6d41\u7a0b",
-    "notSet": "\u672a\u8bbe\u7f6e"
+    "title": "管理",
+    "premiumAccess": "高级访问",
+    "premiumAccessDescription": "切换Pro订阅进行测试",
+    "levelOverride": "级别覆盖",
+    "levelOverrideDescription": "手动设置级别以测试题目",
+    "showOnboarding": "显示引导",
+    "showOnboardingDescription": "预览引导流程",
+    "notSet": "未设置"
   },
   "uiLanguage": {
     "title": "显示语言",

@@ -40,45 +40,45 @@
     "loadFailed": "加载故事失败"
   },
   "empty": {
-    "title": "\u672a\u627e\u5230\u5185\u5bb9",
-    "description": "\u8bf7\u5c1d\u8bd5\u8c03\u6574\u7b5b\u9009\u6761\u4ef6\u6216\u641c\u7d22\u8bcd",
-    "noStories": "\u6682\u65e0\u6545\u4e8b",
-    "noVideos": "\u6682\u65e0\u89c6\u9891"
+    "title": "未找到内容",
+    "description": "请尝试调整筛选条件或搜索词",
+    "noStories": "暂无故事",
+    "noVideos": "暂无视频"
   },
   "story": {
-    "chapter": "\u7b2c{{number}}\u7ae0",
-    "chapters": "{{count}}\u7ae0",
-    "readTime": "{{minutes}}\u5206\u949f\u9605\u8bfb",
-    "continueReading": "\u7ee7\u7eed\u9605\u8bfb",
-    "startReading": "\u5f00\u59cb\u9605\u8bfb",
-    "completed": "\u5df2\u5b8c\u6210",
-    "inProgress": "\u8fdb\u884c\u4e2d",
-    "wordsSaved": "\u5df2\u4fdd\u5b58{{count}}\u4e2a\u5355\u8bcd"
+    "chapter": "第{{number}}章",
+    "chapters": "{{count}}章",
+    "readTime": "{{minutes}}分钟阅读",
+    "continueReading": "继续阅读",
+    "startReading": "开始阅读",
+    "completed": "已完成",
+    "inProgress": "进行中",
+    "wordsSaved": "已保存{{count}}个单词"
   },
   "video": {
     "badge": "视频",
-    "duration": "{{minutes}}\u5206\u949f",
-    "watch": "\u89c2\u770b",
-    "continueWatching": "\u7ee7\u7eed\u89c2\u770b",
-    "transcript": "\u5b57\u5e55",
-    "questions": "{{count}}\u4e2a\u95ee\u9898"
+    "duration": "{{minutes}}分钟",
+    "watch": "观看",
+    "continueWatching": "继续观看",
+    "transcript": "字幕",
+    "questions": "{{count}}个问题"
   },
   "difficulty": {
-    "beginner": "\u521d\u7ea7",
-    "elementary": "\u57fa\u7840",
-    "intermediate": "\u4e2d\u7ea7",
-    "upperIntermediate": "\u4e2d\u9ad8\u7ea7",
-    "advanced": "\u9ad8\u7ea7",
-    "native": "\u6bcd\u8bed\u6c34\u5e73"
+    "beginner": "初级",
+    "elementary": "基础",
+    "intermediate": "中级",
+    "upperIntermediate": "中高级",
+    "advanced": "高级",
+    "native": "母语水平"
   },
   "decks": {
-    "title": "\u8bcd\u6c47\u5361\u7ec4",
-    "browse": "\u6d4f\u89c8\u5361\u7ec4",
-    "subscribe": "\u8ba2\u9605",
-    "subscribed": "\u5df2\u8ba2\u9605",
-    "wordsCount": "{{count}}\u4e2a\u5355\u8bcd",
-    "premadeDecks": "\u9884\u8bbe\u5361\u7ec4",
-    "personalDeck": "\u4e2a\u4eba\u5361\u7ec4",
-    "allWords": "\u6240\u6709\u5355\u8bcd"
+    "title": "词汇卡组",
+    "browse": "浏览卡组",
+    "subscribe": "订阅",
+    "subscribed": "已订阅",
+    "wordsCount": "{{count}}个单词",
+    "premadeDecks": "预设卡组",
+    "personalDeck": "个人卡组",
+    "allWords": "所有单词"
   }
 }

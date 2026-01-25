@@ -1,6 +1,6 @@
 {
-  "title": "\u5b66\u7fd2\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9",
-  "welcome": "\u304a\u304b\u3048\u308a\u306a\u3055\u3044\u3001{{name}}\u3055\u3093\uff01",
+  "title": "学習ダッシュボード",
+  "welcome": "おかえりなさい、{{name}}さん！",
   "dailyActivities": {
     "title": "今日のアクティビティ",
     "noActivities": "予定のアクティビティはありません。ストーリーを読んで始めましょう！",
@@ -17,7 +17,7 @@
     "continue": "続ける"
   },
   "preview": {
-    "title": "\u3042\u306a\u305f\u306e\u5b66\u7fd2\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9",
+    "title": "あなたの学習ダッシュボード",
     "subtitle": "{{brandName}}が語彙習得をどのようにサポートするかをご覧ください",
     "startStudying": "学習を始める",
     "reviewCards": "カードを復習、ストーリーを読む",
@@ -41,27 +41,27 @@
     "addVocabulary": "語彙を追加するか、ライブラリを閲覧して始めましょう。"
   },
   "sections": {
-    "suggestedForYou": "\u3042\u306a\u305f\u3078\u306e\u304a\u3059\u3059\u3081",
-    "popularPicks": "\u4eba\u6c17\u306e\u30b3\u30f3\u30c6\u30f3\u30c4",
-    "stories": "\u30b9\u30c8\u30fc\u30ea\u30fc",
-    "videos": "\u52d5\u753b",
-    "browseLibrary": "\u30e9\u30a4\u30d6\u30e9\u30ea\u3092\u898b\u308b",
-    "libraryDescription": "\u3042\u306a\u305f\u306e\u30ec\u30d9\u30eb\u306b\u5408\u3063\u305f\u30b9\u30c8\u30fc\u30ea\u30fc\u3068\u52d5\u753b",
-    "continueReading": "\u8aad\u307f\u7d9a\u3051\u308b",
-    "quickActions": "\u30af\u30a4\u30c3\u30af\u30a2\u30af\u30b7\u30e7\u30f3",
-    "recentActivity": "\u6700\u8fd1\u306e\u30a2\u30af\u30c6\u30a3\u30d3\u30c6\u30a3"
+    "suggestedForYou": "あなたへのおすすめ",
+    "popularPicks": "人気のコンテンツ",
+    "stories": "ストーリー",
+    "videos": "動画",
+    "browseLibrary": "ライブラリを見る",
+    "libraryDescription": "あなたのレベルに合ったストーリーと動画",
+    "continueReading": "読み続ける",
+    "quickActions": "クイックアクション",
+    "recentActivity": "最近のアクティビティ"
   },
   "signUpCta": {
-    "title": "\u5b66\u7fd2\u3092\u59cb\u3081\u307e\u3057\u3087\u3046\uff01",
+    "title": "学習を始めましょう！",
     "subtitle": "無料で登録して、AIフラッシュカードで語彙を学びましょう。",
-    "button": "\u7121\u6599\u3067\u8a66\u3059",
-    "disclaimer": "\u30af\u30ec\u30b8\u30c3\u30c8\u30ab\u30fc\u30c9\u4e0d\u8981"
+    "button": "無料で試す",
+    "disclaimer": "クレジットカード不要"
   },
   "session": {
-    "startSession": "\u30bb\u30c3\u30b7\u30e7\u30f3\u3092\u59cb\u3081\u308b",
-    "sessionComplete": "\u30bb\u30c3\u30b7\u30e7\u30f3\u5b8c\u4e86",
-    "greatWork": "\u304a\u3064\u304b\u308c\u3055\u307e\u3067\u3057\u305f\uff01",
-    "keepItUp": "\u3053\u306e\u8abf\u5b50\u3067\u9811\u5f35\u308a\u307e\u3057\u3087\u3046\uff01"
+    "startSession": "セッションを始める",
+    "sessionComplete": "セッション完了",
+    "greatWork": "おつかれさまでした！",
+    "keepItUp": "この調子で頑張りましょう！"
   },
   "learningLoop": {
     "title": "学習ループ",

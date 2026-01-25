@@ -89,8 +89,8 @@
   "sort": {
     "newestFirst": "Newest First",
     "oldestFirst": "Oldest First",
-    "alphabetical": "A \u2192 Z",
-    "alphabeticalReverse": "Z \u2192 A",
+    "alphabetical": "A → Z",
+    "alphabeticalReverse": "Z → A",
     "byMastery": "By Mastery"
   },
   "duration": {
