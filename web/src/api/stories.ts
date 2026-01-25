@@ -130,7 +130,10 @@ export function prefetchStory(storyId: string, language: ContentLanguage): void 
 }
 
 // Get story from cache or fetch
-export async function getStoryWithCache(storyId: string, language: ContentLanguage): Promise<Story> {
+export async function getStoryWithCache(
+  storyId: string,
+  language: ContentLanguage
+): Promise<Story> {
   const cacheKey = `${language}:${storyId}`;
   const cached = storyCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {

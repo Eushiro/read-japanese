@@ -1659,7 +1659,10 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
             <label className="block text-sm font-medium text-foreground mb-1.5">
               {t("vocabulary.addModal.language")}
             </label>
-            <Select value={language} onValueChange={(value) => setLanguage(value as ContentLanguage)}>
+            <Select
+              value={language}
+              onValueChange={(value) => setLanguage(value as ContentLanguage)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select language" />
               </SelectTrigger>

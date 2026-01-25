@@ -1123,9 +1123,7 @@ export function SettingsPage() {
                       <SelectItem value="plus">
                         Plus ({getTier("plus")?.credits} credits)
                       </SelectItem>
-                      <SelectItem value="pro">
-                        Pro ({getTier("pro")?.credits} credits)
-                      </SelectItem>
+                      <SelectItem value="pro">Pro ({getTier("pro")?.credits} credits)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1157,9 +1155,7 @@ export function SettingsPage() {
 
                       return (
                         <div key={lang} className="flex items-center gap-3">
-                          <span className="text-sm w-20">
-                            {langInfo?.label}
-                          </span>
+                          <span className="text-sm w-20">{langInfo?.label}</span>
                           <Select
                             value={currentLevel ?? "not_set"}
                             onValueChange={async (value) => {

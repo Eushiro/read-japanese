@@ -16,7 +16,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { type ContentLanguage, detectTargetLanguage, EXAMS_BY_LANGUAGE, LANGUAGES } from "@/lib/contentLanguages";
+import {
+  type ContentLanguage,
+  detectTargetLanguage,
+  EXAMS_BY_LANGUAGE,
+  LANGUAGES,
+} from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";

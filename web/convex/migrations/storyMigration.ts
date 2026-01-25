@@ -108,118 +108,166 @@ export const insertStory = internalMutation({
 
 // Hardcoded translations for all stories (French and Chinese added)
 // Moved here so migrateFromManifest can use it
-const STORY_TRANSLATIONS: Record<string, {
-  title: { en: string; ja: string; fr: string; zh: string };
-  summary: { en: string; ja: string; fr: string; zh: string };
-}> = {
-  "n5_school_day_001": {
-    title: { en: "My Day at School", ja: "学校の一日", fr: "Ma journée à l'école", zh: "我的校园一天" },
+const STORY_TRANSLATIONS: Record<
+  string,
+  {
+    title: { en: string; ja: string; fr: string; zh: string };
+    summary: { en: string; ja: string; fr: string; zh: string };
+  }
+> = {
+  n5_school_day_001: {
+    title: {
+      en: "My Day at School",
+      ja: "学校の一日",
+      fr: "Ma journée à l'école",
+      zh: "我的校园一天",
+    },
     summary: {
       en: "A student describes their typical day at school, from morning classes to going home.",
       ja: "学生が朝の授業から帰るまでの学校の一日を話します。",
       fr: "Un étudiant décrit sa journée typique à l'école, des cours du matin jusqu'au retour à la maison.",
-      zh: "一名学生描述了自己在学校的一天，从早课到放学回家。"
-    }
+      zh: "一名学生描述了自己在学校的一天，从早课到放学回家。",
+    },
   },
-  "n5_first_cafe_001": {
-    title: { en: "My First Cafe", ja: "はじめてのカフェ", fr: "Mon premier café", zh: "我的第一次咖啡馆之旅" },
+  n5_first_cafe_001: {
+    title: {
+      en: "My First Cafe",
+      ja: "はじめてのカフェ",
+      fr: "Mon premier café",
+      zh: "我的第一次咖啡馆之旅",
+    },
     summary: {
       en: "A student visits a cafe for the first time with a friend and enjoys trying new drinks and cake.",
       ja: "学生が友達と初めてカフェに行って、新しい飲み物とケーキを楽しみます。",
       fr: "Un étudiant visite un café pour la première fois avec un ami et découvre de nouvelles boissons et gâteaux.",
-      zh: "一名学生第一次和朋友去咖啡馆，品尝新饮品和蛋糕。"
-    }
+      zh: "一名学生第一次和朋友去咖啡馆，品尝新饮品和蛋糕。",
+    },
   },
-  "n5_weekend_trip_001": {
+  n5_weekend_trip_001: {
     title: { en: "A Fun Weekend", ja: "楽しい週末", fr: "Un week-end amusant", zh: "愉快的周末" },
     summary: {
       en: "A student plans and enjoys a weekend mountain trip with friends, experiencing beautiful nature and delicious food.",
       ja: "学生が友達と週末の山旅行を計画し、美しい自然とおいしい食べ物を楽しみました。",
       fr: "Un étudiant planifie et profite d'une excursion en montagne avec des amis, découvrant la belle nature et la bonne cuisine.",
-      zh: "一名学生和朋友计划并享受了一次周末登山之旅，体验美丽的自然风光和美食。"
-    }
+      zh: "一名学生和朋友计划并享受了一次周末登山之旅，体验美丽的自然风光和美食。",
+    },
   },
-  "n4_lost_wallet_001": {
-    title: { en: "The Lost Wallet", ja: "落とした財布", fr: "Le portefeuille perdu", zh: "丢失的钱包" },
+  n4_lost_wallet_001: {
+    title: {
+      en: "The Lost Wallet",
+      ja: "落とした財布",
+      fr: "Le portefeuille perdu",
+      zh: "丢失的钱包",
+    },
     summary: {
       en: "A person loses their wallet and experiences the kindness of strangers in Japan.",
       ja: "財布をなくして、日本の人々の親切さを経験する話です。",
       fr: "Une personne perd son portefeuille et découvre la gentillesse des inconnus au Japon.",
-      zh: "一个人丢失了钱包，体验了日本陌生人的善意。"
-    }
+      zh: "一个人丢失了钱包，体验了日本陌生人的善意。",
+    },
   },
-  "magic_cat_001": {
-    title: { en: "The Cat of the Rain", ja: "雨の日の猫", fr: "Le chat de la pluie", zh: "雨天的猫" },
+  magic_cat_001: {
+    title: {
+      en: "The Cat of the Rain",
+      ja: "雨の日の猫",
+      fr: "Le chat de la pluie",
+      zh: "雨天的猫",
+    },
     summary: {
       en: "A young man finds a mysterious cat that can stop the rain and learns about its magical past.",
       ja: "雨を止めることができる不思議な猫を見つけた青年が、その猫の魔法の過去を知る物語です。",
       fr: "Un jeune homme trouve un chat mystérieux capable d'arrêter la pluie et découvre son passé magique.",
-      zh: "一个年轻人发现了一只能够停止雨水的神奇猫咪，并了解了它神奇的过去。"
-    }
+      zh: "一个年轻人发现了一只能够停止雨水的神奇猫咪，并了解了它神奇的过去。",
+    },
   },
-  "n2_digital_detox_001": {
-    title: { en: "Modern Society and Solitude", ja: "現代社会と孤独", fr: "La société moderne et la solitude", zh: "现代社会与孤独" },
+  n2_digital_detox_001: {
+    title: {
+      en: "Modern Society and Solitude",
+      ja: "現代社会と孤独",
+      fr: "La société moderne et la solitude",
+      zh: "现代社会与孤独",
+    },
     summary: {
       en: "A reflection on the importance of disconnecting from technology to rediscover oneself.",
       ja: "テクノロジーから離れ、自分自身を見つめ直す重要性についての考察です。",
       fr: "Une réflexion sur l'importance de se déconnecter de la technologie pour se retrouver soi-même.",
-      zh: "关于远离科技、重新发现自我的重要性的思考。"
-    }
+      zh: "关于远离科技、重新发现自我的重要性的思考。",
+    },
   },
-  "n2_career_change_001": {
+  n2_career_change_001: {
     title: { en: "A New Path", ja: "新しい道", fr: "Un nouveau chemin", zh: "新的道路" },
     summary: {
       en: "A salaryman questions his life choices and finds the courage to pursue his dream of becoming a ceramicist.",
       ja: "サラリーマンが人生の選択を問い直し、陶芸家になる夢を追う勇気を見つける話です。",
       fr: "Un employé de bureau remet en question ses choix de vie et trouve le courage de poursuivre son rêve de devenir céramiste.",
-      zh: "一名上班族重新审视自己的人生选择，找到勇气追求成为陶艺家的梦想。"
-    }
+      zh: "一名上班族重新审视自己的人生选择，找到勇气追求成为陶艺家的梦想。",
+    },
   },
-  "n1_seasons_reflection_001": {
-    title: { en: "The Passage of Seasons", ja: "季節の移ろい", fr: "Le passage des saisons", zh: "季节的更迭" },
+  n1_seasons_reflection_001: {
+    title: {
+      en: "The Passage of Seasons",
+      ja: "季節の移ろい",
+      fr: "Le passage des saisons",
+      zh: "季节的更迭",
+    },
     summary: {
       en: "A contemplative piece about the beauty and transience of seasons, reflecting on life's changes through the lens of nature.",
       ja: "季節の美しさと儚さについての瞑想的な作品。自然を通して人生の変化を見つめる。",
       fr: "Une œuvre contemplative sur la beauté et l'éphémère des saisons, réfléchissant aux changements de la vie à travers le prisme de la nature.",
-      zh: "一篇关于季节之美与短暂的沉思之作，通过自然的视角反思人生的变化。"
-    }
+      zh: "一篇关于季节之美与短暂的沉思之作，通过自然的视角反思人生的变化。",
+    },
   },
-  "n3_cooking_lesson_001": {
+  n3_cooking_lesson_001: {
     title: { en: "Learning to Cook", ja: "料理を習う", fr: "Apprendre à cuisiner", zh: "学习烹饪" },
     summary: {
       en: "A young person learns to cook from their grandmother and discovers the joy of making food for others.",
       ja: "祖母から料理を習って、人に食べてもらう喜びを見つける話です。",
       fr: "Un jeune apprend à cuisiner avec sa grand-mère et découvre la joie de préparer des repas pour les autres.",
-      zh: "一个年轻人跟祖母学习烹饪，发现了为他人做饭的快乐。"
-    }
+      zh: "一个年轻人跟祖母学习烹饪，发现了为他人做饭的快乐。",
+    },
   },
-  "n3_library_discovery_001": {
-    title: { en: "A Discovery at the Library", ja: "図書館での発見", fr: "Une découverte à la bibliothèque", zh: "图书馆里的发现" },
+  n3_library_discovery_001: {
+    title: {
+      en: "A Discovery at the Library",
+      ja: "図書館での発見",
+      fr: "Une découverte à la bibliothèque",
+      zh: "图书馆里的发现",
+    },
     summary: {
       en: "A busy office worker escapes to the library and accidentally discovers calligraphy, which transforms their perspective on life and the value of quiet, focused time.",
       ja: "忙しい会社員が図書館で偶然に書道と出会い、静かで集中できる時間の価値に気づいて、日常生活が変わっていく話です。",
       fr: "Un employé de bureau débordé se réfugie à la bibliothèque et découvre par hasard la calligraphie, ce qui transforme sa vision de la vie et la valeur du temps calme et concentré.",
-      zh: "一名忙碌的上班族逃到图书馆，意外发现了书法，这改变了他对生活的看法以及对安静专注时光的珍视。"
-    }
+      zh: "一名忙碌的上班族逃到图书馆，意外发现了书法，这改变了他对生活的看法以及对安静专注时光的珍视。",
+    },
   },
-  "n4_shinkansen_001": {
-    title: { en: "First Shinkansen", ja: "初めての新幹線", fr: "Mon premier Shinkansen", zh: "第一次乘坐新干线" },
+  n4_shinkansen_001: {
+    title: {
+      en: "First Shinkansen",
+      ja: "初めての新幹線",
+      fr: "Mon premier Shinkansen",
+      zh: "第一次乘坐新干线",
+    },
     summary: {
       en: "A person rides the bullet train for the first time on a business trip, experiences the modern station, the fast journey, beautiful scenery, and arrives with new appreciation for Japanese technology.",
       ja: "出張で初めて新幹線に乗って、駅の様子、速い旅、美しい景色を経験し、日本の技術に感動した話です。",
       fr: "Une personne prend le train à grande vitesse pour la première fois lors d'un voyage d'affaires, découvre la gare moderne, le voyage rapide, les beaux paysages, et arrive avec une nouvelle appréciation de la technologie japonaise.",
-      zh: "一个人在出差时第一次乘坐新干线，体验了现代化的车站、快速的旅程、美丽的风景，并对日本技术产生了新的敬意。"
-    }
+      zh: "一个人在出差时第一次乘坐新干线，体验了现代化的车站、快速的旅程、美丽的风景，并对日本技术产生了新的敬意。",
+    },
   },
-  "n1_ephemeral_snow_001": {
-    title: { en: "Fleeting Reminiscence", ja: "微かな追憶", fr: "Réminiscence éphémère", zh: "短暂的追忆" },
+  n1_ephemeral_snow_001: {
+    title: {
+      en: "Fleeting Reminiscence",
+      ja: "微かな追憶",
+      fr: "Réminiscence éphémère",
+      zh: "短暂的追忆",
+    },
     summary: {
       en: "A profound meditation on the nature of memory and the passing of time through the lens of falling snow, as the narrator reflects on a lost love and comes to terms with the beauty of impermanence.",
       ja: "降り積もる雪を通じ、記憶の本質と時の流れを深く思索する文学的な物語。失われた恋の追憶と、無常の美への理解を描く。",
       fr: "Une méditation profonde sur la nature de la mémoire et le passage du temps à travers la neige qui tombe, alors que le narrateur réfléchit à un amour perdu et accepte la beauté de l'impermanence.",
-      zh: "通过飘落的雪花，对记忆本质和时光流逝进行深刻的沉思。叙述者回忆逝去的爱情，并接受无常之美。"
-    }
-  }
+      zh: "通过飘落的雪花，对记忆本质和时光流逝进行深刻的沉思。叙述者回忆逝去的爱情，并接受无常之美。",
+    },
+  },
 };
 
 /**
@@ -255,9 +303,7 @@ export const migrateFromManifest = internalAction({
           storyId: story.id,
           language: story.language as "japanese" | "english" | "french",
           // For Japanese stories, use Japanese as the primary title
-          title: story.language === "japanese"
-            ? translations.title.ja
-            : translations.title.en,
+          title: story.language === "japanese" ? translations.title.ja : translations.title.en,
           titleTranslations: translations.title,
           level: story.level,
           wordCount: story.wordCount,
@@ -265,9 +311,8 @@ export const migrateFromManifest = internalAction({
           chapterCount: story.chapterCount,
           isPremium: story.isPremium,
           // For Japanese stories, use Japanese as the primary summary
-          summary: story.language === "japanese"
-            ? translations.summary.ja
-            : translations.summary.en,
+          summary:
+            story.language === "japanese" ? translations.summary.ja : translations.summary.en,
           summaryTranslations: translations.summary,
           storyUrl,
           // Convert null to undefined for optional fields

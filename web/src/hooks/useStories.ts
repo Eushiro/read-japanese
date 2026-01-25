@@ -154,20 +154,13 @@ export function useFilteredStories(
         const genre = story.genre.toLowerCase();
 
         // Basic text matching
-        if (
-          title.includes(term) ||
-          titleInUILang.includes(term) ||
-          genre.includes(term)
-        ) {
+        if (title.includes(term) || titleInUILang.includes(term) || genre.includes(term)) {
           return true;
         }
 
         // For Japanese stories, also match romaji → hiragana/katakana
         if (story.language === "japanese") {
-          return (
-            title.includes(hiragana) ||
-            title.includes(katakana)
-          );
+          return title.includes(hiragana) || title.includes(katakana);
         }
 
         return false;
