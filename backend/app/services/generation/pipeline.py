@@ -1,6 +1,8 @@
 """
 Story generation pipeline
 Orchestrates story, image, and audio generation into a single workflow.
+
+All media is uploaded directly to R2 - no local files are saved.
 """
 import logging
 import json
@@ -11,10 +13,11 @@ from .image_generator import ImageGenerator
 from .audio_generator import AudioGenerator
 from .image_describer import get_image_describer
 from .vocabulary_validator import get_validator
+from ..storage import upload_story_json
 
 logger = logging.getLogger(__name__)
 
-# Directory for storing story JSON files
+# Optional local backup directory (if needed for debugging)
 STORIES_DIR = Path(__file__).parent.parent.parent / "data" / "stories"
 
 
@@ -123,7 +126,9 @@ class StoryPipeline:
                     color_palette=image_descriptions.get("colorPalette"),
                     style=image_style,
                     aspect_ratio="4:5",
-                    filename_prefix=f"cover_{story['id']}"
+                    story_id=story["id"],
+                    language="japanese",
+                    chapter_num=None,  # Cover, not a chapter
                 )
             else:
                 # Fallback to legacy method
@@ -132,7 +137,9 @@ class StoryPipeline:
                     story_summary=story["metadata"]["summary"],
                     genre=genre,
                     jlpt_level=jlpt_level,
-                    style=image_style
+                    style=image_style,
+                    story_id=story["id"],
+                    language="japanese",
                 )
             if image_result:
                 story["metadata"]["coverImageURL"] = image_result["url"]
@@ -146,34 +153,30 @@ class StoryPipeline:
         if generate_chapter_images and self.image_generator.is_configured:
             logger.info("Step 5/6: Generating chapter images...")
             story = await self._generate_chapter_images(
-                story, genre, image_style, image_descriptions, cover_image_bytes
+                story, genre, image_style, image_descriptions, cover_image_bytes, "japanese"
             )
         else:
             logger.info("Step 5/6: Skipping chapter image generation")
 
-        # Step 6: Generate audio
+        # Step 6 & 7: Generate audio with optional alignment
         if generate_audio and self.audio_generator.is_configured:
             logger.info("Step 6/7: Generating audio narration...")
-            audio_result = await self.audio_generator.generate_story_audio(
-                story_id=story["id"],
-                chapters=story["chapters"],
-                voice=voice
+            audio_result = await self._generate_audio_with_alignment(
+                story=story,
+                voice=voice,
+                language="japanese",
+                align=align_audio,
             )
             if audio_result:
-                story["metadata"]["audioURL"] = audio_result
+                story["metadata"]["audioURL"] = audio_result.get("audioURL")
+                story["metadata"]["audioModel"] = audio_result.get("audioModel")
+                story["metadata"]["audioVoice"] = audio_result.get("audioVoice")
                 story["metadata"]["audioVoiceName"] = voice.capitalize()
         else:
             logger.info("Step 6/7: Skipping audio generation")
 
-        # Step 7: Align audio with text
-        if align_audio and generate_audio and story["metadata"].get("audioURL"):
-            logger.info("Step 7/7: Aligning audio with text...")
-            story = await self._align_audio(story)
-        else:
-            logger.info("Step 7/7: Skipping audio alignment")
-
-        # Save story to file
-        await self._save_story(story)
+        # Save story to R2
+        await self._save_story(story, "japanese")
 
         logger.info(f"Story generation complete: {story['id']}")
         return story
@@ -462,17 +465,189 @@ class StoryPipeline:
         # If same number of checks pass, prefer higher readability score
         return new_val.get("readabilityScore", 0) > old_val.get("readabilityScore", 0)
 
-    async def _save_story(self, story: dict) -> None:
-        """Save story to JSON file"""
+    async def _generate_audio_with_alignment(
+        self,
+        story: dict,
+        voice: str,
+        language: str,
+        align: bool,
+    ) -> Optional[dict]:
+        """
+        Generate audio, optionally align, then upload to R2.
+
+        This keeps audio in memory for alignment before uploading,
+        avoiding the need to download from R2 for alignment.
+        """
+        from .media import get_audio_bytes_as_mp3
+        from ..storage import upload_story_audio
+        from .audio_generator import select_voice, GEMINI_MODEL, NARRATION_PROMPT
+
+        if not self.audio_generator.is_configured:
+            return None
+
+        # Select voice if not provided
+        if voice is None:
+            voice = select_voice()
+
+        # Extract all text from chapters
+        full_text = self.audio_generator._extract_story_text(story["chapters"])
+        if not full_text:
+            logger.warning("No text to generate audio for")
+            return None
+
+        logger.info(f"Generating audio for {story['id']} with voice {voice}")
+
+        # Generate PCM audio
+        pcm_data = self.audio_generator.get_pcm_audio(full_text, voice)
+        if not pcm_data:
+            return None
+
+        # Align if requested (before converting to MP3)
+        if align:
+            logger.info("Step 7/7: Aligning audio with text...")
+            story = await self._align_audio_from_pcm(story, pcm_data)
+        else:
+            logger.info("Step 7/7: Skipping audio alignment")
+
+        # Convert to MP3 in memory
+        mp3_bytes = get_audio_bytes_as_mp3(pcm_data, bitrate="64k")
+
+        # Upload to R2
+        url = upload_story_audio(mp3_bytes, story["id"], language)
+        logger.info(f"Audio uploaded to R2: {len(mp3_bytes) / 1024:.1f}KB")
+
+        return {
+            "audioURL": url,
+            "audioModel": GEMINI_MODEL,
+            "audioPrompt": NARRATION_PROMPT.strip(),
+            "audioVoice": voice,
+        }
+
+    async def _align_audio_from_pcm(self, story: dict, pcm_data: bytes) -> dict:
+        """Align audio with text using stable-whisper, from in-memory PCM data"""
+        import tempfile
+        import wave
+
+        try:
+            import stable_whisper
+        except ImportError:
+            logger.warning("stable_whisper not installed, skipping audio alignment")
+            return story
+
+        # Create temporary WAV file for stable-whisper
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp_path = tmp.name
+            with wave.open(tmp, "wb") as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)  # 16-bit
+                wf.setframerate(24000)  # Gemini TTS sample rate
+                wf.writeframes(pcm_data)
+
+        try:
+            logger.info("  Loading Whisper model for alignment...")
+            model = stable_whisper.load_model("small")
+
+            logger.info("  Transcribing audio for alignment...")
+            result = model.transcribe(
+                tmp_path,
+                language="ja",
+                word_timestamps=True,
+            )
+
+            # Collect all words with timestamps
+            all_words = []
+            for whisper_seg in result.segments:
+                if hasattr(whisper_seg, 'words') and whisper_seg.words:
+                    for word in whisper_seg.words:
+                        all_words.append({
+                            "text": word.word.strip(),
+                            "start": round(word.start, 3),
+                            "end": round(word.end, 3),
+                        })
+
+            if not all_words:
+                logger.warning("No words detected in audio")
+                return story
+
+            logger.info(f"  Detected {len(all_words)} words in audio")
+
+            # Match words to story segments
+            word_idx = 0
+            matched_segments = 0
+
+            for chapter in story.get("chapters", []):
+                for segment in chapter.get("content", []):
+                    seg_text = self._get_segment_text(segment)
+                    if not seg_text.strip():
+                        continue
+
+                    seg_start = None
+                    seg_end = None
+                    seg_words = []
+                    remaining_text = seg_text
+
+                    while word_idx < len(all_words) and remaining_text:
+                        word = all_words[word_idx]
+                        word_text = word["text"]
+
+                        if word_text and word_text in remaining_text:
+                            if seg_start is None:
+                                seg_start = word["start"]
+                            seg_end = word["end"]
+                            seg_words.append({
+                                "text": word_text,
+                                "start": word["start"],
+                                "end": word["end"],
+                            })
+                            idx = remaining_text.find(word_text)
+                            remaining_text = remaining_text[idx + len(word_text):]
+                            word_idx += 1
+                        elif not word_text.strip():
+                            word_idx += 1
+                        else:
+                            if len(remaining_text) < len(seg_text) * 0.3:
+                                break
+                            word_idx += 1
+
+                    if seg_start is not None and seg_end is not None:
+                        segment["audioStartTime"] = seg_start
+                        segment["audioEndTime"] = seg_end
+                        segment["audioWords"] = seg_words
+                        matched_segments += 1
+
+            logger.info(f"  Aligned {matched_segments} segments with audio")
+
+        finally:
+            # Clean up temp file
+            import os
+            os.unlink(tmp_path)
+
+        return story
+
+    async def _save_story(self, story: dict, language: str = "japanese") -> str:
+        """
+        Save story to R2 and return URL.
+        Also saves a local backup for debugging.
+        """
+        story_json = json.dumps(story, ensure_ascii=False, indent=2)
+        story_bytes = story_json.encode("utf-8")
+
+        # Upload to R2
+        try:
+            url = upload_story_json(story_bytes, story["id"], language)
+            logger.info(f"Story uploaded to R2: {url}")
+        except Exception as e:
+            logger.warning(f"R2 upload failed: {e}, saving locally only")
+            url = None
+
+        # Also save locally for debugging/backup
         STORIES_DIR.mkdir(parents=True, exist_ok=True)
-
-        filename = f"{story['id']}.json"
-        filepath = STORIES_DIR / filename
-
+        filepath = STORIES_DIR / f"{story['id']}.json"
         with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(story, f, ensure_ascii=False, indent=2)
+            f.write(story_json)
+        logger.info(f"Story backed up to: {filepath}")
 
-        logger.info(f"Story saved to: {filepath}")
+        return url
 
     async def _generate_chapter_images(
         self,
@@ -480,7 +655,8 @@ class StoryPipeline:
         genre: str,
         style: str,
         image_descriptions: Optional[dict] = None,
-        reference_image: Optional[bytes] = None
+        reference_image: Optional[bytes] = None,
+        language: str = "japanese",
     ) -> dict:
         """Generate images for each chapter using descriptions and reference image for consistency"""
         import asyncio
@@ -512,7 +688,9 @@ class StoryPipeline:
                     style=style,
                     aspect_ratio="16:9",
                     reference_image=reference_image,
-                    filename_prefix=f"chapter_{story['id']}_ch{i+1}"
+                    story_id=story["id"],
+                    language=language,
+                    chapter_num=i + 1,
                 )
             else:
                 # Fallback to legacy method
@@ -523,7 +701,10 @@ class StoryPipeline:
                     story_title=story["metadata"]["title"],
                     genre=genre,
                     style=style,
-                    aspect_ratio="16:9"
+                    aspect_ratio="16:9",
+                    story_id=story["id"],
+                    language=language,
+                    chapter_num=i + 1,
                 )
 
             if chapter_result:
@@ -557,101 +738,6 @@ class StoryPipeline:
         if len(full_text) > 200:
             return full_text[:200] + "..."
         return full_text or chapter.get("title", "")
-
-    async def _align_audio(self, story: dict) -> dict:
-        """Align audio with text using stable-whisper for word-level timestamps"""
-        try:
-            import stable_whisper
-        except ImportError:
-            logger.warning("stable_whisper not installed, skipping audio alignment")
-            return story
-
-        # Find audio file
-        audio_dir = Path(__file__).parent.parent.parent / "static" / "audio"
-        audio_originals_dir = audio_dir / "originals"
-        story_id = story["id"]
-
-        # Prefer WAV original for better alignment
-        audio_path = audio_originals_dir / f"{story_id}.wav"
-        if not audio_path.exists():
-            audio_path = audio_dir / f"{story_id}.mp3"
-        if not audio_path.exists():
-            logger.warning(f"No audio file found for {story_id}")
-            return story
-
-        logger.info(f"  Loading Whisper model for alignment...")
-        model = stable_whisper.load_model("small")
-
-        logger.info(f"  Transcribing audio: {audio_path.name}")
-        result = model.transcribe(
-            str(audio_path),
-            language="ja",
-            word_timestamps=True,
-        )
-
-        # Collect all words with timestamps
-        all_words = []
-        for whisper_seg in result.segments:
-            if hasattr(whisper_seg, 'words') and whisper_seg.words:
-                for word in whisper_seg.words:
-                    all_words.append({
-                        "text": word.word.strip(),
-                        "start": round(word.start, 3),
-                        "end": round(word.end, 3),
-                    })
-
-        if not all_words:
-            logger.warning("No words detected in audio")
-            return story
-
-        logger.info(f"  Detected {len(all_words)} words in audio")
-
-        # Match words to story segments
-        word_idx = 0
-        matched_segments = 0
-
-        for chapter in story.get("chapters", []):
-            for segment in chapter.get("content", []):
-                seg_text = self._get_segment_text(segment)
-                if not seg_text.strip():
-                    continue
-
-                seg_start = None
-                seg_end = None
-                seg_words = []
-                remaining_text = seg_text
-
-                while word_idx < len(all_words) and remaining_text:
-                    word = all_words[word_idx]
-                    word_text = word["text"]
-
-                    if word_text and word_text in remaining_text:
-                        if seg_start is None:
-                            seg_start = word["start"]
-                        seg_end = word["end"]
-                        seg_words.append({
-                            "text": word_text,
-                            "start": word["start"],
-                            "end": word["end"],
-                        })
-                        idx = remaining_text.find(word_text)
-                        remaining_text = remaining_text[idx + len(word_text):]
-                        word_idx += 1
-                    elif not word_text.strip():
-                        word_idx += 1
-                    else:
-                        if len(remaining_text) < len(seg_text) * 0.3:
-                            break
-                        word_idx += 1
-
-                if seg_start is not None and seg_end is not None:
-                    segment["audioStartTime"] = seg_start
-                    segment["audioEndTime"] = seg_end
-                    segment["audioWords"] = seg_words
-                    matched_segments += 1
-
-        logger.info(f"  Aligned {matched_segments} segments with audio")
-        return story
 
     def _get_segment_text(self, segment: dict) -> str:
         """Extract plain text from a segment"""

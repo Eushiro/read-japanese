@@ -5,6 +5,8 @@ Batch Generate Deck Content
 Generates sentences, audio, and images for premade vocabulary decks.
 Uses Google Batch API for cost-efficient text generation (50% discount).
 
+All media is uploaded directly to R2 - no local files are saved.
+
 Usage:
     python scripts/batch_generate_deck.py --deck jlpt_n5 --type sentences --count 100
     python scripts/batch_generate_deck.py --deck jlpt_n5 --type audio --count 50
@@ -31,19 +33,24 @@ from typing import Any, Dict, List, Optional
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Load environment variables from .env file
+# Load environment variables from web/.env.local (shared with frontend)
 from dotenv import load_dotenv
-load_dotenv(Path(__file__).parent.parent / ".env")
+env_path = Path(__file__).parent.parent.parent / "web" / ".env.local"
+load_dotenv(env_path)
 
 from google import genai
 from google.genai import types
 import httpx
-from PIL import Image
 from pydantic import BaseModel
 
 # Import shared utilities
-from app.services.generation.media import compress_audio_to_mp3, compress_image_to_webp
+from app.services.generation.media import get_audio_bytes_as_mp3, get_image_bytes_as_webp
 from app.services.generation.batch import BatchJobRunner, BatchRequest
+from app.services.storage import (
+    upload_word_audio,
+    upload_sentence_audio,
+    upload_word_image,
+)
 from app.config.languages import (
     LANGUAGE_CODES,
     LANGUAGE_NAMES,
@@ -93,9 +100,9 @@ class VocabWord:
     # Generated content
     sentence: Optional[str] = None
     sentence_translations: Optional[Dict[str, str]] = None  # {"en": "...", "ja": "...", "fr": "..."}
-    audio_path: Optional[str] = None
-    word_audio_path: Optional[str] = None
-    image_path: Optional[str] = None
+    audio_url: Optional[str] = None  # R2 URL for sentence audio
+    word_audio_url: Optional[str] = None  # R2 URL for word audio
+    image_url: Optional[str] = None  # R2 URL for image
 
 
 @dataclass
@@ -412,20 +419,22 @@ Make sentences appropriate for the specified difficulty level."""
 
 
 # ============================================
-# AUDIO GENERATION (with compression)
+# AUDIO GENERATION (uploads directly to R2)
 # ============================================
 
 TTS_VOICES = ["Leda", "Aoede", "Alnilam", "Rasalgethi"]
 
-async def generate_audio(
+async def generate_sentence_audio(
     text: str,
-    output_path: Path,
-    voice: str = "Aoede"
-) -> Optional[Path]:
+    word: str,
+    language: str,
+    item_id: str,
+    voice: str = "Aoede",
+) -> Optional[str]:
     """
-    Generate audio using Gemini TTS and compress to MP3.
+    Generate audio for a sentence using Gemini TTS and upload to R2.
 
-    Uses shared compression utility for consistent output across pipelines.
+    Returns R2 URL or None if failed.
     """
     if not GEMINI_API_KEY:
         return None
@@ -451,35 +460,84 @@ async def generate_audio(
         )
 
         # Extract PCM audio data
-        audio_data = response.candidates[0].content.parts[0].inline_data.data
+        pcm_data = response.candidates[0].content.parts[0].inline_data.data
 
-        # Convert to MP3 using shared utility
-        mp3_path = output_path.with_suffix(".mp3")
-        compress_audio_to_mp3(audio_data, mp3_path, bitrate="64k")
+        # Convert to MP3 in memory
+        mp3_bytes = get_audio_bytes_as_mp3(pcm_data, bitrate="64k")
 
-        return mp3_path
+        # Upload to R2
+        url = upload_sentence_audio(mp3_bytes, word, language, item_id)
+        return url
 
     except Exception as e:
         logger.error(f"Audio generation failed: {e}")
         return None
 
 
+async def generate_word_audio(
+    word: str,
+    language: str,
+    voice: str = "Aoede",
+) -> Optional[str]:
+    """
+    Generate audio for a single word using Gemini TTS and upload to R2.
+
+    Returns R2 URL or None if failed.
+    """
+    if not GEMINI_API_KEY:
+        return None
+
+    client = genai.Client(api_key=GEMINI_API_KEY)
+
+    try:
+        prompt = f"Read aloud clearly and slowly for language learners:\n\n{word}"
+
+        response = client.models.generate_content(
+            model=TTS_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_modalities=["AUDIO"],
+                speech_config=types.SpeechConfig(
+                    voice_config=types.VoiceConfig(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                            voice_name=voice,
+                        )
+                    )
+                ),
+            )
+        )
+
+        # Extract PCM audio data
+        pcm_data = response.candidates[0].content.parts[0].inline_data.data
+
+        # Convert to MP3 in memory
+        mp3_bytes = get_audio_bytes_as_mp3(pcm_data, bitrate="64k")
+
+        # Upload to R2
+        url = upload_word_audio(mp3_bytes, word, language)
+        return url
+
+    except Exception as e:
+        logger.error(f"Word audio generation failed: {e}")
+        return None
+
+
 # ============================================
-# IMAGE GENERATION (with compression)
+# IMAGE GENERATION (uploads directly to R2)
 # ============================================
 
 async def generate_image(
     word: str,
     sentence: str,
     language: str,
-    output_path: Path,
+    image_id: str,
     max_size: int = 400,
     quality: int = 80
-) -> Optional[Path]:
+) -> Optional[str]:
     """
-    Generate a flashcard image using Gemini and compress to WebP.
+    Generate a flashcard image using Gemini and upload to R2.
 
-    Uses shared compression utility for consistent output across pipelines.
+    Returns R2 URL or None if failed.
     """
     if not GEMINI_API_KEY:
         return None
@@ -514,11 +572,12 @@ Style: Simple vector-like illustration with clean lines."""
         # Extract image data
         image_data = response.candidates[0].content.parts[0].inline_data.data
 
-        # Compress to WebP using shared utility
-        webp_path = output_path.with_suffix(".webp")
-        compress_image_to_webp(image_data, webp_path, quality=quality, max_size=max_size)
+        # Compress to WebP in memory
+        webp_bytes = get_image_bytes_as_webp(image_data, quality=quality, max_size=max_size)
 
-        return webp_path
+        # Upload to R2
+        url = upload_word_image(webp_bytes, word, language, image_id)
+        return url
 
     except Exception as e:
         logger.error(f"Image generation failed: {e}")
@@ -559,11 +618,17 @@ def load_words_from_csv(csv_path: Path, language: str, level: str) -> List[Vocab
 
 
 # ============================================
-# OUTPUT MANAGEMENT
+# OUTPUT MANAGEMENT (optional, for debugging)
 # ============================================
 
+# Output directory for results JSON (if save_results is enabled)
+OUTPUT_DIR = Path(__file__).parent.parent / "generated"
+
 def save_results_json(words: List[VocabWord], output_path: Path):
-    """Save generated content to JSON for later Convex upload"""
+    """
+    Save generated content to JSON for reference/debugging.
+    Note: Media is already uploaded to R2, this just saves metadata.
+    """
     data = []
     for w in words:
         data.append({
@@ -574,10 +639,10 @@ def save_results_json(words: List[VocabWord], output_path: Path):
             "language": w.language,
             "level": w.level,
             "sentence": w.sentence,
-            "translations": w.sentence_translations or {},  # {"en": "...", "ja": "...", "fr": "..."}
-            "audio_path": str(w.audio_path) if w.audio_path else None,
-            "word_audio_path": str(w.word_audio_path) if w.word_audio_path else None,
-            "image_path": str(w.image_path) if w.image_path else None,
+            "translations": w.sentence_translations or {},
+            "audioUrl": w.audio_url,
+            "wordAudioUrl": w.word_audio_url,
+            "imageUrl": w.image_url,
         })
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -597,10 +662,13 @@ async def run_pipeline(
     generate_audio_flag: bool = False,
     generate_images_flag: bool = False,
     count: Optional[int] = None,
-    output_dir: Path = OUTPUT_DIR,
     use_batch_api: bool = True,
+    save_results: bool = True,
 ):
-    """Run the generation pipeline"""
+    """
+    Run the generation pipeline.
+    All media is uploaded directly to R2 during generation.
+    """
 
     # Limit count if specified
     if count and count < len(words):
@@ -627,10 +695,9 @@ async def run_pipeline(
         success = sum(1 for w in words if w.sentence)
         logger.info(f"Sentences generated: {success}/{len(words)}")
 
-    # Step 2: Generate audio
+    # Step 2: Generate audio and upload to R2
     if generate_audio_flag:
-        logger.info("=== Generating Audio ===")
-        audio_dir = output_dir / "audio"
+        logger.info("=== Generating Audio (uploading to R2) ===")
 
         for i, w in enumerate(words):
             if not w.sentence:
@@ -638,26 +705,29 @@ async def run_pipeline(
 
             logger.info(f"[{i+1}/{len(words)}] Audio for: {w.word}")
 
-            # Sentence audio
-            audio_path = await generate_audio(
-                w.sentence,
-                audio_dir / f"{w.id}_sentence",
+            # Sentence audio -> R2
+            audio_url = await generate_sentence_audio(
+                text=w.sentence,
+                word=w.word,
+                language=w.language,
+                item_id=w.id,
             )
-            if audio_path:
-                w.audio_path = audio_path
+            if audio_url:
+                w.audio_url = audio_url
+                logger.info(f"  Sentence audio uploaded: {audio_url}")
 
-            # Word-only audio
-            word_audio_path = await generate_audio(
-                w.word,
-                audio_dir / f"{w.id}_word",
+            # Word-only audio -> R2
+            word_audio_url = await generate_word_audio(
+                word=w.word,
+                language=w.language,
             )
-            if word_audio_path:
-                w.word_audio_path = word_audio_path
+            if word_audio_url:
+                w.word_audio_url = word_audio_url
+                logger.info(f"  Word audio uploaded: {word_audio_url}")
 
-    # Step 3: Generate images
+    # Step 3: Generate images and upload to R2
     if generate_images_flag:
-        logger.info("=== Generating Images ===")
-        image_dir = output_dir / "images"
+        logger.info("=== Generating Images (uploading to R2) ===")
 
         for i, w in enumerate(words):
             if not w.sentence:
@@ -665,17 +735,19 @@ async def run_pipeline(
 
             logger.info(f"[{i+1}/{len(words)}] Image for: {w.word}")
 
-            image_path = await generate_image(
-                w.word,
-                w.sentence,
-                w.language,
-                image_dir / f"{w.id}",
+            image_url = await generate_image(
+                word=w.word,
+                sentence=w.sentence,
+                language=w.language,
+                image_id=w.id,
             )
-            if image_path:
-                w.image_path = image_path
+            if image_url:
+                w.image_url = image_url
+                logger.info(f"  Image uploaded: {image_url}")
 
-    # Save results
-    save_results_json(words, output_dir / "results.json")
+    # Save results (optional, for debugging)
+    if save_results:
+        save_results_json(words, OUTPUT_DIR / "results.json")
 
     return words
 
@@ -685,18 +757,22 @@ async def run_pipeline(
 # ============================================
 
 def main():
-    parser = argparse.ArgumentParser(description="Batch generate deck content")
+    parser = argparse.ArgumentParser(description="Batch generate deck content (uploads to R2)")
     parser.add_argument("--import-csv", type=Path, help="Import words from CSV file")
     parser.add_argument("--deck", type=str, help="Deck ID (for Convex integration)")
     parser.add_argument("--language", type=str, default="japanese", choices=["japanese", "english", "french"])
     parser.add_argument("--level", type=str, default="N5", help="Difficulty level (N5-N1 or A1-C2)")
     parser.add_argument("--type", type=str, default="sentences", choices=["sentences", "audio", "images", "all"])
     parser.add_argument("--count", type=int, help="Limit number of words to process")
-    parser.add_argument("--output", type=Path, default=OUTPUT_DIR, help="Output directory")
     parser.add_argument(
         "--no-batch-api",
         action="store_true",
         help="Disable Batch API (faster for small batches, but full price)"
+    )
+    parser.add_argument(
+        "--no-save",
+        action="store_true",
+        help="Don't save results.json (all media goes directly to R2)"
     )
 
     args = parser.parse_args()
@@ -720,8 +796,8 @@ def main():
         generate_audio_flag=args.type in ["audio", "all"],
         generate_images_flag=args.type in ["images", "all"],
         count=args.count,
-        output_dir=args.output,
         use_batch_api=not args.no_batch_api,
+        save_results=not args.no_save,
     ))
 
 

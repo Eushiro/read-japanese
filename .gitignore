@@ -103,3 +103,9 @@ yarn.lock
 # Build artifacts
 dist/
 .vite/
+
+# Backend generated files (media uploaded to R2, not stored locally)
+backend/generated/
+backend/app/static/audio/
+backend/app/static/images/
+backend/app/data/stories/

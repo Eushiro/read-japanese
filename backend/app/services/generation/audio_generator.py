@@ -1,21 +1,20 @@
 """
 Audio generation service using Google Gemini TTS
 Generates audio narration for Japanese graded reader stories.
+
+Audio is uploaded directly to R2 storage - no local files are saved.
 """
 import logging
 import os
-from pathlib import Path
 from typing import List, Optional
 
 from google import genai
 from google.genai import types
 
-from .media import compress_audio_to_mp3
+from .media import get_audio_bytes_as_mp3
+from ..storage import upload_story_audio
 
 logger = logging.getLogger(__name__)
-
-# Directory for storing generated audio
-AUDIO_DIR = Path(__file__).parent.parent.parent / "static" / "audio"
 
 # Gemini TTS configuration
 GEMINI_MODEL = "gemini-2.5-flash-preview-tts"
@@ -54,15 +53,18 @@ class AudioGenerator:
         self,
         story_id: str,
         chapters: List[dict],
-        voice: Optional[str] = None
+        voice: Optional[str] = None,
+        language: str = "japanese",
     ) -> Optional[dict]:
         """
         Generate audio for an entire story.
+        Uploads directly to R2 - no local files saved.
 
         Args:
             story_id: Unique story identifier
             chapters: List of chapter dicts with content
             voice: Voice name (optional, randomly selected if not provided)
+            language: Content language (for R2 path)
 
         Returns:
             Dict with audioURL and metadata, or None if generation failed
@@ -84,15 +86,16 @@ class AudioGenerator:
 
         logger.info(f"Generating audio for {story_id} with voice {voice}")
 
-        audio_path = await self._generate_audio(
+        audio_url = await self._generate_and_upload_audio(
             text=full_text,
             voice=voice,
-            filename=f"{story_id}.mp3"
+            story_id=story_id,
+            language=language,
         )
 
-        if audio_path:
+        if audio_url:
             return {
-                "audioURL": audio_path,
+                "audioURL": audio_url,
                 "audioModel": GEMINI_MODEL,
                 "audioPrompt": NARRATION_PROMPT.strip(),
                 "audioVoice": voice
@@ -104,19 +107,22 @@ class AudioGenerator:
         story_id: str,
         chapter_number: int,
         content: List[dict],
-        voice: Optional[str] = None
+        voice: Optional[str] = None,
+        language: str = "japanese",
     ) -> Optional[str]:
         """
         Generate audio for a single chapter.
+        Note: Currently not supported for R2 - story audio is generated as one file.
 
         Args:
             story_id: Story identifier
             chapter_number: Chapter number
             content: List of segment dicts
             voice: Voice name (optional, randomly selected if not provided)
+            language: Content language
 
         Returns:
-            CDN path to the audio file
+            R2 URL to the audio file, or None
         """
         if not self.is_configured:
             return None
@@ -128,20 +134,20 @@ class AudioGenerator:
         if voice is None:
             voice = select_voice()
 
-        return await self._generate_audio(
-            text=text,
-            voice=voice,
-            filename=f"{story_id}_ch{chapter_number}.mp3"
-        )
+        # For chapter audio, we'd need a different R2 path structure
+        # For now, this returns the PCM bytes but doesn't upload
+        logger.warning("Chapter-level audio upload not yet implemented for R2")
+        return None
 
     async def generate_segment_audio(
         self,
         segment_id: str,
         text: str,
-        voice: Optional[str] = None
+        voice: Optional[str] = None,
     ) -> Optional[str]:
         """
         Generate audio for a single segment/sentence.
+        Note: Currently not supported for R2.
 
         Args:
             segment_id: Segment identifier
@@ -149,36 +155,33 @@ class AudioGenerator:
             voice: Voice name (optional, randomly selected if not provided)
 
         Returns:
-            CDN path to the audio file
+            R2 URL to the audio file, or None
         """
         if not self.is_configured or not text:
             return None
 
-        if voice is None:
-            voice = select_voice()
+        # Segment-level audio would need flashcard storage structure
+        logger.warning("Segment-level audio upload not yet implemented for R2")
+        return None
 
-        return await self._generate_audio(
-            text=text,
-            voice=voice,
-            filename=f"{segment_id}.mp3"
-        )
-
-    async def _generate_audio(
+    async def _generate_and_upload_audio(
         self,
         text: str,
         voice: str,
-        filename: str
+        story_id: str,
+        language: str,
     ) -> Optional[str]:
         """
-        Generate audio using Google Gemini TTS API.
+        Generate audio using Google Gemini TTS API and upload to R2.
 
         Args:
             text: Text to convert to speech
             voice: Voice name (e.g., Aoede)
-            filename: Output filename
+            story_id: Story ID for R2 path
+            language: Content language for R2 path
 
         Returns:
-            CDN path to the saved audio file
+            R2 URL to the uploaded audio file
         """
         try:
             # Prepare the prompt with narration instructions
@@ -201,34 +204,52 @@ class AudioGenerator:
             )
 
             # Extract PCM audio data from response
-            audio_data = response.candidates[0].content.parts[0].inline_data.data
+            pcm_data = response.candidates[0].content.parts[0].inline_data.data
 
-            # Ensure output directory exists
-            AUDIO_DIR.mkdir(parents=True, exist_ok=True)
-            filepath = AUDIO_DIR / filename
+            # Convert PCM to MP3 in memory
+            mp3_bytes = get_audio_bytes_as_mp3(pcm_data, bitrate="64k")
 
-            # Convert PCM to MP3
-            await self._save_as_mp3(audio_data, filepath)
+            # Upload to R2
+            url = upload_story_audio(mp3_bytes, story_id, language)
 
-            logger.info(f"Audio saved: {filepath.stat().st_size / 1024:.1f}KB")
-            return f"/cdn/audio/{filename}"
+            logger.info(f"Audio uploaded to R2: {len(mp3_bytes) / 1024:.1f}KB")
+            return url
 
         except Exception as e:
             logger.error(f"Audio generation failed: {e}")
             return None
 
-    async def _save_as_mp3(self, pcm_data: bytes, output_path: Path) -> None:
+    def get_pcm_audio(self, text: str, voice: str) -> Optional[bytes]:
         """
-        Convert PCM audio data to MP3 and save.
-
-        Uses the shared compression utility to ensure consistent
-        compression across all audio generation pipelines.
+        Generate PCM audio without saving (for alignment or further processing).
 
         Args:
-            pcm_data: Raw PCM audio (24kHz, 16-bit, mono)
-            output_path: Path to save MP3 file
+            text: Text to convert to speech
+            voice: Voice name
+
+        Returns:
+            Raw PCM audio bytes (24kHz, 16-bit, mono) or None
         """
-        compress_audio_to_mp3(pcm_data, output_path, bitrate="64k")
+        try:
+            prompt = NARRATION_PROMPT + text
+            response = self.client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_modalities=["AUDIO"],
+                    speech_config=types.SpeechConfig(
+                        voice_config=types.VoiceConfig(
+                            prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                voice_name=voice,
+                            )
+                        )
+                    ),
+                )
+            )
+            return response.candidates[0].content.parts[0].inline_data.data
+        except Exception as e:
+            logger.error(f"PCM audio generation failed: {e}")
+            return None
 
     def _extract_story_text(self, chapters: List[dict]) -> str:
         """Extract all text from story chapters"""

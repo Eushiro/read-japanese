@@ -1,25 +1,20 @@
 """
 Image generation service using OpenRouter with Gemini Image model.
 Generates cover art and chapter illustrations for Japanese graded reader stories.
+
+Images are uploaded directly to R2 storage - no local files are saved.
 """
 import base64
 import logging
-import os
-import re
-import uuid
-from pathlib import Path
 from typing import Optional
 
 import httpx
 
 from ...config.models import ModelConfig
-from .media import compress_image_to_webp
+from .media import get_image_bytes_as_webp
+from ..storage import upload_story_cover, upload_story_chapter_image
 
 logger = logging.getLogger(__name__)
-
-# Directory for storing generated images
-IMAGES_DIR = Path(__file__).parent.parent.parent / "static" / "images"
-ORIGINALS_DIR = Path(__file__).parent.parent.parent / "static" / "images" / "originals"
 
 
 class ImageGenerator:
@@ -156,10 +151,13 @@ class ImageGenerator:
         style: str = "anime",
         aspect_ratio: str = "16:9",
         reference_image: Optional[bytes] = None,
-        filename_prefix: str = "image"
+        story_id: Optional[str] = None,
+        language: str = "japanese",
+        chapter_num: Optional[int] = None,
     ) -> Optional[dict]:
         """
         Generate an image from a synthesized description with optional reference.
+        Uploads directly to R2 - no local files saved.
 
         Args:
             description: Pre-synthesized image description from ImageDescriber
@@ -169,7 +167,9 @@ class ImageGenerator:
             style: Art style name
             aspect_ratio: Image aspect ratio
             reference_image: Optional reference image bytes for style consistency
-            filename_prefix: Prefix for saved filename
+            story_id: Story ID for R2 path (required for R2 upload)
+            language: Content language (for R2 path)
+            chapter_num: Chapter number for chapter images (None for cover)
 
         Returns:
             Dict with url, model, model_name, image_bytes, or None if failed
@@ -207,9 +207,22 @@ Aspect ratio: {aspect_ratio}"""
         image_bytes = await self._call_openrouter_image(prompt, reference_image)
 
         if image_bytes:
-            image_path = self._save_image_with_prefix(image_bytes, filename_prefix)
+            # Compress to WebP in memory
+            webp_bytes = get_image_bytes_as_webp(image_bytes, quality=85, max_size=800)
+
+            # Upload to R2 if story_id provided
+            if story_id:
+                if chapter_num is not None:
+                    url = upload_story_chapter_image(webp_bytes, story_id, language, chapter_num)
+                else:
+                    url = upload_story_cover(webp_bytes, story_id, language)
+            else:
+                # Fallback: return None URL but still provide bytes
+                logger.warning("No story_id provided, image not uploaded to R2")
+                url = None
+
             return {
-                "url": image_path,
+                "url": url,
                 "model": self.model,
                 "model_name": "Gemini Image (OpenRouter)",
                 "image_bytes": image_bytes
@@ -224,10 +237,13 @@ Aspect ratio: {aspect_ratio}"""
         genre: str,
         jlpt_level: str,
         style: str = "anime",
-        aspect_ratio: str = "4:5"
+        aspect_ratio: str = "4:5",
+        story_id: Optional[str] = None,
+        language: str = "japanese",
     ) -> Optional[dict]:
         """
         Generate a cover image for a story (legacy method).
+        Uploads directly to R2 if story_id provided.
         """
         if not self.is_configured:
             logger.warning("OpenRouter API key not configured")
@@ -250,9 +266,18 @@ Aspect ratio: {aspect_ratio}"""
         image_bytes = await self._call_openrouter_image(prompt)
 
         if image_bytes:
-            image_path = self._save_image(image_bytes, story_title)
+            # Compress to WebP in memory
+            webp_bytes = get_image_bytes_as_webp(image_bytes, quality=85, max_size=800)
+
+            # Upload to R2 if story_id provided
+            if story_id:
+                url = upload_story_cover(webp_bytes, story_id, language)
+            else:
+                logger.warning("No story_id provided, cover not uploaded to R2")
+                url = None
+
             return {
-                "url": image_path,
+                "url": url,
                 "model": self.model,
                 "model_name": "Gemini Image (OpenRouter)",
                 "image_bytes": image_bytes
@@ -267,10 +292,14 @@ Aspect ratio: {aspect_ratio}"""
         story_title: str,
         genre: str,
         style: str = "anime",
-        aspect_ratio: str = "16:9"
+        aspect_ratio: str = "16:9",
+        story_id: Optional[str] = None,
+        language: str = "japanese",
+        chapter_num: int = 1,
     ) -> Optional[dict]:
         """
         Generate an illustration for a story chapter (legacy method).
+        Uploads directly to R2 if story_id provided.
         """
         if not self.is_configured:
             logger.warning("OpenRouter API key not configured")
@@ -293,9 +322,18 @@ Aspect ratio: {aspect_ratio}"""
         image_bytes = await self._call_openrouter_image(prompt)
 
         if image_bytes:
-            image_path = self._save_chapter_image(image_bytes, story_title, chapter_title)
+            # Compress to WebP in memory
+            webp_bytes = get_image_bytes_as_webp(image_bytes, quality=85, max_size=800)
+
+            # Upload to R2 if story_id provided
+            if story_id:
+                url = upload_story_chapter_image(webp_bytes, story_id, language, chapter_num)
+            else:
+                logger.warning("No story_id provided, chapter image not uploaded to R2")
+                url = None
+
             return {
-                "url": image_path,
+                "url": url,
                 "model": self.model,
                 "model_name": "Gemini Image (OpenRouter)",
                 "image_bytes": image_bytes
@@ -303,56 +341,3 @@ Aspect ratio: {aspect_ratio}"""
 
         return None
 
-    def _sanitize_filename(self, text: str) -> str:
-        """Convert text to a safe filename component"""
-        safe = re.sub(r"[^\w\s-]", "", text.lower())
-        return re.sub(r"[-\s]+", "_", safe)
-
-    def _save_image_with_prefix(
-        self,
-        image_data: bytes,
-        prefix: str,
-        max_size: int = 800,
-        quality: int = 85,
-    ) -> str:
-        """Save compressed WebP image (no original stored)"""
-        safe_prefix = self._sanitize_filename(prefix)
-        base_filename = f"{safe_prefix}_{uuid.uuid4().hex[:8]}"
-
-        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-        output_path = IMAGES_DIR / f"{base_filename}.webp"
-        compress_image_to_webp(image_data, output_path, quality, max_size)
-
-        return f"/cdn/images/{base_filename}.webp"
-
-    def _save_image(
-        self, image_data: bytes, title: str, max_size: int = 800, quality: int = 85
-    ) -> str:
-        """Save compressed WebP image (no original stored)"""
-        safe_title = self._sanitize_filename(title)
-        base_filename = f"cover_{safe_title}_{uuid.uuid4().hex[:8]}"
-
-        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-        output_path = IMAGES_DIR / f"{base_filename}.webp"
-        compress_image_to_webp(image_data, output_path, quality, max_size)
-
-        return f"/cdn/images/{base_filename}.webp"
-
-    def _save_chapter_image(
-        self,
-        image_data: bytes,
-        story_title: str,
-        chapter_title: str,
-        max_size: int = 800,
-        quality: int = 85,
-    ) -> str:
-        """Save compressed WebP image (no original stored)"""
-        safe_story = self._sanitize_filename(story_title)
-        safe_chapter = self._sanitize_filename(chapter_title)
-        base_filename = f"chapter_{safe_story}_{safe_chapter}_{uuid.uuid4().hex[:8]}"
-
-        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-        output_path = IMAGES_DIR / f"{base_filename}.webp"
-        compress_image_to_webp(image_data, output_path, quality, max_size)
-
-        return f"/cdn/images/{base_filename}.webp"
