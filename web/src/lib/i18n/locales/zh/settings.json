@@ -57,25 +57,28 @@
     "mostPopular": "最受欢迎",
     "perMonth": "/月",
     "tiers": {
-      "basic": {
-        "name": "基础版",
-        "price": "$5",
-        "cta": "选择基础版",
-        "features": ["5个AI故事/月", "200次AI检查/月", "500张闪卡/月", "2次模拟考试/月"]
+      "free": { "name": "免费" },
+      "plus": { "name": "Plus" },
+      "pro": { "name": "Pro" }
+    },
+    "features": {
+      "credits": "{{count}}积分/月",
+      "unlimitedDecks": "无限自定义卡组",
+      "progressTracking": "进度跟踪",
+      "everythingInPlus": "Plus的所有功能",
+      "prioritySupport": "优先支持"
+    },
+    "tierBenefits": {
+      "plus": {
+        "flashcards": "最多500个闪卡句子",
+        "audio": "最多250次音频生成"
       },
       "pro": {
-        "name": "专业版",
-        "price": "$15",
-        "cta": "选择专业版",
-        "features": ["25个AI故事/月", "1,000次AI检查/月", "3,000张闪卡/月", "15次模拟考试/月"]
-      },
-      "power": {
-        "name": "强力版",
-        "price": "$45",
-        "cta": "选择强力版",
-        "features": ["150个AI故事/月", "5,000次AI检查/月", "15,000张闪卡/月", "100次模拟考试/月"]
+        "flashcards": "最多2,000个闪卡句子",
+        "audio": "最多1,000次音频生成"
       }
-    }
+    },
+    "upgradeTo": "升级到{{tier}}"
   },
   "admin": {
     "title": "\u7ba1\u7406",

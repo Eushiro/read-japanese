@@ -57,40 +57,28 @@
     "mostPopular": "Le plus populaire",
     "perMonth": "/mois",
     "tiers": {
-      "basic": {
-        "name": "Basique",
-        "price": "5 $",
-        "cta": "Choisir Basique",
-        "features": [
-          "5 histoires IA/mois",
-          "200 vérifications IA/mois",
-          "500 flashcards/mois",
-          "2 tests blancs/mois"
-        ]
+      "free": { "name": "Gratuit" },
+      "plus": { "name": "Plus" },
+      "pro": { "name": "Pro" }
+    },
+    "features": {
+      "credits": "{{count}} crédits/mois",
+      "unlimitedDecks": "Decks personnalisés illimités",
+      "progressTracking": "Suivi de progression",
+      "everythingInPlus": "Tout ce qui est inclus dans Plus",
+      "prioritySupport": "Support prioritaire"
+    },
+    "tierBenefits": {
+      "plus": {
+        "flashcards": "Jusqu'à 500 phrases flashcards",
+        "audio": "Jusqu'à 250 générations audio"
       },
       "pro": {
-        "name": "Pro",
-        "price": "15 $",
-        "cta": "Choisir Pro",
-        "features": [
-          "25 histoires IA/mois",
-          "1 000 vérifications IA/mois",
-          "3 000 flashcards/mois",
-          "15 tests blancs/mois"
-        ]
-      },
-      "power": {
-        "name": "Power",
-        "price": "45 $",
-        "cta": "Choisir Power",
-        "features": [
-          "150 histoires IA/mois",
-          "5 000 vérifications IA/mois",
-          "15 000 flashcards/mois",
-          "100 tests blancs/mois"
-        ]
+        "flashcards": "Jusqu'à 2 000 phrases flashcards",
+        "audio": "Jusqu'à 1 000 générations audio"
       }
-    }
+    },
+    "upgradeTo": "Passer à {{tier}}"
   },
   "admin": {
     "title": "Admin",

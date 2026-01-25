@@ -15,6 +15,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
+import { formatPrice, getTier, type PaidTierId } from "@/lib/tiers";
 
 import { api } from "../../convex/_generated/api";
 
@@ -41,7 +42,7 @@ export function PricingPage() {
   );
   const currentTier = subscription?.tier ?? "free";
 
-  const handleUpgrade = async (tier: "plus" | "pro") => {
+  const handleUpgrade = async (tier: PaidTierId) => {
     if (!user || checkoutLoading) return;
     setCheckoutLoading(tier);
     try {
@@ -62,15 +63,19 @@ export function PricingPage() {
     }
   };
 
-  // Pricing data
+  // Pricing data - uses centralized config from shared/tiers.json
+  const freeTier = getTier("free");
+  const plusTier = getTier("plus");
+  const proTier = getTier("pro");
+
   const tiers = [
     {
       id: "free",
-      name: "Free",
+      name: t("settings.subscription.tiers.free.name"),
       icon: Zap,
       iconColor: "text-slate-400",
-      price: { monthly: 0, annual: 0 },
-      credits: 50,
+      price: freeTier?.price ?? { monthly: 0, annual: 0 },
+      credits: freeTier?.credits ?? 50,
       description: t("pricing.tiers.free.description"),
       features: [
         t("pricing.tiers.free.features.0"),
@@ -83,11 +88,11 @@ export function PricingPage() {
     },
     {
       id: "plus",
-      name: "Plus",
+      name: t("settings.subscription.tiers.plus.name"),
       icon: Sparkles,
       iconColor: "text-blue-500",
-      price: { monthly: 7.99, annual: 79.99 },
-      credits: 500,
+      price: plusTier?.price ?? { monthly: 7.99, annual: 79.99 },
+      credits: plusTier?.credits ?? 500,
       popular: true,
       description: t("pricing.tiers.plus.description"),
       features: [
@@ -102,11 +107,11 @@ export function PricingPage() {
     },
     {
       id: "pro",
-      name: "Pro",
+      name: t("settings.subscription.tiers.pro.name"),
       icon: Crown,
       iconColor: "text-accent",
-      price: { monthly: 17.99, annual: 179.99 },
-      credits: 2000,
+      price: proTier?.price ?? { monthly: 17.99, annual: 179.99 },
+      credits: proTier?.credits ?? 2000,
       description: t("pricing.tiers.pro.description"),
       features: [
         t("pricing.tiers.pro.features.0"),

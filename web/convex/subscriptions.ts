@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 
+import tiersConfig from "../../shared/tiers.json";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { isAdminEmail } from "./lib/admin";
 import { subscriptionTierValidator } from "./schema";
@@ -7,22 +8,12 @@ import { subscriptionTierValidator } from "./schema";
 // ============================================
 // CREDIT LIMITS PER TIER
 // ============================================
-// Unified credit system - simpler than per-action limits
+// Imported from shared/tiers.json for consistency across frontend/backend.
+// See shared/tiers.json for pricing details.
 //
-// Tier pricing:
-// - Free: $0, 50 credits (loss leader)
-// - Plus: $7.99/mo, 500 credits (94% margin)
-// - Pro: $17.99/mo, 2000 credits (89% margin)
-//
-// Annual plans (17% discount):
-// - Plus: $79.99/year (vs $95.88)
-// - Pro: $179.99/year (vs $215.88)
-//
-export const TIER_CREDITS = {
-  free: 50,
-  plus: 500,
-  pro: 2000,
-} as const;
+export const TIER_CREDITS = Object.fromEntries(
+  tiersConfig.tiers.map((t) => [t.id, t.credits])
+) as Record<"free" | "plus" | "pro", number>;
 
 // ============================================
 // CREDIT COSTS PER ACTION

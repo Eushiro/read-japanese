@@ -13,8 +13,11 @@ import { join, relative } from "path";
 
 // Files that are allowed to have the patterns we're checking for
 const EXCLUDED_FILES = new Set([
-  "languages.ts", // The language config itself
+  "contentLanguages.ts", // The content language config
   "lint-patterns.ts", // This script
+  "tiers.ts", // The tier config itself
+  "schema.ts", // Convex schema with validators
+  "stripe.ts", // Convex backend with local tier types for Stripe price mapping
 ]);
 
 // Directories to exclude
@@ -34,6 +37,15 @@ const LANGUAGE_UNION_PATTERN =
 // Also check for the full 3-language union as a type annotation
 const FULL_UNION_PATTERN =
   /["'](japanese|english|french)["']\s*\|\s*["'](japanese|english|french)["']\s*\|\s*["'](japanese|english|french)["']/;
+
+// Pattern to catch local Language type definitions
+// Matches: type Language = "japanese" | "english" | "french"
+const LOCAL_LANGUAGE_TYPE_PATTERN = /^type\s+Language\s*=/;
+
+// Pattern to match hardcoded tier union types
+// Matches: "free" | "plus" | "pro" (in any order, with any subset of 2+)
+// Catches both type annotations (: "free" | "plus") and type aliases (= "free" | "plus")
+const TIER_UNION_PATTERN = /[=:]\s*["'](free|plus|pro)["']\s*\|\s*["'](free|plus|pro)["']/;
 
 interface Violation {
   file: string;
@@ -105,6 +117,25 @@ function checkFile(filePath: string): Violation[] {
         });
       }
     }
+
+    // Check for hardcoded tier union types
+    // This catches patterns like: (tier: "free" | "plus" | "pro") or type X = "free" | "plus"
+    if (TIER_UNION_PATTERN.test(line)) {
+      // Make sure it's a type annotation or type alias, not a value
+      const isTypeAnnotation =
+        /:\s*["'](free|plus|pro)["']/.test(line) ||
+        /\)\s*:\s*["'](free|plus|pro)["']/.test(line) ||
+        /^type\s+\w+\s*=/.test(trimmed); // type alias
+
+      if (isTypeAnnotation) {
+        violations.push({
+          file: filePath,
+          line: lineNum + 1,
+          message: 'Hardcoded tier union type. Use `TierId` type from "@/lib/tiers" instead.',
+          code: trimmed.substring(0, 80) + (trimmed.length > 80 ? "..." : ""),
+        });
+      }
+    }
   }
 
   return violations;
@@ -168,6 +199,7 @@ function main() {
     }
 
     console.log('Import the Language type: import type { Language } from "@/lib/languages";');
+    console.log('Import the TierId type: import type { TierId } from "@/lib/tiers";');
     console.log("\nSee docs/DEVELOPMENT.md for correct patterns.");
     process.exit(1);
   } else {

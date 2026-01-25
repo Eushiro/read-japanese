@@ -1,0 +1,25 @@
+{
+  "tiers": [
+    {
+      "id": "free",
+      "credits": 50,
+      "price": { "monthly": 0, "annual": 0 },
+      "features": []
+    },
+    {
+      "id": "plus",
+      "credits": 500,
+      "price": { "monthly": 7.99, "annual": 79.99 },
+      "features": ["credits", "unlimitedDecks", "progressTracking"]
+    },
+    {
+      "id": "pro",
+      "credits": 2000,
+      "price": { "monthly": 17.99, "annual": 179.99 },
+      "features": ["credits", "everythingInPlus", "prioritySupport"],
+      "popular": true
+    }
+  ],
+  "currency": "USD",
+  "currencySymbol": "$"
+}

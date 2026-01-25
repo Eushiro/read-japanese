@@ -44,8 +44,9 @@ import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth, UserButton } from "@/contexts/AuthContext";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useSettings } from "@/hooks/useSettings";
+import { type ContentLanguage, EXAMS_BY_LANGUAGE, LANGUAGES } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
-import { EXAMS_BY_LANGUAGE, type Language, LANGUAGES } from "@/lib/languages";
+import { formatPrice, getTier, type PaidTierId, type TierId } from "@/lib/tiers";
 
 import { api } from "../../convex/_generated/api";
 import type { ExamType } from "../../convex/schema";
@@ -108,7 +109,7 @@ export function SettingsPage() {
     }
   }, [isAuthenticated, user, userProfile, upsertUser]);
 
-  const handleLanguageToggle = async (lang: Language) => {
+  const handleLanguageToggle = async (lang: ContentLanguage) => {
     if (!user || !userProfile) return;
 
     const currentLanguages = userProfile.languages || [];
@@ -152,7 +153,7 @@ export function SettingsPage() {
     });
   };
 
-  const handleUpgrade = async (tier: "plus" | "pro") => {
+  const handleUpgrade = async (tier: PaidTierId) => {
     if (!user || checkoutLoading) return;
 
     trackEvent(events.UPGRADE_CLICKED, {
@@ -555,7 +556,6 @@ export function SettingsPage() {
                                 : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
                             }`}
                           >
-                            <span className="mr-2">{lang.flag}</span>
                             {lang.label}
                             {isSelected && <Check className="w-4 h-4 ml-2 inline" />}
                           </button>
@@ -582,7 +582,7 @@ export function SettingsPage() {
                           return (
                             <div key={lang}>
                               <div className="text-xs font-medium text-foreground-muted mb-2 uppercase tracking-wider">
-                                {langInfo?.flag} {langInfo?.label}
+                                {langInfo?.label}
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {exams.map((exam) => {
@@ -650,7 +650,6 @@ export function SettingsPage() {
                       className="flex items-center justify-between p-4 rounded-xl bg-muted/50"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-xl">{langInfo?.flag}</span>
                         <div>
                           <div className="font-medium text-foreground">{langInfo?.label}</div>
                           {proficiency ? (
@@ -780,8 +779,8 @@ export function SettingsPage() {
                     <div className="text-sm text-foreground-muted">
                       {t("settings.subscription.currentPlan")}
                     </div>
-                    <div className="text-lg font-semibold text-foreground capitalize">
-                      {subscription?.tier || t("settings.subscription.free")}
+                    <div className="text-lg font-semibold text-foreground">
+                      {t(`settings.subscription.tiers.${subscription?.tier || "free"}.name`)}
                     </div>
                   </div>
                   {/* Only show Manage button if subscription was created through Stripe */}
@@ -797,32 +796,44 @@ export function SettingsPage() {
                 {subscription?.tier === "plus" && (
                   <ul className="text-sm text-foreground-muted space-y-1.5 pt-3 border-t border-border">
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-blue-500" /> 500 AI credits/month
+                      <Check className="w-4 h-4 text-blue-500" />{" "}
+                      {t("settings.subscription.features.credits", {
+                        count: getTier("plus")?.credits ?? 500,
+                      })}
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-blue-500" /> Up to 500 flashcard sentences
+                      <Check className="w-4 h-4 text-blue-500" />{" "}
+                      {t("settings.subscription.tierBenefits.plus.flashcards")}
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-blue-500" /> Up to 250 audio generations
+                      <Check className="w-4 h-4 text-blue-500" />{" "}
+                      {t("settings.subscription.tierBenefits.plus.audio")}
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-blue-500" /> Unlimited decks
+                      <Check className="w-4 h-4 text-blue-500" />{" "}
+                      {t("settings.subscription.features.unlimitedDecks")}
                     </li>
                   </ul>
                 )}
                 {subscription?.tier === "pro" && (
                   <ul className="text-sm text-foreground-muted space-y-1.5 pt-3 border-t border-border">
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-accent" /> 2,000 AI credits/month
+                      <Check className="w-4 h-4 text-accent" />{" "}
+                      {t("settings.subscription.features.credits", {
+                        count: getTier("pro")?.credits ?? 2000,
+                      })}
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-accent" /> Up to 2,000 flashcard sentences
+                      <Check className="w-4 h-4 text-accent" />{" "}
+                      {t("settings.subscription.tierBenefits.pro.flashcards")}
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-accent" /> Up to 1,000 audio generations
+                      <Check className="w-4 h-4 text-accent" />{" "}
+                      {t("settings.subscription.tierBenefits.pro.audio")}
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-accent" /> Priority support
+                      <Check className="w-4 h-4 text-accent" />{" "}
+                      {t("settings.subscription.features.prioritySupport")}
                     </li>
                   </ul>
                 )}
@@ -840,22 +851,33 @@ export function SettingsPage() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <Zap className="w-5 h-5 text-blue-500" />
-                          <span className="font-semibold text-foreground text-lg">Plus</span>
+                          <span className="font-semibold text-foreground text-lg">
+                            {t("settings.subscription.tiers.plus.name")}
+                          </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-2xl font-bold text-foreground">$7.99</span>
-                          <span className="text-foreground-muted">/mo</span>
+                          <span className="text-2xl font-bold text-foreground">
+                            {formatPrice(getTier("plus")?.price.monthly ?? 7.99)}
+                          </span>
+                          <span className="text-foreground-muted">
+                            {t("settings.subscription.perMonth")}
+                          </span>
                         </div>
                       </div>
                       <ul className="text-sm text-foreground-muted space-y-1.5 mb-4">
                         <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-blue-500" /> 500 AI credits/month
+                          <Check className="w-4 h-4 text-blue-500" />{" "}
+                          {t("settings.subscription.features.credits", {
+                            count: getTier("plus")?.credits ?? 500,
+                          })}
                         </li>
                         <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-blue-500" /> Unlimited custom decks
+                          <Check className="w-4 h-4 text-blue-500" />{" "}
+                          {t("settings.subscription.features.unlimitedDecks")}
                         </li>
                         <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-blue-500" /> Progress tracking
+                          <Check className="w-4 h-4 text-blue-500" />{" "}
+                          {t("settings.subscription.features.progressTracking")}
                         </li>
                       </ul>
                       <Button
@@ -863,7 +885,9 @@ export function SettingsPage() {
                         className={`w-full ${checkoutLoading === "plus" ? "btn-loading-gradient" : ""}`}
                         onClick={() => handleUpgrade("plus")}
                       >
-                        Upgrade to Plus
+                        {t("settings.subscription.upgradeTo", {
+                          tier: t("settings.subscription.tiers.plus.name"),
+                        })}
                       </Button>
                     </div>
 
@@ -877,29 +901,42 @@ export function SettingsPage() {
                       <div className="flex items-start justify-between mb-3 mt-1">
                         <div className="flex items-center gap-2">
                           <Crown className="w-5 h-5 text-accent" />
-                          <span className="font-semibold text-foreground text-lg">Pro</span>
+                          <span className="font-semibold text-foreground text-lg">
+                            {t("settings.subscription.tiers.pro.name")}
+                          </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-2xl font-bold text-foreground">$17.99</span>
-                          <span className="text-foreground-muted">/mo</span>
+                          <span className="text-2xl font-bold text-foreground">
+                            {formatPrice(getTier("pro")?.price.monthly ?? 17.99)}
+                          </span>
+                          <span className="text-foreground-muted">
+                            {t("settings.subscription.perMonth")}
+                          </span>
                         </div>
                       </div>
                       <ul className="text-sm text-foreground-muted space-y-1.5 mb-4">
                         <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-accent" /> 2,000 AI credits/month
+                          <Check className="w-4 h-4 text-accent" />{" "}
+                          {t("settings.subscription.features.credits", {
+                            count: getTier("pro")?.credits ?? 2000,
+                          })}
                         </li>
                         <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-accent" /> Everything in Plus
+                          <Check className="w-4 h-4 text-accent" />{" "}
+                          {t("settings.subscription.features.everythingInPlus")}
                         </li>
                         <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-accent" /> Priority support
+                          <Check className="w-4 h-4 text-accent" />{" "}
+                          {t("settings.subscription.features.prioritySupport")}
                         </li>
                       </ul>
                       <Button
                         className={`w-full ${checkoutLoading === "pro" ? "btn-loading-gradient" : ""}`}
                         onClick={() => handleUpgrade("pro")}
                       >
-                        Upgrade to Pro
+                        {t("settings.subscription.upgradeTo", {
+                          tier: t("settings.subscription.tiers.pro.name"),
+                        })}
                       </Button>
                     </div>
                   </div>
@@ -986,8 +1023,9 @@ export function SettingsPage() {
                         : "",
                     })}
                   </p>
-                  <span className="text-xs text-foreground-muted capitalize">
-                    {creditsTier} {t("settings.credits.tier")}
+                  <span className="text-xs text-foreground-muted">
+                    {t(`settings.subscription.tiers.${creditsTier as TierId}.name`)}{" "}
+                    {t("settings.credits.tier")}
                   </span>
                 </div>
               </div>
@@ -1071,17 +1109,23 @@ export function SettingsPage() {
                       if (!user) return;
                       await upsertSubscription({
                         userId: user.id,
-                        tier: value as "free" | "plus" | "pro",
+                        tier: value as TierId,
                       });
                     }}
                   >
-                    <SelectTrigger className="w-32 border-amber-500/30">
+                    <SelectTrigger className="w-36 border-amber-500/30">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="free">Free (50 credits)</SelectItem>
-                      <SelectItem value="plus">Plus (500 credits)</SelectItem>
-                      <SelectItem value="pro">Pro (2000 credits)</SelectItem>
+                      <SelectItem value="free">
+                        Free ({getTier("free")?.credits} credits)
+                      </SelectItem>
+                      <SelectItem value="plus">
+                        Plus ({getTier("plus")?.credits} credits)
+                      </SelectItem>
+                      <SelectItem value="pro">
+                        Pro ({getTier("pro")?.credits} credits)
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1114,7 +1158,7 @@ export function SettingsPage() {
                       return (
                         <div key={lang} className="flex items-center gap-3">
                           <span className="text-sm w-20">
-                            {langInfo?.flag} {langInfo?.label}
+                            {langInfo?.label}
                           </span>
                           <Select
                             value={currentLevel ?? "not_set"}

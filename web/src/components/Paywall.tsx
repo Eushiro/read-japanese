@@ -12,6 +12,7 @@ import {
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useT } from "@/lib/i18n";
+import { formatPrice, getTier, type TierId } from "@/lib/tiers";
 
 interface PaywallProps {
   isOpen: boolean;
@@ -89,13 +90,13 @@ export function Paywall({
         <div className="bg-muted/50 rounded-lg p-3 mb-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-foreground-muted">{t("paywall.currentPlan")}</span>
-            <span className="font-medium text-foreground capitalize">{tier}</span>
+            <span className="font-medium text-foreground">
+              {t(`settings.subscription.tiers.${tier as TierId}.name`)}
+            </span>
           </div>
           <div className="flex items-center justify-between text-sm mt-1">
             <span className="text-foreground-muted">{t("paywall.creditsRemaining")}</span>
-            <span
-              className={`font-medium ${remaining === 0 ? "text-red-500" : "text-foreground"}`}
-            >
+            <span className={`font-medium ${remaining === 0 ? "text-red-500" : "text-foreground"}`}>
               {remaining} / {limit}
             </span>
           </div>
@@ -104,9 +105,7 @@ export function Paywall({
         {/* Actions */}
         {!isAuthenticated ? (
           <div className="space-y-3">
-            <p className="text-sm text-foreground-muted text-center">
-              {t("paywall.signInPrompt")}
-            </p>
+            <p className="text-sm text-foreground-muted text-center">{t("paywall.signInPrompt")}</p>
             <SignInButton mode="modal">
               <Button className="w-full" size="lg">
                 {t("paywall.signIn")}
@@ -122,10 +121,19 @@ export function Paywall({
                   <div className="p-3 rounded-lg border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 transition-colors cursor-pointer">
                     <div className="flex items-center gap-2 mb-1">
                       <Sparkles className="w-4 h-4 text-blue-500" />
-                      <span className="font-semibold text-sm">Plus</span>
+                      <span className="font-semibold text-sm">
+                        {t("settings.subscription.tiers.plus.name")}
+                      </span>
                     </div>
-                    <p className="text-xs text-foreground-muted">500 credits/mo</p>
-                    <p className="text-sm font-bold text-foreground mt-1">$7.99/mo</p>
+                    <p className="text-xs text-foreground-muted">
+                      {t("settings.subscription.features.credits", {
+                        count: getTier("plus")?.credits ?? 500,
+                      })}
+                    </p>
+                    <p className="text-sm font-bold text-foreground mt-1">
+                      {formatPrice(getTier("plus")?.price.monthly ?? 7.99)}
+                      {t("settings.subscription.perMonth")}
+                    </p>
                   </div>
                 </Link>
               )}
@@ -133,10 +141,19 @@ export function Paywall({
                 <div className="p-3 rounded-lg border border-accent/30 bg-accent/5 hover:bg-accent/10 transition-colors cursor-pointer">
                   <div className="flex items-center gap-2 mb-1">
                     <Crown className="w-4 h-4 text-accent" />
-                    <span className="font-semibold text-sm">Pro</span>
+                    <span className="font-semibold text-sm">
+                      {t("settings.subscription.tiers.pro.name")}
+                    </span>
                   </div>
-                  <p className="text-xs text-foreground-muted">2,000 credits/mo</p>
-                  <p className="text-sm font-bold text-foreground mt-1">$17.99/mo</p>
+                  <p className="text-xs text-foreground-muted">
+                    {t("settings.subscription.features.credits", {
+                      count: getTier("pro")?.credits ?? 2000,
+                    })}
+                  </p>
+                  <p className="text-sm font-bold text-foreground mt-1">
+                    {formatPrice(getTier("pro")?.price.monthly ?? 17.99)}
+                    {t("settings.subscription.perMonth")}
+                  </p>
                 </div>
               </Link>
             </div>

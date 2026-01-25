@@ -57,40 +57,28 @@
     "mostPopular": "Most Popular",
     "perMonth": "/mo",
     "tiers": {
-      "basic": {
-        "name": "Basic",
-        "price": "$5",
-        "cta": "Get Basic",
-        "features": [
-          "5 AI stories/month",
-          "200 AI checks/month",
-          "500 flashcards/month",
-          "2 mock tests/month"
-        ]
+      "free": { "name": "Free" },
+      "plus": { "name": "Plus" },
+      "pro": { "name": "Pro" }
+    },
+    "features": {
+      "credits": "{{count}} AI credits/month",
+      "unlimitedDecks": "Unlimited custom decks",
+      "progressTracking": "Progress tracking",
+      "everythingInPlus": "Everything in Plus",
+      "prioritySupport": "Priority support"
+    },
+    "tierBenefits": {
+      "plus": {
+        "flashcards": "Up to 500 flashcard sentences",
+        "audio": "Up to 250 audio generations"
       },
       "pro": {
-        "name": "Pro",
-        "price": "$15",
-        "cta": "Get Pro",
-        "features": [
-          "25 AI stories/month",
-          "1,000 AI checks/month",
-          "3,000 flashcards/month",
-          "15 mock tests/month"
-        ]
-      },
-      "power": {
-        "name": "Power",
-        "price": "$45",
-        "cta": "Get Power",
-        "features": [
-          "150 AI stories/month",
-          "5,000 AI checks/month",
-          "15,000 flashcards/month",
-          "100 mock tests/month"
-        ]
+        "flashcards": "Up to 2,000 flashcard sentences",
+        "audio": "Up to 1,000 audio generations"
       }
-    }
+    },
+    "upgradeTo": "Upgrade to {{tier}}"
   },
   "admin": {
     "title": "Admin",

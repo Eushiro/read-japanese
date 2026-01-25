@@ -57,40 +57,28 @@
     "mostPopular": "一番人気",
     "perMonth": "/月",
     "tiers": {
-      "basic": {
-        "name": "ベーシック",
-        "price": "$5",
-        "cta": "ベーシックを選ぶ",
-        "features": [
-          "AIストーリー 5件/月",
-          "AI添削 200件/月",
-          "フラッシュカード 500枚/月",
-          "模擬テスト 2回/月"
-        ]
+      "free": { "name": "無料" },
+      "plus": { "name": "Plus" },
+      "pro": { "name": "Pro" }
+    },
+    "features": {
+      "credits": "{{count}}クレジット/月",
+      "unlimitedDecks": "無制限のカスタムデッキ",
+      "progressTracking": "進捗追跡",
+      "everythingInPlus": "Plusのすべての機能",
+      "prioritySupport": "優先サポート"
+    },
+    "tierBenefits": {
+      "plus": {
+        "flashcards": "フラッシュカード文 最大500件",
+        "audio": "音声生成 最大250件"
       },
       "pro": {
-        "name": "プロ",
-        "price": "$15",
-        "cta": "プロを選ぶ",
-        "features": [
-          "AIストーリー 25件/月",
-          "AI添削 1,000件/月",
-          "フラッシュカード 3,000枚/月",
-          "模擬テスト 15回/月"
-        ]
-      },
-      "power": {
-        "name": "パワー",
-        "price": "$45",
-        "cta": "パワーを選ぶ",
-        "features": [
-          "AIストーリー 150件/月",
-          "AI添削 5,000件/月",
-          "フラッシュカード 15,000枚/月",
-          "模擬テスト 100回/月"
-        ]
+        "flashcards": "フラッシュカード文 最大2,000件",
+        "audio": "音声生成 最大1,000件"
       }
-    }
+    },
+    "upgradeTo": "{{tier}}にアップグレード"
   },
   "admin": {
     "title": "\u7ba1\u7406",
