@@ -94,6 +94,12 @@ node_modules/
 package-lock.json
 yarn.lock
 
+# Local MCP config
+.mcp.json
+
+# Root package.json (local tooling only)
+/package.json
+
 # Build artifacts
 dist/
 .vite/
