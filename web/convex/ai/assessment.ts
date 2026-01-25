@@ -342,12 +342,17 @@ export const evaluateShadowing = action({
     // System prompt for the audio model
     const systemPrompt = `You are an experienced ${languageName} pronunciation coach providing detailed, constructive feedback. The student is serious about improving and needs honest, specific guidance.
 
+CRITICAL: Base your evaluation ONLY on what you actually hear in the audio recording.
+- If you hear silence, no speech, or only background noise: accuracyScore = 0, and explain that no speech was detected
+- If you can only hear partial or unclear speech: score appropriately low and explain what was unclear
+- Do NOT assume or guess what the user might have said based on the target text - evaluate strictly what you hear
+
 IMPORTANT: Provide ALL feedback and explanations in ${feedbackLanguageName}. Do NOT respond in English unless the feedback language is English.
 
 The student is trying to repeat: "${args.targetText}"
 
 Listen carefully and evaluate:
-1. **Accuracy** (0-100): Be critical but fair. 90+ = near-native, 70-89 = good with minor issues, 50-69 = understandable but needs work, <50 = significant issues
+1. **Accuracy** (0-100): Be critical but fair. 90+ = near-native, 70-89 = good with minor issues, 50-69 = understandable but needs work, <50 = significant issues, 0 = no speech detected
 2. **Specific issues**: Identify EXACTLY which sounds, words, or syllables need work
 3. **Actionable advice**: Give concrete tips on mouth position, tongue placement, or practice techniques
 
@@ -371,7 +376,7 @@ Common issues to listen for:
             accuracyScore: {
               type: "number",
               description:
-                "Pronunciation accuracy score from 0-100. 90+ = near-native, 70-89 = good with minor issues, 50-69 = understandable but needs work, <50 = significant issues",
+                "Pronunciation accuracy score from 0-100. 0 = no speech detected/silence, 90+ = near-native, 70-89 = good with minor issues, 50-69 = understandable but needs work, <50 = significant issues",
             },
             feedbackText: {
               type: "string",
@@ -436,19 +441,28 @@ Common issues to listen for:
 
       // Parse structured output
       const textContent = result.choices?.[0]?.message?.content ?? "";
-      let feedbackText = "Great effort! Keep practicing.";
-      let spokenFeedback = "";
-      let accuracyScore = 70;
 
+      let parsed;
       try {
-        const parsed = JSON.parse(cleanJsonResponse(textContent));
-        accuracyScore = parsed.accuracyScore ?? 70;
-        feedbackText = parsed.feedbackText ?? feedbackText;
-        spokenFeedback = parsed.spokenFeedback ?? "";
+        parsed = JSON.parse(cleanJsonResponse(textContent));
       } catch {
-        // Use defaults if JSON parsing fails
         console.error("Failed to parse shadowing feedback JSON:", textContent);
+        throw new Error("Failed to parse AI response");
       }
+
+      // Validate required fields - don't fall back to defaults
+      if (typeof parsed.accuracyScore !== "number") {
+        console.error("Missing accuracyScore in response:", parsed);
+        throw new Error("Invalid AI response: missing accuracy score");
+      }
+      if (typeof parsed.feedbackText !== "string" || !parsed.feedbackText) {
+        console.error("Missing feedbackText in response:", parsed);
+        throw new Error("Invalid AI response: missing feedback text");
+      }
+
+      const accuracyScore = parsed.accuracyScore;
+      const feedbackText = parsed.feedbackText;
+      const spokenFeedback = parsed.spokenFeedback ?? "";
 
       // Generate audio feedback using Gemini TTS
       let feedbackAudioBase64: string | undefined;
