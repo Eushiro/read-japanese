@@ -20,6 +20,7 @@ import { CreditAlert } from "@/components/CreditAlert";
 import { StoryCard } from "@/components/library/StoryCard";
 import { VideoCard, type VideoItem } from "@/components/library/VideoCard";
 import { Paywall } from "@/components/Paywall";
+import { WaveBackground } from "@/components/ui/wave-background";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useStories } from "@/hooks/useStories";
 import { LANGUAGES } from "@/lib/contentLanguages";
@@ -164,10 +165,14 @@ export function DashboardPage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <div className="border-b border-border relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-background to-purple-500/5" />
-        <div className="absolute top-0 right-1/4 w-72 h-72 bg-accent/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-2xl relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-background to-orange-500/5 dark:from-orange-900/15 dark:via-background dark:to-purple-900/10" />
+        {/* Warm wave background for dark mode */}
+        <div className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity">
+          <WaveBackground size="hero" variant="warm" className="absolute inset-0" intensity={1} />
+        </div>
+        <div className="absolute top-0 right-1/4 w-72 h-72 bg-accent/10 dark:bg-orange-500/15 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-purple-500/10 dark:bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-5xl relative">
           <div className="animate-fade-in-up text-center">
             <div className="flex items-center justify-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-gradient-to-br from-accent/20 to-purple-500/20">
@@ -193,7 +198,7 @@ export function DashboardPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-5xl">
         {/* Credit Alert (shows at 80% and 95% usage) */}
         {isAuthenticated && <CreditAlert />}
 
@@ -212,7 +217,7 @@ export function DashboardPage() {
                   <div className="text-center mb-6">
                     <button
                       onClick={handleStartStudying}
-                      className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                      className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-500 dark:from-yellow-300 dark:via-orange-400 dark:to-purple-400 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 dark:shadow-orange-500/40 dark:hover:shadow-orange-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                     >
                       <span className="flex items-center justify-center gap-3">
                         <Target className="w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -242,7 +247,7 @@ export function DashboardPage() {
                     </div>
                     <button
                       onClick={handleStartStudying}
-                      className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                      className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-500 dark:from-yellow-300 dark:via-orange-400 dark:to-purple-400 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 dark:shadow-orange-500/40 dark:hover:shadow-orange-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                     >
                       <span className="flex items-center justify-center gap-3">
                         <Play className="w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -287,7 +292,7 @@ export function DashboardPage() {
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-4">
             {isPreviewMode ? (
               <SignInButton mode="modal">
                 <button className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 rounded-xl border border-purple-500/20 p-4 text-center hover:border-purple-500/40 hover:from-purple-500/15 transition-all w-full">
@@ -392,11 +397,27 @@ export function DashboardPage() {
                       {t("dashboard.sections.stories")}
                     </span>
                   </div>
-                  <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 scrollbar-hide">
+                  {/* Horizontal scroll on mobile, grid on larger screens */}
+                  <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 scrollbar-hide lg:hidden">
                     {suggestedStories.map((story) => (
                       <div
                         key={story.id}
                         className="flex-shrink-0 w-[160px] [&>article]:border [&>article]:border-border [&>article]:bg-background"
+                      >
+                        <StoryCard
+                          story={story}
+                          isPremiumUser={!!isPremiumUser}
+                          onClick={() => handleStoryClick(story)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {/* Grid layout on desktop */}
+                  <div className="hidden lg:grid grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                    {suggestedStories.map((story) => (
+                      <div
+                        key={story.id}
+                        className="[&>article]:border [&>article]:border-border [&>article]:bg-background"
                       >
                         <StoryCard
                           story={story}
@@ -418,11 +439,28 @@ export function DashboardPage() {
                       {t("dashboard.sections.videos")}
                     </span>
                   </div>
-                  <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 scrollbar-hide items-stretch">
+                  {/* Horizontal scroll on mobile, grid on larger screens */}
+                  <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 scrollbar-hide items-stretch lg:hidden">
                     {suggestedVideos.map((video) => (
                       <div
                         key={video._id}
                         className="flex-shrink-0 w-[240px] [&>article]:border [&>article]:border-border [&>article]:bg-background [&>article]:h-full"
+                      >
+                        <VideoCard
+                          video={{ ...video, description: undefined }}
+                          onClick={() =>
+                            navigate({ to: "/video/$videoId", params: { videoId: video._id } })
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {/* Grid layout on desktop */}
+                  <div className="hidden lg:grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+                    {suggestedVideos.map((video) => (
+                      <div
+                        key={video._id}
+                        className="[&>article]:border [&>article]:border-border [&>article]:bg-background [&>article]:h-full"
                       >
                         <VideoCard
                           video={{ ...video, description: undefined }}
@@ -472,7 +510,7 @@ export function DashboardPage() {
                 {t("dashboard.signUpCta.subtitle")}
               </p>
               <SignInButton mode="modal">
-                <button className="group relative px-8 py-4 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
+                <button className="group relative px-8 py-4 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-500 dark:from-yellow-300 dark:via-orange-400 dark:to-purple-400 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 dark:shadow-orange-500/40 dark:hover:shadow-orange-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
                   <span className="flex items-center justify-center gap-2">
                     <Sparkles className="w-5 h-5" />
                     {t("dashboard.signUpCta.button")}
@@ -500,7 +538,7 @@ function PreviewStartStudying() {
     <div className="text-center">
       <div className="mb-6">
         <SignInButton mode="modal">
-          <button className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
+          <button className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-500 dark:from-yellow-300 dark:via-orange-400 dark:to-purple-400 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 dark:shadow-orange-500/40 dark:hover:shadow-orange-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
             <span className="flex items-center justify-center gap-3">
               <Play className="w-6 h-6 group-hover:scale-110 transition-transform" />
               {t("dashboard.preview.startStudying")}
@@ -520,7 +558,7 @@ function DashboardSkeleton() {
     <div className="min-h-screen">
       {/* Hero Section Skeleton */}
       <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-2xl">
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-5xl">
           <div className="text-center">
             <div className="h-8 sm:h-9 bg-border rounded-lg w-48 mx-auto animate-pulse" />
           </div>
@@ -528,7 +566,7 @@ function DashboardSkeleton() {
       </div>
 
       {/* Main Content Skeleton */}
-      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-5xl">
         <div className="space-y-6">
           {/* Start Studying CTA Skeleton */}
           <div className="rounded-2xl border border-border bg-surface p-6 sm:p-8">
