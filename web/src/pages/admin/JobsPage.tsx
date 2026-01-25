@@ -12,8 +12,10 @@ import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -105,16 +107,17 @@ export function JobsPage() {
           <h1 className="text-2xl font-bold text-foreground">Batch Jobs</h1>
           <p className="text-foreground-muted">Monitor content generation jobs</p>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="autoRefresh"
               checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="w-4 h-4"
+              onCheckedChange={setAutoRefresh}
             />
-            Auto-refresh
-          </label>
+            <Label htmlFor="autoRefresh" className="text-sm cursor-pointer">
+              Auto-refresh
+            </Label>
+          </div>
           <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
             <RefreshCw className="w-4 h-4" />
           </Button>

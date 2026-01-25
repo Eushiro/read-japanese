@@ -12,6 +12,9 @@ import {
 import { Paywall } from "@/components/Paywall";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
@@ -190,21 +193,25 @@ export function GeneratePage() {
 
           {/* Genre */}
           <div className="space-y-3">
-            <label className="text-sm font-medium text-foreground">
+            <Label className="text-sm font-medium text-foreground">
               {t("generate.form.genre")}
-            </label>
-            <select
+            </Label>
+            <Select
               value={genreKey}
-              onChange={(e) => setGenreKey(e.target.value as (typeof GENRE_KEYS)[number])}
+              onValueChange={(value) => setGenreKey(value as (typeof GENRE_KEYS)[number])}
               disabled={isGenerating}
-              className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
             >
-              {GENRE_KEYS.map((key) => (
-                <option key={key} value={key}>
-                  {t(`generate.genres.${key}`)}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {GENRE_KEYS.map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {t(`generate.genres.${key}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Theme */}
@@ -228,109 +235,85 @@ export function GeneratePage() {
           {/* Chapters */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground">
+              <Label className="text-sm font-medium text-foreground">
                 {t("generate.form.chapters")}
-              </label>
-              <select
-                value={numChapters}
-                onChange={(e) => setNumChapters(Number(e.target.value))}
+              </Label>
+              <Select
+                value={String(numChapters)}
+                onValueChange={(v) => setNumChapters(Number(v))}
                 disabled={isGenerating}
-                className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
               >
-                {[2, 3, 4, 5, 6].map((n) => (
-                  <option key={n} value={n}>
-                    {t("generate.form.chaptersCount", { count: n })}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2, 3, 4, 5, 6].map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {t("generate.form.chaptersCount", { count: n })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground">
+              <Label className="text-sm font-medium text-foreground">
                 {t("generate.form.wordsPerChapter")}
-              </label>
-              <select
-                value={wordsPerChapter}
-                onChange={(e) => setWordsPerChapter(Number(e.target.value))}
+              </Label>
+              <Select
+                value={String(wordsPerChapter)}
+                onValueChange={(v) => setWordsPerChapter(Number(v))}
                 disabled={isGenerating}
-                className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
               >
-                {[100, 150, 200, 250, 300].map((n) => (
-                  <option key={n} value={n}>
-                    {t("generate.form.wordsCount", { count: n })}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[100, 150, 200, 250, 300].map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {t("generate.form.wordsCount", { count: n })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {/* Options */}
           <div className="space-y-4">
-            <label className="text-sm font-medium text-foreground">
+            <Label className="text-sm font-medium text-foreground">
               {t("generate.form.options")}
-            </label>
+            </Label>
             <div className="flex flex-wrap gap-6">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={generateAudio}
-                    onChange={(e) => setGenerateAudio(e.target.checked)}
-                    disabled={isGenerating}
-                    className="peer sr-only"
-                  />
-                  <div className="w-5 h-5 border-2 border-border rounded bg-background peer-checked:bg-accent peer-checked:border-accent transition-all flex items-center justify-center">
-                    {generateAudio && (
-                      <svg
-                        className="w-3 h-3 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={3}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <span className="flex items-center gap-2">
-                  <Volume2 className="w-4 h-4 text-foreground-muted group-hover:text-foreground transition-colors" />
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="generateAudio"
+                  checked={generateAudio}
+                  onCheckedChange={setGenerateAudio}
+                  disabled={isGenerating}
+                />
+                <Label htmlFor="generateAudio" className="flex items-center gap-2 cursor-pointer">
+                  <Volume2 className="w-4 h-4 text-foreground-muted" />
                   <span className="text-sm text-foreground">
                     {t("generate.options.generateAudio")}
                   </span>
-                </span>
-              </label>
+                </Label>
+              </div>
 
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={generateImages}
-                    onChange={(e) => setGenerateImages(e.target.checked)}
-                    disabled={isGenerating}
-                    className="peer sr-only"
-                  />
-                  <div className="w-5 h-5 border-2 border-border rounded bg-background peer-checked:bg-accent peer-checked:border-accent transition-all flex items-center justify-center">
-                    {generateImages && (
-                      <svg
-                        className="w-3 h-3 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={3}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <span className="flex items-center gap-2">
-                  <Image className="w-4 h-4 text-foreground-muted group-hover:text-foreground transition-colors" />
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="generateImages"
+                  checked={generateImages}
+                  onCheckedChange={setGenerateImages}
+                  disabled={isGenerating}
+                />
+                <Label htmlFor="generateImages" className="flex items-center gap-2 cursor-pointer">
+                  <Image className="w-4 h-4 text-foreground-muted" />
                   <span className="text-sm text-foreground">
                     {t("generate.options.generateImages")}
                   </span>
-                </span>
-              </label>
+                </Label>
+              </div>
             </div>
           </div>
 

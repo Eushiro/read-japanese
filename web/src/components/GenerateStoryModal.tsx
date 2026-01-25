@@ -12,6 +12,11 @@ import {
 import { Paywall } from "@/components/Paywall";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
 
@@ -129,12 +134,13 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
     }
   };
 
-  if (!isOpen) return null;
-
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-        <div className="bg-surface rounded-2xl border border-border shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden animate-fade-in-up">
+      <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent
+          className="bg-surface max-w-lg p-0 rounded-2xl border-border overflow-hidden"
+          showCloseButton={false}
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
             <div className="flex items-center gap-3">
@@ -163,152 +169,160 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
           </div>
 
           {/* Form */}
-          <div className="p-4 space-y-5 overflow-y-auto max-h-[calc(90vh-180px)]">
-            {/* JLPT Level */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">JLPT Level</label>
-              <div className="flex flex-wrap gap-2">
-                {JLPT_LEVELS.map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => setJlptLevel(level)}
-                    disabled={isGenerating}
-                    className="transition-all duration-200"
-                  >
-                    <Badge
-                      variant={levelVariantMap[level]}
-                      className={`cursor-pointer px-3 py-1.5 text-sm ${
-                        jlptLevel === level
-                          ? "ring-2 ring-accent/30 ring-offset-2 ring-offset-surface scale-105"
-                          : "opacity-60 hover:opacity-80"
-                      }`}
+          <ScrollArea className="max-h-[calc(90vh-180px)]">
+            <div className="p-4 space-y-5">
+              {/* JLPT Level */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-foreground">JLPT Level</Label>
+                <div className="flex flex-wrap gap-2">
+                  {JLPT_LEVELS.map((level) => (
+                    <button
+                      key={level}
+                      onClick={() => setJlptLevel(level)}
+                      disabled={isGenerating}
+                      className="transition-all duration-200"
                     >
-                      {level}
-                    </Badge>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Genre */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Genre</label>
-              <select
-                value={genre}
-                onChange={(e) => setGenre(e.target.value)}
-                disabled={isGenerating}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-              >
-                {GENRES.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Theme */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                Theme <span className="text-foreground-muted font-normal">(Optional)</span>
-              </label>
-              <input
-                type="text"
-                value={theme}
-                onChange={(e) => setTheme(e.target.value)}
-                placeholder="e.g., cherry blossoms, summer festival..."
-                disabled={isGenerating}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-              />
-            </div>
-
-            {/* Chapters & Words */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Chapters</label>
-                <select
-                  value={numChapters}
-                  onChange={(e) => setNumChapters(Number(e.target.value))}
-                  disabled={isGenerating}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-                >
-                  {[2, 3, 4, 5, 6].map((n) => (
-                    <option key={n} value={n}>
-                      {n} chapters
-                    </option>
+                      <Badge
+                        variant={levelVariantMap[level]}
+                        className={`cursor-pointer px-3 py-1.5 text-sm ${
+                          jlptLevel === level
+                            ? "ring-2 ring-accent/30 ring-offset-2 ring-offset-surface scale-105"
+                            : "opacity-60 hover:opacity-80"
+                        }`}
+                      >
+                        {level}
+                      </Badge>
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
 
+              {/* Genre */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Words/Chapter</label>
-                <select
-                  value={wordsPerChapter}
-                  onChange={(e) => setWordsPerChapter(Number(e.target.value))}
+                <Label className="text-sm font-medium text-foreground">Genre</Label>
+                <Select value={genre} onValueChange={setGenre} disabled={isGenerating}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENRES.map((g) => (
+                      <SelectItem key={g} value={g}>
+                        {g}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Theme */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-foreground">
+                  Theme <span className="text-foreground-muted font-normal">(Optional)</span>
+                </Label>
+                <input
+                  type="text"
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value)}
+                  placeholder="e.g., cherry blossoms, summer festival..."
                   disabled={isGenerating}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-                >
-                  {[100, 150, 200, 250, 300].map((n) => (
-                    <option key={n} value={n}>
-                      ~{n} words
-                    </option>
-                  ))}
-                </select>
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                />
               </div>
-            </div>
 
-            {/* Options */}
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground">Options</label>
-              <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={generateAudio}
-                    onChange={(e) => setGenerateAudio(e.target.checked)}
+              {/* Chapters & Words */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-foreground">Chapters</Label>
+                  <Select
+                    value={String(numChapters)}
+                    onValueChange={(v) => setNumChapters(Number(v))}
                     disabled={isGenerating}
-                    className="w-4 h-4 rounded border-border text-accent focus:ring-accent/20"
-                  />
-                  <span className="flex items-center gap-1.5 text-sm text-foreground">
-                    <Volume2 className="w-4 h-4 text-foreground-muted" />
-                    Audio
-                  </span>
-                </label>
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[2, 3, 4, 5, 6].map((n) => (
+                        <SelectItem key={n} value={String(n)}>
+                          {n} chapters
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={generateImages}
-                    onChange={(e) => setGenerateImages(e.target.checked)}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-foreground">Words/Chapter</Label>
+                  <Select
+                    value={String(wordsPerChapter)}
+                    onValueChange={(v) => setWordsPerChapter(Number(v))}
                     disabled={isGenerating}
-                    className="w-4 h-4 rounded border-border text-accent focus:ring-accent/20"
-                  />
-                  <span className="flex items-center gap-1.5 text-sm text-foreground">
-                    <Image className="w-4 h-4 text-foreground-muted" />
-                    Images
-                  </span>
-                </label>
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[100, 150, 200, 250, 300].map((n) => (
+                        <SelectItem key={n} value={String(n)}>
+                          ~{n} words
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
+              {/* Options */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-foreground">Options</Label>
+                <div className="flex flex-wrap gap-6">
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      id="audio"
+                      checked={generateAudio}
+                      onCheckedChange={setGenerateAudio}
+                      disabled={isGenerating}
+                    />
+                    <Label htmlFor="audio" className="flex items-center gap-1.5 cursor-pointer">
+                      <Volume2 className="w-4 h-4 text-foreground-muted" />
+                      Audio
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      id="images"
+                      checked={generateImages}
+                      onCheckedChange={setGenerateImages}
+                      disabled={isGenerating}
+                    />
+                    <Label htmlFor="images" className="flex items-center gap-1.5 cursor-pointer">
+                      <Image className="w-4 h-4 text-foreground-muted" />
+                      Images
+                    </Label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Progress */}
+              {progress && (
+                <div className="p-3 rounded-lg bg-accent/10 border border-accent/20 text-foreground text-sm flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                  {progress}
+                </div>
+              )}
             </div>
-
-            {/* Error */}
-            {error && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-                {error}
-              </div>
-            )}
-
-            {/* Progress */}
-            {progress && (
-              <div className="p-3 rounded-lg bg-accent/10 border border-accent/20 text-foreground text-sm flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-accent" />
-                {progress}
-              </div>
-            )}
-          </div>
+          </ScrollArea>
 
           {/* Footer */}
-          <div className="p-4 border-t border-border bg-muted/30">
+          <DialogFooter className="p-4 border-t border-border bg-muted/30 flex-col gap-2">
             <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
               {isGenerating ? (
                 <>
@@ -322,12 +336,12 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
                 </>
               )}
             </Button>
-            <p className="text-xs text-foreground-muted text-center mt-2">
+            <p className="text-xs text-foreground-muted text-center">
               Generation takes 2-5 minutes
             </p>
-          </div>
-        </div>
-      </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Paywall Modal */}
       <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="stories" />
