@@ -1,6 +1,6 @@
 {
   "welcome": {
-    "title": "欢迎来到SanLang",
+    "title": "欢迎来到{{brandName}}",
     "subtitle": "来设置你的个性化备考方案吧",
     "getStarted": "开始吧"
   },
@@ -11,7 +11,7 @@
     "saving": "保存中..."
   },
   "howItWorks": {
-    "title": "SanLang是怎么运作的",
+    "title": "{{brandName}}是怎么运作的",
     "subtitle": "通过我们的学习循环掌握词汇",
     "steps": {
       "read": {

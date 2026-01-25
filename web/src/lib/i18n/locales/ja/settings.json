@@ -125,7 +125,7 @@
   },
   "about": {
     "title": "このアプリについて",
-    "version": "SanLang v1.0.0",
+    "version": "{{brandName}} v{{brandVersion}}",
     "description": "AIを活用したパーソナライズ学習"
   },
   "credits": {

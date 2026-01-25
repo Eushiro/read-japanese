@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 
 import { internalAction } from "../_generated/server";
+import { BRAND } from "../lib/brand";
 import { compressToWebp } from "../lib/imageCompression";
 import { uploadAudio, uploadImage } from "../lib/storage";
 import { languageNames } from "./core";
@@ -156,8 +157,8 @@ The image should:
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://sanlang.app",
-        "X-Title": "SanLang",
+        "HTTP-Referer": BRAND.url,
+        "X-Title": BRAND.name,
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-image",

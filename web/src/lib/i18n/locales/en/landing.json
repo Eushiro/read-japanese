@@ -18,7 +18,7 @@
   "comparison": {
     "title": "Not another flashcard app",
     "subtitle": "Most apps test what you recognize. We test what you can produce.",
-    "sanlang": "SanLang",
+    "sanlang": "{{brandName}}",
     "others": "Other Apps",
     "us": {
       "item1": "Write sentences, get AI feedback",
@@ -89,6 +89,6 @@
     "noCreditCard": "No credit card required"
   },
   "footer": {
-    "tagline": "SanLang - Personalized exam prep powered by AI"
+    "tagline": "{{brandName}} - Personalized exam prep powered by AI"
   }
 }

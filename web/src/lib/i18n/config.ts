@@ -7,6 +7,7 @@ import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
 
+import brandConfig from "../../../../shared/brand.json";
 // Import translation files
 import enCommon from "./locales/en/common.json";
 import enComprehension from "./locales/en/comprehension.json";
@@ -268,6 +269,10 @@ i18n
 
     interpolation: {
       escapeValue: false, // React already escapes
+      defaultVariables: {
+        brandName: brandConfig.name,
+        brandVersion: brandConfig.version,
+      },
     },
 
     react: {

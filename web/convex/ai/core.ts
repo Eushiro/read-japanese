@@ -1,10 +1,18 @@
 "use node";
 
+import { BRAND } from "../lib/brand";
+
 // ============================================
 // OPENROUTER CONFIGURATION & SHARED UTILITIES
 // ============================================
 
 export const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+
+export interface OpenRouterUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+}
 
 export interface OpenRouterResponse {
   choices: Array<{
@@ -12,6 +20,38 @@ export interface OpenRouterResponse {
       content: string;
     };
   }>;
+  usage?: OpenRouterUsage;
+  model?: string; // Actual model used (may differ from requested)
+}
+
+export interface AICallResult {
+  content: string;
+  usage?: OpenRouterUsage;
+  model: string;
+  latencyMs: number;
+}
+
+// Cost per 1M tokens in cents (as of Jan 2025)
+// Source: https://openrouter.ai/docs#models
+const MODEL_COSTS: Record<string, { input: number; output: number }> = {
+  "google/gemini-3-flash-preview": { input: 10, output: 40 }, // $0.10/$0.40 per 1M
+  "google/gemini-2.0-flash": { input: 10, output: 40 },
+  "anthropic/claude-haiku-4.5": { input: 80, output: 400 }, // $0.80/$4.00 per 1M
+  "anthropic/claude-3-haiku": { input: 25, output: 125 },
+};
+
+/**
+ * Calculate estimated cost in cents for an AI call
+ */
+export function calculateCostCents(
+  model: string,
+  inputTokens: number,
+  outputTokens: number
+): number {
+  const costs = MODEL_COSTS[model] || { input: 100, output: 400 }; // Default fallback
+  const inputCost = (inputTokens / 1_000_000) * costs.input;
+  const outputCost = (outputTokens / 1_000_000) * costs.output;
+  return inputCost + outputCost;
 }
 
 // Model configuration - ordered by preference (primary first, then fallbacks)
@@ -28,6 +68,9 @@ export interface JsonSchema {
   schema: Record<string, unknown>;
 }
 
+/**
+ * Call OpenRouter and return content string (legacy interface)
+ */
 export async function callOpenRouter(
   prompt: string,
   systemPrompt: string,
@@ -35,6 +78,20 @@ export async function callOpenRouter(
   maxTokens: number = 500,
   jsonSchema?: JsonSchema
 ): Promise<string> {
+  const result = await callOpenRouterWithUsage(prompt, systemPrompt, model, maxTokens, jsonSchema);
+  return result.content;
+}
+
+/**
+ * Call OpenRouter and return full result including usage data
+ */
+export async function callOpenRouterWithUsage(
+  prompt: string,
+  systemPrompt: string,
+  model: string = DEFAULT_MODEL,
+  maxTokens: number = 500,
+  jsonSchema?: JsonSchema
+): Promise<AICallResult> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY environment variable is not set");
@@ -62,16 +119,18 @@ export async function callOpenRouter(
     };
   }
 
+  const startTime = Date.now();
   const response = await fetch(OPENROUTER_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
-      "HTTP-Referer": "https://sanlang.app",
-      "X-Title": "SanLang",
+      "HTTP-Referer": BRAND.url,
+      "X-Title": BRAND.name,
     },
     body: JSON.stringify(body),
   });
+  const latencyMs = Date.now() - startTime;
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -79,7 +138,12 @@ export async function callOpenRouter(
   }
 
   const data = (await response.json()) as OpenRouterResponse;
-  return data.choices[0]?.message?.content ?? "";
+  return {
+    content: data.choices[0]?.message?.content ?? "",
+    usage: data.usage,
+    model: data.model || model,
+    latencyMs,
+  };
 }
 
 /**
@@ -117,11 +181,34 @@ export interface CallWithRetryOptions<T> {
   models?: string[];
 }
 
+export interface CallWithRetryResult<T> {
+  result: T;
+  usage: {
+    model: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    estimatedCostCents: number;
+    latencyMs: number;
+  };
+}
+
 /**
  * Call OpenRouter with automatic retry through model chain
  * Retries on API errors AND validation failures
  */
 export async function callWithRetry<T>(options: CallWithRetryOptions<T>): Promise<T> {
+  const result = await callWithRetryTracked(options);
+  return result.result;
+}
+
+/**
+ * Call OpenRouter with automatic retry and return usage tracking data
+ * Use this when you need to log AI costs
+ */
+export async function callWithRetryTracked<T>(
+  options: CallWithRetryOptions<T>
+): Promise<CallWithRetryResult<T>> {
   const {
     prompt,
     systemPrompt,
@@ -143,8 +230,14 @@ export async function callWithRetry<T>(options: CallWithRetryOptions<T>): Promis
     }
 
     try {
-      const response = await callOpenRouter(prompt, systemPrompt, model, maxTokens, jsonSchema);
-      const parsed = parse(response);
+      const response = await callOpenRouterWithUsage(
+        prompt,
+        systemPrompt,
+        model,
+        maxTokens,
+        jsonSchema
+      );
+      const parsed = parse(response.content);
 
       // Run validation if provided
       if (validate) {
@@ -156,7 +249,25 @@ export async function callWithRetry<T>(options: CallWithRetryOptions<T>): Promis
         }
       }
 
-      return parsed;
+      // Calculate usage data
+      const usage = response.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+      const estimatedCostCents = calculateCostCents(
+        response.model,
+        usage.prompt_tokens,
+        usage.completion_tokens
+      );
+
+      return {
+        result: parsed,
+        usage: {
+          model: response.model,
+          inputTokens: usage.prompt_tokens,
+          outputTokens: usage.completion_tokens,
+          totalTokens: usage.total_tokens,
+          estimatedCostCents,
+          latencyMs: response.latencyMs,
+        },
+      };
     } catch (error) {
       console.error(`Model ${model} failed:`, error);
       lastError = error as Error;

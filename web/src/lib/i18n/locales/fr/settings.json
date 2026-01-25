@@ -125,7 +125,7 @@
   },
   "about": {
     "title": "À propos",
-    "version": "SanLang v1.0.0",
+    "version": "{{brandName}} v{{brandVersion}}",
     "description": "Préparation aux examens personnalisée par IA"
   },
   "credits": {

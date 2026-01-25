@@ -100,7 +100,7 @@
   },
   "about": {
     "title": "About",
-    "version": "SanLang v1.0.0",
+    "version": "{{brandName}} v{{brandVersion}}",
     "description": "Personalized exam prep powered by AI"
   }
 }

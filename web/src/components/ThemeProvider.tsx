@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
+import { BRAND } from "@/lib/brand";
+
 type Theme = "dark" | "light" | "system";
 
 type ThemeProviderProps = {
@@ -23,7 +25,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "sanlang-theme",
+  storageKey = BRAND.themeStorageKey,
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme

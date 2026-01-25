@@ -38,3 +38,6 @@ page-*.jpeg
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Generated files
+public/sw.js

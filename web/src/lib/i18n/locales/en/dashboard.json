@@ -18,7 +18,7 @@
   },
   "preview": {
     "title": "Your Learning Dashboard",
-    "subtitle": "See how SanLang helps you master vocabulary"
+    "subtitle": "See how {{brandName}} helps you master vocabulary"
   },
   "stats": {
     "dueCards": "due cards",

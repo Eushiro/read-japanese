@@ -18,7 +18,7 @@
   "comparison": {
     "title": "ただのフラッシュカードアプリではありません",
     "subtitle": "他のアプリは認識力をテストします。私たちは生産力をテストします。",
-    "sanlang": "SanLang",
+    "sanlang": "{{brandName}}",
     "others": "他のアプリ",
     "us": {
       "item1": "文を書いて、AIからフィードバックを得る",
@@ -89,6 +89,6 @@
     "noCreditCard": "クレジットカード不要"
   },
   "footer": {
-    "tagline": "SanLang - AIを活用したパーソナライズ試験対策"
+    "tagline": "{{brandName}} - AIを活用したパーソナライズ試験対策"
   }
 }

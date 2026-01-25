@@ -1,6 +1,6 @@
 {
   "welcome": {
-    "title": "SanLangへようこそ",
+    "title": "{{brandName}}へようこそ",
     "subtitle": "あなた専用の試験対策を設定しましょう",
     "getStarted": "始めましょう"
   },
@@ -11,7 +11,7 @@
     "saving": "保存中..."
   },
   "howItWorks": {
-    "title": "SanLangの使い方",
+    "title": "{{brandName}}の使い方",
     "subtitle": "効果的な学習サイクルで語彙をマスター",
     "steps": {
       "read": {

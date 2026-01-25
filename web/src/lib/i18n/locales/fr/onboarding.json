@@ -1,6 +1,6 @@
 {
   "welcome": {
-    "title": "Bienvenue sur SanLang",
+    "title": "Bienvenue sur {{brandName}}",
     "subtitle": "Configurons ta préparation aux examens",
     "getStarted": "C'est parti"
   },

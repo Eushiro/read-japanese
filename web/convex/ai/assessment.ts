@@ -4,6 +4,7 @@ import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { action, internalAction } from "../_generated/server";
+import { BRAND } from "../lib/brand";
 import {
   callWithRetry,
   cleanJsonResponse,
@@ -393,8 +394,8 @@ Common issues to listen for:
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
-          "HTTP-Referer": "https://sanlang.app",
-          "X-Title": "SanLang",
+          "HTTP-Referer": BRAND.url,
+          "X-Title": BRAND.name,
         },
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",

@@ -18,7 +18,7 @@
   "comparison": {
     "title": "不只是另一个闪卡应用",
     "subtitle": "大多数应用测试你能认出什么。我们测试你能产出什么。",
-    "sanlang": "SanLang",
+    "sanlang": "{{brandName}}",
     "others": "其他应用",
     "us": {
       "item1": "写句子，获得AI反馈",
@@ -89,6 +89,6 @@
     "noCreditCard": "无需信用卡"
   },
   "footer": {
-    "tagline": "SanLang - AI驱动的个性化考试准备"
+    "tagline": "{{brandName}} - AI驱动的个性化考试准备"
   }
 }

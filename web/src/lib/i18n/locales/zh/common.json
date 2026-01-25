@@ -100,7 +100,7 @@
   },
   "about": {
     "title": "\u5173\u4e8e",
-    "version": "SanLang v1.0.0",
+    "version": "{{brandName}} v{{brandVersion}}",
     "description": "AI\u9a71\u52a8\u7684\u4e2a\u6027\u5316\u8003\u8bd5\u51c6\u5907"
   }
 }

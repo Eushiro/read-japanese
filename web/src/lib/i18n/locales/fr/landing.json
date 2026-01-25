@@ -18,7 +18,7 @@
   "comparison": {
     "title": "Pas une autre application de flashcards",
     "subtitle": "La plupart des applications testent ce que vous reconnaissez. Nous testons ce que vous pouvez produire.",
-    "sanlang": "SanLang",
+    "sanlang": "{{brandName}}",
     "others": "Autres applications",
     "us": {
       "item1": "Écrivez des phrases, obtenez des retours de l'IA",
@@ -89,6 +89,6 @@
     "noCreditCard": "Aucune carte de crédit requise"
   },
   "footer": {
-    "tagline": "SanLang - Préparation aux examens personnalisée par l'IA"
+    "tagline": "{{brandName}} - Préparation aux examens personnalisée par l'IA"
   }
 }

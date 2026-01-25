@@ -24,6 +24,8 @@
 import { readdirSync,readFileSync, writeFileSync } from "fs";
 import { basename, dirname,join } from "path";
 
+import brandConfig from "../../shared/brand.json";
+
 // Exam types and their languages
 const EXAM_LANGUAGES: Record<string, string> = {
   jlpt_n5: "japanese",
@@ -168,8 +170,8 @@ IMPORTANT:
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
-      "HTTP-Referer": "https://sanlang.app",
-      "X-Title": "SanLang Exam Extractor",
+      "HTTP-Referer": `https://${brandConfig.domain}`,
+      "X-Title": `${brandConfig.name} Exam Extractor`,
     },
     body: JSON.stringify({
       model: "google/gemini-3-flash-preview",

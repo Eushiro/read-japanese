@@ -1,6 +1,6 @@
 {
   "welcome": {
-    "title": "Welcome to SanLang",
+    "title": "Welcome to {{brandName}}",
     "subtitle": "Let's set up your personalized exam prep",
     "getStarted": "Get Started"
   },
@@ -11,7 +11,7 @@
     "saving": "Saving..."
   },
   "howItWorks": {
-    "title": "How SanLang Works",
+    "title": "How {{brandName}} Works",
     "subtitle": "Master vocabulary through our proven learning loop",
     "steps": {
       "read": {

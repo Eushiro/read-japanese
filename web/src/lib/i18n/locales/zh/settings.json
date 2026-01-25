@@ -110,7 +110,7 @@
   },
   "about": {
     "title": "关于",
-    "version": "SanLang v1.0.0",
+    "version": "{{brandName}} v{{brandVersion}}",
     "description": "AI驱动的个性化备考"
   },
   "credits": {
