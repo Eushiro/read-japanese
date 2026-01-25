@@ -9,6 +9,7 @@
  *   npx convex run migrations/storyMigration:generateTranslations
  */
 
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
@@ -392,5 +393,123 @@ export const runTranslationUpdate = internalAction({
     );
     console.log(`Updated ${result.updated} of ${result.total} stories with full translations`);
     return result;
+  },
+});
+
+// Known story IDs to rebuild manifest from
+const STORY_IDS = [
+  "n5_school_day_001",
+  "n5_first_cafe_001",
+  "n5_weekend_trip_001",
+  "n4_lost_wallet_001",
+  "n4_shinkansen_001",
+  "n3_cooking_lesson_001",
+  "n3_library_discovery_001",
+  "n2_digital_detox_001",
+  "n2_career_change_001",
+  "n1_seasons_reflection_001",
+  "n1_ephemeral_snow_001",
+  "magic_cat_001",
+];
+
+interface StoryJson {
+  id: string;
+  metadata: {
+    title: string;
+    titleJapanese?: string;
+    level: string;
+    wordCount: number;
+    genre: string;
+    summary: string;
+    summaryJapanese?: string;
+    coverImageURL?: string;
+    audioURL?: string;
+  };
+  chapters: unknown[];
+}
+
+/**
+ * Rebuild manifest.json from R2 stories and upload it
+ *
+ * Usage:
+ *   npx convex run migrations/storyMigration:rebuildManifest --prod
+ */
+export const rebuildManifest = internalAction({
+  args: {},
+  handler: async () => {
+    console.log("Rebuilding manifest from R2 stories...");
+
+    const stories: ManifestStory[] = [];
+
+    for (const id of STORY_IDS) {
+      const url = `${R2_PUBLIC_URL}/stories/japanese/${id}/story.json`;
+      console.log(`  Fetching ${id}...`);
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.log(`    Skipping ${id}: ${response.status}`);
+          continue;
+        }
+
+        const data: StoryJson = await response.json();
+        stories.push({
+          id: data.id,
+          language: "japanese",
+          title: data.metadata.title,
+          titleJapanese: data.metadata.titleJapanese,
+          level: data.metadata.level,
+          wordCount: data.metadata.wordCount,
+          genre: data.metadata.genre,
+          summary: data.metadata.summary,
+          summaryJapanese: data.metadata.summaryJapanese,
+          coverImageURL: data.metadata.coverImageURL,
+          audioURL: data.metadata.audioURL,
+          chapterCount: data.chapters.length,
+          isPremium: false,
+        });
+        console.log(`    Found: ${data.metadata.title}`);
+      } catch (error) {
+        console.log(`    Error fetching ${id}:`, error);
+      }
+    }
+
+    console.log(`\nBuilding manifest with ${stories.length} stories...`);
+
+    const manifest: Manifest = {
+      stories,
+      generatedAt: new Date().toISOString(),
+    };
+
+    // Upload to R2
+    const accountId = process.env.R2_ACCOUNT_ID;
+    const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+    const bucketName = process.env.R2_BUCKET_NAME || "sanlang-media";
+
+    if (!accountId || !accessKeyId || !secretAccessKey) {
+      throw new Error("R2 credentials not configured");
+    }
+
+    const client = new S3Client({
+      region: "auto",
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      credentials: { accessKeyId, secretAccessKey },
+    });
+
+    const manifestJson = JSON.stringify(manifest, null, 2);
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucketName,
+        Key: "stories/manifest.json",
+        Body: manifestJson,
+        ContentType: "application/json",
+      })
+    );
+
+    console.log(`\nManifest uploaded to R2: stories/manifest.json`);
+    console.log(`Public URL: ${R2_PUBLIC_URL}/stories/manifest.json`);
+
+    return { storiesCount: stories.length };
   },
 });
