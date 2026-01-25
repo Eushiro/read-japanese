@@ -78,7 +78,8 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         email: userEmail ?? undefined,
         name: userName ?? undefined,
         languages: selectedLanguages,
-        targetExams: selectedExams,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- selectedExams values come from EXAMS_BY_LANGUAGE
+        targetExams: selectedExams as any,
         primaryLanguage: selectedLanguages[0],
       });
 

@@ -9,7 +9,6 @@ export type {
   CardState,
   DeckSubscriptionStatus,
   ExamType,
-  GenerationStatus,
   Language,
   MasteryState,
   Rating,
@@ -17,6 +16,9 @@ export type {
   SubscriptionStatus,
   SubscriptionTier,
 } from "../../convex/schema";
+
+// GenerationStatus type (if needed in the future)
+export type GenerationStatus = "pending" | "generating" | "completed" | "failed";
 
 // Convenience type aliases for common document types
 import type { Doc } from "../../convex/_generated/dataModel";

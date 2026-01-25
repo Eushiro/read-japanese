@@ -164,6 +164,7 @@ export function PlacementTestPage() {
     ) {
       preGenerateNextQuestion(testId, currentQuestionIndex + 1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- preGenerateNextQuestion uses values already in deps
   }, [testId, currentQuestionIndex, currentTest, nextQuestionReady, isPreGenerating, showFeedback]);
 
   // Reset scroll position when viewing a different question
@@ -426,7 +427,9 @@ export function PlacementTestPage() {
 
             <div className="flex items-center justify-center gap-2 text-foreground-muted mb-8">
               <Target className="w-4 h-4" />
-              <span>{t("placement:results.confidence", { percent: currentTest.confidence })}</span>
+              <span>
+                {t("placement:results.confidence", { percent: currentTest.confidence ?? 0 })}
+              </span>
             </div>
 
             {/* Section breakdown */}
@@ -461,7 +464,7 @@ export function PlacementTestPage() {
 
             <div className="flex flex-col gap-3">
               <Button onClick={() => navigate({ to: "/learn" })}>
-                {t("placement:results.startLearning", { level: currentTest.determinedLevel })}
+                {t("placement:results.startLearning", { level: currentTest.determinedLevel ?? "" })}
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
               <Button variant="outline" onClick={() => navigate({ to: "/settings" })}>

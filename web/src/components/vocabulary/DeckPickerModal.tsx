@@ -43,7 +43,7 @@ export function DeckPickerModal({
 
   // Get user's learning languages
   const user = useQuery(api.users.getByClerkId, { clerkId: userId });
-  const userLanguages = user?.languages ?? ["japanese"];
+  const userLanguages = useMemo(() => user?.languages ?? ["japanese"], [user?.languages]);
 
   // Filter to only show languages user is learning
   const availableLanguages = useMemo(() => {

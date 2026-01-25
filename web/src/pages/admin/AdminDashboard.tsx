@@ -122,7 +122,7 @@ export function AdminDashboard() {
         <h2 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
         <div className="flex flex-wrap gap-3">
           <Button asChild>
-            <Link to="/admin/videos/new">
+            <Link to="/admin/videos/$id" params={{ id: "new" }}>
               <Plus className="w-4 h-4 mr-2" />
               Add Video
             </Link>
@@ -189,7 +189,7 @@ export function AdminDashboard() {
                       </div>
                     </div>
                     <Button variant="outline" size="sm" asChild>
-                      <Link to={`/admin/decks/${deck.deckId}`}>
+                      <Link to="/admin/decks/$deckId" params={{ deckId: deck.deckId }}>
                         View <ArrowRight className="w-4 h-4 ml-1" />
                       </Link>
                     </Button>

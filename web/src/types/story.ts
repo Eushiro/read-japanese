@@ -54,6 +54,8 @@ export interface Token {
   parts?: TokenPart[];
   baseForm?: string;
   partOfSpeech?: string;
+  isWord?: boolean;
+  proficiencyLevel?: string;
 }
 
 // Word-level audio timing from Whisper alignment

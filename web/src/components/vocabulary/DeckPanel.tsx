@@ -328,7 +328,7 @@ function DeckCard({
               <Button
                 variant="destructive"
                 onClick={() => {
-                  onUnsubscribe();
+                  onUnsubscribe?.();
                   setShowConfirm(false);
                 }}
                 className="flex-1"

@@ -19,7 +19,7 @@ type TranslationParams = Record<string, string | number>;
  * }
  */
 export function useT(): (key: string, params?: TranslationParams) => string {
-  const { t: i18nT, i18n } = useTranslation();
+  const { t: i18nT } = useTranslation();
 
   const t = useCallback(
     (key: string, params?: TranslationParams): string => {
@@ -35,7 +35,7 @@ export function useT(): (key: string, params?: TranslationParams) => string {
 
       return i18nT(restKey, { ns: namespace, ...params }) as string;
     },
-    [i18nT, i18n.language] // Re-create when language changes
+    [i18nT] // i18nT already updates when language changes
   );
 
   return t;

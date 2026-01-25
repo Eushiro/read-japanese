@@ -40,6 +40,7 @@ export function ExamTakingPage() {
   const submitAnswer = useMutation(api.examAttempts.submitAnswer);
   const updatePosition = useMutation(api.examAttempts.updatePosition);
   const completeExam = useMutation(api.examAttempts.complete);
+  const updateWithAiGrading = useMutation(api.examAttempts.updateWithAiGrading);
   const gradeAnswer = useAIAction(api.ai.gradeExamAnswer);
 
   // Get current attempt (existing or create new)
@@ -97,6 +98,7 @@ export function ExamTakingPage() {
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Timer effect, handleComplete captures current state when called
   }, [attempt, template]);
 
   // Get current question
@@ -147,7 +149,11 @@ export function ExamTakingPage() {
           q.isCorrect === undefined
       );
 
-      if (questionsNeedingGrading && questionsNeedingGrading.length > 0) {
+      if (
+        questionsNeedingGrading &&
+        questionsNeedingGrading.length > 0 &&
+        attempt?.questionsWithDetails
+      ) {
         for (const q of questionsNeedingGrading) {
           if (!q.questionData) continue;
           const idx = attempt.questionsWithDetails.indexOf(q);
@@ -169,7 +175,7 @@ export function ExamTakingPage() {
             });
 
             // Update with AI grading
-            await api.examAttempts.updateWithAiGrading({
+            await updateWithAiGrading({
               attemptId,
               questionIndex: idx,
               aiScore: result.score,
@@ -358,7 +364,7 @@ export function ExamTakingPage() {
 
             {/* Question indicators */}
             <div className="flex items-center gap-1 flex-wrap justify-center max-w-md">
-              {attempt?.questions?.map((q, idx) => {
+              {attempt?.questions?.map((_, idx) => {
                 const isAnswered = !!answers[idx];
                 const isCurrent = idx === currentQuestionIndex;
                 return (

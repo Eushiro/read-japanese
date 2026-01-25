@@ -20,7 +20,7 @@ import { CreditAlert } from "@/components/CreditAlert";
 import { StoryCard } from "@/components/library/StoryCard";
 import { VideoCard, type VideoItem } from "@/components/library/VideoCard";
 import { Paywall } from "@/components/Paywall";
-import { useAuth } from "@/contexts/AuthContext";
+import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useStories } from "@/hooks/useStories";
 import { useT } from "@/lib/i18n";
 import { LANGUAGES } from "@/lib/languages";

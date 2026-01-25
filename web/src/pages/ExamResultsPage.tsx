@@ -95,8 +95,8 @@ export function ExamResultsPage() {
           </div>
           <p className="text-foreground-muted">
             {t("examResults.header.points", {
-              earned: attempt.earnedPoints,
-              total: attempt.totalPoints,
+              earned: attempt.earnedPoints ?? 0,
+              total: attempt.totalPoints ?? 0,
             })}
           </p>
         </div>
@@ -206,7 +206,7 @@ export function ExamResultsPage() {
                       <span className="text-sm text-foreground-muted">
                         {t("examResults.questions.points", {
                           earned: q.earnedPoints ?? 0,
-                          total: q.questionData?.points,
+                          total: q.questionData?.points ?? 0,
                         })}
                       </span>
                       {isExpanded ? (

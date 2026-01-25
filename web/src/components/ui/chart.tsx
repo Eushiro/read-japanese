@@ -322,5 +322,3 @@ export {
   ChartTooltip,
   ChartTooltipContent,
 };
-
-export type { ChartConfig };

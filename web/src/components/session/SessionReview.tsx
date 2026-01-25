@@ -1,29 +1,17 @@
 import { useMutation, useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { Brain, Check, ChevronRight, Loader2, Volume2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Id, Rating } from "@/lib/convex-types";
+import type { Rating } from "@/lib/convex-types";
 import { useT } from "@/lib/i18n";
 
 import { api } from "../../../convex/_generated/api";
 
-// CardType includes joined vocabulary data from the query
-type CardType = {
-  _id: Id<"flashcards">;
-  sentence: string;
-  sentenceTranslation: string;
-  audioUrl?: string | null;
-  wordAudioUrl?: string | null;
-  imageUrl?: string | null;
-  vocabulary?: {
-    word: string;
-    reading?: string | null;
-    definitions: string[];
-    language: string;
-  } | null;
-};
+// Use Convex's inferred return type from the query
+type CardType = FunctionReturnType<typeof api.flashcards.getDue>[number];
 
 interface SessionReviewProps {
   cardCount: number;
@@ -56,7 +44,7 @@ export function SessionReview({ cardCount, onComplete }: SessionReviewProps) {
 
   // Initialize session queue
   const initialCards = useMemo(() => {
-    const cards = [...(dueCards ?? []), ...(newCards ?? [])] as CardType[];
+    const cards = [...(dueCards ?? []), ...(newCards ?? [])];
     return cards.slice(0, cardCount);
   }, [dueCards, newCards, cardCount]);
 
@@ -254,10 +242,10 @@ function FlashcardDisplay({
   return (
     <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
       {/* Image */}
-      {showAnswer && card.imageUrl && (
+      {showAnswer && card.image?.imageUrl && (
         <div className="mb-6 flex justify-center">
           <img
-            src={card.imageUrl}
+            src={card.image.imageUrl}
             alt={vocab?.word || "Flashcard image"}
             className="max-w-full h-auto max-h-48 rounded-xl object-contain"
           />
@@ -272,9 +260,9 @@ function FlashcardDisplay({
         >
           {vocab?.word}
         </div>
-        {showAnswer && card.wordAudioUrl && (
+        {showAnswer && card.wordAudio?.audioUrl && (
           <button
-            onClick={() => playAudio(card.wordAudioUrl!)}
+            onClick={() => playAudio(card.wordAudio!.audioUrl)}
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
           >
             <Volume2 className="w-4 h-4" />
@@ -289,17 +277,17 @@ function FlashcardDisplay({
           className="text-lg text-foreground leading-relaxed text-center"
           style={{ fontFamily: languageFont }}
         >
-          {card.sentence}
+          {card.sentence?.sentence}
         </p>
         {showAnswer && (
           <p className="text-sm text-foreground-muted text-center mt-2 italic">
-            {card.sentenceTranslation}
+            {card.sentence?.sentenceTranslation}
           </p>
         )}
-        {showAnswer && card.audioUrl && (
+        {showAnswer && card.sentence?.audioUrl && (
           <div className="flex justify-center mt-3">
             <button
-              onClick={() => playAudio(card.audioUrl!)}
+              onClick={() => playAudio(card.sentence!.audioUrl!)}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
             >
               <Volume2 className="w-4 h-4" />

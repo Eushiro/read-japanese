@@ -78,37 +78,63 @@ import { type Language, LANGUAGES } from "@/lib/languages";
 // Type for vocabulary item used in detail modal (subset of Doc<"vocabulary">)
 type VocabularyItem = {
   _id: string;
+  _creationTime: number;
   word: string;
   reading?: string | null;
   definitions: string[];
   language: string;
-  masteryState: MasteryState;
+  masteryState?: MasteryState;
   examLevel?: string | null;
   sourceStoryTitle?: string | null;
   sourceContext?: string | null;
   flashcardPending?: boolean | null;
-};
-
-// Type for premade vocabulary items (from premadeDecks)
-type PremadeVocabItem = {
-  _id: string;
-  word: string;
-  reading?: string | null;
-  definitions: string[];
-  language: string;
-  level: string;
-  deckId: string;
+  // Properties that may come from flashcard resolution or premade vocab
+  level?: string;
+  deckId?: string;
   sentence?: string | null;
   sentenceTranslation?: string | null;
   audioUrl?: string | null;
   wordAudioUrl?: string | null;
   imageUrl?: string | null;
-  generationStatus: string;
-  createdAt: number;
+};
+
+// Type for premade vocabulary items (from premadeDecks)
+type PremadeVocabItem = {
+  _id: string;
+  _creationTime: number;
+  word: string;
+  reading?: string | null;
+  definitions: string[];
+  language: string;
+  level?: string;
+  deckId?: string;
+  sentence?: string | null;
+  sentenceTranslation?: string | null;
+  audioUrl?: string | null;
+  wordAudioUrl?: string | null;
+  imageUrl?: string | null;
+  generationStatus?: string;
+  // Properties for compatibility with VocabularyItem
+  masteryState?: MasteryState;
+  flashcardPending?: boolean | null;
+  sourceContext?: string | null;
+  examLevel?: string | null;
+  sourceStoryTitle?: string | null;
 };
 
 // Union type for vocabulary items (user vocab or premade)
 type AnyVocabItem = VocabularyItem | PremadeVocabItem;
+
+// Type for flashcard data that may have resolved content
+type FlashcardWithContent = {
+  _id: string;
+  sentence?: string | null;
+  sentenceTranslation?: string | null;
+  audioUrl?: string | null;
+  wordAudioUrl?: string | null;
+  imageUrl?: string | null;
+  [key: string]: unknown;
+};
 
 export function VocabularyPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -143,7 +169,7 @@ export function VocabularyPage() {
         // Silently fail - user might not have any active decks
       });
     }
-  }, [isAuthenticated, userId]);
+  }, [isAuthenticated, userId, addDailyCards]);
 
   // Track page view
   useEffect(() => {
@@ -214,8 +240,8 @@ export function VocabularyPage() {
     isAuthenticated && user ? { userId: user.id } : "skip"
   );
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
-  // Pro+ check for premium features like image generation and shadowing
-  const hasProAccess = subscription?.tier === "pro" || subscription?.tier === "power";
+  // Pro check for premium features like image generation and shadowing
+  const hasProAccess = subscription?.tier === "pro";
 
   // Filter vocabulary (with romaji support)
   const filteredVocabulary = useMemo(() => {
@@ -251,9 +277,9 @@ export function VocabularyPage() {
 
     switch (sortBy) {
       case "newest":
-        return items.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+        return items.sort((a, b) => (b._creationTime ?? 0) - (a._creationTime ?? 0));
       case "oldest":
-        return items.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
+        return items.sort((a, b) => (a._creationTime ?? 0) - (b._creationTime ?? 0));
       case "alphabetical":
         return items.sort((a, b) => a.word.localeCompare(b.word, "ja"));
       case "alphabetical-reverse":
@@ -278,7 +304,7 @@ export function VocabularyPage() {
     const groups = new Map<string, typeof sortedVocabulary>();
 
     sortedVocabulary.forEach((item: AnyVocabItem) => {
-      const mastery = "masteryState" in item ? item.masteryState : "new";
+      const mastery = ("masteryState" in item && item.masteryState) || "new";
       if (!groups.has(mastery)) {
         groups.set(mastery, []);
       }
@@ -806,7 +832,8 @@ function VocabularyCard({
     : existingFlashcard !== undefined && existingFlashcard !== null;
 
   // Use premade content or flashcard content
-  const content = premadeContent || existingFlashcard;
+  // Cast to FlashcardWithContent since the query may return raw data without resolved URLs
+  const content = (premadeContent || existingFlashcard) as FlashcardWithContent | null;
 
   const handleEnhancePremade = async () => {
     if (!isPremade || !isAdmin) return;
@@ -892,6 +919,7 @@ function VocabularyCard({
             </span>
           ) : (
             showMastery &&
+            item.masteryState &&
             item.masteryState !== "new" && (
               <span
                 className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${MASTERY_COLORS[item.masteryState] ?? "bg-muted text-foreground-muted"}`}
@@ -983,6 +1011,7 @@ function VocabularyCard({
             </span>
           ) : (
             showMastery &&
+            item.masteryState &&
             item.masteryState !== "new" && (
               <span
                 className={`text-xs px-2 py-1 rounded-full ${MASTERY_COLORS[item.masteryState] ?? "bg-muted text-foreground-muted"}`}
@@ -1183,15 +1212,18 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
   const flashcardData = useFlashcard(isPremade ? undefined : item._id);
 
   // For premade items, use item's content directly
-  const flashcard = isPremade
-    ? {
-        sentence: item.sentence,
-        sentenceTranslation: item.sentenceTranslation,
-        audioUrl: item.audioUrl,
-        wordAudioUrl: item.wordAudioUrl,
-        imageUrl: item.imageUrl,
-      }
-    : flashcardData;
+  // Cast to FlashcardWithContent since the query may return raw data without resolved URLs
+  const flashcard = (
+    isPremade
+      ? {
+          sentence: item.sentence,
+          sentenceTranslation: item.sentenceTranslation,
+          audioUrl: item.audioUrl,
+          wordAudioUrl: item.wordAudioUrl,
+          imageUrl: item.imageUrl,
+        }
+      : flashcardData
+  ) as FlashcardWithContent | null | undefined;
 
   const playAudio = (url: string) => {
     new Audio(url).play();
@@ -1451,9 +1483,9 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
               </span>
             ) : (
               <span
-                className={`text-xs px-2 py-1 rounded-full ${MASTERY_COLORS[item.masteryState] ?? "bg-muted text-foreground-muted"}`}
+                className={`text-xs px-2 py-1 rounded-full ${MASTERY_COLORS[item.masteryState ?? "new"] ?? "bg-muted text-foreground-muted"}`}
               >
-                {t(`vocabulary.mastery.${item.masteryState}`)}
+                {t(`vocabulary.mastery.${item.masteryState ?? "new"}`)}
               </span>
             )}
             <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-foreground-muted capitalize">

@@ -142,7 +142,7 @@ export function VideosPage() {
           </p>
         </div>
         <Button asChild>
-          <Link to="/admin/videos/new">
+          <Link to="/admin/videos/$id" params={{ id: "new" }}>
             <Plus className="w-4 h-4 mr-2" />
             Add Video
           </Link>
@@ -296,7 +296,7 @@ export function VideosPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link to={`/admin/videos/${video._id}`}>
+                              <Link to="/admin/videos/$id" params={{ id: video._id }}>
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
                               </Link>

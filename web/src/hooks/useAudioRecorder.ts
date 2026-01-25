@@ -42,6 +42,12 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderActions {
   const streamRef = useRef<MediaStream | null>(null);
   const startTimeRef = useRef<number>(0);
   const durationIntervalRef = useRef<number | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
+
+  // Keep ref in sync with state for cleanup
+  useEffect(() => {
+    audioUrlRef.current = state.audioUrl;
+  }, [state.audioUrl]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -49,8 +55,8 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderActions {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
-      if (state.audioUrl) {
-        URL.revokeObjectURL(state.audioUrl);
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current);
       }
       if (durationIntervalRef.current) {
         clearInterval(durationIntervalRef.current);

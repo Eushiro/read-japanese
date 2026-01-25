@@ -26,7 +26,7 @@ export function DeckDetailPage() {
 
   // Queries
   const deck = useQuery(api.premadeDecks.getDeck, { deckId });
-  const stats = useQuery(api.premadeDecks.getDeckGenerationStats, { deckId });
+  const stats = useQuery(api.premadeDecks.getDeckStats, { deckId });
   const setPublished = useMutation(api.premadeDecks.setDeckPublished);
 
   // Check local server status
@@ -251,26 +251,22 @@ export function DeckDetailPage() {
             <CardTitle>Generation Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold">{stats.pending}</p>
-                <p className="text-xs text-foreground-muted">Pending</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-500">{stats.generating}</p>
-                <p className="text-xs text-foreground-muted">Generating</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-500">{stats.complete}</p>
-                <p className="text-xs text-foreground-muted">Complete</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-500">{stats.failed}</p>
-                <p className="text-xs text-foreground-muted">Failed</p>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <p className="text-2xl font-bold">{stats.total}</p>
                 <p className="text-xs text-foreground-muted">Total</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-500">{stats.withSentences}</p>
+                <p className="text-xs text-foreground-muted">With Sentences</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-500">{stats.withImages}</p>
+                <p className="text-xs text-foreground-muted">With Images</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-purple-500">{stats.withWordAudio}</p>
+                <p className="text-xs text-foreground-muted">With Audio</p>
               </div>
             </div>
           </CardContent>

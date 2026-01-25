@@ -69,7 +69,6 @@ function camelToSnake(str: string): string {
  * @returns A wrapped action function with the same signature
  */
 export function useAIAction<Args extends AnyArgs, Result>(
-   
   actionRef: FunctionReference<"action", "public", Args, Result>,
   options?: {
     /** Override the auto-detected operation name */
@@ -92,7 +91,8 @@ export function useAIAction<Args extends AnyArgs, Result>(
     async (args: Args): Promise<Result> => {
       // Prevent double-tracking if called multiple times rapidly
       if (pendingRef.current) {
-        return action(args);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex action call signature
+        return (action as any)(args);
       }
 
       pendingRef.current = true;
@@ -102,7 +102,8 @@ export function useAIAction<Args extends AnyArgs, Result>(
       trackAIRequest(operationName, model, args as Record<string, unknown>);
 
       try {
-        const result = await action(args);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex action call signature
+        const result = await (action as any)(args);
 
         // Track success with latency
         const latencyMs = Date.now() - startTime;

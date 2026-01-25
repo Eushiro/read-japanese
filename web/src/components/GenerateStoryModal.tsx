@@ -17,32 +17,19 @@ import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
 
-const _GENRE_KEYS = [
-  "dailyLife",
-  "fantasy",
-  "mystery",
-  "travel",
-  "school",
-  "food",
-  "nature",
-  "adventure",
-  "romance",
-  "historical",
-] as const;
-
-// Map genre keys to the API values
-const _GENRE_API_VALUES: Record<(typeof _GENRE_KEYS)[number], string> = {
-  dailyLife: "Daily Life",
-  fantasy: "Fantasy",
-  mystery: "Mystery",
-  travel: "Travel",
-  school: "School",
-  food: "Food",
-  nature: "Nature",
-  adventure: "Adventure",
-  romance: "Romance",
-  historical: "Historical",
-};
+// Genre values for the select dropdown
+const GENRES = [
+  "Daily Life",
+  "Fantasy",
+  "Mystery",
+  "Travel",
+  "School",
+  "Food",
+  "Nature",
+  "Adventure",
+  "Romance",
+  "Historical",
+];
 
 const levelVariantMap: Record<JLPTLevel, "n5" | "n4" | "n3" | "n2" | "n1"> = {
   N5: "n5",

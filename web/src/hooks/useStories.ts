@@ -85,12 +85,36 @@ export function sortStories(stories: StoryListItem[], sortBy: SortOption): Story
   switch (sortBy) {
     case "level-asc":
       return sorted.sort((a, b) => {
-        const levelOrder = { N5: 1, N4: 2, N3: 3, N2: 4, N1: 5 };
+        const levelOrder: Record<ProficiencyLevel, number> = {
+          N5: 1,
+          N4: 2,
+          N3: 3,
+          N2: 4,
+          N1: 5,
+          A1: 1,
+          A2: 2,
+          B1: 3,
+          B2: 4,
+          C1: 5,
+          C2: 6,
+        };
         return levelOrder[a.level] - levelOrder[b.level];
       });
     case "level-desc":
       return sorted.sort((a, b) => {
-        const levelOrder = { N5: 1, N4: 2, N3: 3, N2: 4, N1: 5 };
+        const levelOrder: Record<ProficiencyLevel, number> = {
+          N5: 1,
+          N4: 2,
+          N3: 3,
+          N2: 4,
+          N1: 5,
+          A1: 1,
+          A2: 2,
+          B1: 3,
+          B2: 4,
+          C1: 5,
+          C2: 6,
+        };
         return levelOrder[b.level] - levelOrder[a.level];
       });
     case "title":

@@ -136,7 +136,7 @@ export function ShadowingCard({ flashcard, userId, onNext }: ShadowingCardProps)
   // Check subscription tier - shadowing requires Pro or higher
   const subscription = useQuery(api.subscriptions.get, { userId });
   const tier = subscription?.tier ?? "free";
-  const hasProAccess = tier === "pro" || tier === "power";
+  const hasProAccess = tier === "pro";
 
   const language = flashcard.vocabulary?.language ?? "japanese";
 
@@ -150,6 +150,7 @@ export function ShadowingCard({ flashcard, userId, onNext }: ShadowingCardProps)
       targetAudioRef.current.pause();
       targetAudioRef.current.currentTime = 0;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Reset state when flashcard changes, recorder reference is stable
   }, [flashcard._id]);
 
   const playTargetAudio = () => {
@@ -321,7 +322,7 @@ export function ShadowingCard({ flashcard, userId, onNext }: ShadowingCardProps)
           <AudioRecorder
             isRecording={recorder.isRecording}
             isPaused={recorder.isPaused}
-            isProcessing={cardState === "processing"}
+            isProcessing={false}
             duration={recorder.duration}
             hasPermission={recorder.hasPermission}
             error={recorder.error}

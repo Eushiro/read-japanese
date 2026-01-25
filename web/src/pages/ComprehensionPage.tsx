@@ -183,6 +183,7 @@ export function ComprehensionPage() {
       };
       doGenerate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- One-time auto-start effect, other values are stable or captured
   }, [hasAutoStarted, subscription, isPremiumUser]);
 
   // Get the full story content for AI

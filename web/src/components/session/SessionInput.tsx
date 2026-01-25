@@ -30,7 +30,7 @@ export function SessionInput({
 
   // Fetch video details if it's a video
   const video = useQuery(
-    api.youtubeContent.getById,
+    api.youtubeContent.get,
     contentType === "video" ? { id: contentId as Id<"youtubeContent"> } : "skip"
   );
 

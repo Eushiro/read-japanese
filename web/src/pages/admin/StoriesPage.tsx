@@ -528,12 +528,16 @@ export function StoriesPage() {
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Button variant="ghost" size="sm" asChild title="Edit Questions">
-                                <Link to={`/admin/stories/${story.id}`}>
+                                <Link to="/admin/stories/$storyId" params={{ storyId: story.id }}>
                                   <BookOpen className="w-4 h-4" />
                                 </Link>
                               </Button>
                               <Button variant="ghost" size="sm" asChild title="Open Story">
-                                <Link to={`/read/${story.id}`} target="_blank">
+                                <Link
+                                  to="/read/$storyId"
+                                  params={{ storyId: story.id }}
+                                  target="_blank"
+                                >
                                   <ArrowRight className="w-4 h-4" />
                                 </Link>
                               </Button>

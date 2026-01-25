@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { formatDuration } from "@/lib/format";
 import { levelVariantMap } from "@/lib/levels";
 import { isValidYoutubeId } from "@/lib/youtube";
+import type { YouTubeOnStateChangeEvent, YouTubePlayer } from "@/types/youtube";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -26,7 +27,7 @@ export function EmbeddedVideoPlayer({
   onComplete,
 }: EmbeddedVideoPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
-  const playerRef = useRef<YT.Player | null>(null);
+  const playerRef = useRef<YouTubePlayer | null>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const playerContainerId = `embedded-youtube-player-${videoId}`;
 
@@ -70,6 +71,7 @@ export function EmbeddedVideoPlayer({
         }
       }
 
+      if (!window.YT?.Player) return;
       playerRef.current = new window.YT.Player(playerContainerId, {
         videoId: video.videoId,
         playerVars: {
@@ -78,7 +80,7 @@ export function EmbeddedVideoPlayer({
           rel: 0,
         },
         events: {
-          onStateChange: (_event: YT.OnStateChangeEvent) => {
+          onStateChange: (_event: YouTubeOnStateChangeEvent) => {
             // Player state change handler
           },
           onReady: () => {
@@ -240,40 +242,4 @@ export function EmbeddedVideoPlayer({
   );
 }
 
-// Re-export YouTube types (they should already be declared in VideoPage.tsx)
-declare global {
-  interface Window {
-    YT: {
-      Player: new (
-        element: string,
-        config: {
-          videoId: string;
-          playerVars?: Record<string, number>;
-          events?: {
-            onStateChange?: (event: YT.OnStateChangeEvent) => void;
-            onReady?: () => void;
-          };
-        }
-      ) => YT.Player;
-      PlayerState: {
-        PLAYING: number;
-        PAUSED: number;
-        ENDED: number;
-      };
-    };
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-namespace -- YouTube API global types
-declare namespace YT {
-  interface Player {
-    seekTo(time: number, allowSeekAhead: boolean): void;
-    playVideo(): void;
-    pauseVideo(): void;
-    getCurrentTime(): number;
-    destroy(): void;
-  }
-  interface OnStateChangeEvent {
-    data: number;
-  }
-}
+// YouTube types are declared in src/types/youtube.d.ts

@@ -167,7 +167,12 @@ class R2StorageProvider implements StorageProvider {
 // Requires passing the ctx.storage object from the action
 export class ConvexStorageProvider implements StorageProvider {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex storage type is complex to import in shared lib
-  constructor(private storage: any) {}
+  private storage: any;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex storage type is complex to import in shared lib
+  constructor(storage: any) {
+    this.storage = storage;
+  }
 
   async upload(options: UploadOptions): Promise<string> {
     // Convert Uint8Array to Blob-compatible format

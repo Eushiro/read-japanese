@@ -53,10 +53,19 @@ export function useFlashcard(vocabularyId: Id<"vocabulary"> | string | undefined
   );
 
   // Preload assets when URLs change (initial load or after generation)
+  // Note: flashcard query may return raw data without resolved URLs
   useEffect(() => {
-    preloadFlashcardAssets(flashcard);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only preload when URLs change, not on every flashcard update
-  }, [flashcard?.wordAudioUrl, flashcard?.audioUrl, flashcard?.imageUrl]);
+    // Cast to expected type - URLs may or may not be present depending on query
+    const flashcardWithUrls = flashcard as
+      | {
+          wordAudioUrl?: string | null;
+          audioUrl?: string | null;
+          imageUrl?: string | null;
+        }
+      | null
+      | undefined;
+    preloadFlashcardAssets(flashcardWithUrls);
+  }, [flashcard]);
 
   return flashcard;
 }

@@ -84,20 +84,12 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
         improvedSentence: verification.improvedSentence,
       });
 
-      // Save to database
+      // Save to database (verification results are stored separately or used locally)
       await submitSentence({
         userId,
         vocabularyId: currentWord._id as GenericId<"vocabulary">,
         targetWord: currentWord.word,
         sentence: sentence.trim(),
-        isCorrect: verification.isCorrect,
-        grammarScore: verification.grammarScore,
-        usageScore: verification.usageScore,
-        naturalnessScore: verification.naturalnessScore,
-        overallScore: verification.overallScore,
-        corrections: verification.corrections,
-        feedback: verification.feedback,
-        improvedSentence: verification.improvedSentence,
       });
 
       setSentencesWritten((prev) => prev + 1);

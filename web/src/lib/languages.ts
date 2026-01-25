@@ -13,7 +13,7 @@ export const LANGUAGES = languagesConfig.supported.map((lang) => ({
   label: lang.name,
   flag: lang.flag,
   nativeName: lang.nativeName,
-})) as const;
+}));
 
 // Export config for direct access
 export const SUPPORTED_LANGUAGE_CODES = languagesConfig.supported.map((l) => l.code);

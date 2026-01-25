@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowRight, CheckCircle2, FileText, Upload } from "lucide-react";
+import { ArrowRight, CheckCircle2, FileText, Plus, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -171,10 +172,14 @@ export function DecksPage() {
         const importResult = await importVocabulary({
           deckId,
           items: parsed,
-          copyExistingContent: copyExisting,
+          linkExistingContent: copyExisting,
         });
 
-        setResult(importResult);
+        setResult({
+          imported: importResult.imported,
+          skipped: importResult.skipped,
+          copiedContent: importResult.linkedContent,
+        });
       }
 
       // Reset form and close dialog
@@ -524,7 +529,7 @@ export function DecksPage() {
                       </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/admin/decks/${deck.deckId}`}>
+                          <Link to="/admin/decks/$deckId" params={{ deckId: deck.deckId }}>
                             <ArrowRight className="w-4 h-4" />
                           </Link>
                         </Button>

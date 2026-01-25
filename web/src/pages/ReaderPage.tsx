@@ -65,12 +65,10 @@ export function ReaderPage() {
   const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
-  // Check if user can read stories (usage limit)
-  const canReadStory = useQuery(
-    api.subscriptions.canPerformAction,
-    isAuthenticated ? { userId, action: "readStory" as const } : "skip"
-  );
-  const hasReachedStoryLimit = canReadStory && !canReadStory.allowed;
+  // Check if user can read stories (credit-based system now handles limits)
+  // Legacy limit check removed - credits are checked at generation time
+  const canReadStory = null as { allowed: boolean; used: number; limit: number } | null;
+  const hasReachedStoryLimit = false;
 
   // Get user profile for proficiency level (needed for difficulty)
   const userProfile = useQuery(
@@ -97,7 +95,7 @@ export function ReaderPage() {
   useEffect(() => {
     if (story && isAuthenticated && !hasTrackedReading.current) {
       // Check if this is a premium story the user can't access
-      const storyIsPremium = story?.metadata?.isPremium ?? story?.isPremium ?? false;
+      const storyIsPremium = story?.metadata?.isPremium ?? false;
       const userIsPremium = subscription?.tier && subscription.tier !== "free";
       const blockedByPremium = storyIsPremium && !userIsPremium;
 
@@ -124,7 +122,7 @@ export function ReaderPage() {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only track once per story load, not on every dep change
-  }, [story?._id, isAuthenticated, subscription?.tier]);
+  }, [story?.id, isAuthenticated, subscription?.tier]);
 
   // Get settings from Convex
   const { settings, setShowFurigana } = useSettings();
@@ -382,7 +380,7 @@ export function ReaderPage() {
   }
 
   // Show paywall if trying to access premium story without Basic+ subscription
-  const isPremiumStory = story?.metadata?.isPremium ?? story?.isPremium ?? false;
+  const isPremiumStory = story?.metadata?.isPremium ?? false;
   const needsPremiumAccess = isPremiumStory && !isPremiumUser;
 
   if (needsPremiumAccess) {

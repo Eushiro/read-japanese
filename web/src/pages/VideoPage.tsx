@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 import { isValidYoutubeId } from "@/lib/youtube";
+import type { WindowWithYT, YouTubeOnStateChangeEvent, YouTubePlayer } from "@/types/youtube";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -38,7 +39,7 @@ export function VideoPage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [, setIsPlaying] = useState(false); // State value not read, only setter used
   const [ytApiReady, setYtApiReady] = useState(false);
-  const playerRef = useRef<YT.Player | null>(null);
+  const playerRef = useRef<YouTubePlayer | null>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const timeTrackingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -99,6 +100,7 @@ export function VideoPage() {
     }
 
     // Create player
+    if (!window.YT?.Player) return;
     playerRef.current = new window.YT.Player("youtube-player", {
       videoId: video.videoId,
       playerVars: {
@@ -107,8 +109,8 @@ export function VideoPage() {
         rel: 0,
       },
       events: {
-        onStateChange: (event: YT.OnStateChangeEvent) => {
-          setIsPlaying(event.data === window.YT.PlayerState.PLAYING);
+        onStateChange: (event: YouTubeOnStateChangeEvent) => {
+          setIsPlaying(event.data === (window.YT?.PlayerState?.PLAYING ?? 1));
         },
         onReady: () => {
           // Start time tracking
@@ -307,45 +309,4 @@ export function VideoPage() {
   );
 }
 
-// YouTube IFrame API types
-interface WindowWithYT extends Window {
-  onYouTubeIframeAPIReady?: () => void;
-  YT: {
-    Player: new (
-      element: string,
-      config: {
-        videoId: string;
-        playerVars?: Record<string, number>;
-        events?: {
-          onStateChange?: (event: YT.OnStateChangeEvent) => void;
-          onReady?: () => void;
-        };
-      }
-    ) => YT.Player;
-    PlayerState: {
-      PLAYING: number;
-      PAUSED: number;
-      ENDED: number;
-    };
-  };
-}
-
-declare global {
-  interface Window {
-    YT?: WindowWithYT["YT"];
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-namespace -- Required for YouTube IFrame API global types
-declare namespace YT {
-  interface Player {
-    seekTo(time: number, allowSeekAhead: boolean): void;
-    playVideo(): void;
-    pauseVideo(): void;
-    getCurrentTime(): number;
-    destroy(): void;
-  }
-  interface OnStateChangeEvent {
-    data: number;
-  }
-}
+// YouTube types are declared in src/types/youtube.d.ts

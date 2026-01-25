@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import {
   BookOpen,
   Brain,
@@ -28,33 +29,8 @@ import { LANGUAGES } from "@/lib/languages";
 
 import { api } from "../../convex/_generated/api";
 
-// Extended card type including SRS fields for undo
-type CardType = {
-  _id: Id<"flashcards">;
-  sentence: string;
-  sentenceTranslation: string | null; // null when translation not available in user's UI language
-  audioUrl?: string | null;
-  wordAudioUrl?: string | null;
-  imageUrl?: string | null;
-  // SRS fields for undo
-  state?: CardState;
-  due?: number;
-  stability?: number;
-  difficulty?: number;
-  elapsedDays?: number;
-  scheduledDays?: number;
-  reps?: number;
-  lapses?: number;
-  lastReview?: number;
-  vocabulary?: {
-    word: string;
-    reading?: string | null;
-    definitions: string[];
-    language: string;
-    timesReviewed?: number;
-    timesCorrect?: number;
-  } | null;
-};
+// Use Convex's inferred return type from the query
+type CardType = FunctionReturnType<typeof api.flashcards.getDue>[number];
 
 // History entry for undo/redo
 type HistoryEntry = {
@@ -140,7 +116,7 @@ export function FlashcardsPage() {
 
   // Initialize session queue when cards load
   const initialCards = useMemo(() => {
-    return [...(dueCards ?? []), ...(newCards ?? [])] as CardType[];
+    return [...(dueCards ?? []), ...(newCards ?? [])];
   }, [dueCards, newCards]);
 
   // Store counts at initialization time to avoid dependency on changing values
@@ -598,12 +574,15 @@ export function FlashcardsPage() {
                 // Update the card in the session queue so the change persists
                 setSessionQueue((prev) =>
                   prev.map((card) =>
-                    card._id === currentCard._id
+                    card._id === currentCard._id && card.sentence
                       ? {
                           ...card,
-                          sentence: newSentence,
-                          sentenceTranslation: newTranslation,
-                          audioUrl: newAudioUrl ?? card.audioUrl,
+                          sentence: {
+                            ...card.sentence,
+                            sentence: newSentence,
+                            sentenceTranslation: newTranslation,
+                            audioUrl: newAudioUrl ?? card.sentence.audioUrl,
+                          },
                         }
                       : card
                   )
@@ -694,20 +673,7 @@ export function FlashcardsPage() {
 
 // Flashcard display component
 interface FlashcardDisplayProps {
-  card: {
-    _id: string;
-    sentence: string;
-    sentenceTranslation: string | null; // null when translation not available in user's UI language
-    audioUrl?: string | null;
-    wordAudioUrl?: string | null;
-    imageUrl?: string | null;
-    vocabulary?: {
-      word: string;
-      reading?: string | null;
-      definitions: string[];
-      language: string;
-    } | null;
-  };
+  card: CardType;
   showAnswer: boolean;
   onShowAnswer: () => void;
   isPremiumUser: boolean;
@@ -731,24 +697,33 @@ function FlashcardDisplay({
   const languageFont = isJapanese ? "var(--font-japanese)" : "inherit";
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [localSentence, setLocalSentence] = useState(card.sentence);
-  const [localTranslation, setLocalTranslation] = useState(card.sentenceTranslation);
-  const [localAudioUrl, setLocalAudioUrl] = useState(card.audioUrl);
+  const [localSentence, setLocalSentence] = useState(card.sentence?.sentence);
+  const [localTranslation, setLocalTranslation] = useState(card.sentence?.sentenceTranslation);
+  const [localAudioUrl, setLocalAudioUrl] = useState(card.sentence?.audioUrl);
   const [showPaywall, setShowPaywall] = useState(false);
 
   const refreshSentence = useAIAction(api.ai.refreshFlashcardSentence);
 
   // Preload audio and images when card changes (before user clicks "Show Answer")
   useEffect(() => {
-    preloadFlashcardAssets(card);
-  }, [card._id, card.wordAudioUrl, card.audioUrl, card.imageUrl]);
+    preloadFlashcardAssets({
+      wordAudioUrl: card.wordAudio?.audioUrl,
+      audioUrl: card.sentence?.audioUrl,
+      imageUrl: card.image?.imageUrl,
+    });
+  }, [card._id, card.wordAudio?.audioUrl, card.sentence?.audioUrl, card.image?.imageUrl]);
 
   // Reset local state when card changes
   useEffect(() => {
-    setLocalSentence(card.sentence);
-    setLocalTranslation(card.sentenceTranslation);
-    setLocalAudioUrl(card.audioUrl);
-  }, [card._id, card.sentence, card.sentenceTranslation, card.audioUrl]);
+    setLocalSentence(card.sentence?.sentence);
+    setLocalTranslation(card.sentence?.sentenceTranslation);
+    setLocalAudioUrl(card.sentence?.audioUrl);
+  }, [
+    card._id,
+    card.sentence?.sentence,
+    card.sentence?.sentenceTranslation,
+    card.sentence?.audioUrl,
+  ]);
 
   const handleRefresh = async () => {
     if (!isPremiumUser) {
@@ -783,10 +758,10 @@ function FlashcardDisplay({
   return (
     <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
       {/* Image - only show after answer */}
-      {showAnswer && card.imageUrl && (
+      {showAnswer && card.image?.imageUrl && (
         <div className="mb-6 flex justify-center">
           <img
-            src={card.imageUrl}
+            src={card.image.imageUrl}
             alt={vocab?.word || "Flashcard image"}
             className="max-w-full h-auto max-h-48 rounded-xl object-contain"
           />
@@ -802,10 +777,10 @@ function FlashcardDisplay({
           {vocab?.word}
         </div>
         {/* Word Audio Button - only show after answer */}
-        {showAnswer && card.wordAudioUrl && (
+        {showAnswer && card.wordAudio?.audioUrl && (
           <div className="mt-2">
             <button
-              onClick={() => playAudio(card.wordAudioUrl!)}
+              onClick={() => playAudio(card.wordAudio!.audioUrl)}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
             >
               <Volume2 className="w-4 h-4" />

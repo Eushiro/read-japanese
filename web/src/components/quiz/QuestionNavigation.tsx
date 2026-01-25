@@ -47,7 +47,7 @@ export function QuestionNavigation({
   finishLabel,
   variant = "spread",
 }: QuestionNavigationProps) {
-  const t = useT("quiz");
+  const t = useT();
 
   // Use translated defaults if no custom labels provided
   const resolvedSubmitLabel = submitLabel ?? t("navigation.submitAnswer");
@@ -125,7 +125,7 @@ export interface QuestionProgressProps {
 }
 
 export function QuestionProgress({ questions, currentIndex, onNavigate }: QuestionProgressProps) {
-  const t = useT("quiz");
+  const t = useT();
 
   return (
     <div className="flex items-center gap-1">

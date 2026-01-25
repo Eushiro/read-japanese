@@ -62,7 +62,8 @@ export function DailyActivities({
         {/* Due flashcards */}
         {dueCards > 0 && (
           <Link
-            to="/learn?tab=review"
+            to="/learn"
+            search={{ tab: "review" }}
             className="flex items-center justify-between p-4 rounded-xl bg-purple-500/5 border border-purple-500/20 hover:bg-purple-500/10 transition-colors group"
           >
             <div className="flex items-center gap-3">
@@ -88,7 +89,8 @@ export function DailyActivities({
         {/* Words to practice */}
         {wordsToPractice > 0 && (
           <Link
-            to="/learn?tab=practice"
+            to="/learn"
+            search={{ tab: "practice" }}
             className="flex items-center justify-between p-4 rounded-xl bg-green-500/5 border border-green-500/20 hover:bg-green-500/10 transition-colors group"
           >
             <div className="flex items-center gap-3">
@@ -118,7 +120,8 @@ export function DailyActivities({
         {/* Continue reading */}
         {continueReading && (
           <Link
-            to={`/read/${continueReading.storyId}`}
+            to="/read/$storyId"
+            params={{ storyId: continueReading.storyId }}
             className="flex items-center justify-between p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 hover:bg-blue-500/10 transition-colors group"
           >
             <div className="flex items-center gap-3">

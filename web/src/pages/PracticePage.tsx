@@ -33,8 +33,8 @@ export function PracticePage() {
   // Get vocabulary for practice (prioritize words that need practice)
   const vocabulary = useQuery(api.vocabulary.list, isAuthenticated ? { userId } : "skip");
 
-  const [selectedWord, setSelectedWord] =
-    useState<typeof vocabulary extends (infer T)[] ? T : never | null>(null);
+  type VocabularyItem = NonNullable<typeof vocabulary>[number];
+  const [selectedWord, setSelectedWord] = useState<VocabularyItem | null>(null);
 
   // Language filter state
   type LanguageFilter = "all" | "japanese" | "english" | "french";
@@ -100,7 +100,7 @@ export function PracticePage() {
     });
   }, [vocabulary, languageFilter]);
 
-  const handleSelectWord = (word: typeof vocabulary extends (infer T)[] ? T : never) => {
+  const handleSelectWord = (word: VocabularyItem) => {
     setSelectedWord(word);
     setSentence("");
     setResult(null);
@@ -150,20 +150,12 @@ export function PracticePage() {
         difficulty_level: verification.difficultyLevel,
       });
 
-      // Save the result to the database
+      // Save the result to the database (verification results are stored separately or used locally)
       await submitSentence({
         userId,
         vocabularyId: selectedWord._id as GenericId<"vocabulary">,
         targetWord: selectedWord.word,
         sentence: sentence.trim(),
-        isCorrect: verification.isCorrect,
-        grammarScore: verification.grammarScore,
-        usageScore: verification.usageScore,
-        naturalnessScore: verification.naturalnessScore,
-        overallScore: verification.overallScore,
-        corrections: verification.corrections,
-        feedback: verification.feedback,
-        improvedSentence: verification.improvedSentence,
       });
     } catch (error) {
       console.error("Failed to verify sentence:", error);
