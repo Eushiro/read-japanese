@@ -111,8 +111,7 @@
   html {
     /* Removed scroll-behavior: smooth to prevent scroll position persistence issues
        during navigation and in-page state changes */
-    /* Reserve space for scrollbar to prevent layout shift when scrollbar appears/disappears */
-    scrollbar-gutter: stable;
+    /* scrollbar-gutter handled by overflow-y: scroll rule above */
   }
 
   body {
@@ -761,6 +760,22 @@ ruby rt {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Prevent Radix scroll lock from causing layout shift */
+:root {
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+html,
+body {
+  overflow-y: scroll !important;
+}
+
+body[data-scroll-locked] {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+  overflow-y: scroll !important;
 }
 
 /* Clerk modal centering */
