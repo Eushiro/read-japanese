@@ -95,16 +95,16 @@ export function VideoCard({ video, onClick, style }: VideoCardProps) {
 
       {/* Content */}
       <div className="p-4">
-        <h3 className="font-semibold text-base text-foreground line-clamp-2 group-hover:text-accent transition-colors">
+        <h3 className="font-semibold text-sm text-foreground line-clamp-2 group-hover:text-accent transition-colors">
           {video.title}
         </h3>
 
         {video.description && (
-          <p className="text-sm text-foreground-muted line-clamp-2 mt-1">{video.description}</p>
+          <p className="text-xs text-foreground-muted line-clamp-2 mt-1">{video.description}</p>
         )}
 
         {/* Meta Info */}
-        <div className="flex items-center gap-2 mt-3 text-xs text-foreground">
+        <div className="flex items-center gap-2 mt-2 text-xs text-foreground">
           <span className="px-2 py-0.5 rounded-full bg-muted text-foreground capitalize">
             {t("library.languages." + video.language)}
           </span>

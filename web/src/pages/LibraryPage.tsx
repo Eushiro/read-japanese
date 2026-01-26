@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
+import { motion } from "framer-motion";
 import { BookOpen, Film, Library, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -17,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { WaveBackground } from "@/components/ui/wave-background";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { type SortOption, sortStories, useFilteredStories, useStories } from "@/hooks/useStories";
 import type { ContentLanguage } from "@/lib/contentLanguages";
@@ -27,6 +27,44 @@ import type { ProficiencyLevel, StoryListItem } from "@/types/story";
 import { api } from "../../convex/_generated/api";
 
 type ContentFilter = "all" | "stories" | "videos";
+
+// Animated background for library page
+function LibraryAnimatedBackground() {
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      <motion.div
+        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-15"
+        style={{
+          background: "radial-gradient(circle, #a855f7 0%, transparent 70%)",
+          top: "-5%",
+          left: "20%",
+        }}
+        animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[400px] h-[400px] rounded-full blur-[120px] opacity-[0.12]"
+        style={{
+          background: "radial-gradient(circle, #06b6d4 0%, transparent 70%)",
+          bottom: "10%",
+          right: "10%",
+        }}
+        animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
+        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[300px] h-[300px] rounded-full blur-[100px] opacity-10"
+        style={{
+          background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
+          top: "40%",
+          right: "30%",
+        }}
+        animate={{ x: [0, 20, 0], y: [0, -20, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
 
 export function LibraryPage() {
   const navigate = useNavigate();
@@ -133,64 +171,64 @@ export function LibraryPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section - extends to cover filters for seamless blend */}
-      <div className="relative overflow-hidden pb-4">
-        <div className="absolute inset-0 bg-gradient-to-b from-orange-900/20 via-purple-900/10 to-transparent dark:from-orange-900/20 dark:via-purple-900/10 dark:to-transparent" />
-        {/* Warm wave background for dark mode */}
-        <div className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity">
-          <WaveBackground size="hero" variant="warm" className="absolute inset-0" intensity={1} />
-        </div>
-        <div className="absolute top-0 right-1/4 w-72 h-72 bg-orange-500/15 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 relative">
-          <div className="max-w-2xl animate-fade-in-up">
+      {/* Animated background */}
+      <LibraryAnimatedBackground />
+
+      {/* Hero Section */}
+      <div className="relative overflow-hidden pt-8 pb-12">
+        <div className="container mx-auto px-4 sm:px-6 relative">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
+            className="max-w-2xl"
+          >
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-purple-500/20 dark:from-orange-500/25 dark:to-purple-500/20">
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: -5 }}
+                className="p-2 rounded-xl bg-orange-500/20"
+              >
                 <Library className="w-5 h-5 text-orange-400" />
-              </div>
+              </motion.div>
               <span className="text-sm font-semibold text-orange-400 uppercase tracking-wider">
                 {t("library.hero.badge")}
               </span>
             </div>
             <h1
-              className="text-3xl sm:text-4xl font-bold text-foreground mb-3"
+              className="text-3xl sm:text-4xl font-bold text-white mb-3"
               style={{ fontFamily: "var(--font-display)" }}
             >
               {t("library.hero.title")}
             </h1>
-            <p className="text-foreground-muted text-lg">{t("library.hero.subtitle")}</p>
+            <p className="text-white/60 text-lg">{t("library.hero.subtitle")}</p>
 
             {/* Generate Story CTA */}
             <div className="mt-6">
               {isAuthenticated ? (
                 <Button
                   variant="glass-accent"
-                  className="gap-2 shadow-[0_0_30px_rgba(249,115,22,0.2)]"
+                  className="gap-2"
                   onClick={() => setShowGenerateModal(true)}
                 >
-                  {/* Shimmer effect */}
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   <Sparkles className="w-4 h-4" />
                   {t("library.hero.generateStory")}
                 </Button>
               ) : (
                 <SignInButton mode="modal">
-                  <Button
-                    variant="glass-accent"
-                    className="gap-2 shadow-[0_0_30px_rgba(249,115,22,0.2)]"
-                  >
+                  <Button variant="glass-accent" className="gap-2">
                     <Sparkles className="w-4 h-4" />
                     {t("library.hero.generateStory")}
                   </Button>
                 </SignInButton>
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
-      {/* Filters Section - No divider, blends with hero */}
-      <div className="container mx-auto px-4 sm:px-6 py-3">
+      {/* Filters Section */}
+      <div className="border-b border-white/5">
+        <div className="container mx-auto px-4 sm:px-6 py-3">
           <div className="flex gap-3">
             {/* Search - capped at max-w-md */}
             <div className="flex-1 max-w-md">
@@ -248,10 +286,11 @@ export function LibraryPage() {
             {/* Sort */}
             <SortDropdown value={sortBy} onChange={setSortBy} />
           </div>
+        </div>
       </div>
 
       {/* Content Sections */}
-      <div className="container mx-auto px-4 sm:px-6 pt-6 pb-12 space-y-10">
+      <div className="px-4 sm:px-6 lg:px-12 xl:px-16 pt-6 pb-12 space-y-10">
         {/* Stories Section */}
         {showStories && (
           <section>
@@ -263,13 +302,13 @@ export function LibraryPage() {
             </div>
 
             {isLoadingStories ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
                 {Array.from({ length: 12 }).map((_, i) => (
                   <StoryCardSkeleton key={i} delay={i * 50} />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
                 {sortedStories.map((story, index) => (
                   <StoryCard
                     key={story.id}
@@ -297,13 +336,13 @@ export function LibraryPage() {
             </div>
 
             {isLoadingVideos ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-                {Array.from({ length: 8 }).map((_, i) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+                {Array.from({ length: 12 }).map((_, i) => (
                   <VideoCardSkeleton key={i} delay={i * 50} />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
                 {filteredVideos.map((video, index) => (
                   <VideoCard
                     key={video._id}
@@ -368,11 +407,11 @@ function StoryCardSkeleton({ delay = 0 }: { delay?: number }) {
         animationDelay: `${delay}ms`,
       }}
     >
-      <div className="aspect-[3/4] bg-border" />
-      <div className="p-4 space-y-3">
+      <div className="aspect-video bg-border" />
+      <div className="p-4 space-y-2">
         <div className="h-4 bg-border rounded w-4/5" />
         <div className="h-3 bg-border rounded w-2/3" />
-        <div className="flex gap-2 mt-3">
+        <div className="flex gap-2 mt-2">
           <div className="h-5 bg-border rounded-full w-16" />
           <div className="h-5 bg-border rounded w-12" />
         </div>
@@ -423,14 +462,14 @@ function LibrarySkeleton() {
       </div>
 
       {/* Content Skeleton */}
-      <div className="container mx-auto px-4 sm:px-6 pt-6 pb-12 space-y-10">
+      <div className="px-4 sm:px-6 lg:px-12 xl:px-16 pt-6 pb-12 space-y-10">
         {/* Stories Section */}
         <section>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-5 h-5 bg-border rounded animate-pulse" />
             <div className="h-5 bg-border rounded w-16 animate-pulse" />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
             {Array.from({ length: 12 }).map((_, i) => (
               <StoryCardSkeleton key={i} delay={i * 50} />
             ))}

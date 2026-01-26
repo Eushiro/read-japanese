@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useMutation, useQuery } from "convex/react";
 import type { GenericId } from "convex/values";
+import { motion } from "framer-motion";
 import {
   ArrowUpDown,
   Book,
@@ -136,6 +137,44 @@ type FlashcardWithContent = {
   imageUrl?: string | null;
   [key: string]: unknown;
 };
+
+// Animated background for vocabulary page
+function VocabularyAnimatedBackground() {
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      <motion.div
+        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-15"
+        style={{
+          background: "radial-gradient(circle, #a855f7 0%, transparent 70%)",
+          top: "-5%",
+          left: "20%",
+        }}
+        animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[400px] h-[400px] rounded-full blur-[120px] opacity-[0.12]"
+        style={{
+          background: "radial-gradient(circle, #06b6d4 0%, transparent 70%)",
+          bottom: "10%",
+          right: "10%",
+        }}
+        animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
+        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[300px] h-[300px] rounded-full blur-[100px] opacity-10"
+        style={{
+          background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
+          top: "40%",
+          right: "30%",
+        }}
+        animate={{ x: [0, 20, 0], y: [0, -20, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
 
 export function VocabularyPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -378,30 +417,37 @@ export function VocabularyPage() {
 
   return (
     <div className="min-h-screen">
+      {/* Animated background */}
+      <VocabularyAnimatedBackground />
+
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-background to-orange-500/5" />
-        <div className="absolute top-0 right-1/4 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl" />
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-4xl relative">
-          <div className="animate-fade-in-up">
+      <div className="relative overflow-hidden pt-8 pb-12">
+        <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20">
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: -5 }}
+                    className="p-2 rounded-xl bg-amber-500/20"
+                  >
                     <BookmarkCheck className="w-5 h-5 text-amber-500" />
-                  </div>
+                  </motion.div>
                   <span className="text-sm font-semibold text-amber-500 uppercase tracking-wider">
                     {t("vocabulary.yourWords")}
                   </span>
                 </div>
                 <h1
-                  className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
+                  className="text-3xl sm:text-4xl font-bold text-white mb-2"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {t("vocabulary.title")}
                 </h1>
-                <p className="text-foreground-muted text-lg">
+                <p className="text-white/60 text-lg">
                   {t("vocabulary.wordsInCollection", { count: vocabulary?.length || 0 })}
                 </p>
               </div>
@@ -413,12 +459,12 @@ export function VocabularyPage() {
                 </Button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-transparent">
+      <div className="border-b border-white/5">
         <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
