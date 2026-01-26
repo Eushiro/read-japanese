@@ -193,17 +193,17 @@ function Navigation() {
         isScrolled ? "backdrop-blur-2xl" : "bg-transparent"
       }`}
     >
-      {/* Rainbow glass effect - colorful gradient behind blur */}
+      {/* Subtle background on scroll */}
       {isScrolled && (
-        <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-white/30 dark:bg-black/20" />
+          {/* Soft fade at bottom to blend with content */}
           <div
-            className="absolute inset-0 opacity-30"
+            className="absolute inset-x-0 bottom-0 h-4 pointer-events-none"
             style={{
-              background:
-                "linear-gradient(90deg, rgba(255,132,0,0.3) 0%, rgba(223,145,247,0.3) 25%, rgba(6,182,212,0.25) 50%, rgba(254,237,122,0.3) 75%, rgba(255,132,0,0.3) 100%)",
+              background: "linear-gradient(to bottom, transparent, var(--color-background))",
             }}
           />
-          <div className="absolute inset-0 bg-white/60 dark:bg-black/40" />
         </div>
       )}
 

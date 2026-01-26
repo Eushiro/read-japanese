@@ -1,8 +1,7 @@
-import { Link, useSearch } from "@tanstack/react-router";
-import { BookmarkCheck, Brain, GraduationCap, PenLine } from "lucide-react";
+import { useSearch } from "@tanstack/react-router";
+import { BookmarkCheck, Brain, PenLine } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { PageSubheader } from "@/components/layout/PageSubheader";
 import { useT } from "@/lib/i18n";
 
 import { FlashcardsPage } from "./FlashcardsPage";
@@ -67,44 +66,30 @@ export function LearnPage() {
   return (
     <div className="min-h-screen">
       {/* Tab Header */}
-      <PageSubheader>
-        <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
-          <div className="flex items-center gap-1 py-2">
-            <Link
-              to="/dashboard"
-              className="flex items-center gap-2 mr-4 hover:opacity-80 transition-opacity"
-            >
-              <div className="p-1.5 rounded-lg bg-accent/10">
-                <GraduationCap className="w-4 h-4 text-accent" />
-              </div>
-              <span className="text-sm font-semibold text-foreground hidden sm:inline">
-                {t("learn.title")}
-              </span>
-            </Link>
-
-            {/* Tab Buttons */}
-            <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
-              {TABS.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                      isActive
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-foreground-muted hover:text-foreground"
-                    }`}
-                  >
-                    <tab.icon className={`w-4 h-4 ${isActive ? "text-accent" : ""}`} />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+      <div className="container mx-auto px-4 sm:px-6 max-w-6xl pt-6 pb-4">
+        <div className="flex items-center justify-center">
+          {/* Tab Buttons */}
+          <div className="flex items-center gap-1 p-1">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    isActive
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-foreground-muted hover:text-foreground"
+                  }`}
+                >
+                  <tab.icon className={`w-4 h-4 ${isActive ? "text-accent" : ""}`} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
-      </PageSubheader>
+      </div>
 
       {/* Tab Content */}
       <div className="animate-fade-in">
