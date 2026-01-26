@@ -142,35 +142,13 @@ type FlashcardWithContent = {
 function VocabularyAnimatedBackground() {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      <motion.div
-        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-15"
+      <div
+        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-30"
         style={{
-          background: "radial-gradient(circle, #a855f7 0%, transparent 70%)",
+          background: "radial-gradient(circle, #f87171 0%, transparent 70%)",
           top: "-5%",
           left: "20%",
         }}
-        animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-[400px] h-[400px] rounded-full blur-[120px] opacity-[0.12]"
-        style={{
-          background: "radial-gradient(circle, #06b6d4 0%, transparent 70%)",
-          bottom: "10%",
-          right: "10%",
-        }}
-        animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-[300px] h-[300px] rounded-full blur-[100px] opacity-10"
-        style={{
-          background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
-          top: "40%",
-          right: "30%",
-        }}
-        animate={{ x: [0, 20, 0], y: [0, -20, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
     </div>
   );

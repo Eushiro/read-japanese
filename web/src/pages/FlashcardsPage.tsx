@@ -71,27 +71,11 @@ function FlashcardsAnimatedBackground() {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
       <div
-        className="absolute w-[600px] h-[600px] rounded-full blur-[150px] opacity-40"
+        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-30"
         style={{
-          background: "radial-gradient(circle, #a855f7 0%, transparent 70%)",
-          top: "-15%",
-          left: "0%",
-        }}
-      />
-      <div
-        className="absolute w-[500px] h-[500px] rounded-full blur-[120px] opacity-35"
-        style={{
-          background: "radial-gradient(circle, #8b5cf6 0%, transparent 70%)",
+          background: "radial-gradient(circle, #86efac 0%, transparent 70%)",
           top: "-5%",
-          right: "5%",
-        }}
-      />
-      <div
-        className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-25"
-        style={{
-          background: "radial-gradient(circle, #c084fc 0%, transparent 70%)",
-          top: "10%",
-          left: "25%",
+          left: "20%",
         }}
       />
     </div>
