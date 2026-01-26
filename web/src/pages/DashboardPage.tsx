@@ -8,7 +8,6 @@ import {
   Brain,
   ChevronRight,
   Flame,
-  Library,
   Play,
   Sparkles,
   Target,
@@ -61,56 +60,101 @@ function FloatingStars({ count }: { count: number }) {
   );
 }
 
-// Animated background orbs
+// Animated background orbs - Full page scale
 function AnimatedOrbs() {
   return (
     <>
       <motion.div
-        className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-20"
+        className="absolute w-[600px] h-[600px] rounded-full blur-[120px] opacity-25"
         style={{
           background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
-          top: "0%",
-          left: "30%",
+          top: "-10%",
+          left: "20%",
         }}
         animate={{
-          x: [0, 50, 0],
-          y: [0, -30, 0],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-[300px] h-[300px] rounded-full blur-[80px] opacity-15"
-        style={{
-          background: "radial-gradient(circle, #df91f7 0%, transparent 70%)",
-          top: "20%",
-          right: "20%",
-        }}
-        animate={{
-          x: [0, -40, 0],
-          y: [0, 30, 0],
-        }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-[250px] h-[250px] rounded-full blur-[70px] opacity-15"
-        style={{
-          background: "radial-gradient(circle, #feed7a 0%, transparent 70%)",
-          bottom: "30%",
-          left: "10%",
-        }}
-        animate={{
-          x: [0, 30, 0],
-          y: [0, -40, 0],
+          x: [0, 80, 0],
+          y: [0, -50, 0],
+          scale: [1, 1.15, 1],
         }}
         transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[500px] h-[500px] rounded-full blur-[100px] opacity-20"
+        style={{
+          background: "radial-gradient(circle, #df91f7 0%, transparent 70%)",
+          top: "30%",
+          right: "10%",
+        }}
+        animate={{
+          x: [0, -60, 0],
+          y: [0, 50, 0],
+        }}
+        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[400px] h-[400px] rounded-full blur-[90px] opacity-20"
+        style={{
+          background: "radial-gradient(circle, #feed7a 0%, transparent 70%)",
+          bottom: "10%",
+          left: "5%",
+        }}
+        animate={{
+          x: [0, 40, 0],
+          y: [0, -60, 0],
+        }}
+        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+      />
+      {/* Additional purple glow in middle */}
+      <motion.div
+        className="absolute w-[450px] h-[450px] rounded-full blur-[100px] opacity-15"
+        style={{
+          background: "radial-gradient(circle, #8b5cf6 0%, transparent 70%)",
+          top: "50%",
+          left: "40%",
+        }}
+        animate={{
+          x: [0, -30, 0],
+          y: [0, 40, 0],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
     </>
   );
 }
 
-// Stat card with glass morphism and color-tinted hover glow
-function StatCard({
+// Floating particles throughout the page
+function FloatingParticles({ count }: { count: number }) {
+  return (
+    <>
+      {[...Array(count)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 bg-white rounded-full"
+          style={{
+            left: `${(i * 13 + 7) % 100}%`,
+            top: `${(i * 19 + 15) % 100}%`,
+            opacity: 0.1 + (i % 5) * 0.08,
+          }}
+          animate={{
+            y: [0, -30, 0],
+            opacity: [0.1, 0.4, 0.1],
+            scale: [1, 1.5, 1],
+          }}
+          transition={{
+            duration: 4 + (i % 6),
+            repeat: Infinity,
+            delay: (i % 10) * 0.5,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+// Floating stat - no borders, just icons, numbers, and labels
+function FloatingStat({
   icon: Icon,
   value,
   label,
@@ -133,20 +177,17 @@ function StatCard({
     purple: {
       bg: "bg-purple-500/20",
       text: "text-purple-400",
-      glow: "rgba(168,85,247,0.2)",
-      gradient: "from-purple-500/10 via-transparent to-transparent",
+      glow: "0 0 40px rgba(168,85,247,0.3)",
     },
     blue: {
       bg: "bg-blue-500/20",
       text: "text-blue-400",
-      glow: "rgba(59,130,246,0.2)",
-      gradient: "from-blue-500/10 via-transparent to-transparent",
+      glow: "0 0 40px rgba(59,130,246,0.3)",
     },
     orange: {
       bg: "bg-orange-500/20",
       text: "text-orange-400",
-      glow: "rgba(249,115,22,0.2)",
-      gradient: "from-orange-500/10 via-transparent to-transparent",
+      glow: "0 0 40px rgba(249,115,22,0.3)",
     },
   };
 
@@ -157,28 +198,25 @@ function StatCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
-      whileHover={{ y: -4, boxShadow: `0 0 40px ${styles.glow}` }}
-      className="group relative rounded-2xl cursor-pointer"
+      whileHover={{ y: -4 }}
+      className="group relative cursor-pointer text-center px-4 py-3"
     >
-      {/* Glass background */}
-      <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
-      <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
-
-      {/* Color accent gradient on hover */}
-      <div
-        className={`absolute inset-0 bg-gradient-to-br ${styles.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl`}
+      {/* Glow effect on hover - no borders */}
+      <motion.div
+        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{ boxShadow: styles.glow }}
       />
 
-      {/* Content */}
-      <div className="relative p-5 text-center">
+      {/* Content - flowing layout */}
+      <div className="relative flex flex-col items-center gap-2">
         <motion.div
           whileHover={{ scale: 1.1, rotate: 5 }}
-          className={`w-12 h-12 rounded-xl ${styles.bg} flex items-center justify-center mx-auto mb-3`}
+          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${styles.bg} flex items-center justify-center`}
         >
-          <Icon className={`w-6 h-6 ${styles.text}`} />
+          <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${styles.text}`} />
         </motion.div>
-        <div className="text-3xl font-bold text-white">{value}</div>
-        <div className="text-sm text-white/50 mt-1">{label}</div>
+        <div className="text-2xl sm:text-3xl font-bold text-white">{value}</div>
+        <div className="text-xs sm:text-sm text-white/50">{label}</div>
       </div>
     </motion.div>
   );
@@ -188,7 +226,11 @@ function StatCard({
   }
 
   if (onClick) {
-    return <button onClick={onClick} className="w-full text-left">{content}</button>;
+    return (
+      <button onClick={onClick} className="text-center">
+        {content}
+      </button>
+    );
   }
 
   return content;
@@ -259,7 +301,7 @@ export function DashboardPage() {
         }
         return ["A1", "A2", "B1", "B2", "C1", "C2"].includes(story.level);
       })
-      .slice(0, 10) ?? [];
+      .slice(0, 8) ?? [];
 
   // Get suggested videos
   const suggestedVideos = videos?.slice(0, 4) ?? [];
@@ -321,17 +363,17 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section - Now with animated orbs and stars */}
-      <section className="relative pt-8 pb-8 overflow-hidden">
-        {/* Animated background orbs */}
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Full-page animated background orbs */}
+      <div className="fixed inset-0 pointer-events-none">
         <AnimatedOrbs />
+        <FloatingParticles count={20} />
+      </div>
 
-        {/* Floating stars */}
-        <FloatingStars count={12} />
-
+      {/* Hero Section */}
+      <section className="relative pt-16 sm:pt-20 pb-8">
         {/* Content */}
-        <div className="container mx-auto px-4 sm:px-6 max-w-5xl relative z-10 text-center">
+        <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative z-10 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -350,36 +392,23 @@ export function DashboardPage() {
             )}
           </motion.div>
         </div>
-
-        {/* Fade-out gradient at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
       </section>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-6 pt-4 pb-8 max-w-5xl">
+      <div className="container mx-auto px-4 sm:px-6 pt-6 pb-8 max-w-6xl relative z-10">
         {/* Credit Alert */}
         {isAuthenticated && <CreditAlert />}
 
-        <div className="space-y-8">
-          {/* Start Studying CTA - Glass Card */}
+        <div className="space-y-16">
+          {/* Start Studying CTA - Floating with ambient glow */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.5 }}
-            whileHover={{ boxShadow: "0 0 60px rgba(255,132,0,0.15)" }}
-            className="relative rounded-3xl"
+            className="relative"
           >
-            {/* Glass background */}
-            <div className="absolute inset-0 backdrop-blur-xl bg-white/[0.03] border border-white/10 rounded-3xl" />
-
-            {/* Inner shadow for depth */}
-            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] rounded-3xl" />
-
-            {/* Gradient accent overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-purple-500/5 rounded-3xl" />
-
             {/* Content */}
-            <div className="relative p-8 sm:p-10">
+            <div className="relative py-10 sm:py-12">
               {isPreviewMode ? (
                 <PreviewStartStudying />
               ) : needsPlacementTest ? (
@@ -427,7 +456,9 @@ export function DashboardPage() {
                   </div>
                   <p className="text-center text-white/80 mb-6 font-medium">{sessionDescription}</p>
                   <div className="text-center">
-                    <p className="text-sm text-white/50 mb-3">{t("dashboard.cta.durationQuestion")}</p>
+                    <p className="text-sm text-white/50 mb-3">
+                      {t("dashboard.cta.durationQuestion")}
+                    </p>
                     <div className="flex justify-center gap-2">
                       {DURATION_OPTIONS.map((option) => (
                         <button
@@ -453,13 +484,13 @@ export function DashboardPage() {
             </div>
           </motion.div>
 
-          {/* Quick Stats - Glass Cards with Color Glows */}
-          <div className="grid grid-cols-3 gap-3 lg:gap-4">
+          {/* Quick Stats - Floating horizontal row with subtle dividers */}
+          <div className="flex justify-center items-center gap-4 sm:gap-8 lg:gap-12">
             {isPreviewMode ? (
               <>
                 <SignInButton mode="modal">
-                  <div className="w-full">
-                    <StatCard
+                  <div>
+                    <FloatingStat
                       icon={Brain}
                       value={dueCards}
                       label={t("dashboard.stats.dueCards")}
@@ -468,9 +499,10 @@ export function DashboardPage() {
                     />
                   </div>
                 </SignInButton>
+                <div className="w-px h-12 bg-white/10" />
                 <SignInButton mode="modal">
-                  <div className="w-full">
-                    <StatCard
+                  <div>
+                    <FloatingStat
                       icon={BookmarkCheck}
                       value={totalWords}
                       label={t("dashboard.stats.words")}
@@ -479,9 +511,10 @@ export function DashboardPage() {
                     />
                   </div>
                 </SignInButton>
+                <div className="w-px h-12 bg-white/10" />
                 <SignInButton mode="modal">
-                  <div className="w-full">
-                    <StatCard
+                  <div>
+                    <FloatingStat
                       icon={Flame}
                       value={currentStreak}
                       label={t("dashboard.stats.streak")}
@@ -493,7 +526,7 @@ export function DashboardPage() {
               </>
             ) : (
               <>
-                <StatCard
+                <FloatingStat
                   icon={Brain}
                   value={dueCards}
                   label={t("dashboard.stats.dueCards")}
@@ -502,7 +535,8 @@ export function DashboardPage() {
                   isLink
                   to="/learn?tab=review"
                 />
-                <StatCard
+                <div className="w-px h-12 bg-white/10" />
+                <FloatingStat
                   icon={BookmarkCheck}
                   value={totalWords}
                   label={t("dashboard.stats.words")}
@@ -511,7 +545,8 @@ export function DashboardPage() {
                   isLink
                   to="/learn?tab=words"
                 />
-                <StatCard
+                <div className="w-px h-12 bg-white/10" />
+                <FloatingStat
                   icon={streakAnimating ? Flame : Flame}
                   value={currentStreak}
                   label={t("dashboard.stats.streak")}
@@ -523,20 +558,19 @@ export function DashboardPage() {
             )}
           </div>
 
-          {/* Suggested for You - Glass Section */}
+          {/* Suggested for You - Open floating section */}
           {(suggestedStories.length > 0 || suggestedVideos.length > 0) && (
             <motion.section
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="relative rounded-3xl"
+              className="relative"
             >
-              {/* Glass background */}
-              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.02] border border-white/10 rounded-3xl" />
-              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-3xl" />
+              {/* Ambient purple glow pool */}
+              <div className="absolute -inset-12 bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/5 rounded-[4rem] blur-3xl pointer-events-none" />
 
-              <div className="relative p-6">
+              <div className="relative py-4">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
@@ -586,7 +620,7 @@ export function DashboardPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="hidden lg:grid grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                    <div className="hidden lg:grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                       {suggestedStories.map((story) => (
                         <div
                           key={story.id}
@@ -627,7 +661,7 @@ export function DashboardPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="hidden lg:grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+                    <div className="hidden lg:grid grid-cols-2 xl:grid-cols-3 gap-6">
                       {suggestedVideos.map((video) => (
                         <div
                           key={video._id}
@@ -648,37 +682,7 @@ export function DashboardPage() {
             </motion.section>
           )}
 
-          {/* Browse Library - Glass CTA */}
-          <Link
-            to="/library"
-            className="group relative flex items-center justify-between p-5 rounded-2xl overflow-hidden"
-          >
-            {/* Glass background */}
-            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 group-hover:border-orange-500/30 transition-colors rounded-2xl" />
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-            {/* Shimmer on hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-
-            <div className="relative flex items-center gap-4">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center"
-              >
-                <Library className="w-6 h-6 text-orange-400" />
-              </motion.div>
-              <div>
-                <div className="font-medium text-white">{t("dashboard.sections.browseLibrary")}</div>
-                <div className="text-sm text-white/50">
-                  {t("dashboard.sections.libraryDescription")}
-                </div>
-              </div>
-            </div>
-
-            <ChevronRight className="relative w-5 h-5 text-white/30 group-hover:text-orange-400 group-hover:translate-x-1 transition-all" />
-          </Link>
-
-          {/* Sign-Up CTA (Preview Mode) - Glass with dramatic glow */}
+          {/* Sign-Up CTA (Preview Mode) - Floating with dramatic glow */}
           {isPreviewMode && (
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -686,17 +690,20 @@ export function DashboardPage() {
               viewport={{ once: true }}
               className="relative rounded-3xl"
             >
-              {/* Glass background */}
-              <div className="absolute inset-0 backdrop-blur-xl bg-white/[0.03] border border-white/10 rounded-3xl" />
-              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] rounded-3xl" />
+              {/* Ambient glow pool */}
+              <div className="absolute -inset-10 bg-gradient-to-br from-orange-500/15 via-purple-500/10 to-transparent rounded-[3rem] blur-2xl pointer-events-none" />
+
+              {/* Subtle background - no border */}
+              <div className="absolute inset-0 backdrop-blur-xl bg-white/[0.02] rounded-3xl" />
+              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-3xl" />
 
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-purple-500/10 rounded-3xl" />
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-purple-500/5 rounded-3xl" />
 
               {/* Floating particles */}
               <FloatingStars count={6} />
 
-              <div className="relative p-8 text-center">
+              <div className="relative p-10 text-center">
                 <h2
                   className="text-xl font-bold text-white mb-2"
                   style={{ fontFamily: "var(--font-display)" }}
@@ -757,22 +764,27 @@ function PreviewStartStudying() {
 // Skeleton loading state
 function DashboardSkeleton() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background placeholder */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute w-[600px] h-[600px] rounded-full blur-[120px] opacity-10 bg-orange-500 top-0 left-1/4" />
+        <div className="absolute w-[500px] h-[500px] rounded-full blur-[100px] opacity-10 bg-purple-500 top-1/3 right-1/4" />
+      </div>
+
       {/* Hero Section Skeleton */}
-      <div className="relative pt-8 pb-16 overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 max-w-5xl">
+      <div className="relative pt-8 pb-8">
+        <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
           <div className="text-center">
-            <div className="h-10 bg-white/5 rounded-full w-32 mx-auto mb-4 animate-pulse" />
             <div className="h-12 bg-white/5 rounded-lg w-64 mx-auto animate-pulse" />
           </div>
         </div>
       </div>
 
       {/* Main Content Skeleton */}
-      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-5xl">
-        <div className="space-y-8">
+      <div className="container mx-auto px-4 sm:px-6 pt-12 pb-8 max-w-6xl relative z-10">
+        <div className="space-y-16">
           {/* Start Studying CTA Skeleton */}
-          <div className="rounded-3xl bg-white/[0.02] border border-white/10 p-8 sm:p-10">
+          <div className="rounded-3xl bg-white/[0.02] p-10 sm:p-12">
             <div className="text-center space-y-4">
               <div className="h-14 bg-white/5 rounded-2xl w-48 mx-auto animate-pulse" />
               <div className="h-5 bg-white/5 rounded w-56 mx-auto animate-pulse" />
@@ -784,22 +796,19 @@ function DashboardSkeleton() {
             </div>
           </div>
 
-          {/* Quick Stats Skeleton */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Quick Stats Skeleton - Floating row */}
+          <div className="flex justify-center items-center gap-8 lg:gap-12">
             {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="rounded-2xl bg-white/[0.02] border border-white/10 p-5 text-center"
-              >
-                <div className="w-12 h-12 rounded-xl bg-white/5 mx-auto mb-3 animate-pulse" />
-                <div className="h-8 bg-white/5 rounded w-12 mx-auto mb-1 animate-pulse" />
-                <div className="h-4 bg-white/5 rounded w-16 mx-auto animate-pulse" />
+              <div key={i} className="flex flex-col items-center gap-2 px-4">
+                <div className="w-12 h-12 rounded-xl bg-white/5 animate-pulse" />
+                <div className="h-8 bg-white/5 rounded w-12 animate-pulse" />
+                <div className="h-4 bg-white/5 rounded w-16 animate-pulse" />
               </div>
             ))}
           </div>
 
           {/* Suggested Section Skeleton */}
-          <div className="rounded-3xl bg-white/[0.02] border border-white/10 p-6">
+          <div className="py-4">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-white/5 rounded-xl animate-pulse" />
               <div className="h-6 bg-white/5 rounded w-40 animate-pulse" />
@@ -809,7 +818,7 @@ function DashboardSkeleton() {
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="flex-shrink-0 w-[160px] rounded-xl bg-white/[0.02] border border-white/10 overflow-hidden"
+                  className="flex-shrink-0 w-[160px] rounded-xl bg-white/[0.02] overflow-hidden"
                 >
                   <div className="aspect-[3/4] bg-white/5 animate-pulse" />
                 </div>
@@ -818,7 +827,7 @@ function DashboardSkeleton() {
           </div>
 
           {/* Browse Library Skeleton */}
-          <div className="rounded-2xl bg-white/[0.02] border border-white/10 p-5">
+          <div className="rounded-2xl bg-white/[0.02] p-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-white/5 animate-pulse" />
               <div className="space-y-2 flex-1">
