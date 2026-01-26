@@ -4,7 +4,6 @@ import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getAudioUrl } from "@/api/stories";
-import { PageSubheader } from "@/components/layout/PageSubheader";
 import { Paywall } from "@/components/Paywall";
 import { AudioPlayer } from "@/components/reader/AudioPlayer";
 import { ChapterView } from "@/components/reader/ChapterView";
@@ -470,17 +469,10 @@ export function ReaderPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Animated background orbs */}
-      <PremiumBackground
-        variant="subtle"
-        colorScheme="warm"
-        showStars={true}
-        showOrbs={true}
-        orbCount={3}
-        starCount={15}
-      />
+      <PremiumBackground colorScheme="warm" starCount={10} showOrbs={true} animateStars={false} />
 
-      {/* Sticky Header - Glass */}
-      <PageSubheader>
+      {/* Header - Non-sticky, blends with background */}
+      <div className="relative z-10">
         <div className="container mx-auto px-4 sm:px-6 py-3 max-w-3xl">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
@@ -563,13 +555,13 @@ export function ReaderPage() {
             </div>
           )}
         </div>
-      </PageSubheader>
+      </div>
 
       {/* Main Content - Book-like reading area with glass morphism */}
       <main className="container mx-auto px-4 sm:px-6 py-8 max-w-3xl">
         <div className="relative rounded-2xl overflow-hidden">
           {/* Glass background */}
-          <div className="absolute inset-0 backdrop-blur-md bg-white/[0.02] border border-border dark:border-white/10 rounded-2xl" />
+          <div className="absolute inset-0 backdrop-blur-xl bg-background/80 border border-border dark:border-white/10 rounded-2xl" />
           <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
           {/* Content */}
@@ -601,17 +593,19 @@ export function ReaderPage() {
         </div>
       </main>
 
-      {/* Chapter Navigation - Glass */}
+      {/* Chapter Navigation - Blends with background */}
       {chapters.length > 1 && (
-        <nav className="sticky bottom-0 z-30 border-t border-border bg-background/80 backdrop-blur-xl dark:border-white/5 dark:bg-black/50">
-          <div className="container mx-auto px-4 sm:px-6 py-4 max-w-3xl">
+        <nav className="relative z-10 py-4">
+          <div className="container mx-auto px-4 sm:px-6 max-w-3xl">
             <div className="flex items-center justify-between">
               <Button
                 variant="outline"
+                size="lg"
                 onClick={handlePreviousChapter}
                 disabled={currentChapterIndex === 0}
+                className="text-base font-medium !bg-background dark:!bg-background hover:!bg-muted dark:hover:!bg-muted border-border"
               >
-                <ChevronLeft className="w-4 h-4 mr-1" />
+                <ChevronLeft className="w-5 h-5 mr-1" />
                 {t("reader.navigation.previous")}
               </Button>
 
@@ -635,14 +629,19 @@ export function ReaderPage() {
               </div>
 
               {currentChapterIndex === chapters.length - 1 ? (
-                <Button onClick={handleTakeQuiz} className="gap-1">
-                  <BookOpen className="w-4 h-4" />
+                <Button onClick={handleTakeQuiz} size="lg" className="gap-1 text-base font-medium">
+                  <BookOpen className="w-5 h-5" />
                   {t("reader.quiz.takeQuiz")}
                 </Button>
               ) : (
-                <Button variant="outline" onClick={handleNextChapter}>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleNextChapter}
+                  className="text-base font-medium !bg-background dark:!bg-background hover:!bg-muted dark:hover:!bg-muted border-border"
+                >
                   {t("reader.navigation.next")}
-                  <ChevronRight className="w-4 h-4 ml-1" />
+                  <ChevronRight className="w-5 h-5 ml-1" />
                 </Button>
               )}
             </div>
