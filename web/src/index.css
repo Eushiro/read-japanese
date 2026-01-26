@@ -58,8 +58,8 @@
   --color-foreground: #1c1917;
   --color-foreground-muted: #78716c;
 
-  --color-border: #e7e0d5;
-  --color-border-subtle: #f0ebe3;
+  --color-border: #d4ccc0;
+  --color-border-subtle: #e7e0d5;
 
   /* Accent - Vermillion inspired */
   --color-accent: #c2410c;
@@ -853,8 +853,8 @@ ruby rt {
   --accent: #c2410c;
   --accent-foreground: #ffffff;
   --destructive: #dc2626;
-  --border: #e7e0d5;
-  --input: #e7e0d5;
+  --border: #d4ccc0;
+  --input: #d4ccc0;
   --ring: #c2410c;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);

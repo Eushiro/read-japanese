@@ -671,24 +671,24 @@ export function PlacementTestPage() {
 
               {/* Centered overlay with wave background and shimmering text */}
               <div className="absolute inset-0 flex items-center justify-center bg-black/70 rounded-2xl">
-              {/* Wave background for dark mode */}
-              <div className="absolute inset-0 opacity-0 dark:opacity-100 overflow-hidden">
-                <WaveBackground size="card" className="absolute inset-0" intensity={2} />
-              </div>
-              <p
-                key={loadingPhrase}
-                className="text-2xl sm:text-3xl font-bold text-center px-4 relative z-10"
-                style={{
-                  background:
-                    "linear-gradient(90deg, var(--foreground) 0%, #a855f7 25%, #06b6d4 50%, #ec4899 75%, var(--foreground) 100%)",
-                  backgroundSize: "200% 100%",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  animation: "shimmer 2s ease-in-out infinite",
-                }}
-              >
-                {loadingPhrase}
-              </p>
+                {/* Wave background for dark mode */}
+                <div className="absolute inset-0 opacity-0 dark:opacity-100 overflow-hidden">
+                  <WaveBackground size="card" className="absolute inset-0" intensity={2} />
+                </div>
+                <p
+                  key={loadingPhrase}
+                  className="text-2xl sm:text-3xl font-bold text-center px-4 relative z-10"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, var(--foreground) 0%, #a855f7 25%, #06b6d4 50%, #ec4899 75%, var(--foreground) 100%)",
+                    backgroundSize: "200% 100%",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    animation: "shimmer 2s ease-in-out infinite",
+                  }}
+                >
+                  {loadingPhrase}
+                </p>
               </div>
             </div>
           </div>
@@ -747,7 +747,7 @@ export function PlacementTestPage() {
             <div className="relative p-6 sm:p-8">
               <div className="flex flex-col items-center justify-center py-8 gap-3">
                 <Loader2 className="w-6 h-6 animate-spin text-accent" />
-                <span className="text-white/60">
+                <span className="text-muted-foreground">
                   {t("placement.question.loadingQuestion")}
                 </span>
               </div>

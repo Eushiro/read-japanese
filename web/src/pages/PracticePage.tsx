@@ -270,12 +270,12 @@ export function PracticePage() {
               </span>
             </div>
             <h1
-              className="text-3xl sm:text-4xl font-bold text-white mb-2"
+              className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
               style={{ fontFamily: "var(--font-display)" }}
             >
               {t("practice.hero.title")}
             </h1>
-            <p className="text-white/60 text-lg">{t("practice.hero.subtitle")}</p>
+            <p className="text-foreground-muted text-lg">{t("practice.hero.subtitle")}</p>
           </motion.div>
         </div>
       </div>

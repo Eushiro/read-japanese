@@ -367,6 +367,7 @@ export function VocabularyPage() {
   // For user vocab, use estimated heights
   const shouldUseVirtualScrolling =
     sortedVocabulary.length > 100 && sortBy !== "by-mastery" && !isViewingPremade;
+  // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer is safe here, we don't pass its functions to memoized components
   const rowVirtualizer = useVirtualizer({
     count: sortedVocabulary.length,
     getScrollElement: () => scrollContainerRef.current,
@@ -442,12 +443,12 @@ export function VocabularyPage() {
                   </span>
                 </div>
                 <h1
-                  className="text-3xl sm:text-4xl font-bold text-white mb-2"
+                  className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {t("vocabulary.title")}
                 </h1>
-                <p className="text-white/60 text-lg">
+                <p className="text-foreground-muted text-lg">
                   {t("vocabulary.wordsInCollection", { count: vocabulary?.length || 0 })}
                 </p>
               </div>
@@ -464,7 +465,7 @@ export function VocabularyPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="border-b border-white/5">
+      <div className="border-b border-border">
         <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
@@ -1379,7 +1380,7 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md"
       onClick={onClose}
     >
       <div
@@ -1694,7 +1695,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md">
       <div className="bg-surface/95 dark:bg-black/90 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] w-full max-w-md mx-4 animate-fade-in-up">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2

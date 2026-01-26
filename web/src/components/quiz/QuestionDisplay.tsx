@@ -98,59 +98,59 @@ export function QuestionDisplay({
   return (
     <div className="relative rounded-2xl overflow-hidden">
       {/* Glass background */}
-      <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+      <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-border rounded-2xl" />
       <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
       {/* Content */}
       <div className="relative p-6 sm:p-8">
-      {/* Metadata badges */}
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <span className={`text-xs px-2 py-1 rounded-full ${getTypeColor(type)}`}>
-          {metadata?.type || getTypeLabel(type, t)}
-        </span>
-        {points !== undefined && (
-          <span className="text-xs text-foreground-muted">
-            {t("comprehension.questionDisplay.points", { count: points })}
+        {/* Metadata badges */}
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <span className={`text-xs px-2 py-1 rounded-full ${getTypeColor(type)}`}>
+            {metadata?.type || getTypeLabel(type, t)}
           </span>
-        )}
-        {metadata?.level && (
-          <span className="text-xs px-2 py-1 rounded-full bg-muted text-foreground-muted">
-            {metadata.level}
-          </span>
-        )}
-        {metadata?.badge && (
-          <span className="text-xs px-2 py-1 rounded-full bg-muted text-foreground-muted">
-            {metadata.badge}
-          </span>
-        )}
-      </div>
+          {points !== undefined && (
+            <span className="text-xs text-foreground-muted">
+              {t("comprehension.questionDisplay.points", { count: points })}
+            </span>
+          )}
+          {metadata?.level && (
+            <span className="text-xs px-2 py-1 rounded-full bg-muted text-foreground-muted">
+              {metadata.level}
+            </span>
+          )}
+          {metadata?.badge && (
+            <span className="text-xs px-2 py-1 rounded-full bg-muted text-foreground-muted">
+              {metadata.badge}
+            </span>
+          )}
+        </div>
 
-      {/* Question text */}
-      <h2 className="text-lg font-semibold text-foreground mb-2" style={{ fontFamily }}>
-        {question}
-      </h2>
-      {questionTranslation && <p className="text-foreground-muted mb-6">{questionTranslation}</p>}
+        {/* Question text */}
+        <h2 className="text-lg font-semibold text-foreground mb-2" style={{ fontFamily }}>
+          {question}
+        </h2>
+        {questionTranslation && <p className="text-foreground-muted mb-6">{questionTranslation}</p>}
 
-      {/* Answer input */}
-      {isMultipleChoice ? (
-        <MultipleChoiceOptions
-          options={options}
-          selectedAnswer={selectedAnswer}
-          onSelect={onSelectAnswer}
-          correctAnswer={correctAnswer}
-          showCorrectness={showCorrectness}
-          isDisabled={isDisabled || isAnswered}
-          fontFamily={fontFamily}
-        />
-      ) : (
-        <TextAnswerInput
-          type={type}
-          value={selectedAnswer}
-          onChange={onSelectAnswer}
-          isDisabled={isDisabled || isAnswered}
-          t={t}
-        />
-      )}
+        {/* Answer input */}
+        {isMultipleChoice ? (
+          <MultipleChoiceOptions
+            options={options}
+            selectedAnswer={selectedAnswer}
+            onSelect={onSelectAnswer}
+            correctAnswer={correctAnswer}
+            showCorrectness={showCorrectness}
+            isDisabled={isDisabled || isAnswered}
+            fontFamily={fontFamily}
+          />
+        ) : (
+          <TextAnswerInput
+            type={type}
+            value={selectedAnswer}
+            onChange={onSelectAnswer}
+            isDisabled={isDisabled || isAnswered}
+            t={t}
+          />
+        )}
 
         {/* Feedback section */}
         {isAnswered && showFeedback && (
@@ -238,13 +238,13 @@ function MultipleChoiceOptions({
                 {!showCorrectness && (
                   <div
                     className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      isSelected ? "border-accent" : "border-white/30"
+                      isSelected ? "border-accent" : "border-foreground/30"
                     }`}
                   >
                     {isSelected && <div className="w-3 h-3 rounded-full bg-accent" />}
                   </div>
                 )}
-                <span className="text-white">{option}</span>
+                <span className="text-foreground">{option}</span>
               </div>
               {showCorrectness && isCorrectOption && (
                 <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />

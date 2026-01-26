@@ -189,7 +189,7 @@ function Navigation() {
 
   return (
     <nav
-      className={`sticky top-0 z-50 transition-all duration-300 ${
+      className={`sticky top-0 z-40 transition-all duration-300 ${
         isScrolled ? "backdrop-blur-2xl" : "bg-transparent"
       }`}
     >
@@ -203,7 +203,7 @@ function Navigation() {
                 "linear-gradient(90deg, rgba(255,132,0,0.3) 0%, rgba(223,145,247,0.3) 25%, rgba(6,182,212,0.25) 50%, rgba(254,237,122,0.3) 75%, rgba(255,132,0,0.3) 100%)",
             }}
           />
-          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-white/60 dark:bg-black/40" />
         </div>
       )}
 
@@ -212,7 +212,8 @@ function Navigation() {
           {/* Logo + Tier Badge */}
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent/80 dark:from-siri-purple dark:to-siri-cyan flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-105 dark:shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+              {/* eslint-disable i18next/no-literal-string -- Brand logo */}
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent/80 dark:from-siri-purple dark:to-siri-cyan flex items-center justify-center transition-all duration-300 dark:shadow-[0_0_20px_rgba(168,85,247,0.3)]">
                 <span
                   className="text-white text-lg font-bold drop-shadow-sm"
                   style={{ fontFamily: "var(--font-japanese)" }}
@@ -228,6 +229,7 @@ function Navigation() {
                   SanLang
                 </span>
               </div>
+              {/* eslint-enable i18next/no-literal-string */}
             </Link>
             {/* Premium Tier Badge */}
             {tier && tier !== "free" && (
@@ -346,11 +348,7 @@ function FlashcardsRedirect() {
 function PracticeRedirect() {
   const search = useSearch({ strict: false }) as { vocabularyId?: string };
   return (
-    <Navigate
-      to="/learn"
-      search={{ tab: "practice", vocabularyId: search.vocabularyId }}
-      replace
-    />
+    <Navigate to="/learn" search={{ tab: "practice", vocabularyId: search.vocabularyId }} replace />
   );
 }
 

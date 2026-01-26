@@ -236,7 +236,7 @@ export function SettingsPage() {
                 <User className="w-5 h-5 text-purple-400" />
               </motion.div>
               <h1
-                className="text-3xl sm:text-4xl font-bold text-white"
+                className="text-3xl sm:text-4xl font-bold text-foreground"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 {t("settings.title")}
@@ -252,7 +252,7 @@ export function SettingsPage() {
           {/* 1. Subscription & Credits */}
           {isAuthenticated && user && (
             <section className="relative rounded-2xl overflow-hidden">
-              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-border rounded-2xl" />
               <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
               <div className="relative p-6">
@@ -262,7 +262,7 @@ export function SettingsPage() {
                       <CreditCard className="w-4 h-4 text-cyan-400" />
                     </div>
                     <h2
-                      className="text-lg font-semibold text-white"
+                      className="text-lg font-semibold text-foreground"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
                       {t("settings.subscription.title")}
@@ -286,88 +286,88 @@ export function SettingsPage() {
                   </div>
                 </div>
 
-              {/* Credit Progress bar */}
-              <div className="p-4 rounded-xl bg-muted/50">
-                {/* Plan type indicator */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="text-base font-semibold">
-                    <span
-                      className={
-                        subscription?.tier === "pro"
-                          ? "text-accent"
-                          : subscription?.tier === "plus"
-                            ? "text-blue-400"
-                            : "text-foreground-muted"
-                      }
-                    >
-                      {t(`settings.subscription.tiers.${subscription?.tier || "free"}.name`)}
-                    </span>
-                    <span className="text-foreground-muted font-normal ml-1">
-                      {t("settings.subscription.plan")}
-                    </span>
-                  </div>
-                  <span
-                    className={`text-sm font-medium ${
-                      creditsPercentage >= 95
-                        ? "text-rose-500"
-                        : creditsPercentage >= 80
-                          ? "text-amber-500"
-                          : "text-foreground-muted"
-                    }`}
-                  >
-                    {creditsPercentage}% {t("settings.credits.used")}
-                  </span>
-                </div>
-                <div className="text-sm text-foreground mb-2">
-                  {creditsUsed} / {creditsLimit} {t("settings.credits.creditsUsed")}
-                </div>
-                <Progress
-                  value={creditsPercentage}
-                  className={
-                    creditsPercentage >= 95
-                      ? "[&>div]:bg-rose-500"
-                      : creditsPercentage >= 80
-                        ? "[&>div]:bg-amber-500"
-                        : ""
-                  }
-                />
-                <p className="text-xs text-foreground-muted mt-2">
-                  {t("settings.credits.resets", {
-                    date: creditsResetDate
-                      ? new Date(creditsResetDate).toLocaleDateString(undefined, {
-                          month: "long",
-                          day: "numeric",
-                        })
-                      : "",
-                  })}
-                </p>
-              </div>
-
-              {/* Upgrade CTA for free users */}
-              {creditsTier === "free" && (
-                <div className="mt-4 p-4 rounded-xl border border-accent/30 bg-accent/5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {t("settings.credits.upgradeTitle")}
-                      </p>
-                      <p className="text-xs text-foreground-muted">
-                        {t("settings.credits.upgradeDescription")}
-                      </p>
+                {/* Credit Progress bar */}
+                <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                  {/* Plan type indicator */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-base font-semibold">
+                      <span
+                        className={
+                          subscription?.tier === "pro"
+                            ? "text-accent"
+                            : subscription?.tier === "plus"
+                              ? "text-blue-400"
+                              : "text-foreground-muted"
+                        }
+                      >
+                        {t(`settings.subscription.tiers.${subscription?.tier || "free"}.name`)}
+                      </span>
+                      <span className="text-foreground-muted font-normal ml-1">
+                        {t("settings.subscription.plan")}
+                      </span>
                     </div>
-                    <Button asChild size="sm" variant="glass-accent">
-                      <Link to="/pricing">{t("settings.credits.upgrade")}</Link>
-                    </Button>
+                    <span
+                      className={`text-sm font-medium ${
+                        creditsPercentage >= 95
+                          ? "text-rose-500"
+                          : creditsPercentage >= 80
+                            ? "text-amber-500"
+                            : "text-foreground-muted"
+                      }`}
+                    >
+                      {creditsPercentage}% {t("settings.credits.used")}
+                    </span>
                   </div>
+                  <div className="text-sm text-foreground mb-2">
+                    {creditsUsed} / {creditsLimit} {t("settings.credits.creditsUsed")}
+                  </div>
+                  <Progress
+                    value={creditsPercentage}
+                    className={
+                      creditsPercentage >= 95
+                        ? "[&>div]:bg-rose-500"
+                        : creditsPercentage >= 80
+                          ? "[&>div]:bg-amber-500"
+                          : ""
+                    }
+                  />
+                  <p className="text-xs text-foreground-muted mt-2">
+                    {t("settings.credits.resets", {
+                      date: creditsResetDate
+                        ? new Date(creditsResetDate).toLocaleDateString(undefined, {
+                            month: "long",
+                            day: "numeric",
+                          })
+                        : "",
+                    })}
+                  </p>
                 </div>
-              )}
+
+                {/* Upgrade CTA for free users */}
+                {creditsTier === "free" && (
+                  <div className="mt-4 p-4 rounded-xl border border-accent/30 bg-accent/5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {t("settings.credits.upgradeTitle")}
+                        </p>
+                        <p className="text-xs text-foreground-muted">
+                          {t("settings.credits.upgradeDescription")}
+                        </p>
+                      </div>
+                      <Button asChild size="sm" variant="glass-accent">
+                        <Link to="/pricing">{t("settings.credits.upgrade")}</Link>
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
           )}
 
           {/* 2. Preferences */}
           <section className="relative rounded-2xl overflow-hidden">
-            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-border rounded-2xl" />
             <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
             <div className="relative p-6">
@@ -376,145 +376,147 @@ export function SettingsPage() {
                   <Sun className="w-4 h-4 text-amber-400" />
                 </div>
                 <h2
-                  className="text-lg font-semibold text-white"
+                  className="text-lg font-semibold text-foreground"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {t("settings.preferences.title")}
                 </h2>
               </div>
 
-            {settingsLoading ? (
-              <div className="space-y-6 animate-pulse">
-                <div className="flex gap-2">
-                  <div className="flex-1 h-10 bg-muted rounded-lg" />
-                  <div className="flex-1 h-10 bg-muted rounded-lg" />
-                  <div className="flex-1 h-10 bg-muted rounded-lg" />
-                </div>
-                <div className="space-y-3">
-                  <div className="h-4 w-32 bg-muted rounded" />
-                  <div className="h-10 w-full bg-muted rounded-lg" />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Theme */}
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-3">
-                    {t("settings.appearance.title")}
-                  </label>
+              {settingsLoading ? (
+                <div className="space-y-6 animate-pulse">
                   <div className="flex gap-2">
-                    <Button
-                      variant={theme === "light" ? "default" : "outline"}
-                      onClick={() => setTheme("light")}
-                      className="flex-1"
-                    >
-                      <Sun className="w-4 h-4 mr-2" />
-                      {t("settings.appearance.light")}
-                    </Button>
-                    <Button
-                      variant={theme === "dark" ? "default" : "outline"}
-                      onClick={() => setTheme("dark")}
-                      className="flex-1"
-                    >
-                      <Moon className="w-4 h-4 mr-2" />
-                      {t("settings.appearance.dark")}
-                    </Button>
-                    <Button
-                      variant={theme === "system" ? "default" : "outline"}
-                      onClick={() => setTheme("system")}
-                      className="flex-1"
-                    >
-                      <Monitor className="w-4 h-4 mr-2" />
-                      {t("settings.appearance.system")}
-                    </Button>
+                    <div className="flex-1 h-10 bg-muted rounded-lg" />
+                    <div className="flex-1 h-10 bg-muted rounded-lg" />
+                    <div className="flex-1 h-10 bg-muted rounded-lg" />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="h-4 w-32 bg-muted rounded" />
+                    <div className="h-10 w-full bg-muted rounded-lg" />
                   </div>
                 </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Theme */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-3">
+                      {t("settings.appearance.title")}
+                    </label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={theme === "light" ? "default" : "outline"}
+                        onClick={() => setTheme("light")}
+                        className="flex-1"
+                      >
+                        <Sun className="w-4 h-4 mr-2" />
+                        {t("settings.appearance.light")}
+                      </Button>
+                      <Button
+                        variant={theme === "dark" ? "default" : "outline"}
+                        onClick={() => setTheme("dark")}
+                        className="flex-1"
+                      >
+                        <Moon className="w-4 h-4 mr-2" />
+                        {t("settings.appearance.dark")}
+                      </Button>
+                      <Button
+                        variant={theme === "system" ? "default" : "outline"}
+                        onClick={() => setTheme("system")}
+                        className="flex-1"
+                      >
+                        <Monitor className="w-4 h-4 mr-2" />
+                        {t("settings.appearance.system")}
+                      </Button>
+                    </div>
+                  </div>
 
-                {/* UI Language */}
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    {t("settings.uiLanguage.title")}
-                  </label>
-                  <p className="text-sm text-foreground-muted mb-3">
-                    {t("settings.uiLanguage.description")}
-                  </p>
-                  <UILanguageSwitcher showLabel={false} />
-                </div>
+                  {/* UI Language */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      {t("settings.uiLanguage.title")}
+                    </label>
+                    <p className="text-sm text-foreground-muted mb-3">
+                      {t("settings.uiLanguage.description")}
+                    </p>
+                    <UILanguageSwitcher showLabel={false} />
+                  </div>
 
-                {/* Reading Settings */}
-                <div className="pt-2 border-t border-white/10">
-                  <label className="block text-sm font-medium text-foreground mb-4">
-                    {t("settings.reading.title")}
-                  </label>
-                  <div className="space-y-4">
-                    {/* Show furigana toggle only if user is studying Japanese */}
-                    {userProfile?.languages?.includes("japanese") && (
+                  {/* Reading Settings */}
+                  <div className="pt-2 border-t border-border">
+                    <label className="block text-sm font-medium text-foreground mb-4">
+                      {t("settings.reading.title")}
+                    </label>
+                    <div className="space-y-4">
+                      {/* Show furigana toggle only if user is studying Japanese */}
+                      {userProfile?.languages?.includes("japanese") && (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-muted">
+                              {showFurigana ? (
+                                <Eye className="w-4 h-4 text-foreground-muted" />
+                              ) : (
+                                <EyeOff className="w-4 h-4 text-foreground-muted" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-medium text-foreground">
+                                {t("settings.reading.showFurigana")}
+                              </div>
+                              <div className="text-sm text-foreground-muted">
+                                {t("settings.reading.showFuriganaDescription")}
+                              </div>
+                            </div>
+                          </div>
+                          <Switch checked={showFurigana} onCheckedChange={setShowFurigana} />
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="p-2 rounded-lg bg-muted">
-                            {showFurigana ? (
-                              <Eye className="w-4 h-4 text-foreground-muted" />
-                            ) : (
-                              <EyeOff className="w-4 h-4 text-foreground-muted" />
-                            )}
+                            <Volume2 className="w-4 h-4 text-foreground-muted" />
                           </div>
                           <div>
                             <div className="font-medium text-foreground">
-                              {t("settings.reading.showFurigana")}
+                              {t("settings.reading.autoplayAudio")}
                             </div>
                             <div className="text-sm text-foreground-muted">
-                              {t("settings.reading.showFuriganaDescription")}
+                              {t("settings.reading.autoplayAudioDescription")}
                             </div>
                           </div>
                         </div>
-                        <Switch checked={showFurigana} onCheckedChange={setShowFurigana} />
+                        <Switch checked={autoplayAudio} onCheckedChange={setAutoplayAudio} />
                       </div>
-                    )}
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-muted">
-                          <Volume2 className="w-4 h-4 text-foreground-muted" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-foreground">
-                            {t("settings.reading.autoplayAudio")}
-                          </div>
-                          <div className="text-sm text-foreground-muted">
-                            {t("settings.reading.autoplayAudioDescription")}
-                          </div>
-                        </div>
+                      <div className="pt-2">
+                        <label className="font-medium text-foreground block mb-3">
+                          {t("settings.reading.textSize")}
+                        </label>
+                        <Select value={fontSize} onValueChange={setFontSize}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select size" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="small">{t("settings.reading.small")}</SelectItem>
+                            <SelectItem value="medium">{t("settings.reading.medium")}</SelectItem>
+                            <SelectItem value="large">{t("settings.reading.large")}</SelectItem>
+                            <SelectItem value="x-large">
+                              {t("settings.reading.extraLarge")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <Switch checked={autoplayAudio} onCheckedChange={setAutoplayAudio} />
-                    </div>
-
-                    <div className="pt-2">
-                      <label className="font-medium text-foreground block mb-3">
-                        {t("settings.reading.textSize")}
-                      </label>
-                      <Select value={fontSize} onValueChange={setFontSize}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select size" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="small">{t("settings.reading.small")}</SelectItem>
-                          <SelectItem value="medium">{t("settings.reading.medium")}</SelectItem>
-                          <SelectItem value="large">{t("settings.reading.large")}</SelectItem>
-                          <SelectItem value="x-large">{t("settings.reading.extraLarge")}</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
             </div>
           </section>
 
           {/* 3. Languages & Exams */}
           {isAuthenticated && user && (
             <section className="relative rounded-2xl overflow-hidden">
-              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-border rounded-2xl" />
               <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
               <div className="relative p-6">
@@ -523,111 +525,111 @@ export function SettingsPage() {
                     <Globe className="w-4 h-4 text-blue-400" />
                   </div>
                   <h2
-                    className="text-lg font-semibold text-white"
+                    className="text-lg font-semibold text-foreground"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
                     {t("settings.languages.title")}
                   </h2>
                 </div>
 
-              {userProfile === undefined ? (
-                // Loading state
-                <div className="space-y-6 animate-pulse">
-                  <div>
-                    <div className="h-4 w-40 bg-muted rounded mb-3" />
-                    <div className="flex gap-2">
-                      <div className="h-10 w-28 bg-muted rounded-lg" />
-                      <div className="h-10 w-24 bg-muted rounded-lg" />
-                      <div className="h-10 w-24 bg-muted rounded-lg" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="h-4 w-32 bg-muted rounded mb-3" />
-                    <div className="flex flex-wrap gap-2">
-                      <div className="h-8 w-20 bg-muted rounded-lg" />
-                      <div className="h-8 w-20 bg-muted rounded-lg" />
-                      <div className="h-8 w-20 bg-muted rounded-lg" />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Languages */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-foreground mb-3">
-                      {t("settings.languages.learningLanguages")}
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {LANGUAGES.map((lang) => {
-                        const isSelected = userProfile?.languages?.includes(lang.value) ?? false;
-                        return (
-                          <button
-                            key={lang.value}
-                            onClick={() => handleLanguageToggle(lang.value)}
-                            className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
-                              isSelected
-                                ? "border-accent bg-accent/10 text-accent"
-                                : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
-                            }`}
-                          >
-                            {t(`common.languages.${lang.value}`)}
-                            {isSelected && <Check className="w-4 h-4 ml-2 inline" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Target Exams */}
-                  {userProfile?.languages && userProfile.languages.length > 0 && (
+                {userProfile === undefined ? (
+                  // Loading state
+                  <div className="space-y-6 animate-pulse">
                     <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <GraduationCap className="w-4 h-4 text-foreground-muted" />
-                        <label className="block text-sm font-medium text-foreground">
-                          {t("settings.languages.targetExams")}
-                        </label>
+                      <div className="h-4 w-40 bg-muted rounded mb-3" />
+                      <div className="flex gap-2">
+                        <div className="h-10 w-28 bg-muted rounded-lg" />
+                        <div className="h-10 w-24 bg-muted rounded-lg" />
+                        <div className="h-10 w-24 bg-muted rounded-lg" />
                       </div>
-                      <div className="space-y-4">
-                        {userProfile.languages.map((lang) => {
-                          const langInfo = LANGUAGES.find((l) => l.value === lang);
-                          const exams =
-                            EXAMS_BY_LANGUAGE[lang as keyof typeof EXAMS_BY_LANGUAGE] || [];
-
+                    </div>
+                    <div>
+                      <div className="h-4 w-32 bg-muted rounded mb-3" />
+                      <div className="flex flex-wrap gap-2">
+                        <div className="h-8 w-20 bg-muted rounded-lg" />
+                        <div className="h-8 w-20 bg-muted rounded-lg" />
+                        <div className="h-8 w-20 bg-muted rounded-lg" />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Languages */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-foreground mb-3">
+                        {t("settings.languages.learningLanguages")}
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {LANGUAGES.map((lang) => {
+                          const isSelected = userProfile?.languages?.includes(lang.value) ?? false;
                           return (
-                            <div key={lang}>
-                              <div className="text-xs font-medium text-foreground-muted mb-2 uppercase tracking-wider">
-                                {langInfo?.label}
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {exams.map((exam) => {
-                                  const isSelected =
-                                    (userProfile?.targetExams as ExamType[] | undefined)?.includes(
-                                      exam.value as ExamType
-                                    ) ?? false;
-                                  return (
-                                    <button
-                                      key={exam.value}
-                                      onClick={() => handleExamToggle(exam.value)}
-                                      className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                                        isSelected
-                                          ? "border-accent bg-accent/10 text-accent"
-                                          : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
-                                      }`}
-                                    >
-                                      {exam.label}
-                                      {isSelected && <Check className="w-3 h-3 ml-1 inline" />}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
+                            <button
+                              key={lang.value}
+                              onClick={() => handleLanguageToggle(lang.value)}
+                              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                                isSelected
+                                  ? "border-accent bg-accent/10 text-accent"
+                                  : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
+                              }`}
+                            >
+                              {t(`common.languages.${lang.value}`)}
+                              {isSelected && <Check className="w-4 h-4 ml-2 inline" />}
+                            </button>
                           );
                         })}
                       </div>
                     </div>
-                  )}
-                </>
-              )}
+
+                    {/* Target Exams */}
+                    {userProfile?.languages && userProfile.languages.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <GraduationCap className="w-4 h-4 text-foreground-muted" />
+                          <label className="block text-sm font-medium text-foreground">
+                            {t("settings.languages.targetExams")}
+                          </label>
+                        </div>
+                        <div className="space-y-4">
+                          {userProfile.languages.map((lang) => {
+                            const langInfo = LANGUAGES.find((l) => l.value === lang);
+                            const exams =
+                              EXAMS_BY_LANGUAGE[lang as keyof typeof EXAMS_BY_LANGUAGE] || [];
+
+                            return (
+                              <div key={lang}>
+                                <div className="text-xs font-medium text-foreground-muted mb-2 uppercase tracking-wider">
+                                  {langInfo?.label}
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {exams.map((exam) => {
+                                    const isSelected =
+                                      (
+                                        userProfile?.targetExams as ExamType[] | undefined
+                                      )?.includes(exam.value as ExamType) ?? false;
+                                    return (
+                                      <button
+                                        key={exam.value}
+                                        onClick={() => handleExamToggle(exam.value)}
+                                        className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                                          isSelected
+                                            ? "border-accent bg-accent/10 text-accent"
+                                            : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
+                                        }`}
+                                      >
+                                        {exam.label}
+                                        {isSelected && <Check className="w-3 h-3 ml-1 inline" />}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </section>
           )}
@@ -635,7 +637,7 @@ export function SettingsPage() {
           {/* 4. Proficiency/Placement Test */}
           {isAuthenticated && user && userProfile && (
             <section className="relative rounded-2xl overflow-hidden">
-              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-border rounded-2xl" />
               <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
               <div className="relative p-6">
@@ -644,75 +646,77 @@ export function SettingsPage() {
                     <Brain className="w-4 h-4 text-purple-400" />
                   </div>
                   <h2
-                    className="text-lg font-semibold text-white"
+                    className="text-lg font-semibold text-foreground"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
                     {t("settings.proficiency.title")}
                   </h2>
                 </div>
 
-                <p className="text-sm text-white/60 mb-4">
+                <p className="text-sm text-foreground-muted mb-4">
                   {t("settings.proficiency.description")}
                 </p>
 
-              <div className="space-y-3">
-                {userProfile.languages?.map((lang) => {
-                  const langInfo = LANGUAGES.find((l) => l.value === lang);
-                  const proficiency =
-                    userProfile.proficiencyLevels?.[
-                      lang as keyof typeof userProfile.proficiencyLevels
-                    ];
+                <div className="space-y-3">
+                  {userProfile.languages?.map((lang) => {
+                    const langInfo = LANGUAGES.find((l) => l.value === lang);
+                    const proficiency =
+                      userProfile.proficiencyLevels?.[
+                        lang as keyof typeof userProfile.proficiencyLevels
+                      ];
 
-                  return (
-                    <div
-                      key={lang}
-                      className="flex items-center justify-between p-4 rounded-xl bg-muted/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <div className="font-medium text-foreground">{langInfo?.label}</div>
-                          {proficiency ? (
-                            <div className="text-sm text-foreground-muted">
-                              {t("settings.proficiency.level")}:{" "}
-                              <span className="font-semibold text-accent">{proficiency.level}</span>
-                              <span className="text-xs ml-2">
-                                (
-                                {t("settings.proficiency.tested", {
-                                  date: new Date(proficiency.assessedAt).toLocaleDateString(),
-                                })}
-                                )
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="text-sm text-foreground-muted">
-                              {t("settings.proficiency.notAssessed")}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        variant="glass-accent"
-                        size="sm"
-                        onClick={() =>
-                          navigate({ to: "/placement-test", search: { language: lang } })
-                        }
+                    return (
+                      <div
+                        key={lang}
+                        className="flex items-center justify-between p-4 rounded-xl bg-muted/50 border border-border"
                       >
-                        {proficiency
-                          ? t("settings.proficiency.retake")
-                          : t("settings.proficiency.takeTest")}
-                        <ChevronRight className="w-4 h-4 ml-1" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <div className="font-medium text-foreground">{langInfo?.label}</div>
+                            {proficiency ? (
+                              <div className="text-sm text-foreground-muted">
+                                {t("settings.proficiency.level")}:{" "}
+                                <span className="font-semibold text-accent">
+                                  {proficiency.level}
+                                </span>
+                                <span className="text-xs ml-2">
+                                  (
+                                  {t("settings.proficiency.tested", {
+                                    date: new Date(proficiency.assessedAt).toLocaleDateString(),
+                                  })}
+                                  )
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="text-sm text-foreground-muted">
+                                {t("settings.proficiency.notAssessed")}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          variant="glass-accent"
+                          size="sm"
+                          onClick={() =>
+                            navigate({ to: "/placement-test", search: { language: lang } })
+                          }
+                        >
+                          {proficiency
+                            ? t("settings.proficiency.retake")
+                            : t("settings.proficiency.takeTest")}
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </section>
           )}
 
           {/* 5. Account */}
           <section className="relative rounded-2xl overflow-hidden">
-            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-border rounded-2xl" />
             <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
             <div className="relative p-6">
@@ -721,64 +725,64 @@ export function SettingsPage() {
                   <User className="w-4 h-4 text-rose-400" />
                 </div>
                 <h2
-                  className="text-lg font-semibold text-white"
+                  className="text-lg font-semibold text-foreground"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {t("settings.account.title")}
                 </h2>
               </div>
-            {authLoading ? (
-              <div className="space-y-4 animate-pulse">
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
-                  <div className="w-12 h-12 rounded-full bg-muted" />
-                  <div className="min-w-0 flex-1">
-                    <div className="h-4 w-24 bg-muted rounded mb-2" />
-                    <div className="h-3 w-40 bg-muted rounded" />
-                  </div>
-                </div>
-                <div className="h-10 w-full bg-muted rounded-lg" />
-              </div>
-            ) : isAuthenticated && user ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
-                  {user.photoURL ? (
-                    <img
-                      src={user.photoURL}
-                      alt={user.displayName || "Profile"}
-                      className="w-12 h-12 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
-                      <span className="text-lg font-semibold text-accent">
-                        {user.displayName?.[0] || user.email?.[0] || "?"}
-                      </span>
+              {authLoading ? (
+                <div className="space-y-4 animate-pulse">
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 border border-border">
+                    <div className="w-12 h-12 rounded-full bg-muted" />
+                    <div className="min-w-0 flex-1">
+                      <div className="h-4 w-24 bg-muted rounded mb-2" />
+                      <div className="h-3 w-40 bg-muted rounded" />
                     </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-foreground truncate">
-                      {user.displayName || "User"}
-                    </div>
-                    <div className="text-sm text-foreground-muted truncate">{user.email}</div>
                   </div>
-                  <UserButton />
+                  <div className="h-10 w-full bg-muted rounded-lg" />
                 </div>
-                <Button variant="outline" onClick={handleSignOut} className="w-full">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  {t("common.nav.signOut")}
-                </Button>
-              </div>
-            ) : (
-              <div className="p-4 rounded-xl bg-muted/50">
-                <p className="text-sm text-foreground-muted mb-3">
-                  {t("settings.account.signInPrompt")}
-                </p>
-                <SignInButton mode="modal">
-                  <Button variant="outline" className="w-full">
-                    {t("common.nav.signIn")}
+              ) : isAuthenticated && user ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 border border-border">
+                    {user.photoURL ? (
+                      <img
+                        src={user.photoURL}
+                        alt={user.displayName || "Profile"}
+                        className="w-12 h-12 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
+                        <span className="text-lg font-semibold text-accent">
+                          {user.displayName?.[0] || user.email?.[0] || "?"}
+                        </span>
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-foreground truncate">
+                        {user.displayName || "User"}
+                      </div>
+                      <div className="text-sm text-foreground-muted truncate">{user.email}</div>
+                    </div>
+                    <UserButton />
+                  </div>
+                  <Button variant="outline" onClick={handleSignOut} className="w-full">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {t("common.nav.signOut")}
                   </Button>
-                </SignInButton>
-              </div>
-            )}
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                  <p className="text-sm text-foreground-muted mb-3">
+                    {t("settings.account.signInPrompt")}
+                  </p>
+                  <SignInButton mode="modal">
+                    <Button variant="outline" className="w-full">
+                      {t("common.nav.signIn")}
+                    </Button>
+                  </SignInButton>
+                </div>
+              )}
             </div>
           </section>
 
@@ -788,43 +792,45 @@ export function SettingsPage() {
               <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-amber-500/30 rounded-2xl" />
               <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
+              {/* eslint-disable i18next/no-literal-string -- Admin-only section */}
               <div className="relative p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Crown className="w-4 h-4 text-amber-500" />
                   <h2
-                    className="text-lg font-semibold text-white"
+                    className="text-lg font-semibold text-foreground"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
                     Admin
                   </h2>
                 </div>
 
-              <div className="space-y-5">
-                {/* Admin Mode Toggle */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-amber-500/10">
-                      <Shield className="w-4 h-4 text-amber-500" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground">Admin Mode</div>
-                      <div className="text-sm text-foreground-muted">
-                        Show admin panel and bypass credit limits
+                <div className="space-y-5">
+                  {/* Admin Mode Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-amber-500/10">
+                        <Shield className="w-4 h-4 text-amber-500" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground">Admin Mode</div>
+                        <div className="text-sm text-foreground-muted">
+                          Show admin panel and bypass credit limits
+                        </div>
                       </div>
                     </div>
+                    {/* eslint-enable i18next/no-literal-string */}
+                    <Switch
+                      checked={userProfile?.isAdminMode ?? false}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        await toggleAdminMode({
+                          userId: user.id,
+                          enabled: checked,
+                        });
+                      }}
+                    />
                   </div>
-                  <Switch
-                    checked={userProfile?.isAdminMode ?? false}
-                    onCheckedChange={async (checked) => {
-                      if (!user) return;
-                      await toggleAdminMode({
-                        userId: user.id,
-                        enabled: checked,
-                      });
-                    }}
-                  />
                 </div>
-              </div>
               </div>
             </section>
           )}

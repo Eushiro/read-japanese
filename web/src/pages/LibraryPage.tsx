@@ -195,12 +195,12 @@ export function LibraryPage() {
               </span>
             </div>
             <h1
-              className="text-3xl sm:text-4xl font-bold text-white mb-3"
+              className="text-3xl sm:text-4xl font-bold text-foreground mb-3"
               style={{ fontFamily: "var(--font-display)" }}
             >
               {t("library.hero.title")}
             </h1>
-            <p className="text-white/60 text-lg">{t("library.hero.subtitle")}</p>
+            <p className="text-foreground-muted text-lg">{t("library.hero.subtitle")}</p>
 
             {/* Generate Story CTA */}
             <div className="mt-6">
@@ -227,7 +227,7 @@ export function LibraryPage() {
       </div>
 
       {/* Filters Section */}
-      <div className="border-b border-white/5">
+      <div className="border-b border-border">
         <div className="container mx-auto px-4 sm:px-6 py-3">
           <div className="flex gap-3">
             {/* Search - capped at max-w-md */}

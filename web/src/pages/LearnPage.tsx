@@ -66,7 +66,7 @@ export function LearnPage() {
   return (
     <div className="min-h-screen">
       {/* Tab Header */}
-      <div className="sticky top-16 z-40 border-b border-border bg-surface/95 backdrop-blur-md dark:border-white/5 dark:bg-black/50 dark:backdrop-blur-xl">
+      <div className="sticky top-16 z-30 border-b border-border bg-background/80 backdrop-blur-xl dark:border-white/5 dark:bg-black/50">
         <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
           <div className="flex items-center gap-1 py-2">
             <Link

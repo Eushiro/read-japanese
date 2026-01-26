@@ -50,10 +50,10 @@ const buttonVariants = cva(
         link: "text-accent underline-offset-4 hover:underline",
         // Glass accent variant with warm glow
         "glass-accent": cn(
-          "relative overflow-hidden bg-orange-500/20 border border-orange-500/30",
-          "hover:bg-orange-500/30 hover:border-orange-500/50",
+          "relative overflow-hidden bg-orange-500/20 border border-orange-500/40",
+          "hover:bg-orange-500/30 hover:border-orange-500/60",
           "hover:shadow-[0_0_30px_rgba(249,115,22,0.3)]",
-          "text-white transition-all duration-300"
+          "text-orange-600 dark:text-white transition-all duration-300"
         ),
       },
       size: {

@@ -51,8 +51,8 @@ export function VideoCard({ video, onClick, style }: VideoCardProps) {
           <div
             className={`absolute inset-0 ${langColor.bg} flex flex-col items-center justify-center`}
           >
-            <Video className="w-12 h-12 text-white/60 mb-2" />
-            <span className="text-white/80 font-medium text-lg">{langColor.text}</span>
+            <Video className="w-12 h-12 text-muted-foreground mb-2" />
+            <span className="text-foreground/80 font-medium text-lg">{langColor.text}</span>
           </div>
         ) : (
           <>

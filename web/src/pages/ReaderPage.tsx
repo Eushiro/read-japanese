@@ -500,7 +500,7 @@ export function ReaderPage() {
       <ReaderAnimatedBackground />
 
       {/* Sticky Header - Glass */}
-      <header className="sticky top-16 z-40 border-b border-white/5 bg-black/50 backdrop-blur-xl">
+      <header className="sticky top-16 z-30 border-b border-border bg-background/80 backdrop-blur-xl dark:border-white/5 dark:bg-black/50">
         <div className="container mx-auto px-4 sm:px-6 py-3 max-w-3xl">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
@@ -562,6 +562,7 @@ export function ReaderPage() {
                 <span className="text-[10px] block leading-none mb-0.5 opacity-70">
                   {showFurigana ? "あ" : ""}
                 </span>
+                {/* eslint-disable-next-line i18next/no-literal-string -- Kanji toggle icon */}
                 <span className="text-sm font-medium leading-none">漢</span>
                 {!showFurigana && (
                   <span className="absolute inset-0 flex items-center justify-center">
@@ -588,7 +589,7 @@ export function ReaderPage() {
       <main className="container mx-auto px-4 sm:px-6 py-8 max-w-3xl">
         <div className="relative rounded-2xl overflow-hidden">
           {/* Glass background */}
-          <div className="absolute inset-0 backdrop-blur-md bg-white/[0.02] border border-white/10 rounded-2xl" />
+          <div className="absolute inset-0 backdrop-blur-md bg-white/[0.02] border border-border dark:border-white/10 rounded-2xl" />
           <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
           {/* Content */}
@@ -622,7 +623,7 @@ export function ReaderPage() {
 
       {/* Chapter Navigation - Glass */}
       {chapters.length > 1 && (
-        <nav className="sticky bottom-0 z-40 border-t border-white/5 bg-black/50 backdrop-blur-xl">
+        <nav className="sticky bottom-0 z-30 border-t border-border bg-background/80 backdrop-blur-xl dark:border-white/5 dark:bg-black/50">
           <div className="container mx-auto px-4 sm:px-6 py-4 max-w-3xl">
             <div className="flex items-center justify-between">
               <Button
@@ -646,7 +647,7 @@ export function ReaderPage() {
                     className={`w-2 h-2 rounded-full transition-all ${
                       index === currentChapterIndex
                         ? "bg-accent w-6 shadow-[0_0_10px_rgba(255,132,0,0.5)]"
-                        : "bg-white/20 hover:bg-white/30"
+                        : "bg-foreground/20 hover:bg-foreground/30"
                     }`}
                     aria-label={t("reader.navigation.goToChapter", { number: index + 1 })}
                   />

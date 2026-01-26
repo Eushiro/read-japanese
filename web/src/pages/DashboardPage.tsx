@@ -215,8 +215,8 @@ function FloatingStat({
         >
           <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${styles.text}`} />
         </motion.div>
-        <div className="text-2xl sm:text-3xl font-bold text-white">{value}</div>
-        <div className="text-xs sm:text-sm text-white/50">{label}</div>
+        <div className="text-2xl sm:text-3xl font-bold text-foreground">{value}</div>
+        <div className="text-xs sm:text-sm text-muted-foreground">{label}</div>
       </div>
     </motion.div>
   );
@@ -380,7 +380,7 @@ export function DashboardPage() {
             transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
           >
             <h1
-              className="text-3xl sm:text-4xl md:text-5xl font-semibold text-white"
+              className="text-3xl sm:text-4xl md:text-5xl font-semibold text-foreground"
               style={{ fontFamily: "var(--font-display)" }}
             >
               {isPreviewMode
@@ -388,7 +388,9 @@ export function DashboardPage() {
                 : t("dashboard.welcome", { name: user?.displayName?.split(" ")[0] ?? "" })}
             </h1>
             {isPreviewMode && (
-              <p className="text-white/60 mt-3 text-lg">{t("dashboard.preview.subtitle")}</p>
+              <p className="text-muted-foreground mt-3 text-lg">
+                {t("dashboard.preview.subtitle")}
+              </p>
             )}
           </motion.div>
         </div>
@@ -414,12 +416,12 @@ export function DashboardPage() {
               ) : needsPlacementTest ? (
                 <div className="text-center">
                   <h2
-                    className="text-2xl sm:text-3xl font-bold text-white mb-2"
+                    className="text-2xl sm:text-3xl font-bold text-foreground mb-2"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
                     {t("dashboard.cta.findLevel")}
                   </h2>
-                  <p className="text-white/60 mb-6 max-w-md mx-auto">
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                     {t("dashboard.cta.placementExplainer")}
                   </p>
                   <button
@@ -438,7 +440,7 @@ export function DashboardPage() {
                 <>
                   <div className="text-center mb-6">
                     <div className="flex justify-center mb-3">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm text-white/60">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border text-sm text-muted-foreground">
                         {languageInfo?.label}
                       </span>
                     </div>
@@ -454,9 +456,11 @@ export function DashboardPage() {
                       </span>
                     </button>
                   </div>
-                  <p className="text-center text-white/80 mb-6 font-medium">{sessionDescription}</p>
+                  <p className="text-center text-foreground/80 mb-6 font-medium">
+                    {sessionDescription}
+                  </p>
                   <div className="text-center">
-                    <p className="text-sm text-white/50 mb-3">
+                    <p className="text-sm text-muted-foreground mb-3">
                       {t("dashboard.cta.durationQuestion")}
                     </p>
                     <div className="flex justify-center gap-2">
@@ -471,7 +475,7 @@ export function DashboardPage() {
                           className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all border-2 ${
                             selectedDuration === option.value
                               ? "bg-accent text-white border-accent shadow-md shadow-accent/25"
-                              : "bg-white/5 text-white/80 border-white/10 hover:border-white/20 hover:bg-white/10"
+                              : "bg-muted text-foreground/80 border-border hover:border-foreground/20 hover:bg-muted/80"
                           }`}
                         >
                           {option.label}
@@ -499,7 +503,7 @@ export function DashboardPage() {
                     />
                   </div>
                 </SignInButton>
-                <div className="w-px h-12 bg-white/10" />
+                <div className="w-px h-12 bg-border" />
                 <SignInButton mode="modal">
                   <div>
                     <FloatingStat
@@ -511,7 +515,7 @@ export function DashboardPage() {
                     />
                   </div>
                 </SignInButton>
-                <div className="w-px h-12 bg-white/10" />
+                <div className="w-px h-12 bg-border" />
                 <SignInButton mode="modal">
                   <div>
                     <FloatingStat
@@ -535,7 +539,7 @@ export function DashboardPage() {
                   isLink
                   to="/learn?tab=review"
                 />
-                <div className="w-px h-12 bg-white/10" />
+                <div className="w-px h-12 bg-border" />
                 <FloatingStat
                   icon={BookmarkCheck}
                   value={totalWords}
@@ -545,7 +549,7 @@ export function DashboardPage() {
                   isLink
                   to="/learn?tab=words"
                 />
-                <div className="w-px h-12 bg-white/10" />
+                <div className="w-px h-12 bg-border" />
                 <FloatingStat
                   icon={streakAnimating ? Flame : Flame}
                   value={currentStreak}
@@ -581,7 +585,7 @@ export function DashboardPage() {
                       <TrendingUp className="w-5 h-5 text-orange-400" />
                     </motion.div>
                     <h2
-                      className="text-xl font-semibold text-white"
+                      className="text-xl font-semibold text-foreground"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
                       {t("dashboard.sections.suggestedForYou")}
@@ -589,20 +593,22 @@ export function DashboardPage() {
                   </div>
                   <Link
                     to="/library"
-                    className="text-sm text-white/50 hover:text-white/80 flex items-center gap-1 transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground/80 flex items-center gap-1 transition-colors"
                   >
                     {t("common.actions.viewAll")}
                     <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>
-                <p className="text-sm text-white/50 mb-4">{t("dashboard.sections.popularPicks")}</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {t("dashboard.sections.popularPicks")}
+                </p>
 
                 {/* Stories */}
                 {suggestedStories.length > 0 && (
                   <div className="mb-6">
                     <div className="flex items-center gap-2 mb-3">
                       <BookOpen className="w-4 h-4 text-accent" />
-                      <span className="text-sm font-medium text-white/80">
+                      <span className="text-sm font-medium text-foreground/80">
                         {t("dashboard.sections.stories")}
                       </span>
                     </div>
@@ -610,7 +616,7 @@ export function DashboardPage() {
                       {suggestedStories.map((story) => (
                         <div
                           key={story.id}
-                          className="flex-shrink-0 w-[160px] [&>article]:border [&>article]:border-white/10 [&>article]:bg-white/[0.02]"
+                          className="flex-shrink-0 w-[160px] [&>article]:border [&>article]:border-border [&>article]:bg-white/[0.02]"
                         >
                           <StoryCard
                             story={story}
@@ -624,7 +630,7 @@ export function DashboardPage() {
                       {suggestedStories.map((story) => (
                         <div
                           key={story.id}
-                          className="[&>article]:border [&>article]:border-white/10 [&>article]:bg-white/[0.02]"
+                          className="[&>article]:border [&>article]:border-border [&>article]:bg-white/[0.02]"
                         >
                           <StoryCard
                             story={story}
@@ -642,7 +648,7 @@ export function DashboardPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <Video className="w-4 h-4 text-accent" />
-                      <span className="text-sm font-medium text-white/80">
+                      <span className="text-sm font-medium text-foreground/80">
                         {t("dashboard.sections.videos")}
                       </span>
                     </div>
@@ -650,7 +656,7 @@ export function DashboardPage() {
                       {suggestedVideos.map((video) => (
                         <div
                           key={video._id}
-                          className="flex-shrink-0 w-[240px] [&>article]:border [&>article]:border-white/10 [&>article]:bg-white/[0.02] [&>article]:h-full"
+                          className="flex-shrink-0 w-[240px] [&>article]:border [&>article]:border-border [&>article]:bg-white/[0.02] [&>article]:h-full"
                         >
                           <VideoCard
                             video={{ ...video, description: undefined }}
@@ -665,7 +671,7 @@ export function DashboardPage() {
                       {suggestedVideos.map((video) => (
                         <div
                           key={video._id}
-                          className="[&>article]:border [&>article]:border-white/10 [&>article]:bg-white/[0.02] [&>article]:h-full"
+                          className="[&>article]:border [&>article]:border-border [&>article]:bg-white/[0.02] [&>article]:h-full"
                         >
                           <VideoCard
                             video={{ ...video, description: undefined }}
@@ -705,12 +711,12 @@ export function DashboardPage() {
 
               <div className="relative p-10 text-center">
                 <h2
-                  className="text-xl font-bold text-white mb-2"
+                  className="text-xl font-bold text-foreground mb-2"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {t("dashboard.signUpCta.title")}
                 </h2>
-                <p className="text-white/60 mb-6 max-w-md mx-auto">
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                   {t("dashboard.signUpCta.subtitle")}
                 </p>
                 <SignInButton mode="modal">
@@ -724,7 +730,9 @@ export function DashboardPage() {
                     </span>
                   </button>
                 </SignInButton>
-                <p className="text-sm text-white/40 mt-3">{t("dashboard.signUpCta.disclaimer")}</p>
+                <p className="text-sm text-muted-foreground mt-3">
+                  {t("dashboard.signUpCta.disclaimer")}
+                </p>
               </div>
             </motion.div>
           )}
@@ -755,8 +763,8 @@ function PreviewStartStudying() {
           </button>
         </SignInButton>
       </div>
-      <p className="text-white font-medium mb-4">{t("dashboard.preview.reviewCards")}</p>
-      <p className="text-sm text-white/50">{t("dashboard.preview.signInPrompt")}</p>
+      <p className="text-foreground font-medium mb-4">{t("dashboard.preview.reviewCards")}</p>
+      <p className="text-sm text-muted-foreground">{t("dashboard.preview.signInPrompt")}</p>
     </div>
   );
 }

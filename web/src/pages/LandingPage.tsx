@@ -586,9 +586,8 @@ function LanguageExamCard({
             return (
               <span
                 key={exam}
-                className="px-3 py-1.5 rounded-lg backdrop-blur-md text-base font-semibold whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
+                className="px-3 py-1.5 rounded-lg backdrop-blur-md text-base font-semibold whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] bg-white/80 dark:bg-black/30"
                 style={{
-                  backgroundColor: "rgba(0, 0, 0, 0.3)",
                   borderWidth: "1px",
                   borderColor: badgeColor,
                   color: badgeColor,
@@ -649,9 +648,9 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
             transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
             className="relative"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-purple-500/20 rounded-3xl blur-xl" />
-            <div className="relative p-8 rounded-3xl bg-gradient-to-br from-orange-500/10 to-purple-500/5 border border-orange-500/30 backdrop-blur-sm">
-              <h3 className="text-xl font-semibold text-orange-400 mb-6 flex items-center gap-2">
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-purple-500/10 dark:from-orange-500/20 dark:to-purple-500/20 rounded-3xl blur-xl" />
+            <div className="relative p-8 rounded-3xl bg-gradient-to-br from-orange-500/5 to-purple-500/[0.02] dark:from-orange-500/10 dark:to-purple-500/5 border border-orange-500/20 dark:border-orange-500/30 backdrop-blur-sm">
+              <h3 className="text-xl font-semibold text-orange-600 dark:text-orange-400 mb-6 flex items-center gap-2">
                 <Sparkles className="w-5 h-5" />
                 {t("landing.comparison.sanlang")}
               </h3>
@@ -671,7 +670,7 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
                     transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
                   >
                     <div className="w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <Check className="w-3 h-3 text-orange-400" />
+                      <Check className="w-3 h-3 text-orange-600 dark:text-orange-400" />
                     </div>
                     <span className="text-foreground/80">{item}</span>
                   </motion.li>
@@ -1009,9 +1008,8 @@ function BentoCard({
 }) {
   return (
     <motion.div
-      className={`group relative h-full rounded-2xl backdrop-blur-md bg-white/[0.03] border border-white/10 overflow-hidden ${large ? "p-8" : "p-6"} shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]`}
+      className={`group relative h-full rounded-2xl backdrop-blur-md bg-white/[0.03] border border-border dark:border-white/10 overflow-hidden ${large ? "p-8" : "p-6"} shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]`}
       whileHover={{
-        borderColor: "rgba(255,255,255,0.25)",
         boxShadow: "0 0 30px rgba(255,255,255,0.05)",
       }}
       transition={{ duration: 0.3 }}
