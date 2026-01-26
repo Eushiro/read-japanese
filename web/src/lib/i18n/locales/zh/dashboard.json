@@ -57,6 +57,12 @@
     "button": "免费试用",
     "disclaimer": "无需信用卡"
   },
+  "skills": {
+    "title": "您的技能",
+    "viewProgress": "查看进度",
+    "noData": "完成分级测试以追踪您的技能",
+    "focusAreas": "需要加强的领域"
+  },
   "languageSwitcher": {
     "takeTest": "测试",
     "due": "待复习"
@@ -64,7 +70,8 @@
   "languages": {
     "title": "您的语言",
     "startStudying": "开始学习",
-    "findYourLevel": "确定您的水平"
+    "findYourLevel": "确定您的水平",
+    "setUpLanguages": "设置语言"
   },
   "crossLanguage": {
     "dueCards": "您有{{count}}张{{language}}卡片待复习",

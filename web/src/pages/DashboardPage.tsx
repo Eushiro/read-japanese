@@ -17,141 +17,20 @@ import {
 import { useState } from "react";
 
 import { CreditAlert } from "@/components/CreditAlert";
+import { SkillsSection } from "@/components/dashboard/SkillsSection";
 import { StoryCard } from "@/components/library/StoryCard";
 import { VideoCard, type VideoItem } from "@/components/library/VideoCard";
 import { Paywall } from "@/components/Paywall";
+import { PremiumBackground } from "@/components/ui/premium-background";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useUserData } from "@/contexts/UserDataContext";
-import { usePrimaryLanguage } from "@/hooks/usePrimaryLanguage";
 import { useStories } from "@/hooks/useStories";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
+import { getLanguageColorScheme, languageButtonGradients } from "@/lib/languageColors";
 import type { StoryListItem } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
-
-// Floating stars component for background decoration
-function FloatingStars({ count }: { count: number }) {
-  return (
-    <>
-      {[...Array(count)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 h-1 bg-white rounded-full"
-          style={{
-            left: `${(i * 17 + 5) % 100}%`,
-            top: `${(i * 23 + 10) % 100}%`,
-            opacity: 0.1 + (i % 4) * 0.1,
-          }}
-          animate={{
-            y: [0, -20, 0],
-            opacity: [0.1, 0.3, 0.1],
-            scale: [1, 1.3, 1],
-          }}
-          transition={{
-            duration: 3 + (i % 5),
-            repeat: Infinity,
-            delay: (i % 8) * 0.6,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
-    </>
-  );
-}
-
-// Animated background orbs - Full page scale
-function AnimatedOrbs() {
-  return (
-    <>
-      <motion.div
-        className="absolute w-[600px] h-[600px] rounded-full blur-[120px] opacity-25"
-        style={{
-          background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
-          top: "-10%",
-          left: "20%",
-        }}
-        animate={{
-          x: [0, 80, 0],
-          y: [0, -50, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-[500px] h-[500px] rounded-full blur-[100px] opacity-20"
-        style={{
-          background: "radial-gradient(circle, #df91f7 0%, transparent 70%)",
-          top: "30%",
-          right: "10%",
-        }}
-        animate={{
-          x: [0, -60, 0],
-          y: [0, 50, 0],
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-[400px] h-[400px] rounded-full blur-[90px] opacity-20"
-        style={{
-          background: "radial-gradient(circle, #feed7a 0%, transparent 70%)",
-          bottom: "10%",
-          left: "5%",
-        }}
-        animate={{
-          x: [0, 40, 0],
-          y: [0, -60, 0],
-        }}
-        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-      />
-      {/* Additional purple glow in middle */}
-      <motion.div
-        className="absolute w-[450px] h-[450px] rounded-full blur-[100px] opacity-15"
-        style={{
-          background: "radial-gradient(circle, #8b5cf6 0%, transparent 70%)",
-          top: "50%",
-          left: "40%",
-        }}
-        animate={{
-          x: [0, -30, 0],
-          y: [0, 40, 0],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-      />
-    </>
-  );
-}
-
-// Floating particles throughout the page
-function FloatingParticles({ count }: { count: number }) {
-  return (
-    <>
-      {[...Array(count)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 h-1 bg-white rounded-full"
-          style={{
-            left: `${(i * 13 + 7) % 100}%`,
-            top: `${(i * 19 + 15) % 100}%`,
-            opacity: 0.1 + (i % 5) * 0.08,
-          }}
-          animate={{
-            y: [0, -30, 0],
-            opacity: [0.1, 0.4, 0.1],
-            scale: [1, 1.5, 1],
-          }}
-          transition={{
-            duration: 4 + (i % 6),
-            repeat: Infinity,
-            delay: (i % 10) * 0.5,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
-    </>
-  );
-}
 
 // Floating stat - no borders, just icons, numbers, and labels
 function FloatingStat({
@@ -250,9 +129,6 @@ export function DashboardPage() {
     setTimeout(() => setStreakAnimating(false), 600);
   };
 
-  // Get primary language and all user languages with localStorage caching (instant, no flicker)
-  const { primaryLanguage, userLanguages } = usePrimaryLanguage();
-
   // Fetch flashcard stats
   const flashcardStats = useQuery(api.flashcards.getStats, isAuthenticated ? { userId } : "skip");
 
@@ -261,6 +137,9 @@ export function DashboardPage() {
 
   // User profile and subscription from shared context (prevents refetching on navigation)
   const { userProfile, isPremium: isPremiumUser } = useUserData();
+
+  // Get user languages from shared context
+  const userLanguages = (userProfile?.languages ?? []) as ContentLanguage[];
 
   // Fetch streak data
   const streakData = useQuery(
@@ -329,11 +208,14 @@ export function DashboardPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Full-page animated background orbs */}
-      <div className="fixed inset-0 pointer-events-none">
-        <AnimatedOrbs />
-        <FloatingParticles count={20} />
-      </div>
+      {/* Full-page animated background */}
+      <PremiumBackground
+        variant="hero"
+        colorScheme="default"
+        showStars={true}
+        showOrbs={true}
+        orbCount={3}
+      />
 
       {/* Hero Section */}
       <section className="relative pt-16 sm:pt-20 pb-8">
@@ -379,7 +261,7 @@ export function DashboardPage() {
                 <PreviewStartStudying />
               </div>
             </motion.div>
-          ) : (
+          ) : userLanguages.length > 0 ? (
             /* Your Languages Section - Side by side buttons */
             <motion.section
               initial={{ opacity: 0, y: 20 }}
@@ -389,67 +271,62 @@ export function DashboardPage() {
             >
               {/* Language buttons side by side */}
               <div className="flex flex-wrap justify-center gap-4">
-                {(userLanguages.length > 0 ? userLanguages : [primaryLanguage]).map(
-                  (lang, index, arr) => {
-                    const hasTakenTest = hasPlacementTest(lang);
+                {userLanguages.map((lang, index, arr) => {
+                  const hasTakenTest = hasPlacementTest(lang);
+                  const colorScheme = getLanguageColorScheme(index, arr.length);
+                  const gradient = languageButtonGradients[colorScheme];
 
-                    // Different gradients for each language - matching stat icon colors
-                    // Order: Blue (left) → Purple (middle) → Orange (right)
-                    const gradientsByPosition = {
-                      orange:
-                        "from-amber-600/90 via-orange-600/90 to-amber-700/90 shadow-amber-900/25 hover:shadow-amber-900/40",
-                      purple:
-                        "from-purple-600/90 via-violet-600/90 to-purple-700/90 shadow-purple-900/25 hover:shadow-purple-900/40",
-                      blue: "from-blue-600/90 via-sky-600/90 to-blue-700/90 shadow-blue-900/25 hover:shadow-blue-900/40",
-                    };
-
-                    // Assign gradient based on count and position
-                    let gradient: string;
-                    if (arr.length === 1) {
-                      gradient = gradientsByPosition.orange;
-                    } else if (arr.length === 2) {
-                      gradient =
-                        index === 0 ? gradientsByPosition.purple : gradientsByPosition.orange;
-                    } else {
-                      // 3+ languages: blue, purple, orange (then repeat)
-                      const colors = ["blue", "purple", "orange"] as const;
-                      gradient = gradientsByPosition[colors[index % 3]];
-                    }
-
-                    return (
-                      <button
-                        key={lang}
-                        onClick={() => {
-                          if (hasTakenTest) {
-                            navigate({ to: "/study-session" });
-                          } else {
-                            navigate({ to: "/placement-test", search: { language: lang } });
-                          }
-                        }}
-                        className={`group relative min-w-[260px] px-10 py-5 text-lg font-semibold rounded-2xl transition-all duration-300 overflow-hidden text-white bg-gradient-to-r ${gradient} shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]`}
-                      >
-                        {/* Shimmer effect */}
-                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                        <span className="relative flex flex-col items-center gap-1">
-                          <span className="flex items-center gap-2">
-                            {hasTakenTest ? (
-                              <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                            ) : (
-                              <Globe className="w-5 h-5" />
-                            )}
-                            {t(`common.languages.${lang}`)}
-                          </span>
-                          <span className="text-sm opacity-90">
-                            {hasTakenTest
-                              ? t("dashboard.languages.startStudying")
-                              : t("dashboard.languages.findYourLevel")}
-                          </span>
+                  return (
+                    <button
+                      key={lang}
+                      onClick={() => {
+                        if (hasTakenTest) {
+                          navigate({ to: "/study-session" });
+                        } else {
+                          navigate({ to: "/placement-test", search: { language: lang } });
+                        }
+                      }}
+                      className={`group relative min-w-[260px] px-10 py-5 text-lg font-semibold rounded-2xl transition-all duration-300 overflow-hidden text-white backdrop-blur-md bg-gradient-to-r ${gradient} border border-white/20 shadow-xl hover:shadow-2xl hover:scale-[1.02] hover:border-white/30 active:scale-[0.98]`}
+                    >
+                      {/* Inner glow */}
+                      <span className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.1)]" />
+                      {/* Shimmer effect */}
+                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                      <span className="relative flex flex-col items-center gap-1">
+                        <span className="flex items-center gap-2">
+                          {hasTakenTest ? (
+                            <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                          ) : (
+                            <Globe className="w-5 h-5" />
+                          )}
+                          {t(`common.languages.${lang}`)}
                         </span>
-                      </button>
-                    );
-                  }
-                )}
+                        <span className="text-sm opacity-90">
+                          {hasTakenTest
+                            ? t("dashboard.languages.startStudying")
+                            : t("dashboard.languages.findYourLevel")}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+            </motion.section>
+          ) : (
+            /* No languages set - prompt to set up */
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="text-center py-8"
+            >
+              <Link
+                to="/settings"
+                className="inline-flex items-center gap-2 px-6 py-3 text-lg font-medium rounded-xl bg-muted hover:bg-muted/80 transition-colors"
+              >
+                <Globe className="w-5 h-5" />
+                {t("dashboard.languages.setUpLanguages")}
+              </Link>
             </motion.section>
           )}
 
@@ -526,6 +403,9 @@ export function DashboardPage() {
               </>
             )}
           </div>
+
+          {/* Your Skills - Radar charts for each language */}
+          <SkillsSection userId={userId} userLanguages={userLanguages} isPreview={isPreviewMode} />
 
           {/* Suggested for You - Open floating section */}
           {(suggestedStories.length > 0 || suggestedVideos.length > 0) && (
@@ -670,9 +550,6 @@ export function DashboardPage() {
 
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-purple-500/5 rounded-3xl" />
-
-              {/* Floating particles */}
-              <FloatingStars count={6} />
 
               <div className="relative p-10 text-center">
                 <h2

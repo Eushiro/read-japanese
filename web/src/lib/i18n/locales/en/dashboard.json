@@ -56,6 +56,12 @@
     "button": "Try it Free",
     "disclaimer": "No credit card required"
   },
+  "skills": {
+    "title": "Your Skills",
+    "viewProgress": "View Progress",
+    "noData": "Complete a placement test to track your skills",
+    "focusAreas": "Focus Areas"
+  },
   "languageSwitcher": {
     "takeTest": "Test",
     "due": "due"
@@ -63,7 +69,8 @@
   "languages": {
     "title": "Your Languages",
     "startStudying": "Start Studying",
-    "findYourLevel": "Find Your Level"
+    "findYourLevel": "Find Your Level",
+    "setUpLanguages": "Set Up Languages"
   },
   "crossLanguage": {
     "dueCards": "You have {{count}} cards due in {{language}}",

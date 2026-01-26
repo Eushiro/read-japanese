@@ -1,6 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { motion } from "framer-motion";
 import { BookOpen, Film, Library, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -11,6 +10,7 @@ import { StoryCard } from "@/components/library/StoryCard";
 import { VideoCard, VideoCardSkeleton, type VideoItem } from "@/components/library/VideoCard";
 import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
+import { PremiumBackground } from "@/components/ui/premium-background";
 import {
   Select,
   SelectContent,
@@ -28,44 +28,6 @@ import type { ProficiencyLevel, StoryListItem } from "@/types/story";
 import { api } from "../../convex/_generated/api";
 
 type ContentFilter = "all" | "stories" | "videos";
-
-// Animated background for library page
-function LibraryAnimatedBackground() {
-  return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      <motion.div
-        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-15"
-        style={{
-          background: "radial-gradient(circle, #a855f7 0%, transparent 70%)",
-          top: "-5%",
-          left: "20%",
-        }}
-        animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-[400px] h-[400px] rounded-full blur-[120px] opacity-[0.12]"
-        style={{
-          background: "radial-gradient(circle, #06b6d4 0%, transparent 70%)",
-          bottom: "10%",
-          right: "10%",
-        }}
-        animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-[300px] h-[300px] rounded-full blur-[100px] opacity-10"
-        style={{
-          background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
-          top: "40%",
-          right: "30%",
-        }}
-        animate={{ x: [0, 20, 0], y: [0, -20, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-      />
-    </div>
-  );
-}
 
 export function LibraryPage() {
   const navigate = useNavigate();
@@ -164,7 +126,13 @@ export function LibraryPage() {
   return (
     <div className="min-h-screen">
       {/* Animated background */}
-      <LibraryAnimatedBackground />
+      <PremiumBackground
+        variant="subtle"
+        colorScheme="cyan"
+        showStars={true}
+        showOrbs={true}
+        orbCount={3}
+      />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-8 pb-12">

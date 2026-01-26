@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -13,6 +12,7 @@ import { FuriganaText } from "@/components/reader/FuriganaText";
 import { WordPopup } from "@/components/reader/WordPopup";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PremiumBackground } from "@/components/ui/premium-background";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
@@ -40,34 +40,6 @@ const levelVariantMap: Record<ProficiencyLevel, BadgeVariant> = {
   C1: "c1",
   C2: "c2",
 };
-
-// Animated background orbs - subtle for reading focus
-function ReaderAnimatedBackground() {
-  return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      <motion.div
-        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-10"
-        style={{
-          background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
-          top: "-10%",
-          right: "10%",
-        }}
-        animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-[400px] h-[400px] rounded-full blur-[120px] opacity-[0.08]"
-        style={{
-          background: "radial-gradient(circle, #df91f7 0%, transparent 70%)",
-          bottom: "10%",
-          left: "5%",
-        }}
-        animate={{ x: [0, -20, 0], y: [0, 30, 0] }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-      />
-    </div>
-  );
-}
 
 export function ReaderPage() {
   const { storyId, language } = useParams({ from: "/read/$language/$storyId" });
@@ -498,7 +470,13 @@ export function ReaderPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Animated background orbs */}
-      <ReaderAnimatedBackground />
+      <PremiumBackground
+        variant="subtle"
+        colorScheme="warm"
+        showStars={true}
+        showOrbs={true}
+        orbCount={3}
+      />
 
       {/* Sticky Header - Glass */}
       <PageSubheader>

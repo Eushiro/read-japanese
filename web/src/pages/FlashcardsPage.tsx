@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
+import { PremiumBackground } from "@/components/ui/premium-background";
 import {
   Select,
   SelectContent,
@@ -67,24 +68,8 @@ type HistoryEntry = {
   };
 };
 
-// Animated background for flashcards page
-function FlashcardsAnimatedBackground() {
-  return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      <div
-        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-15"
-        style={{
-          background: "radial-gradient(circle, #86efac 0%, transparent 70%)",
-          top: "-5%",
-          left: "20%",
-        }}
-      />
-    </div>
-  );
-}
-
 export function FlashcardsPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { trackEvent, events } = useAnalytics();
   const { setCardsLeft } = useReviewSession();
   const t = useT();
@@ -94,20 +79,20 @@ export function FlashcardsPage() {
   // User profile and subscription from shared context (prevents refetching on navigation)
   const { userProfile, isPremium: isPremiumUser } = useUserData();
   const userLanguages = (userProfile?.languages ?? []) as ContentLanguage[];
-  const primaryLanguage = userProfile?.primaryLanguage;
+  const firstLanguage = userLanguages[0];
   const hasMultipleLanguages = userLanguages.length > 1;
 
-  // State for selected language (defaults to primaryLanguage when loaded)
+  // State for selected language (defaults to first language when loaded)
   const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(undefined);
-  const activeLanguage = selectedLanguage ?? primaryLanguage;
+  const activeLanguage = selectedLanguage ?? firstLanguage;
 
-  // Sync selectedLanguage with primaryLanguage when it loads
+  // Sync selectedLanguage with first language when it loads
   useEffect(() => {
-    if (primaryLanguage && !selectedLanguage) {
+    if (firstLanguage && !selectedLanguage) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional sync from async data
-      setSelectedLanguage(primaryLanguage);
+      setSelectedLanguage(firstLanguage);
     }
-  }, [primaryLanguage, selectedLanguage]);
+  }, [firstLanguage, selectedLanguage]);
 
   // Fetch due cards and stats - filtered by selected language
   const stats = useQuery(
@@ -452,7 +437,17 @@ export function FlashcardsPage() {
     handleRedo,
   ]);
 
-  if (!isAuthenticated) {
+  // Check if data is still loading (for inline skeletons)
+  const isDataLoading =
+    isAuthenticated &&
+    (userProfile === undefined ||
+      stats === undefined ||
+      dueCards === undefined ||
+      newCards === undefined ||
+      (!isInitialized && initialCards.length > 0));
+
+  // Don't show sign-in prompt while auth is still loading
+  if (!isAuthLoading && !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-4">
@@ -469,73 +464,16 @@ export function FlashcardsPage() {
     );
   }
 
-  // Show skeleton while loading OR while waiting for session to initialize (when there are cards)
-  const isLoading =
-    userProfile === undefined ||
-    stats === undefined ||
-    dueCards === undefined ||
-    newCards === undefined ||
-    (!isInitialized && initialCards.length > 0);
-
-  if (isLoading) {
-    return (
-      <div className="h-full flex flex-col overflow-hidden">
-        <FlashcardsAnimatedBackground />
-        {/* Header Skeleton */}
-        <div className="relative flex-shrink-0 pt-6 pb-0">
-          <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
-            <div>
-              {/* Icon + Badge Row */}
-              <div className="flex items-center gap-3 mb-3">
-                <Skeleton className="w-9 h-9 rounded-xl" />
-                <Skeleton className="w-24 h-4" />
-              </div>
-              {/* Title Row */}
-              <div className="flex items-center justify-between gap-4 mb-2">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="w-48 h-10" />
-                  <Skeleton className="w-20 h-7 rounded-full" />
-                </div>
-                <div className="inline-flex items-center gap-2">
-                  <Skeleton className="w-8 h-6" />
-                  <Skeleton className="w-16 h-4" />
-                </div>
-              </div>
-              {/* Subtitle */}
-              <Skeleton className="w-64 h-5" />
-            </div>
-          </div>
-        </div>
-        {/* Card Skeleton */}
-        <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl flex-1 flex flex-col items-center overflow-y-auto">
-          <div className="w-full space-y-4">
-            {/* Undo/Redo buttons */}
-            <div className="flex items-center justify-end gap-2">
-              <Skeleton className="w-8 h-8 rounded-lg" />
-              <Skeleton className="w-8 h-8 rounded-lg" />
-            </div>
-            {/* Flashcard */}
-            <div className="rounded-2xl border border-border bg-surface/80 p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <Skeleton className="w-16 h-5 rounded-full" />
-                <Skeleton className="w-8 h-8 rounded-lg" />
-              </div>
-              <div className="text-center py-8 space-y-3">
-                <Skeleton className="w-32 h-10 mx-auto" />
-                <Skeleton className="w-48 h-5 mx-auto" />
-              </div>
-              <Skeleton className="w-full h-12 rounded-lg" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Animated background */}
-      <FlashcardsAnimatedBackground />
+      <PremiumBackground
+        variant="subtle"
+        colorScheme="cool"
+        showStars={true}
+        showOrbs={true}
+        orbCount={1}
+      />
 
       {/* Header Section */}
       <div className="relative flex-shrink-0 pt-6 pb-0">
@@ -543,10 +481,10 @@ export function FlashcardsPage() {
           <div>
             {/* Icon + Badge Row */}
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-xl bg-purple-500/20">
-                <Brain className="w-5 h-5 text-purple-400" />
+              <div className="p-2 rounded-xl bg-blue-500/20">
+                <Brain className="w-5 h-5 text-blue-400" />
               </div>
-              <span className="text-sm font-medium text-purple-400 uppercase tracking-wider">
+              <span className="text-sm font-medium text-blue-400 uppercase tracking-wider">
                 {t("flashcards.hero.badge")}
               </span>
             </div>
@@ -582,9 +520,13 @@ export function FlashcardsPage() {
               </div>
               {/* Cards remaining badge */}
               <div className="inline-flex items-center gap-2">
-                <span className="text-xl font-bold text-green-500">
-                  {sessionQueue.length - currentIndex}
-                </span>
+                {isDataLoading ? (
+                  <Skeleton className="w-8 h-6" />
+                ) : (
+                  <span className="text-xl font-bold text-green-500">
+                    {sessionQueue.length - currentIndex}
+                  </span>
+                )}
                 <span className="text-sm text-foreground-muted">
                   {t("flashcards.counter.cardsLeft")}
                 </span>
@@ -599,7 +541,28 @@ export function FlashcardsPage() {
 
       {/* Review Area */}
       <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl flex-1 flex flex-col items-center overflow-y-auto">
-        {sessionQueue.length === 0 && isInitialized ? (
+        {isDataLoading ? (
+          // Inline skeleton for flashcard area
+          <div className="w-full space-y-4">
+            {/* Undo/Redo buttons */}
+            <div className="flex items-center justify-end gap-2">
+              <Skeleton className="w-8 h-8 rounded-lg" />
+              <Skeleton className="w-8 h-8 rounded-lg" />
+            </div>
+            {/* Flashcard */}
+            <div className="rounded-2xl border border-border bg-surface/80 p-6 space-y-4">
+              <div className="text-center py-8 space-y-3">
+                <Skeleton className="w-32 h-10 mx-auto" />
+                <Skeleton className="w-48 h-5 mx-auto" />
+              </div>
+              <div className="bg-muted/50 rounded-xl p-4 space-y-2">
+                <Skeleton className="w-full h-5" />
+                <Skeleton className="w-3/4 h-5 mx-auto" />
+              </div>
+              <Skeleton className="w-full h-12 rounded-lg" />
+            </div>
+          </div>
+        ) : sessionQueue.length === 0 && isInitialized ? (
           // No cards to review
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
@@ -880,7 +843,7 @@ function FlashcardDisplay({
   };
 
   return (
-    <div className="bg-surface/80 backdrop-blur-xl rounded-2xl border border-white/10 p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)] dark:border-white/10 dark:bg-white/[0.03]">
+    <div className="bg-surface/80 backdrop-blur-xl rounded-2xl border border-white/10 p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.05)] dark:border-white/10 dark:bg-white/[0.03]">
       {/* Image - only show after answer */}
       {showAnswer && card.image?.imageUrl && (
         <div className="mb-6 flex justify-center">

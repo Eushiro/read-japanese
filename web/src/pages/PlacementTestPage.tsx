@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { QuestionDisplay, QuestionNavigation } from "@/components/quiz";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PremiumBackground } from "@/components/ui/premium-background";
 import { WaveBackground } from "@/components/ui/wave-background";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
@@ -29,48 +30,6 @@ interface PlacementQuestion {
   difficulty: number;
   userAnswer?: string;
   isCorrect?: boolean;
-}
-
-// Animated background for test taking
-function TestAnimatedBackground() {
-  return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      {/* Subtle animated orbs */}
-      <motion.div
-        className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-15"
-        style={{
-          background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
-          top: "5%",
-          left: "20%",
-        }}
-        animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-[350px] h-[350px] rounded-full blur-[90px] opacity-[0.12]"
-        style={{
-          background: "radial-gradient(circle, #df91f7 0%, transparent 70%)",
-          bottom: "15%",
-          right: "15%",
-        }}
-        animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
-        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-      />
-      {/* Floating stars */}
-      {[...Array(8)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 h-1 bg-white rounded-full"
-          style={{
-            left: `${(i * 17 + 5) % 100}%`,
-            top: `${(i * 23 + 10) % 100}%`,
-          }}
-          animate={{ y: [0, -15, 0], opacity: [0.1, 0.3, 0.1] }}
-          transition={{ duration: 3 + (i % 4), repeat: Infinity, delay: i * 0.5 }}
-        />
-      ))}
-    </div>
-  );
 }
 
 export function PlacementTestPage() {
@@ -570,7 +529,13 @@ export function PlacementTestPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Animated background */}
-      <TestAnimatedBackground />
+      <PremiumBackground
+        variant="subtle"
+        colorScheme="default"
+        showStars={true}
+        showOrbs={true}
+        orbCount={3}
+      />
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Header */}

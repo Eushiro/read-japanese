@@ -57,6 +57,12 @@
     "button": "無料で試す",
     "disclaimer": "クレジットカード不要"
   },
+  "skills": {
+    "title": "あなたのスキル",
+    "viewProgress": "進捗を見る",
+    "noData": "スキルを追跡するには、レベルチェックを受けてください",
+    "focusAreas": "強化すべき分野"
+  },
   "languageSwitcher": {
     "takeTest": "テスト",
     "due": "待ち"
@@ -64,7 +70,8 @@
   "languages": {
     "title": "学習中の言語",
     "startStudying": "学習を始める",
-    "findYourLevel": "レベルを確認"
+    "findYourLevel": "レベルを確認",
+    "setUpLanguages": "言語を設定"
   },
   "crossLanguage": {
     "dueCards": "{{language}}で{{count}}枚のカードが復習待ち",

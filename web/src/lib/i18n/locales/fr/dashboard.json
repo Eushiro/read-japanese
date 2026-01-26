@@ -57,6 +57,12 @@
     "button": "Essayer gratuitement",
     "disclaimer": "Aucune carte de crédit requise"
   },
+  "skills": {
+    "title": "Vos compétences",
+    "viewProgress": "Voir la progression",
+    "noData": "Passez un test de niveau pour suivre vos compétences",
+    "focusAreas": "Points à améliorer"
+  },
   "languageSwitcher": {
     "takeTest": "Test",
     "due": "en attente"
@@ -64,7 +70,8 @@
   "languages": {
     "title": "Vos langues",
     "startStudying": "Commencer",
-    "findYourLevel": "Trouver votre niveau"
+    "findYourLevel": "Trouver votre niveau",
+    "setUpLanguages": "Configurer les langues"
   },
   "crossLanguage": {
     "dueCards": "Vous avez {{count}} cartes à réviser en {{language}}",

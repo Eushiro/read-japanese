@@ -15,7 +15,6 @@ import { useEffect, useState } from "react";
 // Admin pages
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { OnboardingModal } from "@/components/OnboardingModal";
-import { PremiumBackground } from "@/components/ui/premium-background";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useUserData } from "@/contexts/UserDataContext";
 import { isAdmin } from "@/lib/admin";
@@ -106,8 +105,6 @@ function RootLayout() {
 
   return (
     <div className="min-h-screen bg-background paper-texture relative">
-      {/* Premium animated background for authenticated users */}
-      {isAuthenticated && <PremiumBackground variant="subtle" />}
       {!isStudySession && <Navigation />}
       <main className="relative z-10 animate-fade-in">
         <Outlet />

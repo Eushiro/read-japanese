@@ -458,7 +458,13 @@ export function VocabularyPage() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Animated background */}
-      <PremiumBackground variant="subtle" colorScheme="warm" orbCount={1} />
+      <PremiumBackground
+        variant="subtle"
+        colorScheme="warm"
+        showStars={true}
+        showOrbs={true}
+        orbCount={1}
+      />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-8 pb-12 flex-shrink-0">
