@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { BookOpen, CheckCircle2, Layers, Pause, PenLine, Play, Plus, Zap } from "lucide-react";
+import { CheckCircle2, Layers, Minus, Pause, PenLine, Play, Plus, Trash2, Zap } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ContentLanguage, DeckSubscriptionStatus } from "@/lib/convex-types";
 import { useT } from "@/lib/i18n";
 
@@ -55,6 +55,10 @@ export function DeckPanel({ userId, onBrowseDecks, selectedDeckId, onSelectDeck 
   const setActiveDeck = useMutation(api.userDeckSubscriptions.setActiveDeck);
   const unsubscribe = useMutation(api.userDeckSubscriptions.unsubscribe);
 
+  // Shared confirmation dialog state
+  const [confirmDeckId, setConfirmDeckId] = useState<string | null>(null);
+  const confirmDeck = subscriptions?.find((s) => s.deckId === confirmDeckId);
+
   const activeSub = subscriptions?.find((s) => s.status === "active");
   const otherSubs = subscriptions?.filter((s) => s.status !== "active") ?? [];
 
@@ -73,6 +77,7 @@ export function DeckPanel({ userId, onBrowseDecks, selectedDeckId, onSelectDeck 
       if (selectedDeckId === deckId) {
         onSelectDeck(null);
       }
+      setConfirmDeckId(null);
     } catch (err) {
       console.error("Failed to unsubscribe:", err);
     }
@@ -80,12 +85,18 @@ export function DeckPanel({ userId, onBrowseDecks, selectedDeckId, onSelectDeck 
 
   const isLoading = subscriptions === undefined;
 
+  // Determine view filter value based on selection
+  const getViewValue = () => {
+    if (selectedDeckId === null) return "all";
+    if (selectedDeckId === personalDeck?.deckId) return "my";
+    return "all"; // If a subscribed deck is selected, keep "all" tab highlighted
+  };
+
   return (
     <div className="w-72 flex-shrink-0 space-y-4">
-      {/* View Filter Section */}
+      {/* View Filter Section - Using Tabs */}
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <BookOpen className="w-4 h-4 text-foreground-muted" />
           <span className="font-medium text-foreground text-sm">
             {t("vocabulary.deckPanel.view")}
           </span>
@@ -94,54 +105,29 @@ export function DeckPanel({ userId, onBrowseDecks, selectedDeckId, onSelectDeck 
         {isLoading ? (
           <Skeleton className="h-10 w-full rounded-lg" />
         ) : (
-          <div className="space-y-1">
-            {/* All Words button */}
-            <button
-              onClick={() => onSelectDeck(null)}
-              className={`w-full p-2.5 rounded-lg text-left transition-colors border ${
-                selectedDeckId === null
-                  ? "bg-accent/10 border-accent/30"
-                  : "bg-surface border-border hover:bg-muted"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Layers
-                  className={`w-4 h-4 ${selectedDeckId === null ? "text-accent" : "text-foreground-muted"}`}
-                />
-                <span
-                  className={`text-sm font-medium ${selectedDeckId === null ? "text-accent" : "text-foreground"}`}
-                >
-                  {t("vocabulary.deckPanel.allWords")}
-                </span>
-              </div>
-            </button>
-
-            {/* Personal deck */}
-            {personalDeck && personalDeck.totalWords > 0 && (
-              <button
-                onClick={() => onSelectDeck(personalDeck.deckId)}
-                className={`w-full p-2.5 rounded-lg text-left transition-colors border ${
-                  selectedDeckId === personalDeck.deckId
-                    ? "bg-accent/10 border-accent/30"
-                    : "bg-surface border-border hover:bg-muted"
-                }`}
+          <Tabs value={getViewValue()} className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger
+                value="all"
+                onClick={() => onSelectDeck(null)}
+                className="flex-1 gap-1.5"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <PenLine
-                      className={`w-4 h-4 ${selectedDeckId === personalDeck.deckId ? "text-accent" : "text-foreground-muted"}`}
-                    />
-                    <span
-                      className={`text-sm font-medium ${selectedDeckId === personalDeck.deckId ? "text-accent" : "text-foreground"}`}
-                    >
-                      {t("vocabulary.deckPanel.myWords")}
-                    </span>
-                  </div>
-                  <span className="text-xs text-foreground-muted">{personalDeck.totalWords}</span>
-                </div>
-              </button>
-            )}
-          </div>
+                <Layers className="w-3.5 h-3.5" />
+                {t("vocabulary.deckPanel.allWords")}
+              </TabsTrigger>
+              {personalDeck && personalDeck.totalWords > 0 && (
+                <TabsTrigger
+                  value="my"
+                  onClick={() => onSelectDeck(personalDeck.deckId)}
+                  className="flex-1 gap-1.5"
+                >
+                  <PenLine className="w-3.5 h-3.5" />
+                  {t("vocabulary.deckPanel.myWords")}
+                  <span className="text-xs text-foreground-muted">({personalDeck.totalWords})</span>
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </Tabs>
         )}
       </div>
 
@@ -166,14 +152,13 @@ export function DeckPanel({ userId, onBrowseDecks, selectedDeckId, onSelectDeck 
         {isLoading ? (
           <Skeleton className="h-24 w-full rounded-lg" />
         ) : activeSub ? (
-          <DeckCard
+          <ActiveDeckCard
             subscription={activeSub}
             isSelected={selectedDeckId === activeSub.deckId}
             onSelect={() =>
               onSelectDeck(activeSub.deckId === selectedDeckId ? null : activeSub.deckId)
             }
-            onUnsubscribe={() => handleUnsubscribe(activeSub.deckId)}
-            isActive
+            onUnsubscribe={() => setConfirmDeckId(activeSub.deckId)}
             userId={userId}
           />
         ) : (
@@ -196,14 +181,13 @@ export function DeckPanel({ userId, onBrowseDecks, selectedDeckId, onSelectDeck 
               {t("vocabulary.deckPanel.paused")}
             </div>
             {otherSubs.map((sub) => (
-              <DeckCard
+              <PausedDeckItem
                 key={sub._id}
                 subscription={sub}
                 isSelected={selectedDeckId === sub.deckId}
                 onSelect={() => onSelectDeck(sub.deckId === selectedDeckId ? null : sub.deckId)}
                 onActivate={() => handleSwitchDeck(sub.deckId)}
-                onUnsubscribe={() => handleUnsubscribe(sub.deckId)}
-                compact
+                onUnsubscribe={() => setConfirmDeckId(sub.deckId)}
               />
             ))}
           </div>
@@ -222,33 +206,112 @@ export function DeckPanel({ userId, onBrowseDecks, selectedDeckId, onSelectDeck 
           </Button>
         )}
       </div>
+
+      {/* Shared Confirmation Dialog */}
+      <Dialog open={!!confirmDeckId} onOpenChange={(open) => !open && setConfirmDeckId(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("vocabulary.deckPanel.removeDeckTitle")}</DialogTitle>
+            <DialogDescription>
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: t("vocabulary.deckPanel.removeDeckDescription", {
+                    deckName: confirmDeck?.deck?.name ?? "",
+                  }),
+                }}
+              />
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 mt-4">
+            <Button variant="outline" onClick={() => setConfirmDeckId(null)} className="flex-1">
+              {t("vocabulary.deckPanel.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => confirmDeckId && handleUnsubscribe(confirmDeckId)}
+              className="flex-1"
+            >
+              {t("vocabulary.deckPanel.remove")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-interface DeckCardProps {
+// Daily Cards Stepper Component
+interface DailyCardsStepperProps {
+  value: number;
+  onChange: (value: number) => void;
+}
+
+function DailyCardsStepper({ value, onChange }: DailyCardsStepperProps) {
+  const t = useT();
+
+  const decrement = () => {
+    if (value > 1) {
+      onChange(value - 1);
+    }
+  };
+
+  const increment = () => {
+    if (value < 50) {
+      onChange(value + 1);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-xs text-foreground-muted">
+        {t("vocabulary.deckPanel.newCardsPerDay")}
+      </span>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            decrement();
+          }}
+          disabled={value <= 1}
+          className="w-7 h-7 flex items-center justify-center rounded-md border border-border bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <Minus className="w-3 h-3" />
+        </button>
+        <span className="w-8 text-center text-sm font-medium text-foreground">{value}</span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            increment();
+          }}
+          disabled={value >= 50}
+          className="w-7 h-7 flex items-center justify-center rounded-md border border-border bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <Plus className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Active Deck Card - Full card with progress, stats, daily cards control
+interface ActiveDeckCardProps {
   subscription: SubscriptionWithDeck;
   isSelected: boolean;
   onSelect: () => void;
-  isActive?: boolean;
-  onActivate?: () => void;
-  onUnsubscribe?: () => void;
-  compact?: boolean;
-  userId?: string;
+  onUnsubscribe: () => void;
+  userId: string;
 }
 
-function DeckCard({
+function ActiveDeckCard({
   subscription,
   isSelected,
   onSelect,
-  isActive,
-  onActivate,
   onUnsubscribe,
-  compact,
   userId,
-}: DeckCardProps) {
+}: ActiveDeckCardProps) {
   const t = useT();
-  const [showConfirm, setShowConfirm] = useState(false);
   const [localDailyCards, setLocalDailyCards] = useState(subscription.dailyNewCards);
   const updateDailyLimit = useMutation(api.userDeckSubscriptions.updateDailyLimit);
 
@@ -259,214 +322,184 @@ function DeckCard({
 
   const isCompleted = subscription.status === "completed";
 
-  if (compact) {
-    return (
-      <>
-        <div
-          className={`w-full p-2 rounded-lg text-left transition-colors border group ${
-            isSelected ? "bg-accent/10 border-accent/30" : "bg-surface border-border hover:bg-muted"
-          }`}
-        >
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              {/* Deck icon */}
-              <div className="w-3.5 h-3.5 shrink-0">
-                {isCompleted ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-orange-500" />
-                ) : (
-                  <Layers
-                    className={`w-3.5 h-3.5 ${isSelected ? "text-accent" : "text-foreground-muted"}`}
-                  />
-                )}
-              </div>
-              <button
-                onClick={onSelect}
-                className={`text-xs font-medium truncate ${isSelected ? "text-accent" : "text-foreground"}`}
-              >
-                {subscription.deck?.name ?? subscription.deckId}
-              </button>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-foreground-muted">
-                {subscription.wordsAdded}/{subscription.totalWordsInDeck}
-              </span>
-              {!isCompleted && onActivate && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onActivate();
-                  }}
-                  className="p-1 rounded text-orange-500 hover:bg-orange-500/10 transition-colors"
-                  title={t("vocabulary.deckPanel.makeActive")}
-                >
-                  <Play className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Confirmation Dialog */}
-        <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>{t("vocabulary.deckPanel.removeDeckTitle")}</DialogTitle>
-              <DialogDescription>
-                <span
-                  dangerouslySetInnerHTML={{
-                    __html: t("vocabulary.deckPanel.removeDeckDescription", {
-                      deckName: subscription.deck?.name ?? "",
-                    }),
-                  }}
-                />
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex gap-2 mt-4">
-              <Button variant="outline" onClick={() => setShowConfirm(false)} className="flex-1">
-                {t("vocabulary.deckPanel.cancel")}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  onUnsubscribe?.();
-                  setShowConfirm(false);
-                }}
-                className="flex-1"
-              >
-                {t("vocabulary.deckPanel.remove")}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </>
-    );
-  }
+  const handleDailyCardsChange = (newValue: number) => {
+    setLocalDailyCards(newValue);
+    updateDailyLimit({
+      userId,
+      deckId: subscription.deckId,
+      dailyNewCards: newValue,
+    });
+  };
 
   return (
-    <>
-      <div
-        onClick={onSelect}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onSelect();
-          }
-        }}
-        className={`w-full rounded-lg transition-all border group text-left cursor-pointer ${
-          isSelected ? "bg-accent/10 border-accent/30" : "bg-surface border-border hover:bg-muted"
-        }`}
-      >
-        <div className="w-full p-3">
-          <div className="flex items-start gap-2 mb-2">
-            {/* Deck icon */}
-            <div className="w-4 h-4 shrink-0 mt-0.5">
-              {isCompleted ? (
-                <CheckCircle2 className="w-4 h-4 text-orange-500" />
-              ) : (
-                <Layers className={`w-4 h-4 ${isSelected ? "text-accent" : "text-orange-500"}`} />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span
-                  className={`text-sm font-medium truncate ${isSelected ? "text-accent" : "text-foreground"}`}
-                >
-                  {subscription.deck?.name ?? subscription.deckId}
-                </span>
-              </div>
-              <span className="text-xs text-foreground-muted">{subscription.deck?.level}</span>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="mb-2">
-            <div className="h-1.5 bg-border rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all bg-orange-500"
-                style={{ width: `${Math.min(progress, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="flex items-center justify-between text-xs text-foreground-muted">
-            <span>
-              {t("vocabulary.deckPanel.wordsProgress", {
-                added: subscription.wordsAdded,
-                total: subscription.totalWordsInDeck,
-              })}
-            </span>
-            {isActive && subscription.cardsAddedToday > 0 && (
-              <span className="text-orange-500">
-                {t("vocabulary.deckPanel.today", { count: subscription.cardsAddedToday })}
-              </span>
+    <div
+      onClick={onSelect}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className={`w-full rounded-lg transition-all border group text-left cursor-pointer ${
+        isSelected ? "bg-accent/10 border-accent/30" : "bg-surface border-border hover:bg-muted"
+      }`}
+    >
+      <div className="w-full p-3">
+        <div className="flex items-start gap-2 mb-2">
+          {/* Deck icon */}
+          <div className="w-4 h-4 shrink-0 mt-0.5">
+            {isCompleted ? (
+              <CheckCircle2 className="w-4 h-4 text-orange-500" />
+            ) : (
+              <Layers className={`w-4 h-4 ${isSelected ? "text-accent" : "text-orange-500"}`} />
             )}
           </div>
-
-          {/* Daily rate controls */}
-          {isActive && !isCompleted && userId && (
-            <div className="mt-2 pt-2 border-t border-border/50">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-foreground-muted">
-                  {t("vocabulary.deckPanel.newCardsPerDay")}
-                </span>
-                <Input
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={localDailyCards}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => {
-                    const newValue = Math.max(1, Math.min(50, parseInt(e.target.value) || 1));
-                    setLocalDailyCards(newValue);
-                    updateDailyLimit({
-                      userId,
-                      deckId: subscription.deckId,
-                      dailyNewCards: newValue,
-                    });
-                  }}
-                  className="w-16 h-7 text-center text-sm"
-                />
-              </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span
+                className={`text-sm font-medium truncate ${isSelected ? "text-accent" : "text-foreground"}`}
+              >
+                {subscription.deck?.name ?? subscription.deckId}
+              </span>
             </div>
+            <span className="text-xs text-foreground-muted">{subscription.deck?.level}</span>
+          </div>
+          {/* Remove button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onUnsubscribe();
+            }}
+            className="p-1 rounded text-foreground-muted opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
+            title={t("vocabulary.deckPanel.removeDeck")}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mb-2">
+          <div className="h-1.5 bg-border rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all bg-orange-500"
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="flex items-center justify-between text-xs text-foreground-muted">
+          <span>
+            {t("vocabulary.deckPanel.wordsProgress", {
+              added: subscription.wordsAdded,
+              total: subscription.totalWordsInDeck,
+            })}
+          </span>
+          {subscription.cardsAddedToday > 0 && (
+            <span className="text-orange-500">
+              {t("vocabulary.deckPanel.today", { count: subscription.cardsAddedToday })}
+            </span>
           )}
         </div>
-      </div>
 
-      {/* Confirmation Dialog */}
-      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{t("vocabulary.deckPanel.removeDeckTitle")}</DialogTitle>
-            <DialogDescription>
-              <span
-                dangerouslySetInnerHTML={{
-                  __html: t("vocabulary.deckPanel.removeDeckDescription", {
-                    deckName: subscription.deck?.name ?? "",
-                  }),
-                }}
-              />
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-2 mt-4">
-            <Button variant="outline" onClick={() => setShowConfirm(false)} className="flex-1">
-              {t("vocabulary.deckPanel.cancel")}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                onUnsubscribe?.();
-                setShowConfirm(false);
-              }}
-              className="flex-1"
-            >
-              {t("vocabulary.deckPanel.remove")}
-            </Button>
+        {/* Daily rate controls with stepper */}
+        {!isCompleted && (
+          <div className="mt-2 pt-2 border-t border-border/50">
+            <DailyCardsStepper value={localDailyCards} onChange={handleDailyCardsChange} />
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Paused Deck Item - Compact row with name, mini progress, activate button
+interface PausedDeckItemProps {
+  subscription: SubscriptionWithDeck;
+  isSelected: boolean;
+  onSelect: () => void;
+  onActivate: () => void;
+  onUnsubscribe: () => void;
+}
+
+function PausedDeckItem({
+  subscription,
+  isSelected,
+  onSelect,
+  onActivate,
+  onUnsubscribe,
+}: PausedDeckItemProps) {
+  const t = useT();
+
+  const progress =
+    subscription.totalWordsInDeck > 0
+      ? (subscription.wordsAdded / subscription.totalWordsInDeck) * 100
+      : 0;
+
+  const isCompleted = subscription.status === "completed";
+
+  return (
+    <div
+      className={`w-full p-2 rounded-lg text-left transition-colors border group ${
+        isSelected ? "bg-accent/10 border-accent/30" : "bg-surface border-border hover:bg-muted"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {/* Deck icon */}
+          <div className="w-3.5 h-3.5 shrink-0">
+            {isCompleted ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-orange-500" />
+            ) : (
+              <Layers
+                className={`w-3.5 h-3.5 ${isSelected ? "text-accent" : "text-foreground-muted"}`}
+              />
+            )}
+          </div>
+          <button
+            onClick={onSelect}
+            className={`text-xs font-medium truncate ${isSelected ? "text-accent" : "text-foreground"}`}
+          >
+            {subscription.deck?.name ?? subscription.deckId}
+          </button>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {/* Mini progress bar */}
+          <div className="w-12 h-1 bg-border rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all bg-orange-500/60"
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
+          <span className="text-xs text-foreground-muted whitespace-nowrap">
+            {subscription.wordsAdded}/{subscription.totalWordsInDeck}
+          </span>
+          {!isCompleted && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onActivate();
+              }}
+              className="p-1 rounded text-orange-500 hover:bg-orange-500/10 transition-colors"
+              title={t("vocabulary.deckPanel.makeActive")}
+            >
+              <Play className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onUnsubscribe();
+            }}
+            className="p-1 rounded text-foreground-muted opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
+            title={t("vocabulary.deckPanel.removeDeck")}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
