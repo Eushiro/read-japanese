@@ -418,7 +418,7 @@ export function VocabularyPage() {
       </div>
 
       {/* Search and Filters - Glass styling */}
-      <div className="sticky top-16 z-40 border-b border-border/50 dark:border-white/5 bg-surface/80 dark:bg-black/50 backdrop-blur-xl">
+      <div className="sticky top-16 z-40 border-b border-border/50 bg-surface/80 backdrop-blur-xl dark:border-white/5 dark:bg-black/50">
         <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
@@ -1648,8 +1648,8 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-md mx-4 animate-fade-in-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
+      <div className="bg-surface/95 dark:bg-black/90 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] w-full max-w-md mx-4 animate-fade-in-up">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2
             className="text-lg font-semibold text-foreground"
@@ -1807,6 +1807,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
             </Button>
             <Button
               type="submit"
+              variant="glass-accent"
               disabled={isSubmitting || !word.trim() || !definitions.trim()}
               className="flex-1"
             >

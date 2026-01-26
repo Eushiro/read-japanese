@@ -41,9 +41,10 @@ export function Paywall({
   requiredTier: _requiredTier,
   creditsNeeded = 1,
 }: PaywallProps) {
-  // Use feature as alias for action
-  const actionText = action || feature;
   const t = useT();
+  // Use feature as alias for action, and translate it
+  const featureKey = action || feature;
+  const actionText = featureKey ? t(`paywall.features.${featureKey}`) : undefined;
   const { isAuthenticated } = useAuth();
   const { remaining, limit, tier } = useCreditBalance();
 

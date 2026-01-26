@@ -9,24 +9,52 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "bg-accent text-white shadow-sm hover:bg-accent-hover dark:text-black dark:hover:shadow-[0_0_30px_rgba(255,132,0,0.25)]",
-        secondary: "bg-secondary text-white shadow-sm hover:bg-secondary-hover",
-        destructive: "bg-destructive text-white shadow-sm hover:bg-destructive/90",
-        outline:
-          "border border-border bg-surface shadow-sm hover:bg-muted hover:border-foreground-muted/30 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-white/20",
-        ghost: "hover:bg-muted hover:text-foreground dark:hover:bg-white/[0.05]",
-        link: "text-accent underline-offset-4 hover:underline",
-        // Warm variant for dark mode accents - subtle with glow on hover
-        warm: cn(
-          "bg-white/[0.03] border border-white/10 text-foreground",
-          "hover:border-white/20 hover:shadow-[0_0_30px_rgba(255,132,0,0.15)]",
-          "transition-all duration-300"
+        // Default: Glass with accent tint
+        default: cn(
+          "relative overflow-hidden bg-accent/90 border border-accent/50 text-white",
+          "hover:bg-accent hover:border-accent/70",
+          "hover:shadow-[0_0_25px_rgba(255,132,0,0.3)]",
+          "dark:bg-accent/80 dark:border-accent/40 dark:text-white",
+          "dark:hover:bg-accent/90 dark:hover:shadow-[0_0_30px_rgba(255,132,0,0.35)]",
+          "shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
         ),
-        // AI gradient button with warm colors
-        ai: "btn-ai shadow-sm hover:shadow-[0_0_20px_rgba(255,132,0,0.4)] dark:hover:shadow-[0_0_30px_rgba(255,132,0,0.5)]",
-        // Glow variant for emphasis
-        glow: "bg-orange-600 text-white shadow-sm hover:bg-orange-500 dark:bg-orange-600 dark:hover:bg-orange-500 dark:hover:shadow-[0_0_25px_rgba(255,132,0,0.4)]",
+        // Secondary: Glass with neutral tint
+        secondary: cn(
+          "relative overflow-hidden bg-white/10 border border-white/20 text-foreground",
+          "hover:bg-white/15 hover:border-white/30",
+          "dark:bg-white/[0.08] dark:border-white/15",
+          "dark:hover:bg-white/[0.12] dark:hover:border-white/25",
+          "shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+        ),
+        // Destructive: Glass with red tint
+        destructive: cn(
+          "relative overflow-hidden bg-destructive/90 border border-destructive/50 text-white",
+          "hover:bg-destructive hover:border-destructive/70",
+          "hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]",
+          "shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
+        ),
+        // Outline: Glass border style
+        outline: cn(
+          "border border-border bg-surface/80 text-foreground",
+          "hover:bg-muted/80 hover:border-foreground-muted/30",
+          "dark:border-white/10 dark:bg-white/[0.03]",
+          "dark:hover:bg-white/[0.06] dark:hover:border-white/20",
+          "shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
+        ),
+        // Ghost: Minimal glass on hover
+        ghost: cn(
+          "text-foreground-muted hover:text-foreground",
+          "hover:bg-white/[0.05] dark:hover:bg-white/[0.05]"
+        ),
+        // Link: Text only
+        link: "text-accent underline-offset-4 hover:underline",
+        // Glass accent variant with warm glow
+        "glass-accent": cn(
+          "relative overflow-hidden bg-orange-500/20 border border-orange-500/30",
+          "hover:bg-orange-500/30 hover:border-orange-500/50",
+          "hover:shadow-[0_0_30px_rgba(249,115,22,0.3)]",
+          "text-white transition-all duration-300"
+        ),
       },
       size: {
         default: "h-10 px-5 py-2.5",

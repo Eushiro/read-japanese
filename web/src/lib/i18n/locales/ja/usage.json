@@ -17,6 +17,7 @@
   "details": "詳細",
   "free": "無料",
   "admin": "管理者",
+  "creditCount": "{{count}}クレジット",
   "tier": {
     "free": "無料プラン",
     "basic": "ベーシックプラン",

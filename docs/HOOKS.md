@@ -9,11 +9,12 @@ The repository uses **Husky** for pre-commit hooks that enforce code quality.
 3. **TypeScript** - `tsc --noEmit` catches type errors
 4. **ESLint** - Runs on staged `.ts/.tsx` files, fails on any warnings or errors
 5. **i18n validation** - Ensures all translation files have matching keys AND all keys used in code exist
-6. **Convex typecheck** - Validates Convex functions and schema types
-7. **Pattern validation** - Checks for hardcoded language types (use `Language` from `@/lib/languages`)
-8. **Smoke tests** - Runs `bun test` to verify critical paths aren't broken
-9. **Python linting** - Ruff check/format on backend files (if changed)
-10. **Claude Code review** - AI review checks for bugs, security issues, and guideline violations
+6. **i18n interpolation** - Catches untranslated strings passed to `t()` interpolation (see below)
+7. **Convex typecheck** - Validates Convex functions and schema types
+8. **Pattern validation** - Checks for hardcoded language types (use `Language` from `@/lib/languages`)
+9. **Smoke tests** - Runs `bun test` to verify critical paths aren't broken
+10. **Python linting** - Ruff check/format on backend files (if changed)
+11. **Claude Code review** - AI review checks for bugs, security issues, and guideline violations
 
 ## What runs on commit message (commit-msg)
 
@@ -55,6 +56,20 @@ Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
 - Check the error output for the list of missing keys
 - Add the missing keys to English (`en/`) locale files first
 - Then sync to other locales (`ja/`, `fr/`, `zh/`)
+
+**i18n interpolation error:** Literal strings in `t()` interpolation won't be translated:
+```typescript
+// BAD - "stories" appears as English in all languages
+t("paywall.message", { action: "stories" })
+
+// GOOD - translate the value first
+const actionText = t("paywall.features.stories")
+t("paywall.message", { action: actionText })
+
+// GOOD - use a variable that's already translated
+t("paywall.message", { action: translatedFeatureName })
+```
+Add translation keys for the interpolated values to all locale files.
 
 **Tests failed:** Fix the failing tests. Run `bun test` to see details.
 
@@ -119,6 +134,7 @@ These tests are designed to be:
 - `.husky/commit-msg` - Commit message validation
 - `web/bunfig.toml` - Bun test configuration
 - `web/scripts/check-i18n-keys.ts` - Translation key validator
+- `web/eslint-plugin-i18n-interpolation.js` - ESLint rule for i18n interpolation
 - `web/.prettierrc` - Prettier configuration
 - `web/commitlint.config.js` - Commit message rules
 - `web/.secretlintrc.json` - Secret detection rules

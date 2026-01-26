@@ -6,6 +6,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import i18next from 'eslint-plugin-i18next'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
+import i18nInterpolation from './eslint-plugin-i18n-interpolation.js'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
@@ -85,6 +86,21 @@ export default defineConfig([
           message: 'Use useAIAction from @/hooks/useAIAction instead of useAction for AI actions. It provides automatic analytics tracking.',
         },
       ],
+    },
+  },
+  // i18n interpolation - catch untranslated strings passed to t() interpolation
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    plugins: {
+      'i18n-interpolation': i18nInterpolation,
+    },
+    rules: {
+      'i18n-interpolation/no-literal-interpolation': ['error', {
+        // Parameters that are allowed to have literal strings
+        // ns: i18next namespace configuration
+        // format, style, currency: formatting hints
+        allowedParams: ['ns', 'format', 'style', 'currency'],
+      }],
     },
   },
   // i18n linting - error on hardcoded strings in JSX (excludes admin pages)

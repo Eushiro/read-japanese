@@ -57,7 +57,7 @@ export function UsageHistoryPage() {
     : "";
 
   return (
-    <div className="container max-w-4xl py-8">
+    <div className="container mx-auto max-w-4xl py-8">
       {/* Header with back button */}
       <div className="mb-6 flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
@@ -174,7 +174,7 @@ export function UsageHistoryPage() {
                           {tx.metadata?.adminBypass && ` (${t("usage.admin")})`}
                         </span>
                       ) : (
-                        <span className="text-red-600">-{tx.creditsSpent}</span>
+                        <span>{tx.creditsSpent}</span>
                       )}
                     </TableCell>
                   </TableRow>

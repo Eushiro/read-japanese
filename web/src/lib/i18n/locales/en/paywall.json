@@ -9,5 +9,12 @@
   "signInPrompt": "Sign in to track your usage and access more features.",
   "signIn": "Sign In",
   "viewAllPlans": "View All Plans",
-  "viewUsage": "View Usage Details"
+  "viewUsage": "View Usage Details",
+  "features": {
+    "stories": "stories",
+    "flashcards": "flashcards",
+    "sentences": "sentences",
+    "shadowing": "shadowing",
+    "comprehension": "comprehension"
+  }
 }

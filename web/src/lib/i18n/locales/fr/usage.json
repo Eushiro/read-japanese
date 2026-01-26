@@ -17,6 +17,8 @@
   "details": "Détails",
   "free": "Gratuit",
   "admin": "Admin",
+  "creditCount": "{{count}} crédit",
+  "creditCount_other": "{{count}} crédits",
   "tier": {
     "free": "Forfait gratuit",
     "basic": "Forfait basique",

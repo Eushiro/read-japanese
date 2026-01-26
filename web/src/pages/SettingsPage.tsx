@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { WaveBackground } from "@/components/ui/wave-background";
 import { UILanguageSwitcher } from "@/components/UILanguageSwitcher";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth, UserButton } from "@/contexts/AuthContext";
@@ -218,10 +219,14 @@ export function SettingsPage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <div className="border-b border-border relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-background to-accent/5" />
-        <div className="absolute top-0 left-1/4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-2xl relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-background to-accent/5 dark:from-purple-900/20 dark:via-background dark:to-cyan-900/10" />
+        {/* Siri-inspired wave background for dark mode */}
+        <div className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity">
+          <WaveBackground size="hero" className="absolute inset-0" intensity={1} />
+        </div>
+        <div className="absolute top-0 left-1/4 w-72 h-72 bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-accent/10 dark:bg-cyan-500/15 rounded-full blur-3xl" />
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-4xl relative">
           <div className="animate-fade-in-up">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-accent/20">
@@ -239,7 +244,7 @@ export function SettingsPage() {
       </div>
 
       {/* Settings Content */}
-      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
         <div className="space-y-6">
           {/* Theme */}
           <section className="bg-gradient-to-br from-amber-500/5 to-surface rounded-2xl border border-amber-500/20 p-6 shadow-sm">
@@ -326,7 +331,7 @@ export function SettingsPage() {
               <p className="text-sm text-foreground-muted mb-4">
                 {t("settings.learningTools.description")}
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <Link
                   to="/learn"
                   className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/5 transition-all"
@@ -481,8 +486,8 @@ export function SettingsPage() {
                   <Switch checked={autoplayAudio} onCheckedChange={setAutoplayAudio} />
                 </div>
 
-                <div className="space-y-3">
-                  <label className="font-medium text-foreground">
+                <div className="pt-2">
+                  <label className="font-medium text-foreground block mb-3">
                     {t("settings.reading.textSize")}
                   </label>
                   <Select value={fontSize} onValueChange={setFontSize}>
@@ -672,7 +677,7 @@ export function SettingsPage() {
                         </div>
                       </div>
                       <Button
-                        variant="outline"
+                        variant="glass-accent"
                         size="sm"
                         onClick={() =>
                           navigate({ to: "/placement-test", search: { language: lang } })
@@ -881,7 +886,7 @@ export function SettingsPage() {
                         </li>
                       </ul>
                       <Button
-                        variant="outline"
+                        variant="glass-accent"
                         className={`w-full ${checkoutLoading === "plus" ? "btn-loading-gradient" : ""}`}
                         onClick={() => handleUpgrade("plus")}
                       >
@@ -931,6 +936,7 @@ export function SettingsPage() {
                         </li>
                       </ul>
                       <Button
+                        variant="glass-accent"
                         className={`w-full ${checkoutLoading === "pro" ? "btn-loading-gradient" : ""}`}
                         onClick={() => handleUpgrade("pro")}
                       >
@@ -1042,7 +1048,7 @@ export function SettingsPage() {
                         {t("settings.credits.upgradeDescription")}
                       </p>
                     </div>
-                    <Button asChild size="sm">
+                    <Button asChild size="sm" variant="glass-accent">
                       <Link to="/pricing">{t("settings.credits.upgrade")}</Link>
                     </Button>
                   </div>
@@ -1244,7 +1250,7 @@ function SettingsSkeleton() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-2xl">
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-4xl">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-border w-9 h-9 animate-pulse" />
             <div className="h-9 bg-border rounded-lg w-24 animate-pulse" />
@@ -1253,7 +1259,7 @@ function SettingsSkeleton() {
       </div>
 
       {/* Settings Content Skeleton */}
-      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
         <div className="space-y-6">
           {/* Appearance Section */}
           <section className="bg-surface rounded-2xl border border-border p-6">

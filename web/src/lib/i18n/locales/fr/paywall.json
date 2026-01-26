@@ -9,5 +9,12 @@
   "signInPrompt": "Connectez-vous pour suivre votre utilisation et accéder à plus de fonctionnalités.",
   "signIn": "Se connecter",
   "viewAllPlans": "Voir tous les forfaits",
-  "viewUsage": "Voir les détails d'utilisation"
+  "viewUsage": "Voir les détails d'utilisation",
+  "features": {
+    "stories": "les histoires",
+    "flashcards": "les flashcards",
+    "sentences": "les phrases",
+    "shadowing": "le shadowing",
+    "comprehension": "la compréhension"
+  }
 }

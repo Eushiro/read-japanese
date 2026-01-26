@@ -9,5 +9,12 @@
   "signInPrompt": "登录以跟踪您的使用情况并访问更多功能。",
   "signIn": "登录",
   "viewAllPlans": "查看所有方案",
-  "viewUsage": "查看使用详情"
+  "viewUsage": "查看使用详情",
+  "features": {
+    "stories": "故事生成",
+    "flashcards": "闪卡",
+    "sentences": "例句生成",
+    "shadowing": "跟读练习",
+    "comprehension": "阅读理解"
+  }
 }

@@ -17,6 +17,7 @@
   "details": "详情",
   "free": "免费",
   "admin": "管理员",
+  "creditCount": "{{count}}积分",
   "tier": {
     "free": "免费版",
     "basic": "基础版",

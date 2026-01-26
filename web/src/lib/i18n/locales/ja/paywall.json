@@ -9,5 +9,12 @@
   "signInPrompt": "ログインして使用状況を確認し、より多くの機能にアクセスしましょう。",
   "signIn": "ログイン",
   "viewAllPlans": "すべてのプランを見る",
-  "viewUsage": "使用状況の詳細"
+  "viewUsage": "使用状況の詳細",
+  "features": {
+    "stories": "ストーリー生成",
+    "flashcards": "フラッシュカード",
+    "sentences": "例文生成",
+    "shadowing": "シャドーイング",
+    "comprehension": "読解問題"
+  }
 }
