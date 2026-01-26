@@ -1,13 +1,19 @@
 import { useSearch } from "@tanstack/react-router";
 import { BookmarkCheck, Brain, PenLine } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
 import { useT } from "@/lib/i18n";
 
-import { FlashcardsPage } from "./FlashcardsPage";
-import { PracticePage } from "./PracticePage";
-// Import content from existing pages (we'll extract the content components)
-import { VocabularyPage } from "./VocabularyPage";
+// Lazy load tab content to improve initial navigation performance
+const VocabularyContent = lazy(() =>
+  import("./VocabularyPage").then((m) => ({ default: m.VocabularyPage }))
+);
+const FlashcardsContent = lazy(() =>
+  import("./FlashcardsPage").then((m) => ({ default: m.FlashcardsPage }))
+);
+const PracticeContent = lazy(() =>
+  import("./PracticePage").then((m) => ({ default: m.PracticePage }))
+);
 
 type LearnTab = "words" | "review" | "practice";
 
@@ -17,6 +23,11 @@ const TAB_ICONS: Record<LearnTab, typeof BookmarkCheck> = {
   review: Brain,
   practice: PenLine,
 };
+
+// Loading skeleton shown while tab content is loading
+function TabLoadingSkeleton() {
+  return null; // Let pages handle their own loading states
+}
 
 export function LearnPage() {
   const t = useT();
@@ -91,34 +102,14 @@ export function LearnPage() {
         </div>
       </div>
 
-      {/* Tab Content - CSS visibility keeps all tabs mounted to preserve Convex subscriptions */}
+      {/* Tab Content - Only render active tab, lazy loaded with Suspense */}
       <div className="flex-1 overflow-hidden">
-        <div className={activeTab === "words" ? "h-full" : "hidden"}>
-          <VocabularyContent />
-        </div>
-        <div className={activeTab === "review" ? "h-full" : "hidden"}>
-          <FlashcardsContent />
-        </div>
-        <div className={activeTab === "practice" ? "h-full" : "hidden"}>
-          <PracticeContent />
-        </div>
+        <Suspense fallback={<TabLoadingSkeleton />}>
+          {activeTab === "words" && <VocabularyContent />}
+          {activeTab === "review" && <FlashcardsContent />}
+          {activeTab === "practice" && <PracticeContent />}
+        </Suspense>
       </div>
     </div>
   );
-}
-
-// Wrapper components that render existing page content without their hero headers
-// For now, we'll just render the full pages. In a future iteration,
-// we could extract just the content portions.
-
-function VocabularyContent() {
-  return <VocabularyPage />;
-}
-
-function FlashcardsContent() {
-  return <FlashcardsPage />;
-}
-
-function PracticeContent() {
-  return <PracticePage />;
 }

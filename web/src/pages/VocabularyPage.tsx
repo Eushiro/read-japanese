@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import type { GenericId } from "convex/values";
 import {
   ArrowUpDown,
@@ -171,8 +171,10 @@ export function VocabularyPage() {
 
   // Virtual scrolling ref
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // Load more sentinel ref (for non-virtualized infinite scroll)
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { trackEvent, events } = useAnalytics();
   const t = useT();
   const { language: uiLang } = useUILanguage();
@@ -210,10 +212,19 @@ export function VocabularyPage() {
       : "skip"
   );
 
-  const premadeAllVocabulary = useQuery(
-    api.premadeDecks.getAllSubscribedVocabulary,
-    isAuthenticated && !selectedDeckId ? { userId, uiLanguage: uiLang } : "skip"
+  // Use paginated query for "All Words" view to improve initial load performance
+  const {
+    results: premadeAllVocabularyResults,
+    status: paginationStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    api.premadeDecks.getAllSubscribedVocabularyPaginated,
+    isAuthenticated && !selectedDeckId ? { userId, uiLanguage: uiLang } : "skip",
+    { initialNumItems: 50 }
   );
+  // Map to same format as useQuery result for compatibility
+  const premadeAllVocabulary =
+    isAuthenticated && !selectedDeckId ? premadeAllVocabularyResults : undefined;
 
   const premadeDeckVocabulary = useQuery(
     api.premadeDecks.getVocabularyForDeck,
@@ -355,6 +366,28 @@ export function VocabularyPage() {
     enabled: shouldUseVirtualScrolling,
   });
 
+  // Load more items when scrolling near the bottom (for paginated "All Words" view)
+  // Uses IntersectionObserver for non-virtualized scrolling
+  useEffect(() => {
+    // Only applies when viewing "All Words" (no deck selected) and more items are available
+    if (selectedDeckId || paginationStatus !== "CanLoadMore") return;
+
+    const sentinel = loadMoreRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore(50);
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [paginationStatus, selectedDeckId, loadMore]);
+
   // Track search with debounce
   useEffect(() => {
     if (!searchTerm.trim()) return;
@@ -381,7 +414,8 @@ export function VocabularyPage() {
   const hasActiveFilters = languageFilter !== null || masteryFilter !== null;
   const hasAnyFilter = hasActiveFilters || selectedDeckId !== null;
 
-  if (!isAuthenticated) {
+  // Don't show sign-in prompt while auth is still loading
+  if (!isAuthLoading && !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -421,7 +455,11 @@ export function VocabularyPage() {
                   {t("vocabulary.title")}
                 </h1>
                 <p className="text-foreground-muted text-lg">
-                  {t("vocabulary.wordsInCollection", { count: vocabulary?.length || 0 })}
+                  {vocabulary === undefined ? (
+                    <Skeleton className="w-32 h-5 inline-block" />
+                  ) : (
+                    t("vocabulary.wordsInCollection", { count: vocabulary.length })
+                  )}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -752,6 +790,20 @@ export function VocabularyPage() {
                       isPremade={isViewingPremade}
                     />
                   ))}
+                  {/* Sentinel for infinite scroll - triggers loadMore when visible */}
+                  {!selectedDeckId && paginationStatus === "CanLoadMore" && (
+                    <div ref={loadMoreRef}>
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div
+                          key={`skeleton-${i}`}
+                          className={`p-5 rounded-xl bg-surface border border-border animate-pulse ${isCompactMode ? "mb-1" : "mb-3"}`}
+                        >
+                          <div className="h-6 bg-muted rounded w-24 mb-2" />
+                          <div className="h-4 bg-muted rounded w-48" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

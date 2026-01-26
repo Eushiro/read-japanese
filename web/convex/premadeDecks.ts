@@ -1,3 +1,4 @@
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 
 import { type Id } from "./_generated/dataModel";
@@ -214,6 +215,56 @@ export const getAllSubscribedVocabulary = query({
 
     // Resolve content for each item
     return Promise.all(limited.map((item) => resolveVocabularyContent(ctx.db, item, uiLang)));
+  },
+});
+
+// Get all vocabulary from subscribed decks with pagination (for better initial load performance)
+export const getAllSubscribedVocabularyPaginated = query({
+  args: {
+    userId: v.string(),
+    uiLanguage: v.optional(uiLanguageValidator),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const uiLang = normalizeUILanguage(args.uiLanguage);
+
+    // Get all user's deck subscriptions
+    const subscriptions = await ctx.db
+      .query("userDeckSubscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    if (subscriptions.length === 0) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+
+    const deckIds = new Set(subscriptions.map((s) => s.deckId));
+
+    // Query premadeVocabulary with pagination
+    // Note: We can't filter by multiple deckIds with a single index, so we fetch more
+    // items and filter. This means some pages may have fewer items than requested.
+    const paginatedResult = await ctx.db.query("premadeVocabulary").paginate(args.paginationOpts);
+
+    // Filter to only subscribed decks and dedupe by word+language
+    const seen = new Set<string>();
+    const filtered = paginatedResult.page.filter((item) => {
+      if (!deckIds.has(item.deckId)) return false;
+      const key = `${item.word}-${item.language}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    // Resolve content for each item
+    const resolved = await Promise.all(
+      filtered.map((item) => resolveVocabularyContent(ctx.db, item, uiLang))
+    );
+
+    return {
+      page: resolved,
+      isDone: paginatedResult.isDone,
+      continueCursor: paginatedResult.continueCursor,
+    };
   },
 });
 
