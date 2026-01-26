@@ -1,6 +1,4 @@
 import { Link } from "@tanstack/react-router";
-
-import { Footer } from "@/components/Footer";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
   ArrowRight,
@@ -11,7 +9,9 @@ import {
   ChevronDown,
   Globe,
   GraduationCap,
+  Headphones,
   Languages,
+  Mic,
   PenLine,
   Sparkles,
   Target,
@@ -20,8 +20,10 @@ import {
 import * as React from "react";
 import { useEffect, useState } from "react";
 
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 
 export function LandingPage() {
@@ -57,9 +59,6 @@ export function LandingPage() {
 // HERO SECTION - Dramatic entrance with floating orbs
 // ============================================================================
 
-// Animated exam names for the headline
-const EXAM_NAMES = ["Your Exam", "JLPT", "TOEFL", "DELF"];
-
 function HeroSection({
   isAuthenticated,
   t,
@@ -68,14 +67,20 @@ function HeroSection({
   t: ReturnType<typeof useT>;
 }) {
   const [examIndex, setExamIndex] = useState(0);
+  const examNames = [
+    t("landing.hero.examName1"),
+    t("landing.hero.examName2"),
+    t("landing.hero.examName3"),
+    t("landing.hero.examName4"),
+  ];
 
   // Rotate through exam names
   useEffect(() => {
     const interval = setInterval(() => {
-      setExamIndex((prev) => (prev + 1) % EXAM_NAMES.length);
+      setExamIndex((prev) => (prev + 1) % examNames.length);
     }, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [examNames.length]);
 
   return (
     <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
@@ -164,16 +169,23 @@ function HeroSection({
             </span>
           </motion.div>
 
-          {/* Title - with animated exam name */}
-          <motion.h1
-            className="mt-8 text-[clamp(3rem,10vw,6rem)] font-semibold leading-[0.95] tracking-tight text-white"
-            style={{ fontFamily: "var(--font-display)" }}
+          {/* Title - with animated exam name on separate line */}
+          <motion.div
+            className="mt-8"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2, ease: [0.19, 1, 0.22, 1] }}
           >
-            {t("landing.hero.title")}{" "}
-            <span className="inline-block relative">
+            <h1
+              className="text-[clamp(2rem,8vw,6rem)] font-semibold leading-[0.95] tracking-tight text-white whitespace-nowrap"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t("landing.hero.title")}
+            </h1>
+            <div
+              className="mt-2 text-[clamp(2rem,8vw,6rem)] font-semibold leading-[0.95] tracking-tight"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
               <AnimatePresence mode="wait">
                 <motion.span
                   key={examIndex}
@@ -183,11 +195,11 @@ function HeroSection({
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
                 >
-                  {EXAM_NAMES[examIndex]}
+                  {examNames[examIndex]}
                 </motion.span>
               </AnimatePresence>
-            </span>
-          </motion.h1>
+            </div>
+          </motion.div>
 
           {/* Subtitle - fade up */}
           <motion.p
@@ -238,7 +250,7 @@ function HeroSection({
               </SignInButton>
             )}
             <Link to="/library">
-              <Button size="lg" variant="glass" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">
                 <BookOpen className="w-5 h-5 mr-2" />
                 {t("landing.hero.browseLibrary")}
               </Button>
@@ -294,38 +306,61 @@ function ExamsSection({ t }: { t: ReturnType<typeof useT> }) {
           <p className="text-white/50 text-lg max-w-2xl mx-auto">{t("landing.exams.subtitle")}</p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           <TiltCard delay={0}>
             <LanguageExamCard
-              language={t("landing.exams.japanese")}
+              languageName={t("landing.exams.japanese")}
               tagline={t("landing.exams.japaneseTagline")}
-              exams={["JLPT N5", "JLPT N4", "JLPT N3", "JLPT N2", "JLPT N1"]}
+              exams={[
+                t("landing.exams.jlptN5"),
+                t("landing.exams.jlptN4"),
+                t("landing.exams.jlptN3"),
+                t("landing.exams.jlptN2"),
+                t("landing.exams.jlptN1"),
+              ]}
               gradient="from-red-500/20 via-red-600/10 to-transparent"
               accentColor="text-red-400"
               borderColor="border-red-500/30 hover:border-red-500/50"
               icon={Languages}
+              stat={t("landing.exams.japaneseStat")}
+              skills={["reading", "listening", "writing", "speaking"]}
+              language="japanese"
             />
           </TiltCard>
           <TiltCard delay={0.1}>
             <LanguageExamCard
-              language={t("landing.exams.english")}
+              languageName={t("landing.exams.english")}
               tagline={t("landing.exams.englishTagline")}
-              exams={["TOEFL", "SAT", "GRE"]}
+              exams={[
+                t("landing.exams.toefl"),
+                t("landing.exams.sat"),
+                t("landing.exams.gre"),
+              ]}
               gradient="from-blue-500/20 via-blue-600/10 to-transparent"
               accentColor="text-blue-400"
               borderColor="border-blue-500/30 hover:border-blue-500/50"
               icon={Globe}
+              stat={t("landing.exams.englishStat")}
+              skills={["reading", "listening", "writing", "speaking"]}
+              language="english"
             />
           </TiltCard>
           <TiltCard delay={0.2}>
             <LanguageExamCard
-              language={t("landing.exams.french")}
+              languageName={t("landing.exams.french")}
               tagline={t("landing.exams.frenchTagline")}
-              exams={["DELF A1-B2", "DALF C1-C2", "TCF"]}
+              exams={[
+                t("landing.exams.delf"),
+                t("landing.exams.dalf"),
+                t("landing.exams.tcf"),
+              ]}
               gradient="from-purple-500/20 via-purple-600/10 to-transparent"
               accentColor="text-purple-400"
               borderColor="border-purple-500/30 hover:border-purple-500/50"
               icon={GraduationCap}
+              stat={t("landing.exams.frenchStat")}
+              skills={["reading", "listening", "writing", "speaking"]}
+              language="french"
             />
           </TiltCard>
         </div>
@@ -381,32 +416,134 @@ function TiltCard({ children, delay = 0 }: { children: React.ReactNode; delay?: 
   );
 }
 
+type SkillType = "reading" | "listening" | "writing" | "speaking";
+
+const skillIcons: Record<SkillType, React.ComponentType<{ className?: string }>> = {
+  reading: BookOpen,
+  listening: Headphones,
+  writing: PenLine,
+  speaking: Mic,
+};
+
+const examColors: Record<ContentLanguage, string[]> = {
+  japanese: ["#fbbf24", "#f59e0b", "#ea580c", "#dc2626", "#b91c1c"], // amber → red
+  english: ["#22d3ee", "#0ea5e9", "#2563eb"], // cyan → blue (toned down)
+  french: ["#e879f9", "#c084fc", "#a855f7"], // fuchsia → violet (boosted)
+};
+
+function DecorativePattern({ language, accentColor }: { language: ContentLanguage; accentColor: string }) {
+  const colorClass = accentColor.replace("text-", "");
+
+  if (language === "japanese") {
+    // Seigaiha-inspired wave pattern
+    return (
+      <svg
+        className={`absolute -top-4 -right-4 w-40 h-40 opacity-10 text-${colorClass}`}
+        viewBox="0 0 100 100"
+        fill="currentColor"
+      >
+        <defs>
+          <pattern id="waves" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path
+              d="M0 20 Q5 10 10 20 Q15 30 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M0 15 Q5 5 10 15 Q15 25 20 15"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M0 10 Q5 0 10 10 Q15 20 20 10"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </pattern>
+        </defs>
+        <rect width="100" height="100" fill="url(#waves)" />
+      </svg>
+    );
+  }
+
+  if (language === "english") {
+    // Geometric globe/circle pattern
+    return (
+      <svg
+        className={`absolute -top-4 -right-4 w-40 h-40 opacity-10 text-${colorClass}`}
+        viewBox="0 0 100 100"
+        fill="none"
+        stroke="currentColor"
+      >
+        <circle cx="70" cy="30" r="25" strokeWidth="1.5" />
+        <circle cx="70" cy="30" r="18" strokeWidth="1" />
+        <circle cx="70" cy="30" r="11" strokeWidth="1" />
+        <ellipse cx="70" cy="30" rx="25" ry="10" strokeWidth="1" />
+        <ellipse cx="70" cy="30" rx="10" ry="25" strokeWidth="1" />
+        <line x1="45" y1="30" x2="95" y2="30" strokeWidth="1" />
+        <line x1="70" y1="5" x2="70" y2="55" strokeWidth="1" />
+      </svg>
+    );
+  }
+
+  // French - elegant arc/flourish pattern
+  return (
+    <svg
+      className={`absolute -top-4 -right-4 w-40 h-40 opacity-10 text-${colorClass}`}
+      viewBox="0 0 100 100"
+      fill="none"
+      stroke="currentColor"
+    >
+      <path d="M50 10 Q90 10 90 50 Q90 90 50 90" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M55 20 Q80 20 80 50 Q80 80 55 80" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M60 30 Q70 30 70 50 Q70 70 60 70" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="75" cy="25" r="3" fill="currentColor" />
+      <circle cx="80" cy="50" r="2" fill="currentColor" />
+      <circle cx="75" cy="75" r="3" fill="currentColor" />
+    </svg>
+  );
+}
+
 function LanguageExamCard({
-  language,
+  languageName,
   tagline,
   exams,
   gradient,
   accentColor,
   borderColor,
   icon: Icon,
+  stat,
+  skills,
+  language,
 }: {
-  language: string;
+  languageName: string;
   tagline: string;
   exams: string[];
   gradient: string;
   accentColor: string;
   borderColor: string;
   icon: React.ComponentType<{ className?: string }>;
+  stat: string;
+  skills: SkillType[];
+  language: ContentLanguage;
 }) {
+  const allSkills: SkillType[] = ["reading", "listening", "writing", "speaking"];
+
   return (
     <div
-      className={`relative h-full p-8 rounded-2xl bg-gradient-to-br ${gradient} border ${borderColor} backdrop-blur-md transition-all duration-300 group overflow-hidden`}
+      className={`relative h-full min-h-[280px] p-6 rounded-2xl bg-gradient-to-br ${gradient} border ${borderColor} backdrop-blur-md transition-all duration-300 group overflow-hidden`}
       style={{ transformStyle: "preserve-3d" }}
     >
       {/* Glass highlight */}
       <div className="absolute inset-0 bg-white/[0.02] rounded-2xl" />
       {/* Inner shadow for depth */}
       <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] rounded-2xl" />
+
+      {/* Decorative pattern */}
+      <DecorativePattern language={language} accentColor={accentColor} />
 
       {/* Shimmer effect */}
       <motion.div
@@ -415,27 +552,64 @@ function LanguageExamCard({
         transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
       />
 
-      <div style={{ transform: "translateZ(20px)" }} className="relative z-10">
+      <div style={{ transform: "translateZ(20px)" }} className="relative z-10 h-full flex flex-col">
         {/* Icon and language */}
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-3 mb-1">
           <div
             className={`p-2 rounded-lg ${accentColor.replace("text-", "bg-")}/20 backdrop-blur-sm`}
           >
             <Icon className={`w-5 h-5 ${accentColor}`} />
           </div>
-          <h3 className="text-2xl font-semibold text-white">{language}</h3>
+          <h3 className="text-2xl font-semibold text-white">{languageName}</h3>
         </div>
+
+        {/* Stat */}
+        <p className={`text-sm font-medium ${accentColor} mb-1 ml-12`}>{stat}</p>
+
         {/* Tagline */}
-        <p className="text-sm text-white/50 mb-6">{tagline}</p>
-        <div className="flex flex-wrap gap-2">
-          {exams.map((exam) => (
-            <span
-              key={exam}
-              className={`px-3 py-1.5 rounded-lg backdrop-blur-md bg-white/5 border border-white/10 text-sm font-medium ${accentColor} shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]`}
-            >
-              {exam}
-            </span>
-          ))}
+        <p className="text-sm text-white/50 mb-4">{tagline}</p>
+
+        {/* Skills icons */}
+        <div className="flex gap-2 mb-5">
+          {allSkills.map((skill) => {
+            const SkillIcon = skillIcons[skill];
+            const isActive = skills.includes(skill);
+            return (
+              <div
+                key={skill}
+                className={`p-1.5 rounded-full ${
+                  isActive
+                    ? `${accentColor.replace("text-", "bg-")}/20 ${accentColor}`
+                    : "bg-white/5 text-white/20"
+                } transition-colors`}
+                title={skill.charAt(0).toUpperCase() + skill.slice(1)}
+              >
+                <SkillIcon className="w-3.5 h-3.5" />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Exams */}
+        <div className="flex flex-wrap gap-1.5">
+          {exams.map((exam, index) => {
+            const colors = examColors[language];
+            const badgeColor = colors[index % colors.length];
+            return (
+              <span
+                key={exam}
+                className="px-3 py-1.5 rounded-lg backdrop-blur-md text-base font-semibold whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
+                style={{
+                  backgroundColor: "rgba(0, 0, 0, 0.3)",
+                  borderWidth: "1px",
+                  borderColor: badgeColor,
+                  color: badgeColor,
+                }}
+              >
+                {exam}
+              </span>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -977,13 +1151,13 @@ function CTASection({
           </p>
 
           {isAuthenticated ? (
-            <Link to="/library">
+            <Link to="/dashboard">
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-300 text-black font-semibold shadow-2xl shadow-orange-500/30 hover:shadow-orange-500/50 transition-all text-lg px-10 py-6"
               >
                 <BookOpen className="w-6 h-6 mr-2" />
-                {t("landing.cta.goToLibrary")}
+                {t("landing.hero.startLearning")}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
