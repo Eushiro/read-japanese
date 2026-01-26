@@ -19,14 +19,14 @@ import { getTier, type PaidTierId } from "@/lib/tiers";
 
 import { api } from "../../convex/_generated/api";
 
-// Credit costs for the reference table
+// Credit costs for the reference table - uses translation keys
 const CREDIT_COSTS = [
-  { action: "AI flashcard sentence", credits: 1, upTo500: "500" },
-  { action: "Writing feedback", credits: 1, upTo500: "500" },
-  { action: "Quiz grading", credits: 1, upTo500: "500" },
-  { action: "Audio generation", credits: 2, upTo500: "250" },
-  { action: "Shadowing session", credits: 3, upTo500: "166" },
-];
+  { actionKey: "flashcard", credits: 1, upTo500: "500" },
+  { actionKey: "feedback", credits: 1, upTo500: "500" },
+  { actionKey: "comprehension", credits: 1, upTo500: "500" },
+  { actionKey: "audio", credits: 2, upTo500: "250" },
+  { actionKey: "shadowing", credits: 3, upTo500: "166" },
+] as const;
 
 export function PricingPage() {
   const t = useT();
@@ -315,13 +315,16 @@ export function PricingPage() {
               </TableHeader>
               <TableBody>
                 {CREDIT_COSTS.map((row) => (
-                  <TableRow key={row.action}>
-                    <TableCell className="font-medium">{row.action}</TableCell>
+                  <TableRow key={row.actionKey}>
+                    <TableCell className="font-medium">
+                      {t(`pricing.creditCosts.actions.${row.actionKey}`)}
+                    </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="outline">{row.credits}</Badge>
                     </TableCell>
                     <TableCell className="text-right text-foreground-muted">
-                      {row.upTo500}/month
+                      {row.upTo500}
+                      {t("pricing.creditCosts.perMonth")}
                     </TableCell>
                   </TableRow>
                 ))}

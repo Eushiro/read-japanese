@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useStory } from "@/hooks/useStory";
+import { isAdmin as checkIsAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 import { difficultyLevelToTestLevel, testLevelToDifficultyLevel } from "@/types/story";
@@ -95,7 +96,7 @@ export function ComprehensionPage() {
   const removeStoryQuestions = useMutation(api.storyQuestions.remove);
 
   // Admin check
-  const isAdmin = user?.email === "hiro.ayettey@gmail.com";
+  const isAdmin = checkIsAdmin(user?.email);
 
   // Initialize local questions from existing comprehension
   useEffect(() => {

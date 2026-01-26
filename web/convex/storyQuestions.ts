@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import { isAdminEmail } from "./lib/admin";
 import { languageValidator } from "./schema";
 
 // Question type validator (shared with storyComprehension)
@@ -270,7 +271,7 @@ export const remove = mutation({
   },
   handler: async (ctx, args) => {
     // Only allow admin to delete
-    if (args.adminEmail !== "hiro.ayettey@gmail.com") {
+    if (!isAdminEmail(args.adminEmail)) {
       throw new Error("Unauthorized: Admin access required");
     }
 

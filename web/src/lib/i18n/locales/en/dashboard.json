@@ -56,6 +56,19 @@
     "button": "Try it Free",
     "disclaimer": "No credit card required"
   },
+  "languageSwitcher": {
+    "takeTest": "Test",
+    "due": "due"
+  },
+  "languages": {
+    "title": "Your Languages",
+    "startStudying": "Start Studying",
+    "findYourLevel": "Find Your Level"
+  },
+  "crossLanguage": {
+    "dueCards": "You have {{count}} cards due in {{language}}",
+    "switchPrompt": "Tap to switch and review"
+  },
   "session": {
     "startSession": "Start Session",
     "sessionComplete": "Session Complete",

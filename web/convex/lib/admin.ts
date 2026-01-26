@@ -1,15 +1,25 @@
 /**
  * Centralized admin email management
  * Single source of truth for admin access control
+ *
+ * Set ADMIN_EMAILS environment variable in Convex dashboard
+ * as a comma-separated list of emails
  */
 
-// Admin emails - users with these emails can enable admin mode
-export const ADMIN_EMAILS = ["hiro.ayettey@gmail.com"] as const;
+/**
+ * Get admin emails from environment variable
+ */
+export function getAdminEmails(): string[] {
+  const envEmails = process.env.ADMIN_EMAILS;
+  if (!envEmails) return [];
+  return envEmails.split(",").map((email) => email.trim());
+}
 
 /**
  * Check if an email is in the admin list
  */
 export function isAdminEmail(email: string | null | undefined): boolean {
   if (!email) return false;
-  return ADMIN_EMAILS.includes(email as (typeof ADMIN_EMAILS)[number]);
+  const adminEmails = getAdminEmails();
+  return adminEmails.includes(email);
 }

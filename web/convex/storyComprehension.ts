@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { isAdminEmail } from "./lib/admin";
 import { languageValidator } from "./schema";
 
 // ============================================
@@ -450,7 +451,7 @@ export const reset = mutation({
   },
   handler: async (ctx, args) => {
     // Only allow admin to reset
-    if (args.adminEmail !== "hiro.ayettey@gmail.com") {
+    if (!isAdminEmail(args.adminEmail)) {
       throw new Error("Unauthorized: Admin access required");
     }
 

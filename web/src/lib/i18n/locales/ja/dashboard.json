@@ -57,6 +57,19 @@
     "button": "無料で試す",
     "disclaimer": "クレジットカード不要"
   },
+  "languageSwitcher": {
+    "takeTest": "テスト",
+    "due": "待ち"
+  },
+  "languages": {
+    "title": "学習中の言語",
+    "startStudying": "学習を始める",
+    "findYourLevel": "レベルを確認"
+  },
+  "crossLanguage": {
+    "dueCards": "{{language}}で{{count}}枚のカードが復習待ち",
+    "switchPrompt": "タップして切り替えて復習"
+  },
   "session": {
     "startSession": "セッションを始める",
     "sessionComplete": "セッション完了",

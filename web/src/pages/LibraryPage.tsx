@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
+import { useUserData } from "@/contexts/UserDataContext";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { type SortOption, sortStories, useFilteredStories, useStories } from "@/hooks/useStories";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
@@ -69,7 +71,7 @@ function LibraryAnimatedBackground() {
 export function LibraryPage() {
   const navigate = useNavigate();
   const t = useT();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<ProficiencyLevel | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("level-asc");
@@ -78,21 +80,12 @@ export function LibraryPage() {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [contentFilter, setContentFilter] = useState<ContentFilter>("all");
 
-  // Check subscription from Convex (with dev override fallback)
-  const subscription = useQuery(
-    api.subscriptions.get,
-    isAuthenticated && user ? { userId: user.id } : "skip"
-  );
+  // User profile and subscription from shared context (prevents refetching on navigation)
+  const { userProfile, isPremium } = useUserData();
 
-  // Premium if subscription tier is not free, or if dev toggle is enabled
+  // Premium if context says premium, or if dev toggle is enabled
   const devPremiumOverride = localStorage.getItem("isPremiumUser") === "true";
-  const isPremiumUser = devPremiumOverride || (subscription?.tier && subscription.tier !== "free");
-
-  // Get user profile to access their languages
-  const userProfile = useQuery(
-    api.users.getByClerkId,
-    isAuthenticated && user ? { clerkId: user.id } : "skip"
-  );
+  const isPremiumUser = devPremiumOverride || isPremium;
 
   // Don't auto-select language - show all content by default
   // Users can filter by language if they want
@@ -113,12 +106,15 @@ export function LibraryPage() {
     [filteredStories, sortBy]
   );
 
-  // Fetch videos from Convex
-  const videos = useQuery(
+  // Fetch videos from Convex with caching
+  const videosQuery = useQuery(
     api.youtubeContent.list,
     selectedLanguage ? { language: selectedLanguage, level: selectedLevel ?? undefined } : {}
   ) as VideoItem[] | undefined;
-  const isLoadingVideos = videos === undefined;
+  const { data: videos, isLoading: isLoadingVideos } = useCachedQuery(
+    videosQuery,
+    `videos:${selectedLanguage ?? "all"}:${selectedLevel ?? "all"}`
+  );
 
   // Filter videos by search term (with romaji support)
   const filteredVideos = useMemo(() => {
@@ -177,19 +173,11 @@ export function LibraryPage() {
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-8 pb-12">
         <div className="container mx-auto px-4 sm:px-6 relative">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
-            className="max-w-2xl"
-          >
+          <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-3">
-              <motion.div
-                whileHover={{ scale: 1.1, rotate: -5 }}
-                className="p-2 rounded-xl bg-orange-500/20"
-              >
+              <div className="p-2 rounded-xl bg-orange-500/20">
                 <Library className="w-5 h-5 text-orange-400" />
-              </motion.div>
+              </div>
               <span className="text-sm font-semibold text-orange-400 uppercase tracking-wider">
                 {t("library.hero.badge")}
               </span>
@@ -222,7 +210,7 @@ export function LibraryPage() {
                 </SignInButton>
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 

@@ -74,6 +74,26 @@ The brand name is configured in `shared/brand.json` and automatically available 
 
 ---
 
+## i18n: Never Use Emoji Flags
+
+**Never use emoji flags** (e.g., no country flag emojis like flags for Japan, France, USA, etc.). Use text language names instead.
+
+This applies to:
+- UI components displaying languages
+- Translation files
+- Any user-facing text
+
+**Example:**
+```typescript
+// Bad - emoji flags
+<span>🇯🇵 Japanese</span>
+
+// Good - text only
+<span>Japanese</span>
+```
+
+---
+
 ## Development Guidelines
 
 See **`docs/DEVELOPMENT.md`** for detailed patterns on:

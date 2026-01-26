@@ -67,6 +67,7 @@
       "audio": "Génération audio",
       "shadowing": "Session de shadowing"
     },
+    "perMonth": "/mois",
     "footer": "Les crédits sont réinitialisés mensuellement. Les crédits non utilisés ne sont pas reportés."
   },
   "faq": {

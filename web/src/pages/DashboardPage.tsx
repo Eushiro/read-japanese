@@ -8,24 +8,24 @@ import {
   Brain,
   ChevronRight,
   Flame,
+  Globe,
   Play,
   Sparkles,
-  Target,
   TrendingUp,
   Video,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { CreditAlert } from "@/components/CreditAlert";
 import { StoryCard } from "@/components/library/StoryCard";
 import { VideoCard, type VideoItem } from "@/components/library/VideoCard";
 import { Paywall } from "@/components/Paywall";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
+import { useUserData } from "@/contexts/UserDataContext";
+import { usePrimaryLanguage } from "@/hooks/usePrimaryLanguage";
 import { useStories } from "@/hooks/useStories";
-import { LANGUAGES } from "@/lib/contentLanguages";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
-import { buildSessionPlan, DURATION_OPTIONS, getSessionDescription } from "@/lib/sessionPlanner";
-import { getRandomStudyPhrase } from "@/lib/studyPhrases";
 import type { StoryListItem } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
@@ -242,7 +242,6 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const t = useT();
 
-  const [selectedDuration, setSelectedDuration] = useState<number | null>(15);
   const [streakAnimating, setStreakAnimating] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
 
@@ -251,17 +250,17 @@ export function DashboardPage() {
     setTimeout(() => setStreakAnimating(false), 600);
   };
 
+  // Get primary language and all user languages with localStorage caching (instant, no flicker)
+  const { primaryLanguage, userLanguages } = usePrimaryLanguage();
+
   // Fetch flashcard stats
   const flashcardStats = useQuery(api.flashcards.getStats, isAuthenticated ? { userId } : "skip");
 
   // Fetch vocabulary
   const vocabulary = useQuery(api.vocabulary.list, isAuthenticated ? { userId } : "skip");
 
-  // Fetch user profile for streak
-  const userProfile = useQuery(
-    api.users.getByClerkId,
-    isAuthenticated && user ? { clerkId: user.id } : "skip"
-  );
+  // User profile and subscription from shared context (prevents refetching on navigation)
+  const { userProfile, isPremium: isPremiumUser } = useUserData();
 
   // Fetch streak data
   const streakData = useQuery(
@@ -269,42 +268,34 @@ export function DashboardPage() {
     isAuthenticated && user ? { clerkId: user.id } : "skip"
   );
 
-  // Fetch videos for recommendations
-  const primaryLanguage = userProfile?.primaryLanguage ?? "japanese";
-
-  // Get language info and random study phrase (stable per page load)
-  const languageInfo = LANGUAGES.find((l) => l.value === primaryLanguage);
-  const studyPhrase = useMemo(() => getRandomStudyPhrase(primaryLanguage), [primaryLanguage]);
-
-  // Check subscription for premium content
-  const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
-  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
-
-  // Check if user needs placement test for their primary language
-  const needsPlacementTest =
-    userProfile &&
-    !userProfile.proficiencyLevels?.[primaryLanguage as keyof typeof userProfile.proficiencyLevels];
-
-  const videos = useQuery(api.youtubeContent.list, { language: primaryLanguage }) as
-    | VideoItem[]
-    | undefined;
+  // Fetch all videos and filter by user's languages
+  const allVideos = useQuery(api.youtubeContent.list, {}) as VideoItem[] | undefined;
+  const videos =
+    allVideos?.filter((v) =>
+      userLanguages.length > 0 ? userLanguages.includes(v.language as ContentLanguage) : true
+    ) ?? [];
 
   // Fetch stories for recommendations
   const { data: allStories } = useStories();
 
-  // Filter stories by user's language/level
+  // Filter stories by user's languages and levels
   const suggestedStories =
     allStories
       ?.filter((story) => {
-        if (primaryLanguage === "japanese") {
+        // Filter by user's languages (or show all if no languages set)
+        if (userLanguages.length > 0 && !userLanguages.includes(story.language as ContentLanguage)) {
+          return false;
+        }
+        // Filter by valid levels for the story's language
+        if (story.language === "japanese") {
           return ["N5", "N4", "N3", "N2", "N1"].includes(story.level);
         }
         return ["A1", "A2", "B1", "B2", "C1", "C2"].includes(story.level);
       })
       .slice(0, 8) ?? [];
 
-  // Get suggested videos
-  const suggestedVideos = videos?.slice(0, 4) ?? [];
+  // Get suggested videos from user's languages
+  const suggestedVideos = videos.slice(0, 4);
 
   // Handle story click with premium check
   const handleStoryClick = (story: StoryListItem) => {
@@ -323,39 +314,10 @@ export function DashboardPage() {
   const dueCards = isPreviewMode ? 12 : (flashcardStats?.dueNow ?? 0) + (flashcardStats?.new ?? 0);
   const totalWords = isPreviewMode ? 247 : (vocabulary?.length ?? 0);
   const currentStreak = isPreviewMode ? 3 : (streakData?.currentStreak ?? 0);
-  const vocabToReview = isPreviewMode
-    ? 8
-    : (vocabulary?.filter((v) => v.masteryState === "new" || v.masteryState === "learning")
-        .length ?? 0);
 
-  // Build session plan
-  const firstVideo = videos?.[0];
-  const recommendedContent = firstVideo
-    ? {
-        type: "video" as const,
-        id: firstVideo._id,
-        title: firstVideo.title,
-        language: firstVideo.language,
-      }
-    : null;
-
-  const sessionPlan = buildSessionPlan({
-    dueCardCount: flashcardStats?.dueNow ?? 0,
-    newCardCount: flashcardStats?.new ?? 0,
-    vocabToReview,
-    recommendedContent,
-    selectedDuration,
-  });
-
-  const sessionDescription = getSessionDescription(sessionPlan);
-
-  // Handle start studying
-  const handleStartStudying = () => {
-    if (needsPlacementTest) {
-      navigate({ to: "/placement-test", search: { language: primaryLanguage } });
-    } else {
-      navigate({ to: "/study-session" });
-    }
+  // Helper to check if a language has a placement test
+  const hasPlacementTest = (lang: ContentLanguage): boolean => {
+    return !!userProfile?.proficiencyLevels?.[lang as keyof typeof userProfile.proficiencyLevels];
   };
 
   if (authLoading) {
@@ -403,90 +365,89 @@ export function DashboardPage() {
 
         <div className="space-y-16">
           {/* Start Studying CTA - Floating with ambient glow */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-            className="relative"
-          >
-            {/* Content */}
-            <div className="relative py-10 sm:py-12">
-              {isPreviewMode ? (
+          {isPreviewMode ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="relative"
+            >
+              <div className="relative py-10 sm:py-12">
                 <PreviewStartStudying />
-              ) : needsPlacementTest ? (
-                <div className="text-center">
-                  <h2
-                    className="text-2xl sm:text-3xl font-bold text-foreground mb-2"
-                    style={{ fontFamily: "var(--font-display)" }}
-                  >
-                    {t("dashboard.cta.findLevel")}
-                  </h2>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    {t("dashboard.cta.placementExplainer")}
-                  </p>
-                  <button
-                    onClick={handleStartStudying}
-                    className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 hover:from-orange-400 hover:to-amber-300 text-black shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 overflow-hidden"
-                  >
-                    {/* Shimmer effect */}
-                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                    <span className="relative flex items-center justify-center gap-3">
-                      <Target className="w-6 h-6" />
-                      {t("dashboard.cta.startPlacement")}
-                    </span>
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="text-center mb-6">
-                    <div className="flex justify-center mb-3">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border text-sm text-muted-foreground">
-                        {languageInfo?.label}
-                      </span>
-                    </div>
-                    <button
-                      onClick={handleStartStudying}
-                      className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-500 dark:from-yellow-300 dark:via-orange-400 dark:to-purple-400 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 overflow-hidden"
-                    >
-                      {/* Shimmer effect */}
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                      <span className="relative flex items-center justify-center gap-3">
-                        <Play className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                        {studyPhrase}
-                      </span>
-                    </button>
-                  </div>
-                  <p className="text-center text-foreground/80 mb-6 font-medium">
-                    {sessionDescription}
-                  </p>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {t("dashboard.cta.durationQuestion")}
-                    </p>
-                    <div className="flex justify-center gap-2">
-                      {DURATION_OPTIONS.map((option) => (
-                        <button
-                          key={option.value}
-                          onClick={() =>
-                            setSelectedDuration(
-                              selectedDuration === option.value ? null : option.value
-                            )
+              </div>
+            </motion.div>
+          ) : (
+            /* Your Languages Section - Side by side buttons */
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="text-center py-8"
+            >
+              {/* Language buttons side by side */}
+              <div className="flex flex-wrap justify-center gap-4">
+                {(userLanguages.length > 0 ? userLanguages : [primaryLanguage]).map(
+                  (lang, index, arr) => {
+                    const hasTakenTest = hasPlacementTest(lang);
+
+                    // Different gradients for each language - matching stat icon colors
+                    // Order: Blue (left) → Purple (middle) → Orange (right)
+                    const gradientsByPosition = {
+                      orange:
+                        "from-amber-600/90 via-orange-600/90 to-amber-700/90 shadow-amber-900/25 hover:shadow-amber-900/40",
+                      purple:
+                        "from-purple-600/90 via-violet-600/90 to-purple-700/90 shadow-purple-900/25 hover:shadow-purple-900/40",
+                      blue: "from-blue-600/90 via-sky-600/90 to-blue-700/90 shadow-blue-900/25 hover:shadow-blue-900/40",
+                    };
+
+                    // Assign gradient based on count and position
+                    let gradient: string;
+                    if (arr.length === 1) {
+                      gradient = gradientsByPosition.orange;
+                    } else if (arr.length === 2) {
+                      gradient = index === 0 ? gradientsByPosition.purple : gradientsByPosition.orange;
+                    } else {
+                      // 3+ languages: blue, purple, orange (then repeat)
+                      const colors = ["blue", "purple", "orange"] as const;
+                      gradient = gradientsByPosition[colors[index % 3]];
+                    }
+
+                    return (
+                      <button
+                        key={lang}
+                        onClick={() => {
+                          if (hasTakenTest) {
+                            navigate({ to: "/study-session" });
+                          } else {
+                            navigate({ to: "/placement-test", search: { language: lang } });
                           }
-                          className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all border-2 ${
-                            selectedDuration === option.value
-                              ? "bg-accent text-white border-accent shadow-md shadow-accent/25"
-                              : "bg-muted text-foreground/80 border-border hover:border-foreground/20 hover:bg-muted/80"
-                          }`}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </motion.div>
+                        }}
+                        className={`group relative min-w-[260px] px-10 py-5 text-lg font-semibold rounded-2xl transition-all duration-300 overflow-hidden text-white bg-gradient-to-r ${gradient} shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]`}
+                      >
+                        {/* Shimmer effect */}
+                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                        <span className="relative flex flex-col items-center gap-1">
+                          <span className="flex items-center gap-2">
+                            {hasTakenTest ? (
+                              <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                            ) : (
+                              <Globe className="w-5 h-5" />
+                            )}
+                            {t(`common.languages.${lang}`)}
+                          </span>
+                          <span className="text-sm opacity-90">
+                            {hasTakenTest
+                              ? t("dashboard.languages.startStudying")
+                              : t("dashboard.languages.findYourLevel")}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+            </motion.section>
+          )}
 
           {/* Quick Stats - Floating horizontal row with subtle dividers */}
           <div className="flex justify-center items-center gap-4 sm:gap-8 lg:gap-12">

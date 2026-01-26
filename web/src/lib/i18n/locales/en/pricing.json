@@ -67,6 +67,7 @@
       "audio": "Audio generation",
       "shadowing": "Shadowing session"
     },
+    "perMonth": "/month",
     "footer": "Credits reset monthly. Unused credits don't roll over."
   },
   "faq": {

@@ -57,6 +57,19 @@
     "button": "Essayer gratuitement",
     "disclaimer": "Aucune carte de crédit requise"
   },
+  "languageSwitcher": {
+    "takeTest": "Test",
+    "due": "en attente"
+  },
+  "languages": {
+    "title": "Vos langues",
+    "startStudying": "Commencer",
+    "findYourLevel": "Trouver votre niveau"
+  },
+  "crossLanguage": {
+    "dueCards": "Vous avez {{count}} cartes à réviser en {{language}}",
+    "switchPrompt": "Appuyez pour changer et réviser"
+  },
   "session": {
     "startSession": "Démarrer la session",
     "sessionComplete": "Session terminée",

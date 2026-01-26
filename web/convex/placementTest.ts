@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { internalMutation, mutation, query } from "./_generated/server";
+import { isAdminEmail } from "./lib/admin";
 import { getGradingProfile as getGradingProfileConstant } from "./lib/gradingProfiles";
 import { type ContentLanguage, languageValidator } from "./schema";
 
@@ -459,7 +460,7 @@ export const reset = mutation({
   },
   handler: async (ctx, args) => {
     // Only allow admin to reset
-    if (args.adminEmail !== "hiro.ayettey@gmail.com") {
+    if (!isAdminEmail(args.adminEmail)) {
       throw new Error("Unauthorized: Only admin can reset placement tests");
     }
 

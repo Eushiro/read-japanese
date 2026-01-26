@@ -57,6 +57,19 @@
     "button": "免费试用",
     "disclaimer": "无需信用卡"
   },
+  "languageSwitcher": {
+    "takeTest": "测试",
+    "due": "待复习"
+  },
+  "languages": {
+    "title": "您的语言",
+    "startStudying": "开始学习",
+    "findYourLevel": "确定您的水平"
+  },
+  "crossLanguage": {
+    "dueCards": "您有{{count}}张{{language}}卡片待复习",
+    "switchPrompt": "点击切换并复习"
+  },
   "session": {
     "startSession": "开始学习",
     "sessionComplete": "学习完成",

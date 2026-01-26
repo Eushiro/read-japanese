@@ -11,17 +11,12 @@ import { WaveBackground } from "@/components/ui/wave-background";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
+import { isAdmin as checkIsAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-
-const languageFlags: Record<ContentLanguage, string> = {
-  japanese: "\u{1f1ef}\u{1f1f5}",
-  english: "\u{1f1ec}\u{1f1e7}",
-  french: "\u{1f1eb}\u{1f1f7}",
-};
 
 interface PlacementQuestion {
   questionId: string;
@@ -171,7 +166,7 @@ export function PlacementTestPage() {
   const getNextDifficulty = useAIAction(api.ai.getNextQuestionDifficulty);
 
   // Admin check
-  const isAdmin = user?.email === "hiro.ayettey@gmail.com";
+  const isAdmin = checkIsAdmin(user?.email);
 
   // Reset initialization flag when language changes
   useEffect(() => {
@@ -505,7 +500,6 @@ export function PlacementTestPage() {
             </div>
 
             <h2 className="text-2xl font-bold mb-2">
-              {languageFlags[language]}{" "}
               {t("placement.results.yourLevel", { language: languageName })}
             </h2>
 
@@ -585,9 +579,7 @@ export function PlacementTestPage() {
             <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <h1 className="text-xl font-bold">
-              {languageFlags[language]} {t("placement.question.title")}
-            </h1>
+            <h1 className="text-xl font-bold">{t("placement.question.title")}</h1>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline">

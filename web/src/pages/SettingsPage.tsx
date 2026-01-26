@@ -1,8 +1,7 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useAction, useMutation, useQuery } from "convex/react";
+import { Link } from "@tanstack/react-router";
+import { useAction, useMutation } from "convex/react";
 import { motion } from "framer-motion";
 import {
-  Brain,
   Check,
   ChevronRight,
   CreditCard,
@@ -11,6 +10,7 @@ import {
   EyeOff,
   Globe,
   GraduationCap,
+  Lock,
   LogOut,
   Monitor,
   Moon,
@@ -19,9 +19,11 @@ import {
   User,
   Volume2,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { Footer } from "@/components/Footer";
+import { Paywall } from "@/components/Paywall";
+import { PlacementTestPromptDialog } from "@/components/PlacementTestPromptDialog";
 import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -36,8 +38,10 @@ import { Switch } from "@/components/ui/switch";
 import { UILanguageSwitcher } from "@/components/UILanguageSwitcher";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth, UserButton } from "@/contexts/AuthContext";
+import { useUserData } from "@/contexts/UserDataContext";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useSettings } from "@/hooks/useSettings";
+import { isAdmin } from "@/lib/admin";
 import { type ContentLanguage, EXAMS_BY_LANGUAGE, LANGUAGES } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 
@@ -83,9 +87,14 @@ function SettingsAnimatedBackground() {
 }
 
 export function SettingsPage() {
-  const navigate = useNavigate();
   const { trackEvent, events } = useAnalytics();
   const t = useT();
+
+  // State for dialogs
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [placementPromptLanguage, setPlacementPromptLanguage] = useState<ContentLanguage | null>(
+    null
+  );
 
   const {
     settings,
@@ -108,18 +117,10 @@ export function SettingsPage() {
     tier: creditsTier,
   } = useCreditBalance();
 
-  // Subscription data
-  const subscription = useQuery(
-    api.subscriptions.get,
-    isAuthenticated && user ? { userId: user.id } : "skip"
-  );
+  // User profile and subscription from shared context (prevents refetching on navigation)
+  const { userProfile, subscription, isPremium: isPremiumUser } = useUserData();
   const createPortal = useAction(api.stripe.createPortalSession);
 
-  // User profile data
-  const userProfile = useQuery(
-    api.users.getByClerkId,
-    isAuthenticated && user ? { clerkId: user.id } : "skip"
-  );
   const updateLanguages = useMutation(api.users.updateLanguages);
   const updateTargetExams = useMutation(api.users.updateTargetExams);
   const upsertUser = useMutation(api.users.upsert);
@@ -140,12 +141,20 @@ export function SettingsPage() {
     if (!user || !userProfile) return;
 
     const currentLanguages = userProfile.languages || [];
-    const newLanguages = currentLanguages.includes(lang)
-      ? currentLanguages.filter((l) => l !== lang)
-      : [...currentLanguages, lang];
+    const isRemoving = currentLanguages.includes(lang);
 
     // Don't allow removing all languages
-    if (newLanguages.length === 0) return;
+    if (isRemoving && currentLanguages.length <= 1) return;
+
+    // If trying to add a language and user is not premium, show paywall
+    if (!isRemoving && !isPremiumUser && currentLanguages.length >= 1) {
+      setShowPaywall(true);
+      return;
+    }
+
+    const newLanguages = isRemoving
+      ? currentLanguages.filter((l) => l !== lang)
+      : [...currentLanguages, lang];
 
     await updateLanguages({
       clerkId: user.id,
@@ -155,8 +164,13 @@ export function SettingsPage() {
     trackEvent(events.SETTING_CHANGED, {
       setting: "languages",
       value: newLanguages,
-      action: currentLanguages.includes(lang) ? "remove" : "add",
+      action: isRemoving ? "remove" : "add",
     });
+
+    // If adding a language (not removing), show placement test prompt
+    if (!isRemoving) {
+      setPlacementPromptLanguage(lang);
+    }
   };
 
   const handleExamToggle = async (exam: string) => {
@@ -559,21 +573,33 @@ export function SettingsPage() {
                       <label className="block text-sm font-medium text-foreground mb-3">
                         {t("settings.languages.learningLanguages")}
                       </label>
+                      {!isPremiumUser && (userProfile?.languages?.length ?? 0) >= 1 && (
+                        <p className="text-xs text-foreground-muted mb-3">
+                          {t("settings.languages.premiumHint")}
+                        </p>
+                      )}
                       <div className="flex flex-wrap gap-2">
                         {LANGUAGES.map((lang) => {
                           const isSelected = userProfile?.languages?.includes(lang.value) ?? false;
+                          const isLocked =
+                            !isSelected &&
+                            !isPremiumUser &&
+                            (userProfile?.languages?.length ?? 0) >= 1;
                           return (
                             <button
                               key={lang.value}
                               onClick={() => handleLanguageToggle(lang.value)}
-                              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all flex items-center gap-2 ${
                                 isSelected
                                   ? "border-accent bg-accent/10 text-accent"
-                                  : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
+                                  : isLocked
+                                    ? "border-border bg-muted/50 text-foreground-muted cursor-pointer"
+                                    : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
                               }`}
                             >
+                              {isLocked && <Lock className="w-3 h-3" />}
                               {t(`common.languages.${lang.value}`)}
-                              {isSelected && <Check className="w-4 h-4 ml-2 inline" />}
+                              {isSelected && <Check className="w-4 h-4" />}
                             </button>
                           );
                         })}
@@ -634,87 +660,7 @@ export function SettingsPage() {
             </section>
           )}
 
-          {/* 4. Proficiency/Placement Test */}
-          {isAuthenticated && user && userProfile && (
-            <section className="relative rounded-2xl overflow-hidden">
-              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-border rounded-2xl" />
-              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
-
-              <div className="relative p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-1.5 rounded-lg bg-purple-500/20">
-                    <Brain className="w-4 h-4 text-purple-400" />
-                  </div>
-                  <h2
-                    className="text-lg font-semibold text-foreground"
-                    style={{ fontFamily: "var(--font-display)" }}
-                  >
-                    {t("settings.proficiency.title")}
-                  </h2>
-                </div>
-
-                <p className="text-sm text-foreground-muted mb-4">
-                  {t("settings.proficiency.description")}
-                </p>
-
-                <div className="space-y-3">
-                  {userProfile.languages?.map((lang) => {
-                    const langInfo = LANGUAGES.find((l) => l.value === lang);
-                    const proficiency =
-                      userProfile.proficiencyLevels?.[
-                        lang as keyof typeof userProfile.proficiencyLevels
-                      ];
-
-                    return (
-                      <div
-                        key={lang}
-                        className="flex items-center justify-between p-4 rounded-xl bg-muted/50 border border-border"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div>
-                            <div className="font-medium text-foreground">{langInfo?.label}</div>
-                            {proficiency ? (
-                              <div className="text-sm text-foreground-muted">
-                                {t("settings.proficiency.level")}:{" "}
-                                <span className="font-semibold text-accent">
-                                  {proficiency.level}
-                                </span>
-                                <span className="text-xs ml-2">
-                                  (
-                                  {t("settings.proficiency.tested", {
-                                    date: new Date(proficiency.assessedAt).toLocaleDateString(),
-                                  })}
-                                  )
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="text-sm text-foreground-muted">
-                                {t("settings.proficiency.notAssessed")}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <Button
-                          variant="glass-accent"
-                          size="sm"
-                          onClick={() =>
-                            navigate({ to: "/placement-test", search: { language: lang } })
-                          }
-                        >
-                          {proficiency
-                            ? t("settings.proficiency.retake")
-                            : t("settings.proficiency.takeTest")}
-                          <ChevronRight className="w-4 h-4 ml-1" />
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* 5. Account */}
+          {/* 4. Account */}
           <section className="relative rounded-2xl overflow-hidden">
             <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-border rounded-2xl" />
             <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
@@ -786,8 +732,8 @@ export function SettingsPage() {
             </div>
           </section>
 
-          {/* 6. Admin Settings - for specific users */}
-          {user?.email === "hiro.ayettey@gmail.com" && (
+          {/* 5. Admin Settings - for specific users */}
+          {isAdmin(user?.email) && (
             <section className="relative rounded-2xl overflow-hidden">
               <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-amber-500/30 rounded-2xl" />
               <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
@@ -838,6 +784,25 @@ export function SettingsPage() {
       </div>
 
       <Footer />
+
+      {/* Paywall for premium languages */}
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="additionalLanguages"
+        title={t("settings.languages.premiumRequired")}
+        description={t("settings.languages.premiumDescription")}
+      />
+
+      {/* Placement test prompt dialog */}
+      {placementPromptLanguage && (
+        <PlacementTestPromptDialog
+          isOpen={!!placementPromptLanguage}
+          onClose={() => setPlacementPromptLanguage(null)}
+          language={placementPromptLanguage}
+          onSkip={() => setPlacementPromptLanguage(null)}
+        />
+      )}
     </div>
   );
 }
