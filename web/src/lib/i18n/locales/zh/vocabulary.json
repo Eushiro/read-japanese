@@ -23,6 +23,7 @@
     "removeDeckDescription": "这将从您的卡组中删除<strong>{{deckName}}</strong>。您已学会的单词将保留在词汇表中。",
     "cancel": "取消",
     "remove": "删除",
+    "removeDeck": "删除卡组",
     "wordsProgress": "{{added}}/{{total}}个单词",
     "today": "今天+{{count}}",
     "newCardsPerDay": "每日新卡片"

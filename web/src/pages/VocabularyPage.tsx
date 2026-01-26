@@ -26,6 +26,7 @@ import { Paywall } from "@/components/Paywall";
 import { AudioRecorder } from "@/components/shadowing/AudioRecorder";
 import { FeedbackDisplay } from "@/components/shadowing/FeedbackDisplay";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { matchesSearch, SearchBox } from "@/components/ui/search-box";
 import {
   Select,
@@ -425,7 +426,11 @@ export function VocabularyPage() {
               </div>
               <div className="flex items-center gap-2">
                 {/* Generate All Flashcards button removed to prevent accidental mass AI requests */}
-                <Button onClick={() => setShowAddModal(true)} className="gap-2">
+                <Button
+                  variant="glass-accent"
+                  onClick={() => setShowAddModal(true)}
+                  className="gap-2"
+                >
                   <Plus className="w-4 h-4" />
                   {t("vocabulary.addWord")}
                 </Button>
@@ -1562,9 +1567,6 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
   const [suggestions, setSuggestions] = useState<DictionaryEntry[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Lock body scroll when modal is open (with scrollbar compensation)
-  useBodyScrollLock();
-
   const { trackEvent, events } = useAnalytics();
   const addWord = useMutation(api.vocabulary.add);
   const generateFlashcardWithAudio = useAIAction(api.ai.generateFlashcardWithAudio);
@@ -1666,15 +1668,12 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md">
-      <div className="bg-surface/95 dark:bg-black/90 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] w-full max-w-md mx-4 animate-fade-in-up">
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md p-0" showCloseButton={false}>
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2
-            className="text-lg font-semibold text-foreground"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
+          <DialogTitle style={{ fontFamily: "var(--font-display)" }}>
             {t("vocabulary.addModal.title")}
-          </h2>
+          </DialogTitle>
           <button
             onClick={onClose}
             className="p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-muted transition-colors"
@@ -1737,7 +1736,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
             </div>
             {/* Suggestions dropdown */}
             {showSuggestions && word.trim().length > 0 && suggestions.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+              <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
                 {suggestions.map((entry, index) => (
                   <button
                     key={`${entry.word}-${index}`}
@@ -1777,7 +1776,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
               word.trim().length > 0 &&
               suggestions.length === 0 &&
               !isSearching && (
-                <div className="absolute z-10 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg p-4 text-sm text-foreground-muted">
+                <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-lg shadow-lg p-4 text-sm text-foreground-muted">
                   {t("vocabulary.addModal.noResults")}
                 </div>
               )}
@@ -1840,7 +1839,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

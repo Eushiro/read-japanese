@@ -23,6 +23,7 @@
     "removeDeckDescription": "Cela supprimera <strong>{{deckName}}</strong> de vos paquets. Les mots que vous avez déjà appris resteront dans votre vocabulaire.",
     "cancel": "Annuler",
     "remove": "Supprimer",
+    "removeDeck": "Supprimer le paquet",
     "wordsProgress": "{{added}}/{{total}} mots",
     "today": "+{{count}} aujourd'hui",
     "newCardsPerDay": "Nouvelles cartes/jour"

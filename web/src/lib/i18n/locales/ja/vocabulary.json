@@ -23,6 +23,7 @@
     "removeDeckDescription": "<strong>{{deckName}}</strong>をデッキから削除します。すでに学習した単語は語彙に残ります。",
     "cancel": "キャンセル",
     "remove": "削除",
+    "removeDeck": "デッキを削除",
     "wordsProgress": "{{added}}/{{total}}単語",
     "today": "今日+{{count}}",
     "newCardsPerDay": "1日の新規カード"

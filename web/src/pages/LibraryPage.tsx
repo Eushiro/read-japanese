@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/select";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useUserData } from "@/contexts/UserDataContext";
-import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { type SortOption, sortStories, useFilteredStories, useStories } from "@/hooks/useStories";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
@@ -106,15 +105,12 @@ export function LibraryPage() {
     [filteredStories, sortBy]
   );
 
-  // Fetch videos from Convex with caching
-  const videosQuery = useQuery(
+  // Fetch videos from Convex
+  const videos = useQuery(
     api.youtubeContent.list,
     selectedLanguage ? { language: selectedLanguage, level: selectedLevel ?? undefined } : {}
   ) as VideoItem[] | undefined;
-  const { data: videos, isLoading: isLoadingVideos } = useCachedQuery(
-    videosQuery,
-    `videos:${selectedLanguage ?? "all"}:${selectedLevel ?? "all"}`
-  );
+  const isLoadingVideos = videos === undefined;
 
   // Filter videos by search term (with romaji support)
   const filteredVideos = useMemo(() => {

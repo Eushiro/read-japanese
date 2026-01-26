@@ -23,6 +23,7 @@
     "removeDeckDescription": "This will remove <strong>{{deckName}}</strong> from your decks. Words you've already learned will stay in your vocabulary.",
     "cancel": "Cancel",
     "remove": "Remove",
+    "removeDeck": "Remove deck",
     "wordsProgress": "{{added}}/{{total}} words",
     "today": "+{{count}} today",
     "newCardsPerDay": "New cards/day"

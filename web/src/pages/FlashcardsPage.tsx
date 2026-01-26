@@ -5,7 +5,6 @@ import {
   Brain,
   Check,
   ChevronRight,
-  Loader2,
   Redo2,
   RefreshCw,
   RotateCcw,
@@ -25,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useReviewSession } from "@/contexts/ReviewSessionContext";
@@ -114,10 +114,12 @@ export function FlashcardsPage() {
     api.flashcards.getStats,
     isAuthenticated ? { userId, language: activeLanguage } : "skip"
   );
+
   const dueCards = useQuery(
     api.flashcards.getDue,
     isAuthenticated ? { userId, limit: 50, language: activeLanguage, uiLanguage } : "skip"
   );
+
   const newCards = useQuery(
     api.flashcards.getNew,
     isAuthenticated ? { userId, limit: 20, language: activeLanguage, uiLanguage } : "skip"
@@ -467,10 +469,65 @@ export function FlashcardsPage() {
     );
   }
 
-  if (stats === undefined || dueCards === undefined || newCards === undefined) {
+  // Show skeleton while loading OR while waiting for session to initialize (when there are cards)
+  const isLoading =
+    userProfile === undefined ||
+    stats === undefined ||
+    dueCards === undefined ||
+    newCards === undefined ||
+    (!isInitialized && initialCards.length > 0);
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      <div className="h-full flex flex-col overflow-hidden">
+        <FlashcardsAnimatedBackground />
+        {/* Header Skeleton */}
+        <div className="relative flex-shrink-0 pt-6 pb-0">
+          <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
+            <div>
+              {/* Icon + Badge Row */}
+              <div className="flex items-center gap-3 mb-3">
+                <Skeleton className="w-9 h-9 rounded-xl" />
+                <Skeleton className="w-24 h-4" />
+              </div>
+              {/* Title Row */}
+              <div className="flex items-center justify-between gap-4 mb-2">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-48 h-10" />
+                  <Skeleton className="w-20 h-7 rounded-full" />
+                </div>
+                <div className="inline-flex items-center gap-2">
+                  <Skeleton className="w-8 h-6" />
+                  <Skeleton className="w-16 h-4" />
+                </div>
+              </div>
+              {/* Subtitle */}
+              <Skeleton className="w-64 h-5" />
+            </div>
+          </div>
+        </div>
+        {/* Card Skeleton */}
+        <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl flex-1 flex flex-col items-center overflow-y-auto">
+          <div className="w-full space-y-4">
+            {/* Undo/Redo buttons */}
+            <div className="flex items-center justify-end gap-2">
+              <Skeleton className="w-8 h-8 rounded-lg" />
+              <Skeleton className="w-8 h-8 rounded-lg" />
+            </div>
+            {/* Flashcard */}
+            <div className="rounded-2xl border border-border bg-surface/80 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <Skeleton className="w-16 h-5 rounded-full" />
+                <Skeleton className="w-8 h-8 rounded-lg" />
+              </div>
+              <div className="text-center py-8 space-y-3">
+                <Skeleton className="w-32 h-10 mx-auto" />
+                <Skeleton className="w-48 h-5 mx-auto" />
+              </div>
+              <Skeleton className="w-full h-12 rounded-lg" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -544,61 +601,68 @@ export function FlashcardsPage() {
       <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl flex-1 flex flex-col items-center overflow-y-auto">
         {sessionQueue.length === 0 && isInitialized ? (
           // No cards to review
-          <div className="text-center py-12">
-            <div className="w-20 h-20 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-6">
-              <Check className="w-10 h-10 text-green-500" />
-            </div>
-            <h2
-              className="text-2xl font-bold text-foreground mb-2"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              {t("flashcards.states.allCaughtUp.title")}
-            </h2>
-            <p className="text-foreground-muted mb-6">
-              {t("flashcards.states.allCaughtUp.description")}
-            </p>
-            <div className="flex justify-center gap-4">
-              <Button variant="outline" onClick={() => (window.location.href = "/learn?tab=words")}>
-                <BookOpen className="w-4 h-4 mr-2" />
-                {t("flashcards.states.allCaughtUp.addVocabulary")}
-              </Button>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-6">
+                <Check className="w-10 h-10 text-green-500" />
+              </div>
+              <h2
+                className="text-2xl font-bold text-foreground mb-2"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("flashcards.states.allCaughtUp.title")}
+              </h2>
+              <p className="text-foreground-muted mb-6">
+                {t("flashcards.states.allCaughtUp.description")}
+              </p>
+              <div className="flex justify-center gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => (window.location.href = "/learn?tab=words")}
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  {t("flashcards.states.allCaughtUp.addVocabulary")}
+                </Button>
+              </div>
             </div>
           </div>
         ) : sessionComplete ? (
           // Session complete
-          <div className="text-center py-12">
-            <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
-              <Sparkles className="w-10 h-10 text-accent" />
-            </div>
-            <h2
-              className="text-2xl font-bold text-foreground mb-2"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              {t("flashcards.states.sessionComplete.title")}
-            </h2>
-            <p className="text-foreground-muted mb-2">
-              {t("flashcards.states.sessionComplete.cardsReviewed", { count: reviewedCount })
-                .split("<bold>")
-                .map((part, i) =>
-                  i === 0 ? (
-                    part
-                  ) : (
-                    <span key={i}>
-                      <span className="font-semibold text-foreground">
-                        {part.split("</bold>")[0]}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
+                <Sparkles className="w-10 h-10 text-accent" />
+              </div>
+              <h2
+                className="text-2xl font-bold text-foreground mb-2"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("flashcards.states.sessionComplete.title")}
+              </h2>
+              <p className="text-foreground-muted mb-2">
+                {t("flashcards.states.sessionComplete.cardsReviewed", { count: reviewedCount })
+                  .split("<bold>")
+                  .map((part, i) =>
+                    i === 0 ? (
+                      part
+                    ) : (
+                      <span key={i}>
+                        <span className="font-semibold text-foreground">
+                          {part.split("</bold>")[0]}
+                        </span>
+                        {part.split("</bold>")[1]}
                       </span>
-                      {part.split("</bold>")[1]}
-                    </span>
-                  )
-                )}
-            </p>
-            <p className="text-sm text-foreground-muted mb-6">
-              {t("flashcards.states.sessionComplete.encouragement")}
-            </p>
-            <Button onClick={restartSession}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              {t("flashcards.states.sessionComplete.reviewAgain")}
-            </Button>
+                    )
+                  )}
+              </p>
+              <p className="text-sm text-foreground-muted mb-6">
+                {t("flashcards.states.sessionComplete.encouragement")}
+              </p>
+              <Button onClick={restartSession}>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                {t("flashcards.states.sessionComplete.reviewAgain")}
+              </Button>
+            </div>
           </div>
         ) : currentCard ? (
           // Review card
@@ -659,7 +723,7 @@ export function FlashcardsPage() {
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-4 border-red-500/30 hover:bg-red-500/10 hover:border-red-500 transition-all ${
                       lastSelectedRating === "again"
-                        ? "ring-2 ring-red-500 bg-red-300/30 scale-95"
+                        ? "ring-2 ring-red-500 !bg-red-500/40 scale-95"
                         : ""
                     }`}
                   >
@@ -675,7 +739,7 @@ export function FlashcardsPage() {
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-4 border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500 transition-all ${
                       lastSelectedRating === "hard"
-                        ? "ring-2 ring-amber-500 bg-amber-300/30 scale-95"
+                        ? "ring-2 ring-amber-500 !bg-amber-500/40 scale-95"
                         : ""
                     }`}
                   >
@@ -691,7 +755,7 @@ export function FlashcardsPage() {
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-4 border-green-500/30 hover:bg-green-500/10 hover:border-green-500 transition-all ${
                       lastSelectedRating === "good"
-                        ? "ring-2 ring-green-500 bg-green-300/30 scale-95"
+                        ? "ring-2 ring-green-500 !bg-green-500/40 scale-95"
                         : ""
                     }`}
                   >
@@ -707,7 +771,7 @@ export function FlashcardsPage() {
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-4 border-blue-500/30 hover:bg-blue-500/10 hover:border-blue-500 transition-all ${
                       lastSelectedRating === "easy"
-                        ? "ring-2 ring-blue-500 bg-blue-300/30 scale-95"
+                        ? "ring-2 ring-blue-500 !bg-blue-500/40 scale-95"
                         : ""
                     }`}
                   >
