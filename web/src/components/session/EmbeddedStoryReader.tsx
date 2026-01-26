@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/hooks/useSettings";
 import { useStory } from "@/hooks/useStory";
 import type { ContentLanguage } from "@/lib/contentLanguages";
+import { useT } from "@/lib/i18n";
 import type { ProficiencyLevel, Token } from "@/types/story";
 
 type BadgeVariant = "n5" | "n4" | "n3" | "n2" | "n1" | "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
@@ -43,6 +44,7 @@ export function EmbeddedStoryReader({
   onClose,
   onComplete,
 }: EmbeddedStoryReaderProps) {
+  const t = useT();
   const { story, isLoading, error } = useStory(isOpen ? storyId : undefined, language);
   const { user, isAuthenticated } = useAuth();
   const { settings } = useSettings();
@@ -115,7 +117,7 @@ export function EmbeddedStoryReader({
                 )}
                 {totalChapters > 1 && (
                   <span className="text-sm text-foreground-muted">
-                    Chapter {currentChapterIndex + 1} of {totalChapters}
+                    {t("reader.chapter.progress", { current: currentChapterIndex + 1, total: totalChapters })}
                   </span>
                 )}
               </div>
@@ -132,7 +134,7 @@ export function EmbeddedStoryReader({
             <div className="flex flex-col items-center justify-center py-12">
               <BookOpen className="w-12 h-12 text-foreground-muted mb-3" />
               <p className="text-foreground-muted">
-                {error ? "Failed to load story" : "Story not found"}
+                {error ? t("reader.errors.failedToLoad") : t("reader.errors.storyNotFound")}
               </p>
             </div>
           ) : currentChapter ? (
@@ -146,7 +148,7 @@ export function EmbeddedStoryReader({
             />
           ) : (
             <div className="flex items-center justify-center py-12">
-              <p className="text-foreground-muted">No content available</p>
+              <p className="text-foreground-muted">{t("reader.errors.noContent")}</p>
             </div>
           )}
         </div>
@@ -181,7 +183,7 @@ export function EmbeddedStoryReader({
             {/* Complete button */}
             <Button onClick={onComplete} className="gap-2">
               <Check className="w-4 h-4" />
-              Done Reading
+              {t("reader.actions.doneReading")}
             </Button>
           </div>
         </div>

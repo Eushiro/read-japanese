@@ -2,10 +2,12 @@
 """Run the Japanese Reader API server"""
 import os
 import uvicorn
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from web/.env.local (shared with frontend)
+env_path = Path(__file__).parent.parent / "web" / ".env.local"
+load_dotenv(env_path)
 
 if __name__ == "__main__":
     # Configuration from environment

@@ -5,6 +5,10 @@
  * Much faster than server round-trips.
  *
  * Dictionaries are served from R2 (VITE_R2_PUBLIC_URL) for cost optimization.
+ *
+ * Dictionary naming convention:
+ * - Language-pair dictionaries: `{contentLang}-{uiLang}.json` (e.g., `ja-en.json`)
+ * - Fallback to legacy single-language: `{langCode}.json` (e.g., `ja.json`)
  */
 
 import * as wanakana from "wanakana";
@@ -14,6 +18,9 @@ import type { ContentLanguage } from "@/lib/contentLanguages";
 // R2 base URL from environment, falls back to local /dictionaries for development
 const R2_BASE_URL = import.meta.env.VITE_R2_PUBLIC_URL || "";
 
+// UI language type (matches backend)
+export type UILanguage = "en" | "ja" | "fr" | "zh";
+
 export interface DictionaryEntry {
   word: string;
   reading: string;
@@ -21,19 +28,34 @@ export interface DictionaryEntry {
   partOfSpeech?: string;
 }
 
-// Cache for loaded dictionaries
-const cache: Record<ContentLanguage, DictionaryEntry[] | null> = {
+// Cache key for language-pair dictionaries
+type DictionaryCacheKey = `${ContentLanguage}-${UILanguage}`;
+
+// Cache for loaded dictionaries (keyed by content-ui language pair)
+const pairCache: Record<string, DictionaryEntry[] | null> = {};
+
+// Loading promises to prevent duplicate fetches
+const pairLoadingPromises: Record<string, Promise<DictionaryEntry[]> | null> = {};
+
+// Legacy cache for single-language dictionaries (fallback)
+const legacyCache: Record<ContentLanguage, DictionaryEntry[] | null> = {
   japanese: null,
   english: null,
   french: null,
 };
 
-// Loading promises to prevent duplicate fetches
-const loadingPromises: Record<ContentLanguage, Promise<DictionaryEntry[]> | null> = {
+const legacyLoadingPromises: Record<ContentLanguage, Promise<DictionaryEntry[]> | null> = {
   japanese: null,
   english: null,
   french: null,
 };
+
+/**
+ * Convert content language to language code
+ */
+function contentLangToCode(language: ContentLanguage): string {
+  return language === "japanese" ? "ja" : language === "english" ? "en" : "fr";
+}
 
 /**
  * Parse compact JSON format into DictionaryEntry objects
@@ -41,8 +63,8 @@ const loadingPromises: Record<ContentLanguage, Promise<DictionaryEntry[]> | null
  * English/French format: [word, [meanings], pos?]
  * Japanese format: [word, reading, [meanings]]
  */
-function parseEntries(data: unknown[], language: ContentLanguage): DictionaryEntry[] {
-  if (language === "japanese") {
+function parseEntries(data: unknown[], contentLanguage: ContentLanguage): DictionaryEntry[] {
+  if (contentLanguage === "japanese") {
     // Japanese: [word, reading, [meanings]]
     return data.map((item) => {
       const arr = item as [string, string, string[]];
@@ -67,26 +89,84 @@ function parseEntries(data: unknown[], language: ContentLanguage): DictionaryEnt
 }
 
 /**
- * Load dictionary for a language (lazy, cached)
+ * Load language-pair dictionary (e.g., ja-en.json for Japanese words with English meanings)
+ * Falls back to legacy single-language dictionary if pair dictionary doesn't exist.
  */
-export async function loadDictionary(language: ContentLanguage): Promise<DictionaryEntry[]> {
+export async function loadDictionary(
+  contentLanguage: ContentLanguage,
+  uiLanguage: UILanguage
+): Promise<DictionaryEntry[]> {
+  const cacheKey: DictionaryCacheKey = `${contentLanguage}-${uiLanguage}`;
+
   // Return cached if available
-  if (cache[language]) {
-    return cache[language]!;
+  if (pairCache[cacheKey]) {
+    return pairCache[cacheKey]!;
   }
 
   // Return existing promise if already loading
-  if (loadingPromises[language]) {
-    return loadingPromises[language]!;
+  if (pairLoadingPromises[cacheKey]) {
+    return pairLoadingPromises[cacheKey]!;
   }
 
-  // Start loading
-  const langCode = language === "japanese" ? "ja" : language === "english" ? "en" : "fr";
+  const contentCode = contentLangToCode(contentLanguage);
+
+  // Try language-pair dictionary first
+  const pairUrl = R2_BASE_URL
+    ? `${R2_BASE_URL}/dictionaries/${contentCode}-${uiLanguage}.json`
+    : `/dictionaries/${contentCode}-${uiLanguage}.json`;
+
+  pairLoadingPromises[cacheKey] = fetch(pairUrl)
+    .then((res) => {
+      if (!res.ok) {
+        // Fall back to legacy single-language dictionary
+        return loadLegacyDictionary(contentLanguage);
+      }
+      return res.json();
+    })
+    .then((data: unknown[] | DictionaryEntry[]) => {
+      // If we got DictionaryEntry[] from legacy fallback, use directly
+      const firstItem = Array.isArray(data) && data.length > 0 ? data[0] : null;
+      if (firstItem && typeof firstItem === "object" && "word" in firstItem) {
+        pairCache[cacheKey] = data as DictionaryEntry[];
+        return data as DictionaryEntry[];
+      }
+      // Parse compact format
+      const entries = parseEntries(data as unknown[], contentLanguage);
+      pairCache[cacheKey] = entries;
+      return entries;
+    })
+    .catch((err) => {
+      console.error(`Failed to load ${cacheKey} dictionary:`, err);
+      // Try legacy fallback
+      return loadLegacyDictionary(contentLanguage);
+    })
+    .finally(() => {
+      pairLoadingPromises[cacheKey] = null;
+    });
+
+  return pairLoadingPromises[cacheKey]!;
+}
+
+/**
+ * Load legacy single-language dictionary (fallback)
+ */
+async function loadLegacyDictionary(language: ContentLanguage): Promise<DictionaryEntry[]> {
+  // Return cached if available
+  if (legacyCache[language]) {
+    return legacyCache[language]!;
+  }
+
+  // Return existing promise if already loading
+  if (legacyLoadingPromises[language]) {
+    return legacyLoadingPromises[language]!;
+  }
+
+  const langCode = contentLangToCode(language);
   const dictionaryUrl = R2_BASE_URL
     ? `${R2_BASE_URL}/dictionaries/${langCode}.json`
     : `/dictionaries/${langCode}.json`;
 
-  loadingPromises[language] = fetch(dictionaryUrl)
+  legacyLoadingPromises[language] = fetch(dictionaryUrl)
     .then((res) => {
       if (!res.ok) {
         throw new Error(`Failed to load ${language} dictionary: ${res.status}`);
@@ -95,27 +175,29 @@ export async function loadDictionary(language: ContentLanguage): Promise<Diction
     })
     .then((data: unknown[]) => {
       const entries = parseEntries(data, language);
-      cache[language] = entries;
-      // Dictionary loaded successfully
+      legacyCache[language] = entries;
       return entries;
     })
     .catch((err) => {
       console.error(`Failed to load ${language} dictionary:`, err);
-      cache[language] = [];
+      legacyCache[language] = [];
       return [];
     })
     .finally(() => {
-      loadingPromises[language] = null;
+      legacyLoadingPromises[language] = null;
     });
 
-  return loadingPromises[language]!;
+  return legacyLoadingPromises[language]!;
 }
 
 /**
  * Preload dictionary (call when modal opens)
  */
-export function preloadDictionary(language: ContentLanguage): void {
-  loadDictionary(language).catch(() => {
+export function preloadDictionary(
+  contentLanguage: ContentLanguage,
+  uiLanguage: UILanguage = "en"
+): void {
+  loadDictionary(contentLanguage, uiLanguage).catch(() => {
     // Ignore errors during preload
   });
 }
@@ -147,20 +229,21 @@ function getJapaneseSearchTerms(query: string): string[] {
 
 /**
  * Search dictionary for prefix matches
- * Falls back to API for Japanese if local results are insufficient
+ * Uses language-pair dictionary to show meanings in user's UI language.
  */
 export async function searchClientDictionary(
   query: string,
-  language: ContentLanguage,
-  limit: number = 10
+  contentLanguage: ContentLanguage,
+  uiLanguage: UILanguage,
+  limit: number
 ): Promise<DictionaryEntry[]> {
   if (!query.trim()) return [];
 
-  const entries = await loadDictionary(language);
+  const entries = await loadDictionary(contentLanguage, uiLanguage);
 
   // For Japanese, get multiple search terms (romaji -> hiragana/katakana)
   const searchTerms =
-    language === "japanese" ? getJapaneseSearchTerms(query) : [query.toLowerCase()];
+    contentLanguage === "japanese" ? getJapaneseSearchTerms(query) : [query.toLowerCase()];
 
   const results: DictionaryEntry[] = [];
   const seen = new Set<string>();
@@ -186,15 +269,23 @@ export async function searchClientDictionary(
 }
 
 /**
- * Check if dictionary is loaded for a language
+ * Check if dictionary is loaded for a language pair
  */
-export function isDictionaryLoaded(language: ContentLanguage): boolean {
-  return cache[language] !== null;
+export function isDictionaryLoaded(
+  contentLanguage: ContentLanguage,
+  uiLanguage: UILanguage = "en"
+): boolean {
+  const cacheKey: DictionaryCacheKey = `${contentLanguage}-${uiLanguage}`;
+  return pairCache[cacheKey] !== null || legacyCache[contentLanguage] !== null;
 }
 
 /**
  * Get dictionary loading status
  */
-export function isDictionaryLoading(language: ContentLanguage): boolean {
-  return loadingPromises[language] !== null;
+export function isDictionaryLoading(
+  contentLanguage: ContentLanguage,
+  uiLanguage: UILanguage = "en"
+): boolean {
+  const cacheKey: DictionaryCacheKey = `${contentLanguage}-${uiLanguage}`;
+  return pairLoadingPromises[cacheKey] !== null || legacyLoadingPromises[contentLanguage] !== null;
 }

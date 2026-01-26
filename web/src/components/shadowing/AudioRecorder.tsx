@@ -1,28 +1,11 @@
 import { Loader2, Mic, MicOff, Square } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
-import { WaveBackground, WaveOrbs } from "@/components/ui/wave-background";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
+import { useT } from "@/lib/i18n";
 
 import { AudioWaveform } from "./AudioWaveform";
-
-const PROCESSING_MESSAGES = [
-  "Analyzing your pronunciation...",
-  "Listening carefully to your intonation...",
-  "Comparing with native speech patterns...",
-  "Checking pitch and rhythm...",
-  "Evaluating your accent...",
-  "Measuring speech clarity...",
-  "Detecting subtle nuances...",
-  "Processing audio waveforms...",
-  "Reviewing syllable timing...",
-  "Assessing natural flow...",
-  "Examining vowel sounds...",
-  "Studying consonant placement...",
-  "Measuring pause patterns...",
-  "Analyzing stress points...",
-];
 
 interface AudioRecorderProps {
   isRecording: boolean;
@@ -49,8 +32,29 @@ export function AudioRecorder({
   onStopRecording,
   disabled = false,
 }: AudioRecorderProps) {
+  const t = useT();
   const pulseRef = useRef<HTMLDivElement>(null);
-  const processingMessage = useRotatingMessages(PROCESSING_MESSAGES, isProcessing, 2500);
+
+  const processingMessages = useMemo(
+    () => [
+      t("common.recording.processing.analyzingPronunciation"),
+      t("common.recording.processing.listeningIntonation"),
+      t("common.recording.processing.comparingNative"),
+      t("common.recording.processing.checkingPitch"),
+      t("common.recording.processing.evaluatingAccent"),
+      t("common.recording.processing.measuringClarity"),
+      t("common.recording.processing.detectingNuances"),
+      t("common.recording.processing.processingWaveforms"),
+      t("common.recording.processing.reviewingSyllables"),
+      t("common.recording.processing.assessingFlow"),
+      t("common.recording.processing.examiningVowels"),
+      t("common.recording.processing.studyingConsonants"),
+      t("common.recording.processing.measuringPauses"),
+      t("common.recording.processing.analyzingStress"),
+    ],
+    [t]
+  );
+  const processingMessage = useRotatingMessages(processingMessages, isProcessing, 2500);
 
   // Animate pulse effect when recording
   useEffect(() => {
@@ -69,20 +73,21 @@ export function AudioRecorder({
 
   if (isProcessing) {
     return (
-      <div className="relative flex flex-col items-center gap-4 py-8 overflow-hidden rounded-xl">
-        {/* Wave background */}
-        <WaveBackground size="card" variant="warm" intensity={2} className="absolute inset-0" />
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="relative">
-            <WaveOrbs className="opacity-60" variant="warm" />
-            <Loader2 className="absolute inset-0 m-auto w-6 h-6 text-amber-500 animate-spin" />
-          </div>
-          <p className="text-sm font-medium text-foreground transition-opacity duration-300">
-            {processingMessage}
-          </p>
+      <div className="flex flex-col items-center gap-4 py-8">
+        {/* Pulsing gradient circle with spinner */}
+        <div className="relative">
+          <div
+            className="w-24 h-24 rounded-full animate-pulse"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(255,132,0,0.25) 0%, rgba(254,237,122,0.15) 50%, transparent 70%)",
+            }}
+          />
+          <Loader2 className="absolute inset-0 m-auto w-10 h-10 text-amber-500 animate-spin" />
         </div>
+        <p className="text-sm font-medium text-foreground transition-opacity duration-300">
+          {processingMessage}
+        </p>
       </div>
     );
   }
@@ -94,9 +99,9 @@ export function AudioRecorder({
           <MicOff className="w-10 h-10 text-red-500" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-red-500 mb-1">Microphone access denied</p>
+          <p className="text-sm font-medium text-red-500 mb-1">{t("common.recording.microphoneDenied")}</p>
           <p className="text-sm text-foreground-muted">
-            Please allow microphone access in your browser settings to use shadowing practice.
+            {t("common.recording.microphoneDeniedHelp")}
           </p>
         </div>
       </div>
@@ -110,11 +115,11 @@ export function AudioRecorder({
           <MicOff className="w-10 h-10 text-amber-500" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-amber-500 mb-1">Recording error</p>
+          <p className="text-sm font-medium text-amber-500 mb-1">{t("common.recording.recordingError")}</p>
           <p className="text-sm text-foreground-muted">{error}</p>
         </div>
         <Button onClick={onStartRecording} variant="outline" disabled={disabled}>
-          Try again
+          {t("common.recording.tryAgain")}
         </Button>
       </div>
     );
@@ -171,10 +176,10 @@ export function AudioRecorder({
         {isRecording ? (
           <>
             <p className="text-2xl font-mono font-bold text-red-500">{formatDuration(duration)}</p>
-            <p className="text-sm text-foreground-muted">Tap to stop recording</p>
+            <p className="text-sm text-foreground-muted">{t("common.recording.tapToStop")}</p>
           </>
         ) : (
-          <p className="text-sm text-foreground-muted">Tap the microphone to start recording</p>
+          <p className="text-sm text-foreground-muted">{t("common.recording.tapToStart")}</p>
         )}
       </div>
 

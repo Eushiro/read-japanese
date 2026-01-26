@@ -2,8 +2,8 @@ import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { getSentenceTranslation, type UILanguage } from "./lib/translation";
-import { cardStateValidator, ratingValidator } from "./schema";
+import { getDefinitions, getSentenceTranslation, normalizeUILanguage } from "./lib/translation";
+import { cardStateValidator, ratingValidator, uiLanguageValidator } from "./schema";
 
 // ============================================
 // FSRS-inspired SRS Constants
@@ -121,11 +121,11 @@ export const getDue = query({
     userId: v.string(),
     limit: v.optional(v.number()),
     language: v.optional(v.string()),
-    uiLanguage: v.optional(v.string()), // UI language for translation resolution
+    uiLanguage: v.optional(uiLanguageValidator), // UI language for translation resolution
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
+    const uiLang = normalizeUILanguage(args.uiLanguage);
     const cards = await ctx.db
       .query("flashcards")
       .withIndex("by_user_and_due", (q) => q.eq("userId", args.userId).lte("due", now))
@@ -155,9 +155,17 @@ export const getDue = query({
           ? getSentenceTranslation(sentence.translations, uiLang)
           : null;
 
+        // Resolve vocabulary definitions for user's UI language
+        const resolvedVocab = vocab
+          ? {
+              ...vocab,
+              definitions: getDefinitions(vocab.definitionTranslations, vocab.definitions, uiLang),
+            }
+          : null;
+
         return {
           ...card,
-          vocabulary: vocab,
+          vocabulary: resolvedVocab,
           sentence: sentence
             ? {
                 ...sentence,
@@ -186,10 +194,10 @@ export const getNew = query({
     userId: v.string(),
     limit: v.optional(v.number()),
     language: v.optional(v.string()),
-    uiLanguage: v.optional(v.string()), // UI language for translation resolution
+    uiLanguage: v.optional(uiLanguageValidator), // UI language for translation resolution
   },
   handler: async (ctx, args) => {
-    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
+    const uiLang = normalizeUILanguage(args.uiLanguage);
     const cards = await ctx.db
       .query("flashcards")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -219,9 +227,17 @@ export const getNew = query({
           ? getSentenceTranslation(sentence.translations, uiLang)
           : null;
 
+        // Resolve vocabulary definitions for user's UI language
+        const resolvedVocab = vocab
+          ? {
+              ...vocab,
+              definitions: getDefinitions(vocab.definitionTranslations, vocab.definitions, uiLang),
+            }
+          : null;
+
         return {
           ...card,
-          vocabulary: vocab,
+          vocabulary: resolvedVocab,
           sentence: sentence
             ? {
                 ...sentence,
@@ -308,10 +324,10 @@ export const getByVocabulary = query({
 export const getWithContent = query({
   args: {
     flashcardId: v.id("flashcards"),
-    uiLanguage: v.optional(v.string()), // UI language for translation resolution
+    uiLanguage: v.optional(uiLanguageValidator), // UI language for translation resolution
   },
   handler: async (ctx, args) => {
-    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
+    const uiLang = normalizeUILanguage(args.uiLanguage);
     const card = await ctx.db.get(args.flashcardId);
     if (!card) return null;
 
@@ -336,9 +352,17 @@ export const getWithContent = query({
       ? getSentenceTranslation(sentence.translations, uiLang)
       : null;
 
+    // Resolve vocabulary definitions for user's UI language
+    const resolvedVocab = vocab
+      ? {
+          ...vocab,
+          definitions: getDefinitions(vocab.definitionTranslations, vocab.definitions, uiLang),
+        }
+      : null;
+
     return {
       ...card,
-      vocabulary: vocab,
+      vocabulary: resolvedVocab,
       sentence: sentence
         ? {
             ...sentence,

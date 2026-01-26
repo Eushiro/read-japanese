@@ -23,7 +23,7 @@ import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useReviewSession } from "@/contexts/ReviewSessionContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
-import { LANGUAGES } from "@/lib/contentLanguages";
+import { contentLanguageMatchesUI } from "@/lib/contentLanguages";
 import type { CardState, Id, Rating } from "@/lib/convex-types";
 import { useT, useUILanguage } from "@/lib/i18n";
 
@@ -73,7 +73,6 @@ export function FlashcardsPage() {
     isAuthenticated && user ? { clerkId: user.id } : "skip"
   );
   const primaryLanguage = userProfile?.primaryLanguage;
-  const languageInfo = LANGUAGES.find((l) => l.value === primaryLanguage);
 
   // Check subscription for AI features
   const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
@@ -433,13 +432,13 @@ export function FlashcardsPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="h-screen flex flex-col overflow-hidden">
       {/* Hero Section */}
-      <div className="border-b border-border relative overflow-hidden">
+      <div className="relative overflow-hidden flex-shrink-0">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-background to-violet-500/5" />
         <div className="absolute top-0 right-1/4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl" />
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-4xl relative">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-4xl relative">
           <div className="animate-fade-in-up">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-violet-500/20">
@@ -456,9 +455,9 @@ export function FlashcardsPage() {
               >
                 {t("flashcards.hero.title")}
               </h1>
-              {languageInfo && (
+              {primaryLanguage && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-sm">
-                  {languageInfo.label}
+                  {t(`common.languages.${primaryLanguage}`)}
                 </span>
               )}
             </div>
@@ -467,22 +466,24 @@ export function FlashcardsPage() {
         </div>
       </div>
 
-      {/* Stats Bar */}
-      <div className="border-b border-border bg-surface">
-        <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
-          <div className="text-center">
-            <span className="text-3xl font-bold text-green-500">
-              {sessionQueue.length - currentIndex}
-            </span>
-            <span className="text-lg text-foreground-muted ml-2">
-              {t("flashcards.counter.cardsLeft")}
-            </span>
+      {/* Stats Bar - Glass pill */}
+      <div className="bg-surface/50 backdrop-blur-md dark:bg-black/30 flex-shrink-0">
+        <div className="container mx-auto px-4 sm:px-6 py-2 max-w-4xl">
+          <div className="flex justify-center">
+            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full backdrop-blur-xl bg-white/10 dark:bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_0_20px_rgba(34,197,94,0.15)]">
+              <span className="text-2xl font-bold text-green-500">
+                {sessionQueue.length - currentIndex}
+              </span>
+              <span className="text-sm text-foreground-muted">
+                {t("flashcards.counter.cardsLeft")}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Review Area */}
-      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 sm:px-6 py-4 max-w-3xl flex-grow flex flex-col justify-center overflow-auto">
         {sessionQueue.length === 0 && isInitialized ? (
           // No cards to review
           <div className="text-center py-20">
@@ -601,15 +602,15 @@ export function FlashcardsPage() {
                     variant="outline"
                     onClick={() => handleRating("again")}
                     disabled={isTransitioning}
-                    className={`flex-col h-auto py-3 border-red-500/30 hover:bg-red-500/10 hover:border-red-500 transition-all ${
+                    className={`flex-col h-auto py-4 border-red-500/30 hover:bg-red-500/10 hover:border-red-500 transition-all ${
                       lastSelectedRating === "again"
                         ? "ring-2 ring-red-500 bg-red-500/20 scale-95"
                         : ""
                     }`}
                   >
-                    <X className="w-5 h-5 text-red-500 mb-1" />
-                    <span className="text-xs font-medium">{t("flashcards.rating.again")}</span>
-                    <span className="text-[10px] text-foreground-muted">
+                    <X className="w-6 h-6 text-red-500 mb-1" />
+                    <span className="text-sm font-medium">{t("flashcards.rating.again")}</span>
+                    <span className="text-xs text-foreground-muted">
                       {t("flashcards.rating.intervals.again")}
                     </span>
                   </Button>
@@ -617,15 +618,15 @@ export function FlashcardsPage() {
                     variant="outline"
                     onClick={() => handleRating("hard")}
                     disabled={isTransitioning}
-                    className={`flex-col h-auto py-3 border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500 transition-all ${
+                    className={`flex-col h-auto py-4 border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500 transition-all ${
                       lastSelectedRating === "hard"
                         ? "ring-2 ring-amber-500 bg-amber-500/20 scale-95"
                         : ""
                     }`}
                   >
-                    <span className="text-amber-500 font-bold mb-1">~</span>
-                    <span className="text-xs font-medium">{t("flashcards.rating.hard")}</span>
-                    <span className="text-[10px] text-foreground-muted">
+                    <span className="text-amber-500 font-bold text-lg mb-1">~</span>
+                    <span className="text-sm font-medium">{t("flashcards.rating.hard")}</span>
+                    <span className="text-xs text-foreground-muted">
                       {t("flashcards.rating.intervals.hard")}
                     </span>
                   </Button>
@@ -633,15 +634,15 @@ export function FlashcardsPage() {
                     variant="outline"
                     onClick={() => handleRating("good")}
                     disabled={isTransitioning}
-                    className={`flex-col h-auto py-3 border-green-500/30 hover:bg-green-500/10 hover:border-green-500 transition-all ${
+                    className={`flex-col h-auto py-4 border-green-500/30 hover:bg-green-500/10 hover:border-green-500 transition-all ${
                       lastSelectedRating === "good"
                         ? "ring-2 ring-green-500 bg-green-500/20 scale-95"
                         : ""
                     }`}
                   >
-                    <Check className="w-5 h-5 text-green-500 mb-1" />
-                    <span className="text-xs font-medium">{t("flashcards.rating.good")}</span>
-                    <span className="text-[10px] text-foreground-muted">
+                    <Check className="w-6 h-6 text-green-500 mb-1" />
+                    <span className="text-sm font-medium">{t("flashcards.rating.good")}</span>
+                    <span className="text-xs text-foreground-muted">
                       {t("flashcards.rating.intervals.good")}
                     </span>
                   </Button>
@@ -649,15 +650,15 @@ export function FlashcardsPage() {
                     variant="outline"
                     onClick={() => handleRating("easy")}
                     disabled={isTransitioning}
-                    className={`flex-col h-auto py-3 border-blue-500/30 hover:bg-blue-500/10 hover:border-blue-500 transition-all ${
+                    className={`flex-col h-auto py-4 border-blue-500/30 hover:bg-blue-500/10 hover:border-blue-500 transition-all ${
                       lastSelectedRating === "easy"
                         ? "ring-2 ring-blue-500 bg-blue-500/20 scale-95"
                         : ""
                     }`}
                   >
-                    <ChevronRight className="w-5 h-5 text-blue-500 mb-1" />
-                    <span className="text-xs font-medium">{t("flashcards.rating.easy")}</span>
-                    <span className="text-[10px] text-foreground-muted">
+                    <ChevronRight className="w-6 h-6 text-blue-500 mb-1" />
+                    <span className="text-sm font-medium">{t("flashcards.rating.easy")}</span>
+                    <span className="text-xs text-foreground-muted">
                       {t("flashcards.rating.intervals.easy")}
                     </span>
                   </Button>
@@ -692,9 +693,13 @@ function FlashcardDisplay({
   onSentenceRefreshed,
 }: FlashcardDisplayProps) {
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
   const vocab = card.vocabulary;
   const isJapanese = vocab?.language === "japanese";
   const languageFont = isJapanese ? "var(--font-japanese)" : "inherit";
+  // Hide translation if content language matches UI language
+  const hideRedundantTranslation =
+    vocab?.language && contentLanguageMatchesUI(vocab.language, uiLanguage);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [localSentence, setLocalSentence] = useState(card.sentence?.sentence);
@@ -756,7 +761,7 @@ function FlashcardDisplay({
   };
 
   return (
-    <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
+    <div className="bg-surface/80 backdrop-blur-xl rounded-2xl border border-white/10 p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)] dark:border-white/10 dark:bg-white/[0.03]">
       {/* Image - only show after answer */}
       {showAnswer && card.image?.imageUrl && (
         <div className="mb-6 flex justify-center">
@@ -771,7 +776,7 @@ function FlashcardDisplay({
       {/* Front - Word (no reading shown) */}
       <div className="text-center mb-6">
         <div
-          className="text-4xl sm:text-5xl font-bold text-foreground mb-2"
+          className="text-5xl sm:text-6xl font-bold text-foreground mb-2"
           style={{ fontFamily: languageFont }}
         >
           {vocab?.word}
@@ -798,8 +803,8 @@ function FlashcardDisplay({
         >
           {localSentence}
         </p>
-        {/* Sentence Translation - shown directly below sentence (only if available in user's UI language) */}
-        {showAnswer && localTranslation && (
+        {/* Sentence Translation - shown directly below sentence (only if available and different from content language) */}
+        {showAnswer && localTranslation && !hideRedundantTranslation && (
           <p className="text-sm text-foreground-muted text-center mt-2 italic">
             {localTranslation}
           </p>
@@ -831,7 +836,12 @@ function FlashcardDisplay({
 
       {/* Show Answer Button / Answer */}
       {!showAnswer ? (
-        <Button onClick={onShowAnswer} className="w-full" size="lg">
+        <Button
+          onClick={onShowAnswer}
+          variant="glass-accent"
+          className="w-full shadow-[0_0_20px_rgba(249,115,22,0.2)]"
+          size="lg"
+        >
           {t("flashcards.card.showAnswer")}
         </Button>
       ) : (

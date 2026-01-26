@@ -3,7 +3,12 @@
     "restart": "Recommencer"
   },
   "errors": {
-    "storyNotFound": "Histoire introuvable"
+    "storyNotFound": "Histoire introuvable",
+    "failedToLoad": "Échec du chargement",
+    "noContent": "Aucun contenu disponible"
+  },
+  "actions": {
+    "doneReading": "Terminer la lecture"
   },
   "navigation": {
     "backToLibrary": "Retour à la bibliothèque",

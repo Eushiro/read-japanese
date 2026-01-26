@@ -9,10 +9,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { LANGUAGES } from "@/lib/contentLanguages";
+import { useT } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
 
 export function LanguageSwitcher() {
+  const t = useT();
   const { user, isAuthenticated } = useAuth();
 
   const userProfile = useQuery(
@@ -46,7 +48,7 @@ export function LanguageSwitcher() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium hover:bg-muted transition-colors">
-          <span className="text-base">{currentLanguage?.label}</span>
+          <span className="text-base">{currentLanguage ? t(`common.languages.${currentLanguage.value}`) : ""}</span>
           <ChevronDown className="w-3 h-3 text-foreground-muted" />
         </button>
       </DropdownMenuTrigger>
@@ -58,7 +60,7 @@ export function LanguageSwitcher() {
             className="flex items-center justify-between gap-2"
           >
             <span className="flex items-center gap-2">
-              <span>{lang.label}</span>
+              <span>{t(`common.languages.${lang.value}`)}</span>
             </span>
             {lang.value === userProfile.primaryLanguage && (
               <Check className="w-4 h-4 text-accent" />

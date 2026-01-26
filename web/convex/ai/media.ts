@@ -6,7 +6,8 @@ import { internalAction } from "../_generated/server";
 import { convertPcmToMp3 } from "../lib/audioCompression";
 import { BRAND } from "../lib/brand";
 import { compressToWebp } from "../lib/imageCompression";
-import { uploadAudio, uploadImage } from "../lib/storage";
+import { uploadSentenceAudio, uploadWordAudio, uploadWordImage } from "../lib/storage";
+import type { ContentLanguage } from "../schema";
 import { languageNames } from "./core";
 
 // ============================================
@@ -253,11 +254,20 @@ The image should:
 
 /**
  * Internal action wrapper for TTS audio generation
+ *
+ * Word-centric storage organization:
+ * - word: The vocabulary word this audio is for
+ * - audioType: "word" for word pronunciation, "sentence" for sentence audio
+ * - sentenceId: Required when audioType is "sentence"
  */
 export const generateTTSAudioAction = internalAction({
   args: {
     text: v.string(),
     language: v.string(),
+    // Word context for organized storage (optional for backwards compatibility)
+    word: v.optional(v.string()),
+    audioType: v.optional(v.union(v.literal("word"), v.literal("sentence"))),
+    sentenceId: v.optional(v.string()),
   },
   handler: async (_ctx, args): Promise<{ success: boolean; audioUrl?: string }> => {
     const audioResult = await generateTTSAudio(args.text, args.language);
@@ -266,8 +276,44 @@ export const generateTTSAudioAction = internalAction({
       return { success: false };
     }
 
-    // Upload audio to storage
-    const audioUrl = await uploadAudio(new Uint8Array(audioResult.audioData), audioResult.mimeType);
+    const language = args.language as ContentLanguage;
+    let audioUrl: string;
+
+    // Use word-centric storage
+    if (args.word && args.audioType === "word") {
+      audioUrl = await uploadWordAudio(
+        new Uint8Array(audioResult.audioData),
+        args.word,
+        language,
+        audioResult.mimeType
+      );
+    } else if (args.word && args.audioType === "sentence" && args.sentenceId) {
+      audioUrl = await uploadSentenceAudio(
+        new Uint8Array(audioResult.audioData),
+        args.word,
+        language,
+        args.sentenceId,
+        audioResult.mimeType
+      );
+    } else if (args.word && args.audioType === "sentence") {
+      // Sentence audio without sentenceId - generate a random ID
+      const randomId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+      audioUrl = await uploadSentenceAudio(
+        new Uint8Array(audioResult.audioData),
+        args.word,
+        language,
+        randomId,
+        audioResult.mimeType
+      );
+    } else {
+      // No word context - use word audio path with text as the word
+      audioUrl = await uploadWordAudio(
+        new Uint8Array(audioResult.audioData),
+        args.text,
+        language,
+        audioResult.mimeType
+      );
+    }
 
     return { success: true, audioUrl };
   },
@@ -275,12 +321,18 @@ export const generateTTSAudioAction = internalAction({
 
 /**
  * Internal action wrapper for image generation
+ *
+ * Word-centric storage organization:
+ * - imageId: Unique identifier for this image (e.g., database ID)
+ *   If not provided, a random ID is generated.
  */
 export const generateFlashcardImageAction = internalAction({
   args: {
     word: v.string(),
     sentence: v.string(),
     language: v.string(),
+    // Optional image ID for organized storage (random ID generated if not provided)
+    imageId: v.optional(v.string()),
   },
   handler: async (_ctx, args): Promise<{ success: boolean; imageUrl?: string }> => {
     const imageResult = await generateFlashcardImage(args.word, args.sentence, args.language);
@@ -289,8 +341,18 @@ export const generateFlashcardImageAction = internalAction({
       return { success: false };
     }
 
-    // Upload image to storage
-    const imageUrl = await uploadImage(new Uint8Array(imageResult.imageData), imageResult.mimeType);
+    const language = args.language as ContentLanguage;
+    // Use provided imageId or generate a random one
+    const imageId =
+      args.imageId || Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+
+    const imageUrl = await uploadWordImage(
+      new Uint8Array(imageResult.imageData),
+      args.word,
+      language,
+      imageId,
+      imageResult.mimeType
+    );
 
     return { success: true, imageUrl };
   },

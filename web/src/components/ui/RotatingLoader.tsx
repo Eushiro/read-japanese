@@ -2,6 +2,8 @@ import { Loader2 } from "lucide-react";
 
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
 
+import { WaveOrbs } from "./wave-background";
+
 interface RotatingLoaderProps {
   messages: string[];
   isActive: boolean;
@@ -10,6 +12,8 @@ interface RotatingLoaderProps {
   size?: "sm" | "md" | "lg";
   /** Whether to show shimmer effect on text */
   shimmer?: boolean;
+  /** Whether to show wave animation behind the loader (AI-style) */
+  showWave?: boolean;
 }
 
 const sizeConfig = {
@@ -24,6 +28,7 @@ export function RotatingLoader({
   intervalMs = 2500,
   size = "md",
   shimmer = false,
+  showWave = false,
 }: RotatingLoaderProps) {
   const currentMessage = useRotatingMessages(messages, isActive, intervalMs);
   const config = sizeConfig[size];
@@ -31,19 +36,23 @@ export function RotatingLoader({
   return (
     <div className="flex flex-col items-center gap-4 py-8">
       <div className="relative">
+        {showWave && <WaveOrbs className="absolute inset-0 scale-150 opacity-50" />}
         <div
-          className={`${config.container} rounded-full bg-accent/10 flex items-center justify-center`}
+          className={`${config.container} rounded-full ${showWave ? "bg-purple-500/10 dark:bg-purple-500/20" : "bg-accent/10"} flex items-center justify-center relative z-10`}
         >
-          <Loader2 className={`${config.icon} text-accent animate-spin`} />
+          <Loader2
+            className={`${config.icon} ${showWave ? "text-purple-500" : "text-accent"} animate-spin`}
+          />
         </div>
       </div>
       <p
         className={`${config.text} text-foreground-muted transition-opacity duration-300`}
         style={
-          shimmer
+          shimmer || showWave
             ? {
-                background:
-                  "linear-gradient(90deg, var(--foreground) 0%, var(--accent) 50%, var(--foreground) 100%)",
+                background: showWave
+                  ? "linear-gradient(90deg, var(--foreground) 0%, #a855f7 25%, #06b6d4 50%, #ec4899 75%, var(--foreground) 100%)"
+                  : "linear-gradient(90deg, var(--foreground) 0%, var(--accent) 50%, var(--foreground) 100%)",
                 backgroundSize: "200% 100%",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",

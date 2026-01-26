@@ -19,23 +19,41 @@ Convex backend for SanLang, handling:
 All AI generation must go through `ai.ts` or `lib/generation.ts`:
 
 ```typescript
-// TTS (outputs MP3)
-await ctx.runAction(internal.ai.generateTTSAudioAction, { text, language });
+// TTS (outputs MP3) - word-centric storage
+await ctx.runAction(internal.ai.generateTTSAudioAction, {
+  text, language, word, audioType: "word" | "sentence", sentenceId
+});
 
-// Images (outputs WebP)
-await ctx.runAction(internal.ai.generateFlashcardImageAction, { word, sentence, language });
+// Images (outputs WebP) - word-centric storage
+await ctx.runAction(internal.ai.generateFlashcardImageAction, {
+  word, sentence, language, imageId
+});
 
 // With content reuse + paywall
 await ctx.runAction(internal.lib.generation.generateSentenceForWord, { userId, vocabularyId, word, ... });
 ```
 
-### 2. Use Storage Abstraction
+### 2. Use Storage Abstraction (Word-Centric)
+
+Media is organized by word for easy browsing and management:
+```
+flashcards/{language}/{word}/
+├── word.mp3              # Word pronunciation
+├── sentence-{id}.mp3     # Sentence audio
+└── image-{id}.webp       # Images
+```
 
 ```typescript
-import { uploadAudio, uploadImage } from "./lib/storage";
+import { uploadWordAudio, uploadSentenceAudio, uploadWordImage } from "./lib/storage";
 
-const audioUrl = await uploadAudio(audioBytes, "audio/mpeg");
-const imageUrl = await uploadImage(imageBytes, "image/webp");
+// Word pronunciation audio
+const wordAudioUrl = await uploadWordAudio(audioBytes, word, language, "audio/mpeg");
+
+// Sentence audio (requires word context and sentence ID)
+const sentenceAudioUrl = await uploadSentenceAudio(audioBytes, word, language, sentenceId, "audio/mpeg");
+
+// Image (requires word context and image ID)
+const imageUrl = await uploadWordImage(imageBytes, word, language, imageId, "image/webp");
 ```
 
 ### 3. Use Shared Content Language Configuration

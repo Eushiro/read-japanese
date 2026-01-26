@@ -158,7 +158,7 @@ function StatCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
       whileHover={{ y: -4, boxShadow: `0 0 40px ${styles.glow}` }}
-      className="group relative rounded-2xl overflow-hidden cursor-pointer"
+      className="group relative rounded-2xl cursor-pointer"
     >
       {/* Glass background */}
       <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
@@ -166,7 +166,7 @@ function StatCard({
 
       {/* Color accent gradient on hover */}
       <div
-        className={`absolute inset-0 bg-gradient-to-br ${styles.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+        className={`absolute inset-0 bg-gradient-to-br ${styles.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl`}
       />
 
       {/* Content */}
@@ -367,20 +367,16 @@ export function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.5 }}
             whileHover={{ boxShadow: "0 0 60px rgba(255,132,0,0.15)" }}
-            className="relative rounded-3xl overflow-hidden"
+            className="relative rounded-3xl"
           >
             {/* Glass background */}
-            <div className="absolute inset-0 backdrop-blur-xl bg-white/[0.03] border border-white/10" />
+            <div className="absolute inset-0 backdrop-blur-xl bg-white/[0.03] border border-white/10 rounded-3xl" />
 
             {/* Inner shadow for depth */}
             <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] rounded-3xl" />
 
             {/* Gradient accent overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-purple-500/5" />
-
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-purple-500/5 rounded-3xl" />
 
             {/* Content */}
             <div className="relative p-8 sm:p-10">
@@ -533,7 +529,7 @@ export function DashboardPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="relative rounded-3xl overflow-hidden"
+              className="relative rounded-3xl"
             >
               {/* Glass background */}
               <div className="absolute inset-0 backdrop-blur-md bg-white/[0.02] border border-white/10 rounded-3xl" />
@@ -657,7 +653,7 @@ export function DashboardPage() {
             className="group relative flex items-center justify-between p-5 rounded-2xl overflow-hidden"
           >
             {/* Glass background */}
-            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 group-hover:border-orange-500/30 transition-colors" />
+            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 group-hover:border-orange-500/30 transition-colors rounded-2xl" />
             <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
             {/* Shimmer on hover */}
@@ -687,14 +683,14 @@ export function DashboardPage() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="relative rounded-3xl overflow-hidden"
+              className="relative rounded-3xl"
             >
               {/* Glass background */}
-              <div className="absolute inset-0 backdrop-blur-xl bg-white/[0.03] border border-white/10" />
-              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" />
+              <div className="absolute inset-0 backdrop-blur-xl bg-white/[0.03] border border-white/10 rounded-3xl" />
+              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] rounded-3xl" />
 
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-purple-500/10" />
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-purple-500/10 rounded-3xl" />
 
               {/* Floating particles */}
               <FloatingStars count={6} />

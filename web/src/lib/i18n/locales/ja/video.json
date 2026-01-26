@@ -2,6 +2,7 @@
   "notFound": "動画が見つかりません",
   "backToLibrary": "ライブラリに戻る",
   "takeQuiz": "クイズに挑戦",
+  "doneWatching": "視聴完了",
   "demo": {
     "title": "デモコンテンツ - 動画再生は利用できません",
     "subtitle": "下のトランスクリプトを読んでください"

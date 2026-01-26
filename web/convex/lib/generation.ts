@@ -645,11 +645,12 @@ export const generateImageForWord = internalAction({
       };
     }
 
-    // Step 3: Generate new image via AI
+    // Step 3: Generate new image via AI (using vocab ID for organized storage path)
     const imageResult = await ctx.runAction(internal.ai.generateFlashcardImageAction, {
       word: args.word,
       sentence: args.sentence,
       language: args.language,
+      imageId: args.vocabularyId, // Use vocab ID for word-centric storage path
     });
 
     if (!imageResult.success || !imageResult.imageUrl) {
@@ -697,6 +698,9 @@ export const generateAudioForText = internalAction({
     language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     isWordAudio: v.optional(v.boolean()), // True if this is word pronunciation, false for sentence
     skipUsageCheck: v.optional(v.boolean()),
+    // For word-centric storage organization
+    word: v.optional(v.string()), // The vocabulary word (for sentence audio context)
+    sentenceId: v.optional(v.string()), // ID for sentence audio path
   },
   handler: async (ctx, args): Promise<GeneratedAudioResult> => {
     // For word audio, check if it already exists in content library
@@ -729,10 +733,16 @@ export const generateAudioForText = internalAction({
       }
     }
 
-    // Generate new audio via TTS
+    // Determine word context for organized storage
+    const word = args.isWordAudio ? args.text : args.word;
+
+    // Generate new audio via TTS with word-centric storage
     const audioResult = await ctx.runAction(internal.ai.generateTTSAudioAction, {
       text: args.text,
       language: args.language,
+      word,
+      audioType: args.isWordAudio ? "word" : "sentence",
+      sentenceId: args.sentenceId,
     });
 
     if (!audioResult.success || !audioResult.audioUrl) {

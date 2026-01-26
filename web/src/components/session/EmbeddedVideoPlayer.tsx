@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDuration } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import { levelVariantMap } from "@/lib/levels";
 import { isValidYoutubeId } from "@/lib/youtube";
 import type { YouTubeOnStateChangeEvent, YouTubePlayer } from "@/types/youtube";
@@ -26,6 +27,7 @@ export function EmbeddedVideoPlayer({
   onClose,
   onComplete,
 }: EmbeddedVideoPlayerProps) {
+  const t = useT();
   const [currentTime, setCurrentTime] = useState(0);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
@@ -193,7 +195,7 @@ export function EmbeddedVideoPlayer({
             {/* Mark complete button */}
             <Button onClick={onComplete} className="w-full gap-2">
               <Check className="w-4 h-4" />
-              Done Watching
+              {t("video.doneWatching")}
             </Button>
           </div>
 
@@ -201,12 +203,12 @@ export function EmbeddedVideoPlayer({
           <div className="bg-surface rounded-xl border border-border overflow-hidden flex flex-col max-h-[400px]">
             <div className="px-4 py-3 border-b border-border flex items-center gap-2 shrink-0">
               <FileText className="w-4 h-4 text-accent" />
-              <h2 className="font-medium text-foreground text-sm">Transcript</h2>
+              <h2 className="font-medium text-foreground text-sm">{t("video.transcript.title")}</h2>
             </div>
 
             <div ref={transcriptRef} className="p-3 space-y-1.5 overflow-y-auto flex-1">
               {!hasTranscript ? (
-                <p className="text-foreground-muted text-sm">Transcript not available.</p>
+                <p className="text-foreground-muted text-sm">{t("video.transcript.notAvailable")}</p>
               ) : (
                 video.transcript!.map((segment, index) => (
                   <button

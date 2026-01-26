@@ -1,7 +1,13 @@
 import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { languageValidator, masteryStateValidator, sourceTypeValidator } from "./schema";
+import { getDefinitions, type UILanguage } from "./lib/translation";
+import {
+  languageValidator,
+  masteryStateValidator,
+  sourceTypeValidator,
+  uiLanguageValidator,
+} from "./schema";
 
 // ============================================
 // QUERIES
@@ -176,9 +182,98 @@ export const listByDeck = query({
   },
 });
 
+// Helper to resolve definitions for a vocabulary item
+function resolveVocabDefinitions<
+  T extends {
+    definitions: string[];
+    definitionTranslations?: { en: string; ja: string; fr: string; zh: string }[];
+  },
+>(item: T, uiLanguage: UILanguage): T & { definitions: string[] } {
+  return {
+    ...item,
+    definitions: getDefinitions(item.definitionTranslations, item.definitions, uiLanguage),
+  };
+}
+
+// List vocabulary with definitions resolved for a specific UI language
+export const listResolved = query({
+  args: {
+    userId: v.string(),
+    language: v.optional(languageValidator),
+    uiLanguage: uiLanguageValidator,
+  },
+  handler: async (ctx, args) => {
+    let items;
+    if (args.language) {
+      items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user_and_language", (q) =>
+          q.eq("userId", args.userId).eq("language", args.language!)
+        )
+        .order("desc")
+        .collect();
+    } else {
+      items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .order("desc")
+        .collect();
+    }
+
+    // Resolve definitions for the UI language
+    return items.map((item) => resolveVocabDefinitions(item, args.uiLanguage));
+  },
+});
+
+// Search vocabulary with definitions resolved for UI language
+export const searchResolved = query({
+  args: {
+    userId: v.string(),
+    query: v.string(),
+    language: v.optional(languageValidator),
+    uiLanguage: uiLanguageValidator,
+  },
+  handler: async (ctx, args) => {
+    const searchTerm = args.query.toLowerCase();
+
+    let items;
+    if (args.language) {
+      items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user_and_language", (q) =>
+          q.eq("userId", args.userId).eq("language", args.language!)
+        )
+        .collect();
+    } else {
+      items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .collect();
+    }
+
+    // Filter then resolve definitions
+    const filtered = items.filter(
+      (item) =>
+        item.word.toLowerCase().includes(searchTerm) ||
+        item.reading?.toLowerCase().includes(searchTerm) ||
+        item.definitions.some((def) => def.toLowerCase().includes(searchTerm))
+    );
+
+    return filtered.map((item) => resolveVocabDefinitions(item, args.uiLanguage));
+  },
+});
+
 // ============================================
 // MUTATIONS
 // ============================================
+
+// Definition translation validator (used in multiple places)
+const definitionTranslationValidator = v.object({
+  en: v.string(),
+  ja: v.string(),
+  fr: v.string(),
+  zh: v.string(),
+});
 
 // Add a word to vocabulary
 export const add = mutation({
@@ -188,6 +283,8 @@ export const add = mutation({
     word: v.string(),
     reading: v.optional(v.string()),
     definitions: v.array(v.string()),
+    // Multi-language definitions (optional - can be added later via AI translation)
+    definitionTranslations: v.optional(v.array(definitionTranslationValidator)),
     partOfSpeech: v.optional(v.string()),
     sourceType: sourceTypeValidator,
     sourceStoryId: v.optional(v.string()),
@@ -216,6 +313,7 @@ export const add = mutation({
       word: args.word,
       reading: args.reading,
       definitions: args.definitions,
+      definitionTranslations: args.definitionTranslations,
       partOfSpeech: args.partOfSpeech,
       masteryState: "new",
       sourceType: args.sourceType,
@@ -262,6 +360,7 @@ export const bulkAdd = mutation({
         word: v.string(),
         reading: v.optional(v.string()),
         definitions: v.array(v.string()),
+        definitionTranslations: v.optional(v.array(definitionTranslationValidator)),
         partOfSpeech: v.optional(v.string()),
         examLevel: v.optional(v.string()),
       })
@@ -285,6 +384,7 @@ export const bulkAdd = mutation({
           word: item.word,
           reading: item.reading,
           definitions: item.definitions,
+          definitionTranslations: item.definitionTranslations,
           partOfSpeech: item.partOfSpeech,
           masteryState: "new",
           sourceType: args.sourceType,
@@ -322,6 +422,7 @@ export const update = mutation({
     id: v.id("vocabulary"),
     reading: v.optional(v.string()),
     definitions: v.optional(v.array(v.string())),
+    definitionTranslations: v.optional(v.array(definitionTranslationValidator)),
     partOfSpeech: v.optional(v.string()),
     examLevel: v.optional(v.string()),
     flashcardPending: v.optional(v.boolean()),

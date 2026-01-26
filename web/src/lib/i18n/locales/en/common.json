@@ -110,5 +110,60 @@
     "listening": "Listening",
     "writing": "Writing",
     "speaking": "Speaking"
+  },
+  "levels": {
+    "beginner": "Beginner",
+    "elementary": "Elementary",
+    "intermediate": "Intermediate",
+    "upperIntermediate": "Upper Intermediate",
+    "advanced": "Advanced",
+    "mastery": "Mastery",
+    "generalProficiency": "General Proficiency",
+    "academicEnglish": "Academic English",
+    "collegeAdmission": "College Admission",
+    "graduateSchool": "Graduate School"
+  },
+  "uiLanguages": {
+    "en": "English",
+    "fr": "French",
+    "ja": "Japanese",
+    "zh": "Chinese"
+  },
+  "fonts": {
+    "system": "System"
+  },
+  "content": {
+    "noCover": "No cover",
+    "premium": "Premium",
+    "chapter": "chapter",
+    "chapter_other": "chapters"
+  },
+  "recording": {
+    "microphoneDenied": "Microphone access denied",
+    "microphoneDeniedHelp": "Please allow microphone access in your browser settings to use shadowing practice.",
+    "recordingError": "Recording error",
+    "tryAgain": "Try again",
+    "tapToStop": "Tap to stop recording",
+    "tapToStart": "Tap the microphone to start recording",
+    "processing": {
+      "analyzingPronunciation": "Analyzing your pronunciation...",
+      "listeningIntonation": "Listening carefully to your intonation...",
+      "comparingNative": "Comparing with native speech patterns...",
+      "checkingPitch": "Checking pitch and rhythm...",
+      "evaluatingAccent": "Evaluating your accent...",
+      "measuringClarity": "Measuring speech clarity...",
+      "detectingNuances": "Detecting subtle nuances...",
+      "processingWaveforms": "Processing audio waveforms...",
+      "reviewingSyllables": "Reviewing syllable timing...",
+      "assessingFlow": "Assessing natural flow...",
+      "examiningVowels": "Examining vowel sounds...",
+      "studyingConsonants": "Studying consonant placement...",
+      "measuringPauses": "Measuring pause patterns...",
+      "analyzingStress": "Analyzing stress points..."
+    }
+  },
+  "proficiency": {
+    "jlpt": "JLPT",
+    "cefr": "CEFR"
   }
 }

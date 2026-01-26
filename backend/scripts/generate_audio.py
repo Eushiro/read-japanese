@@ -24,8 +24,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from web/.env.local (shared with frontend)
+env_path = Path(__file__).parent.parent.parent / "web" / ".env.local"
+load_dotenv(env_path)
 
 # Import Google GenAI
 try:
@@ -301,7 +302,7 @@ def main():
         print("To generate audio, set your API key:")
         print("  export GEMINI_API_KEY=your_api_key_here")
         print()
-        print("You can also add it to backend/.env file")
+        print("You can also add it to web/.env.local file")
         print("Get your key from: https://aistudio.google.com/app/apikey")
         print("=" * 60)
         print()

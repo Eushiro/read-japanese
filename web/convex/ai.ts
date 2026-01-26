@@ -68,3 +68,6 @@ export {
   gradeExamAnswerInternal,
   gradeExamAnswersBatch,
 } from "./ai/assessment";
+
+// Definition translations
+export { translateDefinitions, translateDefinitionsTracked } from "./ai/definitions";

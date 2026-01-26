@@ -6,14 +6,18 @@
     "subtitle": "L'IA génère du contenu à partir de votre vocabulaire, corrige vos écrits et crée des examens blancs adaptés à votre objectif. Pas de matériel générique—un parcours d'apprentissage conçu pour vous.",
     "startLearning": "Commencer à apprendre",
     "getStartedFree": "Commencer gratuitement",
-    "browseLibrary": "Parcourir la bibliothèque"
+    "browseLibrary": "Parcourir la bibliothèque",
+    "scroll": "Défiler"
   },
   "exams": {
     "title": "Préparez les examens qui comptent",
     "subtitle": "Contenu et tests alignés sur les formats officiels et les listes de vocabulaire.",
     "japanese": "Japonais",
     "english": "Anglais",
-    "french": "Français"
+    "french": "Français",
+    "japaneseTagline": "Maîtrisez les kanji, la grammaire et l'écoute",
+    "englishTagline": "Examens académiques et professionnels",
+    "frenchTagline": "Certifications officielles de français"
   },
   "comparison": {
     "title": "Pas une autre application de flashcards",
@@ -79,6 +83,14 @@
     "tapDefine": {
       "title": "Tapez pour définir",
       "description": "Tapez sur n'importe quel mot pour des définitions instantanées. Des aides à la lecture comme les furigana vous maintiennent dans le flux."
+    },
+    "progress": {
+      "title": "Analyse des progrès",
+      "description": "Suivez votre parcours d'apprentissage avec des statistiques détaillées et des insights personnalisés."
+    },
+    "community": {
+      "title": "Histoires communautaires",
+      "description": "Apprenez à partir de contenus créés par des locuteurs natifs et d'autres apprenants."
     }
   },
   "cta": {
@@ -89,6 +101,8 @@
     "noCreditCard": "Aucune carte de crédit requise"
   },
   "footer": {
-    "tagline": "{{brandName}} - Préparation aux examens personnalisée par l'IA"
+    "tagline": "{{brandName}} - Préparation aux examens personnalisée par l'IA",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation"
   }
 }

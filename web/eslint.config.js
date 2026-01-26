@@ -112,15 +112,21 @@ export default defineConfig([
     },
     rules: {
       'i18next/no-literal-string': ['error', {
-        mode: 'jsx-only',
+        mode: 'jsx-text-only',
         'jsx-attributes': {
           include: ['alt', 'aria-label', 'aria-placeholder', 'placeholder', 'title'],
           exclude: ['className', 'class', 'style', 'href', 'to', 'src', 'name', 'id', 'data-*', 'key', 'type', 'role', 'htmlFor', 'target', 'rel', 'method', 'action', 'variant', 'size', 'asChild', 'mode', 'side', 'align', 'sideOffset', 'alignOffset'],
         },
         words: {
           exclude: [
-            // Single characters and symbols
-            '/', '|', '-', '•', '→', '←', '×', '+', '&', '@', ':', ',', '.', '!', '?', '*', '#', '~',
+            // Single characters and symbols (escape regex special chars: | . * + ?)
+            '/', '\\|', '-', '•', '→', '←', '×', '\\+', '&', '@', ':', ',', '\\.', '!', '\\?', '\\*', '#', '~',
+            // Numbers (standalone)
+            '[0-9]+',
+            // Emojis (common ones used in app)
+            '🎉', '✓', '✗', '⭐', '🔥', '💪',
+            // Ruby text parentheses
+            '\\(', '\\)',
             // Technical values
             'N/A', 'px', 'em', 'rem', '%', 'auto', 'none', 'inherit',
             // Common technical strings

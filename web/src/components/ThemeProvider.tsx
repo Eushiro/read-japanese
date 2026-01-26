@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/clerk-react";
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { BRAND } from "@/lib/brand";
@@ -24,18 +25,22 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "dark",
   storageKey = BRAND.themeStorageKey,
 }: ThemeProviderProps) {
+  useAuth(); // Keep for future use
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
+
+  // Use user's preferred theme (dark by default)
+  const effectiveTheme = theme;
 
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
 
-    if (theme === "system") {
+    if (effectiveTheme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
@@ -43,8 +48,8 @@ export function ThemeProvider({
       return;
     }
 
-    root.classList.add(theme);
-  }, [theme]);
+    root.classList.add(effectiveTheme);
+  }, [effectiveTheme]);
 
   const value = {
     theme,

@@ -73,11 +73,19 @@ export type SkillType = "vocabulary" | "grammar" | "reading" | "listening" | "wr
 // VALIDATORS
 // ============================================
 
-// Supported languages
+// Supported content languages
 export const languageValidator = v.union(
   v.literal("japanese"),
   v.literal("english"),
   v.literal("french")
+);
+
+// Supported UI languages (for translations)
+export const uiLanguageValidator = v.union(
+  v.literal("en"),
+  v.literal("ja"),
+  v.literal("fr"),
+  v.literal("zh")
 );
 
 // Mastery states for vocabulary items
@@ -252,7 +260,18 @@ export default defineSchema({
     language: languageValidator,
     word: v.string(),
     reading: v.optional(v.string()), // Furigana for Japanese, pronunciation for others
-    definitions: v.array(v.string()), // Multiple definitions
+    definitions: v.array(v.string()), // DEPRECATED: Use definitionTranslations instead
+    // Multi-language definitions - each definition has translations to all UI languages
+    definitionTranslations: v.optional(
+      v.array(
+        v.object({
+          en: v.string(),
+          ja: v.string(),
+          fr: v.string(),
+          zh: v.string(),
+        })
+      )
+    ),
     partOfSpeech: v.optional(v.string()),
 
     // Mastery tracking
@@ -926,7 +945,18 @@ export default defineSchema({
     // Word data
     word: v.string(),
     reading: v.optional(v.string()), // Furigana/pronunciation
-    definitions: v.array(v.string()),
+    definitions: v.array(v.string()), // DEPRECATED: Use definitionTranslations instead
+    // Multi-language definitions - each definition has translations to all UI languages
+    definitionTranslations: v.optional(
+      v.array(
+        v.object({
+          en: v.string(),
+          ja: v.string(),
+          fr: v.string(),
+          zh: v.string(),
+        })
+      )
+    ),
     partOfSpeech: v.optional(v.string()),
 
     // References to content libraries

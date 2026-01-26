@@ -6,14 +6,18 @@
     "subtitle": "AI从您的词汇生成内容，批改您的写作，并创建针对您目标考试的模拟考试。不是通用学习材料——是为您打造的学习路径。",
     "startLearning": "开始学习",
     "getStartedFree": "免费开始",
-    "browseLibrary": "浏览图书馆"
+    "browseLibrary": "浏览图书馆",
+    "scroll": "滚动"
   },
   "exams": {
     "title": "备考重要的考试",
     "subtitle": "内容和测试与官方考试形式和词汇表保持一致。",
     "japanese": "日语",
     "english": "英语",
-    "french": "法语"
+    "french": "法语",
+    "japaneseTagline": "掌握汉字、语法和听力",
+    "englishTagline": "学术和职业考试",
+    "frenchTagline": "法语官方认证考试"
   },
   "comparison": {
     "title": "不只是另一个闪卡应用",
@@ -79,6 +83,14 @@
     "tapDefine": {
       "title": "点击查定义",
       "description": "点击任何单词即时查看定义。假名注音等阅读辅助帮助您保持流畅。"
+    },
+    "progress": {
+      "title": "学习分析",
+      "description": "通过详细统计和个性化洞察追踪您的学习旅程。"
+    },
+    "community": {
+      "title": "社区故事",
+      "description": "从母语者和其他学习者创建的内容中学习。"
     }
   },
   "cta": {
@@ -89,6 +101,8 @@
     "noCreditCard": "无需信用卡"
   },
   "footer": {
-    "tagline": "{{brandName}} - AI驱动的个性化考试准备"
+    "tagline": "{{brandName}} - AI驱动的个性化考试准备",
+    "privacy": "隐私政策",
+    "terms": "服务条款"
   }
 }

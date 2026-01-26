@@ -142,8 +142,9 @@ export function getSessionDescription(plan: SessionPlan): string {
 }
 
 // Duration options for UI
+// Note: descriptionKey should be translated at render time with t(`common.duration.${descriptionKey}`)
 export const DURATION_OPTIONS = [
-  { value: 5, label: "5 min", description: "Quick review" },
-  { value: 15, label: "15 min", description: "Standard" },
-  { value: 30, label: "30 min", description: "Deep study" },
+  { value: 5, label: "5 min", descriptionKey: "quick" },
+  { value: 15, label: "15 min", descriptionKey: "standard" },
+  { value: 30, label: "30 min", descriptionKey: "deep" },
 ] as const;

@@ -3,7 +3,12 @@
     "restart": "Restart"
   },
   "errors": {
-    "storyNotFound": "Story not found"
+    "storyNotFound": "Story not found",
+    "failedToLoad": "Failed to load story",
+    "noContent": "No content available"
+  },
+  "actions": {
+    "doneReading": "Done Reading"
   },
   "navigation": {
     "backToLibrary": "Back to Library",

@@ -198,10 +198,21 @@
     border-color: var(--color-accent);
   }
 
-  .dark .card-elevated:hover {
+  /* Dark mode: glass morphism for visible cards */
+  .dark .card-elevated {
+    @apply bg-white/[0.04] border-white/10;
     box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .card-elevated:hover {
+    @apply bg-white/[0.06] border-white/15;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
       0 12px 40px -12px rgba(0, 0, 0, 0.5),
-      0 0 20px rgba(255, 132, 0, 0.15);
+      0 0 30px rgba(255, 132, 0, 0.1);
+    transform: translateY(-4px);
   }
 
   /* Glass morphism for overlays */
@@ -213,6 +224,72 @@
   .dark .glass {
     @apply bg-background/70;
     border: 1px solid rgba(255, 132, 0, 0.1);
+  }
+
+  /* Enhanced glass card */
+  .glass-card {
+    @apply backdrop-blur-xl bg-white/[0.03] border border-white/10;
+    @apply hover:bg-white/[0.05] hover:border-white/15;
+    @apply hover:shadow-[0_0_30px_rgba(255,132,0,0.08)];
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .glass-card:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      0 0 20px rgba(255, 132, 0, 0.1);
+  }
+
+  /* Sticky header - subtle glass effect */
+  .sticky-header {
+    @apply border-b border-white/5 bg-black/50 backdrop-blur-xl;
+  }
+
+  /* Spacing utilities using CSS variables */
+  .space-y-section > * + * {
+    margin-top: var(--space-xl);
+  }
+
+  .py-section {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+
+  .gap-content {
+    gap: var(--space-md);
+  }
+
+  /* Standard content grid - max 5 columns */
+  .grid-content {
+    @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5;
+  }
+
+  /* Standard feature grid - max 3 columns */
+  .grid-features {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+  }
+
+  /* Glass pill badge */
+  .glass-pill {
+    @apply backdrop-blur-xl bg-white/10 border border-white/20 px-4 py-2 rounded-full;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* Glass input */
+  .glass-input {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-input:focus {
+    @apply border-white/30;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 0 20px rgba(255, 132, 0, 0.15);
   }
 
   /* Gradient backgrounds */

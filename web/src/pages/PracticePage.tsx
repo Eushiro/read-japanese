@@ -1,6 +1,7 @@
 import { useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import type { GenericId } from "convex/values";
+import { motion } from "framer-motion";
 import {
   BookOpen,
   Check,
@@ -21,6 +22,44 @@ import { useAIAction } from "@/hooks/useAIAction";
 import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
+
+// Animated background for practice page
+function PracticeAnimatedBackground() {
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      <motion.div
+        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-15"
+        style={{
+          background: "radial-gradient(circle, #a855f7 0%, transparent 70%)",
+          top: "-5%",
+          left: "20%",
+        }}
+        animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[400px] h-[400px] rounded-full blur-[120px] opacity-[0.12]"
+        style={{
+          background: "radial-gradient(circle, #06b6d4 0%, transparent 70%)",
+          bottom: "10%",
+          right: "10%",
+        }}
+        animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
+        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[300px] h-[300px] rounded-full blur-[100px] opacity-10"
+        style={{
+          background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
+          top: "40%",
+          right: "30%",
+        }}
+        animate={{ x: [0, 20, 0], y: [0, -20, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
 
 export function PracticePage() {
   const t = useT();
@@ -208,26 +247,36 @@ export function PracticePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Animated background */}
+      <PracticeAnimatedBackground />
+
       {/* Hero Section */}
-      <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-4xl">
-          <div className="animate-fade-in-up">
+      <div className="relative overflow-hidden pt-8 pb-12">
+        <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
+          >
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-accent/10">
-                <PenLine className="w-5 h-5 text-accent" />
-              </div>
-              <span className="text-sm font-medium text-accent uppercase tracking-wider">
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: -5 }}
+                className="p-2 rounded-xl bg-purple-500/20"
+              >
+                <PenLine className="w-5 h-5 text-purple-400" />
+              </motion.div>
+              <span className="text-sm font-medium text-purple-400 uppercase tracking-wider">
                 {t("practice.hero.badge")}
               </span>
             </div>
             <h1
-              className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
+              className="text-3xl sm:text-4xl font-bold text-white mb-2"
               style={{ fontFamily: "var(--font-display)" }}
             >
               {t("practice.hero.title")}
             </h1>
-            <p className="text-foreground-muted text-lg">{t("practice.hero.subtitle")}</p>
-          </div>
+            <p className="text-white/60 text-lg">{t("practice.hero.subtitle")}</p>
+          </motion.div>
         </div>
       </div>
 

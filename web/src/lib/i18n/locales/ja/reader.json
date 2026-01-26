@@ -3,7 +3,12 @@
     "restart": "最初から"
   },
   "errors": {
-    "storyNotFound": "ストーリーが見つかりません"
+    "storyNotFound": "ストーリーが見つかりません",
+    "failedToLoad": "読み込みに失敗しました",
+    "noContent": "コンテンツがありません"
+  },
+  "actions": {
+    "doneReading": "読み終わり"
   },
   "navigation": {
     "backToLibrary": "ライブラリに戻る",

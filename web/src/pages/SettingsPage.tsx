@@ -627,7 +627,7 @@ export function SettingsPage() {
                                 : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
                             }`}
                           >
-                            {lang.label}
+                            {t(`common.languages.${lang.value}`)}
                             {isSelected && <Check className="w-4 h-4 ml-2 inline" />}
                           </button>
                         );

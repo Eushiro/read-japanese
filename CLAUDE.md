@@ -58,6 +58,22 @@ This applies to:
 
 ---
 
+## i18n: Use Brand Name Variable
+
+**Never hardcode "SanLang" in translation files.** Use the `{{brandName}}` interpolation variable instead.
+
+```json
+// Bad - hardcoded brand name
+"tagline": "SanLang - Learn languages with AI"
+
+// Good - uses interpolation variable
+"tagline": "{{brandName}} - Learn languages with AI"
+```
+
+The brand name is configured in `shared/brand.json` and automatically available in all translations via `{{brandName}}`.
+
+---
+
 ## Development Guidelines
 
 See **`docs/DEVELOPMENT.md`** for detailed patterns on:

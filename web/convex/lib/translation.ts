@@ -16,6 +16,16 @@ export type TranslationMap = {
 };
 
 /**
+ * Definition translation map - all languages are required for definitions.
+ */
+export type DefinitionTranslationMap = {
+  en: string;
+  ja: string;
+  fr: string;
+  zh: string;
+};
+
+/**
  * Get the sentence translation for a specific UI language.
  * Returns null if the translation is not available - NO fallback to English.
  *
@@ -68,4 +78,26 @@ export function normalizeUILanguage(lang: string | undefined): UILanguage {
     return lang;
   }
   return "en";
+}
+
+/**
+ * Get definitions for a specific UI language from translated definitions.
+ * Falls back to the original definitions array if translations are not available.
+ *
+ * @param definitionTranslations - Array of definition translations (or undefined)
+ * @param definitions - Original definitions array (fallback)
+ * @param uiLanguage - The user's UI language
+ * @returns Array of definitions in the specified language
+ */
+export function getDefinitions(
+  definitionTranslations: DefinitionTranslationMap[] | undefined,
+  definitions: string[],
+  uiLanguage: UILanguage
+): string[] {
+  // If translations are available, use them
+  if (definitionTranslations && definitionTranslations.length > 0) {
+    return definitionTranslations.map((dt) => dt[uiLanguage]);
+  }
+  // Otherwise, fall back to original definitions
+  return definitions;
 }

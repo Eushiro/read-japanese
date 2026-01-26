@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UI_LANGUAGES, type UILanguage, useUILanguage } from "@/lib/i18n";
+import { UI_LANGUAGES, type UILanguage, useT, useUILanguage } from "@/lib/i18n";
 
 interface UILanguageSwitcherProps {
   className?: string;
@@ -21,6 +21,7 @@ interface UILanguageSwitcherProps {
 }
 
 export function UILanguageSwitcher({ className, showLabel = true }: UILanguageSwitcherProps) {
+  const t = useT();
   const { language, setLanguage, isChanging } = useUILanguage();
 
   return (
@@ -39,7 +40,7 @@ export function UILanguageSwitcher({ className, showLabel = true }: UILanguageSw
         <SelectContent>
           {UI_LANGUAGES.map((lang) => (
             <SelectItem key={lang.value} value={lang.value}>
-              {showLabel ? lang.label : lang.nativeName}
+              {showLabel ? t(`common.uiLanguages.${lang.labelKey}`) : lang.nativeName}
             </SelectItem>
           ))}
         </SelectContent>

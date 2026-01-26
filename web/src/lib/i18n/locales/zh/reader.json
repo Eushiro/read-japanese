@@ -3,7 +3,12 @@
     "restart": "重新播放"
   },
   "errors": {
-    "storyNotFound": "找不到故事"
+    "storyNotFound": "找不到故事",
+    "failedToLoad": "加载失败",
+    "noContent": "无可用内容"
+  },
+  "actions": {
+    "doneReading": "阅读完成"
   },
   "navigation": {
     "backToLibrary": "返回图书馆",

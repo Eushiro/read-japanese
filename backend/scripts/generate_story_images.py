@@ -16,9 +16,10 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Load environment variables from .env file
+# Load environment variables from web/.env.local (shared with frontend)
 from dotenv import load_dotenv
-load_dotenv(Path(__file__).parent.parent / ".env")
+env_path = Path(__file__).parent.parent.parent / "web" / ".env.local"
+load_dotenv(env_path)
 
 from app.services.generation.image_generator import ImageGenerator
 

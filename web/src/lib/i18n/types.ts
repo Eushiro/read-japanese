@@ -14,15 +14,17 @@ export interface TranslationContextValue {
   isReady: boolean;
 }
 
+// labelKey is the i18n key for the language name (translate with t(`common.uiLanguages.${value}`))
+// nativeName is the language's name in its own script (never translated)
 export const UI_LANGUAGES: {
   value: UILanguage;
-  label: string;
+  labelKey: string;
   nativeName: string;
 }[] = [
-  { value: "en", label: "English", nativeName: "English" },
-  { value: "fr", label: "French", nativeName: "Français" },
-  { value: "ja", label: "Japanese", nativeName: "日本語" },
-  { value: "zh", label: "Chinese", nativeName: "中文" },
+  { value: "en", labelKey: "en", nativeName: "English" },
+  { value: "fr", labelKey: "fr", nativeName: "Français" },
+  { value: "ja", labelKey: "ja", nativeName: "日本語" },
+  { value: "zh", labelKey: "zh", nativeName: "中文" },
 ];
 
 export const DEFAULT_LANGUAGE: UILanguage = "en";

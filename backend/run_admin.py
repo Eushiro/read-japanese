@@ -13,12 +13,14 @@ Or with custom port:
 """
 import os
 import uvicorn
+from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from web/.env.local (shared with frontend)
+env_path = Path(__file__).parent.parent / "web" / ".env.local"
+load_dotenv(env_path)
 
 # Import the admin batch router
 from app.routers.admin_batch import router as admin_router

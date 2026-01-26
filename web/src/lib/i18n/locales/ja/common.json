@@ -110,5 +110,60 @@
     "listening": "聴解",
     "writing": "作文",
     "speaking": "会話"
+  },
+  "levels": {
+    "beginner": "初級",
+    "elementary": "初中級",
+    "intermediate": "中級",
+    "upperIntermediate": "中上級",
+    "advanced": "上級",
+    "mastery": "マスター",
+    "generalProficiency": "一般能力",
+    "academicEnglish": "アカデミック英語",
+    "collegeAdmission": "大学入学",
+    "graduateSchool": "大学院"
+  },
+  "uiLanguages": {
+    "en": "英語",
+    "fr": "フランス語",
+    "ja": "日本語",
+    "zh": "中国語"
+  },
+  "fonts": {
+    "system": "システム"
+  },
+  "content": {
+    "noCover": "表紙なし",
+    "premium": "プレミアム",
+    "chapter": "章",
+    "chapter_other": "章"
+  },
+  "recording": {
+    "microphoneDenied": "マイクへのアクセスが拒否されました",
+    "microphoneDeniedHelp": "シャドーイング練習を使用するには、ブラウザの設定でマイクへのアクセスを許可してください。",
+    "recordingError": "録音エラー",
+    "tryAgain": "もう一度試す",
+    "tapToStop": "タップして録音を停止",
+    "tapToStart": "マイクをタップして録音を開始",
+    "processing": {
+      "analyzingPronunciation": "発音を分析中...",
+      "listeningIntonation": "イントネーションを確認中...",
+      "comparingNative": "ネイティブの発音パターンと比較中...",
+      "checkingPitch": "ピッチとリズムをチェック中...",
+      "evaluatingAccent": "アクセントを評価中...",
+      "measuringClarity": "発音の明瞭さを測定中...",
+      "detectingNuances": "微妙なニュアンスを検出中...",
+      "processingWaveforms": "音声波形を処理中...",
+      "reviewingSyllables": "音節のタイミングを確認中...",
+      "assessingFlow": "自然な流れを評価中...",
+      "examiningVowels": "母音を確認中...",
+      "studyingConsonants": "子音の配置を分析中...",
+      "measuringPauses": "ポーズパターンを測定中...",
+      "analyzingStress": "アクセントポイントを分析中..."
+    }
+  },
+  "proficiency": {
+    "jlpt": "JLPT",
+    "cefr": "CEFR"
   }
 }

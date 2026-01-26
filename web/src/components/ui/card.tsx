@@ -9,10 +9,11 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
       className={cn(
         "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
         "transition-all duration-300",
-        // Dark mode: semi-transparent with subtle border, warm glow on hover
-        "dark:bg-white/[0.03] dark:border-white/[0.08]",
-        "dark:hover:bg-white/[0.05] dark:hover:border-white/[0.12]",
-        "dark:hover:shadow-[0_0_30px_rgba(255,132,0,0.08)]",
+        // Dark mode: glass morphism with subtle border and warm glow on hover
+        "dark:backdrop-blur-md dark:bg-white/[0.03] dark:border-white/10",
+        "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
+        "dark:hover:bg-white/[0.05] dark:hover:border-white/15",
+        "dark:hover:shadow-[0_0_30px_rgba(255,132,0,0.08),inset_0_1px_0_rgba(255,255,255,0.08)]",
         className
       )}
       {...props}

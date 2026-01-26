@@ -110,5 +110,60 @@
     "listening": "听力",
     "writing": "写作",
     "speaking": "口语"
+  },
+  "levels": {
+    "beginner": "初级",
+    "elementary": "基础",
+    "intermediate": "中级",
+    "upperIntermediate": "中高级",
+    "advanced": "高级",
+    "mastery": "精通",
+    "generalProficiency": "综合能力",
+    "academicEnglish": "学术英语",
+    "collegeAdmission": "大学入学",
+    "graduateSchool": "研究生院"
+  },
+  "uiLanguages": {
+    "en": "英语",
+    "fr": "法语",
+    "ja": "日语",
+    "zh": "中文"
+  },
+  "fonts": {
+    "system": "系统"
+  },
+  "content": {
+    "noCover": "无封面",
+    "premium": "高级",
+    "chapter": "章",
+    "chapter_other": "章"
+  },
+  "recording": {
+    "microphoneDenied": "麦克风访问被拒绝",
+    "microphoneDeniedHelp": "请在浏览器设置中允许麦克风访问以使用跟读练习。",
+    "recordingError": "录音错误",
+    "tryAgain": "重试",
+    "tapToStop": "点击停止录音",
+    "tapToStart": "点击麦克风开始录音",
+    "processing": {
+      "analyzingPronunciation": "分析您的发音...",
+      "listeningIntonation": "仔细聆听您的语调...",
+      "comparingNative": "与母语发音模式对比...",
+      "checkingPitch": "检查音高和节奏...",
+      "evaluatingAccent": "评估您的口音...",
+      "measuringClarity": "测量语音清晰度...",
+      "detectingNuances": "检测细微差别...",
+      "processingWaveforms": "处理音频波形...",
+      "reviewingSyllables": "检查音节时序...",
+      "assessingFlow": "评估自然流畅度...",
+      "examiningVowels": "检查元音发音...",
+      "studyingConsonants": "分析辅音位置...",
+      "measuringPauses": "测量停顿模式...",
+      "analyzingStress": "分析重音点..."
+    }
+  },
+  "proficiency": {
+    "jlpt": "JLPT",
+    "cefr": "CEFR"
   }
 }

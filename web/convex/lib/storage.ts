@@ -15,6 +15,8 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 
+import type { ContentLanguage } from "../schema";
+
 // ============================================
 // STORAGE INTERFACE
 // ============================================
@@ -28,6 +30,11 @@ export interface UploadOptions {
   prefix?: string;
   /** Optional cache control header */
   cacheControl?: string;
+  /**
+   * If true, use prefix as the exact key (minus extension).
+   * Otherwise, a random suffix is appended.
+   */
+  exactKey?: boolean;
 }
 
 export interface DownloadResult {
@@ -87,14 +94,20 @@ class R2StorageProvider implements StorageProvider {
 
   async upload(options: UploadOptions): Promise<string> {
     const client = this.getClient();
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 10);
     const extension = getExtensionFromMime(options.contentType);
-    const key = options.prefix
-      ? `${options.prefix}/${timestamp}-${random}.${extension}`
-      : `${timestamp}-${random}.${extension}`;
+
+    let key: string;
+    if (options.exactKey && options.prefix) {
+      // Use prefix as exact key (with extension)
+      key = `${options.prefix}.${extension}`;
+    } else {
+      // Generate unique filename with random suffix
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 10);
+      key = options.prefix
+        ? `${options.prefix}/${timestamp}-${random}.${extension}`
+        : `${timestamp}-${random}.${extension}`;
+    }
 
     // Upload to R2
     await client.send(
@@ -107,9 +120,13 @@ class R2StorageProvider implements StorageProvider {
       })
     );
 
-    // Return public URL
+    // Return public URL with properly encoded path segments
     const baseUrl = this.publicUrl.endsWith("/") ? this.publicUrl.slice(0, -1) : this.publicUrl;
-    return `${baseUrl}/${key}`;
+    const encodedKey = key
+      .split("/")
+      .map((segment) => encodeURIComponent(segment))
+      .join("/");
+    return `${baseUrl}/${encodedKey}`;
   }
 
   async download(key: string): Promise<DownloadResult> {
@@ -238,36 +255,80 @@ export function getStorageProvider(convexStorage?: any): StorageProvider {
 }
 
 // ============================================
-// CONVENIENCE FUNCTIONS
+// WORD-CENTRIC UPLOAD FUNCTIONS
 // ============================================
 
 /**
- * Upload audio file to storage
+ * Get the folder path for a word's media files
+ * Format: flashcards/{language}/{word}
+ * Word is stored with raw Unicode - URL encoding happens only when constructing public URLs
  */
-export async function uploadAudio(
+export function getWordFolderPath(word: string, language: ContentLanguage): string {
+  return `flashcards/${language}/${word}`;
+}
+
+/**
+ * Upload word pronunciation audio to storage
+ * Path: words/{language}/{word}_{hash}/word.mp3
+ */
+export async function uploadWordAudio(
   data: Uint8Array,
-  mimeType: string = "audio/wav"
+  word: string,
+  language: ContentLanguage,
+  mimeType: string
 ): Promise<string> {
   const provider = getStorageProvider();
+  const folderPath = getWordFolderPath(word, language);
+
   return provider.upload({
     data,
     contentType: mimeType,
-    prefix: "audio",
+    prefix: `${folderPath}/word`,
+    exactKey: true,
   });
 }
 
 /**
- * Upload image file to storage
+ * Upload sentence audio to storage
+ * Path: words/{language}/{word}_{hash}/sentence-{sentenceId}.mp3
  */
-export async function uploadImage(
+export async function uploadSentenceAudio(
   data: Uint8Array,
-  mimeType: string = "image/png"
+  word: string,
+  language: ContentLanguage,
+  sentenceId: string,
+  mimeType: string
 ): Promise<string> {
   const provider = getStorageProvider();
+  const folderPath = getWordFolderPath(word, language);
+
   return provider.upload({
     data,
     contentType: mimeType,
-    prefix: "images",
+    prefix: `${folderPath}/sentence-${sentenceId}`,
+    exactKey: true,
+  });
+}
+
+/**
+ * Upload word image to storage
+ * Path: words/{language}/{word}_{hash}/image-{imageId}.webp
+ */
+export async function uploadWordImage(
+  data: Uint8Array,
+  word: string,
+  language: ContentLanguage,
+  imageId: string,
+  mimeType: string
+): Promise<string> {
+  const provider = getStorageProvider();
+  const folderPath = getWordFolderPath(word, language);
+
+  return provider.upload({
+    data,
+    contentType: mimeType,
+    prefix: `${folderPath}/image-${imageId}`,
+    exactKey: true,
   });
 }
 

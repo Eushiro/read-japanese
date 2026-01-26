@@ -2,7 +2,8 @@ import { v } from "convex/values";
 
 import { type Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import { languageValidator } from "./schema";
+import { getDefinitions, getSentenceTranslation, normalizeUILanguage } from "./lib/translation";
+import { languageValidator, uiLanguageValidator } from "./schema";
 
 // ============================================
 // DECK QUERIES
@@ -108,8 +109,13 @@ export const listAllDecks = query({
 // Returns flat fields that the frontend expects
 import type { Doc } from "./_generated/dataModel";
 import type { DatabaseReader } from "./_generated/server";
+import type { UILanguage } from "./lib/translation";
 
-async function resolveVocabularyContent(db: DatabaseReader, item: Doc<"premadeVocabulary">) {
+async function resolveVocabularyContent(
+  db: DatabaseReader,
+  item: Doc<"premadeVocabulary">,
+  uiLanguage: UILanguage
+) {
   const [sentenceDoc, imageDoc, wordAudioDoc] = await Promise.all([
     item.sentenceId ? db.get(item.sentenceId) : null,
     item.imageId ? db.get(item.imageId) : null,
@@ -119,11 +125,25 @@ async function resolveVocabularyContent(db: DatabaseReader, item: Doc<"premadeVo
       .first(),
   ]);
 
+  // Resolve sentence translation for user's UI language
+  const sentenceTranslation = sentenceDoc?.translations
+    ? getSentenceTranslation(sentenceDoc.translations, uiLanguage)
+    : null;
+
+  // Resolve definitions for user's UI language
+  const resolvedDefinitions = getDefinitions(
+    item.definitionTranslations,
+    item.definitions,
+    uiLanguage
+  );
+
   return {
     ...item,
+    // Resolved definitions for user's UI language
+    definitions: resolvedDefinitions,
     // Flat fields for frontend
     sentence: sentenceDoc?.sentence,
-    sentenceTranslation: sentenceDoc?.translations?.en,
+    sentenceTranslation,
     audioUrl: sentenceDoc?.audioUrl,
     wordAudioUrl: wordAudioDoc?.audioUrl,
     imageUrl: imageDoc?.imageUrl,
@@ -135,8 +155,10 @@ export const getVocabularyForDeck = query({
   args: {
     deckId: v.string(),
     limit: v.optional(v.number()),
+    uiLanguage: v.optional(uiLanguageValidator),
   },
   handler: async (ctx, args) => {
+    const uiLang = normalizeUILanguage(args.uiLanguage);
     const items = await ctx.db
       .query("premadeVocabulary")
       .withIndex("by_deck", (q) => q.eq("deckId", args.deckId))
@@ -145,7 +167,7 @@ export const getVocabularyForDeck = query({
     const limited = args.limit ? items.slice(0, args.limit) : items;
 
     // Resolve content for each item
-    return Promise.all(limited.map((item) => resolveVocabularyContent(ctx.db, item)));
+    return Promise.all(limited.map((item) => resolveVocabularyContent(ctx.db, item, uiLang)));
   },
 });
 
@@ -154,8 +176,10 @@ export const getAllSubscribedVocabulary = query({
   args: {
     userId: v.string(),
     limit: v.optional(v.number()),
+    uiLanguage: v.optional(uiLanguageValidator),
   },
   handler: async (ctx, args) => {
+    const uiLang = normalizeUILanguage(args.uiLanguage);
     // Get all user's deck subscriptions
     const subscriptions = await ctx.db
       .query("userDeckSubscriptions")
@@ -189,7 +213,7 @@ export const getAllSubscribedVocabulary = query({
     const limited = args.limit ? flattened.slice(0, args.limit) : flattened;
 
     // Resolve content for each item
-    return Promise.all(limited.map((item) => resolveVocabularyContent(ctx.db, item)));
+    return Promise.all(limited.map((item) => resolveVocabularyContent(ctx.db, item, uiLang)));
   },
 });
 
@@ -433,6 +457,14 @@ export const deleteDeck = mutation({
 // VOCABULARY MUTATIONS
 // ============================================
 
+// Definition translation validator (for premade vocabulary import)
+const definitionTranslationValidator = v.object({
+  en: v.string(),
+  ja: v.string(),
+  fr: v.string(),
+  zh: v.string(),
+});
+
 // Import vocabulary items to a deck (bulk)
 export const importVocabulary = mutation({
   args: {
@@ -442,6 +474,7 @@ export const importVocabulary = mutation({
         word: v.string(),
         reading: v.optional(v.string()),
         definitions: v.array(v.string()),
+        definitionTranslations: v.optional(v.array(definitionTranslationValidator)),
         partOfSpeech: v.optional(v.string()),
       })
     ),
@@ -515,6 +548,7 @@ export const importVocabulary = mutation({
         word: item.word,
         reading: item.reading,
         definitions: item.definitions,
+        definitionTranslations: item.definitionTranslations,
         partOfSpeech: item.partOfSpeech,
         sentenceId,
         imageId,
@@ -629,6 +663,7 @@ export const importDeckToUser = mutation({
         word: premade.word,
         reading: premade.reading,
         definitions: premade.definitions,
+        definitionTranslations: premade.definitionTranslations,
         partOfSpeech: premade.partOfSpeech,
         masteryState: "new",
         sourceType: "import",

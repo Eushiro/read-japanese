@@ -300,20 +300,20 @@ function FlashcardDisplay({
       {/* Show answer / Answer */}
       {!showAnswer ? (
         <Button onClick={onShowAnswer} className="w-full" size="lg">
-          Show Answer
+          {t("flashcards.card.showAnswer")}
         </Button>
       ) : (
         <div className="space-y-4 animate-fade-in-up">
           {isJapanese && vocab?.reading && (
             <div className="text-center">
-              <div className="text-sm text-foreground-muted mb-1">Reading</div>
+              <div className="text-sm text-foreground-muted mb-1">{t("flashcards.card.reading")}</div>
               <div className="text-2xl text-foreground" style={{ fontFamily: languageFont }}>
                 {vocab.reading}
               </div>
             </div>
           )}
           <div className="text-center">
-            <div className="text-sm text-foreground-muted mb-1">Definition</div>
+            <div className="text-sm text-foreground-muted mb-1">{t("flashcards.card.definition")}</div>
             <div className="text-xl font-medium text-foreground">
               {vocab?.definitions.join("; ")}
             </div>
@@ -336,11 +336,12 @@ function RatingButton({
   disabled: boolean;
   onClick: () => void;
 }) {
+  const t = useT();
   const config = {
-    again: { icon: X, color: "red", label: "Again", time: "1m" },
-    hard: { icon: null, color: "amber", label: "Hard", time: "10m" },
-    good: { icon: Check, color: "green", label: "Good", time: "1d" },
-    easy: { icon: ChevronRight, color: "blue", label: "Easy", time: "4d" },
+    again: { icon: X, color: "red" },
+    hard: { icon: null, color: "amber" },
+    good: { icon: Check, color: "green" },
+    easy: { icon: ChevronRight, color: "blue" },
   }[rating];
 
   return (
@@ -357,8 +358,8 @@ function RatingButton({
       ) : (
         <span className={`text-${config.color}-500 font-bold mb-1`}>~</span>
       )}
-      <span className="text-xs font-medium">{config.label}</span>
-      <span className="text-[10px] text-foreground-muted">{config.time}</span>
+      <span className="text-xs font-medium">{t(`flashcards.rating.${rating}`)}</span>
+      <span className="text-[10px] text-foreground-muted">{t(`flashcards.rating.intervals.${rating}`)}</span>
     </Button>
   );
 }

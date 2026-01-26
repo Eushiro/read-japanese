@@ -5,7 +5,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { type Id } from "../_generated/dataModel";
 import { action, internalAction } from "../_generated/server";
-import { uploadAudio, uploadImage } from "../lib/storage";
+import { uploadSentenceAudio, uploadWordAudio, uploadWordImage } from "../lib/storage";
 import {
   callWithRetry,
   type CallWithRetryResult,
@@ -625,8 +625,14 @@ export const generateFlashcardAudio = action({
       return { success: false };
     }
 
-    // Upload audio to storage (R2)
-    const audioUrl = await uploadAudio(new Uint8Array(audioResult.audioData), audioResult.mimeType);
+    // Upload audio to storage (R2) - word-centric path
+    const audioUrl = await uploadSentenceAudio(
+      new Uint8Array(audioResult.audioData),
+      vocab.word,
+      vocab.language,
+      args.flashcardId,
+      audioResult.mimeType
+    );
 
     // Update sentence with audio URL
     await ctx.runMutation(internal.aiHelpers.updateFlashcardAudio, {
@@ -691,8 +697,14 @@ export const generateFlashcardWithAudio = action({
         const audioResult = await generateTTSAudio(generated.sentence, vocab.language);
 
         if (audioResult) {
-          // Upload audio to storage (R2)
-          audioUrl = await uploadAudio(new Uint8Array(audioResult.audioData), audioResult.mimeType);
+          // Upload sentence audio to storage (R2) - word-centric path
+          audioUrl = await uploadSentenceAudio(
+            new Uint8Array(audioResult.audioData),
+            vocab.word,
+            vocab.language,
+            flashcardId,
+            audioResult.mimeType
+          );
 
           await ctx.runMutation(internal.aiHelpers.updateFlashcardAudio, {
             flashcardId: flashcardId as Id<"flashcards">,
@@ -709,9 +721,11 @@ export const generateFlashcardWithAudio = action({
         const wordAudioResult = await generateTTSAudio(vocab.word, vocab.language);
 
         if (wordAudioResult) {
-          // Upload word audio to storage (R2)
-          wordAudioUrl = await uploadAudio(
+          // Upload word audio to storage (R2) - word-centric path
+          wordAudioUrl = await uploadWordAudio(
             new Uint8Array(wordAudioResult.audioData),
+            vocab.word,
+            vocab.language,
             wordAudioResult.mimeType
           );
 
@@ -736,8 +750,14 @@ export const generateFlashcardWithAudio = action({
         );
 
         if (imageResult) {
-          // Upload image to storage (R2)
-          imageUrl = await uploadImage(new Uint8Array(imageResult.imageData), imageResult.mimeType);
+          // Upload image to storage (R2) - word-centric path
+          imageUrl = await uploadWordImage(
+            new Uint8Array(imageResult.imageData),
+            vocab.word,
+            vocab.language,
+            flashcardId,
+            imageResult.mimeType
+          );
 
           await ctx.runMutation(internal.aiHelpers.updateFlashcardImage, {
             flashcardId: flashcardId as Id<"flashcards">,
@@ -844,9 +864,12 @@ export const enhancePremadeVocabulary = action({
       try {
         const audioResult = await generateTTSAudio(sentence, vocab.language);
         if (audioResult) {
-          // Upload audio to storage (R2)
-          const audioUrl = await uploadAudio(
+          // Upload sentence audio to storage (R2) - word-centric path
+          const audioUrl = await uploadSentenceAudio(
             new Uint8Array(audioResult.audioData),
+            vocab.word,
+            vocab.language,
+            args.premadeVocabularyId,
             audioResult.mimeType
           );
 
@@ -866,9 +889,11 @@ export const enhancePremadeVocabulary = action({
       try {
         const wordAudioResult = await generateTTSAudio(vocab.word, vocab.language);
         if (wordAudioResult) {
-          // Upload word audio to storage (R2)
-          const wordAudioUrl = await uploadAudio(
+          // Upload word audio to storage (R2) - word-centric path
+          const wordAudioUrl = await uploadWordAudio(
             new Uint8Array(wordAudioResult.audioData),
+            vocab.word,
+            vocab.language,
             wordAudioResult.mimeType
           );
 
@@ -888,9 +913,12 @@ export const enhancePremadeVocabulary = action({
       try {
         const imageResult = await generateFlashcardImage(vocab.word, sentence, vocab.language);
         if (imageResult) {
-          // Upload image to storage (R2)
-          const imageUrl = await uploadImage(
+          // Upload image to storage (R2) - word-centric path
+          const imageUrl = await uploadWordImage(
             new Uint8Array(imageResult.imageData),
+            vocab.word,
+            vocab.language,
+            args.premadeVocabularyId,
             imageResult.mimeType
           );
 
@@ -974,8 +1002,14 @@ export const refreshFlashcardSentence = action({
       const audioResult = await generateTTSAudio(generated.sentence, vocab.language);
 
       if (audioResult) {
-        // Upload audio to storage (R2)
-        audioUrl = await uploadAudio(new Uint8Array(audioResult.audioData), audioResult.mimeType);
+        // Upload sentence audio to storage (R2) - word-centric path
+        audioUrl = await uploadSentenceAudio(
+          new Uint8Array(audioResult.audioData),
+          vocab.word,
+          vocab.language,
+          args.flashcardId,
+          audioResult.mimeType
+        );
       }
     } catch (error) {
       console.error("Audio generation failed during refresh:", error);

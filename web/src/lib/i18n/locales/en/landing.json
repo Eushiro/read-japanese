@@ -6,14 +6,18 @@
     "subtitle": "AI generates content from your vocabulary, verifies your writing, and creates mock tests tailored to your target exam. Not generic study materials—a learning path built for you.",
     "startLearning": "Start Learning",
     "getStartedFree": "Get Started Free",
-    "browseLibrary": "Browse Library"
+    "browseLibrary": "Browse Library",
+    "scroll": "Scroll"
   },
   "exams": {
     "title": "Prep for the exams that matter",
     "subtitle": "Content and tests aligned with official exam formats and vocabulary lists.",
     "japanese": "Japanese",
     "english": "English",
-    "french": "French"
+    "french": "French",
+    "japaneseTagline": "Master kanji, grammar & listening",
+    "englishTagline": "Academic & professional exams",
+    "frenchTagline": "Official French certifications"
   },
   "comparison": {
     "title": "Not another flashcard app",
@@ -79,6 +83,14 @@
     "tapDefine": {
       "title": "Tap-to-Define",
       "description": "Tap any word for instant definitions. Reading aids like furigana help you stay in flow."
+    },
+    "progress": {
+      "title": "Progress Analytics",
+      "description": "Track your learning journey with detailed stats and personalized insights."
+    },
+    "community": {
+      "title": "Community Stories",
+      "description": "Learn from content created by native speakers and fellow learners."
     }
   },
   "cta": {
@@ -89,6 +101,8 @@
     "noCreditCard": "No credit card required"
   },
   "footer": {
-    "tagline": "{{brandName}} - Personalized exam prep powered by AI"
+    "tagline": "{{brandName}} - Personalized exam prep powered by AI",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   }
 }

@@ -23,33 +23,57 @@ export const SUPPORTED_LANGUAGE_CODES = languagesConfig.supported.map((l) => l.c
 export const DEFAULT_LANGUAGE_CODE = languagesConfig.default;
 export const TRANSLATION_TARGETS = languagesConfig.translationTargets;
 
+// Exam descriptions use i18n keys - translate at render time with t(`common.levels.${descriptionKey}`)
 export const EXAMS_BY_LANGUAGE = {
   japanese: [
-    { value: "jlpt_n5", label: "JLPT N5", description: "Beginner" },
-    { value: "jlpt_n4", label: "JLPT N4", description: "Elementary" },
-    { value: "jlpt_n3", label: "JLPT N3", description: "Intermediate" },
-    { value: "jlpt_n2", label: "JLPT N2", description: "Upper Intermediate" },
-    { value: "jlpt_n1", label: "JLPT N1", description: "Advanced" },
+    { value: "jlpt_n5", label: "JLPT N5", descriptionKey: "beginner" },
+    { value: "jlpt_n4", label: "JLPT N4", descriptionKey: "elementary" },
+    { value: "jlpt_n3", label: "JLPT N3", descriptionKey: "intermediate" },
+    { value: "jlpt_n2", label: "JLPT N2", descriptionKey: "upperIntermediate" },
+    { value: "jlpt_n1", label: "JLPT N1", descriptionKey: "advanced" },
   ],
   english: [
-    { value: "toefl", label: "TOEFL", description: "Academic English" },
-    { value: "sat", label: "SAT", description: "College Admission" },
-    { value: "gre", label: "GRE", description: "Graduate School" },
+    { value: "toefl", label: "TOEFL", descriptionKey: "academicEnglish" },
+    { value: "sat", label: "SAT", descriptionKey: "collegeAdmission" },
+    { value: "gre", label: "GRE", descriptionKey: "graduateSchool" },
   ],
   french: [
-    { value: "delf_a1", label: "DELF A1", description: "Beginner" },
-    { value: "delf_a2", label: "DELF A2", description: "Elementary" },
-    { value: "delf_b1", label: "DELF B1", description: "Intermediate" },
-    { value: "delf_b2", label: "DELF B2", description: "Upper Intermediate" },
-    { value: "dalf_c1", label: "DALF C1", description: "Advanced" },
-    { value: "dalf_c2", label: "DALF C2", description: "Mastery" },
-    { value: "tcf", label: "TCF", description: "General Proficiency" },
+    { value: "delf_a1", label: "DELF A1", descriptionKey: "beginner" },
+    { value: "delf_a2", label: "DELF A2", descriptionKey: "elementary" },
+    { value: "delf_b1", label: "DELF B1", descriptionKey: "intermediate" },
+    { value: "delf_b2", label: "DELF B2", descriptionKey: "upperIntermediate" },
+    { value: "dalf_c1", label: "DALF C1", descriptionKey: "advanced" },
+    { value: "dalf_c2", label: "DALF C2", descriptionKey: "mastery" },
+    { value: "tcf", label: "TCF", descriptionKey: "generalProficiency" },
   ],
 } as const;
 
 export type ContentLanguage = (typeof LANGUAGES)[number]["value"];
 export type ContentLanguageOption = (typeof LANGUAGES)[number];
 export type ExamOption = (typeof EXAMS_BY_LANGUAGE)[ContentLanguage][number];
+
+/**
+ * Mapping from content language codes to UI language codes
+ * Content: "japanese" | "english" | "french"
+ * UI: "ja" | "en" | "fr" | "zh"
+ */
+const CONTENT_TO_UI_LANGUAGE: Record<ContentLanguage, string> = {
+  japanese: "ja",
+  english: "en",
+  french: "fr",
+};
+
+/**
+ * Check if content language matches UI language
+ * Used to hide redundant translations (e.g., don't show Japanese translation
+ * when user is studying Japanese with UI in Japanese)
+ */
+export function contentLanguageMatchesUI(
+  contentLanguage: ContentLanguage,
+  uiLanguage: string
+): boolean {
+  return CONTENT_TO_UI_LANGUAGE[contentLanguage] === uiLanguage;
+}
 
 // Language-specific placeholder colors for video thumbnails
 export const LANGUAGE_COLORS: Record<string, { bg: string; text: string }> = {

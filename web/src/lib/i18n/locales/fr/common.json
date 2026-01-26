@@ -110,5 +110,60 @@
     "listening": "Écoute",
     "writing": "Écriture",
     "speaking": "Expression orale"
+  },
+  "levels": {
+    "beginner": "Débutant",
+    "elementary": "Élémentaire",
+    "intermediate": "Intermédiaire",
+    "upperIntermediate": "Intermédiaire avancé",
+    "advanced": "Avancé",
+    "mastery": "Maîtrise",
+    "generalProficiency": "Compétence générale",
+    "academicEnglish": "Anglais académique",
+    "collegeAdmission": "Admission universitaire",
+    "graduateSchool": "Études supérieures"
+  },
+  "uiLanguages": {
+    "en": "Anglais",
+    "fr": "Français",
+    "ja": "Japonais",
+    "zh": "Chinois"
+  },
+  "fonts": {
+    "system": "Système"
+  },
+  "content": {
+    "noCover": "Pas de couverture",
+    "premium": "Premium",
+    "chapter": "chapitre",
+    "chapter_other": "chapitres"
+  },
+  "recording": {
+    "microphoneDenied": "Accès au microphone refusé",
+    "microphoneDeniedHelp": "Veuillez autoriser l'accès au microphone dans les paramètres de votre navigateur pour utiliser la pratique du shadowing.",
+    "recordingError": "Erreur d'enregistrement",
+    "tryAgain": "Réessayer",
+    "tapToStop": "Appuyez pour arrêter l'enregistrement",
+    "tapToStart": "Appuyez sur le microphone pour commencer l'enregistrement",
+    "processing": {
+      "analyzingPronunciation": "Analyse de votre prononciation...",
+      "listeningIntonation": "Écoute attentive de votre intonation...",
+      "comparingNative": "Comparaison avec les modèles de parole natifs...",
+      "checkingPitch": "Vérification de la hauteur et du rythme...",
+      "evaluatingAccent": "Évaluation de votre accent...",
+      "measuringClarity": "Mesure de la clarté de la parole...",
+      "detectingNuances": "Détection des nuances subtiles...",
+      "processingWaveforms": "Traitement des formes d'onde audio...",
+      "reviewingSyllables": "Révision du timing des syllabes...",
+      "assessingFlow": "Évaluation du flux naturel...",
+      "examiningVowels": "Examen des sons voyelles...",
+      "studyingConsonants": "Étude du placement des consonnes...",
+      "measuringPauses": "Mesure des patterns de pause...",
+      "analyzingStress": "Analyse des points d'accentuation..."
+    }
+  },
+  "proficiency": {
+    "jlpt": "JLPT",
+    "cefr": "CECR"
   }
 }

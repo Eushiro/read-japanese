@@ -15,8 +15,9 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from web/.env.local (shared with frontend)
+env_path = Path(__file__).parent.parent.parent / "web" / ".env.local"
+load_dotenv(env_path)
 
 # Configure logging
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()

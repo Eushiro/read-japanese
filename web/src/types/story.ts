@@ -5,19 +5,20 @@ export type JLPTLevel = "N5" | "N4" | "N3" | "N2" | "N1";
 
 export const JLPT_LEVELS: JLPTLevel[] = ["N5", "N4", "N3", "N2", "N1"];
 
+// Description keys are i18n keys - translate at render time with t(`common.levels.${descriptionKey}`)
 export const JLPT_LEVEL_INFO: Record<
   JLPTLevel,
   {
     difficulty: number;
-    description: string;
+    descriptionKey: string;
     color: string;
   }
 > = {
-  N5: { difficulty: 1, description: "Beginner", color: "jlpt-n5" },
-  N4: { difficulty: 2, description: "Elementary", color: "jlpt-n4" },
-  N3: { difficulty: 3, description: "Intermediate", color: "jlpt-n3" },
-  N2: { difficulty: 4, description: "Upper Intermediate", color: "jlpt-n2" },
-  N1: { difficulty: 5, description: "Advanced", color: "jlpt-n1" },
+  N5: { difficulty: 1, descriptionKey: "beginner", color: "jlpt-n5" },
+  N4: { difficulty: 2, descriptionKey: "elementary", color: "jlpt-n4" },
+  N3: { difficulty: 3, descriptionKey: "intermediate", color: "jlpt-n3" },
+  N2: { difficulty: 4, descriptionKey: "upperIntermediate", color: "jlpt-n2" },
+  N1: { difficulty: 5, descriptionKey: "advanced", color: "jlpt-n1" },
 };
 
 // CEFR Level types (French, English)
@@ -25,20 +26,21 @@ export type CEFRLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 
 export const CEFR_LEVELS: CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
+// Description keys are i18n keys - translate at render time with t(`common.levels.${descriptionKey}`)
 export const CEFR_LEVEL_INFO: Record<
   CEFRLevel,
   {
     difficulty: number;
-    description: string;
+    descriptionKey: string;
     color: string;
   }
 > = {
-  A1: { difficulty: 1, description: "Beginner", color: "cefr-a1" },
-  A2: { difficulty: 2, description: "Elementary", color: "cefr-a2" },
-  B1: { difficulty: 3, description: "Intermediate", color: "cefr-b1" },
-  B2: { difficulty: 4, description: "Upper Intermediate", color: "cefr-b2" },
-  C1: { difficulty: 5, description: "Advanced", color: "cefr-c1" },
-  C2: { difficulty: 6, description: "Mastery", color: "cefr-c2" },
+  A1: { difficulty: 1, descriptionKey: "beginner", color: "cefr-a1" },
+  A2: { difficulty: 2, descriptionKey: "elementary", color: "cefr-a2" },
+  B1: { difficulty: 3, descriptionKey: "intermediate", color: "cefr-b1" },
+  B2: { difficulty: 4, descriptionKey: "upperIntermediate", color: "cefr-b2" },
+  C1: { difficulty: 5, descriptionKey: "advanced", color: "cefr-c1" },
+  C2: { difficulty: 6, descriptionKey: "mastery", color: "cefr-c2" },
 };
 
 // Combined level type for filtering

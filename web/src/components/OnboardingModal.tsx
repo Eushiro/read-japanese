@@ -273,7 +273,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div>
-                              <div className="font-medium text-foreground">{lang.label}</div>
+                              <div className="font-medium text-foreground">{t(`common.languages.${lang.value}`)}</div>
                               <div className="text-sm text-foreground-muted">{lang.nativeName}</div>
                             </div>
                           </div>
@@ -352,7 +352,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                                       {exam.label}
                                     </div>
                                     <div className="text-xs text-foreground-muted">
-                                      {exam.description}
+                                      {t(`common.levels.${exam.descriptionKey}`)}
                                     </div>
                                   </div>
                                   {isSelected && <Check className="w-4 h-4 text-accent" />}

@@ -63,7 +63,7 @@ export function LevelFilter({ selectedLevel, onSelectLevel, languages }: LevelFi
           <>
             <SelectSeparator />
             <SelectGroup>
-              <SelectLabel>JLPT</SelectLabel>
+              <SelectLabel>{t("common.proficiency.jlpt")}</SelectLabel>
               {jlptLevelsToShow.map((level) => (
                 <SelectItem key={level} value={level}>
                   {level}
@@ -77,7 +77,7 @@ export function LevelFilter({ selectedLevel, onSelectLevel, languages }: LevelFi
           <>
             <SelectSeparator />
             <SelectGroup>
-              <SelectLabel>CEFR</SelectLabel>
+              <SelectLabel>{t("common.proficiency.cefr")}</SelectLabel>
               {cefrLevelsToShow.map((level) => (
                 <SelectItem key={level} value={level}>
                   {level}
