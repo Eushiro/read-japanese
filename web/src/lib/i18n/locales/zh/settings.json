@@ -51,6 +51,7 @@
   },
   "subscription": {
     "title": "订阅",
+    "plan": "方案",
     "currentPlan": "当前方案",
     "free": "免费",
     "upgradePlan": "升级方案",
@@ -126,11 +127,15 @@
     "title": "积分",
     "viewHistory": "查看历史",
     "description": "跟踪您的月度积分使用情况",
-    "creditsUsed": "积分已使用",
+    "creditsUsed": "积分",
+    "used": "已使用",
     "resets": "{{date}}重置",
     "tier": "方案",
     "upgradeTitle": "需要更多积分？",
     "upgradeDescription": "升级您的方案以获得更多月度积分。",
     "upgrade": "升级"
+  },
+  "preferences": {
+    "title": "偏好设置"
   }
 }

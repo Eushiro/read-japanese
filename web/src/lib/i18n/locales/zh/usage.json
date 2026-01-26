@@ -21,7 +21,8 @@
   "tier": {
     "free": "免费版",
     "basic": "基础版",
-    "pro": "专业版",
+    "plus": "Plus版",
+    "pro": "Pro版",
     "unlimited": "无限版"
   },
   "actions": {

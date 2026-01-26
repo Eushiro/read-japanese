@@ -22,6 +22,7 @@
   "tier": {
     "free": "Forfait gratuit",
     "basic": "Forfait basique",
+    "plus": "Forfait Plus",
     "pro": "Forfait pro",
     "unlimited": "Forfait illimité"
   },

@@ -2,8 +2,6 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import {
-  Activity,
-  BookOpen,
   Brain,
   Check,
   ChevronRight,
@@ -13,18 +11,15 @@ import {
   EyeOff,
   Globe,
   GraduationCap,
-  Languages,
   LogOut,
   Monitor,
   Moon,
   Shield,
-  Sparkles,
   Sun,
   User,
   Volume2,
-  Zap,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { Footer } from "@/components/Footer";
 import { useTheme } from "@/components/ThemeProvider";
@@ -45,7 +40,6 @@ import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useSettings } from "@/hooks/useSettings";
 import { type ContentLanguage, EXAMS_BY_LANGUAGE, LANGUAGES } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
-import { formatPrice, getTier, type PaidTierId, type TierId } from "@/lib/tiers";
 
 import { api } from "../../convex/_generated/api";
 import type { ExamType } from "../../convex/schema";
@@ -119,9 +113,7 @@ export function SettingsPage() {
     api.subscriptions.get,
     isAuthenticated && user ? { userId: user.id } : "skip"
   );
-  const createCheckout = useAction(api.stripe.createCheckoutSession);
   const createPortal = useAction(api.stripe.createPortalSession);
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   // User profile data
   const userProfile = useQuery(
@@ -186,32 +178,6 @@ export function SettingsPage() {
       value: newExams,
       action: currentExams.includes(examValue) ? "remove" : "add",
     });
-  };
-
-  const handleUpgrade = async (tier: PaidTierId) => {
-    if (!user || checkoutLoading) return;
-
-    trackEvent(events.UPGRADE_CLICKED, {
-      tier,
-      current_tier: subscription?.tier ?? "free",
-    });
-
-    setCheckoutLoading(tier);
-    try {
-      const result = await createCheckout({
-        userId: user.id,
-        tier,
-        successUrl: `${window.location.origin}/settings?success=true`,
-        cancelUrl: `${window.location.origin}/settings?canceled=true`,
-      });
-      if (result.url) {
-        window.location.href = result.url;
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-    } finally {
-      setCheckoutLoading(null);
-    }
   };
 
   const handleManageSubscription = async () => {
@@ -283,9 +249,124 @@ export function SettingsPage() {
       {/* Settings Content */}
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
         <div className="space-y-6">
-          {/* Theme */}
+          {/* 1. Subscription & Credits */}
+          {isAuthenticated && user && (
+            <section className="relative rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+              <div className="relative p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-cyan-500/20">
+                      <CreditCard className="w-4 h-4 text-cyan-400" />
+                    </div>
+                    <h2
+                      className="text-lg font-semibold text-white"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {t("settings.subscription.title")}
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {/* Only show Manage button if subscription was created through Stripe */}
+                    {"stripeCustomerId" in (subscription ?? {}) &&
+                      (subscription as { stripeCustomerId?: string })?.stripeCustomerId && (
+                        <Button variant="outline" size="sm" onClick={handleManageSubscription}>
+                          {t("common.actions.manage")}
+                        </Button>
+                      )}
+                    <Link
+                      to="/settings/usage"
+                      className="text-sm text-accent hover:underline flex items-center gap-1"
+                    >
+                      {t("settings.credits.viewHistory")}
+                      <ChevronRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+
+              {/* Credit Progress bar */}
+              <div className="p-4 rounded-xl bg-muted/50">
+                {/* Plan type indicator */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-base font-semibold">
+                    <span
+                      className={
+                        subscription?.tier === "pro"
+                          ? "text-accent"
+                          : subscription?.tier === "plus"
+                            ? "text-blue-400"
+                            : "text-foreground-muted"
+                      }
+                    >
+                      {t(`settings.subscription.tiers.${subscription?.tier || "free"}.name`)}
+                    </span>
+                    <span className="text-foreground-muted font-normal ml-1">
+                      {t("settings.subscription.plan")}
+                    </span>
+                  </div>
+                  <span
+                    className={`text-sm font-medium ${
+                      creditsPercentage >= 95
+                        ? "text-rose-500"
+                        : creditsPercentage >= 80
+                          ? "text-amber-500"
+                          : "text-foreground-muted"
+                    }`}
+                  >
+                    {creditsPercentage}% {t("settings.credits.used")}
+                  </span>
+                </div>
+                <div className="text-sm text-foreground mb-2">
+                  {creditsUsed} / {creditsLimit} {t("settings.credits.creditsUsed")}
+                </div>
+                <Progress
+                  value={creditsPercentage}
+                  className={
+                    creditsPercentage >= 95
+                      ? "[&>div]:bg-rose-500"
+                      : creditsPercentage >= 80
+                        ? "[&>div]:bg-amber-500"
+                        : ""
+                  }
+                />
+                <p className="text-xs text-foreground-muted mt-2">
+                  {t("settings.credits.resets", {
+                    date: creditsResetDate
+                      ? new Date(creditsResetDate).toLocaleDateString(undefined, {
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : "",
+                  })}
+                </p>
+              </div>
+
+              {/* Upgrade CTA for free users */}
+              {creditsTier === "free" && (
+                <div className="mt-4 p-4 rounded-xl border border-accent/30 bg-accent/5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {t("settings.credits.upgradeTitle")}
+                      </p>
+                      <p className="text-xs text-foreground-muted">
+                        {t("settings.credits.upgradeDescription")}
+                      </p>
+                    </div>
+                    <Button asChild size="sm" variant="glass-accent">
+                      <Link to="/pricing">{t("settings.credits.upgrade")}</Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
+              </div>
+            </section>
+          )}
+
+          {/* 2. Preferences */}
           <section className="relative rounded-2xl overflow-hidden">
-            {/* Glass background */}
             <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
             <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
@@ -298,181 +379,139 @@ export function SettingsPage() {
                   className="text-lg font-semibold text-white"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  {t("settings.appearance.title")}
-                </h2>
-              </div>
-            {settingsLoading ? (
-              <div className="flex gap-2 animate-pulse">
-                <div className="flex-1 h-10 bg-muted rounded-lg" />
-                <div className="flex-1 h-10 bg-muted rounded-lg" />
-                <div className="flex-1 h-10 bg-muted rounded-lg" />
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <Button
-                  variant={theme === "light" ? "default" : "outline"}
-                  onClick={() => setTheme("light")}
-                  className="flex-1"
-                >
-                  <Sun className="w-4 h-4 mr-2" />
-                  {t("settings.appearance.light")}
-                </Button>
-                <Button
-                  variant={theme === "dark" ? "default" : "outline"}
-                  onClick={() => setTheme("dark")}
-                  className="flex-1"
-                >
-                  <Moon className="w-4 h-4 mr-2" />
-                  {t("settings.appearance.dark")}
-                </Button>
-                <Button
-                  variant={theme === "system" ? "default" : "outline"}
-                  onClick={() => setTheme("system")}
-                  className="flex-1"
-                >
-                  <Monitor className="w-4 h-4 mr-2" />
-                  {t("settings.appearance.system")}
-                </Button>
-              </div>
-            )}
-            </div>
-          </section>
-
-          {/* Display Language */}
-          <section className="relative rounded-2xl overflow-hidden">
-            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
-            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
-
-            <div className="relative p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-lg bg-violet-500/20">
-                  <Languages className="w-4 h-4 text-violet-400" />
-                </div>
-                <h2
-                  className="text-lg font-semibold text-white"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {t("settings.uiLanguage.title")}
-                </h2>
-              </div>
-              <p className="text-sm text-white/60 mb-4">
-                {t("settings.uiLanguage.description")}
-              </p>
-              <UILanguageSwitcher showLabel={false} />
-            </div>
-          </section>
-
-          {/* Reading */}
-          <section className="relative rounded-2xl overflow-hidden">
-            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
-            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
-
-            <div className="relative p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-lg bg-emerald-500/20">
-                  <BookOpen className="w-4 h-4 text-emerald-400" />
-                </div>
-                <h2
-                  className="text-lg font-semibold text-white"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {t("settings.reading.title")}
+                  {t("settings.preferences.title")}
                 </h2>
               </div>
 
             {settingsLoading ? (
-              // Loading state to avoid flickering defaults
-              <div className="space-y-5 animate-pulse">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted" />
-                    <div>
-                      <div className="h-4 w-28 bg-muted rounded mb-2" />
-                      <div className="h-3 w-40 bg-muted rounded" />
-                    </div>
-                  </div>
-                  <div className="w-11 h-6 bg-muted rounded-full" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted" />
-                    <div>
-                      <div className="h-4 w-28 bg-muted rounded mb-2" />
-                      <div className="h-3 w-44 bg-muted rounded" />
-                    </div>
-                  </div>
-                  <div className="w-11 h-6 bg-muted rounded-full" />
+              <div className="space-y-6 animate-pulse">
+                <div className="flex gap-2">
+                  <div className="flex-1 h-10 bg-muted rounded-lg" />
+                  <div className="flex-1 h-10 bg-muted rounded-lg" />
+                  <div className="flex-1 h-10 bg-muted rounded-lg" />
                 </div>
                 <div className="space-y-3">
-                  <div className="h-4 w-20 bg-muted rounded" />
-                  <div className="w-full h-12 bg-muted rounded-lg" />
+                  <div className="h-4 w-32 bg-muted rounded" />
+                  <div className="h-10 w-full bg-muted rounded-lg" />
                 </div>
               </div>
             ) : (
-              <div className="space-y-5">
-                {/* Show furigana toggle only if user is studying Japanese */}
-                {userProfile?.languages?.includes("japanese") && (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-muted">
-                        {showFurigana ? (
-                          <Eye className="w-4 h-4 text-foreground-muted" />
-                        ) : (
-                          <EyeOff className="w-4 h-4 text-foreground-muted" />
-                        )}
-                      </div>
-                      <div>
-                        <div className="font-medium text-foreground">
-                          {t("settings.reading.showFurigana")}
-                        </div>
-                        <div className="text-sm text-foreground-muted">
-                          {t("settings.reading.showFuriganaDescription")}
-                        </div>
-                      </div>
-                    </div>
-                    <Switch checked={showFurigana} onCheckedChange={setShowFurigana} />
+              <div className="space-y-6">
+                {/* Theme */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-3">
+                    {t("settings.appearance.title")}
+                  </label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={theme === "light" ? "default" : "outline"}
+                      onClick={() => setTheme("light")}
+                      className="flex-1"
+                    >
+                      <Sun className="w-4 h-4 mr-2" />
+                      {t("settings.appearance.light")}
+                    </Button>
+                    <Button
+                      variant={theme === "dark" ? "default" : "outline"}
+                      onClick={() => setTheme("dark")}
+                      className="flex-1"
+                    >
+                      <Moon className="w-4 h-4 mr-2" />
+                      {t("settings.appearance.dark")}
+                    </Button>
+                    <Button
+                      variant={theme === "system" ? "default" : "outline"}
+                      onClick={() => setTheme("system")}
+                      className="flex-1"
+                    >
+                      <Monitor className="w-4 h-4 mr-2" />
+                      {t("settings.appearance.system")}
+                    </Button>
                   </div>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <Volume2 className="w-4 h-4 text-foreground-muted" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground">
-                        {t("settings.reading.autoplayAudio")}
-                      </div>
-                      <div className="text-sm text-foreground-muted">
-                        {t("settings.reading.autoplayAudioDescription")}
-                      </div>
-                    </div>
-                  </div>
-                  <Switch checked={autoplayAudio} onCheckedChange={setAutoplayAudio} />
                 </div>
 
-                <div className="pt-2">
-                  <label className="font-medium text-foreground block mb-3">
-                    {t("settings.reading.textSize")}
+                {/* UI Language */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    {t("settings.uiLanguage.title")}
                   </label>
-                  <Select value={fontSize} onValueChange={setFontSize}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="small">{t("settings.reading.small")}</SelectItem>
-                      <SelectItem value="medium">{t("settings.reading.medium")}</SelectItem>
-                      <SelectItem value="large">{t("settings.reading.large")}</SelectItem>
-                      <SelectItem value="x-large">{t("settings.reading.extraLarge")}</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <p className="text-sm text-foreground-muted mb-3">
+                    {t("settings.uiLanguage.description")}
+                  </p>
+                  <UILanguageSwitcher showLabel={false} />
+                </div>
+
+                {/* Reading Settings */}
+                <div className="pt-2 border-t border-white/10">
+                  <label className="block text-sm font-medium text-foreground mb-4">
+                    {t("settings.reading.title")}
+                  </label>
+                  <div className="space-y-4">
+                    {/* Show furigana toggle only if user is studying Japanese */}
+                    {userProfile?.languages?.includes("japanese") && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-muted">
+                            {showFurigana ? (
+                              <Eye className="w-4 h-4 text-foreground-muted" />
+                            ) : (
+                              <EyeOff className="w-4 h-4 text-foreground-muted" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium text-foreground">
+                              {t("settings.reading.showFurigana")}
+                            </div>
+                            <div className="text-sm text-foreground-muted">
+                              {t("settings.reading.showFuriganaDescription")}
+                            </div>
+                          </div>
+                        </div>
+                        <Switch checked={showFurigana} onCheckedChange={setShowFurigana} />
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-muted">
+                          <Volume2 className="w-4 h-4 text-foreground-muted" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-foreground">
+                            {t("settings.reading.autoplayAudio")}
+                          </div>
+                          <div className="text-sm text-foreground-muted">
+                            {t("settings.reading.autoplayAudioDescription")}
+                          </div>
+                        </div>
+                      </div>
+                      <Switch checked={autoplayAudio} onCheckedChange={setAutoplayAudio} />
+                    </div>
+
+                    <div className="pt-2">
+                      <label className="font-medium text-foreground block mb-3">
+                        {t("settings.reading.textSize")}
+                      </label>
+                      <Select value={fontSize} onValueChange={setFontSize}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="small">{t("settings.reading.small")}</SelectItem>
+                          <SelectItem value="medium">{t("settings.reading.medium")}</SelectItem>
+                          <SelectItem value="large">{t("settings.reading.large")}</SelectItem>
+                          <SelectItem value="x-large">{t("settings.reading.extraLarge")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
             </div>
           </section>
 
-          {/* Languages & Exams */}
+          {/* 3. Languages & Exams */}
           {isAuthenticated && user && (
             <section className="relative rounded-2xl overflow-hidden">
               <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
@@ -593,7 +632,7 @@ export function SettingsPage() {
             </section>
           )}
 
-          {/* Placement Test */}
+          {/* 4. Proficiency/Placement Test */}
           {isAuthenticated && user && userProfile && (
             <section className="relative rounded-2xl overflow-hidden">
               <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
@@ -671,7 +710,7 @@ export function SettingsPage() {
             </section>
           )}
 
-          {/* Account */}
+          {/* 5. Account */}
           <section className="relative rounded-2xl overflow-hidden">
             <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
             <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
@@ -743,312 +782,7 @@ export function SettingsPage() {
             </div>
           </section>
 
-          {/* Subscription */}
-          {isAuthenticated && user && (
-            <section className="relative rounded-2xl overflow-hidden">
-              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
-              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
-
-              <div className="relative p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-1.5 rounded-lg bg-cyan-500/20">
-                    <CreditCard className="w-4 h-4 text-cyan-400" />
-                  </div>
-                  <h2
-                    className="text-lg font-semibold text-white"
-                    style={{ fontFamily: "var(--font-display)" }}
-                  >
-                    {t("settings.subscription.title")}
-                  </h2>
-                </div>
-
-              {/* Current Plan */}
-              <div className="p-4 rounded-xl bg-muted/50 mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <div className="text-sm text-foreground-muted">
-                      {t("settings.subscription.currentPlan")}
-                    </div>
-                    <div className="text-lg font-semibold text-foreground">
-                      {t(`settings.subscription.tiers.${subscription?.tier || "free"}.name`)}
-                    </div>
-                  </div>
-                  {/* Only show Manage button if subscription was created through Stripe */}
-                  {"stripeCustomerId" in (subscription ?? {}) &&
-                    (subscription as { stripeCustomerId?: string })?.stripeCustomerId && (
-                      <Button variant="outline" size="sm" onClick={handleManageSubscription}>
-                        {t("common.actions.manage")}
-                      </Button>
-                    )}
-                </div>
-
-                {/* Show benefits for paid subscribers */}
-                {subscription?.tier === "plus" && (
-                  <ul className="text-sm text-foreground-muted space-y-1.5 pt-3 border-t border-border">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-blue-500" />{" "}
-                      {t("settings.subscription.features.credits", {
-                        count: getTier("plus")?.credits ?? 500,
-                      })}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-blue-500" />{" "}
-                      {t("settings.subscription.tierBenefits.plus.flashcards")}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-blue-500" />{" "}
-                      {t("settings.subscription.tierBenefits.plus.audio")}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-blue-500" />{" "}
-                      {t("settings.subscription.features.unlimitedDecks")}
-                    </li>
-                  </ul>
-                )}
-                {subscription?.tier === "pro" && (
-                  <ul className="text-sm text-foreground-muted space-y-1.5 pt-3 border-t border-border">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-accent" />{" "}
-                      {t("settings.subscription.features.credits", {
-                        count: getTier("pro")?.credits ?? 2000,
-                      })}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-accent" />{" "}
-                      {t("settings.subscription.tierBenefits.pro.flashcards")}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-accent" />{" "}
-                      {t("settings.subscription.tierBenefits.pro.audio")}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-accent" />{" "}
-                      {t("settings.subscription.features.prioritySupport")}
-                    </li>
-                  </ul>
-                )}
-              </div>
-
-              {/* Upgrade Options */}
-              {(!subscription?.tier || subscription.tier === "free") && (
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-foreground-muted">
-                    {t("settings.subscription.upgradePlan")}
-                  </h3>
-                  <div className="grid gap-4">
-                    {/* Plus */}
-                    <div className="p-5 rounded-xl border border-border hover:border-blue-500/50 transition-colors">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <Zap className="w-5 h-5 text-blue-500" />
-                          <span className="font-semibold text-foreground text-lg">
-                            {t("settings.subscription.tiers.plus.name")}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-2xl font-bold text-foreground">
-                            {formatPrice(getTier("plus")?.price.monthly ?? 7.99)}
-                          </span>
-                          <span className="text-foreground-muted">
-                            {t("settings.subscription.perMonth")}
-                          </span>
-                        </div>
-                      </div>
-                      <ul className="text-sm text-foreground-muted space-y-1.5 mb-4">
-                        <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-blue-500" />{" "}
-                          {t("settings.subscription.features.credits", {
-                            count: getTier("plus")?.credits ?? 500,
-                          })}
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-blue-500" />{" "}
-                          {t("settings.subscription.features.unlimitedDecks")}
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-blue-500" />{" "}
-                          {t("settings.subscription.features.progressTracking")}
-                        </li>
-                      </ul>
-                      <Button
-                        variant="glass-accent"
-                        className={`w-full ${checkoutLoading === "plus" ? "btn-loading-gradient" : ""}`}
-                        onClick={() => handleUpgrade("plus")}
-                      >
-                        {t("settings.subscription.upgradeTo", {
-                          tier: t("settings.subscription.tiers.plus.name"),
-                        })}
-                      </Button>
-                    </div>
-
-                    {/* Pro */}
-                    <div className="p-5 rounded-xl border-2 border-accent bg-accent/5 relative">
-                      <div className="absolute -top-3 left-4">
-                        <span className="text-xs px-3 py-1 rounded-full bg-accent text-white font-medium">
-                          {t("settings.subscription.mostPopular")}
-                        </span>
-                      </div>
-                      <div className="flex items-start justify-between mb-3 mt-1">
-                        <div className="flex items-center gap-2">
-                          <Crown className="w-5 h-5 text-accent" />
-                          <span className="font-semibold text-foreground text-lg">
-                            {t("settings.subscription.tiers.pro.name")}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-2xl font-bold text-foreground">
-                            {formatPrice(getTier("pro")?.price.monthly ?? 17.99)}
-                          </span>
-                          <span className="text-foreground-muted">
-                            {t("settings.subscription.perMonth")}
-                          </span>
-                        </div>
-                      </div>
-                      <ul className="text-sm text-foreground-muted space-y-1.5 mb-4">
-                        <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-accent" />{" "}
-                          {t("settings.subscription.features.credits", {
-                            count: getTier("pro")?.credits ?? 2000,
-                          })}
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-accent" />{" "}
-                          {t("settings.subscription.features.everythingInPlus")}
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-accent" />{" "}
-                          {t("settings.subscription.features.prioritySupport")}
-                        </li>
-                      </ul>
-                      <Button
-                        variant="glass-accent"
-                        className={`w-full ${checkoutLoading === "pro" ? "btn-loading-gradient" : ""}`}
-                        onClick={() => handleUpgrade("pro")}
-                      >
-                        {t("settings.subscription.upgradeTo", {
-                          tier: t("settings.subscription.tiers.pro.name"),
-                        })}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* View all plans link */}
-                  <div className="text-center">
-                    <Link
-                      to="/pricing"
-                      className="text-sm text-accent hover:underline flex items-center justify-center gap-1"
-                    >
-                      {t("paywall.viewAllPlans")}
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              )}
-              </div>
-            </section>
-          )}
-
-          {/* Credit Usage (New Unified System) */}
-          {isAuthenticated && user && (
-            <section className="relative rounded-2xl overflow-hidden">
-              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
-              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
-
-              <div className="relative p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-indigo-500/20">
-                      <Activity className="w-4 h-4 text-indigo-400" />
-                    </div>
-                    <h2
-                      className="text-lg font-semibold text-white"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      {t("settings.credits.title")}
-                    </h2>
-                  </div>
-                  <Link
-                    to="/settings/usage"
-                    className="text-sm text-accent hover:underline flex items-center gap-1"
-                  >
-                    {t("settings.credits.viewHistory")}
-                    <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-
-                <p className="text-sm text-white/60 mb-4">
-                  {t("settings.credits.description")}
-                </p>
-
-              {/* Progress bar */}
-              <div className="p-4 rounded-xl bg-muted/50">
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-foreground">
-                    {creditsUsed} / {creditsLimit} {t("settings.credits.creditsUsed")}
-                  </span>
-                  <span
-                    className={`font-medium ${
-                      creditsPercentage >= 95
-                        ? "text-rose-500"
-                        : creditsPercentage >= 80
-                          ? "text-amber-500"
-                          : "text-foreground-muted"
-                    }`}
-                  >
-                    {creditsPercentage}%
-                  </span>
-                </div>
-                <Progress
-                  value={creditsPercentage}
-                  className={
-                    creditsPercentage >= 95
-                      ? "[&>div]:bg-rose-500"
-                      : creditsPercentage >= 80
-                        ? "[&>div]:bg-amber-500"
-                        : ""
-                  }
-                />
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-foreground-muted">
-                    {t("settings.credits.resets", {
-                      date: creditsResetDate
-                        ? new Date(creditsResetDate).toLocaleDateString(undefined, {
-                            month: "long",
-                            day: "numeric",
-                          })
-                        : "",
-                    })}
-                  </p>
-                  <span className="text-xs text-foreground-muted">
-                    {t(`settings.subscription.tiers.${creditsTier as TierId}.name`)}{" "}
-                    {t("settings.credits.tier")}
-                  </span>
-                </div>
-              </div>
-
-              {/* Upgrade CTA for free users */}
-              {creditsTier === "free" && (
-                <div className="mt-4 p-4 rounded-xl border border-accent/30 bg-accent/5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {t("settings.credits.upgradeTitle")}
-                      </p>
-                      <p className="text-xs text-foreground-muted">
-                        {t("settings.credits.upgradeDescription")}
-                      </p>
-                    </div>
-                    <Button asChild size="sm" variant="glass-accent">
-                      <Link to="/pricing">{t("settings.credits.upgrade")}</Link>
-                    </Button>
-                  </div>
-                </div>
-              )}
-              </div>
-            </section>
-          )}
-
-          {/* Admin Settings - for specific users */}
+          {/* 6. Admin Settings - for specific users */}
           {user?.email === "hiro.ayettey@gmail.com" && (
             <section className="relative rounded-2xl overflow-hidden">
               <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-amber-500/30 rounded-2xl" />
@@ -1094,30 +828,6 @@ export function SettingsPage() {
               </div>
             </section>
           )}
-
-          {/* About */}
-          <section className="relative rounded-2xl overflow-hidden">
-            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
-            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
-
-            <div className="relative p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-lg bg-slate-500/20">
-                  <Sparkles className="w-4 h-4 text-slate-400" />
-                </div>
-                <h2
-                  className="text-lg font-semibold text-white"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {t("settings.about.title")}
-                </h2>
-              </div>
-              <div className="text-sm text-white/60 space-y-1">
-                <p className="font-medium text-white">{t("settings.about.version")}</p>
-                <p>{t("settings.about.description")}</p>
-              </div>
-            </div>
-          </section>
         </div>
       </div>
 

@@ -21,7 +21,8 @@
   "tier": {
     "free": "無料プラン",
     "basic": "ベーシックプラン",
-    "pro": "プロプラン",
+    "plus": "Plusプラン",
+    "pro": "Proプラン",
     "unlimited": "無制限プラン"
   },
   "actions": {

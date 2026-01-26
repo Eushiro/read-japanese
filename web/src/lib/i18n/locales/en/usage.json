@@ -22,6 +22,7 @@
   "tier": {
     "free": "Free tier",
     "basic": "Basic tier",
+    "plus": "Plus tier",
     "pro": "Pro tier",
     "unlimited": "Unlimited tier"
   },

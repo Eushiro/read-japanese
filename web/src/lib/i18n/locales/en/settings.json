@@ -51,6 +51,7 @@
   },
   "subscription": {
     "title": "Subscription",
+    "plan": "Plan",
     "currentPlan": "Current Plan",
     "free": "Free",
     "upgradePlan": "Upgrade your plan",
@@ -120,11 +121,15 @@
     "title": "Credits",
     "viewHistory": "View History",
     "description": "Track your monthly credit usage",
-    "creditsUsed": "credits used",
+    "creditsUsed": "credits",
+    "used": "used",
     "resets": "Resets {{date}}",
     "tier": "tier",
     "upgradeTitle": "Need more credits?",
     "upgradeDescription": "Upgrade your plan for more monthly credits.",
     "upgrade": "Upgrade"
+  },
+  "preferences": {
+    "title": "Preferences"
   }
 }

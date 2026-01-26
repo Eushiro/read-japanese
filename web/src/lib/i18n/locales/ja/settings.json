@@ -51,6 +51,7 @@
   },
   "subscription": {
     "title": "サブスクリプション",
+    "plan": "プラン",
     "currentPlan": "現在のプラン",
     "free": "無料",
     "upgradePlan": "プランをアップグレード",
@@ -126,11 +127,15 @@
     "title": "クレジット",
     "viewHistory": "履歴を見る",
     "description": "月間クレジット使用状況を確認",
-    "creditsUsed": "クレジット使用済み",
+    "creditsUsed": "クレジット",
+    "used": "使用",
     "resets": "{{date}}にリセット",
     "tier": "プラン",
     "upgradeTitle": "もっとクレジットが必要ですか？",
     "upgradeDescription": "プランをアップグレードして月間クレジットを増やしましょう。",
     "upgrade": "アップグレード"
+  },
+  "preferences": {
+    "title": "設定"
   }
 }

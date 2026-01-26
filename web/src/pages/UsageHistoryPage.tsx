@@ -74,7 +74,7 @@ export function UsageHistoryPage() {
       {/* Summary cards */}
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
-          <CardContent className="pt-6">
+          <CardContent>
             <div className="flex items-center gap-2">
               <CreditCard className="text-muted-foreground h-5 w-5" />
               <span className="text-muted-foreground text-sm">{t("usage.creditsUsed")}</span>
@@ -84,7 +84,7 @@ export function UsageHistoryPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
+          <CardContent>
             <div className="flex items-center gap-2">
               <TrendingUp className="text-muted-foreground h-5 w-5" />
               <span className="text-muted-foreground text-sm">{t("usage.creditsRemaining")}</span>
@@ -94,7 +94,7 @@ export function UsageHistoryPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
+          <CardContent>
             <div className="flex items-center gap-2">
               <History className="text-muted-foreground h-5 w-5" />
               <span className="text-muted-foreground text-sm">{t("usage.actionsThisMonth")}</span>
@@ -107,14 +107,33 @@ export function UsageHistoryPage() {
 
       {/* Progress bar */}
       <Card className="mb-8">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between text-sm">
+        <CardContent>
+          {/* Plan type indicator */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-base font-semibold">
+              <span
+                className={
+                  tier === "pro"
+                    ? "text-accent"
+                    : tier === "plus"
+                      ? "text-blue-400"
+                      : "text-muted-foreground"
+                }
+              >
+                {t(`settings.subscription.tiers.${tier}.name`)}
+              </span>
+              <span className="text-muted-foreground font-normal ml-1">
+                {t("settings.subscription.plan")}
+              </span>
+            </div>
+            <span className="text-sm font-medium text-muted-foreground">{percentage}%</span>
+          </div>
+          <div className="flex items-center justify-between text-sm mb-2">
             <span>
               {used} / {limit} {t("usage.credits")}
             </span>
-            <span>{percentage}%</span>
           </div>
-          <Progress value={percentage} className="mt-2" />
+          <Progress value={percentage} />
           <p className="text-muted-foreground mt-2 text-xs">
             {t("usage.resetsOn", { date: formattedResetDate })}
           </p>

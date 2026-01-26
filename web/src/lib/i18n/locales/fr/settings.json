@@ -51,6 +51,7 @@
   },
   "subscription": {
     "title": "Abonnement",
+    "plan": "Forfait",
     "currentPlan": "Forfait actuel",
     "free": "Gratuit",
     "upgradePlan": "Améliorer votre forfait",
@@ -126,11 +127,15 @@
     "title": "Crédits",
     "viewHistory": "Voir l'historique",
     "description": "Suivez votre utilisation mensuelle de crédits",
-    "creditsUsed": "crédits utilisés",
+    "creditsUsed": "crédits",
+    "used": "utilisé",
     "resets": "Réinitialisation le {{date}}",
     "tier": "forfait",
     "upgradeTitle": "Besoin de plus de crédits ?",
     "upgradeDescription": "Améliorez votre forfait pour plus de crédits mensuels.",
     "upgrade": "Améliorer"
+  },
+  "preferences": {
+    "title": "Préférences"
   }
 }
