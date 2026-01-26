@@ -500,7 +500,7 @@ export function FlashcardsPage() {
               {t("flashcards.states.allCaughtUp.description")}
             </p>
             <div className="flex justify-center gap-4">
-              <Button variant="outline" onClick={() => (window.location.href = "/vocabulary")}>
+              <Button variant="outline" onClick={() => (window.location.href = "/learn?tab=words")}>
                 <BookOpen className="w-4 h-4 mr-2" />
                 {t("flashcards.states.allCaughtUp.addVocabulary")}
               </Button>

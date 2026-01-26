@@ -7,7 +7,6 @@ import {
   Brain,
   Check,
   ChevronRight,
-  Compass,
   CreditCard,
   Crown,
   Eye,
@@ -15,11 +14,9 @@ import {
   Globe,
   GraduationCap,
   Languages,
-  Layers,
   LogOut,
   Monitor,
   Moon,
-  PenLine,
   Shield,
   Sparkles,
   Sun,
@@ -364,98 +361,6 @@ export function SettingsPage() {
               <UILanguageSwitcher showLabel={false} />
             </div>
           </section>
-
-          {/* Learning Tools */}
-          {isAuthenticated && (
-            <section className="relative rounded-2xl overflow-hidden">
-              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
-              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
-
-              <div className="relative p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-1.5 rounded-lg bg-orange-500/20">
-                    <Compass className="w-4 h-4 text-orange-400" />
-                  </div>
-                  <h2
-                    className="text-lg font-semibold text-white"
-                    style={{ fontFamily: "var(--font-display)" }}
-                  >
-                    {t("settings.learningTools.title")}
-                  </h2>
-                </div>
-                <p className="text-sm text-white/60 mb-4">
-                  {t("settings.learningTools.description")}
-                </p>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <Link
-                  to="/learn"
-                  className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/5 transition-all"
-                >
-                  <div className="p-2 rounded-lg bg-accent/10">
-                    <BookOpen className="w-4 h-4 text-accent" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-foreground text-sm">
-                      {t("settings.learningTools.learnHub")}
-                    </div>
-                    <div className="text-xs text-foreground-muted">
-                      {t("settings.learningTools.learnHubDescription")}
-                    </div>
-                  </div>
-                </Link>
-                <Link
-                  to="/flashcards"
-                  className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/5 transition-all"
-                >
-                  <div className="p-2 rounded-lg bg-blue-500/10">
-                    <Layers className="w-4 h-4 text-blue-500" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-foreground text-sm">
-                      {t("settings.learningTools.flashcards")}
-                    </div>
-                    <div className="text-xs text-foreground-muted">
-                      {t("settings.learningTools.flashcardsDescription")}
-                    </div>
-                  </div>
-                </Link>
-                <Link
-                  to="/vocabulary"
-                  className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/5 transition-all"
-                >
-                  <div className="p-2 rounded-lg bg-green-500/10">
-                    <BookOpen className="w-4 h-4 text-green-500" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-foreground text-sm">
-                      {t("settings.learningTools.vocabulary")}
-                    </div>
-                    <div className="text-xs text-foreground-muted">
-                      {t("settings.learningTools.vocabularyDescription")}
-                    </div>
-                  </div>
-                </Link>
-                <Link
-                  to="/practice"
-                  search={{ vocabularyId: undefined }}
-                  className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/5 transition-all"
-                >
-                  <div className="p-2 rounded-lg bg-purple-500/10">
-                    <PenLine className="w-4 h-4 text-purple-500" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-foreground text-sm">
-                      {t("settings.learningTools.practice")}
-                    </div>
-                    <div className="text-xs text-foreground-muted">
-                      {t("settings.learningTools.practiceDescription")}
-                    </div>
-                  </div>
-                </Link>
-              </div>
-              </div>
-            </section>
-          )}
 
           {/* Reading */}
           <section className="relative rounded-2xl overflow-hidden">

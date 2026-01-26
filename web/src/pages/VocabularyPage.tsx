@@ -1121,8 +1121,8 @@ function VocabularyCard({
           {/* Study button - only for user vocab */}
           {!isPremade && (
             <Link
-              to="/practice"
-              search={{ vocabularyId: item._id }}
+              to="/learn"
+              search={{ tab: "practice", vocabularyId: item._id }}
               className="p-2 rounded-lg text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors"
               title={t("vocabulary.card.practiceWriting")}
             >

@@ -4,11 +4,13 @@ import {
   createRoute,
   createRouter,
   Link,
+  Navigate,
   Outlet,
   useLocation,
+  useSearch,
 } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { BookOpen, CreditCard, Crown, Home, Shield, User, Zap } from "lucide-react";
+import { BookOpen, CreditCard, Crown, GraduationCap, Home, Shield, User, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
 // Admin pages
@@ -35,13 +37,11 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { ExamResultsPage } from "@/pages/ExamResultsPage";
 import { ExamsPage } from "@/pages/ExamsPage";
 import { ExamTakingPage } from "@/pages/ExamTakingPage";
-import { FlashcardsPage } from "@/pages/FlashcardsPage";
 import { GeneratePage } from "@/pages/GeneratePage";
 import { LandingPage } from "@/pages/LandingPage";
 import { LearnPage } from "@/pages/LearnPage";
 import { LibraryPage } from "@/pages/LibraryPage";
 import { PlacementTestPage } from "@/pages/PlacementTestPage";
-import { PracticePage } from "@/pages/PracticePage";
 import { PricingPage } from "@/pages/PricingPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
 import { ProgressPage } from "@/pages/ProgressPage";
@@ -52,7 +52,6 @@ import { TermsPage } from "@/pages/TermsPage";
 import { UsageHistoryPage } from "@/pages/UsageHistoryPage";
 import { VideoPage } from "@/pages/VideoPage";
 import { VideoQuizPage } from "@/pages/VideoQuizPage";
-import { VocabularyPage } from "@/pages/VocabularyPage";
 
 import { api } from "../convex/_generated/api";
 
@@ -171,9 +170,10 @@ function Navigation() {
     { to: "/pricing", labelKey: "common.nav.pricing", icon: CreditCard },
   ] as const;
 
-  // Links only visible when signed in - simplified to 3 tabs
+  // Links only visible when signed in - with Learn hub
   const authLinks = [
     { to: "/dashboard", labelKey: "common.nav.home", icon: Home },
+    { to: "/learn", labelKey: "common.nav.learn", icon: GraduationCap },
     { to: "/library", labelKey: "common.nav.library", icon: BookOpen },
     { to: "/settings", labelKey: "common.nav.profile", icon: User },
   ] as const;
@@ -334,23 +334,42 @@ const comprehensionRoute = createRoute({
   component: ComprehensionPage,
 });
 
-// Legacy routes - redirect to /learn with appropriate tab
+// Legacy route redirects - redirect to /learn with appropriate tab
+function VocabularyRedirect() {
+  return <Navigate to="/learn" search={{ tab: "words" }} replace />;
+}
+
+function FlashcardsRedirect() {
+  return <Navigate to="/learn" search={{ tab: "review" }} replace />;
+}
+
+function PracticeRedirect() {
+  const search = useSearch({ strict: false }) as { vocabularyId?: string };
+  return (
+    <Navigate
+      to="/learn"
+      search={{ tab: "practice", vocabularyId: search.vocabularyId }}
+      replace
+    />
+  );
+}
+
 const vocabularyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/vocabulary",
-  component: VocabularyPage,
+  component: VocabularyRedirect,
 });
 
 const flashcardsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/flashcards",
-  component: FlashcardsPage,
+  component: FlashcardsRedirect,
 });
 
 const practiceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/practice",
-  component: PracticePage,
+  component: PracticeRedirect,
   validateSearch: (search: Record<string, unknown>) => ({
     vocabularyId: search.vocabularyId as string | undefined,
   }),

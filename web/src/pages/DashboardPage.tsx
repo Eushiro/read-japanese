@@ -323,7 +323,7 @@ export function DashboardPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section - Now with animated orbs and stars */}
-      <section className="relative pt-8 pb-16 overflow-hidden">
+      <section className="relative pt-12 pb-20 overflow-hidden">
         {/* Animated background orbs */}
         <AnimatedOrbs />
 
@@ -383,27 +383,28 @@ export function DashboardPage() {
               {isPreviewMode ? (
                 <PreviewStartStudying />
               ) : needsPlacementTest ? (
-                <>
-                  <div className="text-center mb-6">
-                    <button
-                      onClick={handleStartStudying}
-                      className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-500 dark:from-yellow-300 dark:via-orange-400 dark:to-purple-400 bg-[length:200%_100%] animate-gradient-x shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 overflow-hidden"
-                    >
-                      {/* Shimmer effect */}
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                      <span className="relative flex items-center justify-center gap-3">
-                        <Target className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                        {t("dashboard.cta.startPlacement")}
-                      </span>
-                    </button>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-white font-medium mb-2">{t("dashboard.cta.findLevel")}</p>
-                    <p className="text-sm text-white/50 max-w-md mx-auto">
-                      {t("dashboard.cta.placementExplainer")}
-                    </p>
-                  </div>
-                </>
+                <div className="text-center">
+                  <h2
+                    className="text-2xl sm:text-3xl font-bold text-white mb-2"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {t("dashboard.cta.findLevel")}
+                  </h2>
+                  <p className="text-white/60 mb-6 max-w-md mx-auto">
+                    {t("dashboard.cta.placementExplainer")}
+                  </p>
+                  <button
+                    onClick={handleStartStudying}
+                    className="group relative w-full sm:w-auto px-10 py-5 text-lg font-semibold rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 hover:from-orange-400 hover:to-amber-300 text-black shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 overflow-hidden"
+                  >
+                    {/* Shimmer effect */}
+                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    <span className="relative flex items-center justify-center gap-3">
+                      <Target className="w-6 h-6" />
+                      {t("dashboard.cta.startPlacement")}
+                    </span>
+                  </button>
+                </div>
               ) : (
                 <>
                   <div className="text-center mb-6">
@@ -499,7 +500,7 @@ export function DashboardPage() {
                   color="purple"
                   index={0}
                   isLink
-                  to="/flashcards"
+                  to="/learn?tab=review"
                 />
                 <StatCard
                   icon={BookmarkCheck}
@@ -508,7 +509,7 @@ export function DashboardPage() {
                   color="blue"
                   index={1}
                   isLink
-                  to="/vocabulary"
+                  to="/learn?tab=words"
                 />
                 <StatCard
                   icon={streakAnimating ? Flame : Flame}
