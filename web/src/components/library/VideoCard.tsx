@@ -74,11 +74,11 @@ export function VideoCard({ video, onClick, style }: VideoCardProps) {
         {/* Gradient overlay for badges */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/30 opacity-70 group-hover:opacity-50 transition-opacity duration-300" />
 
-        {/* Level Badge */}
+        {/* Level Badge - Prominent */}
         {getLevelVariant(video.level) && (
           <Badge
             variant={getLevelVariant(video.level)}
-            className="absolute top-3 left-3 shadow-lg ring-2 ring-white/20"
+            className="absolute top-2 left-2 px-2.5 py-1 text-sm font-bold shadow-xl ring-2 ring-white/30"
           >
             {video.level}
           </Badge>
