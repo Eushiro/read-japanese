@@ -1,19 +1,49 @@
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
-import { AlertCircle, ArrowRight, BookOpen, Clock, Layers, Plus, Video } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import {
+  AlertCircle,
+  ArrowRight,
+  BookOpen,
+  Clock,
+  Crown,
+  FlaskConical,
+  GraduationCap,
+  Layers,
+  Plus,
+  Sparkles,
+  Video,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
+import { LANGUAGES } from "@/lib/contentLanguages";
+import { getTier, type TierId } from "@/lib/tiers";
 
 import { api } from "../../../convex/_generated/api";
 
 export function AdminDashboard() {
+  const { user } = useAuth();
+
   // Fetch stats
   const videos = useQuery(api.youtubeContent.list, {});
   const decks = useQuery(api.premadeDecks.listAllDecks, {});
   const jobs = useQuery(api.batchJobs.list, { limit: 10 });
+
+  // Testing tools
+  const userProfile = useQuery(api.users.getByClerkId, user ? { clerkId: user.id } : "skip");
+  const subscription = useQuery(api.subscriptions.get, user ? { userId: user.id } : "skip");
+  const upsertSubscription = useMutation(api.subscriptions.upsert);
+  const updateProficiencyLevel = useMutation(api.users.updateProficiencyLevel);
 
   const isLoading = videos === undefined || decks === undefined || jobs === undefined;
 
@@ -238,6 +268,132 @@ export function AdminDashboard() {
           </Card>
         </div>
       )}
+
+      {/* Testing Tools */}
+      <div>
+        <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <FlaskConical className="w-5 h-5 text-amber-500" />
+          Testing Tools
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Subscription Tier */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Crown className="w-4 h-4 text-amber-500" />
+                Subscription Tier
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Test different subscription features
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Select
+                value={subscription?.tier ?? "free"}
+                onValueChange={async (value) => {
+                  if (!user) return;
+                  await upsertSubscription({
+                    userId: user.id,
+                    tier: value as TierId,
+                  });
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Free ({getTier("free")?.credits} credits)</SelectItem>
+                  <SelectItem value="plus">Plus ({getTier("plus")?.credits} credits)</SelectItem>
+                  <SelectItem value="pro">Pro ({getTier("pro")?.credits} credits)</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Level Override */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-amber-500" />
+                Level Override
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Test questions at different difficulties
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {userProfile?.languages?.map((lang) => {
+                  const langInfo = LANGUAGES.find((l) => l.value === lang);
+                  const currentLevel =
+                    userProfile.proficiencyLevels?.[
+                      lang as keyof typeof userProfile.proficiencyLevels
+                    ]?.level;
+                  const levels =
+                    lang === "japanese"
+                      ? ["N5", "N4", "N3", "N2", "N1"]
+                      : ["A1", "A2", "B1", "B2", "C1", "C2"];
+
+                  return (
+                    <div key={lang} className="flex items-center gap-2">
+                      <span className="text-xs w-16 text-foreground-muted">{langInfo?.label}</span>
+                      <Select
+                        value={currentLevel ?? "not_set"}
+                        onValueChange={async (value) => {
+                          if (!user || value === "not_set") return;
+                          await updateProficiencyLevel({
+                            clerkId: user.id,
+                            language: lang as "japanese" | "english" | "french",
+                            level: value,
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="flex-1 h-8 text-sm">
+                          <SelectValue placeholder="Not set" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="not_set">Not set</SelectItem>
+                          {levels.map((level) => (
+                            <SelectItem key={level} value={level}>
+                              {level}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })}
+                {(!userProfile?.languages || userProfile.languages.length === 0) && (
+                  <p className="text-xs text-foreground-muted">No languages configured</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Show Onboarding */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                Show Onboarding
+              </CardTitle>
+              <CardDescription className="text-xs">Preview the onboarding flow</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  window.location.href = "/settings?onboarding=true";
+                }}
+              >
+                Show Onboarding Modal
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

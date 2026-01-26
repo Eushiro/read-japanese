@@ -136,7 +136,6 @@ function Navigation() {
   const t = useT();
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
-  const userIsAdmin = isAdmin(user?.email);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Track scroll position for blur effect
@@ -149,6 +148,14 @@ function Navigation() {
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Get user profile for admin mode check
+  const userProfile = useQuery(
+    api.users.getByClerkId,
+    isAuthenticated && user ? { clerkId: user.id } : "skip"
+  );
+  // Show admin panel only if user is admin AND has admin mode enabled
+  const showAdminPanel = isAdmin(user?.email) && userProfile?.isAdminMode !== false;
 
   // Get subscription tier for premium badge
   const subscription = useQuery(
@@ -258,8 +265,8 @@ function Navigation() {
               );
             })}
 
-            {/* Admin link - only visible to admins */}
-            {userIsAdmin && (
+            {/* Admin link - only visible when admin mode is enabled */}
+            {showAdminPanel && (
               <Link
                 to="/admin"
                 className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${

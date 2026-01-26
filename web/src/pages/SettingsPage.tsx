@@ -1,6 +1,4 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-
-import { Footer } from "@/components/Footer";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import {
@@ -31,6 +29,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { Footer } from "@/components/Footer";
 import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -134,9 +133,7 @@ export function SettingsPage() {
   );
   const updateLanguages = useMutation(api.users.updateLanguages);
   const updateTargetExams = useMutation(api.users.updateTargetExams);
-  const updateProficiencyLevel = useMutation(api.users.updateProficiencyLevel);
   const upsertUser = useMutation(api.users.upsert);
-  const upsertSubscription = useMutation(api.subscriptions.upsert);
   const toggleAdminMode = useMutation(api.subscriptions.toggleAdminMode);
 
   // Initialize user if they don't exist
@@ -1173,7 +1170,7 @@ export function SettingsPage() {
                     <div>
                       <div className="font-medium text-foreground">Admin Mode</div>
                       <div className="text-sm text-foreground-muted">
-                        Bypass credit limits and unlock image generation
+                        Show admin panel and bypass credit limits
                       </div>
                     </div>
                   </div>
@@ -1187,127 +1184,6 @@ export function SettingsPage() {
                       });
                     }}
                   />
-                </div>
-
-                {/* Tier Selection */}
-                <div className="flex items-center justify-between pt-4 border-t border-amber-500/20">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-amber-500/10">
-                      <Crown className="w-4 h-4 text-amber-500" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground">Subscription Tier</div>
-                      <div className="text-sm text-foreground-muted">
-                        Change tier for testing features
-                      </div>
-                    </div>
-                  </div>
-                  <Select
-                    value={subscription?.tier ?? "free"}
-                    onValueChange={async (value) => {
-                      if (!user) return;
-                      await upsertSubscription({
-                        userId: user.id,
-                        tier: value as TierId,
-                      });
-                    }}
-                  >
-                    <SelectTrigger className="w-36 border-amber-500/30">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="free">
-                        Free ({getTier("free")?.credits} credits)
-                      </SelectItem>
-                      <SelectItem value="plus">
-                        Plus ({getTier("plus")?.credits} credits)
-                      </SelectItem>
-                      <SelectItem value="pro">Pro ({getTier("pro")?.credits} credits)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Level Override */}
-                <div className="pt-4 border-t border-amber-500/20">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-2 rounded-lg bg-amber-500/10">
-                      <GraduationCap className="w-4 h-4 text-amber-500" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground">Level Override</div>
-                      <div className="text-sm text-foreground-muted">
-                        Manually set proficiency level for testing questions
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3 ml-11">
-                    {userProfile?.languages?.map((lang) => {
-                      const langInfo = LANGUAGES.find((l) => l.value === lang);
-                      const currentLevel =
-                        userProfile.proficiencyLevels?.[
-                          lang as keyof typeof userProfile.proficiencyLevels
-                        ]?.level;
-                      const levels =
-                        lang === "japanese"
-                          ? ["N5", "N4", "N3", "N2", "N1"]
-                          : ["A1", "A2", "B1", "B2", "C1", "C2"];
-
-                      return (
-                        <div key={lang} className="flex items-center gap-3">
-                          <span className="text-sm w-20">{langInfo?.label}</span>
-                          <Select
-                            value={currentLevel ?? "not_set"}
-                            onValueChange={async (value) => {
-                              if (!user || value === "not_set") return;
-                              await updateProficiencyLevel({
-                                clerkId: user.id,
-                                language: lang as "japanese" | "english" | "french",
-                                level: value,
-                              });
-                            }}
-                          >
-                            <SelectTrigger className="flex-1 h-8 text-sm border-amber-500/30">
-                              <SelectValue placeholder="Not set" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="not_set">Not set</SelectItem>
-                              {levels.map((level) => (
-                                <SelectItem key={level} value={level}>
-                                  {level}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Show Onboarding */}
-                <div className="pt-4 border-t border-amber-500/20">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-amber-500/10">
-                        <Sparkles className="w-4 h-4 text-amber-500" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-foreground">Show Onboarding</div>
-                        <div className="text-sm text-foreground-muted">
-                          Preview the onboarding flow
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        window.location.href = "/settings?onboarding=true";
-                      }}
-                    >
-                      Show
-                    </Button>
-                  </div>
                 </div>
               </div>
               </div>
