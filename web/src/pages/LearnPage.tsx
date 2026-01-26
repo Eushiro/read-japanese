@@ -64,9 +64,9 @@ export function LearnPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
       {/* Tab Header */}
-      <div className="container mx-auto px-4 sm:px-6 max-w-6xl pt-6 pb-4">
+      <div className="container mx-auto px-4 sm:px-6 max-w-6xl pt-6 pb-4 flex-shrink-0">
         <div className="flex items-center justify-center">
           {/* Tab Buttons */}
           <div className="flex items-center gap-1 p-1">
@@ -91,11 +91,17 @@ export function LearnPage() {
         </div>
       </div>
 
-      {/* Tab Content */}
-      <div className="animate-fade-in">
-        {activeTab === "words" && <VocabularyContent />}
-        {activeTab === "review" && <FlashcardsContent />}
-        {activeTab === "practice" && <PracticeContent />}
+      {/* Tab Content - CSS visibility keeps all tabs mounted to preserve Convex subscriptions */}
+      <div className="flex-1 overflow-hidden">
+        <div className={activeTab === "words" ? "h-full" : "hidden"}>
+          <VocabularyContent />
+        </div>
+        <div className={activeTab === "review" ? "h-full" : "hidden"}>
+          <FlashcardsContent />
+        </div>
+        <div className={activeTab === "practice" ? "h-full" : "hidden"}>
+          <PracticeContent />
+        </div>
       </div>
     </div>
   );

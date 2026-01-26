@@ -28,9 +28,10 @@ import {
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useReviewSession } from "@/contexts/ReviewSessionContext";
+import { useUserData } from "@/contexts/UserDataContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
-import { contentLanguageMatchesUI, type ContentLanguage } from "@/lib/contentLanguages";
+import { type ContentLanguage, contentLanguageMatchesUI } from "@/lib/contentLanguages";
 import type { CardState, Id, Rating } from "@/lib/convex-types";
 import { useT, useUILanguage } from "@/lib/i18n";
 
@@ -71,7 +72,7 @@ function FlashcardsAnimatedBackground() {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
       <div
-        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-30"
+        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-15"
         style={{
           background: "radial-gradient(circle, #86efac 0%, transparent 70%)",
           top: "-5%",
@@ -90,11 +91,8 @@ export function FlashcardsPage() {
   const { language: uiLanguage } = useUILanguage();
   const userId = user?.id ?? "anonymous";
 
-  // Fetch user profile for languages
-  const userProfile = useQuery(
-    api.users.getByClerkId,
-    isAuthenticated && user ? { clerkId: user.id } : "skip"
-  );
+  // User profile and subscription from shared context (prevents refetching on navigation)
+  const { userProfile, isPremium: isPremiumUser } = useUserData();
   const userLanguages = (userProfile?.languages ?? []) as ContentLanguage[];
   const primaryLanguage = userProfile?.primaryLanguage;
   const hasMultipleLanguages = userLanguages.length > 1;
@@ -110,10 +108,6 @@ export function FlashcardsPage() {
       setSelectedLanguage(primaryLanguage);
     }
   }, [primaryLanguage, selectedLanguage]);
-
-  // Check subscription for AI features
-  const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
-  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
   // Fetch due cards and stats - filtered by selected language
   const stats = useQuery(
@@ -482,14 +476,14 @@ export function FlashcardsPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-120px)] flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Animated background */}
       <FlashcardsAnimatedBackground />
 
       {/* Header Section */}
       <div className="relative flex-shrink-0 pt-6 pb-0">
         <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
-          <div className="animate-fade-in-up">
+          <div>
             {/* Icon + Badge Row */}
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-xl bg-purple-500/20">
@@ -547,7 +541,7 @@ export function FlashcardsPage() {
       </div>
 
       {/* Review Area */}
-      <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl flex-grow flex flex-col items-center overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl flex-1 flex flex-col items-center overflow-y-auto">
         {sessionQueue.length === 0 && isInitialized ? (
           // No cards to review
           <div className="text-center py-12">

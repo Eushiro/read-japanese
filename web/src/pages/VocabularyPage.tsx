@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useMutation, useQuery } from "convex/react";
 import type { GenericId } from "convex/values";
-import { motion } from "framer-motion";
 import {
   ArrowUpDown,
   Book,
@@ -44,6 +43,7 @@ import { useAIAction } from "@/hooks/useAIAction";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { useFlashcard } from "@/hooks/useFlashcard";
+import { isAdmin as checkIsAdmin } from "@/lib/admin";
 import {
   type DictionaryEntry,
   preloadDictionary,
@@ -176,7 +176,7 @@ export function VocabularyPage() {
   const t = useT();
   const { language: uiLang } = useUILanguage();
   const userId = user?.id ?? "anonymous";
-  const isAdmin = user?.email === "hiro.ayettey@gmail.com";
+  const isAdmin = checkIsAdmin(user?.email);
 
   // Add daily cards mutation
   const addDailyCards = useMutation(api.userDeckSubscriptions.addDailyCards);
@@ -395,27 +395,20 @@ export function VocabularyPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Animated background */}
       <VocabularyAnimatedBackground />
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden pt-8 pb-12">
+      <div className="relative overflow-hidden pt-8 pb-12 flex-shrink-0">
         <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
-          >
+          <div>
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-3">
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: -5 }}
-                    className="p-2 rounded-xl bg-amber-500/20"
-                  >
+                  <div className="p-2 rounded-xl bg-amber-500/20">
                     <BookmarkCheck className="w-5 h-5 text-amber-500" />
-                  </motion.div>
+                  </div>
                   <span className="text-sm font-semibold text-amber-500 uppercase tracking-wider">
                     {t("vocabulary.yourWords")}
                   </span>
@@ -438,12 +431,12 @@ export function VocabularyPage() {
                 </Button>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div>
+      <div className="flex-shrink-0">
         <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
@@ -584,10 +577,10 @@ export function VocabularyPage() {
       </div>
 
       {/* Main content area */}
-      <div className="container mx-auto px-4 sm:px-6 py-6 max-w-6xl">
-        <div className="flex gap-6">
-          {/* Deck Panel - sticky, positioned below the search bar */}
-          <div className="hidden lg:block sticky top-40 self-start">
+      <div className="container mx-auto px-4 sm:px-6 py-6 max-w-6xl flex-1 overflow-hidden">
+        <div className="flex gap-6 h-full">
+          {/* Deck Panel - sticky at top of scroll container */}
+          <div className="hidden lg:block sticky top-0 self-start">
             <DeckPanel
               userId={userId}
               onBrowseDecks={() => setShowDeckPicker(true)}
@@ -597,7 +590,7 @@ export function VocabularyPage() {
           </div>
 
           {/* Vocabulary content */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 h-full overflow-y-auto pr-2">
             {/* Results count - fade in to avoid flicker */}
             <div className="mb-4 h-5">
               <p
@@ -691,7 +684,7 @@ export function VocabularyPage() {
                 </div>
               ) : shouldUseVirtualScrolling ? (
                 // Virtual scrolling for large lists
-                <div ref={scrollContainerRef} className="h-[calc(100vh-320px)] overflow-auto">
+                <div ref={scrollContainerRef} className="h-full overflow-auto">
                   <div
                     style={{
                       height: `${rowVirtualizer.getTotalSize()}px`,
