@@ -14,6 +14,7 @@
     "continue": "続ける"
   },
   "actions": {
+    "signIn": "ログイン",
     "save": "保存",
     "cancel": "キャンセル",
     "continue": "続ける",

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import type { GenericId } from "convex/values";
 import {
   ArrowUpDown,
@@ -27,6 +27,7 @@ import { AudioRecorder } from "@/components/shadowing/AudioRecorder";
 import { FeedbackDisplay } from "@/components/shadowing/FeedbackDisplay";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { PremiumBackground } from "@/components/ui/premium-background";
 import { matchesSearch, SearchBox } from "@/components/ui/search-box";
 import {
   Select,
@@ -139,22 +140,6 @@ type FlashcardWithContent = {
   [key: string]: unknown;
 };
 
-// Animated background for vocabulary page
-function VocabularyAnimatedBackground() {
-  return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      <div
-        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-30"
-        style={{
-          background: "radial-gradient(circle, #f87171 0%, transparent 70%)",
-          top: "-5%",
-          left: "20%",
-        }}
-      />
-    </div>
-  );
-}
-
 export function VocabularyPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -169,10 +154,14 @@ export function VocabularyPage() {
   const [showDeckPicker, setShowDeckPicker] = useState(false);
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
 
+  // Pagination state for "All Words" view
+  const [allWordsOffset, setAllWordsOffset] = useState(0);
+  const [accumulatedAllWords, setAccumulatedAllWords] = useState<PremadeVocabItem[]>([]);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const PAGE_SIZE = 50;
+
   // Virtual scrolling ref
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  // Load more sentinel ref (for non-virtualized infinite scroll)
-  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { trackEvent, events } = useAnalytics();
@@ -212,19 +201,68 @@ export function VocabularyPage() {
       : "skip"
   );
 
-  // Use paginated query for "All Words" view to improve initial load performance
-  const {
-    results: premadeAllVocabularyResults,
-    status: paginationStatus,
-    loadMore,
-  } = usePaginatedQuery(
-    api.premadeDecks.getAllSubscribedVocabularyPaginated,
-    isAuthenticated && !selectedDeckId ? { userId, uiLanguage: uiLang } : "skip",
-    { initialNumItems: 50 }
+  // Use paginated query with explicit offset for "All Words" view
+  const paginatedAllWords = useQuery(
+    api.premadeDecks.getAllSubscribedVocabularyWithOffset,
+    isAuthenticated && !selectedDeckId
+      ? { userId, uiLanguage: uiLang, offset: allWordsOffset, limit: PAGE_SIZE }
+      : "skip"
   );
-  // Map to same format as useQuery result for compatibility
-  const premadeAllVocabulary =
-    isAuthenticated && !selectedDeckId ? premadeAllVocabularyResults : undefined;
+
+  // Accumulate paginated results for "All Words" view
+  useEffect(() => {
+    if (paginatedAllWords?.items) {
+      if (allWordsOffset === 0) {
+        // First page - replace accumulated items
+        setAccumulatedAllWords(paginatedAllWords.items as PremadeVocabItem[]);
+      } else {
+        // Subsequent pages - append to accumulated items
+        setAccumulatedAllWords((prev) => [
+          ...prev,
+          ...(paginatedAllWords.items as PremadeVocabItem[]),
+        ]);
+      }
+    }
+  }, [paginatedAllWords, allWordsOffset]);
+
+  // Reset pagination when switching away from "All Words" view
+  useEffect(() => {
+    if (selectedDeckId) {
+      setAllWordsOffset(0);
+      setAccumulatedAllWords([]);
+    }
+  }, [selectedDeckId]);
+
+  // IntersectionObserver for infinite scroll in "All Words" view
+  // Use a ref to track current loading/hasMore state to avoid stale closures
+  const paginationStateRef = useRef({ hasMore: false, isLoading: true });
+  paginationStateRef.current = {
+    hasMore: paginatedAllWords?.hasMore ?? false,
+    isLoading: paginatedAllWords === undefined,
+  };
+
+  useEffect(() => {
+    if (selectedDeckId) return;
+
+    const currentRef = loadMoreRef.current;
+    if (!currentRef) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const { hasMore, isLoading } = paginationStateRef.current;
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          setAllWordsOffset((prev) => prev + PAGE_SIZE);
+        }
+      },
+      { threshold: 0.1, rootMargin: "200px" }
+    );
+
+    observer.observe(currentRef);
+
+    return () => {
+      observer.unobserve(currentRef);
+    };
+  }, [selectedDeckId]);
 
   const premadeDeckVocabulary = useQuery(
     api.premadeDecks.getVocabularyForDeck,
@@ -241,14 +279,24 @@ export function VocabularyPage() {
     if (selectedDeckId) {
       return premadeDeckVocabulary ?? [];
     }
-    return premadeAllVocabulary ?? [];
+    // For "All Words", use accumulated items from pagination
+    return accumulatedAllWords;
   }, [
     selectedDeckId,
     isPersonalDeckSelected,
     userVocabulary,
     premadeDeckVocabulary,
-    premadeAllVocabulary,
+    accumulatedAllWords,
   ]);
+
+  // Track if we're loading more items (for showing skeletons at bottom)
+  const isLoadingMoreAllWords =
+    !selectedDeckId && allWordsOffset > 0 && paginatedAllWords === undefined;
+  // Track if initial load is in progress for "All Words"
+  const isInitialLoadAllWords =
+    !selectedDeckId && allWordsOffset === 0 && paginatedAllWords === undefined;
+  // Total count for "All Words" view (from pagination data)
+  const allWordsTotalCount = paginatedAllWords?.totalCount ?? accumulatedAllWords.length;
 
   // Track page view (placed after vocabulary is defined)
   useEffect(() => {
@@ -366,28 +414,6 @@ export function VocabularyPage() {
     enabled: shouldUseVirtualScrolling,
   });
 
-  // Load more items when scrolling near the bottom (for paginated "All Words" view)
-  // Uses IntersectionObserver for non-virtualized scrolling
-  useEffect(() => {
-    // Only applies when viewing "All Words" (no deck selected) and more items are available
-    if (selectedDeckId || paginationStatus !== "CanLoadMore") return;
-
-    const sentinel = loadMoreRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore(50);
-        }
-      },
-      { rootMargin: "200px" }
-    );
-
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [paginationStatus, selectedDeckId, loadMore]);
-
   // Track search with debounce
   useEffect(() => {
     if (!searchTerm.trim()) return;
@@ -432,7 +458,7 @@ export function VocabularyPage() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Animated background */}
-      <VocabularyAnimatedBackground />
+      <PremiumBackground variant="subtle" colorScheme="warm" orbCount={1} />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-8 pb-12 flex-shrink-0">
@@ -454,13 +480,7 @@ export function VocabularyPage() {
                 >
                   {t("vocabulary.title")}
                 </h1>
-                <p className="text-foreground-muted text-lg">
-                  {vocabulary === undefined ? (
-                    <Skeleton className="w-32 h-5 inline-block" />
-                  ) : (
-                    t("vocabulary.wordsInCollection", { count: vocabulary.length })
-                  )}
-                </p>
+                <p className="text-foreground-muted text-lg">{t("vocabulary.yourCollection")}</p>
               </div>
               <div className="flex items-center gap-2">
                 {/* Generate All Flashcards button removed to prevent accidental mass AI requests */}
@@ -637,11 +657,18 @@ export function VocabularyPage() {
             {/* Results count - fade in to avoid flicker */}
             <div className="mb-4 h-5">
               <p
-                className={`text-sm text-foreground-muted transition-opacity duration-200 ${vocabulary === undefined ? "opacity-0" : "opacity-100"}`}
+                className={`text-sm text-foreground-muted transition-opacity duration-200 ${vocabulary.length === 0 && isInitialLoadAllWords ? "opacity-0" : "opacity-100"}`}
               >
-                <span className="font-medium text-foreground">{sortedVocabulary.length}</span>{" "}
-                {sortedVocabulary.length === 1 ? t("vocabulary.word") : t("vocabulary.words")}
-                {vocabulary &&
+                {/* For "All Words", show total count; for specific decks, show filtered/total */}
+                <span className="font-medium text-foreground">
+                  {!selectedDeckId ? allWordsTotalCount : sortedVocabulary.length}
+                </span>{" "}
+                {(!selectedDeckId ? allWordsTotalCount : sortedVocabulary.length) === 1
+                  ? t("vocabulary.word")
+                  : t("vocabulary.words")}
+                {/* Show filtered count for specific deck views when filtering */}
+                {selectedDeckId &&
+                  vocabulary.length > 0 &&
                   sortedVocabulary.length !== vocabulary.length &&
                   ` (${t("vocabulary.ofTotal", { total: vocabulary.length })})`}
               </p>
@@ -649,9 +676,10 @@ export function VocabularyPage() {
 
             {/* Vocabulary List */}
             <div className="pb-12">
-              {vocabulary === undefined ? (
+              {(vocabulary === undefined && !accumulatedAllWords.length) ||
+              isInitialLoadAllWords ? (
                 <div className="space-y-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
+                  {Array.from({ length: 10 }).map((_, i) => (
                     <div
                       key={i}
                       className="p-5 rounded-xl bg-surface border border-border animate-pulse"
@@ -790,13 +818,18 @@ export function VocabularyPage() {
                       isPremade={isViewingPremade}
                     />
                   ))}
-                  {/* Sentinel for infinite scroll - triggers loadMore when visible */}
-                  {!selectedDeckId && paginationStatus === "CanLoadMore" && (
-                    <div ref={loadMoreRef}>
-                      {Array.from({ length: 3 }).map((_, i) => (
+
+                  {/* Infinite scroll trigger for "All Words" pagination */}
+                  {!selectedDeckId && <div ref={loadMoreRef} className="h-10" />}
+
+                  {/* Loading skeletons while fetching more for "All Words" */}
+                  {isLoadingMoreAllWords && (
+                    <div className="space-y-3">
+                      {Array.from({ length: 10 }).map((_, i) => (
                         <div
                           key={`skeleton-${i}`}
-                          className={`p-5 rounded-xl bg-surface border border-border animate-pulse ${isCompactMode ? "mb-1" : "mb-3"}`}
+                          className="p-5 rounded-xl bg-surface border border-border animate-pulse"
+                          style={{ animationDelay: `${i * 50}ms` }}
                         >
                           <div className="h-6 bg-muted rounded w-24 mb-2" />
                           <div className="h-4 bg-muted rounded w-48" />

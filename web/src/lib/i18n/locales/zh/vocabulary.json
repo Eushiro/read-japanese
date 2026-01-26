@@ -1,6 +1,7 @@
 {
   "title": "词汇",
   "yourWords": "您的单词",
+  "yourCollection": "您的收藏",
   "wordsInCollection": "收藏中有{{count}}个单词",
   "addWord": "添加单词",
   "searchPlaceholder": "搜索词汇...",

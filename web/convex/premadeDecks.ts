@@ -234,33 +234,106 @@ export const getAllSubscribedVocabularyPaginated = query({
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
 
-    const deckIds = new Set(subscriptions.map((s) => s.deckId));
+    if (subscriptions.length === 0) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
 
-    // Query premadeVocabulary with pagination
-    // Note: We can't filter by multiple deckIds with a single index, so we fetch more
-    // items and filter. This means some pages may have fewer items than requested.
-    const paginatedResult = await ctx.db.query("premadeVocabulary").paginate(args.paginationOpts);
+    // Fetch vocabulary from EACH subscribed deck using the by_deck index
+    const deckIds = subscriptions.map((s) => s.deckId);
+    const allVocabulary = await Promise.all(
+      deckIds.map((deckId) =>
+        ctx.db
+          .query("premadeVocabulary")
+          .withIndex("by_deck", (q) => q.eq("deckId", deckId))
+          .collect()
+      )
+    );
 
-    // Filter to only subscribed decks and dedupe by word+language
+    // Flatten and dedupe by word+language
     const seen = new Set<string>();
-    const filtered = paginatedResult.page.filter((item) => {
-      if (!deckIds.has(item.deckId)) return false;
+    const flattened = allVocabulary.flat().filter((item) => {
       const key = `${item.word}-${item.language}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
 
+    // Parse offset from cursor (cursor is "offset:N" or empty for start)
+    const cursor = args.paginationOpts.cursor;
+    const offset = cursor ? parseInt(cursor.split(":")[1] || "0", 10) : 0;
+    const numItems = args.paginationOpts.numItems ?? 50;
+
+    // Slice for this page
+    const page = flattened.slice(offset, offset + numItems);
+    const nextOffset = offset + page.length;
+    const isDone = nextOffset >= flattened.length;
+
     // Resolve content for each item
     const resolved = await Promise.all(
-      filtered.map((item) => resolveVocabularyContent(ctx.db, item, uiLang))
+      page.map((item) => resolveVocabularyContent(ctx.db, item, uiLang))
     );
 
     return {
       page: resolved,
-      isDone: paginatedResult.isDone,
-      continueCursor: paginatedResult.continueCursor,
+      isDone,
+      continueCursor: isDone ? "" : `offset:${nextOffset}`,
     };
+  },
+});
+
+// Get all vocabulary from subscribed decks with explicit offset/limit (for manual pagination)
+export const getAllSubscribedVocabularyWithOffset = query({
+  args: {
+    userId: v.string(),
+    uiLanguage: v.optional(uiLanguageValidator),
+    offset: v.number(),
+    limit: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const uiLang = normalizeUILanguage(args.uiLanguage);
+
+    // Get all user's deck subscriptions
+    const subscriptions = await ctx.db
+      .query("userDeckSubscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    if (subscriptions.length === 0) {
+      return { items: [], hasMore: false, totalCount: 0 };
+    }
+
+    // Fetch vocabulary from EACH subscribed deck using the by_deck index
+    const deckIds = subscriptions.map((s) => s.deckId);
+    const allVocabulary = await Promise.all(
+      deckIds.map((deckId) =>
+        ctx.db
+          .query("premadeVocabulary")
+          .withIndex("by_deck", (q) => q.eq("deckId", deckId))
+          .collect()
+      )
+    );
+
+    // Flatten and dedupe by word+language
+    const seen = new Set<string>();
+    const flattened = allVocabulary.flat().filter((item) => {
+      const key = `${item.word}-${item.language}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    const totalCount = flattened.length;
+
+    // Slice for this page
+    const page = flattened.slice(args.offset, args.offset + args.limit);
+    const hasMore = args.offset + page.length < totalCount;
+
+    // Resolve content for each item
+    const items = await Promise.all(
+      page.map((item) => resolveVocabularyContent(ctx.db, item, uiLang))
+    );
+
+    return { items, hasMore, totalCount };
   },
 });
 

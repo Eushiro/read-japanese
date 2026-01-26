@@ -1,6 +1,7 @@
 {
   "title": "Vocabulaire",
   "yourWords": "Vos mots",
+  "yourCollection": "Votre collection",
   "wordsInCollection": "{{count}} mots dans votre collection",
   "addWord": "Ajouter un mot",
   "searchPlaceholder": "Rechercher dans le vocabulaire...",

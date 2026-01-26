@@ -1,6 +1,7 @@
 {
   "title": "語彙",
   "yourWords": "あなたの単語",
+  "yourCollection": "あなたのコレクション",
   "wordsInCollection": "コレクションに{{count}}単語",
   "addWord": "単語を追加",
   "searchPlaceholder": "単語を検索...",
