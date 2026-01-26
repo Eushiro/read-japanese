@@ -9,7 +9,6 @@ import {
   useLocation,
   useSearch,
 } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
 import { BookOpen, CreditCard, Crown, GraduationCap, Home, Shield, User, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -18,6 +17,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { PremiumBackground } from "@/components/ui/premium-background";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
+import { useUserData } from "@/contexts/UserDataContext";
 import { isAdmin } from "@/lib/admin";
 import { trackPageView } from "@/lib/analytics";
 import { useT } from "@/lib/i18n";
@@ -53,8 +53,6 @@ import { UsageHistoryPage } from "@/pages/UsageHistoryPage";
 import { VideoPage } from "@/pages/VideoPage";
 import { VideoQuizPage } from "@/pages/VideoQuizPage";
 
-import { api } from "../convex/_generated/api";
-
 // Root layout
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -62,6 +60,7 @@ const rootRoute = createRootRoute({
 
 function RootLayout() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { userProfile } = useUserData();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [forceOnboarding, setForceOnboarding] = useState(false);
   const location = useLocation();
@@ -84,12 +83,6 @@ function RootLayout() {
   useEffect(() => {
     trackPageView(location.pathname);
   }, [location.pathname]);
-
-  // Check if user has completed onboarding
-  const userProfile = useQuery(
-    api.users.getByClerkId,
-    isAuthenticated && user ? { clerkId: user.id } : "skip"
-  );
 
   // Show onboarding if user is authenticated but has no profile, or if forced
   const showOnboarding =
@@ -135,32 +128,22 @@ function Navigation() {
   const t = useT();
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
+  const { userProfile, subscription } = useUserData();
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Track scroll position for blur effect
+  // Track scroll position for header opacity
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
-    // Check initial state
-    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Get user profile for admin mode check
-  const userProfile = useQuery(
-    api.users.getByClerkId,
-    isAuthenticated && user ? { clerkId: user.id } : "skip"
-  );
   // Show admin panel only if user is admin AND has admin mode enabled
   const showAdminPanel = isAdmin(user?.email) && userProfile?.isAdminMode !== false;
 
   // Get subscription tier for premium badge
-  const subscription = useQuery(
-    api.subscriptions.get,
-    isAuthenticated && user ? { userId: user.id } : "skip"
-  );
   const tier = subscription?.tier;
 
   // Links visible to everyone (logged-out users see preview dashboard)
@@ -189,24 +172,10 @@ function Navigation() {
 
   return (
     <nav
-      className={`sticky top-0 z-40 transition-all duration-300 ${
-        isScrolled ? "backdrop-blur-2xl" : "bg-transparent"
+      className={`sticky top-0 z-40 transition-all duration-200 ${
+        isScrolled ? "backdrop-blur-xl bg-background/80" : ""
       }`}
     >
-      {/* Subtle background on scroll */}
-      {isScrolled && (
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-white/30 dark:bg-black/20" />
-          {/* Soft fade at bottom to blend with content */}
-          <div
-            className="absolute inset-x-0 bottom-0 h-4 pointer-events-none"
-            style={{
-              background: "linear-gradient(to bottom, transparent, var(--color-background))",
-            }}
-          />
-        </div>
-      )}
-
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo + Tier Badge */}
