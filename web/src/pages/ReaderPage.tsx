@@ -476,6 +476,7 @@ export function ReaderPage() {
         showStars={true}
         showOrbs={true}
         orbCount={3}
+        starCount={15}
       />
 
       {/* Sticky Header - Glass */}

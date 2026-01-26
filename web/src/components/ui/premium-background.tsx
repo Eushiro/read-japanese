@@ -11,6 +11,7 @@ interface PremiumBackgroundProps {
   showStars: boolean;
   showOrbs: boolean;
   orbCount: 1 | 2 | 3;
+  starCount: number;
 }
 
 // Color schemes for different pages (RGB values)
@@ -29,6 +30,7 @@ export function PremiumBackground({
   showStars,
   showOrbs,
   orbCount,
+  starCount,
 }: PremiumBackgroundProps) {
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 1000], [0, 100]);
@@ -57,14 +59,14 @@ export function PremiumBackground({
   const orbConfig = useMemo(() => {
     const sizes = {
       hero: { primary: 600, secondary: 500, tertiary: 400 },
-      page: { primary: 400, secondary: 350, tertiary: 300 },
-      subtle: { primary: 300, secondary: 250, tertiary: 200 },
+      page: { primary: 450, secondary: 380, tertiary: 320 },
+      subtle: { primary: 500, secondary: 400, tertiary: 320 },
     };
 
     const baseOpacities = {
       hero: { primary: 0.2, secondary: 0.15, tertiary: 0.1 },
-      page: { primary: 0.2, secondary: 0.15, tertiary: 0.1 },
-      subtle: { primary: 0.2, secondary: 0.15, tertiary: 0.1 },
+      page: { primary: 0.28, secondary: 0.2, tertiary: 0.14 },
+      subtle: { primary: 0.35, secondary: 0.25, tertiary: 0.18 },
     };
 
     // Light mode: reduce opacities (but keep visible)
@@ -84,43 +86,44 @@ export function PremiumBackground({
 
   // Generate stable star positions
   const stars = useMemo(() => {
-    return Array.from({ length: 15 }, (_, i) => ({
+    return Array.from({ length: starCount }, (_, i) => ({
       id: i,
       left: `${(i * 17 + 5) % 100}%`,
       top: `${(i * 23 + 10) % 100}%`,
       delay: (i % 8) * 0.6,
       duration: 3 + (i % 5),
     }));
-  }, []);
+  }, [starCount]);
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
       {/* Animated gradient orbs with parallax */}
       {showOrbs && (
         <>
-          {/* Primary orb - top area near header */}
+          {/* Primary orb - position depends on orbCount */}
           <motion.div
-            className="absolute rounded-full blur-[120px]"
+            className={`absolute rounded-full ${orbCount === 1 ? "blur-[80px]" : "blur-[120px]"}`}
             style={{
-              width: orbConfig.sizes.primary,
-              height: orbConfig.sizes.primary,
-              background: `radial-gradient(circle, rgba(${orbConfig.colors.primary}, ${orbConfig.opacities.primary * 1.4}) 0%, transparent 70%)`,
-              top: "8%",
-              left: "30%",
+              width: orbCount === 1 ? orbConfig.sizes.primary * 0.7 : orbConfig.sizes.primary,
+              height: orbCount === 1 ? orbConfig.sizes.primary * 0.7 : orbConfig.sizes.primary,
+              background: `radial-gradient(circle, rgba(${orbConfig.colors.primary}, ${orbConfig.opacities.primary}) 0%, transparent 70%)`,
+              // 1 orb: centered top, 2 orbs: top-left, 3 orbs: top-left
+              top: orbCount === 1 ? "5%" : "-5%",
+              left: orbCount === 1 ? "28%" : orbCount === 2 ? "15%" : "5%",
               y: y1,
             }}
             animate={{
-              x: [0, 80, 0],
-              scale: [1, 1.15, 1],
+              x: [0, 50, 0],
+              scale: [1, 1.1, 1],
             }}
             transition={{
-              duration: 20,
+              duration: 25,
               repeat: Infinity,
               ease: "easeInOut",
             }}
           />
 
-          {/* Secondary orb - right area */}
+          {/* Secondary orb - position depends on orbCount */}
           {orbCount >= 2 && (
             <motion.div
               className="absolute rounded-full blur-[100px]"
@@ -128,24 +131,26 @@ export function PremiumBackground({
                 width: orbConfig.sizes.secondary,
                 height: orbConfig.sizes.secondary,
                 background: `radial-gradient(circle, rgba(${orbConfig.colors.secondary}, ${orbConfig.opacities.secondary}) 0%, transparent 70%)`,
-                top: "40%",
-                right: "10%",
+                // 2 orbs: bottom-right diagonal, 3 orbs: right-middle
+                top: orbCount === 2 ? undefined : "30%",
+                bottom: orbCount === 2 ? "10%" : undefined,
+                right: orbCount === 2 ? "20%" : "-5%",
                 y: y2,
               }}
               animate={{
-                x: [0, -60, 0],
-                y: [0, 40, 0],
-                scale: [1, 1.1, 1],
+                x: [0, -40, 0],
+                y: [0, 30, 0],
+                scale: [1, 1.08, 1],
               }}
               transition={{
-                duration: 25,
+                duration: 28,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
             />
           )}
 
-          {/* Tertiary orb - bottom area */}
+          {/* Tertiary orb - bottom center (only for 3 orbs) */}
           {orbCount >= 3 && (
             <motion.div
               className="absolute rounded-full blur-[80px]"
@@ -153,16 +158,16 @@ export function PremiumBackground({
                 width: orbConfig.sizes.tertiary,
                 height: orbConfig.sizes.tertiary,
                 background: `radial-gradient(circle, rgba(${orbConfig.colors.tertiary}, ${orbConfig.opacities.tertiary}) 0%, transparent 70%)`,
-                bottom: "15%",
-                left: "30%",
+                bottom: "5%",
+                left: "40%",
                 y: y3,
               }}
               animate={{
-                x: [0, 50, 0],
-                scale: [1, 1.2, 1],
+                x: [0, 30, 0],
+                scale: [1, 1.1, 1],
               }}
               transition={{
-                duration: 18,
+                duration: 22,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}

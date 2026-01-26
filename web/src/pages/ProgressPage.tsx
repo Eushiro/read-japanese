@@ -1,6 +1,7 @@
-import { Link } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { AlertTriangle, BookOpen, Clock, Flame, Target, TrendingUp } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Flame, Target, TrendingUp } from "lucide-react";
+import { useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -17,31 +18,66 @@ import {
 } from "recharts";
 
 import { PremiumBackground } from "@/components/ui/premium-background";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
+import { getLanguageColorScheme } from "@/lib/languageColors";
 
 import { api } from "../../convex/_generated/api";
 
+// Color configurations for each language color scheme
+const colorConfigs: Record<"blue" | "purple" | "orange", { stroke: string; fill: string }> = {
+  blue: { stroke: "#3b82f6", fill: "#3b82f6" },
+  purple: { stroke: "#a855f7", fill: "#a855f7" },
+  orange: { stroke: "#f97316", fill: "#f97316" },
+};
+
 export function ProgressPage() {
   const t = useT();
+  const router = useRouter();
   const { user, isAuthenticated } = useAuth();
 
-  // Get learner profile
+  // Get user profile to access their languages
+  const userProfile = useQuery(
+    api.users.getByClerkId,
+    isAuthenticated && user ? { clerkId: user.id } : "skip"
+  );
+
+  const userLanguages = (userProfile?.languages ?? []) as ContentLanguage[];
+  const [selectedLanguage, setSelectedLanguage] = useState<ContentLanguage | null>(null);
+
+  // Use selected language or default to first language
+  const activeLanguage = selectedLanguage ?? userLanguages[0] ?? "japanese";
+  const languageIndex = userLanguages.indexOf(activeLanguage);
+  const colorScheme = getLanguageColorScheme(
+    languageIndex >= 0 ? languageIndex : 0,
+    userLanguages.length || 1
+  );
+  const colors = colorConfigs[colorScheme];
+
+  // Get learner profile for selected language
   const profile = useQuery(
     api.learnerModel.getProfile,
-    isAuthenticated && user ? { userId: user.id, language: "japanese" } : "skip"
+    isAuthenticated && user ? { userId: user.id, language: activeLanguage } : "skip"
   );
 
-  // Get weak areas
+  // Get weak areas for selected language
   const weakAreas = useQuery(
     api.learnerModel.getWeakAreas,
-    isAuthenticated && user ? { userId: user.id, language: "japanese", limit: 5 } : "skip"
+    isAuthenticated && user ? { userId: user.id, language: activeLanguage, limit: 5 } : "skip"
   );
 
-  // Get daily progress (last 30 days)
+  // Get daily progress (last 30 days) for selected language
   const dailyProgress = useQuery(
     api.learnerModel.getDailyProgress,
-    isAuthenticated && user ? { userId: user.id, language: "japanese", days: 30 } : "skip"
+    isAuthenticated && user ? { userId: user.id, language: activeLanguage, days: 30 } : "skip"
   );
 
   // Get all profiles for language comparison
@@ -112,13 +148,44 @@ export function ProgressPage() {
         colorScheme="cool"
         showStars={true}
         showOrbs={true}
-        orbCount={1}
+        orbCount={3}
+        starCount={15}
       />
       <div className="container mx-auto px-4 py-8 flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">{t("progress.title")}</h1>
+            <button
+              onClick={() => router.history.back()}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              {t("common.actions.back")}
+            </button>
+            <div className="flex items-baseline gap-3 mb-2">
+              <h1 className="text-3xl font-bold">{t("progress.title")}</h1>
+              {userLanguages.length > 1 ? (
+                <Select
+                  value={activeLanguage}
+                  onValueChange={(value) => setSelectedLanguage(value as ContentLanguage)}
+                >
+                  <SelectTrigger className="w-auto h-8 px-3 rounded-full bg-surface/80 border border-border backdrop-blur-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {userLanguages.map((lang) => (
+                      <SelectItem key={lang} value={lang}>
+                        {t(`common.languages.${lang}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : userLanguages.length === 1 ? (
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-surface/80 border border-border text-sm font-medium backdrop-blur-sm">
+                  {t(`common.languages.${activeLanguage}`)}
+                </span>
+              ) : null}
+            </div>
             <p className="text-foreground-muted">{t("progress.subtitle")}</p>
           </div>
 
@@ -198,8 +265,8 @@ export function ProgressPage() {
                     <Radar
                       name="Skills"
                       dataKey="value"
-                      stroke="hsl(var(--accent))"
-                      fill="hsl(var(--accent))"
+                      stroke={colors.stroke}
+                      fill={colors.fill}
                       fillOpacity={0.3}
                       strokeWidth={2}
                     />
@@ -212,14 +279,9 @@ export function ProgressPage() {
               )}
             </div>
 
-            {/* Weak Areas */}
+            {/* Focus Areas */}
             <div className="rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">{t("progress.focusAreas.title")}</h2>
-                <Link to="/flashcards" className="text-sm text-accent hover:underline">
-                  {t("progress.focusAreas.practice")}
-                </Link>
-              </div>
+              <h2 className="font-semibold mb-4">{t("progress.focusAreas.title")}</h2>
               {weakAreas && weakAreas.length > 0 ? (
                 <div className="space-y-3">
                   {weakAreas.map((area, idx) => (
@@ -227,25 +289,12 @@ export function ProgressPage() {
                       key={idx}
                       className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
                     >
-                      <div className="flex items-center gap-3">
-                        <AlertTriangle
-                          className={`w-4 h-4 ${
-                            area.score < 50 ? "text-red-500" : "text-yellow-500"
-                          }`}
-                        />
-                        <div>
-                          <p className="font-medium capitalize">{area.topic}</p>
-                          <p className="text-xs text-foreground-muted capitalize">{area.skill}</p>
-                        </div>
+                      <div>
+                        <p className="font-medium capitalize">{area.topic}</p>
+                        <p className="text-xs text-foreground-muted capitalize">{area.skill}</p>
                       </div>
                       <div className="text-right">
-                        <p
-                          className={`font-semibold ${
-                            area.score < 50 ? "text-red-500" : "text-yellow-500"
-                          }`}
-                        >
-                          {area.score}%
-                        </p>
+                        <p className="font-semibold text-foreground-muted">{area.score}%</p>
                         <p className="text-xs text-foreground-muted">
                           {t("progress.focusAreas.questions", { count: area.questionCount })}
                         </p>
@@ -356,24 +405,6 @@ export function ProgressPage() {
               </div>
             </div>
           )}
-
-          {/* Quick Actions */}
-          <div className="mt-8 flex flex-wrap gap-4 justify-center">
-            <Link
-              to="/exams"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90"
-            >
-              <Target className="w-4 h-4" />
-              {t("progress.actions.takePracticeExam")}
-            </Link>
-            <Link
-              to="/flashcards"
-              className="inline-flex items-center gap-2 px-6 py-3 border border-border rounded-lg hover:bg-muted/50"
-            >
-              <BookOpen className="w-4 h-4" />
-              {t("progress.actions.reviewFlashcards")}
-            </Link>
-          </div>
         </div>
       </div>
     </div>

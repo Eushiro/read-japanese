@@ -200,7 +200,8 @@ export function SettingsPage() {
         colorScheme="purple"
         showStars={true}
         showOrbs={true}
-        orbCount={3}
+        orbCount={2}
+        starCount={30}
       />
 
       {/* Hero Section */}

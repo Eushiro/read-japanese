@@ -207,6 +207,7 @@ export function PracticePage() {
         showStars={true}
         showOrbs={true}
         orbCount={1}
+        starCount={15}
       />
 
       {/* Hero Section */}

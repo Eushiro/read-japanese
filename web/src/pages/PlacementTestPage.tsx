@@ -535,6 +535,7 @@ export function PlacementTestPage() {
         showStars={true}
         showOrbs={true}
         orbCount={3}
+        starCount={15}
       />
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">

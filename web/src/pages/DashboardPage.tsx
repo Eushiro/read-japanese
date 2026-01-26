@@ -215,6 +215,7 @@ export function DashboardPage() {
         showStars={true}
         showOrbs={true}
         orbCount={3}
+        starCount={15}
       />
 
       {/* Hero Section */}

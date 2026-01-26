@@ -295,6 +295,13 @@ export function VocabularyPage() {
   // Track if initial load is in progress for "All Words"
   const isInitialLoadAllWords =
     !selectedDeckId && allWordsOffset === 0 && paginatedAllWords === undefined;
+  // Track if loading personal deck vocabulary
+  const isLoadingPersonalDeck = isPersonalDeckSelected && userVocabulary === undefined;
+  // Track if loading premade deck vocabulary
+  const isLoadingPremadeDeck =
+    selectedDeckId && !isPersonalDeckSelected && premadeDeckVocabulary === undefined;
+  // Combined loading state - show skeletons for All Words and premade decks, not personal deck
+  const isLoadingVocabulary = isInitialLoadAllWords || isLoadingPremadeDeck;
   // Total count for "All Words" view (from pagination data)
   const allWordsTotalCount = paginatedAllWords?.totalCount ?? accumulatedAllWords.length;
 
@@ -464,6 +471,7 @@ export function VocabularyPage() {
         showStars={true}
         showOrbs={true}
         orbCount={1}
+        starCount={15}
       />
 
       {/* Hero Section */}
@@ -682,8 +690,7 @@ export function VocabularyPage() {
 
             {/* Vocabulary List */}
             <div className="pb-12">
-              {(vocabulary === undefined && !accumulatedAllWords.length) ||
-              isInitialLoadAllWords ? (
+              {isLoadingVocabulary ? (
                 <div className="space-y-4">
                   {Array.from({ length: 10 }).map((_, i) => (
                     <div
@@ -696,7 +703,7 @@ export function VocabularyPage() {
                     </div>
                   ))}
                 </div>
-              ) : sortedVocabulary.length === 0 ? (
+              ) : sortedVocabulary.length === 0 && !isLoadingPersonalDeck ? (
                 <div className="flex flex-col items-center justify-center py-20 text-foreground-muted">
                   <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
                     <BookOpen className="w-8 h-8 opacity-40" />
@@ -1773,7 +1780,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="px-6 pb-6 pt-0 space-y-4">
           {/* Language */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
@@ -1786,7 +1793,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select language" />
               </SelectTrigger>
-              <SelectContent position="item-aligned">
+              <SelectContent position="item-aligned" className="z-[10000]">
                 {LANGUAGES.map((lang) => (
                   <SelectItem key={lang.value} value={lang.value}>
                     {t(`common.languages.${lang.value}`)}

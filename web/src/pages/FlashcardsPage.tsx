@@ -473,6 +473,7 @@ export function FlashcardsPage() {
         showStars={true}
         showOrbs={true}
         orbCount={1}
+        starCount={15}
       />
 
       {/* Header Section */}
