@@ -290,7 +290,7 @@ export function LibraryPage() {
       </div>
 
       {/* Content Sections */}
-      <div className="px-4 sm:px-6 lg:px-12 xl:px-16 pt-6 pb-12 space-y-10">
+      <div className="container mx-auto px-4 sm:px-6 pt-6 pb-12 space-y-10">
         {/* Stories Section */}
         {showStories && (
           <section>
@@ -302,13 +302,13 @@ export function LibraryPage() {
             </div>
 
             {isLoadingStories ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-                {Array.from({ length: 12 }).map((_, i) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+                {Array.from({ length: 10 }).map((_, i) => (
                   <StoryCardSkeleton key={i} delay={i * 50} />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                 {sortedStories.map((story, index) => (
                   <StoryCard
                     key={story.id}
@@ -336,13 +336,13 @@ export function LibraryPage() {
             </div>
 
             {isLoadingVideos ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-                {Array.from({ length: 12 }).map((_, i) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                {Array.from({ length: 8 }).map((_, i) => (
                   <VideoCardSkeleton key={i} delay={i * 50} />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
                 {filteredVideos.map((video, index) => (
                   <VideoCard
                     key={video._id}
@@ -407,7 +407,7 @@ function StoryCardSkeleton({ delay = 0 }: { delay?: number }) {
         animationDelay: `${delay}ms`,
       }}
     >
-      <div className="aspect-video bg-border" />
+      <div className="aspect-[3/3.2] bg-border" />
       <div className="p-4 space-y-2">
         <div className="h-4 bg-border rounded w-4/5" />
         <div className="h-3 bg-border rounded w-2/3" />
@@ -462,15 +462,15 @@ function LibrarySkeleton() {
       </div>
 
       {/* Content Skeleton */}
-      <div className="px-4 sm:px-6 lg:px-12 xl:px-16 pt-6 pb-12 space-y-10">
+      <div className="container mx-auto px-4 sm:px-6 pt-6 pb-12 space-y-10">
         {/* Stories Section */}
         <section>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-5 h-5 bg-border rounded animate-pulse" />
             <div className="h-5 bg-border rounded w-16 animate-pulse" />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-            {Array.from({ length: 12 }).map((_, i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+            {Array.from({ length: 10 }).map((_, i) => (
               <StoryCardSkeleton key={i} delay={i * 50} />
             ))}
           </div>

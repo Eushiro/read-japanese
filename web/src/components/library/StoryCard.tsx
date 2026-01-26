@@ -54,7 +54,7 @@ export function StoryCard({
       style={style}
     >
       {/* Cover Image */}
-      <div className="aspect-video relative bg-background-subtle overflow-hidden">
+      <div className="aspect-[3/3.2] relative bg-background-subtle overflow-hidden">
         {coverUrl ? (
           <>
             {/* Skeleton while image loads */}
