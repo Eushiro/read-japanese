@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 // Admin pages
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { OnboardingModal } from "@/components/OnboardingModal";
+import { PremiumBackground } from "@/components/ui/premium-background";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { isAdmin } from "@/lib/admin";
 import { trackPageView } from "@/lib/analytics";
@@ -112,9 +113,11 @@ function RootLayout() {
   const isStudySession = location.pathname === "/study-session";
 
   return (
-    <div className="min-h-screen bg-background paper-texture">
+    <div className="min-h-screen bg-background paper-texture relative">
+      {/* Premium animated background for authenticated users */}
+      {isAuthenticated && <PremiumBackground variant="subtle" />}
       {!isStudySession && <Navigation />}
-      <main className="animate-fade-in">
+      <main className="relative z-10 animate-fade-in">
         <Outlet />
       </main>
       {showOnboarding && (
@@ -134,6 +137,18 @@ function Navigation() {
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
   const userIsAdmin = isAdmin(user?.email);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Track scroll position for blur effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    // Check initial state
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Get subscription tier for premium badge
   const subscription = useQuery(
@@ -166,15 +181,19 @@ function Navigation() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-surface/95 backdrop-blur-md supports-[backdrop-filter]:bg-surface/80">
+    <nav
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled ? "backdrop-blur-xl bg-black/30" : "bg-transparent"
+      }`}
+    >
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo + Tier Badge */}
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent/80 dark:from-siri-purple dark:to-siri-cyan flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-105 dark:shadow-[0_0_20px_rgba(168,85,247,0.3)]">
                 <span
-                  className="text-white text-lg font-bold"
+                  className="text-white text-lg font-bold drop-shadow-sm"
                   style={{ fontFamily: "var(--font-japanese)" }}
                 >
                   読
@@ -182,7 +201,7 @@ function Navigation() {
               </div>
               <div className="hidden sm:block">
                 <span
-                  className="text-lg font-semibold text-foreground tracking-tight"
+                  className="text-lg font-semibold text-foreground tracking-tight dark:text-transparent dark:bg-gradient-to-r dark:from-white dark:to-white/80 dark:bg-clip-text"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   SanLang
@@ -193,10 +212,10 @@ function Navigation() {
             {tier && tier !== "free" && (
               <Link
                 to="/settings"
-                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold transition-all hover:scale-105 ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 backdrop-blur-sm ${
                   tier === "pro"
-                    ? "bg-gradient-to-r from-accent/20 to-accent/30 text-accent border border-accent/30"
-                    : "bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-400 border border-blue-500/30"
+                    ? "bg-gradient-to-r from-accent/15 to-accent/25 text-accent border border-accent/20 shadow-sm dark:from-siri-purple/20 dark:to-siri-purple/30 dark:text-siri-purple dark:border-siri-purple/30 dark:shadow-[0_0_10px_rgba(168,85,247,0.2)]"
+                    : "bg-gradient-to-r from-blue-500/15 to-blue-600/25 text-blue-500 border border-blue-500/20 shadow-sm dark:from-siri-cyan/20 dark:to-siri-cyan/30 dark:text-siri-cyan dark:border-siri-cyan/30 dark:shadow-[0_0_10px_rgba(6,182,212,0.2)]"
                 }`}
               >
                 {tier === "pro" ? <Crown className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
@@ -213,17 +232,14 @@ function Navigation() {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                     active
-                      ? "text-accent"
-                      : "text-foreground-muted hover:text-foreground hover:bg-muted/50"
+                      ? "text-accent bg-accent/10 dark:bg-orange-500/15 dark:border dark:border-orange-500/20 dark:shadow-[0_0_12px_rgba(255,132,0,0.15)] backdrop-blur-sm"
+                      : "text-foreground-muted hover:text-foreground hover:bg-muted/60 dark:hover:bg-white/5 dark:hover:backdrop-blur-sm"
                   }`}
                 >
                   <link.icon className={`w-4 h-4 ${active ? "text-accent" : ""}`} />
                   <span className="hidden sm:inline">{t(link.labelKey)}</span>
-                  {active && (
-                    <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-accent rounded-full" />
-                  )}
                 </Link>
               );
             })}
@@ -232,26 +248,23 @@ function Navigation() {
             {userIsAdmin && (
               <Link
                 to="/admin"
-                className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                   location.pathname.startsWith("/admin")
-                    ? "text-amber-500"
-                    : "text-foreground-muted hover:text-foreground hover:bg-muted/50"
+                    ? "text-amber-500 bg-amber-500/10 dark:shadow-[0_0_12px_rgba(245,158,11,0.15)]"
+                    : "text-foreground-muted hover:text-foreground hover:bg-muted/60 dark:hover:bg-white/5"
                 }`}
               >
                 <Shield
                   className={`w-4 h-4 ${location.pathname.startsWith("/admin") ? "text-amber-500" : ""}`}
                 />
                 <span className="hidden sm:inline">{t("common.nav.admin")}</span>
-                {location.pathname.startsWith("/admin") && (
-                  <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-amber-500 rounded-full" />
-                )}
               </Link>
             )}
 
-            {/* Sign In button when not authenticated */}
+            {/* Sign In button when not authenticated - Glass styled */}
             {!isAuthenticated && (
               <SignInButton mode="modal">
-                <button className="ml-2 px-4 py-2 rounded-lg text-sm font-medium bg-accent text-white hover:bg-accent/90 transition-colors">
+                <button className="ml-2 px-4 py-2 rounded-xl text-sm font-semibold backdrop-blur-xl bg-white/10 dark:bg-white/10 border border-white/20 dark:border-white/20 text-foreground dark:text-white hover:bg-white/15 dark:hover:bg-white/15 hover:border-white/30 dark:hover:border-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_0_20px_rgba(255,132,0,0.15)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
                   {t("common.nav.signIn")}
                 </button>
               </SignInButton>

@@ -1,5 +1,6 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
+import { motion } from "framer-motion";
 import { ArrowLeft, Brain, ChevronRight, Loader2, RotateCcw, Target, Trophy } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -33,6 +34,48 @@ interface PlacementQuestion {
   difficulty: number;
   userAnswer?: string;
   isCorrect?: boolean;
+}
+
+// Animated background for test taking
+function TestAnimatedBackground() {
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      {/* Subtle animated orbs */}
+      <motion.div
+        className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-15"
+        style={{
+          background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
+          top: "5%",
+          left: "20%",
+        }}
+        animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[350px] h-[350px] rounded-full blur-[90px] opacity-[0.12]"
+        style={{
+          background: "radial-gradient(circle, #df91f7 0%, transparent 70%)",
+          bottom: "15%",
+          right: "15%",
+        }}
+        animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
+        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+      />
+      {/* Floating stars */}
+      {[...Array(8)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 bg-white rounded-full"
+          style={{
+            left: `${(i * 17 + 5) % 100}%`,
+            top: `${(i * 23 + 10) % 100}%`,
+          }}
+          animate={{ y: [0, -15, 0], opacity: [0.1, 0.3, 0.1] }}
+          transition={{ duration: 3 + (i % 4), repeat: Infinity, delay: i * 0.5 }}
+        />
+      ))}
+    </div>
+  );
 }
 
 export function PlacementTestPage() {
@@ -603,6 +646,9 @@ export function PlacementTestPage() {
   // Question view
   return (
     <div className="min-h-screen bg-background">
+      {/* Animated background */}
+      <TestAnimatedBackground />
+
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -644,10 +690,12 @@ export function PlacementTestPage() {
                     : t("placement.question.assessing")}
               </span>
             </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-accent transition-all duration-500"
-                style={{ width: `${maxConfidence}%` }}
+            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full shadow-[0_0_10px_rgba(255,132,0,0.5)]"
+                initial={{ width: 0 }}
+                animate={{ width: `${maxConfidence}%` }}
+                transition={{ duration: 0.5 }}
               />
             </div>
             <div className="flex justify-between text-xs text-foreground-muted mt-1">
@@ -666,29 +714,34 @@ export function PlacementTestPage() {
 
         {/* Question Card */}
         {isGeneratingQuestion ? (
-          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm relative overflow-hidden">
-            {/* Skeleton structure matching multiple choice layout */}
-            <div>
-              {/* Skeleton for type badge */}
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-6 w-28 rounded-full bg-border animate-pulse" />
-              </div>
-              {/* Skeleton for question text */}
-              <div className="mb-6 space-y-2">
-                <div className="h-5 w-full rounded-md bg-border animate-pulse" />
-                <div className="h-5 w-4/5 rounded-md bg-border animate-pulse" />
-              </div>
-              {/* Skeleton for 4 options */}
-              <div className="space-y-3">
-                <div className="h-14 w-full rounded-xl bg-border animate-pulse" />
-                <div className="h-14 w-full rounded-xl bg-border animate-pulse" />
-                <div className="h-14 w-full rounded-xl bg-border animate-pulse" />
-                <div className="h-14 w-full rounded-xl bg-border animate-pulse" />
-              </div>
-            </div>
+          <div className="relative rounded-2xl overflow-hidden">
+            {/* Glass background */}
+            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
-            {/* Centered overlay with wave background and shimmering text */}
-            <div className="absolute inset-0 flex items-center justify-center bg-surface/80 dark:bg-background/90">
+            <div className="relative p-6 sm:p-8">
+              {/* Skeleton structure matching multiple choice layout */}
+              <div>
+                {/* Skeleton for type badge */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-6 w-28 rounded-full bg-white/10 animate-pulse" />
+                </div>
+                {/* Skeleton for question text */}
+                <div className="mb-6 space-y-2">
+                  <div className="h-5 w-full rounded-md bg-white/10 animate-pulse" />
+                  <div className="h-5 w-4/5 rounded-md bg-white/10 animate-pulse" />
+                </div>
+                {/* Skeleton for 4 options */}
+                <div className="space-y-3">
+                  <div className="h-14 w-full rounded-xl bg-white/10 animate-pulse" />
+                  <div className="h-14 w-full rounded-xl bg-white/10 animate-pulse" />
+                  <div className="h-14 w-full rounded-xl bg-white/10 animate-pulse" />
+                  <div className="h-14 w-full rounded-xl bg-white/10 animate-pulse" />
+                </div>
+              </div>
+
+              {/* Centered overlay with wave background and shimmering text */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/70 rounded-2xl">
               {/* Wave background for dark mode */}
               <div className="absolute inset-0 opacity-0 dark:opacity-100 overflow-hidden">
                 <WaveBackground size="card" className="absolute inset-0" intensity={2} />
@@ -707,6 +760,7 @@ export function PlacementTestPage() {
               >
                 {loadingPhrase}
               </p>
+              </div>
             </div>
           </div>
         ) : viewingQuestion ? (
@@ -756,12 +810,18 @@ export function PlacementTestPage() {
             />
           </>
         ) : (
-          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
-            <div className="flex flex-col items-center justify-center py-8 gap-3">
-              <Loader2 className="w-6 h-6 animate-spin text-accent" />
-              <span className="text-foreground-muted">
-                {t("placement.question.loadingQuestion")}
-              </span>
+          <div className="relative rounded-2xl overflow-hidden">
+            {/* Glass background */}
+            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+            <div className="relative p-6 sm:p-8">
+              <div className="flex flex-col items-center justify-center py-8 gap-3">
+                <Loader2 className="w-6 h-6 animate-spin text-accent" />
+                <span className="text-white/60">
+                  {t("placement.question.loadingQuestion")}
+                </span>
+              </div>
             </div>
           </div>
         )}

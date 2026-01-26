@@ -72,6 +72,13 @@ See **`docs/DEVELOPMENT.md`** for detailed patterns on:
 - Batch API usage for bulk generation
 - JSON schemas for AI structured output
 
+See **`docs/DESIGN.md`** for visual design patterns:
+- Glass morphism implementation
+- Animated backgrounds usage
+- Color palette and typography
+- Button and card styling
+- When to use which visual treatments
+
 ---
 
 ## Tech Stack
@@ -238,6 +245,7 @@ CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-domain.clerk.accounts.dev
 | `docs/ARCHITECTURE.md` | System architecture and data models |
 | `docs/TASKS.md` | Step-by-step admin and content tasks |
 | `docs/HOOKS.md` | Pre-commit hooks and validation |
+| `docs/DESIGN.md` | Visual design system, glass morphism, colors |
 | `shared/contentLanguages.json` | Supported languages (shared between frontend/backend) |
 | `web/convex/schema.ts` | All Convex table definitions |
 | `web/convex/learnerModel.ts` | Unified skill tracking |

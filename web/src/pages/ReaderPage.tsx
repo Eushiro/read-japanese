@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
+import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -38,6 +39,34 @@ const levelVariantMap: Record<ProficiencyLevel, BadgeVariant> = {
   C1: "c1",
   C2: "c2",
 };
+
+// Animated background orbs - subtle for reading focus
+function ReaderAnimatedBackground() {
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      <motion.div
+        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-10"
+        style={{
+          background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
+          top: "-10%",
+          right: "10%",
+        }}
+        animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[400px] h-[400px] rounded-full blur-[120px] opacity-[0.08]"
+        style={{
+          background: "radial-gradient(circle, #df91f7 0%, transparent 70%)",
+          bottom: "10%",
+          left: "5%",
+        }}
+        animate={{ x: [0, -20, 0], y: [0, 30, 0] }}
+        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
 
 export function ReaderPage() {
   const { storyId, language } = useParams({ from: "/read/$language/$storyId" });
@@ -467,8 +496,11 @@ export function ReaderPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sticky Header */}
-      <header className="sticky top-16 z-40 border-b border-border bg-surface/95 backdrop-blur-md">
+      {/* Animated background orbs */}
+      <ReaderAnimatedBackground />
+
+      {/* Sticky Header - Glass */}
+      <header className="sticky top-16 z-40 border-b border-white/5 bg-black/50 backdrop-blur-xl">
         <div className="container mx-auto px-4 sm:px-6 py-3 max-w-3xl">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
@@ -552,38 +584,45 @@ export function ReaderPage() {
         </div>
       </header>
 
-      {/* Main Content - Book-like reading area */}
+      {/* Main Content - Book-like reading area with glass morphism */}
       <main className="container mx-auto px-4 sm:px-6 py-8 max-w-3xl">
-        <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
-          {currentChapter ? (
-            <ChapterView
-              chapter={currentChapter}
-              chapterIndex={currentChapterIndex}
-              totalChapters={chapters.length}
-              showFurigana={showFurigana}
-              onTokenClick={handleTokenClick}
-              currentAudioTime={story.metadata.audioURL ? audioTime : undefined}
-              selectedToken={selectedToken}
-              headerAction={
-                currentChapterIndex === chapters.length - 1 && chapters.length > 0 ? (
-                  <Button onClick={handleTakeQuiz} className="gap-2" size="sm">
-                    <BookOpen className="w-4 h-4" />
-                    {t("reader.quiz.takeQuiz")}
-                  </Button>
-                ) : undefined
-              }
-            />
-          ) : (
-            <div className="text-center text-foreground-muted py-12">
-              {t("reader.empty.noChapters")}
-            </div>
-          )}
+        <div className="relative rounded-2xl overflow-hidden">
+          {/* Glass background */}
+          <div className="absolute inset-0 backdrop-blur-md bg-white/[0.02] border border-white/10 rounded-2xl" />
+          <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+          {/* Content */}
+          <div className="relative p-6 sm:p-8">
+            {currentChapter ? (
+              <ChapterView
+                chapter={currentChapter}
+                chapterIndex={currentChapterIndex}
+                totalChapters={chapters.length}
+                showFurigana={showFurigana}
+                onTokenClick={handleTokenClick}
+                currentAudioTime={story.metadata.audioURL ? audioTime : undefined}
+                selectedToken={selectedToken}
+                headerAction={
+                  currentChapterIndex === chapters.length - 1 && chapters.length > 0 ? (
+                    <Button onClick={handleTakeQuiz} className="gap-2" size="sm">
+                      <BookOpen className="w-4 h-4" />
+                      {t("reader.quiz.takeQuiz")}
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : (
+              <div className="text-center text-foreground-muted py-12">
+                {t("reader.empty.noChapters")}
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
-      {/* Chapter Navigation */}
+      {/* Chapter Navigation - Glass */}
       {chapters.length > 1 && (
-        <nav className="sticky bottom-0 border-t border-border bg-surface/95 backdrop-blur-md">
+        <nav className="sticky bottom-0 z-40 border-t border-white/5 bg-black/50 backdrop-blur-xl">
           <div className="container mx-auto px-4 sm:px-6 py-4 max-w-3xl">
             <div className="flex items-center justify-between">
               <Button
@@ -606,8 +645,8 @@ export function ReaderPage() {
                     }}
                     className={`w-2 h-2 rounded-full transition-all ${
                       index === currentChapterIndex
-                        ? "bg-accent w-6"
-                        : "bg-border hover:bg-foreground-muted"
+                        ? "bg-accent w-6 shadow-[0_0_10px_rgba(255,132,0,0.5)]"
+                        : "bg-white/20 hover:bg-white/30"
                     }`}
                     aria-label={t("reader.navigation.goToChapter", { number: index + 1 })}
                   />

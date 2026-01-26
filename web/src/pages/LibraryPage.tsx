@@ -133,22 +133,22 @@ export function LibraryPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <div className="border-b border-border relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-background to-purple-500/5 dark:from-orange-900/15 dark:via-background dark:to-purple-900/10" />
+      {/* Hero Section - extends to cover filters for seamless blend */}
+      <div className="relative overflow-hidden pb-4">
+        <div className="absolute inset-0 bg-gradient-to-b from-orange-900/20 via-purple-900/10 to-transparent dark:from-orange-900/20 dark:via-purple-900/10 dark:to-transparent" />
         {/* Warm wave background for dark mode */}
         <div className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity">
           <WaveBackground size="hero" variant="warm" className="absolute inset-0" intensity={1} />
         </div>
-        <div className="absolute top-0 right-1/4 w-72 h-72 bg-blue-500/10 dark:bg-orange-500/15 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-purple-500/10 dark:bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-1/4 w-72 h-72 bg-orange-500/15 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
         <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 relative">
           <div className="max-w-2xl animate-fade-in-up">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20">
-                <Library className="w-5 h-5 text-blue-400" />
+              <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-purple-500/20 dark:from-orange-500/25 dark:to-purple-500/20">
+                <Library className="w-5 h-5 text-orange-400" />
               </div>
-              <span className="text-sm font-semibold text-blue-400 uppercase tracking-wider">
+              <span className="text-sm font-semibold text-orange-400 uppercase tracking-wider">
                 {t("library.hero.badge")}
               </span>
             </div>
@@ -164,15 +164,21 @@ export function LibraryPage() {
             <div className="mt-6">
               {isAuthenticated ? (
                 <Button
-                  className="gap-2 shadow-lg shadow-accent/25"
+                  variant="glass-accent"
+                  className="gap-2 shadow-[0_0_30px_rgba(249,115,22,0.2)]"
                   onClick={() => setShowGenerateModal(true)}
                 >
+                  {/* Shimmer effect */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   <Sparkles className="w-4 h-4" />
                   {t("library.hero.generateStory")}
                 </Button>
               ) : (
                 <SignInButton mode="modal">
-                  <Button className="gap-2 shadow-lg shadow-accent/25">
+                  <Button
+                    variant="glass-accent"
+                    className="gap-2 shadow-[0_0_30px_rgba(249,115,22,0.2)]"
+                  >
                     <Sparkles className="w-4 h-4" />
                     {t("library.hero.generateStory")}
                   </Button>
@@ -183,12 +189,11 @@ export function LibraryPage() {
         </div>
       </div>
 
-      {/* Filters Section */}
-      <div className="sticky top-16 z-40 border-b border-border bg-background/95 backdrop-blur-md">
-        <div className="container mx-auto px-4 sm:px-6 py-3">
+      {/* Filters Section - No divider, blends with hero */}
+      <div className="container mx-auto px-4 sm:px-6 py-3">
           <div className="flex gap-3">
-            {/* Search */}
-            <div className="flex-1">
+            {/* Search - capped at max-w-md */}
+            <div className="flex-1 max-w-md">
               <SearchBar
                 value={searchTerm}
                 onChange={setSearchTerm}
@@ -243,7 +248,6 @@ export function LibraryPage() {
             {/* Sort */}
             <SortDropdown value={sortBy} onChange={setSortBy} />
           </div>
-        </div>
       </div>
 
       {/* Content Sections */}
@@ -259,13 +263,13 @@ export function LibraryPage() {
             </div>
 
             {isLoadingStories ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                 {Array.from({ length: 12 }).map((_, i) => (
                   <StoryCardSkeleton key={i} delay={i * 50} />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                 {sortedStories.map((story, index) => (
                   <StoryCard
                     key={story.id}
@@ -293,13 +297,13 @@ export function LibraryPage() {
             </div>
 
             {isLoadingVideos ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <VideoCardSkeleton key={i} delay={i * 50} />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
                 {filteredVideos.map((video, index) => (
                   <VideoCard
                     key={video._id}
@@ -426,7 +430,7 @@ function LibrarySkeleton() {
             <div className="w-5 h-5 bg-border rounded animate-pulse" />
             <div className="h-5 bg-border rounded w-16 animate-pulse" />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
             {Array.from({ length: 12 }).map((_, i) => (
               <StoryCardSkeleton key={i} delay={i * 50} />
             ))}

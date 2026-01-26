@@ -96,7 +96,13 @@ export function QuestionDisplay({
   const showCorrectness = showFeedback && isAnswered;
 
   return (
-    <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
+    <div className="relative rounded-2xl overflow-hidden">
+      {/* Glass background */}
+      <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+      <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+      {/* Content */}
+      <div className="relative p-6 sm:p-8">
       {/* Metadata badges */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <span className={`text-xs px-2 py-1 rounded-full ${getTypeColor(type)}`}>
@@ -146,16 +152,17 @@ export function QuestionDisplay({
         />
       )}
 
-      {/* Feedback section */}
-      {isAnswered && showFeedback && (
-        <FeedbackDisplay
-          correctAnswer={!isMultipleChoice ? correctAnswer : undefined}
-          aiFeedback={aiFeedback}
-          aiScore={aiScore}
-          type={type}
-          t={t}
-        />
-      )}
+        {/* Feedback section */}
+        {isAnswered && showFeedback && (
+          <FeedbackDisplay
+            correctAnswer={!isMultipleChoice ? correctAnswer : undefined}
+            aiFeedback={aiFeedback}
+            aiScore={aiScore}
+            type={type}
+            t={t}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -186,21 +193,28 @@ function MultipleChoiceOptions({
         const isSelected = selectedAnswer === option;
         const isCorrectOption = option === correctAnswer;
 
-        // Determine styling based on state
-        let borderClass = "border-border hover:border-foreground-muted/50";
-        let bgClass = "";
-
+        // Determine ring styling based on state
+        let ringClass = "";
         if (showCorrectness) {
           if (isCorrectOption) {
-            borderClass = "border-green-500";
-            bgClass = "bg-green-500/10";
+            ringClass = "ring-2 ring-green-500";
           } else if (isSelected && !isCorrectOption) {
-            borderClass = "border-red-500";
-            bgClass = "bg-red-500/10";
+            ringClass = "ring-2 ring-red-500";
           }
         } else if (isSelected) {
-          borderClass = "border-accent";
-          bgClass = "bg-accent/5";
+          ringClass = "ring-2 ring-accent";
+        }
+
+        // Determine glass background state
+        let glassBgClass = "bg-white/[0.03] border-white/10";
+        let glassHoverClass = "group-hover:bg-white/[0.06] group-hover:border-white/15";
+
+        if (showCorrectness && isCorrectOption) {
+          glassBgClass = "bg-green-500/10 border-green-500/30";
+          glassHoverClass = "";
+        } else if (showCorrectness && isSelected && !isCorrectOption) {
+          glassBgClass = "bg-red-500/10 border-red-500/30";
+          glassHoverClass = "";
         }
 
         return (
@@ -208,23 +222,29 @@ function MultipleChoiceOptions({
             key={index}
             onClick={() => !isDisabled && onSelect(option)}
             disabled={isDisabled}
-            className={`w-full text-left p-4 rounded-xl border transition-all ${borderClass} ${bgClass} ${
+            className={`group relative w-full p-4 rounded-xl text-left transition-all overflow-hidden ${ringClass} ${
               isDisabled ? "cursor-not-allowed opacity-60" : ""
             }`}
             style={{ fontFamily }}
           >
-            <div className="flex items-center justify-between gap-3">
+            {/* Glass background */}
+            <div
+              className={`absolute inset-0 backdrop-blur-sm border transition-colors rounded-xl ${glassBgClass} ${glassHoverClass}`}
+            />
+
+            {/* Content */}
+            <div className="relative flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 {!showCorrectness && (
                   <div
                     className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      isSelected ? "border-accent" : "border-border"
+                      isSelected ? "border-accent" : "border-white/30"
                     }`}
                   >
                     {isSelected && <div className="w-3 h-3 rounded-full bg-accent" />}
                   </div>
                 )}
-                <span className="text-foreground">{option}</span>
+                <span className="text-white">{option}</span>
               </div>
               {showCorrectness && isCorrectOption && (
                 <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />

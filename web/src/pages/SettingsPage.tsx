@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAction, useMutation, useQuery } from "convex/react";
+import { motion } from "framer-motion";
 import {
   Activity,
   BookOpen,
@@ -39,7 +40,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { WaveBackground } from "@/components/ui/wave-background";
 import { UILanguageSwitcher } from "@/components/UILanguageSwitcher";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth, UserButton } from "@/contexts/AuthContext";
@@ -51,6 +51,44 @@ import { formatPrice, getTier, type PaidTierId, type TierId } from "@/lib/tiers"
 
 import { api } from "../../convex/_generated/api";
 import type { ExamType } from "../../convex/schema";
+
+// Animated background for settings page
+function SettingsAnimatedBackground() {
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      <motion.div
+        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-15"
+        style={{
+          background: "radial-gradient(circle, #a855f7 0%, transparent 70%)",
+          top: "-5%",
+          left: "20%",
+        }}
+        animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[400px] h-[400px] rounded-full blur-[120px] opacity-[0.12]"
+        style={{
+          background: "radial-gradient(circle, #06b6d4 0%, transparent 70%)",
+          bottom: "10%",
+          right: "10%",
+        }}
+        animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
+        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[300px] h-[300px] rounded-full blur-[100px] opacity-10"
+        style={{
+          background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
+          top: "40%",
+          right: "30%",
+        }}
+        animate={{ x: [0, 20, 0], y: [0, -20, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -217,29 +255,32 @@ export function SettingsPage() {
 
   return (
     <div className="min-h-screen">
+      {/* Animated background */}
+      <SettingsAnimatedBackground />
+
       {/* Hero Section */}
-      <div className="border-b border-border relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-background to-accent/5 dark:from-purple-900/20 dark:via-background dark:to-cyan-900/10" />
-        {/* Siri-inspired wave background for dark mode */}
-        <div className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity">
-          <WaveBackground size="hero" className="absolute inset-0" intensity={1} />
-        </div>
-        <div className="absolute top-0 left-1/4 w-72 h-72 bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-accent/10 dark:bg-cyan-500/15 rounded-full blur-3xl" />
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-4xl relative">
-          <div className="animate-fade-in-up">
+      <div className="relative overflow-hidden pt-8 pb-12">
+        <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
+          >
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-accent/20">
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: -5 }}
+                className="p-2 rounded-xl bg-purple-500/20"
+              >
                 <User className="w-5 h-5 text-purple-400" />
-              </div>
+              </motion.div>
               <h1
-                className="text-3xl sm:text-4xl font-bold text-foreground"
+                className="text-3xl sm:text-4xl font-bold text-white"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 {t("settings.title")}
               </h1>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -247,18 +288,23 @@ export function SettingsPage() {
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
         <div className="space-y-6">
           {/* Theme */}
-          <section className="bg-gradient-to-br from-amber-500/5 to-surface rounded-2xl border border-amber-500/20 p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-1.5 rounded-lg bg-amber-500/15">
-                <Sun className="w-4 h-4 text-amber-400" />
+          <section className="relative rounded-2xl overflow-hidden">
+            {/* Glass background */}
+            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+            <div className="relative p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 rounded-lg bg-amber-500/20">
+                  <Sun className="w-4 h-4 text-amber-400" />
+                </div>
+                <h2
+                  className="text-lg font-semibold text-white"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("settings.appearance.title")}
+                </h2>
               </div>
-              <h2
-                className="text-lg font-semibold text-foreground"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {t("settings.appearance.title")}
-              </h2>
-            </div>
             {settingsLoading ? (
               <div className="flex gap-2 animate-pulse">
                 <div className="flex-1 h-10 bg-muted rounded-lg" />
@@ -293,44 +339,54 @@ export function SettingsPage() {
                 </Button>
               </div>
             )}
+            </div>
           </section>
 
           {/* Display Language */}
-          <section className="bg-gradient-to-br from-violet-500/5 to-surface rounded-2xl border border-violet-500/20 p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-1.5 rounded-lg bg-violet-500/15">
-                <Languages className="w-4 h-4 text-violet-400" />
+          <section className="relative rounded-2xl overflow-hidden">
+            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+            <div className="relative p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 rounded-lg bg-violet-500/20">
+                  <Languages className="w-4 h-4 text-violet-400" />
+                </div>
+                <h2
+                  className="text-lg font-semibold text-white"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("settings.uiLanguage.title")}
+                </h2>
               </div>
-              <h2
-                className="text-lg font-semibold text-foreground"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {t("settings.uiLanguage.title")}
-              </h2>
+              <p className="text-sm text-white/60 mb-4">
+                {t("settings.uiLanguage.description")}
+              </p>
+              <UILanguageSwitcher showLabel={false} />
             </div>
-            <p className="text-sm text-foreground-muted mb-4">
-              {t("settings.uiLanguage.description")}
-            </p>
-            <UILanguageSwitcher showLabel={false} />
           </section>
 
           {/* Learning Tools */}
           {isAuthenticated && (
-            <section className="bg-gradient-to-br from-accent/5 to-surface rounded-2xl border border-accent/20 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-lg bg-accent/15">
-                  <Compass className="w-4 h-4 text-accent" />
+            <section className="relative rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+              <div className="relative p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-1.5 rounded-lg bg-orange-500/20">
+                    <Compass className="w-4 h-4 text-orange-400" />
+                  </div>
+                  <h2
+                    className="text-lg font-semibold text-white"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {t("settings.learningTools.title")}
+                  </h2>
                 </div>
-                <h2
-                  className="text-lg font-semibold text-foreground"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {t("settings.learningTools.title")}
-                </h2>
-              </div>
-              <p className="text-sm text-foreground-muted mb-4">
-                {t("settings.learningTools.description")}
-              </p>
+                <p className="text-sm text-white/60 mb-4">
+                  {t("settings.learningTools.description")}
+                </p>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <Link
                   to="/learn"
@@ -398,22 +454,27 @@ export function SettingsPage() {
                   </div>
                 </Link>
               </div>
+              </div>
             </section>
           )}
 
           {/* Reading */}
-          <section className="bg-gradient-to-br from-emerald-500/5 to-surface rounded-2xl border border-emerald-500/20 p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-1.5 rounded-lg bg-emerald-500/15">
-                <BookOpen className="w-4 h-4 text-emerald-400" />
+          <section className="relative rounded-2xl overflow-hidden">
+            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+            <div className="relative p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 rounded-lg bg-emerald-500/20">
+                  <BookOpen className="w-4 h-4 text-emerald-400" />
+                </div>
+                <h2
+                  className="text-lg font-semibold text-white"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("settings.reading.title")}
+                </h2>
               </div>
-              <h2
-                className="text-lg font-semibold text-foreground"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {t("settings.reading.title")}
-              </h2>
-            </div>
 
             {settingsLoading ? (
               // Loading state to avoid flickering defaults
@@ -504,22 +565,27 @@ export function SettingsPage() {
                 </div>
               </div>
             )}
+            </div>
           </section>
 
           {/* Languages & Exams */}
           {isAuthenticated && user && (
-            <section className="bg-gradient-to-br from-blue-500/5 to-surface rounded-2xl border border-blue-500/20 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-lg bg-blue-500/15">
-                  <Globe className="w-4 h-4 text-blue-400" />
+            <section className="relative rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+              <div className="relative p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-1.5 rounded-lg bg-blue-500/20">
+                    <Globe className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <h2
+                    className="text-lg font-semibold text-white"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {t("settings.languages.title")}
+                  </h2>
                 </div>
-                <h2
-                  className="text-lg font-semibold text-foreground"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {t("settings.languages.title")}
-                </h2>
-              </div>
 
               {userProfile === undefined ? (
                 // Loading state
@@ -619,27 +685,32 @@ export function SettingsPage() {
                   )}
                 </>
               )}
+              </div>
             </section>
           )}
 
           {/* Placement Test */}
           {isAuthenticated && user && userProfile && (
-            <section className="bg-gradient-to-br from-purple-500/5 to-surface rounded-2xl border border-purple-500/20 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-lg bg-purple-500/15">
-                  <Brain className="w-4 h-4 text-purple-400" />
-                </div>
-                <h2
-                  className="text-lg font-semibold text-foreground"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {t("settings.proficiency.title")}
-                </h2>
-              </div>
+            <section className="relative rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
-              <p className="text-sm text-foreground-muted mb-4">
-                {t("settings.proficiency.description")}
-              </p>
+              <div className="relative p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-1.5 rounded-lg bg-purple-500/20">
+                    <Brain className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <h2
+                    className="text-lg font-semibold text-white"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {t("settings.proficiency.title")}
+                  </h2>
+                </div>
+
+                <p className="text-sm text-white/60 mb-4">
+                  {t("settings.proficiency.description")}
+                </p>
 
               <div className="space-y-3">
                 {userProfile.languages?.map((lang) => {
@@ -692,22 +763,27 @@ export function SettingsPage() {
                   );
                 })}
               </div>
+              </div>
             </section>
           )}
 
           {/* Account */}
-          <section className="bg-gradient-to-br from-rose-500/5 to-surface rounded-2xl border border-rose-500/20 p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-1.5 rounded-lg bg-rose-500/15">
-                <User className="w-4 h-4 text-rose-400" />
+          <section className="relative rounded-2xl overflow-hidden">
+            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+            <div className="relative p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 rounded-lg bg-rose-500/20">
+                  <User className="w-4 h-4 text-rose-400" />
+                </div>
+                <h2
+                  className="text-lg font-semibold text-white"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("settings.account.title")}
+                </h2>
               </div>
-              <h2
-                className="text-lg font-semibold text-foreground"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {t("settings.account.title")}
-              </h2>
-            </div>
             {authLoading ? (
               <div className="space-y-4 animate-pulse">
                 <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
@@ -760,22 +836,27 @@ export function SettingsPage() {
                 </SignInButton>
               </div>
             )}
+            </div>
           </section>
 
           {/* Subscription */}
           {isAuthenticated && user && (
-            <section className="bg-gradient-to-br from-cyan-500/5 to-surface rounded-2xl border border-cyan-500/20 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-lg bg-cyan-500/15">
-                  <CreditCard className="w-4 h-4 text-cyan-400" />
+            <section className="relative rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+              <div className="relative p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-1.5 rounded-lg bg-cyan-500/20">
+                    <CreditCard className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <h2
+                    className="text-lg font-semibold text-white"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {t("settings.subscription.title")}
+                  </h2>
                 </div>
-                <h2
-                  className="text-lg font-semibold text-foreground"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {t("settings.subscription.title")}
-                </h2>
-              </div>
 
               {/* Current Plan */}
               <div className="p-4 rounded-xl bg-muted/50 mb-6">
@@ -959,36 +1040,41 @@ export function SettingsPage() {
                   </div>
                 </div>
               )}
+              </div>
             </section>
           )}
 
           {/* Credit Usage (New Unified System) */}
           {isAuthenticated && user && (
-            <section className="bg-gradient-to-br from-indigo-500/5 to-surface rounded-2xl border border-indigo-500/20 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-indigo-500/15">
-                    <Activity className="w-4 h-4 text-indigo-400" />
-                  </div>
-                  <h2
-                    className="text-lg font-semibold text-foreground"
-                    style={{ fontFamily: "var(--font-display)" }}
-                  >
-                    {t("settings.credits.title")}
-                  </h2>
-                </div>
-                <Link
-                  to="/settings/usage"
-                  className="text-sm text-accent hover:underline flex items-center gap-1"
-                >
-                  {t("settings.credits.viewHistory")}
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
-              </div>
+            <section className="relative rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
 
-              <p className="text-sm text-foreground-muted mb-4">
-                {t("settings.credits.description")}
-              </p>
+              <div className="relative p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-indigo-500/20">
+                      <Activity className="w-4 h-4 text-indigo-400" />
+                    </div>
+                    <h2
+                      className="text-lg font-semibold text-white"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {t("settings.credits.title")}
+                    </h2>
+                  </div>
+                  <Link
+                    to="/settings/usage"
+                    className="text-sm text-accent hover:underline flex items-center gap-1"
+                  >
+                    {t("settings.credits.viewHistory")}
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
+
+                <p className="text-sm text-white/60 mb-4">
+                  {t("settings.credits.description")}
+                </p>
 
               {/* Progress bar */}
               <div className="p-4 rounded-xl bg-muted/50">
@@ -1054,21 +1140,26 @@ export function SettingsPage() {
                   </div>
                 </div>
               )}
+              </div>
             </section>
           )}
 
           {/* Admin Settings - for specific users */}
           {user?.email === "hiro.ayettey@gmail.com" && (
-            <section className="bg-surface rounded-2xl border border-amber-500/30 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <Crown className="w-4 h-4 text-amber-500" />
-                <h2
-                  className="text-lg font-semibold text-foreground"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  Admin
-                </h2>
-              </div>
+            <section className="relative rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-amber-500/30 rounded-2xl" />
+              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+              <div className="relative p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                  <h2
+                    className="text-lg font-semibold text-white"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    Admin
+                  </h2>
+                </div>
 
               <div className="space-y-5">
                 {/* Admin Mode Toggle */}
@@ -1217,25 +1308,31 @@ export function SettingsPage() {
                   </div>
                 </div>
               </div>
+              </div>
             </section>
           )}
 
           {/* About */}
-          <section className="bg-gradient-to-br from-slate-500/5 to-surface rounded-2xl border border-slate-500/20 p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-1.5 rounded-lg bg-slate-500/15">
-                <Sparkles className="w-4 h-4 text-slate-400" />
+          <section className="relative rounded-2xl overflow-hidden">
+            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
+            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+
+            <div className="relative p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 rounded-lg bg-slate-500/20">
+                  <Sparkles className="w-4 h-4 text-slate-400" />
+                </div>
+                <h2
+                  className="text-lg font-semibold text-white"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("settings.about.title")}
+                </h2>
               </div>
-              <h2
-                className="text-lg font-semibold text-foreground"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {t("settings.about.title")}
-              </h2>
-            </div>
-            <div className="text-sm text-foreground-muted space-y-1">
-              <p className="font-medium text-foreground">{t("settings.about.version")}</p>
-              <p>{t("settings.about.description")}</p>
+              <div className="text-sm text-white/60 space-y-1">
+                <p className="font-medium text-white">{t("settings.about.version")}</p>
+                <p>{t("settings.about.description")}</p>
+              </div>
             </div>
           </section>
         </div>
