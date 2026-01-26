@@ -126,14 +126,7 @@ export function LibraryPage() {
   return (
     <div className="min-h-screen">
       {/* Animated background */}
-      <PremiumBackground
-        variant="subtle"
-        colorScheme="cyan"
-        showStars={true}
-        showOrbs={true}
-        orbCount={3}
-        starCount={15}
-      />
+      <PremiumBackground colorScheme="cool" starCount={6} />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-8 pb-12">

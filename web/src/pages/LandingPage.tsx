@@ -22,6 +22,7 @@ import { useEffect, useState } from "react";
 
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { PremiumBackground } from "@/components/ui/premium-background";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
@@ -31,7 +32,10 @@ export function LandingPage() {
   const t = useT();
 
   return (
-    <div className="min-h-screen overflow-hidden">
+    <div className="min-h-screen bg-background">
+      {/* Full-page animated background */}
+      <PremiumBackground starCount={15} animateStars />
+
       {/* Hero Section */}
       <HeroSection isAuthenticated={isAuthenticated} t={t} />
 
@@ -83,78 +87,7 @@ function HeroSection({
   }, [examNames.length]);
 
   return (
-    <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
-      {/* Floating stars background */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            style={{
-              left: `${(i * 17 + 5) % 100}%`,
-              top: `${(i * 23 + 10) % 100}%`,
-              opacity: 0.1 + (i % 4) * 0.1,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.1, 0.4, 0.1],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: 3 + (i % 5),
-              repeat: Infinity,
-              delay: (i % 8) * 0.6,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Animated gradient orbs */}
-      <div className="absolute inset-0">
-        <motion.div
-          className="absolute w-[600px] h-[600px] rounded-full blur-[120px] opacity-30"
-          style={{
-            background: "radial-gradient(circle, #ff8400 0%, transparent 70%)",
-            top: "10%",
-            left: "20%",
-          }}
-          animate={{
-            x: [0, 100, 0],
-            y: [0, -50, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute w-[500px] h-[500px] rounded-full blur-[100px] opacity-25"
-          style={{
-            background: "radial-gradient(circle, #df91f7 0%, transparent 70%)",
-            bottom: "20%",
-            right: "15%",
-          }}
-          animate={{
-            x: [0, -80, 0],
-            y: [0, 60, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute w-[400px] h-[400px] rounded-full blur-[80px] opacity-20"
-          style={{
-            background: "radial-gradient(circle, #feed7a 0%, transparent 70%)",
-            top: "50%",
-            right: "30%",
-          }}
-          animate={{
-            x: [0, 50, 0],
-            y: [0, -80, 0],
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </div>
-
+    <section className="relative min-h-[85vh] flex items-center justify-center">
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           {/* Title - with animated exam name on separate line */}
@@ -535,12 +468,8 @@ function LanguageExamCard({
       {/* Decorative pattern */}
       <DecorativePattern language={language} accentColor={accentColor} />
 
-      {/* Shimmer effect */}
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-        animate={{ x: ["-100%", "200%"] }}
-        transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
-      />
+      {/* Shimmer effect - hover only for performance */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity" />
 
       <div style={{ transform: "translateZ(20px)" }} className="relative z-10 h-full flex flex-col">
         {/* Icon and language */}
@@ -611,16 +540,9 @@ function LanguageExamCard({
 
 function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
   return (
-    <section className="py-32 relative overflow-hidden">
-      {/* Pulsing background glow */}
-      <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-orange-500/10 rounded-full blur-[150px]"
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.1, 0.2, 0.1],
-        }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-      />
+    <section className="py-32 relative">
+      {/* Static background glow - reduced blur for performance */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-orange-500/10 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 sm:px-6 relative">
         <motion.div
@@ -782,7 +704,7 @@ function LearningLoopSection({ t }: { t: ReturnType<typeof useT> }) {
   };
 
   return (
-    <section className="py-32 relative overflow-hidden">
+    <section className="py-32 relative">
       <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           className="text-center mb-20"
@@ -804,14 +726,8 @@ function LearningLoopSection({ t }: { t: ReturnType<typeof useT> }) {
 
         {/* Connected cards with flowing line */}
         <div className="relative max-w-5xl mx-auto">
-          {/* Animated gradient line */}
-          <motion.div className="hidden lg:block absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 overflow-hidden">
-            <motion.div
-              className="h-full w-[200%] bg-gradient-to-r from-yellow-500/20 via-orange-500/20 via-purple-500/20 to-pink-500/20 dark:from-yellow-500/50 dark:via-orange-500/50 dark:via-purple-500/50 dark:to-pink-500/50"
-              animate={{ x: ["-50%", "0%"] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-            />
-          </motion.div>
+          {/* Static gradient line - no animation for performance */}
+          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 bg-gradient-to-r from-yellow-500/20 via-orange-500/20 via-purple-500/20 to-pink-500/20 dark:from-yellow-500/50 dark:via-orange-500/50 dark:via-purple-500/50 dark:to-pink-500/50" />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4">
             {steps.map((step, index) => {
@@ -874,9 +790,9 @@ function LearningLoopSection({ t }: { t: ReturnType<typeof useT> }) {
 function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
   return (
     <section className="py-32 relative">
-      {/* Background gradients */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[150px]" />
-      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-orange-500/10 rounded-full blur-[120px]" />
+      {/* Background gradients - reduced blur for performance */}
+      <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] bg-orange-500/10 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 sm:px-6 relative">
         <motion.div
@@ -940,7 +856,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
           >
             <BentoCard
               icon={Target}
@@ -957,7 +873,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
           >
             <BentoCard
               icon={GraduationCap}
@@ -974,7 +890,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
           >
             <BentoCard
               icon={Volume2}
@@ -1024,30 +940,6 @@ function BentoCard({
         className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
       />
 
-      {/* Floating particles effect */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className={`absolute rounded-full bg-white/20 ${i % 2 === 0 ? "w-1 h-1" : "w-0.5 h-0.5"}`}
-            style={{
-              left: `${10 + i * 15}%`,
-              top: "100%",
-            }}
-            animate={{
-              y: [0, -200],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: 2 + (i % 3),
-              repeat: Infinity,
-              delay: i * 0.3,
-              ease: "easeOut",
-            }}
-          />
-        ))}
-      </div>
-
       <div className="relative z-10">
         <motion.div
           className={`${large ? "w-16 h-16" : "w-12 h-12"} rounded-xl ${iconBg} backdrop-blur-sm flex items-center justify-center mb-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]`}
@@ -1080,47 +972,18 @@ function CTASection({
   t: ReturnType<typeof useT>;
 }) {
   return (
-    <section className="pt-32 relative overflow-hidden">
-      {/* Animated background */}
+    <section className="pt-32 relative">
+      {/* Static background - reduced blur for performance */}
       <div className="absolute inset-0">
-        <motion.div
-          className="absolute w-[800px] h-[800px] rounded-full blur-[200px] opacity-20"
+        <div
+          className="absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-15"
           style={{
             background: "radial-gradient(circle, #ff8400 0%, #df91f7 50%, transparent 70%)",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
           }}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.15, 0.25, 0.15],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
-      </div>
-
-      {/* Floating sparkles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1.5 h-1.5 bg-orange-400/40 rounded-full"
-            style={{
-              left: `${10 + i * 10}%`,
-              bottom: 0,
-            }}
-            animate={{
-              y: [0, -300],
-              opacity: [0, 1, 0],
-              scale: [0.5, 1, 0.5],
-            }}
-            transition={{
-              duration: 4 + (i % 3),
-              repeat: Infinity,
-              delay: i * 0.3,
-            }}
-          />
-        ))}
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 text-center relative z-10">

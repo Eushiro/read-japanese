@@ -209,14 +209,7 @@ export function DashboardPage() {
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Full-page animated background */}
-      <PremiumBackground
-        variant="hero"
-        colorScheme="default"
-        showStars={true}
-        showOrbs={true}
-        orbCount={3}
-        starCount={15}
-      />
+      <PremiumBackground />
 
       {/* Hero Section */}
       <section className="relative pt-16 sm:pt-20 pb-8">

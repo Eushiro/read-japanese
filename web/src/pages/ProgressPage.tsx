@@ -143,14 +143,7 @@ export function ProgressPage() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <PremiumBackground
-        variant="subtle"
-        colorScheme="cool"
-        showStars={true}
-        showOrbs={true}
-        orbCount={3}
-        starCount={15}
-      />
+      <PremiumBackground colorScheme="cool" starCount={6} />
       <div className="container mx-auto px-4 py-8 flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto">
           {/* Header */}

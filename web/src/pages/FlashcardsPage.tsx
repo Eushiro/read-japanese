@@ -467,14 +467,7 @@ export function FlashcardsPage() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Animated background */}
-      <PremiumBackground
-        variant="subtle"
-        colorScheme="cool"
-        showStars={true}
-        showOrbs={true}
-        orbCount={1}
-        starCount={15}
-      />
+      <PremiumBackground colorScheme="cool" />
 
       {/* Header Section */}
       <div className="relative flex-shrink-0 pt-6 pb-0">

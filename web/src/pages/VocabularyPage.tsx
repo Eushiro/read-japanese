@@ -492,56 +492,11 @@ export function VocabularyPage() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Animated background */}
-      <PremiumBackground
-        variant="subtle"
-        colorScheme="warm"
-        showStars={true}
-        showOrbs={true}
-        orbCount={1}
-        starCount={15}
-      />
-
-      {/* Hero Section */}
-      <div className="relative overflow-hidden pt-8 pb-12 flex-shrink-0">
-        <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-xl bg-amber-500/20">
-                    <BookmarkCheck className="w-5 h-5 text-amber-500" />
-                  </div>
-                  <span className="text-sm font-semibold text-amber-500 uppercase tracking-wider">
-                    {t("vocabulary.yourWords")}
-                  </span>
-                </div>
-                <h1
-                  className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {t("vocabulary.title")}
-                </h1>
-                <p className="text-foreground-muted text-lg">{t("vocabulary.yourCollection")}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Generate All Flashcards button removed to prevent accidental mass AI requests */}
-                <Button
-                  variant="glass-accent"
-                  onClick={() => setShowAddModal(true)}
-                  className="gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  {t("vocabulary.addWord")}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PremiumBackground />
 
       {/* Search and Filters */}
-      <div className="flex-shrink-0">
-        <div className="container mx-auto px-4 sm:px-6 py-4 max-w-6xl">
+      <div className="flex-shrink-0 pt-4 pb-3">
+        <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
             <SearchBox
@@ -626,6 +581,12 @@ export function VocabularyPage() {
               ) : (
                 <LayoutGrid className="w-4 h-4" />
               )}
+            </Button>
+
+            {/* Add Word Button */}
+            <Button variant="glass-accent" onClick={() => setShowAddModal(true)} className="gap-2">
+              <Plus className="w-4 h-4" />
+              {t("vocabulary.addWord")}
             </Button>
           </div>
 

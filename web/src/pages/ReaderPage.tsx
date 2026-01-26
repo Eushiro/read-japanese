@@ -469,7 +469,7 @@ export function ReaderPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Animated background orbs */}
-      <PremiumBackground colorScheme="warm" starCount={10} showOrbs={true} animateStars={false} />
+      <PremiumBackground starCount={10} />
 
       {/* Header - Non-sticky, blends with background */}
       <div className="relative z-10">

@@ -195,14 +195,7 @@ export function SettingsPage() {
   return (
     <div className="min-h-screen">
       {/* Animated background */}
-      <PremiumBackground
-        variant="subtle"
-        colorScheme="purple"
-        showStars={true}
-        showOrbs={true}
-        orbCount={2}
-        starCount={30}
-      />
+      <PremiumBackground colorScheme="purple" starCount={5} />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-8 pb-12">

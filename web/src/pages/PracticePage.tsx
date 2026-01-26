@@ -201,14 +201,7 @@ export function PracticePage() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Animated background */}
-      <PremiumBackground
-        variant="subtle"
-        colorScheme="purple"
-        showStars={true}
-        showOrbs={true}
-        orbCount={1}
-        starCount={15}
-      />
+      <PremiumBackground colorScheme="purple" />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-8 pb-12 flex-shrink-0">
