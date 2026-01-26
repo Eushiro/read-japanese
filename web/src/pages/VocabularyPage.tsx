@@ -160,6 +160,10 @@ export function VocabularyPage() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const PAGE_SIZE = 50;
 
+  // Cache counts for skeleton display (up to 10)
+  const [cachedPersonalCount, setCachedPersonalCount] = useState(0);
+  const [cachedAllWordsCount, setCachedAllWordsCount] = useState(0);
+
   // Virtual scrolling ref
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -233,6 +237,19 @@ export function VocabularyPage() {
     }
   }, [selectedDeckId]);
 
+  // Cache counts for skeleton display
+  useEffect(() => {
+    if (userVocabulary) {
+      setCachedPersonalCount(Math.min(userVocabulary.length, 10));
+    }
+  }, [userVocabulary]);
+
+  useEffect(() => {
+    if (paginatedAllWords?.totalCount) {
+      setCachedAllWordsCount(Math.min(paginatedAllWords.totalCount, 10));
+    }
+  }, [paginatedAllWords?.totalCount]);
+
   // IntersectionObserver for infinite scroll in "All Words" view
   // Use a ref to track current loading/hasMore state to avoid stale closures
   const paginationStateRef = useRef({ hasMore: false, isLoading: true });
@@ -300,8 +317,18 @@ export function VocabularyPage() {
   // Track if loading premade deck vocabulary
   const isLoadingPremadeDeck =
     selectedDeckId && !isPersonalDeckSelected && premadeDeckVocabulary === undefined;
-  // Combined loading state - show skeletons for All Words and premade decks, not personal deck
-  const isLoadingVocabulary = isInitialLoadAllWords || isLoadingPremadeDeck;
+  // Show skeletons when loading and we have a cached count to show appropriate number
+  const showAllWordsSkeletons = isInitialLoadAllWords && cachedAllWordsCount > 0;
+  const showPersonalSkeletons = isLoadingPersonalDeck && cachedPersonalCount > 0;
+  // Combined loading state
+  const isLoadingVocabulary =
+    showAllWordsSkeletons || showPersonalSkeletons || isLoadingPremadeDeck;
+  // Number of skeletons based on view
+  const skeletonCount = showPersonalSkeletons
+    ? cachedPersonalCount
+    : showAllWordsSkeletons
+      ? cachedAllWordsCount
+      : 10;
   // Total count for "All Words" view (from pagination data)
   const allWordsTotalCount = paginatedAllWords?.totalCount ?? accumulatedAllWords.length;
 
@@ -692,7 +719,7 @@ export function VocabularyPage() {
             <div className="pb-12">
               {isLoadingVocabulary ? (
                 <div className="space-y-4">
-                  {Array.from({ length: 10 }).map((_, i) => (
+                  {Array.from({ length: skeletonCount }).map((_, i) => (
                     <div
                       key={i}
                       className="p-5 rounded-xl bg-surface border border-border animate-pulse"
@@ -703,7 +730,9 @@ export function VocabularyPage() {
                     </div>
                   ))}
                 </div>
-              ) : sortedVocabulary.length === 0 && !isLoadingPersonalDeck ? (
+              ) : sortedVocabulary.length === 0 &&
+                !isLoadingPersonalDeck &&
+                !isInitialLoadAllWords ? (
                 <div className="flex flex-col items-center justify-center py-20 text-foreground-muted">
                   <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
                     <BookOpen className="w-8 h-8 opacity-40" />

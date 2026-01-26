@@ -8,7 +8,6 @@ import { QuestionDisplay, QuestionNavigation } from "@/components/quiz";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PremiumBackground } from "@/components/ui/premium-background";
-import { WaveBackground } from "@/components/ui/wave-background";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
@@ -531,7 +530,7 @@ export function PlacementTestPage() {
       {/* Animated background */}
       <PremiumBackground
         variant="subtle"
-        colorScheme="default"
+        colorScheme="purple"
         showStars={true}
         showOrbs={true}
         orbCount={3}
@@ -579,7 +578,7 @@ export function PlacementTestPage() {
             </div>
             <div className="h-2 bg-white/5 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full shadow-[0_0_10px_rgba(255,132,0,0.5)]"
+                className="h-full bg-accent rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${maxConfidence}%` }}
                 transition={{ duration: 0.5 }}
@@ -627,12 +626,8 @@ export function PlacementTestPage() {
                 </div>
               </div>
 
-              {/* Centered overlay with wave background and shimmering text */}
+              {/* Centered overlay with shimmering text */}
               <div className="absolute inset-0 flex items-center justify-center bg-black/70 rounded-2xl">
-                {/* Wave background for dark mode */}
-                <div className="absolute inset-0 opacity-0 dark:opacity-100 overflow-hidden">
-                  <WaveBackground size="card" className="absolute inset-0" intensity={2} />
-                </div>
                 <p
                   key={loadingPhrase}
                   className="text-2xl sm:text-3xl font-bold text-center px-4 relative z-10"
