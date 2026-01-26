@@ -16,6 +16,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { PremiumBackground } from "@/components/ui/premium-background";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 
@@ -105,262 +106,274 @@ export function ProgressPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">{t("progress.title")}</h1>
-          <p className="text-foreground-muted">{t("progress.subtitle")}</p>
-        </div>
-
-        {/* Overview Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {/* Streak */}
-          <div className="bg-surface rounded-xl border border-border p-4">
-            <div className="flex items-center gap-2 text-orange-500 mb-2">
-              <Flame className="w-5 h-5" />
-              <span className="text-sm font-medium">{t("progress.stats.streak")}</span>
-            </div>
-            <p className="text-2xl font-bold">
-              {t("progress.stats.days", { count: currentStreak })}
-            </p>
+    <div className="h-full flex flex-col overflow-hidden">
+      <PremiumBackground
+        variant="subtle"
+        colorScheme="cool"
+        showStars={true}
+        showOrbs={true}
+        orbCount={1}
+      />
+      <div className="container mx-auto px-4 py-8 flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">{t("progress.title")}</h1>
+            <p className="text-foreground-muted">{t("progress.subtitle")}</p>
           </div>
 
-          {/* Study Time */}
-          <div className="bg-surface rounded-xl border border-border p-4">
-            <div className="flex items-center gap-2 text-blue-500 mb-2">
-              <Clock className="w-5 h-5" />
-              <span className="text-sm font-medium">{t("progress.stats.totalStudy")}</span>
+          {/* Overview Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {/* Streak */}
+            <div className="rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+              <div className="flex items-center gap-2 text-orange-500 mb-2">
+                <Flame className="w-5 h-5" />
+                <span className="text-sm font-medium">{t("progress.stats.streak")}</span>
+              </div>
+              <p className="text-2xl font-bold">
+                {t("progress.stats.days", { count: currentStreak })}
+              </p>
             </div>
-            <p className="text-2xl font-bold">
-              {t("progress.stats.hours", {
-                count: Math.round((profile?.totalStudyMinutes ?? 0) / 60),
-              })}
-            </p>
-          </div>
 
-          {/* Vocab Coverage */}
-          <div className="bg-surface rounded-xl border border-border p-4">
-            <div className="flex items-center gap-2 text-green-500 mb-2">
-              <BookOpen className="w-5 h-5" />
-              <span className="text-sm font-medium">{t("progress.stats.vocabulary")}</span>
+            {/* Study Time */}
+            <div className="rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+              <div className="flex items-center gap-2 text-blue-500 mb-2">
+                <Clock className="w-5 h-5" />
+                <span className="text-sm font-medium">{t("progress.stats.totalStudy")}</span>
+              </div>
+              <p className="text-2xl font-bold">
+                {t("progress.stats.hours", {
+                  count: Math.round((profile?.totalStudyMinutes ?? 0) / 60),
+                })}
+              </p>
             </div>
-            <p className="text-2xl font-bold">
-              {profile?.vocabCoverage?.known ?? 0}
-              <span className="text-sm text-foreground-muted font-normal">
-                /{profile?.vocabCoverage?.totalWords ?? "—"}
+
+            {/* Vocab Coverage */}
+            <div className="rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+              <div className="flex items-center gap-2 text-green-500 mb-2">
+                <BookOpen className="w-5 h-5" />
+                <span className="text-sm font-medium">{t("progress.stats.vocabulary")}</span>
+              </div>
+              <p className="text-2xl font-bold">
+                {profile?.vocabCoverage?.known ?? 0}
+                <span className="text-sm text-foreground-muted font-normal">
+                  /{profile?.vocabCoverage?.totalWords ?? "—"}
+                </span>
+              </p>
+            </div>
+
+            {/* Readiness */}
+            <div className="rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+              <div className="flex items-center gap-2 text-purple-500 mb-2">
+                <Target className="w-5 h-5" />
+                <span className="text-sm font-medium">{t("progress.readiness.title")}</span>
+              </div>
+              <span
+                className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                  readinessColors[profile?.readiness?.level ?? "not_ready"]
+                }`}
+              >
+                {readinessLabels[profile?.readiness?.level ?? "not_ready"]}
               </span>
-            </p>
-          </div>
-
-          {/* Readiness */}
-          <div className="bg-surface rounded-xl border border-border p-4">
-            <div className="flex items-center gap-2 text-purple-500 mb-2">
-              <Target className="w-5 h-5" />
-              <span className="text-sm font-medium">{t("progress.readiness.title")}</span>
             </div>
-            <span
-              className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                readinessColors[profile?.readiness?.level ?? "not_ready"]
-              }`}
-            >
-              {readinessLabels[profile?.readiness?.level ?? "not_ready"]}
-            </span>
           </div>
-        </div>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-8">
-          {/* Skill Radar */}
-          <div className="bg-surface rounded-xl border border-border p-6">
-            <h2 className="font-semibold mb-4">{t("progress.skills.title")}</h2>
-            {profile ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <RadarChart data={skillData}>
-                  <PolarGrid stroke="currentColor" className="text-border" />
-                  <PolarAngleAxis
-                    dataKey="skill"
-                    tick={{ fill: "currentColor", className: "text-foreground-muted text-sm" }}
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
+            {/* Skill Radar */}
+            <div className="rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+              <h2 className="font-semibold mb-4">{t("progress.skills.title")}</h2>
+              {profile ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <RadarChart data={skillData}>
+                    <PolarGrid stroke="currentColor" className="text-border" />
+                    <PolarAngleAxis
+                      dataKey="skill"
+                      tick={{ fill: "currentColor", className: "text-foreground-muted text-sm" }}
+                    />
+                    <PolarRadiusAxis
+                      angle={30}
+                      domain={[0, 100]}
+                      tick={{ fill: "currentColor", className: "text-foreground-muted text-xs" }}
+                    />
+                    <Radar
+                      name="Skills"
+                      dataKey="value"
+                      stroke="hsl(var(--accent))"
+                      fill="hsl(var(--accent))"
+                      fillOpacity={0.3}
+                      strokeWidth={2}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-foreground-muted">
+                  {t("progress.skills.noData")}
+                </div>
+              )}
+            </div>
+
+            {/* Weak Areas */}
+            <div className="rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold">{t("progress.focusAreas.title")}</h2>
+                <Link to="/flashcards" className="text-sm text-accent hover:underline">
+                  {t("progress.focusAreas.practice")}
+                </Link>
+              </div>
+              {weakAreas && weakAreas.length > 0 ? (
+                <div className="space-y-3">
+                  {weakAreas.map((area, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle
+                          className={`w-4 h-4 ${
+                            area.score < 50 ? "text-red-500" : "text-yellow-500"
+                          }`}
+                        />
+                        <div>
+                          <p className="font-medium capitalize">{area.topic}</p>
+                          <p className="text-xs text-foreground-muted capitalize">{area.skill}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p
+                          className={`font-semibold ${
+                            area.score < 50 ? "text-red-500" : "text-yellow-500"
+                          }`}
+                        >
+                          {area.score}%
+                        </p>
+                        <p className="text-xs text-foreground-muted">
+                          {t("progress.focusAreas.questions", { count: area.questionCount })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-40 flex items-center justify-center text-foreground-muted">
+                  {t("progress.focusAreas.noWeakAreas")}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Progress Over Time */}
+          <div className="rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 mb-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+            <h2 className="font-semibold mb-4">{t("progress.progressChart.title")}</h2>
+            {progressChartData && progressChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={progressChartData}>
+                  <CartesianGrid strokeDasharray="3 3" className="text-border" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: "currentColor", className: "text-foreground-muted text-xs" }}
                   />
-                  <PolarRadiusAxis
-                    angle={30}
+                  <YAxis
                     domain={[0, 100]}
                     tick={{ fill: "currentColor", className: "text-foreground-muted text-xs" }}
                   />
-                  <Radar
-                    name="Skills"
-                    dataKey="value"
-                    stroke="hsl(var(--accent))"
-                    fill="hsl(var(--accent))"
-                    fillOpacity={0.3}
-                    strokeWidth={2}
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "8px",
+                    }}
                   />
-                </RadarChart>
+                  <Line
+                    type="monotone"
+                    dataKey="vocabulary"
+                    stroke="#22c55e"
+                    strokeWidth={2}
+                    dot={false}
+                    name={t("progress.skills.vocabulary")}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="grammar"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={false}
+                    name={t("progress.skills.grammar")}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="reading"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    dot={false}
+                    name={t("progress.skills.reading")}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[300px] flex items-center justify-center text-foreground-muted">
-                {t("progress.skills.noData")}
+              <div className="h-[250px] flex items-center justify-center text-foreground-muted">
+                {t("progress.progressChart.noData")}
               </div>
             )}
           </div>
 
-          {/* Weak Areas */}
-          <div className="bg-surface rounded-xl border border-border p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">{t("progress.focusAreas.title")}</h2>
-              <Link to="/flashcards" className="text-sm text-accent hover:underline">
-                {t("progress.focusAreas.practice")}
-              </Link>
-            </div>
-            {weakAreas && weakAreas.length > 0 ? (
-              <div className="space-y-3">
-                {weakAreas.map((area, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle
-                        className={`w-4 h-4 ${
-                          area.score < 50 ? "text-red-500" : "text-yellow-500"
-                        }`}
-                      />
-                      <div>
-                        <p className="font-medium capitalize">{area.topic}</p>
-                        <p className="text-xs text-foreground-muted capitalize">{area.skill}</p>
+          {/* Language Comparison */}
+          {allProfiles && allProfiles.length > 1 && (
+            <div className="rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+              <h2 className="font-semibold mb-4">{t("progress.languages.title")}</h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {allProfiles.map((p) => {
+                  const avgSkill = Math.round(
+                    (p.skills.vocabulary +
+                      p.skills.grammar +
+                      p.skills.reading +
+                      p.skills.listening) /
+                      4
+                  );
+                  return (
+                    <div key={p._id} className="p-4 bg-muted/30 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-medium capitalize">{p.language}</p>
+                        <span
+                          className={`text-sm px-2 py-0.5 rounded ${
+                            readinessColors[p.readiness.level]
+                          }`}
+                        >
+                          {readinessLabels[p.readiness.level]}
+                        </span>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p
-                        className={`font-semibold ${
-                          area.score < 50 ? "text-red-500" : "text-yellow-500"
-                        }`}
-                      >
-                        {area.score}%
-                      </p>
-                      <p className="text-xs text-foreground-muted">
-                        {t("progress.focusAreas.questions", { count: area.questionCount })}
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-accent rounded-full"
+                          style={{ width: `${avgSkill}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-foreground-muted mt-1">
+                        {t("progress.languages.average", { percent: avgSkill })}
                       </p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            ) : (
-              <div className="h-40 flex items-center justify-center text-foreground-muted">
-                {t("progress.focusAreas.noWeakAreas")}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Progress Over Time */}
-        <div className="bg-surface rounded-xl border border-border p-6 mb-8">
-          <h2 className="font-semibold mb-4">{t("progress.progressChart.title")}</h2>
-          {progressChartData && progressChartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={progressChartData}>
-                <CartesianGrid strokeDasharray="3 3" className="text-border" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fill: "currentColor", className: "text-foreground-muted text-xs" }}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  tick={{ fill: "currentColor", className: "text-foreground-muted text-xs" }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "var(--surface)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="vocabulary"
-                  stroke="#22c55e"
-                  strokeWidth={2}
-                  dot={false}
-                  name={t("progress.skills.vocabulary")}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="grammar"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={false}
-                  name={t("progress.skills.grammar")}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="reading"
-                  stroke="#f59e0b"
-                  strokeWidth={2}
-                  dot={false}
-                  name={t("progress.skills.reading")}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-[250px] flex items-center justify-center text-foreground-muted">
-              {t("progress.progressChart.noData")}
             </div>
           )}
-        </div>
 
-        {/* Language Comparison */}
-        {allProfiles && allProfiles.length > 1 && (
-          <div className="bg-surface rounded-xl border border-border p-6">
-            <h2 className="font-semibold mb-4">{t("progress.languages.title")}</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {allProfiles.map((p) => {
-                const avgSkill = Math.round(
-                  (p.skills.vocabulary + p.skills.grammar + p.skills.reading + p.skills.listening) /
-                    4
-                );
-                return (
-                  <div key={p._id} className="p-4 bg-muted/30 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium capitalize">{p.language}</p>
-                      <span
-                        className={`text-sm px-2 py-0.5 rounded ${
-                          readinessColors[p.readiness.level]
-                        }`}
-                      >
-                        {readinessLabels[p.readiness.level]}
-                      </span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-accent rounded-full"
-                        style={{ width: `${avgSkill}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-foreground-muted mt-1">
-                      {t("progress.languages.average", { percent: avgSkill })}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
+          {/* Quick Actions */}
+          <div className="mt-8 flex flex-wrap gap-4 justify-center">
+            <Link
+              to="/exams"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90"
+            >
+              <Target className="w-4 h-4" />
+              {t("progress.actions.takePracticeExam")}
+            </Link>
+            <Link
+              to="/flashcards"
+              className="inline-flex items-center gap-2 px-6 py-3 border border-border rounded-lg hover:bg-muted/50"
+            >
+              <BookOpen className="w-4 h-4" />
+              {t("progress.actions.reviewFlashcards")}
+            </Link>
           </div>
-        )}
-
-        {/* Quick Actions */}
-        <div className="mt-8 flex flex-wrap gap-4 justify-center">
-          <Link
-            to="/exams"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90"
-          >
-            <Target className="w-4 h-4" />
-            {t("progress.actions.takePracticeExam")}
-          </Link>
-          <Link
-            to="/flashcards"
-            className="inline-flex items-center gap-2 px-6 py-3 border border-border rounded-lg hover:bg-muted/50"
-          >
-            <BookOpen className="w-4 h-4" />
-            {t("progress.actions.reviewFlashcards")}
-          </Link>
         </div>
       </div>
     </div>

@@ -15,6 +15,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
+import { PremiumBackground } from "@/components/ui/premium-background";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useUserData } from "@/contexts/UserDataContext";
@@ -23,26 +25,10 @@ import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
 
-// Animated background for practice page
-function PracticeAnimatedBackground() {
-  return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      <div
-        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-30"
-        style={{
-          background: "radial-gradient(circle, #a855f7 0%, transparent 70%)",
-          top: "-5%",
-          left: "20%",
-        }}
-      />
-    </div>
-  );
-}
-
 export function PracticePage() {
   const t = useT();
   const { language: uiLanguage } = useUILanguage();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { trackEvent, events } = useAnalytics();
   const userId = user?.id ?? "anonymous";
   const search = useSearch({ strict: false }) as { vocabularyId?: string };
@@ -194,7 +180,8 @@ export function PracticePage() {
     setResult(null);
   };
 
-  if (!isAuthenticated) {
+  // Don't show sign-in prompt while auth is still loading
+  if (!isAuthLoading && !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-4">
@@ -211,18 +198,16 @@ export function PracticePage() {
     );
   }
 
-  if (vocabulary === undefined) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
-      </div>
-    );
-  }
-
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Animated background */}
-      <PracticeAnimatedBackground />
+      <PremiumBackground
+        variant="subtle"
+        colorScheme="purple"
+        showStars={true}
+        showOrbs={true}
+        orbCount={1}
+      />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-8 pb-12 flex-shrink-0">
@@ -247,24 +232,47 @@ export function PracticePage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl flex-1 overflow-y-auto">
-        {practiceWords.length === 0 ? (
-          // No words to practice
-          <div className="text-center py-20">
-            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
-              <BookOpen className="w-10 h-10 text-foreground-muted" />
+      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl flex-1 flex flex-col overflow-y-auto">
+        {vocabulary === undefined ? (
+          // Loading skeleton for word grid
+          <div>
+            <Skeleton className="w-40 h-6 mb-4" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="p-4 rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] animate-pulse"
+                  style={{ animationDelay: `${i * 50}ms` }}
+                >
+                  <div className="h-6 bg-muted rounded w-24 mb-2" />
+                  <div className="h-4 bg-muted rounded w-32 mb-2" />
+                  <div className="flex gap-2">
+                    <div className="h-4 bg-muted rounded-full w-16" />
+                    <div className="h-4 bg-muted rounded-full w-12" />
+                  </div>
+                </div>
+              ))}
             </div>
-            <h2
-              className="text-2xl font-bold text-foreground mb-2"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              {t("practice.empty.title")}
-            </h2>
-            <p className="text-foreground-muted mb-6">{t("practice.empty.description")}</p>
-            <Button onClick={() => (window.location.href = "/vocabulary")}>
-              <BookOpen className="w-4 h-4 mr-2" />
-              {t("practice.empty.goToVocabulary")}
-            </Button>
+          </div>
+        ) : practiceWords.length === 0 ? (
+          // No words to practice
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
+                <BookOpen className="w-10 h-10 text-foreground-muted" />
+              </div>
+              <h2
+                className="text-2xl font-bold text-foreground mb-2"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("practice.empty.title")}
+              </h2>
+              <p className="text-foreground-muted mb-6">{t("practice.empty.description")}</p>
+              <Button onClick={() => (window.location.href = "/vocabulary")}>
+                <BookOpen className="w-4 h-4 mr-2" />
+                {t("practice.empty.goToVocabulary")}
+              </Button>
+            </div>
           </div>
         ) : !selectedWord ? (
           // Word selection
@@ -330,7 +338,7 @@ export function PracticePage() {
                 <button
                   key={word._id}
                   onClick={() => handleSelectWord(word)}
-                  className="p-4 rounded-xl bg-surface border border-border hover:border-accent/50 hover:bg-accent/5 transition-all text-left"
+                  className="p-4 rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 hover:border-foreground-muted/30 dark:hover:border-white/20 dark:hover:shadow-[0_0_15px_rgba(255,132,0,0.08)] transition-all duration-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] text-left"
                 >
                   <div
                     className="text-xl font-semibold text-foreground mb-1"
@@ -359,7 +367,7 @@ export function PracticePage() {
           // Practice interface
           <div className="space-y-6">
             {/* Selected word */}
-            <div className="bg-surface rounded-2xl border border-border p-6">
+            <div className="rounded-2xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-sm text-foreground-muted mb-1">
@@ -438,7 +446,7 @@ export function PracticePage() {
             {result && (
               <div className="space-y-6 animate-fade-in-up">
                 {/* Score summary */}
-                <div className="bg-surface rounded-2xl border border-border p-6">
+                <div className="rounded-2xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                   <div className="flex items-center justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3">
                       {result.isCorrect ? (
@@ -480,7 +488,7 @@ export function PracticePage() {
                 </div>
 
                 {/* Your sentence */}
-                <div className="bg-surface rounded-2xl border border-border p-6">
+                <div className="rounded-2xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                   <div className="text-sm font-medium text-foreground-muted mb-2">
                     {t("practice.results.yourSentence")}
                   </div>
@@ -497,7 +505,7 @@ export function PracticePage() {
 
                 {/* Corrections */}
                 {result.corrections.length > 0 && (
-                  <div className="bg-surface rounded-2xl border border-border p-6">
+                  <div className="rounded-2xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                     <div className="text-sm font-medium text-foreground-muted mb-3">
                       {t("practice.results.corrections")}
                     </div>
@@ -526,7 +534,7 @@ export function PracticePage() {
                 )}
 
                 {/* Feedback */}
-                <div className="bg-surface rounded-2xl border border-border p-6">
+                <div className="rounded-2xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                   <div className="text-sm font-medium text-foreground-muted mb-2">
                     {t("practice.results.feedback")}
                   </div>
