@@ -1,9 +1,29 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Shield } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 
+type DataSharingItem = { name: string; desc: string };
+
+const LAST_UPDATED = new Date(2026, 0, 1); // January 2026
+
 export function PrivacyPage() {
+  const { t, i18n } = useTranslation("legal");
+
+  const formattedDate = new Intl.DateTimeFormat(i18n.language, {
+    year: "numeric",
+    month: "long",
+  }).format(LAST_UPDATED);
+
+  const infoCollectItems = t("privacy.sections.infoCollect.items", { returnObjects: true }) as string[];
+  const howWeUseItems = t("privacy.sections.howWeUse.items", { returnObjects: true }) as string[];
+  const aiProcessingItems = t("privacy.sections.aiProcessing.items", { returnObjects: true }) as string[];
+  const dataSharingItems = t("privacy.sections.dataSharing.items", {
+    returnObjects: true,
+  }) as DataSharingItem[];
+  const yourRightsItems = t("privacy.sections.yourRights.items", { returnObjects: true }) as string[];
+
   return (
     <div className="min-h-screen py-8 sm:py-16">
       <div className="container mx-auto px-4 sm:px-6 max-w-3xl">
@@ -11,7 +31,7 @@ export function PrivacyPage() {
           <Link to="/">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
+              {t("backToHome")}
             </Button>
           </Link>
         </div>
@@ -25,148 +45,103 @@ export function PrivacyPage() {
               className="text-3xl sm:text-4xl font-bold text-foreground"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Privacy Policy
+              {t("privacy.title")}
             </h1>
-            <p className="text-foreground-muted text-sm">Last updated: January 2025</p>
+            <p className="text-foreground-muted text-sm">{t("lastUpdated", { date: formattedDate })}</p>
           </div>
         </div>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              1. Information We Collect
+              {t("privacy.sections.infoCollect.title")}
             </h2>
-            <p className="text-foreground-muted mb-4">
-              We collect information you provide directly to us when you:
-            </p>
+            <p className="text-foreground-muted mb-4">{t("privacy.sections.infoCollect.intro")}</p>
             <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
-              <li>Create an account (email address, name)</li>
-              <li>Use our learning features (vocabulary, flashcards, progress)</li>
-              <li>Subscribe to premium features (payment information via Stripe)</li>
-              <li>Contact us for support</li>
+              {infoCollectItems.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
             </ul>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              2. How We Use Your Information
+              {t("privacy.sections.howWeUse.title")}
             </h2>
-            <p className="text-foreground-muted mb-4">We use the information we collect to:</p>
+            <p className="text-foreground-muted mb-4">{t("privacy.sections.howWeUse.intro")}</p>
             <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
-              <li>Provide, maintain, and improve our services</li>
-              <li>Personalize your learning experience with AI-powered features</li>
-              <li>Process transactions and send related information</li>
-              <li>Track your learning progress and adapt difficulty levels</li>
-              <li>Send technical notices, updates, and support messages</li>
+              {howWeUseItems.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
             </ul>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              3. AI and Data Processing
+              {t("privacy.sections.aiProcessing.title")}
             </h2>
-            <p className="text-foreground-muted mb-4">
-              Our platform uses AI to enhance your learning experience. This includes:
-            </p>
+            <p className="text-foreground-muted mb-4">{t("privacy.sections.aiProcessing.intro")}</p>
             <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
-              <li>Generating personalized sentences and flashcards</li>
-              <li>Evaluating your writing practice submissions</li>
-              <li>Adapting content difficulty to your proficiency level</li>
-              <li>Creating audio pronunciations using text-to-speech</li>
+              {aiProcessingItems.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
             </ul>
-            <p className="text-foreground-muted mt-4">
-              Your learning data may be processed by third-party AI providers (OpenRouter, Google
-              Gemini) to deliver these features. We do not use your personal data to train AI
-              models.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">4. Data Sharing</h2>
-            <p className="text-foreground-muted mb-4">We may share your information with:</p>
-            <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
-              <li>
-                <strong>Stripe</strong> - for payment processing
-              </li>
-              <li>
-                <strong>Clerk</strong> - for authentication
-              </li>
-              <li>
-                <strong>PostHog</strong> - for product analytics (anonymized)
-              </li>
-              <li>
-                <strong>Sentry</strong> - for error tracking (anonymized)
-              </li>
-              <li>
-                <strong>AI Providers</strong> - to generate learning content
-              </li>
-            </ul>
-            <p className="text-foreground-muted mt-4">
-              We do not sell your personal information to third parties.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">5. Data Retention</h2>
-            <p className="text-foreground-muted">
-              We retain your account and learning data for as long as your account is active. You
-              can request deletion of your account and associated data at any time by contacting us.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">6. Security</h2>
-            <p className="text-foreground-muted">
-              We implement industry-standard security measures to protect your data, including
-              encrypted connections (HTTPS), secure authentication, and access controls. However, no
-              method of transmission over the Internet is 100% secure.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">7. Your Rights</h2>
-            <p className="text-foreground-muted mb-4">
-              Depending on your location, you may have the right to:
-            </p>
-            <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
-              <li>Access the personal data we hold about you</li>
-              <li>Request correction of inaccurate data</li>
-              <li>Request deletion of your data</li>
-              <li>Object to or restrict processing of your data</li>
-              <li>Export your data in a portable format</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">8. Cookies and Tracking</h2>
-            <p className="text-foreground-muted">
-              We use essential cookies for authentication and session management. We also use
-              analytics cookies (PostHog) to understand how users interact with our platform. You
-              can control cookie preferences through your browser settings.
-            </p>
+            <p className="text-foreground-muted mt-4">{t("privacy.sections.aiProcessing.footer")}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              9. Changes to This Policy
+              {t("privacy.sections.dataSharing.title")}
             </h2>
-            <p className="text-foreground-muted">
-              We may update this privacy policy from time to time. We will notify you of any changes
-              by posting the new policy on this page and updating the &ldquo;Last updated&rdquo;
-              date.
-            </p>
+            <p className="text-foreground-muted mb-4">{t("privacy.sections.dataSharing.intro")}</p>
+            <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
+              {dataSharingItems.map((item, i) => (
+                <li key={i}>
+                  <strong>{item.name}</strong> - {item.desc}
+                </li>
+              ))}
+            </ul>
+            <p className="text-foreground-muted mt-4">{t("privacy.sections.dataSharing.footer")}</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">10. Contact Us</h2>
-            <p className="text-foreground-muted">
-              If you have any questions about this privacy policy or our data practices, please
-              contact us at{" "}
-              <a href="mailto:privacy@sanlang.app" className="text-accent hover:underline">
-                privacy@sanlang.app
-              </a>
-              .
-            </p>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              {t("privacy.sections.dataRetention.title")}
+            </h2>
+            <p className="text-foreground-muted">{t("privacy.sections.dataRetention.content")}</p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              {t("privacy.sections.security.title")}
+            </h2>
+            <p className="text-foreground-muted">{t("privacy.sections.security.content")}</p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              {t("privacy.sections.yourRights.title")}
+            </h2>
+            <p className="text-foreground-muted mb-4">{t("privacy.sections.yourRights.intro")}</p>
+            <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
+              {yourRightsItems.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              {t("privacy.sections.cookies.title")}
+            </h2>
+            <p className="text-foreground-muted">{t("privacy.sections.cookies.content")}</p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              {t("privacy.sections.changes.title")}
+            </h2>
+            <p className="text-foreground-muted">{t("privacy.sections.changes.content")}</p>
           </section>
         </div>
       </div>

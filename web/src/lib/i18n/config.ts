@@ -20,6 +20,7 @@ import enFlashcards from "./locales/en/flashcards.json";
 import enGenerate from "./locales/en/generate.json";
 import enLanding from "./locales/en/landing.json";
 import enLearn from "./locales/en/learn.json";
+import enLegal from "./locales/en/legal.json";
 import enLibrary from "./locales/en/library.json";
 import enNavigation from "./locales/en/navigation.json";
 import enOnboarding from "./locales/en/onboarding.json";
@@ -48,6 +49,7 @@ import frFlashcards from "./locales/fr/flashcards.json";
 import frGenerate from "./locales/fr/generate.json";
 import frLanding from "./locales/fr/landing.json";
 import frLearn from "./locales/fr/learn.json";
+import frLegal from "./locales/fr/legal.json";
 import frLibrary from "./locales/fr/library.json";
 import frNavigation from "./locales/fr/navigation.json";
 import frOnboarding from "./locales/fr/onboarding.json";
@@ -76,6 +78,7 @@ import jaFlashcards from "./locales/ja/flashcards.json";
 import jaGenerate from "./locales/ja/generate.json";
 import jaLanding from "./locales/ja/landing.json";
 import jaLearn from "./locales/ja/learn.json";
+import jaLegal from "./locales/ja/legal.json";
 import jaLibrary from "./locales/ja/library.json";
 import jaNavigation from "./locales/ja/navigation.json";
 import jaOnboarding from "./locales/ja/onboarding.json";
@@ -104,6 +107,7 @@ import zhFlashcards from "./locales/zh/flashcards.json";
 import zhGenerate from "./locales/zh/generate.json";
 import zhLanding from "./locales/zh/landing.json";
 import zhLearn from "./locales/zh/learn.json";
+import zhLegal from "./locales/zh/legal.json";
 import zhLibrary from "./locales/zh/library.json";
 import zhNavigation from "./locales/zh/navigation.json";
 import zhOnboarding from "./locales/zh/onboarding.json";
@@ -129,6 +133,7 @@ const resources = {
     credits: enCredits,
     dashboard: enDashboard,
     landing: enLanding,
+    legal: enLegal,
     navigation: enNavigation,
     settings: enSettings,
     vocabulary: enVocabulary,
@@ -159,6 +164,7 @@ const resources = {
     credits: frCredits,
     dashboard: frDashboard,
     landing: frLanding,
+    legal: frLegal,
     navigation: frNavigation,
     settings: frSettings,
     vocabulary: frVocabulary,
@@ -189,6 +195,7 @@ const resources = {
     credits: jaCredits,
     dashboard: jaDashboard,
     landing: jaLanding,
+    legal: jaLegal,
     navigation: jaNavigation,
     settings: jaSettings,
     vocabulary: jaVocabulary,
@@ -219,6 +226,7 @@ const resources = {
     credits: zhCredits,
     dashboard: zhDashboard,
     landing: zhLanding,
+    legal: zhLegal,
     navigation: zhNavigation,
     settings: zhSettings,
     vocabulary: zhVocabulary,
@@ -261,6 +269,7 @@ i18n
       "credits",
       "dashboard",
       "landing",
+      "legal",
       "navigation",
       "settings",
       "vocabulary",
@@ -293,6 +302,9 @@ i18n
       lookupLocalStorage: "uiLanguage",
       caches: ["localStorage"],
     },
+
+    // Allow returning arrays/objects from translations
+    returnObjects: true,
 
     interpolation: {
       escapeValue: false, // React already escapes

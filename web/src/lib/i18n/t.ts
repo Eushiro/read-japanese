@@ -11,27 +11,30 @@
 
 import i18n from "./config";
 
-type TranslationParams = Record<string, string | number>;
+type TranslationParams = Record<string, string | number | boolean>;
 
 /**
  * Translate a key with optional interpolation params
  * @param key - Namespaced key like 'common.nav.home' or 'dashboard.welcome'
  * @param params - Optional interpolation values like { name: 'John' }
+ *
+ * For arrays/objects, use returnObjects: true and specify the type:
+ *   t<string[]>('legal.privacy.sections.items', { returnObjects: true })
  */
-export function t(key: string, params?: TranslationParams): string {
+export function t<T = string>(key: string, params?: TranslationParams): T {
   // Split namespace from the rest of the key
   // e.g., 'common.nav.home' -> namespace='common', restKey='nav.home'
   const dotIndex = key.indexOf(".");
 
   if (dotIndex === -1) {
     // No namespace specified, use 'common' as default
-    return i18n.t(key, { ns: "common", ...params }) as string;
+    return i18n.t(key, { ns: "common", ...params }) as T;
   }
 
   const namespace = key.substring(0, dotIndex);
   const restKey = key.substring(dotIndex + 1);
 
-  return i18n.t(restKey, { ns: namespace, ...params }) as string;
+  return i18n.t(restKey, { ns: namespace, ...params }) as T;
 }
 
 /**

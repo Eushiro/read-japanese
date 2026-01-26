@@ -1,0 +1,153 @@
+{
+  "backToHome": "Retour à l'accueil",
+  "lastUpdated": "Dernière mise à jour : {{date}}",
+  "privacy": {
+    "title": "Politique de confidentialité",
+    "sections": {
+      "infoCollect": {
+        "title": "1. Informations que nous collectons",
+        "intro": "Nous collectons les informations que vous nous fournissez directement lorsque vous :",
+        "items": [
+          "Créez un compte (adresse e-mail, nom)",
+          "Utilisez nos fonctionnalités d'apprentissage (vocabulaire, flashcards, progression)",
+          "Souscrivez aux fonctionnalités premium (informations de paiement via Stripe)",
+          "Nous contactez pour obtenir de l'aide"
+        ]
+      },
+      "howWeUse": {
+        "title": "2. Comment nous utilisons vos informations",
+        "intro": "Nous utilisons les informations collectées pour :",
+        "items": [
+          "Fournir, maintenir et améliorer nos services",
+          "Personnaliser votre expérience d'apprentissage avec des fonctionnalités IA",
+          "Traiter les transactions et envoyer les informations associées",
+          "Suivre votre progression et adapter les niveaux de difficulté",
+          "Envoyer des avis techniques, des mises à jour et des messages d'assistance"
+        ]
+      },
+      "aiProcessing": {
+        "title": "3. IA et traitement des données",
+        "intro": "Notre plateforme utilise l'IA pour améliorer votre expérience d'apprentissage. Cela comprend :",
+        "items": [
+          "Générer des phrases et des flashcards personnalisées",
+          "Évaluer vos exercices d'écriture",
+          "Adapter la difficulté du contenu à votre niveau",
+          "Créer des prononciations audio par synthèse vocale"
+        ],
+        "footer": "Vos données d'apprentissage peuvent être traitées par des fournisseurs d'IA tiers (OpenRouter, Google Gemini) pour fournir ces fonctionnalités. Nous n'utilisons pas vos données personnelles pour entraîner des modèles d'IA."
+      },
+      "dataSharing": {
+        "title": "4. Partage des données",
+        "intro": "Nous pouvons partager vos informations avec :",
+        "items": [
+          { "name": "Stripe", "desc": "pour le traitement des paiements" },
+          { "name": "Clerk", "desc": "pour l'authentification" },
+          { "name": "PostHog", "desc": "pour l'analyse produit (anonymisé)" },
+          { "name": "Sentry", "desc": "pour le suivi des erreurs (anonymisé)" },
+          { "name": "Fournisseurs d'IA", "desc": "pour générer du contenu d'apprentissage" }
+        ],
+        "footer": "Nous ne vendons pas vos informations personnelles à des tiers."
+      },
+      "dataRetention": {
+        "title": "5. Conservation des données",
+        "content": "Nous conservons votre compte et vos données d'apprentissage tant que votre compte est actif. Vous pouvez demander la suppression de votre compte et des données associées à tout moment en nous contactant."
+      },
+      "security": {
+        "title": "6. Sécurité",
+        "content": "Nous mettons en œuvre des mesures de sécurité conformes aux normes de l'industrie pour protéger vos données, notamment des connexions chiffrées (HTTPS), une authentification sécurisée et des contrôles d'accès. Cependant, aucune méthode de transmission sur Internet n'est sécurisée à 100%."
+      },
+      "yourRights": {
+        "title": "7. Vos droits",
+        "intro": "Selon votre localisation, vous pouvez avoir le droit de :",
+        "items": [
+          "Accéder aux données personnelles que nous détenons sur vous",
+          "Demander la correction de données inexactes",
+          "Demander la suppression de vos données",
+          "Vous opposer au traitement de vos données ou le limiter",
+          "Exporter vos données dans un format portable"
+        ]
+      },
+      "cookies": {
+        "title": "8. Cookies et suivi",
+        "content": "Nous utilisons des cookies essentiels pour l'authentification et la gestion des sessions. Nous utilisons également des cookies d'analyse (PostHog) pour comprendre comment les utilisateurs interagissent avec notre plateforme. Vous pouvez contrôler les préférences de cookies via les paramètres de votre navigateur."
+      },
+      "changes": {
+        "title": "9. Modifications de cette politique",
+        "content": "Nous pouvons mettre à jour cette politique de confidentialité de temps à autre. Nous vous informerons de tout changement en publiant la nouvelle politique sur cette page et en mettant à jour la date de « Dernière mise à jour »."
+      }
+    }
+  },
+  "terms": {
+    "title": "Conditions d'utilisation",
+    "sections": {
+      "acceptance": {
+        "title": "1. Acceptation des conditions",
+        "content": "En accédant ou en utilisant {{brandName}}, vous acceptez d'être lié par ces Conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser notre service."
+      },
+      "description": {
+        "title": "2. Description du service",
+        "content": "{{brandName}} est une plateforme d'apprentissage des langues alimentée par l'IA qui fournit des outils de construction de vocabulaire, de flashcards, de pratique de lecture et de préparation aux examens pour les apprenants de japonais, d'anglais et de français."
+      },
+      "accounts": {
+        "title": "3. Comptes utilisateur",
+        "intro": "Pour utiliser notre service, vous devez :",
+        "items": [
+          "Créer un compte avec des informations exactes",
+          "Avoir au moins 13 ans (ou avoir le consentement parental)",
+          "Garder vos identifiants de compte en sécurité",
+          "Nous informer immédiatement de tout accès non autorisé"
+        ]
+      },
+      "billing": {
+        "title": "4. Abonnement et facturation",
+        "intro": "{{brandName}} propose des niveaux d'abonnement gratuit et premium :",
+        "items": [
+          "Le niveau gratuit comprend des crédits mensuels limités",
+          "Les abonnements premium sont facturés mensuellement ou annuellement",
+          "Vous pouvez annuler votre abonnement à tout moment",
+          "Les remboursements sont traités selon notre politique de remboursement"
+        ]
+      },
+      "acceptableUse": {
+        "title": "5. Utilisation acceptable",
+        "intro": "Vous acceptez de ne pas :",
+        "items": [
+          "Utiliser le service à des fins illégales",
+          "Tenter d'accéder de manière non autorisée à nos systèmes",
+          "Interférer avec ou perturber le service",
+          "Utiliser des outils automatisés pour extraire des données",
+          "Partager votre compte avec d'autres personnes",
+          "Soumettre du contenu nuisible, offensant ou violant les droits d'autrui"
+        ]
+      },
+      "aiContent": {
+        "title": "6. Contenu généré par l'IA",
+        "content": "Notre service utilise l'IA pour générer du contenu d'apprentissage, y compris des phrases, des flashcards et des retours. Bien que nous visions l'exactitude, le contenu généré par l'IA peut contenir des erreurs. Les utilisateurs doivent vérifier les informations critiques de manière indépendante. Nous ne sommes pas responsables des décisions prises sur la base du contenu généré par l'IA."
+      },
+      "ip": {
+        "title": "7. Propriété intellectuelle",
+        "content": "Tout le contenu sur {{brandName}}, y compris les textes, graphiques, logos et logiciels, appartient à {{brandName}} ou à ses concédants et est protégé par les lois sur la propriété intellectuelle. Vous ne pouvez pas reproduire, distribuer ou créer des œuvres dérivées sans notre permission."
+      },
+      "userContent": {
+        "title": "8. Contenu utilisateur",
+        "content": "Vous conservez la propriété du contenu que vous soumettez (comme les phrases d'exercice). En soumettant du contenu, vous nous accordez une licence pour l'utiliser afin de fournir et d'améliorer nos services. Vous êtes responsable de vous assurer que vous avez les droits sur tout contenu que vous soumettez."
+      },
+      "disclaimer": {
+        "title": "9. Exclusion de garanties",
+        "content": "{{brandName}} est fourni « tel quel » sans garantie d'aucune sorte. Nous ne garantissons pas que le service sera ininterrompu, sans erreur, ou qu'il répondra à vos objectifs d'apprentissage spécifiques. Nous ne garantissons pas la réussite aux examens ni des résultats d'apprentissage spécifiques."
+      },
+      "liability": {
+        "title": "10. Limitation de responsabilité",
+        "content": "Dans toute la mesure permise par la loi, {{brandName}} ne sera pas responsable des dommages indirects, accessoires, spéciaux ou consécutifs découlant de votre utilisation du service."
+      },
+      "changes": {
+        "title": "11. Modifications des conditions",
+        "content": "Nous pouvons modifier ces conditions à tout moment. Nous informerons les utilisateurs des changements importants par e-mail ou notification dans l'application. L'utilisation continue du service après les modifications constitue une acceptation des nouvelles conditions."
+      },
+      "termination": {
+        "title": "12. Résiliation",
+        "content": "Nous pouvons suspendre ou résilier votre compte si vous violez ces conditions. Vous pouvez également fermer votre compte à tout moment. À la résiliation, votre droit d'utiliser le service cessera immédiatement."
+      }
+    }
+  }
+}
