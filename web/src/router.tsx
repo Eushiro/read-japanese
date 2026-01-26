@@ -148,6 +148,7 @@ function Navigation() {
   // Links visible to everyone (logged-out users see preview dashboard)
   const publicLinks = [
     { to: "/dashboard", labelKey: "common.nav.home", icon: Home },
+    { to: "/learn", labelKey: "common.nav.learn", icon: GraduationCap },
     { to: "/library", labelKey: "common.nav.library", icon: BookOpen },
     { to: "/pricing", labelKey: "common.nav.pricing", icon: CreditCard },
   ] as const;

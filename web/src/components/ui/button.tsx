@@ -55,6 +55,19 @@ const buttonVariants = cva(
           "hover:shadow-[0_0_30px_rgba(249,115,22,0.3)]",
           "text-orange-600 dark:text-white transition-all duration-300"
         ),
+        // Glass variant for toggle buttons (inactive state)
+        glass: cn(
+          "relative overflow-hidden bg-white/10 border border-white/20",
+          "hover:bg-white/15 hover:border-white/30",
+          "text-foreground-muted hover:text-foreground transition-all duration-300"
+        ),
+        // Glass active variant for toggle buttons (selected state)
+        "glass-active": cn(
+          "relative overflow-hidden bg-orange-500/20 border border-orange-500/40",
+          "hover:bg-orange-500/30 hover:border-orange-500/60",
+          "hover:shadow-[0_0_30px_rgba(249,115,22,0.3)]",
+          "text-orange-600 dark:text-white transition-all duration-300"
+        ),
       },
       size: {
         default: "h-10 px-5 py-2.5",

@@ -221,7 +221,7 @@ export function PracticePage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-6xl flex-1 flex flex-col overflow-y-auto">
+      <div className="container mx-auto px-4 sm:px-6 pt-6 pb-8 max-w-6xl flex-1 flex flex-col overflow-y-auto">
         {vocabulary === undefined ? (
           // Loading skeleton for word grid
           <div>
@@ -273,51 +273,39 @@ export function PracticePage() {
               {/* Language Filter - only show if multiple languages */}
               {showLanguageFilter && (
                 <div className="flex gap-2">
-                  <button
+                  <Button
+                    variant={languageFilter === "all" ? "glass-active" : "glass"}
+                    size="sm"
                     onClick={() => setLanguageFilter("all")}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      languageFilter === "all"
-                        ? "bg-accent text-white"
-                        : "bg-muted text-foreground-muted hover:text-foreground"
-                    }`}
                   >
                     {t("practice.wordSelection.all")}
-                  </button>
+                  </Button>
                   {availableLanguages.includes("japanese") && (
-                    <button
+                    <Button
+                      variant={languageFilter === "japanese" ? "glass-active" : "glass"}
+                      size="sm"
                       onClick={() => setLanguageFilter("japanese")}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                        languageFilter === "japanese"
-                          ? "bg-accent text-white"
-                          : "bg-muted text-foreground-muted hover:text-foreground"
-                      }`}
                     >
                       {t("practice.wordSelection.japanese")}
-                    </button>
+                    </Button>
                   )}
                   {availableLanguages.includes("english") && (
-                    <button
+                    <Button
+                      variant={languageFilter === "english" ? "glass-active" : "glass"}
+                      size="sm"
                       onClick={() => setLanguageFilter("english")}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                        languageFilter === "english"
-                          ? "bg-accent text-white"
-                          : "bg-muted text-foreground-muted hover:text-foreground"
-                      }`}
                     >
                       {t("practice.wordSelection.english")}
-                    </button>
+                    </Button>
                   )}
                   {availableLanguages.includes("french") && (
-                    <button
+                    <Button
+                      variant={languageFilter === "french" ? "glass-active" : "glass"}
+                      size="sm"
                       onClick={() => setLanguageFilter("french")}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                        languageFilter === "french"
-                          ? "bg-accent text-white"
-                          : "bg-muted text-foreground-muted hover:text-foreground"
-                      }`}
                     >
                       {t("practice.wordSelection.french")}
-                    </button>
+                    </Button>
                   )}
                 </div>
               )}

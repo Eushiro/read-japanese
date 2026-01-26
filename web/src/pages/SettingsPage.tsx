@@ -381,27 +381,27 @@ export function SettingsPage() {
                     </label>
                     <div className="flex gap-2">
                       <Button
-                        variant={theme === "light" ? "default" : "outline"}
+                        variant={theme === "light" ? "glass-active" : "glass"}
                         onClick={() => setTheme("light")}
                         className="flex-1"
                       >
-                        <Sun className="w-4 h-4 mr-2" />
+                        <Sun className="w-4 h-4" />
                         {t("settings.appearance.light")}
                       </Button>
                       <Button
-                        variant={theme === "dark" ? "default" : "outline"}
+                        variant={theme === "dark" ? "glass-active" : "glass"}
                         onClick={() => setTheme("dark")}
                         className="flex-1"
                       >
-                        <Moon className="w-4 h-4 mr-2" />
+                        <Moon className="w-4 h-4" />
                         {t("settings.appearance.dark")}
                       </Button>
                       <Button
-                        variant={theme === "system" ? "default" : "outline"}
+                        variant={theme === "system" ? "glass-active" : "glass"}
                         onClick={() => setTheme("system")}
                         className="flex-1"
                       >
-                        <Monitor className="w-4 h-4 mr-2" />
+                        <Monitor className="w-4 h-4" />
                         {t("settings.appearance.system")}
                       </Button>
                     </div>

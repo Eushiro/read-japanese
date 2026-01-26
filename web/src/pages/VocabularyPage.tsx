@@ -513,7 +513,7 @@ export function VocabularyPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="flex-shrink-0 pb-3">
+      <div className="flex-shrink-0 pt-2 pb-3">
         <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
