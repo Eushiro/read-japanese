@@ -1,4 +1,6 @@
 import { Link } from "@tanstack/react-router";
+
+import { Footer } from "@/components/Footer";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
   ArrowRight,
@@ -27,7 +29,7 @@ export function LandingPage() {
   const t = useT();
 
   return (
-    <div className="min-h-screen bg-black overflow-hidden">
+    <div className="min-h-screen overflow-hidden">
       {/* Hero Section */}
       <HeroSection isAuthenticated={isAuthenticated} t={t} />
 
@@ -46,22 +48,7 @@ export function LandingPage() {
       {/* CTA Section */}
       <CTASection isAuthenticated={isAuthenticated} t={t} />
 
-      {/* Footer */}
-      <footer className="py-10 border-t border-white/5">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/40">
-            <p>{t("landing.footer.tagline")}</p>
-            <div className="flex items-center gap-6">
-              <Link to="/privacy" className="hover:text-white/60 transition-colors">
-                {t("landing.footer.privacy")}
-              </Link>
-              <Link to="/terms" className="hover:text-white/60 transition-colors">
-                {t("landing.footer.terms")}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

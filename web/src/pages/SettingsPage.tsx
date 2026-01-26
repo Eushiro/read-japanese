@@ -1,4 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+
+import { Footer } from "@/components/Footer";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import {
@@ -1337,6 +1339,8 @@ export function SettingsPage() {
           </section>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
