@@ -49,8 +49,6 @@ export function LandingPage() {
 
       {/* CTA Section */}
       <CTASection isAuthenticated={isAuthenticated} t={t} />
-
-      <Footer />
     </div>
   );
 }
@@ -157,18 +155,6 @@ function HeroSection({
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Badge - slides down */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
-          >
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-medium text-white/80 backdrop-blur-sm">
-              <Sparkles className="w-4 h-4 text-orange-400" />
-              {t("landing.hero.tagline")}
-            </span>
-          </motion.div>
-
           {/* Title - with animated exam name on separate line */}
           <motion.div
             className="mt-8"
@@ -177,7 +163,7 @@ function HeroSection({
             transition={{ duration: 0.8, delay: 0.2, ease: [0.19, 1, 0.22, 1] }}
           >
             <h1
-              className="text-[clamp(2rem,8vw,6rem)] font-semibold leading-[0.95] tracking-tight text-white whitespace-nowrap"
+              className="text-[clamp(2rem,8vw,6rem)] font-semibold leading-[0.95] tracking-tight text-foreground whitespace-nowrap"
               style={{ fontFamily: "var(--font-display)" }}
             >
               {t("landing.hero.title")}
@@ -203,7 +189,7 @@ function HeroSection({
 
           {/* Subtitle - fade up */}
           <motion.p
-            className="mt-6 text-xl text-white/50 max-w-2xl mx-auto leading-relaxed"
+            className="mt-6 text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5, ease: [0.19, 1, 0.22, 1] }}
@@ -271,8 +257,10 @@ function HeroSection({
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           className="flex flex-col items-center gap-2"
         >
-          <span className="text-xs text-white/40 uppercase tracking-wider">{t("landing.hero.scroll")}</span>
-          <ChevronDown className="w-5 h-5 text-white/40" />
+          <span className="text-xs text-muted-foreground uppercase tracking-wider">
+            {t("landing.hero.scroll")}
+          </span>
+          <ChevronDown className="w-5 h-5 text-muted-foreground" />
         </motion.div>
       </motion.div>
     </section>
@@ -298,12 +286,14 @@ function ExamsSection({ t }: { t: ReturnType<typeof useT> }) {
           transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
         >
           <h2
-            className="text-4xl sm:text-5xl font-semibold text-white mb-4"
+            className="text-4xl sm:text-5xl font-semibold text-foreground mb-4"
             style={{ fontFamily: "var(--font-display)" }}
           >
             {t("landing.exams.title")}
           </h2>
-          <p className="text-white/50 text-lg max-w-2xl mx-auto">{t("landing.exams.subtitle")}</p>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            {t("landing.exams.subtitle")}
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -331,11 +321,7 @@ function ExamsSection({ t }: { t: ReturnType<typeof useT> }) {
             <LanguageExamCard
               languageName={t("landing.exams.english")}
               tagline={t("landing.exams.englishTagline")}
-              exams={[
-                t("landing.exams.toefl"),
-                t("landing.exams.sat"),
-                t("landing.exams.gre"),
-              ]}
+              exams={[t("landing.exams.toefl"), t("landing.exams.sat"), t("landing.exams.gre")]}
               gradient="from-blue-500/20 via-blue-600/10 to-transparent"
               accentColor="text-blue-400"
               borderColor="border-blue-500/30 hover:border-blue-500/50"
@@ -349,11 +335,7 @@ function ExamsSection({ t }: { t: ReturnType<typeof useT> }) {
             <LanguageExamCard
               languageName={t("landing.exams.french")}
               tagline={t("landing.exams.frenchTagline")}
-              exams={[
-                t("landing.exams.delf"),
-                t("landing.exams.dalf"),
-                t("landing.exams.tcf"),
-              ]}
+              exams={[t("landing.exams.delf"), t("landing.exams.dalf"), t("landing.exams.tcf")]}
               gradient="from-purple-500/20 via-purple-600/10 to-transparent"
               accentColor="text-purple-400"
               borderColor="border-purple-500/30 hover:border-purple-500/50"
@@ -431,7 +413,13 @@ const examColors: Record<ContentLanguage, string[]> = {
   french: ["#e879f9", "#c084fc", "#a855f7"], // fuchsia → violet (boosted)
 };
 
-function DecorativePattern({ language, accentColor }: { language: ContentLanguage; accentColor: string }) {
+function DecorativePattern({
+  language,
+  accentColor,
+}: {
+  language: ContentLanguage;
+  accentColor: string;
+}) {
   const colorClass = accentColor.replace("text-", "");
 
   if (language === "japanese") {
@@ -560,14 +548,14 @@ function LanguageExamCard({
           >
             <Icon className={`w-5 h-5 ${accentColor}`} />
           </div>
-          <h3 className="text-2xl font-semibold text-white">{languageName}</h3>
+          <h3 className="text-2xl font-semibold text-foreground">{languageName}</h3>
         </div>
 
         {/* Stat */}
         <p className={`text-sm font-medium ${accentColor} mb-1 ml-12`}>{stat}</p>
 
         {/* Tagline */}
-        <p className="text-sm text-white/50 mb-4">{tagline}</p>
+        <p className="text-sm text-muted-foreground mb-4">{tagline}</p>
 
         {/* Skills icons */}
         <div className="flex gap-2 mb-5">
@@ -580,7 +568,7 @@ function LanguageExamCard({
                 className={`p-1.5 rounded-full ${
                   isActive
                     ? `${accentColor.replace("text-", "bg-")}/20 ${accentColor}`
-                    : "bg-white/5 text-white/20"
+                    : "bg-white/5 text-muted-foreground/40"
                 } transition-colors`}
                 title={skill.charAt(0).toUpperCase() + skill.slice(1)}
               >
@@ -642,12 +630,12 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
           transition={{ duration: 0.8 }}
         >
           <h2
-            className="text-4xl sm:text-5xl font-semibold text-white mb-4"
+            className="text-4xl sm:text-5xl font-semibold text-foreground mb-4"
             style={{ fontFamily: "var(--font-display)" }}
           >
             {t("landing.comparison.title")}
           </h2>
-          <p className="text-white/50 text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             {t("landing.comparison.subtitle")}
           </p>
         </motion.div>
@@ -685,7 +673,7 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
                     <div className="w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 text-orange-400" />
                     </div>
-                    <span className="text-white/80">{item}</span>
+                    <span className="text-foreground/80">{item}</span>
                   </motion.li>
                 ))}
               </ul>
@@ -699,8 +687,8 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
           >
-            <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10">
-              <h3 className="text-xl font-semibold text-white/40 mb-6">
+            <div className="p-8 rounded-3xl bg-white/[0.02] border border-border">
+              <h3 className="text-xl font-semibold text-muted-foreground mb-6">
                 {t("landing.comparison.others")}
               </h3>
               <ul className="space-y-4">
@@ -721,7 +709,7 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
                     <div className="w-5 h-5 shrink-0 mt-0.5 flex items-center justify-center">
                       <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
                     </div>
-                    <span className="text-white/40">{item}</span>
+                    <span className="text-muted-foreground">{item}</span>
                   </motion.li>
                 ))}
               </ul>
@@ -803,12 +791,14 @@ function LearningLoopSection({ t }: { t: ReturnType<typeof useT> }) {
           transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
         >
           <h2
-            className="text-4xl sm:text-5xl font-semibold text-white mb-4"
+            className="text-4xl sm:text-5xl font-semibold text-foreground mb-4"
             style={{ fontFamily: "var(--font-display)" }}
           >
             {t("landing.loop.title")}
           </h2>
-          <p className="text-white/50 text-lg max-w-2xl mx-auto">{t("landing.loop.subtitle")}</p>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            {t("landing.loop.subtitle")}
+          </p>
         </motion.div>
 
         {/* Connected cards with flowing line */}
@@ -816,7 +806,7 @@ function LearningLoopSection({ t }: { t: ReturnType<typeof useT> }) {
           {/* Animated gradient line */}
           <motion.div className="hidden lg:block absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 overflow-hidden">
             <motion.div
-              className="h-full w-[200%] bg-gradient-to-r from-yellow-500/50 via-orange-500/50 via-purple-500/50 to-pink-500/50"
+              className="h-full w-[200%] bg-gradient-to-r from-yellow-500/20 via-orange-500/20 via-purple-500/20 to-pink-500/20 dark:from-yellow-500/50 dark:via-orange-500/50 dark:via-purple-500/50 dark:to-pink-500/50"
               animate={{ x: ["-50%", "0%"] }}
               transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
             />
@@ -862,8 +852,8 @@ function LearningLoopSection({ t }: { t: ReturnType<typeof useT> }) {
                         <Icon className={`w-7 h-7 ${colors.text}`} />
                       </motion.div>
 
-                      <h3 className="text-lg font-semibold text-white mb-2">{step.title}</h3>
-                      <p className="text-sm text-white/50 leading-relaxed">{step.desc}</p>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">{step.title}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -896,12 +886,12 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
           transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
         >
           <h2
-            className="text-4xl sm:text-5xl font-semibold text-white mb-4"
+            className="text-4xl sm:text-5xl font-semibold text-foreground mb-4"
             style={{ fontFamily: "var(--font-display)" }}
           >
             {t("landing.features.title")}
           </h2>
-          <p className="text-white/50 text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             {t("landing.features.subtitle")}
           </p>
         </motion.div>
@@ -1067,10 +1057,10 @@ function BentoCard({
           <Icon className={`${large ? "w-8 h-8" : "w-6 h-6"} ${iconColor}`} />
         </motion.div>
 
-        <h3 className={`${large ? "text-xl" : "text-lg"} font-semibold text-white mb-2`}>
+        <h3 className={`${large ? "text-xl" : "text-lg"} font-semibold text-foreground mb-2`}>
           {title}
         </h3>
-        <p className={`${large ? "text-base" : "text-sm"} text-white/50 leading-relaxed`}>
+        <p className={`${large ? "text-base" : "text-sm"} text-muted-foreground leading-relaxed`}>
           {description}
         </p>
       </div>
@@ -1090,7 +1080,7 @@ function CTASection({
   t: ReturnType<typeof useT>;
 }) {
   return (
-    <section className="py-32 relative overflow-hidden">
+    <section className="pt-32 relative overflow-hidden">
       {/* Animated background */}
       <div className="absolute inset-0">
         <motion.div
@@ -1141,12 +1131,12 @@ function CTASection({
           transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
         >
           <h2
-            className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-white mb-6"
+            className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-foreground mb-6"
             style={{ fontFamily: "var(--font-display)" }}
           >
             {t("landing.cta.title")}
           </h2>
-          <p className="text-white/50 text-xl mb-10 max-w-xl mx-auto">
+          <p className="text-muted-foreground text-xl mb-10 max-w-xl mx-auto">
             {t("landing.cta.subtitle")}
           </p>
 
@@ -1174,8 +1164,13 @@ function CTASection({
             </SignInButton>
           )}
 
-          <p className="text-sm text-white/30 mt-6">{t("landing.cta.noCreditCard")}</p>
+          <p className="text-sm text-muted-foreground/50 mt-6">{t("landing.cta.noCreditCard")}</p>
         </motion.div>
+      </div>
+
+      {/* Footer overlaid on the animated background */}
+      <div className="relative z-10 mt-16">
+        <Footer />
       </div>
     </section>
   );
