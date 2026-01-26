@@ -470,24 +470,17 @@ export function FlashcardsPage() {
       <PremiumBackground colorScheme="cool" />
 
       {/* Header Section */}
-      <div className="relative flex-shrink-0 pt-6 pb-0">
+      <div className="relative flex-shrink-0 pb-2">
         <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
           <div>
-            {/* Icon + Badge Row */}
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-xl bg-blue-500/20">
-                <Brain className="w-5 h-5 text-blue-400" />
-              </div>
-              <span className="text-sm font-medium text-blue-400 uppercase tracking-wider">
-                {t("flashcards.hero.badge")}
-              </span>
-            </div>
-
             {/* Title Row */}
-            <div className="flex items-center justify-between gap-4 mb-2">
+            <div className="flex items-center justify-between gap-4 mb-1">
               <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-blue-500/20">
+                  <Brain className="w-5 h-5 text-blue-400" />
+                </div>
                 <h1
-                  className="text-3xl sm:text-4xl font-bold text-foreground"
+                  className="text-2xl font-bold text-foreground"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {t("flashcards.hero.title")}
@@ -528,7 +521,7 @@ export function FlashcardsPage() {
             </div>
 
             {/* Subtitle */}
-            <p className="text-foreground-muted text-lg">{t("flashcards.hero.subtitle")}</p>
+            <p className="text-foreground-muted">{t("flashcards.hero.subtitle")}</p>
           </div>
         </div>
       </div>

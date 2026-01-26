@@ -494,8 +494,26 @@ export function VocabularyPage() {
       {/* Animated background */}
       <PremiumBackground />
 
+      {/* Header Section */}
+      <div className="relative flex-shrink-0 pb-2">
+        <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="p-2 rounded-xl bg-amber-500/20">
+              <BookmarkCheck className="w-5 h-5 text-amber-500" />
+            </div>
+            <h1
+              className="text-2xl font-bold text-foreground"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t("vocabulary.title")}
+            </h1>
+          </div>
+          <p className="text-foreground-muted">{t("vocabulary.yourCollection")}</p>
+        </div>
+      </div>
+
       {/* Search and Filters */}
-      <div className="flex-shrink-0 pt-4 pb-3">
+      <div className="flex-shrink-0 pb-3">
         <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
@@ -642,7 +660,7 @@ export function VocabularyPage() {
       </div>
 
       {/* Main content area */}
-      <div className="container mx-auto px-4 sm:px-6 py-6 max-w-6xl flex-1 overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 pt-2 pb-6 max-w-6xl flex-1 overflow-hidden">
         <div className="flex gap-6 h-full">
           {/* Deck Panel - sticky at top of scroll container */}
           <div className="hidden lg:block sticky top-0 self-start">

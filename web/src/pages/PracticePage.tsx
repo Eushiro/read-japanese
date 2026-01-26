@@ -203,26 +203,21 @@ export function PracticePage() {
       {/* Animated background */}
       <PremiumBackground colorScheme="purple" />
 
-      {/* Hero Section */}
-      <div className="relative overflow-hidden pt-8 pb-12 flex-shrink-0">
+      {/* Header Section */}
+      <div className="relative flex-shrink-0 pb-2">
         <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-xl bg-purple-500/20">
-                <PenLine className="w-5 h-5 text-purple-400" />
-              </div>
-              <span className="text-sm font-medium text-purple-400 uppercase tracking-wider">
-                {t("practice.hero.badge")}
-              </span>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="p-2 rounded-xl bg-purple-500/20">
+              <PenLine className="w-5 h-5 text-purple-400" />
             </div>
             <h1
-              className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
+              className="text-2xl font-bold text-foreground"
               style={{ fontFamily: "var(--font-display)" }}
             >
               {t("practice.hero.title")}
             </h1>
-            <p className="text-foreground-muted text-lg">{t("practice.hero.subtitle")}</p>
           </div>
+          <p className="text-foreground-muted">{t("practice.hero.subtitle")}</p>
         </div>
       </div>
 
