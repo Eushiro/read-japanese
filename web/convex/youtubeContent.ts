@@ -214,6 +214,28 @@ export const remove = mutation({
 });
 
 /**
+ * Remove multiple videos by their Convex IDs (batch delete)
+ */
+export const removeByIds = mutation({
+  args: {
+    ids: v.array(v.id("youtubeContent")),
+  },
+  handler: async (ctx, args) => {
+    let deletedCount = 0;
+
+    for (const id of args.ids) {
+      const video = await ctx.db.get(id);
+      if (video) {
+        await ctx.db.delete(id);
+        deletedCount++;
+      }
+    }
+
+    return { deletedCount };
+  },
+});
+
+/**
  * Remove a video by its videoId string
  */
 export const removeByVideoId = mutation({

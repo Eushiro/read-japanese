@@ -14,6 +14,7 @@ import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,9 +64,11 @@ export function VideosPage() {
   const [search, setSearch] = useState("");
   const [languageFilter, setLanguageFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedIds, setSelectedIds] = useState<Set<Id<"youtubeContent">>>(new Set());
 
   const videos = useQuery(api.youtubeContent.list, {});
   const removeVideo = useMutation(api.youtubeContent.remove);
+  const removeVideos = useMutation(api.youtubeContent.removeByIds);
 
   // Get video question stats (difficulty levels)
   const questionStats = useQuery(api.videoQuestions.listAllStats, {});
@@ -106,6 +109,34 @@ export function VideosPage() {
   const handleDelete = async (id: Id<"youtubeContent">) => {
     if (confirm("Are you sure you want to delete this video?")) {
       await removeVideo({ id });
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} video${selectedIds.size > 1 ? "s" : ""}?`)) return;
+
+    await removeVideos({ ids: Array.from(selectedIds) });
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (id: Id<"youtubeContent">) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredVideos.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredVideos.map((v) => v._id)));
     }
   };
 
@@ -184,11 +215,28 @@ export function VideosPage() {
         </Select>
       </div>
 
-      {/* Stats */}
-      <div className="flex gap-4 text-sm text-foreground-muted">
-        <span>Total: {videos?.length ?? 0}</span>
-        <span>Showing: {filteredVideos.length}</span>
-        <span className="text-amber-500">Needs work: {needsWorkCount}</span>
+      {/* Stats and bulk actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-4 text-sm text-foreground-muted">
+          <span>Total: {videos?.length ?? 0}</span>
+          <span>Showing: {filteredVideos.length}</span>
+          <span className="text-amber-500">Needs work: {needsWorkCount}</span>
+        </div>
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-foreground-muted">
+              {selectedIds.size} selected
+            </span>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteSelected}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Selected
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Table */}
@@ -203,6 +251,13 @@ export function VideosPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={filteredVideos.length > 0 && selectedIds.size === filteredVideos.length}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
                 <TableHead className="w-[280px]">Title</TableHead>
                 <TableHead>Language</TableHead>
                 <TableHead>Level</TableHead>
@@ -214,7 +269,7 @@ export function VideosPage() {
             <TableBody>
               {filteredVideos.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-foreground-muted">
+                  <TableCell colSpan={7} className="text-center py-8 text-foreground-muted">
                     No videos found
                   </TableCell>
                 </TableRow>
@@ -225,6 +280,13 @@ export function VideosPage() {
 
                   return (
                     <TableRow key={video._id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(video._id)}
+                          onCheckedChange={() => toggleSelect(video._id)}
+                          aria-label={`Select ${video.title}`}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="w-16 h-10 rounded bg-muted overflow-hidden flex-shrink-0">
