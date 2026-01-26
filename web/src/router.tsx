@@ -40,6 +40,7 @@ import { GeneratePage } from "@/pages/GeneratePage";
 import { LandingPage } from "@/pages/LandingPage";
 import { LearnPage } from "@/pages/LearnPage";
 import { LibraryPage } from "@/pages/LibraryPage";
+import { NotFoundPage } from "@/pages/NotFoundPage";
 import { PlacementTestPage } from "@/pages/PlacementTestPage";
 import { PricingPage } from "@/pages/PricingPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
@@ -55,6 +56,7 @@ import { VideoQuizPage } from "@/pages/VideoQuizPage";
 // Root layout
 const rootRoute = createRootRoute({
   component: RootLayout,
+  notFoundComponent: NotFoundPage,
 });
 
 function RootLayout() {
