@@ -913,7 +913,7 @@ function VocabularyCard({
   if (compact) {
     return (
       <div
-        className="px-4 py-3 rounded-lg bg-surface/80 dark:bg-white/[0.03] backdrop-blur-md border border-border dark:border-white/10 hover:border-foreground-muted/30 dark:hover:border-white/20 dark:hover:shadow-[0_0_15px_rgba(255,132,0,0.08)] transition-all duration-200 animate-fade-in-up cursor-pointer"
+        className="px-4 py-3 rounded-lg bg-surface/80 dark:bg-white/[0.03] backdrop-blur-md border border-border dark:border-white/10 hover:border-foreground-muted/30 dark:hover:border-white/20 dark:hover:shadow-[0_0_15px_rgba(255,132,0,0.08)] transition-all duration-200 cursor-pointer"
         style={{ animationDelay: `${delay}ms` }}
         onClick={onClick}
       >
@@ -995,7 +995,7 @@ function VocabularyCard({
 
   return (
     <div
-      className="p-5 rounded-xl bg-surface/80 dark:bg-white/[0.03] backdrop-blur-md border border-border dark:border-white/10 hover:border-foreground-muted/30 dark:hover:border-white/20 dark:hover:shadow-[0_0_20px_rgba(255,132,0,0.1)] transition-all duration-200 animate-fade-in-up cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
+      className="p-5 rounded-xl bg-surface/80 dark:bg-white/[0.03] backdrop-blur-md border border-border dark:border-white/10 hover:border-foreground-muted/30 dark:hover:border-white/20 dark:hover:shadow-[0_0_20px_rgba(255,132,0,0.1)] transition-all duration-200 cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
       style={{ animationDelay: `${delay}ms` }}
       onClick={onClick}
     >

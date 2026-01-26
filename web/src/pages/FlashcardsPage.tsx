@@ -659,7 +659,7 @@ export function FlashcardsPage() {
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-4 border-red-500/30 hover:bg-red-500/10 hover:border-red-500 transition-all ${
                       lastSelectedRating === "again"
-                        ? "ring-2 ring-red-500 bg-red-500/20 scale-95"
+                        ? "ring-2 ring-red-500 bg-red-300/30 scale-95"
                         : ""
                     }`}
                   >
@@ -675,7 +675,7 @@ export function FlashcardsPage() {
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-4 border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500 transition-all ${
                       lastSelectedRating === "hard"
-                        ? "ring-2 ring-amber-500 bg-amber-500/20 scale-95"
+                        ? "ring-2 ring-amber-500 bg-amber-300/30 scale-95"
                         : ""
                     }`}
                   >
@@ -691,7 +691,7 @@ export function FlashcardsPage() {
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-4 border-green-500/30 hover:bg-green-500/10 hover:border-green-500 transition-all ${
                       lastSelectedRating === "good"
-                        ? "ring-2 ring-green-500 bg-green-500/20 scale-95"
+                        ? "ring-2 ring-green-500 bg-green-300/30 scale-95"
                         : ""
                     }`}
                   >
@@ -707,7 +707,7 @@ export function FlashcardsPage() {
                     disabled={isTransitioning}
                     className={`flex-col h-auto py-4 border-blue-500/30 hover:bg-blue-500/10 hover:border-blue-500 transition-all ${
                       lastSelectedRating === "easy"
-                        ? "ring-2 ring-blue-500 bg-blue-500/20 scale-95"
+                        ? "ring-2 ring-blue-500 bg-blue-300/30 scale-95"
                         : ""
                     }`}
                   >
