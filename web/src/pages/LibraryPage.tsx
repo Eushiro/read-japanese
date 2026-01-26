@@ -227,7 +227,7 @@ export function LibraryPage() {
       </div>
 
       {/* Filters Section */}
-      <div className="border-b border-border">
+      <div>
         <div className="container mx-auto px-4 sm:px-6 py-3">
           <div className="flex gap-3">
             {/* Search - capped at max-w-md */}

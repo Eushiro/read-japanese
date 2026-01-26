@@ -465,7 +465,7 @@ export function VocabularyPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="border-b border-border">
+      <div>
         <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}

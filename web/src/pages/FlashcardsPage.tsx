@@ -18,12 +18,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useReviewSession } from "@/contexts/ReviewSessionContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
-import { contentLanguageMatchesUI } from "@/lib/contentLanguages";
+import { contentLanguageMatchesUI, type ContentLanguage } from "@/lib/contentLanguages";
 import type { CardState, Id, Rating } from "@/lib/convex-types";
 import { useT, useUILanguage } from "@/lib/i18n";
 
@@ -59,6 +66,38 @@ type HistoryEntry = {
   };
 };
 
+// Animated background for flashcards page
+function FlashcardsAnimatedBackground() {
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      <div
+        className="absolute w-[600px] h-[600px] rounded-full blur-[150px] opacity-40"
+        style={{
+          background: "radial-gradient(circle, #a855f7 0%, transparent 70%)",
+          top: "-15%",
+          left: "0%",
+        }}
+      />
+      <div
+        className="absolute w-[500px] h-[500px] rounded-full blur-[120px] opacity-35"
+        style={{
+          background: "radial-gradient(circle, #8b5cf6 0%, transparent 70%)",
+          top: "-5%",
+          right: "5%",
+        }}
+      />
+      <div
+        className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-25"
+        style={{
+          background: "radial-gradient(circle, #c084fc 0%, transparent 70%)",
+          top: "10%",
+          left: "25%",
+        }}
+      />
+    </div>
+  );
+}
+
 export function FlashcardsPage() {
   const { user, isAuthenticated } = useAuth();
   const { trackEvent, events } = useAnalytics();
@@ -67,29 +106,43 @@ export function FlashcardsPage() {
   const { language: uiLanguage } = useUILanguage();
   const userId = user?.id ?? "anonymous";
 
-  // Fetch user profile for primary language
+  // Fetch user profile for languages
   const userProfile = useQuery(
     api.users.getByClerkId,
     isAuthenticated && user ? { clerkId: user.id } : "skip"
   );
+  const userLanguages = (userProfile?.languages ?? []) as ContentLanguage[];
   const primaryLanguage = userProfile?.primaryLanguage;
+  const hasMultipleLanguages = userLanguages.length > 1;
+
+  // State for selected language (defaults to primaryLanguage when loaded)
+  const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(undefined);
+  const activeLanguage = selectedLanguage ?? primaryLanguage;
+
+  // Sync selectedLanguage with primaryLanguage when it loads
+  useEffect(() => {
+    if (primaryLanguage && !selectedLanguage) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional sync from async data
+      setSelectedLanguage(primaryLanguage);
+    }
+  }, [primaryLanguage, selectedLanguage]);
 
   // Check subscription for AI features
   const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
   const isPremiumUser = subscription?.tier && subscription.tier !== "free";
 
-  // Fetch due cards and stats - filtered by primary language
+  // Fetch due cards and stats - filtered by selected language
   const stats = useQuery(
     api.flashcards.getStats,
-    isAuthenticated ? { userId, language: primaryLanguage } : "skip"
+    isAuthenticated ? { userId, language: activeLanguage } : "skip"
   );
   const dueCards = useQuery(
     api.flashcards.getDue,
-    isAuthenticated ? { userId, limit: 50, language: primaryLanguage, uiLanguage } : "skip"
+    isAuthenticated ? { userId, limit: 50, language: activeLanguage, uiLanguage } : "skip"
   );
   const newCards = useQuery(
     api.flashcards.getNew,
-    isAuthenticated ? { userId, limit: 20, language: primaryLanguage, uiLanguage } : "skip"
+    isAuthenticated ? { userId, limit: 20, language: activeLanguage, uiLanguage } : "skip"
   );
 
   // Session queue - includes original cards plus requeued "Again" cards
@@ -269,6 +322,19 @@ export function FlashcardsPage() {
     setUndoneHistory([]);
   };
 
+  // Reset session when language changes
+  const handleLanguageChange = (value: string) => {
+    setSelectedLanguage(value);
+    setSessionQueue([]);
+    setCurrentIndex(0);
+    setShowAnswer(false);
+    setSessionComplete(false);
+    setReviewedCount(0);
+    setIsInitialized(false);
+    setHistory([]);
+    setUndoneHistory([]);
+  };
+
   // Undo last review
   const handleUndo = useCallback(async () => {
     if (history.length === 0) return;
@@ -432,61 +498,75 @@ export function FlashcardsPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden flex-shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-background to-violet-500/5" />
-        <div className="absolute top-0 right-1/4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl" />
-        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-4xl relative">
+    <div className="h-[calc(100vh-120px)] flex flex-col overflow-hidden">
+      {/* Animated background */}
+      <FlashcardsAnimatedBackground />
+
+      {/* Header Section */}
+      <div className="relative flex-shrink-0 pt-6 pb-0">
+        <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
           <div className="animate-fade-in-up">
+            {/* Icon + Badge Row */}
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-violet-500/20">
+              <div className="p-2 rounded-xl bg-purple-500/20">
                 <Brain className="w-5 h-5 text-purple-400" />
               </div>
-              <span className="text-sm font-semibold text-purple-400 uppercase tracking-wider">
+              <span className="text-sm font-medium text-purple-400 uppercase tracking-wider">
                 {t("flashcards.hero.badge")}
               </span>
             </div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1
-                className="text-3xl sm:text-4xl font-bold text-foreground"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {t("flashcards.hero.title")}
-              </h1>
-              {primaryLanguage && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-sm">
-                  {t(`common.languages.${primaryLanguage}`)}
+
+            {/* Title Row */}
+            <div className="flex items-center justify-between gap-4 mb-2">
+              <div className="flex items-center gap-3">
+                <h1
+                  className="text-3xl sm:text-4xl font-bold text-foreground"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("flashcards.hero.title")}
+                </h1>
+                {/* Language selector - show dropdown if multiple languages, otherwise static badge */}
+                {hasMultipleLanguages ? (
+                  <Select value={activeLanguage} onValueChange={handleLanguageChange}>
+                    <SelectTrigger className="h-8 px-3 rounded-full bg-muted border-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {userLanguages.map((lang) => (
+                        <SelectItem key={lang} value={lang}>
+                          {t(`common.languages.${lang}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : activeLanguage ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-sm">
+                    {t(`common.languages.${activeLanguage}`)}
+                  </span>
+                ) : null}
+              </div>
+              {/* Cards remaining badge */}
+              <div className="inline-flex items-center gap-2">
+                <span className="text-xl font-bold text-green-500">
+                  {sessionQueue.length - currentIndex}
                 </span>
-              )}
+                <span className="text-sm text-foreground-muted">
+                  {t("flashcards.counter.cardsLeft")}
+                </span>
+              </div>
             </div>
+
+            {/* Subtitle */}
             <p className="text-foreground-muted text-lg">{t("flashcards.hero.subtitle")}</p>
           </div>
         </div>
       </div>
 
-      {/* Stats Bar - Glass pill */}
-      <div className="bg-surface/50 backdrop-blur-md dark:bg-black/30 flex-shrink-0">
-        <div className="container mx-auto px-4 sm:px-6 py-2 max-w-4xl">
-          <div className="flex justify-center">
-            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full backdrop-blur-xl bg-white/10 dark:bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_0_20px_rgba(34,197,94,0.15)]">
-              <span className="text-2xl font-bold text-green-500">
-                {sessionQueue.length - currentIndex}
-              </span>
-              <span className="text-sm text-foreground-muted">
-                {t("flashcards.counter.cardsLeft")}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Review Area */}
-      <div className="container mx-auto px-4 sm:px-6 py-4 max-w-3xl flex-grow flex flex-col justify-center overflow-auto">
+      <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl flex-grow flex flex-col items-center overflow-hidden">
         {sessionQueue.length === 0 && isInitialized ? (
           // No cards to review
-          <div className="text-center py-20">
+          <div className="text-center py-12">
             <div className="w-20 h-20 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-6">
               <Check className="w-10 h-10 text-green-500" />
             </div>
@@ -508,7 +588,7 @@ export function FlashcardsPage() {
           </div>
         ) : sessionComplete ? (
           // Session complete
-          <div className="text-center py-20">
+          <div className="text-center py-12">
             <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
               <Sparkles className="w-10 h-10 text-accent" />
             </div>
@@ -544,7 +624,7 @@ export function FlashcardsPage() {
           </div>
         ) : currentCard ? (
           // Review card
-          <div className="space-y-6">
+          <div className="w-full space-y-4">
             {/* Undo/Redo */}
             <div className="flex items-center justify-end gap-2 text-sm text-foreground-muted">
               <button
@@ -594,9 +674,6 @@ export function FlashcardsPage() {
             {/* Rating Buttons */}
             {showAnswer && (
               <div className="space-y-3 animate-fade-in-up">
-                <p className="text-center text-sm text-foreground-muted">
-                  {t("flashcards.rating.prompt")}
-                </p>
                 <div className="grid grid-cols-4 gap-2">
                   <Button
                     variant="outline"

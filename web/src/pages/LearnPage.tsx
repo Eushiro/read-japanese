@@ -2,6 +2,7 @@ import { Link, useSearch } from "@tanstack/react-router";
 import { BookmarkCheck, Brain, GraduationCap, PenLine } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { PageSubheader } from "@/components/layout/PageSubheader";
 import { useT } from "@/lib/i18n";
 
 import { FlashcardsPage } from "./FlashcardsPage";
@@ -66,7 +67,7 @@ export function LearnPage() {
   return (
     <div className="min-h-screen">
       {/* Tab Header */}
-      <div className="sticky top-16 z-30 border-b border-border bg-background/80 backdrop-blur-xl dark:border-white/5 dark:bg-black/50">
+      <PageSubheader>
         <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
           <div className="flex items-center gap-1 py-2">
             <Link
@@ -103,7 +104,7 @@ export function LearnPage() {
             </div>
           </div>
         </div>
-      </div>
+      </PageSubheader>
 
       {/* Tab Content */}
       <div className="animate-fade-in">

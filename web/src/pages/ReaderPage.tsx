@@ -5,6 +5,7 @@ import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getAudioUrl } from "@/api/stories";
+import { PageSubheader } from "@/components/layout/PageSubheader";
 import { Paywall } from "@/components/Paywall";
 import { AudioPlayer } from "@/components/reader/AudioPlayer";
 import { ChapterView } from "@/components/reader/ChapterView";
@@ -500,7 +501,7 @@ export function ReaderPage() {
       <ReaderAnimatedBackground />
 
       {/* Sticky Header - Glass */}
-      <header className="sticky top-16 z-30 border-b border-border bg-background/80 backdrop-blur-xl dark:border-white/5 dark:bg-black/50">
+      <PageSubheader>
         <div className="container mx-auto px-4 sm:px-6 py-3 max-w-3xl">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
@@ -583,7 +584,7 @@ export function ReaderPage() {
             </div>
           )}
         </div>
-      </header>
+      </PageSubheader>
 
       {/* Main Content - Book-like reading area with glass morphism */}
       <main className="container mx-auto px-4 sm:px-6 py-8 max-w-3xl">
