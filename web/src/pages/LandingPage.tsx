@@ -34,7 +34,7 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Full-page animated background */}
-      <PremiumBackground starCount={15} animateStars />
+      <PremiumBackground starCount={15} animateStars animateOrbs />
 
       {/* Hero Section */}
       <HeroSection isAuthenticated={isAuthenticated} t={t} />
@@ -591,7 +591,7 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
                     initial={{ opacity: 0, x: -20 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
+                    transition={{ duration: 0.4, delay: 0.1 + i * 0.05 }}
                   >
                     <div className="w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 text-orange-600 dark:text-orange-400" />
@@ -627,7 +627,7 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
                     initial={{ opacity: 0, x: 20 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
+                    transition={{ duration: 0.4, delay: 0.1 + i * 0.05 }}
                   >
                     <div className="w-5 h-5 shrink-0 mt-0.5 flex items-center justify-center">
                       <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
@@ -872,7 +872,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "200px" }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             <BentoCard
@@ -889,7 +889,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "200px" }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             <BentoCard

@@ -9,6 +9,7 @@ interface PremiumBackgroundProps {
   starCount?: number;
   showOrbs?: boolean;
   animateStars?: boolean;
+  animateOrbs?: boolean;
 }
 
 // Color schemes with hex values for direct use
@@ -24,6 +25,7 @@ export function PremiumBackground({
   starCount = 8,
   showOrbs = true,
   animateStars = false,
+  animateOrbs = false,
 }: PremiumBackgroundProps) {
   const { primary, secondary } = COLOR_SCHEMES[colorScheme];
 
@@ -63,11 +65,11 @@ export function PremiumBackground({
           />
         ))}
 
-      {/* Static gradient orbs */}
+      {/* Gradient orbs */}
       {showOrbs && (
         <>
           <div
-            className="absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-20"
+            className={`absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-20 ${animateOrbs ? "animate-orb-float" : ""}`}
             style={{
               background: `radial-gradient(circle, ${primary} 0%, transparent 70%)`,
               top: "10%",
@@ -75,7 +77,7 @@ export function PremiumBackground({
             }}
           />
           <div
-            className="absolute w-[400px] h-[400px] rounded-full blur-3xl opacity-15"
+            className={`absolute w-[400px] h-[400px] rounded-full blur-3xl opacity-15 ${animateOrbs ? "animate-orb-float-alt" : ""}`}
             style={{
               background: `radial-gradient(circle, ${secondary} 0%, transparent 70%)`,
               bottom: "20%",
