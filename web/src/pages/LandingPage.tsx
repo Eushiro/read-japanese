@@ -70,6 +70,8 @@ function HeroSection({
     t("landing.hero.examName2"),
     t("landing.hero.examName3"),
     t("landing.hero.examName4"),
+    t("landing.hero.examName5"),
+    t("landing.hero.examName6"),
   ];
 
   // Rotate through exam names
