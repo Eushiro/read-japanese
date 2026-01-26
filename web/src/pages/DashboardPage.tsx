@@ -82,7 +82,7 @@ function FloatingStat({
     >
       {/* Glow effect on hover - no borders */}
       <motion.div
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
         style={{ boxShadow: styles.glow }}
       />
 
@@ -242,7 +242,7 @@ export function DashboardPage() {
         {/* Credit Alert */}
         {isAuthenticated && <CreditAlert />}
 
-        <div className="space-y-16">
+        <div className="space-y-10">
           {/* Start Studying CTA - Floating with ambient glow */}
           {isPreviewMode ? (
             <motion.div
@@ -261,7 +261,7 @@ export function DashboardPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.5 }}
-              className="text-center py-8"
+              className="text-center"
             >
               {/* Language buttons side by side */}
               <div className="flex flex-wrap justify-center gap-4">
@@ -280,7 +280,7 @@ export function DashboardPage() {
                           navigate({ to: "/placement-test", search: { language: lang } });
                         }
                       }}
-                      className={`group relative min-w-[260px] px-10 py-5 text-lg font-semibold rounded-2xl transition-all duration-300 overflow-hidden text-white backdrop-blur-md bg-gradient-to-r ${gradient} border border-white/20 shadow-xl hover:shadow-2xl hover:scale-[1.02] hover:border-white/30 active:scale-[0.98]`}
+                      className={`group relative min-w-[260px] px-10 py-5 text-lg font-semibold rounded-2xl transition-all duration-300 overflow-hidden text-white isolate transform-gpu bg-gradient-to-r ${gradient} border border-white/20 shadow-xl hover:shadow-2xl hover:scale-[1.02] hover:border-white/30 active:scale-[0.98]`}
                     >
                       {/* Inner glow */}
                       <span className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.1)]" />
@@ -465,7 +465,7 @@ export function DashboardPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="hidden lg:grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                    <div className="hidden lg:grid lg:grid-cols-4 gap-4">
                       {suggestedStories.map((story) => (
                         <div
                           key={story.id}
@@ -506,7 +506,7 @@ export function DashboardPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="hidden lg:grid grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className="hidden lg:grid lg:grid-cols-4 gap-4">
                       {suggestedVideos.map((video) => (
                         <div
                           key={video._id}
@@ -626,7 +626,7 @@ function DashboardSkeleton() {
 
       {/* Main Content Skeleton */}
       <div className="container mx-auto px-4 sm:px-6 pt-12 pb-8 max-w-6xl relative z-10">
-        <div className="space-y-16">
+        <div className="space-y-10">
           {/* Start Studying CTA Skeleton */}
           <div className="rounded-3xl bg-white/[0.02] p-10 sm:p-12">
             <div className="text-center space-y-4">

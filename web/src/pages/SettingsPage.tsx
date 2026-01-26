@@ -198,7 +198,7 @@ export function SettingsPage() {
       <PremiumBackground colorScheme="purple" starCount={5} />
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden pt-8 pb-12">
+      <div className="relative overflow-hidden pt-8">
         <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
