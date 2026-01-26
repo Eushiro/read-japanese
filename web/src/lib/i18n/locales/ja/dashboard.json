@@ -34,8 +34,8 @@
   },
   "cta": {
     "startPlacement": "レベルチェックを始める",
-    "findLevel": "あなたのレベルを確認しましょう",
-    "placementExplainer": "短い適応テスト（10-15問）を受けて、学習をパーソナライズしましょう。テストはあなたのレベルに合わせて調整されます。",
+    "findLevel": "レベルを確認",
+    "placementExplainer": "約10問 \u2022 適応型",
     "durationQuestion": "どのくらい学習しますか？",
     "noContentYet": "まだコンテンツがありません",
     "addVocabulary": "語彙を追加するか、ライブラリを閲覧して始めましょう。"

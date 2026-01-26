@@ -323,7 +323,7 @@ export function DashboardPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section - Now with animated orbs and stars */}
-      <section className="relative pt-12 pb-20 overflow-hidden">
+      <section className="relative pt-8 pb-8 overflow-hidden">
         {/* Animated background orbs */}
         <AnimatedOrbs />
 
@@ -356,7 +356,7 @@ export function DashboardPage() {
       </section>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-5xl">
+      <div className="container mx-auto px-4 sm:px-6 pt-4 pb-8 max-w-5xl">
         {/* Credit Alert */}
         {isAuthenticated && <CreditAlert />}
 

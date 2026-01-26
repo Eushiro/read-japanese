@@ -34,8 +34,8 @@
   },
   "cta": {
     "startPlacement": "开始分级测试",
-    "findLevel": "让我们确定您的起始水平",
-    "placementExplainer": "参加快速自适应测试（10-15题），个性化您的学习路径。",
+    "findLevel": "确定您的水平",
+    "placementExplainer": "约10题 \u2022 自适应",
     "durationQuestion": "您想学习多长时间？",
     "noContentYet": "还没有内容",
     "addVocabulary": "添加词汇或浏览图书馆开始。"

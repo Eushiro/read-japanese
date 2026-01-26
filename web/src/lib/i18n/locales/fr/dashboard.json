@@ -34,8 +34,8 @@
   },
   "cta": {
     "startPlacement": "Commencer le test de niveau",
-    "findLevel": "Trouvons votre niveau de départ",
-    "placementExplainer": "Passez un test adaptatif rapide (10-15 questions) pour personnaliser votre parcours d'apprentissage.",
+    "findLevel": "Trouvez votre niveau",
+    "placementExplainer": "~10 questions \u2022 adaptatif",
     "durationQuestion": "Combien de temps voulez-vous étudier ?",
     "noContentYet": "Pas encore de contenu",
     "addVocabulary": "Ajoutez du vocabulaire ou parcourez la bibliothèque pour commencer."

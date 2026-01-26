@@ -1,7 +1,7 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Brain, ChevronRight, Loader2, RotateCcw, Target, Trophy } from "lucide-react";
+import { ArrowLeft, ChevronRight, Loader2, RotateCcw, Target, Trophy } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { QuestionDisplay, QuestionNavigation } from "@/components/quiz";
@@ -122,6 +122,10 @@ export function PlacementTestPage() {
   const [isPreGenerating, setIsPreGenerating] = useState(false);
   // Track if we've initialized from an existing test (to avoid re-running on every query update)
   const hasInitializedFromExisting = useRef(false);
+  // Ref to hold the latest generateNextQuestion function
+  const generateNextQuestionRef = useRef<
+    (tid: Id<"placementTests">, afterIndex: number, isPreGeneration?: boolean) => Promise<void>
+  >(() => Promise.resolve());
   // Track max confidence so progress bar never moves backwards
   const [maxConfidence, setMaxConfidence] = useState(0);
   // Cycling loading phrases
@@ -174,6 +178,40 @@ export function PlacementTestPage() {
     hasInitializedFromExisting.current = false;
   }, [language]);
 
+  // Auto-start test when user arrives with no existing test
+  const hasAutoStarted = useRef(false);
+  useEffect(() => {
+    // Don't auto-start if:
+    // - Already auto-started
+    // - Still loading existing test
+    // - Already have a test ID
+    // - Not authenticated
+    // - User has an existing test (in progress or completed)
+    if (hasAutoStarted.current) return;
+    if (existingTest === undefined) return;
+    if (testId) return;
+    if (!user) return;
+    if (existingTest) return; // Has existing test (in progress or completed)
+
+    hasAutoStarted.current = true;
+
+    // Start test inline (same as handleStartTest but avoids dependency)
+    const startTest = async () => {
+      try {
+        const id = await createTest({ userId: user.id, language });
+        setTestId(id);
+        setCurrentQuestionIndex(0);
+        setViewingIndex(0);
+        setPreviousQuestions([]);
+        // Note: generateNextQuestion will be called by the question view effect
+        await generateNextQuestionRef.current(id, 0);
+      } catch (error) {
+        console.error("Failed to start test:", error);
+      }
+    };
+    startTest();
+  }, [existingTest, testId, user, createTest, language]);
+
   // Initialize or resume test (only runs once per language, not on every query update)
   useEffect(() => {
     if (existingTest === undefined) return; // Still loading
@@ -194,11 +232,6 @@ export function PlacementTestPage() {
       setTestId(existingTest._id);
     }
   }, [existingTest]);
-
-  // Ref to hold the latest generateNextQuestion function
-  const generateNextQuestionRef = useRef<
-    (tid: Id<"placementTests">, afterIndex: number, isPreGeneration?: boolean) => Promise<void>
-  >(() => Promise.resolve());
 
   // Wrap preGenerateNextQuestion in useCallback for use in effect
   const preGenerateNextQuestionCallback = useCallback(
@@ -237,24 +270,6 @@ export function PlacementTestPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [viewingIndex]);
-
-  // Start a new test
-  const handleStartTest = async () => {
-    if (!user) return;
-
-    try {
-      const id = await createTest({ userId: user.id, language });
-      setTestId(id);
-      setCurrentQuestionIndex(0);
-      setViewingIndex(0);
-      setPreviousQuestions([]);
-
-      // Generate first question
-      await generateNextQuestion(id, 0);
-    } catch (error) {
-      console.error("Failed to start test:", error);
-    }
-  };
 
   // Generate the next question
   const generateNextQuestion = async (
@@ -548,97 +563,11 @@ export function PlacementTestPage() {
     );
   }
 
-  // Start test view - but not if we're generating the first question
+  // Auto-starting view - show loading while test initializes
   if (!testId || (currentTest && currentTest.questions.length === 0 && !isGeneratingQuestion)) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 max-w-2xl">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <h1 className="text-xl font-bold">
-                {languageFlags[language]} {t("placement.start.title", { language: languageName })}
-              </h1>
-            </div>
-            {isAdmin && (
-              <Button variant="destructive" size="sm" onClick={handleResetTest}>
-                <RotateCcw className="w-4 h-4 mr-2" />
-                {t("placement.start.reset")}
-              </Button>
-            )}
-          </div>
-
-          {/* Start Card */}
-          <div className="bg-surface rounded-2xl border border-border p-8">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                <Brain className="w-8 h-8 text-accent" />
-              </div>
-              <h2 className="text-2xl font-bold mb-2">{t("placement.start.adaptiveTest")}</h2>
-              <p className="text-foreground-muted">{t("placement.start.description")}</p>
-            </div>
-
-            {/* How it works explanation */}
-            <div className="bg-muted/50 rounded-xl p-4 mb-6 text-sm">
-              <h4 className="font-medium text-foreground mb-2">
-                {t("placement.start.howItWorks")}
-              </h4>
-              <ul className="space-y-1.5 text-foreground-muted">
-                <li
-                  dangerouslySetInnerHTML={{
-                    __html: `\u2022 ${t("placement.start.questionRange")}`,
-                  }}
-                />
-                <li>{`\u2022 ${t("placement.start.questionsAdjust")}`}</li>
-                <li>{`\u2022 ${t("placement.start.testEnds")}`}</li>
-                <li
-                  dangerouslySetInnerHTML={{
-                    __html: `\u2022 ${t("placement.start.typicalDuration")}`,
-                  }}
-                />
-              </ul>
-            </div>
-
-            <div className="space-y-4 mb-8">
-              <div className="flex items-start gap-3 text-sm">
-                <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-accent font-medium">1</span>
-                </div>
-                <div>
-                  <div className="font-medium">{t("placement.start.skillsTitle")}</div>
-                  <div className="text-foreground-muted">
-                    {t("placement.start.skillsDescription")}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 text-sm">
-                <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-accent font-medium">2</span>
-                </div>
-                <div>
-                  <div className="font-medium">{t("placement.start.personalizedTitle")}</div>
-                  <div className="text-foreground-muted">
-                    {t("placement.start.personalizedDescription")}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <Button className="w-full" onClick={handleStartTest} disabled={isGeneratingQuestion}>
-              {isGeneratingQuestion ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {t("placement.start.preparingTest")}
-                </>
-              ) : (
-                t("placement.start.startTest")
-              )}
-            </Button>
-          </div>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
       </div>
     );
   }

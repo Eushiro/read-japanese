@@ -33,8 +33,8 @@
   },
   "cta": {
     "startPlacement": "Start Placement Test",
-    "findLevel": "Let's find your starting level",
-    "placementExplainer": "Take a quick adaptive test (10-15 questions) to personalize your learning path. The test adjusts to your skill level as you answer.",
+    "findLevel": "Find your level",
+    "placementExplainer": "~10 questions \u2022 adaptive",
     "durationQuestion": "How long do you want to study?",
     "noContentYet": "No content yet",
     "addVocabulary": "Add vocabulary or browse the library to get started."
