@@ -379,7 +379,7 @@ export function VocabularyPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="border-b border-border relative overflow-hidden">
+      <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-background to-orange-500/5" />
         <div className="absolute top-0 right-1/4 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl" />
@@ -417,8 +417,8 @@ export function VocabularyPage() {
         </div>
       </div>
 
-      {/* Search and Filters - Glass styling */}
-      <div className="sticky top-16 z-40 border-b border-border/50 bg-surface/80 backdrop-blur-xl dark:border-white/5 dark:bg-black/50">
+      {/* Search and Filters */}
+      <div className="bg-transparent">
         <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
@@ -462,7 +462,7 @@ export function VocabularyPage() {
                 <SelectItem value="all">{t("vocabulary.filters.allLanguages")}</SelectItem>
                 {LANGUAGES.map((lang) => (
                   <SelectItem key={lang.value} value={lang.value}>
-                    {lang.label}
+                    {t(`common.languages.${lang.value}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -531,7 +531,7 @@ export function VocabularyPage() {
                   onClick={() => setLanguageFilter(null)}
                   className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium hover:bg-accent/20 transition-colors"
                 >
-                  {LANGUAGES.find((l) => l.value === languageFilter)?.label}
+                  {t(`common.languages.${languageFilter}`)}
                   <span className="ml-1">×</span>
                 </button>
               )}
@@ -1681,7 +1681,7 @@ function AddWordModal({ userId, onClose, isPremiumUser, hasProAccess }: AddWordM
               <SelectContent position="item-aligned">
                 {LANGUAGES.map((lang) => (
                   <SelectItem key={lang.value} value={lang.value}>
-                    {lang.label}
+                    {t(`common.languages.${lang.value}`)}
                   </SelectItem>
                 ))}
               </SelectContent>

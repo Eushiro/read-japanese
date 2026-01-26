@@ -183,9 +183,23 @@ function Navigation() {
   return (
     <nav
       className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled ? "backdrop-blur-xl bg-black/30" : "bg-transparent"
+        isScrolled ? "backdrop-blur-2xl" : "bg-transparent"
       }`}
     >
+      {/* Rainbow glass effect - colorful gradient behind blur */}
+      {isScrolled && (
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-30"
+            style={{
+              background:
+                "linear-gradient(90deg, rgba(255,132,0,0.3) 0%, rgba(223,145,247,0.3) 25%, rgba(6,182,212,0.25) 50%, rgba(254,237,122,0.3) 75%, rgba(255,132,0,0.3) 100%)",
+            }}
+          />
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+      )}
+
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo + Tier Badge */}
