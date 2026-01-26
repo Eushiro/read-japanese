@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import {
@@ -35,7 +36,7 @@ interface OnboardingModalProps {
 
 export function OnboardingModal({ userId, userEmail, userName, onComplete }: OnboardingModalProps) {
   const [step, setStep] = useState(0);
-  const [selectedLanguages, setSelectedLanguages] = useState<ContentLanguage[]>([]);
+  const [selectedLanguage, setSelectedLanguage] = useState<ContentLanguage | null>(null);
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const startTime = useRef(Date.now());
@@ -58,15 +59,14 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
   // Pre-select detected language on mount
   useEffect(() => {
     const detected = detectTargetLanguage();
-    setSelectedLanguages([detected]);
+    setSelectedLanguage(detected);
   }, []);
 
-  const handleLanguageToggle = (lang: ContentLanguage) => {
-    const isRemoving = selectedLanguages.includes(lang);
-    setSelectedLanguages((prev) => (isRemoving ? prev.filter((l) => l !== lang) : [...prev, lang]));
-    if (!isRemoving) {
-      trackEvent(events.ONBOARDING_LANGUAGE_SELECTED, { language: lang });
-    }
+  const handleLanguageSelect = (lang: ContentLanguage) => {
+    setSelectedLanguage(lang);
+    trackEvent(events.ONBOARDING_LANGUAGE_SELECTED, { language: lang });
+    // Clear exams when language changes since exams are language-specific
+    setSelectedExams([]);
   };
 
   const handleExamToggle = (exam: string) => {
@@ -78,7 +78,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
   };
 
   const handleComplete = async () => {
-    if (selectedLanguages.length === 0) return;
+    if (!selectedLanguage) return;
 
     setIsSubmitting(true);
     try {
@@ -86,10 +86,10 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         clerkId: userId,
         email: userEmail ?? undefined,
         name: userName ?? undefined,
-        languages: selectedLanguages,
+        languages: [selectedLanguage],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- selectedExams values come from EXAMS_BY_LANGUAGE
         targetExams: selectedExams as any,
-        primaryLanguage: selectedLanguages[0],
+        primaryLanguage: selectedLanguage,
       });
 
       // Pre-create Stripe customer in background for faster checkout later
@@ -100,7 +100,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
       }).catch((err) => console.error("Failed to pre-create Stripe customer:", err));
 
       trackEvent(events.ONBOARDING_COMPLETED, {
-        selected_languages: selectedLanguages,
+        selected_languages: [selectedLanguage],
         selected_exams: selectedExams,
         duration_seconds: Math.round((Date.now() - startTime.current) / 1000),
       });
@@ -257,36 +257,33 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                 </div>
                 <p className="text-foreground mb-6">{t("onboarding.languageSelection.subtitle")}</p>
 
-                <div className="space-y-3 mb-8">
+                <RadioGroup
+                  value={selectedLanguage ?? undefined}
+                  onValueChange={(value) => handleLanguageSelect(value as ContentLanguage)}
+                  className="space-y-3 mb-8"
+                >
                   {LANGUAGES.map((lang) => {
-                    const isSelected = selectedLanguages.includes(lang.value);
+                    const isSelected = selectedLanguage === lang.value;
                     return (
-                      <button
+                      <label
                         key={lang.value}
-                        onClick={() => handleLanguageToggle(lang.value)}
-                        className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                        className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                           isSelected
                             ? "border-accent bg-accent/5"
                             : "border-border hover:border-foreground-muted"
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div>
-                              <div className="font-medium text-foreground">{t(`common.languages.${lang.value}`)}</div>
-                              <div className="text-sm text-foreground-muted">{lang.nativeName}</div>
-                            </div>
+                        <RadioGroupItem value={lang.value} id={lang.value} />
+                        <div>
+                          <div className="font-medium text-foreground">
+                            {t(`common.languages.${lang.value}`)}
                           </div>
-                          {isSelected && (
-                            <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center">
-                              <Check className="w-4 h-4 text-white" />
-                            </div>
-                          )}
+                          <div className="text-sm text-foreground-muted">{lang.nativeName}</div>
                         </div>
-                      </button>
+                      </label>
                     );
                   })}
-                </div>
+                </RadioGroup>
 
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
@@ -294,7 +291,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                   </Button>
                   <Button
                     onClick={() => setStep(3)}
-                    disabled={selectedLanguages.length === 0}
+                    disabled={!selectedLanguage}
                     className="flex-1 gap-2"
                   >
                     {t("onboarding.actions.continue")}
@@ -306,7 +303,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
           )}
 
           {/* Step 3: Exam Selection */}
-          {step === 3 && (
+          {step === 3 && selectedLanguage && (
             <div className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-orange-500/10" />
               <div className="absolute top-0 left-1/4 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl" />
@@ -324,12 +321,12 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                 <p className="text-foreground mb-6">{t("onboarding.examSelection.subtitle")}</p>
 
                 <div className="space-y-6 mb-8">
-                  {selectedLanguages.map((lang) => {
-                    const langInfo = LANGUAGES.find((l) => l.value === lang);
-                    const exams = EXAMS_BY_LANGUAGE[lang] || [];
+                  {(() => {
+                    const langInfo = LANGUAGES.find((l) => l.value === selectedLanguage);
+                    const exams = EXAMS_BY_LANGUAGE[selectedLanguage] || [];
 
                     return (
-                      <div key={lang}>
+                      <div>
                         <div className="text-sm font-medium text-foreground-muted mb-2 flex items-center gap-2">
                           {langInfo?.label}
                         </div>
@@ -363,7 +360,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                         </div>
                       </div>
                     );
-                  })}
+                  })()}
                 </div>
 
                 <div className="flex gap-3">

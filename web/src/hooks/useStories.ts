@@ -2,6 +2,7 @@ import { useQuery as useConvexQuery } from "convex/react";
 import { useMemo } from "react";
 import { isRomaji, toHiragana, toKatakana } from "wanakana";
 
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import type { UILanguage } from "@/lib/i18n/types";
 import type { ProficiencyLevel, StoryListItem } from "@/types/story";
@@ -62,14 +63,16 @@ function toStoryListItem(s: ConvexStoryResponse): StoryListItem {
 }
 
 /**
- * Fetch all stories from Convex
+ * Fetch all stories from Convex with caching to prevent loading spinners on remount
  */
 export function useStories(): {
   data: StoryListItem[] | undefined;
   isLoading: boolean;
+  isStale: boolean;
   error: Error | null;
 } {
-  const stories = useConvexQuery(api.stories.listAll) as ConvexStoryResponse[] | undefined;
+  const storiesQuery = useConvexQuery(api.stories.listAll) as ConvexStoryResponse[] | undefined;
+  const { data: stories, isLoading, isStale } = useCachedQuery(storiesQuery, "stories:listAll");
 
   // Transform Convex response to StoryListItem format
   const data = useMemo(() => {
@@ -79,7 +82,8 @@ export function useStories(): {
 
   return {
     data,
-    isLoading: stories === undefined,
+    isLoading,
+    isStale,
     error: null, // Convex handles errors via ConvexProvider
   };
 }

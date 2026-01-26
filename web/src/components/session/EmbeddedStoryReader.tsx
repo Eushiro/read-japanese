@@ -117,7 +117,10 @@ export function EmbeddedStoryReader({
                 )}
                 {totalChapters > 1 && (
                   <span className="text-sm text-foreground-muted">
-                    {t("reader.chapter.progress", { current: currentChapterIndex + 1, total: totalChapters })}
+                    {t("reader.chapter.progress", {
+                      current: currentChapterIndex + 1,
+                      total: totalChapters,
+                    })}
                   </span>
                 )}
               </div>

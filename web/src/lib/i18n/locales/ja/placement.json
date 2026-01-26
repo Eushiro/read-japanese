@@ -1,4 +1,11 @@
 {
+  "prompt": {
+    "title": "{{language}}を追加しました！",
+    "description": "簡単なレベルテストを受けて、あなたに合ったコンテンツを表示します。",
+    "skipInfo": "スキップすると、初級レベル（{{level}}）からスタートします。",
+    "takeTest": "レベルテストを受ける",
+    "skip": "今はスキップ"
+  },
   "loadingPhrases": {
     "creating": "問題を作成中...",
     "calibrating": "難易度を調整中...",

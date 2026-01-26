@@ -102,7 +102,9 @@ export function StoryCard({
           <div className="absolute inset-0 bg-foreground/40 backdrop-blur-[2px] flex items-end justify-center pb-6">
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-surface/95 rounded-full shadow-sm border border-border">
               <Crown className="w-3.5 h-3.5 text-accent" />
-              <span className="text-xs font-medium text-foreground">{t("common.content.premium")}</span>
+              <span className="text-xs font-medium text-foreground">
+                {t("common.content.premium")}
+              </span>
             </div>
           </div>
         )}

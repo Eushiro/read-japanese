@@ -1,4 +1,11 @@
 {
+  "prompt": {
+    "title": "你已添加{{language}}！",
+    "description": "做个快速的水平测试，让我们为你个性化内容。",
+    "skipInfo": "如果跳过，你将从初级水平（{{level}}）开始。",
+    "takeTest": "开始水平测试",
+    "skip": "暂时跳过"
+  },
   "loadingPhrases": {
     "creating": "正在创建问题...",
     "calibrating": "正在调整难度...",

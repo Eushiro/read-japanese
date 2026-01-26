@@ -1,4 +1,11 @@
 {
+  "prompt": {
+    "title": "You've added {{language}}!",
+    "description": "Take a quick placement test so we can personalize your content.",
+    "skipInfo": "If you skip, you'll start at beginner level ({{level}}).",
+    "takeTest": "Take Placement Test",
+    "skip": "Skip for Now"
+  },
   "loadingPhrases": {
     "creating": "Creating your question...",
     "calibrating": "Calibrating difficulty...",

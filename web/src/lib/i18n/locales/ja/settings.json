@@ -33,7 +33,10 @@
   "languages": {
     "title": "言語と試験",
     "learningLanguages": "学習中の言語",
-    "targetExams": "目標試験"
+    "targetExams": "目標試験",
+    "premiumHint": "アップグレードして言語を追加",
+    "premiumRequired": "複数言語の学習にはアップグレードが必要",
+    "premiumDescription": "無料ユーザーは1言語のみ学習できます。PlusまたはProにアップグレードして、学習プランに言語を追加しましょう。"
   },
   "proficiency": {
     "title": "習得レベル",

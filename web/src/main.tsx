@@ -14,6 +14,7 @@ import { AnalyticsProvider } from "./contexts/AnalyticsContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ReviewSessionProvider } from "./contexts/ReviewSessionContext";
 import { StudySessionProvider } from "./contexts/StudySessionContext";
+import { UserDataProvider } from "./contexts/UserDataContext";
 import { TranslationProvider } from "./lib/i18n";
 import { router } from "./router.tsx";
 
@@ -77,17 +78,19 @@ createRoot(document.getElementById("root")!).render(
       <ClerkProvider publishableKey={clerkPubKey}>
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
           <AuthProvider>
-            <AnalyticsProvider>
-              <ReviewSessionProvider>
-                <StudySessionProvider>
-                  <QueryClientProvider client={queryClient}>
-                    <ThemeProvider>
-                      <RouterProvider router={router} />
-                    </ThemeProvider>
-                  </QueryClientProvider>
-                </StudySessionProvider>
-              </ReviewSessionProvider>
-            </AnalyticsProvider>
+            <UserDataProvider>
+              <AnalyticsProvider>
+                <ReviewSessionProvider>
+                  <StudySessionProvider>
+                    <QueryClientProvider client={queryClient}>
+                      <ThemeProvider>
+                        <RouterProvider router={router} />
+                      </ThemeProvider>
+                    </QueryClientProvider>
+                  </StudySessionProvider>
+                </ReviewSessionProvider>
+              </AnalyticsProvider>
+            </UserDataProvider>
           </AuthProvider>
         </ConvexProviderWithClerk>
       </ClerkProvider>

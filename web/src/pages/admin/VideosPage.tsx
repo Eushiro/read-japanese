@@ -114,7 +114,12 @@ export function VideosPage() {
 
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Are you sure you want to delete ${selectedIds.size} video${selectedIds.size > 1 ? "s" : ""}?`)) return;
+    if (
+      !confirm(
+        `Are you sure you want to delete ${selectedIds.size} video${selectedIds.size > 1 ? "s" : ""}?`
+      )
+    )
+      return;
 
     await removeVideos({ ids: Array.from(selectedIds) });
     setSelectedIds(new Set());
@@ -224,14 +229,8 @@ export function VideosPage() {
         </div>
         {selectedIds.size > 0 && (
           <div className="flex items-center gap-3">
-            <span className="text-sm text-foreground-muted">
-              {selectedIds.size} selected
-            </span>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleDeleteSelected}
-            >
+            <span className="text-sm text-foreground-muted">{selectedIds.size} selected</span>
+            <Button variant="destructive" size="sm" onClick={handleDeleteSelected}>
               <Trash2 className="w-4 h-4 mr-2" />
               Delete Selected
             </Button>
@@ -253,7 +252,9 @@ export function VideosPage() {
               <TableRow>
                 <TableHead className="w-[50px]">
                   <Checkbox
-                    checked={filteredVideos.length > 0 && selectedIds.size === filteredVideos.length}
+                    checked={
+                      filteredVideos.length > 0 && selectedIds.size === filteredVideos.length
+                    }
                     onCheckedChange={toggleSelectAll}
                     aria-label="Select all"
                   />

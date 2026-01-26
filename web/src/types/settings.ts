@@ -31,7 +31,12 @@ export const DEFAULT_SETTINGS: Settings = {
 
 // labelKey is an i18n key for "system", or null for proper noun font names
 // Translate at render time: labelKey ? t(`common.fonts.${labelKey}`) : label
-export const FONT_OPTIONS: { value: FontName; label: string; labelKey: string | null; fontFamily: string }[] = [
+export const FONT_OPTIONS: {
+  value: FontName;
+  label: string;
+  labelKey: string | null;
+  fontFamily: string;
+}[] = [
   { value: "system", label: "System", labelKey: "system", fontFamily: "system-ui, sans-serif" },
   {
     value: "hiragino-sans",
@@ -45,7 +50,12 @@ export const FONT_OPTIONS: { value: FontName; label: string; labelKey: string | 
     labelKey: null,
     fontFamily: '"Hiragino Mincho ProN", serif',
   },
-  { value: "noto-sans-jp", label: "Noto Sans JP", labelKey: null, fontFamily: '"Noto Sans JP", sans-serif' },
+  {
+    value: "noto-sans-jp",
+    label: "Noto Sans JP",
+    labelKey: null,
+    fontFamily: '"Noto Sans JP", sans-serif',
+  },
 ];
 
 export function getFontFamily(fontName: FontName): string {

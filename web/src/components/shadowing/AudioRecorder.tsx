@@ -99,7 +99,9 @@ export function AudioRecorder({
           <MicOff className="w-10 h-10 text-red-500" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-red-500 mb-1">{t("common.recording.microphoneDenied")}</p>
+          <p className="text-sm font-medium text-red-500 mb-1">
+            {t("common.recording.microphoneDenied")}
+          </p>
           <p className="text-sm text-foreground-muted">
             {t("common.recording.microphoneDeniedHelp")}
           </p>
@@ -115,7 +117,9 @@ export function AudioRecorder({
           <MicOff className="w-10 h-10 text-amber-500" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-amber-500 mb-1">{t("common.recording.recordingError")}</p>
+          <p className="text-sm font-medium text-amber-500 mb-1">
+            {t("common.recording.recordingError")}
+          </p>
           <p className="text-sm text-foreground-muted">{error}</p>
         </div>
         <Button onClick={onStartRecording} variant="outline" disabled={disabled}>

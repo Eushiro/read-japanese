@@ -33,7 +33,10 @@
   "languages": {
     "title": "Languages & Exams",
     "learningLanguages": "Languages you're learning",
-    "targetExams": "Target exams"
+    "targetExams": "Target exams",
+    "premiumHint": "Upgrade to add more languages",
+    "premiumRequired": "Upgrade to Learn More Languages",
+    "premiumDescription": "Free users can study one language. Upgrade to Plus or Pro to add more languages to your learning plan."
   },
   "proficiency": {
     "title": "Proficiency Level",

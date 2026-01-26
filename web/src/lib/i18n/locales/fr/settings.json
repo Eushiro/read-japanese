@@ -33,7 +33,10 @@
   "languages": {
     "title": "Langues et examens",
     "learningLanguages": "Langues que vous apprenez",
-    "targetExams": "Examens visés"
+    "targetExams": "Examens visés",
+    "premiumHint": "Passez à un abonnement supérieur pour ajouter plus de langues",
+    "premiumRequired": "Passez à un abonnement supérieur pour apprendre plus de langues",
+    "premiumDescription": "Les utilisateurs gratuits peuvent étudier une seule langue. Passez à Plus ou Pro pour ajouter d'autres langues."
   },
   "proficiency": {
     "title": "Niveau de compétence",

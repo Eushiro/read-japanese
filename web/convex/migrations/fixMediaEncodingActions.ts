@@ -92,9 +92,7 @@ async function migrateFile(
       contentType = getResponse.ContentType || "application/octet-stream";
       foundAtDecodedPath = false;
     } catch {
-      throw new Error(
-        `File not found at decoded (${decodedKey}) or encoded (${encodedPath}) path`
-      );
+      throw new Error(`File not found at decoded (${decodedKey}) or encoded (${encodedPath}) path`);
     }
   }
 

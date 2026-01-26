@@ -33,8 +33,8 @@
     }
   },
   "languageSelection": {
-    "title": "Which languages are you studying?",
-    "subtitle": "Select all that apply"
+    "title": "What language are you studying?",
+    "subtitle": "Choose the language you want to focus on"
   },
   "examSelection": {
     "title": "Any exams coming up?",

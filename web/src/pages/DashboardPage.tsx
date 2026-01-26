@@ -283,7 +283,10 @@ export function DashboardPage() {
     allStories
       ?.filter((story) => {
         // Filter by user's languages (or show all if no languages set)
-        if (userLanguages.length > 0 && !userLanguages.includes(story.language as ContentLanguage)) {
+        if (
+          userLanguages.length > 0 &&
+          !userLanguages.includes(story.language as ContentLanguage)
+        ) {
           return false;
         }
         // Filter by valid levels for the story's language
@@ -405,7 +408,8 @@ export function DashboardPage() {
                     if (arr.length === 1) {
                       gradient = gradientsByPosition.orange;
                     } else if (arr.length === 2) {
-                      gradient = index === 0 ? gradientsByPosition.purple : gradientsByPosition.orange;
+                      gradient =
+                        index === 0 ? gradientsByPosition.purple : gradientsByPosition.orange;
                     } else {
                       // 3+ languages: blue, purple, orange (then repeat)
                       const colors = ["blue", "purple", "orange"] as const;

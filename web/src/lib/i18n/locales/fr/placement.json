@@ -1,4 +1,11 @@
 {
+  "prompt": {
+    "title": "Tu as ajouté {{language}} !",
+    "description": "Passe un test de niveau rapide pour personnaliser ton contenu.",
+    "skipInfo": "Si tu passes, tu commenceras au niveau débutant ({{level}}).",
+    "takeTest": "Passer le test de niveau",
+    "skip": "Passer pour l'instant"
+  },
   "loadingPhrases": {
     "creating": "Création de votre question...",
     "calibrating": "Calibrage de la difficulté...",

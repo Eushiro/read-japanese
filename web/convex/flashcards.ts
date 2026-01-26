@@ -309,6 +309,60 @@ export const getStats = query({
   },
 });
 
+// Get stats for multiple languages at once (for cross-language notifications)
+export const getStatsByLanguages = query({
+  args: {
+    userId: v.string(),
+    languages: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const allCards = await ctx.db
+      .query("flashcards")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    // Fetch vocabulary for all cards to get language info
+    const cardsWithVocab = await Promise.all(
+      allCards.map(async (card) => {
+        const vocab = await ctx.db.get(card.vocabularyId);
+        return { ...card, vocabulary: vocab };
+      })
+    );
+
+    // Group stats by language
+    const statsByLanguage: Record<
+      string,
+      { total: number; new: number; dueNow: number; dueToday: number }
+    > = {};
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    const endOfDayTimestamp = endOfDay.getTime();
+
+    for (const lang of args.languages) {
+      const langCards = cardsWithVocab.filter((c) => c.vocabulary?.language === lang);
+
+      const stats = {
+        total: langCards.length,
+        new: 0,
+        dueNow: 0,
+        dueToday: 0,
+      };
+
+      for (const card of langCards) {
+        if (card.state === "new") stats.new++;
+        if (card.due <= now) stats.dueNow++;
+        if (card.due <= endOfDayTimestamp) stats.dueToday++;
+      }
+
+      statsByLanguage[lang] = stats;
+    }
+
+    return statsByLanguage;
+  },
+});
+
 // Get flashcard by vocabulary ID
 export const getByVocabulary = query({
   args: { vocabularyId: v.id("vocabulary") },

@@ -306,14 +306,18 @@ function FlashcardDisplay({
         <div className="space-y-4 animate-fade-in-up">
           {isJapanese && vocab?.reading && (
             <div className="text-center">
-              <div className="text-sm text-foreground-muted mb-1">{t("flashcards.card.reading")}</div>
+              <div className="text-sm text-foreground-muted mb-1">
+                {t("flashcards.card.reading")}
+              </div>
               <div className="text-2xl text-foreground" style={{ fontFamily: languageFont }}>
                 {vocab.reading}
               </div>
             </div>
           )}
           <div className="text-center">
-            <div className="text-sm text-foreground-muted mb-1">{t("flashcards.card.definition")}</div>
+            <div className="text-sm text-foreground-muted mb-1">
+              {t("flashcards.card.definition")}
+            </div>
             <div className="text-xl font-medium text-foreground">
               {vocab?.definitions.join("; ")}
             </div>
@@ -359,7 +363,9 @@ function RatingButton({
         <span className={`text-${config.color}-500 font-bold mb-1`}>~</span>
       )}
       <span className="text-xs font-medium">{t(`flashcards.rating.${rating}`)}</span>
-      <span className="text-[10px] text-foreground-muted">{t(`flashcards.rating.intervals.${rating}`)}</span>
+      <span className="text-[10px] text-foreground-muted">
+        {t(`flashcards.rating.intervals.${rating}`)}
+      </span>
     </Button>
   );
 }
