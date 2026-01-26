@@ -478,7 +478,7 @@ export function FlashcardsPage() {
 
       {/* Header Section */}
       <div className="relative flex-shrink-0 pt-6 pb-0">
-        <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
+        <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
           <div>
             {/* Icon + Badge Row */}
             <div className="flex items-center gap-3 mb-3">
@@ -541,7 +541,7 @@ export function FlashcardsPage() {
       </div>
 
       {/* Review Area */}
-      <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl flex-1 flex flex-col items-center overflow-y-auto">
+      <div className="container mx-auto px-4 sm:px-6 py-4 max-w-6xl flex-1 flex flex-col items-center overflow-y-auto">
         {isDataLoading ? (
           // Inline skeleton for flashcard area
           <div className="w-full space-y-4">

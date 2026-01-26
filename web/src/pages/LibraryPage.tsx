@@ -137,7 +137,7 @@ export function LibraryPage() {
 
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-8 pb-12">
-        <div className="container mx-auto px-4 sm:px-6 relative">
+        <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-xl bg-orange-500/20">
@@ -181,7 +181,7 @@ export function LibraryPage() {
 
       {/* Filters Section */}
       <div>
-        <div className="container mx-auto px-4 sm:px-6 py-3">
+        <div className="container mx-auto px-4 sm:px-6 max-w-6xl py-3">
           <div className="flex gap-3">
             {/* Search - capped at max-w-md */}
             <div className="flex-1 max-w-md">
@@ -243,7 +243,7 @@ export function LibraryPage() {
       </div>
 
       {/* Content Sections */}
-      <div className="container mx-auto px-4 sm:px-6 pt-6 pb-12 space-y-10">
+      <div className="container mx-auto px-4 sm:px-6 max-w-6xl pt-6 pb-12 space-y-10">
         {/* Stories Section */}
         {showStories && (
           <section>
@@ -379,7 +379,7 @@ function LibrarySkeleton() {
     <div className="min-h-screen">
       {/* Hero Section Skeleton */}
       <div className="border-b border-border bg-gradient-to-b from-background to-background-subtle">
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="container mx-auto px-4 sm:px-6 max-w-6xl py-8 sm:py-12">
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-border w-9 h-9 animate-pulse" />
@@ -394,7 +394,7 @@ function LibrarySkeleton() {
 
       {/* Filters Section Skeleton */}
       <div className="sticky top-16 z-40 border-b border-border bg-surface/95">
-        <div className="container mx-auto px-4 sm:px-6 py-4">
+        <div className="container mx-auto px-4 sm:px-6 max-w-6xl py-4">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
               <div className="flex gap-0.5 p-1 rounded-lg bg-muted border border-border">
@@ -415,7 +415,7 @@ function LibrarySkeleton() {
       </div>
 
       {/* Content Skeleton */}
-      <div className="container mx-auto px-4 sm:px-6 pt-6 pb-12 space-y-10">
+      <div className="container mx-auto px-4 sm:px-6 max-w-6xl pt-6 pb-12 space-y-10">
         {/* Stories Section */}
         <section>
           <div className="flex items-center gap-2 mb-4">

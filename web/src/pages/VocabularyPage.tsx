@@ -503,7 +503,7 @@ export function VocabularyPage() {
 
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-8 pb-12 flex-shrink-0">
-        <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
+        <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
           <div>
             <div className="flex items-center justify-between">
               <div>
@@ -541,7 +541,7 @@ export function VocabularyPage() {
 
       {/* Search and Filters */}
       <div className="flex-shrink-0">
-        <div className="container mx-auto px-4 sm:px-6 py-4 max-w-4xl">
+        <div className="container mx-auto px-4 sm:px-6 py-4 max-w-6xl">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
             <SearchBox

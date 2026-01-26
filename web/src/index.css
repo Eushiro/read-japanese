@@ -111,6 +111,8 @@
   html {
     /* Removed scroll-behavior: smooth to prevent scroll position persistence issues
        during navigation and in-page state changes */
+    /* Reserve space for scrollbar to prevent layout shift when scrollbar appears/disappears */
+    scrollbar-gutter: stable;
   }
 
   body {

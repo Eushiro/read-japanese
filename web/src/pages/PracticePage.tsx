@@ -212,7 +212,7 @@ export function PracticePage() {
 
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-8 pb-12 flex-shrink-0">
-        <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative">
+        <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
           <div>
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-xl bg-purple-500/20">
@@ -233,7 +233,7 @@ export function PracticePage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl flex-1 flex flex-col overflow-y-auto">
+      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-6xl flex-1 flex flex-col overflow-y-auto">
         {vocabulary === undefined ? (
           // Loading skeleton for word grid
           <div>
