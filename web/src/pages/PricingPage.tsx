@@ -230,7 +230,7 @@ export function PricingPage() {
                   </div>
                   <div className="mt-2">
                     <span className="text-4xl font-bold text-foreground">
-                      ${price === 0 ? "0" : price.toFixed(2)}
+                      {t("pricing.price", { price: price === 0 ? "0" : price.toFixed(2) })}
                     </span>
                     <span className="text-foreground-muted">
                       /{billingPeriod === "annual" ? t("pricing.year") : t("pricing.month")}

@@ -186,7 +186,7 @@ export function EmbeddedVideoPlayer({
                 <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-accent/20 to-accent/5">
                   <Video className="w-12 h-12 text-accent/50 mb-3" />
                   <p className="text-foreground-muted text-sm text-center px-4">
-                    Demo content - read along below
+                    {t("video.demo.subtitle")}
                   </p>
                 </div>
               )}
@@ -208,7 +208,9 @@ export function EmbeddedVideoPlayer({
 
             <div ref={transcriptRef} className="p-3 space-y-1.5 overflow-y-auto flex-1">
               {!hasTranscript ? (
-                <p className="text-foreground-muted text-sm">{t("video.transcript.notAvailable")}</p>
+                <p className="text-foreground-muted text-sm">
+                  {t("video.transcript.notAvailable")}
+                </p>
               ) : (
                 video.transcript!.map((segment, index) => (
                   <button

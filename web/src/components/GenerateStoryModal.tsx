@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
 import { JLPT_LEVELS, type JLPTLevel } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
@@ -56,6 +57,7 @@ interface GenerateStoryModalProps {
 }
 
 export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps) {
+  const t = useT();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -162,11 +164,9 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
                   className="text-lg font-semibold text-foreground"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  Generate Story
+                  {t("generate.modal.title")}
                 </h2>
-                <p className="text-sm text-foreground-muted">
-                  Create a custom story for your level
-                </p>
+                <p className="text-sm text-foreground-muted">{t("generate.modal.subtitle")}</p>
               </div>
             </div>
             <button
@@ -183,7 +183,9 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
             <div className="p-4 space-y-5">
               {/* JLPT Level */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-foreground">JLPT Level</Label>
+                <Label className="text-sm font-medium text-foreground">
+                  {t("generate.form.jlptLevel")}
+                </Label>
                 <div className="flex flex-wrap gap-2">
                   {JLPT_LEVELS.map((level) => (
                     <button
@@ -209,7 +211,9 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
 
               {/* Genre */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-foreground">Genre</Label>
+                <Label className="text-sm font-medium text-foreground">
+                  {t("generate.form.genre")}
+                </Label>
                 <Select value={genre} onValueChange={setGenre} disabled={isGenerating}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -227,7 +231,10 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
               {/* Theme */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">
-                  Theme <span className="text-foreground-muted font-normal">(Optional)</span>
+                  {t("generate.form.theme")}{" "}
+                  <span className="text-foreground-muted font-normal">
+                    {t("generate.form.themeOptional")}
+                  </span>
                 </Label>
                 <input
                   type="text"
@@ -242,7 +249,9 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
               {/* Chapters & Words */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">Chapters</Label>
+                  <Label className="text-sm font-medium text-foreground">
+                    {t("generate.form.chapters")}
+                  </Label>
                   <Select
                     value={String(numChapters)}
                     onValueChange={(v) => setNumChapters(Number(v))}
@@ -254,7 +263,7 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
                     <SelectContent>
                       {[2, 3, 4, 5, 6].map((n) => (
                         <SelectItem key={n} value={String(n)}>
-                          {n} chapters
+                          {t("generate.form.chaptersCount", { count: n })}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -262,7 +271,9 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">Words/Chapter</Label>
+                  <Label className="text-sm font-medium text-foreground">
+                    {t("generate.form.wordsPerChapter")}
+                  </Label>
                   <Select
                     value={String(wordsPerChapter)}
                     onValueChange={(v) => setWordsPerChapter(Number(v))}
@@ -274,7 +285,7 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
                     <SelectContent>
                       {[100, 150, 200, 250, 300].map((n) => (
                         <SelectItem key={n} value={String(n)}>
-                          ~{n} words
+                          {t("generate.form.wordsCount", { count: n })}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -284,7 +295,9 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
 
               {/* Options */}
               <div className="space-y-3">
-                <Label className="text-sm font-medium text-foreground">Options</Label>
+                <Label className="text-sm font-medium text-foreground">
+                  {t("generate.form.options")}
+                </Label>
                 <div className="flex flex-wrap gap-6">
                   <div className="flex items-center gap-3">
                     <Switch
@@ -295,7 +308,7 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
                     />
                     <Label htmlFor="audio" className="flex items-center gap-1.5 cursor-pointer">
                       <Volume2 className="w-4 h-4 text-foreground-muted" />
-                      Audio
+                      {t("generate.options.audio")}
                     </Label>
                   </div>
 
@@ -308,7 +321,7 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
                     />
                     <Label htmlFor="images" className="flex items-center gap-1.5 cursor-pointer">
                       <Image className="w-4 h-4 text-foreground-muted" />
-                      Images
+                      {t("generate.options.images")}
                     </Label>
                   </div>
                 </div>
@@ -342,12 +355,12 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Story
+                  {t("generate.actions.generate")}
                 </>
               )}
             </Button>
             <p className="text-xs text-foreground-muted text-center">
-              Generation takes 2-5 minutes
+              {t("generate.info.generationTimeBrief")}
             </p>
           </DialogFooter>
         </DialogContent>

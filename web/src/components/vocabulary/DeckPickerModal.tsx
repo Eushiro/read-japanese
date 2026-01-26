@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { BookOpen, Check, Loader2, Minus, Plus } from "lucide-react";
+import { BookOpen, Check, Loader2, Minus, Plus, Volume2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -221,8 +221,9 @@ export function DeckPickerModal({
                     </span>
                   )}
                   {deck.wordsWithAudio > 0 && (
-                    <span>
-                      🔊 {t("vocabulary.deckPicker.audio", { count: deck.wordsWithAudio })}
+                    <span className="flex items-center gap-1">
+                      <Volume2 className="w-3 h-3" />
+                      {t("vocabulary.deckPicker.audio", { count: deck.wordsWithAudio })}
                     </span>
                   )}
                 </div>
