@@ -566,14 +566,21 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Us - Glowing card */}
           <motion.div
-            initial={{ opacity: 0, x: -60 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
+            variants={{
+              hidden: { opacity: 0, x: -60 },
+              visible: {
+                opacity: 1,
+                x: 0,
+                transition: { duration: 0.8, ease: [0.19, 1, 0.22, 1], staggerChildren: 0.05 },
+              },
+            }}
             className="relative"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-purple-500/10 dark:from-orange-500/20 dark:to-purple-500/20 rounded-3xl blur-xl" />
-            <div className="relative p-8 rounded-3xl bg-gradient-to-br from-orange-500/5 to-purple-500/[0.02] dark:from-orange-500/10 dark:to-purple-500/5 border border-orange-500/20 dark:border-orange-500/30 backdrop-blur-sm">
+            <div className="relative p-8 rounded-3xl bg-gradient-to-br from-orange-500/5 to-purple-500/[0.02] dark:from-orange-500/10 dark:to-purple-500/5 border border-orange-500/20 dark:border-orange-500/30">
               <h3 className="text-xl font-semibold text-orange-600 dark:text-orange-400 mb-6 flex items-center gap-2">
                 <Sparkles className="w-5 h-5" />
                 {t("landing.comparison.sanlang")}
@@ -588,10 +595,10 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
                   <motion.li
                     key={i}
                     className="flex items-start gap-3"
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: 0.1 + i * 0.05 }}
+                    variants={{
+                      hidden: { opacity: 0, x: -20 },
+                      visible: { opacity: 1, x: 0, transition: { duration: 0.4 } },
+                    }}
                   >
                     <div className="w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 text-orange-600 dark:text-orange-400" />
@@ -605,10 +612,17 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
 
           {/* Others - Muted card */}
           <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
+            variants={{
+              hidden: { opacity: 0, x: 60 },
+              visible: {
+                opacity: 1,
+                x: 0,
+                transition: { duration: 0.8, ease: [0.19, 1, 0.22, 1], staggerChildren: 0.05 },
+              },
+            }}
           >
             <div className="p-8 rounded-3xl bg-white/[0.02] border border-border">
               <h3 className="text-xl font-semibold text-muted-foreground mb-6">
@@ -624,10 +638,10 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
                   <motion.li
                     key={i}
                     className="flex items-start gap-3"
-                    initial={{ opacity: 0, x: 20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: 0.1 + i * 0.05 }}
+                    variants={{
+                      hidden: { opacity: 0, x: 20 },
+                      visible: { opacity: 1, x: 0, transition: { duration: 0.4 } },
+                    }}
                   >
                     <div className="w-5 h-5 shrink-0 mt-0.5 flex items-center justify-center">
                       <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
@@ -839,7 +853,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            transition={{ duration: 0.6 }}
           >
             <BentoCard
               icon={PenLine}
@@ -856,7 +870,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            transition={{ duration: 0.6, delay: 0.05 }}
           >
             <BentoCard
               icon={Target}
@@ -868,11 +882,11 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
             />
           </motion.div>
 
-          {/* Exam Formats */}
+          {/* Exam Formats - animate with top cards via large margin */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "200px" }}
+            viewport={{ once: true, margin: "0px 0px 500px 0px" }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             <BentoCard
@@ -885,12 +899,12 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
             />
           </motion.div>
 
-          {/* Native Audio */}
+          {/* Native Audio - animate with top cards via large margin */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "200px" }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            viewport={{ once: true, margin: "0px 0px 500px 0px" }}
+            transition={{ duration: 0.6, delay: 0.15 }}
           >
             <BentoCard
               icon={Volume2}
