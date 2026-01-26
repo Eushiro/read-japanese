@@ -234,10 +234,6 @@ export const getAllSubscribedVocabularyPaginated = query({
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
 
-    if (subscriptions.length === 0) {
-      return { page: [], isDone: true, continueCursor: "" };
-    }
-
     const deckIds = new Set(subscriptions.map((s) => s.deckId));
 
     // Query premadeVocabulary with pagination
