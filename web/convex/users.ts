@@ -44,7 +44,6 @@ export const upsert = mutation({
     name: v.optional(v.string()),
     languages: v.optional(v.array(languageValidator)),
     targetExams: v.optional(v.array(examTypeValidator)),
-    primaryLanguage: v.optional(languageValidator),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -57,7 +56,6 @@ export const upsert = mutation({
       if (args.name !== undefined) updates.name = args.name;
       if (args.languages !== undefined) updates.languages = args.languages;
       if (args.targetExams !== undefined) updates.targetExams = args.targetExams;
-      if (args.primaryLanguage !== undefined) updates.primaryLanguage = args.primaryLanguage;
 
       await ctx.db.patch(existing._id, updates);
       return existing._id;
@@ -70,7 +68,6 @@ export const upsert = mutation({
       name: args.name,
       languages: args.languages ?? ["japanese"],
       targetExams: args.targetExams ?? [],
-      primaryLanguage: args.primaryLanguage ?? "japanese",
       createdAt: now,
       updatedAt: now,
     });
@@ -82,20 +79,12 @@ export const updateLanguages = mutation({
   args: {
     clerkId: v.string(),
     languages: v.array(languageValidator),
-    primaryLanguage: v.optional(languageValidator),
   },
   handler: async (ctx, args) => {
     const user = await requireUserByClerkId(ctx, args.clerkId);
 
-    // If primary language is set and not in the new languages list, reset it
-    let primaryLanguage = args.primaryLanguage ?? user.primaryLanguage;
-    if (primaryLanguage && !args.languages.includes(primaryLanguage)) {
-      primaryLanguage = args.languages[0];
-    }
-
     await ctx.db.patch(user._id, {
       languages: args.languages,
-      primaryLanguage,
       updatedAt: Date.now(),
     });
   },
@@ -112,27 +101,6 @@ export const updateTargetExams = mutation({
 
     await ctx.db.patch(user._id, {
       targetExams: args.targetExams,
-      updatedAt: Date.now(),
-    });
-  },
-});
-
-// Set primary language
-export const setPrimaryLanguage = mutation({
-  args: {
-    clerkId: v.string(),
-    language: languageValidator,
-  },
-  handler: async (ctx, args) => {
-    const user = await requireUserByClerkId(ctx, args.clerkId);
-
-    // Ensure language is in user's languages list
-    if (!user.languages.includes(args.language)) {
-      throw new Error("Language not in user's language list");
-    }
-
-    await ctx.db.patch(user._id, {
-      primaryLanguage: args.language,
       updatedAt: Date.now(),
     });
   },

@@ -46,8 +46,8 @@ export function StudySessionPage() {
   );
 
   // Get recommended content
-  const primaryLanguage = userProfile?.primaryLanguage ?? "japanese";
-  const videos = useQuery(api.youtubeContent.list, { language: primaryLanguage });
+  const userLanguage = userProfile?.languages?.[0] ?? "japanese";
+  const videos = useQuery(api.youtubeContent.list, { language: userLanguage });
 
   // Streak update mutation
   const updateStreak = useMutation(api.users.updateStreak);

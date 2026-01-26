@@ -89,7 +89,6 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         languages: [selectedLanguage],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- selectedExams values come from EXAMS_BY_LANGUAGE
         targetExams: selectedExams as any,
-        primaryLanguage: selectedLanguage,
       });
 
       // Pre-create Stripe customer in background for faster checkout later

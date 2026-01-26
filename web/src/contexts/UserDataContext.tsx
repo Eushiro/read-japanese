@@ -14,7 +14,6 @@ interface UserProfile {
   email?: string;
   name?: string;
   languages?: ContentLanguage[];
-  primaryLanguage?: ContentLanguage;
   targetExams?: string[];
   proficiencyLevels?: Record<string, string>;
   isAdminMode?: boolean;

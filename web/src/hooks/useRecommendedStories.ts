@@ -44,7 +44,6 @@ type ExamType =
 interface UserProfile {
   languages?: ContentLanguage[];
   targetExams?: ExamType[];
-  primaryLanguage?: ContentLanguage;
   proficiencyLevels?: {
     japanese?: { level: string; assessedAt: number };
     english?: { level: string; assessedAt: number };

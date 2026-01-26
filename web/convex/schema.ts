@@ -213,7 +213,6 @@ export default defineSchema({
     name: v.optional(v.string()),
     languages: v.array(languageValidator), // Languages user is learning
     targetExams: v.array(examTypeValidator), // Exams user is preparing for
-    primaryLanguage: v.optional(languageValidator), // Currently active language
     // Proficiency levels determined by placement tests
     proficiencyLevels: v.optional(
       v.object({
