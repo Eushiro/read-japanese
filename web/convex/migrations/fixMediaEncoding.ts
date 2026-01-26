@@ -27,7 +27,6 @@ import { internalMutation, internalQuery, query } from "../_generated/server";
 function hasEncodedPath(url: string): boolean {
   try {
     const urlObj = new URL(url);
-    const path = urlObj.pathname;
     // Check if path contains %XX patterns (percent-encoded characters)
     // We check the raw URL string, not the decoded pathname
     const pathFromUrl = url.slice(url.indexOf(urlObj.pathname));

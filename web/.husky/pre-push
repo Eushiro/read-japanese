@@ -1,8 +1,0 @@
-#!/bin/sh
-
-# Pre-push hook
-# Note: Claude code review has been moved to pre-commit for earlier feedback
-# This hook is now minimal - just a reminder
-
-echo "Pushing to remote..."
-echo "Note: Code was already reviewed at commit time."

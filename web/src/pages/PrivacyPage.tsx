@@ -9,20 +9,28 @@ type DataSharingItem = { name: string; desc: string };
 const LAST_UPDATED = new Date(2026, 0, 1); // January 2026
 
 export function PrivacyPage() {
-  const { t, i18n } = useTranslation("legal");
+  const { t, i18n } = useTranslation();
 
   const formattedDate = new Intl.DateTimeFormat(i18n.language, {
     year: "numeric",
     month: "long",
   }).format(LAST_UPDATED);
 
-  const infoCollectItems = t("privacy.sections.infoCollect.items", { returnObjects: true }) as string[];
-  const howWeUseItems = t("privacy.sections.howWeUse.items", { returnObjects: true }) as string[];
-  const aiProcessingItems = t("privacy.sections.aiProcessing.items", { returnObjects: true }) as string[];
-  const dataSharingItems = t("privacy.sections.dataSharing.items", {
+  const infoCollectItems = t("legal.privacy.sections.infoCollect.items", {
+    returnObjects: true,
+  }) as string[];
+  const howWeUseItems = t("legal.privacy.sections.howWeUse.items", {
+    returnObjects: true,
+  }) as string[];
+  const aiProcessingItems = t("legal.privacy.sections.aiProcessing.items", {
+    returnObjects: true,
+  }) as string[];
+  const dataSharingItems = t("legal.privacy.sections.dataSharing.items", {
     returnObjects: true,
   }) as DataSharingItem[];
-  const yourRightsItems = t("privacy.sections.yourRights.items", { returnObjects: true }) as string[];
+  const yourRightsItems = t("legal.privacy.sections.yourRights.items", {
+    returnObjects: true,
+  }) as string[];
 
   return (
     <div className="min-h-screen py-8 sm:py-16">
@@ -31,7 +39,7 @@ export function PrivacyPage() {
           <Link to="/">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              {t("backToHome")}
+              {t("legal.backToHome")}
             </Button>
           </Link>
         </div>
@@ -45,18 +53,22 @@ export function PrivacyPage() {
               className="text-3xl sm:text-4xl font-bold text-foreground"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {t("privacy.title")}
+              {t("legal.privacy.title")}
             </h1>
-            <p className="text-foreground-muted text-sm">{t("lastUpdated", { date: formattedDate })}</p>
+            <p className="text-foreground-muted text-sm">
+              {t("legal.lastUpdated", { date: formattedDate })}
+            </p>
           </div>
         </div>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              {t("privacy.sections.infoCollect.title")}
+              {t("legal.privacy.sections.infoCollect.title")}
             </h2>
-            <p className="text-foreground-muted mb-4">{t("privacy.sections.infoCollect.intro")}</p>
+            <p className="text-foreground-muted mb-4">
+              {t("legal.privacy.sections.infoCollect.intro")}
+            </p>
             <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
               {infoCollectItems.map((item, i) => (
                 <li key={i}>{item}</li>
@@ -66,9 +78,11 @@ export function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              {t("privacy.sections.howWeUse.title")}
+              {t("legal.privacy.sections.howWeUse.title")}
             </h2>
-            <p className="text-foreground-muted mb-4">{t("privacy.sections.howWeUse.intro")}</p>
+            <p className="text-foreground-muted mb-4">
+              {t("legal.privacy.sections.howWeUse.intro")}
+            </p>
             <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
               {howWeUseItems.map((item, i) => (
                 <li key={i}>{item}</li>
@@ -78,22 +92,28 @@ export function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              {t("privacy.sections.aiProcessing.title")}
+              {t("legal.privacy.sections.aiProcessing.title")}
             </h2>
-            <p className="text-foreground-muted mb-4">{t("privacy.sections.aiProcessing.intro")}</p>
+            <p className="text-foreground-muted mb-4">
+              {t("legal.privacy.sections.aiProcessing.intro")}
+            </p>
             <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
               {aiProcessingItems.map((item, i) => (
                 <li key={i}>{item}</li>
               ))}
             </ul>
-            <p className="text-foreground-muted mt-4">{t("privacy.sections.aiProcessing.footer")}</p>
+            <p className="text-foreground-muted mt-4">
+              {t("legal.privacy.sections.aiProcessing.footer")}
+            </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              {t("privacy.sections.dataSharing.title")}
+              {t("legal.privacy.sections.dataSharing.title")}
             </h2>
-            <p className="text-foreground-muted mb-4">{t("privacy.sections.dataSharing.intro")}</p>
+            <p className="text-foreground-muted mb-4">
+              {t("legal.privacy.sections.dataSharing.intro")}
+            </p>
             <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
               {dataSharingItems.map((item, i) => (
                 <li key={i}>
@@ -101,28 +121,34 @@ export function PrivacyPage() {
                 </li>
               ))}
             </ul>
-            <p className="text-foreground-muted mt-4">{t("privacy.sections.dataSharing.footer")}</p>
+            <p className="text-foreground-muted mt-4">
+              {t("legal.privacy.sections.dataSharing.footer")}
+            </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              {t("privacy.sections.dataRetention.title")}
+              {t("legal.privacy.sections.dataRetention.title")}
             </h2>
-            <p className="text-foreground-muted">{t("privacy.sections.dataRetention.content")}</p>
+            <p className="text-foreground-muted">
+              {t("legal.privacy.sections.dataRetention.content")}
+            </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              {t("privacy.sections.security.title")}
+              {t("legal.privacy.sections.security.title")}
             </h2>
-            <p className="text-foreground-muted">{t("privacy.sections.security.content")}</p>
+            <p className="text-foreground-muted">{t("legal.privacy.sections.security.content")}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              {t("privacy.sections.yourRights.title")}
+              {t("legal.privacy.sections.yourRights.title")}
             </h2>
-            <p className="text-foreground-muted mb-4">{t("privacy.sections.yourRights.intro")}</p>
+            <p className="text-foreground-muted mb-4">
+              {t("legal.privacy.sections.yourRights.intro")}
+            </p>
             <ul className="list-disc list-inside text-foreground-muted space-y-2 ml-4">
               {yourRightsItems.map((item, i) => (
                 <li key={i}>{item}</li>
@@ -132,16 +158,16 @@ export function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              {t("privacy.sections.cookies.title")}
+              {t("legal.privacy.sections.cookies.title")}
             </h2>
-            <p className="text-foreground-muted">{t("privacy.sections.cookies.content")}</p>
+            <p className="text-foreground-muted">{t("legal.privacy.sections.cookies.content")}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">
-              {t("privacy.sections.changes.title")}
+              {t("legal.privacy.sections.changes.title")}
             </h2>
-            <p className="text-foreground-muted">{t("privacy.sections.changes.content")}</p>
+            <p className="text-foreground-muted">{t("legal.privacy.sections.changes.content")}</p>
           </section>
         </div>
       </div>
