@@ -1,26 +1,27 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, FileText } from "lucide-react";
-import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
+import { useI18n, useT } from "@/lib/i18n";
 
 const LAST_UPDATED = new Date(2026, 0, 1); // January 2026
 
 export function TermsPage() {
-  const { t, i18n } = useTranslation();
+  const t = useT();
+  const i18n = useI18n();
 
   const formattedDate = new Intl.DateTimeFormat(i18n.language, {
     year: "numeric",
     month: "long",
   }).format(LAST_UPDATED);
 
-  const accountsItems = t("legal.terms.sections.accounts.items", {
+  const accountsItems = t<string[]>("legal.terms.sections.accounts.items", {
     returnObjects: true,
-  }) as string[];
-  const billingItems = t("legal.terms.sections.billing.items", { returnObjects: true }) as string[];
-  const acceptableUseItems = t("legal.terms.sections.acceptableUse.items", {
+  });
+  const billingItems = t<string[]>("legal.terms.sections.billing.items", { returnObjects: true });
+  const acceptableUseItems = t<string[]>("legal.terms.sections.acceptableUse.items", {
     returnObjects: true,
-  }) as string[];
+  });
 
   return (
     <div className="min-h-screen py-8 sm:py-16">

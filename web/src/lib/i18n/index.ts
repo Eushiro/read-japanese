@@ -32,7 +32,7 @@ export { TranslationProvider } from "./TranslationProvider";
 export { hasTranslation, t } from "./t";
 
 // Hook for reactive translations (re-renders on language change)
-export { useT } from "./useTranslate";
+export { useI18n, useT } from "./useTranslate";
 
 // UI language management
 export { useSyncUILanguage, useUILanguage } from "./useUILanguage";

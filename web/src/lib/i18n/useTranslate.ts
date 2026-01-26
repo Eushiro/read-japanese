@@ -3,10 +3,11 @@
  * Use this when you need the component to re-render when language changes
  */
 
+import type { i18n } from "i18next";
 import { useCallback } from "react";
-import { useTranslation } from "react-i18next";
+import { useTranslation as useI18nextTranslation } from "react-i18next";
 
-type TranslationParams = Record<string, string | number | boolean>;
+type TranslationParams = Record<string, string | number | boolean | undefined>;
 
 export type TranslateFunction = {
   (key: string, params?: TranslationParams): string;
@@ -27,7 +28,7 @@ export type TranslateFunction = {
  * }
  */
 export function useT(): TranslateFunction {
-  const { t: i18nT } = useTranslation();
+  const { t: i18nT } = useI18nextTranslation();
 
   const t = useCallback(
     <T = string>(key: string, params?: TranslationParams): T => {
@@ -47,4 +48,18 @@ export function useT(): TranslateFunction {
   );
 
   return t as TranslateFunction;
+}
+
+/**
+ * Hook for accessing the i18n instance directly.
+ * Only use this when you need i18n features like language detection.
+ * For translations, use useT() instead.
+ *
+ * @example
+ * const i18n = useI18n();
+ * const currentLanguage = i18n.language;
+ */
+export function useI18n(): i18n {
+  const { i18n } = useI18nextTranslation();
+  return i18n;
 }

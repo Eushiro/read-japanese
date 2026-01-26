@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useTranslation as useI18nextTranslation } from "react-i18next";
 
 import { setUILanguage } from "./language";
 import type { UILanguage } from "./types";
@@ -29,7 +29,7 @@ interface UseUILanguageReturn {
  * );
  */
 export function useUILanguage(): UseUILanguageReturn {
-  const { i18n } = useTranslation();
+  const { i18n } = useI18nextTranslation();
   const [isChanging, setIsChanging] = useState(false);
 
   const language = i18n.language as UILanguage;

@@ -1,36 +1,37 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Shield } from "lucide-react";
-import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
+import { useI18n, useT } from "@/lib/i18n";
 
 type DataSharingItem = { name: string; desc: string };
 
 const LAST_UPDATED = new Date(2026, 0, 1); // January 2026
 
 export function PrivacyPage() {
-  const { t, i18n } = useTranslation();
+  const t = useT();
+  const i18n = useI18n();
 
   const formattedDate = new Intl.DateTimeFormat(i18n.language, {
     year: "numeric",
     month: "long",
   }).format(LAST_UPDATED);
 
-  const infoCollectItems = t("legal.privacy.sections.infoCollect.items", {
+  const infoCollectItems = t<string[]>("legal.privacy.sections.infoCollect.items", {
     returnObjects: true,
-  }) as string[];
-  const howWeUseItems = t("legal.privacy.sections.howWeUse.items", {
+  });
+  const howWeUseItems = t<string[]>("legal.privacy.sections.howWeUse.items", {
     returnObjects: true,
-  }) as string[];
-  const aiProcessingItems = t("legal.privacy.sections.aiProcessing.items", {
+  });
+  const aiProcessingItems = t<string[]>("legal.privacy.sections.aiProcessing.items", {
     returnObjects: true,
-  }) as string[];
-  const dataSharingItems = t("legal.privacy.sections.dataSharing.items", {
+  });
+  const dataSharingItems = t<DataSharingItem[]>("legal.privacy.sections.dataSharing.items", {
     returnObjects: true,
-  }) as DataSharingItem[];
-  const yourRightsItems = t("legal.privacy.sections.yourRights.items", {
+  });
+  const yourRightsItems = t<string[]>("legal.privacy.sections.yourRights.items", {
     returnObjects: true,
-  }) as string[];
+  });
 
   return (
     <div className="min-h-screen py-8 sm:py-16">
