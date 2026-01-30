@@ -3,10 +3,10 @@ import { useMutation, useQuery } from "convex/react";
 import { AlertCircle, BookOpen, ChevronRight, Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { SessionBreadcrumbs } from "@/components/session/SessionBreadcrumbs";
 import { SessionComplete } from "@/components/session/SessionComplete";
 import { SessionInput } from "@/components/session/SessionInput";
 import { SessionOutput } from "@/components/session/SessionOutput";
-import { SessionProgress } from "@/components/session/SessionProgress";
 import { SessionReview } from "@/components/session/SessionReview";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -220,7 +220,7 @@ export function StudySessionPage() {
               >
                 <X className="w-5 h-5 text-foreground-muted" />
               </button>
-              <SessionProgress
+              <SessionBreadcrumbs
                 activities={state.plan.activities}
                 currentIndex={state.currentActivityIndex}
               />

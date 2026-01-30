@@ -18,7 +18,14 @@
     "chaptersCount": "{{count}} chapitres",
     "wordsPerChapter": "Mots/Chapitre",
     "wordsCount": "~{{count}} mots",
-    "options": "Options"
+    "options": "Options",
+    "storyType": "Type d'histoire",
+    "storyTypes": {
+      "standard": "Standard",
+      "standardDescription": "Créer une histoire basée sur le niveau et le genre",
+      "personalized": "Personnalisé pour moi",
+      "personalizedDescription": "Utilise votre vocabulaire et vos intérêts"
+    }
   },
   "genres": {
     "dailyLife": "Vie quotidienne",
@@ -51,6 +58,15 @@
   },
   "info": {
     "generationTime": "La génération de l'histoire peut prendre 2 à 5 minutes selon les options sélectionnées.",
-    "generationTimeBrief": "La génération prend 2 à 5 minutes"
+    "generationTimeBrief": "La génération prend 2 à 5 minutes",
+    "personalizedBrief": "Génère une histoire courte avec votre vocabulaire"
+  },
+  "personalized": {
+    "wordCount": "{{count}} mots",
+    "newWords": "{{count}} nouveaux mots",
+    "vocabulary": "Vocabulaire",
+    "new": "Nouveau",
+    "generateAnother": "Générer une autre",
+    "topicHint": "Laissez vide pour utiliser vos intérêts enregistrés"
   }
 }

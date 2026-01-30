@@ -1,7 +1,7 @@
 {
   "welcome": {
     "title": "Bienvenue sur {{brandName}}",
-    "subtitle": "Configurons ta préparation aux examens",
+    "subtitle": "Personnalisons ton expérience d'apprentissage",
     "getStarted": "C'est parti"
   },
   "actions": {
@@ -36,9 +36,54 @@
     "title": "Quelle langue étudies-tu ?",
     "subtitle": "Choisis la langue sur laquelle tu veux te concentrer"
   },
+  "goalSelection": {
+    "title": "Quel est ton objectif principal ?",
+    "subtitle": "On adaptera ton expérience pour t'aider à l'atteindre",
+    "goals": {
+      "exam": {
+        "label": "Réussir un examen",
+        "description": "JLPT, TOEFL, DELF, etc."
+      },
+      "travel": {
+        "label": "Voyage & Conversation",
+        "description": "Parler avec confiance à l'étranger"
+      },
+      "professional": {
+        "label": "Usage professionnel",
+        "description": "Business & travail"
+      },
+      "media": {
+        "label": "Consommation de médias",
+        "description": "Anime, films, livres"
+      },
+      "casual": {
+        "label": "Juste pour explorer",
+        "description": "Apprendre à mon rythme"
+      }
+    }
+  },
+  "interestSelection": {
+    "title": "Qu'est-ce qui t'intéresse ?",
+    "subtitle": "Choisis 3-5 sujets pour du contenu personnalisé",
+    "interests": {
+      "food": "Cuisine & Gastronomie",
+      "sports": "Sports & Fitness",
+      "technology": "Technologie",
+      "nature": "Nature & Voyage",
+      "relationships": "Relations",
+      "business": "Business",
+      "popCulture": "Culture Pop",
+      "history": "Histoire",
+      "music": "Musique",
+      "art": "Art & Design",
+      "gaming": "Jeux vidéo",
+      "science": "Science"
+    },
+    "minSelection": "Sélectionne au moins 3 sujets"
+  },
   "examSelection": {
-    "title": "Un examen en vue ?",
-    "subtitle": "On adaptera le contenu à tes objectifs (facultatif)",
+    "title": "Quel examen prépares-tu ?",
+    "subtitle": "On se concentrera sur le contenu spécifique à l'examen",
     "skipForNow": "Passer pour l'instant"
   }
 }

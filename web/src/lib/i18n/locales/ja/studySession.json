@@ -61,5 +61,13 @@
     "read": "読む",
     "watch": "見る",
     "write": "書く"
+  },
+  "breadcrumbs": {
+    "review": "復習",
+    "read": "読書",
+    "watch": "動画視聴",
+    "practice": "練習",
+    "cardCount": "{{count}}枚",
+    "sentenceCount": "{{count}}文"
   }
 }

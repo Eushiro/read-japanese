@@ -20,6 +20,10 @@ const FSRS_PARAMS = {
   relearningSteps: [10],
 };
 
+// Smart Flashcard Management Constants
+const DEFAULT_MAX_REVIEWS_PER_SESSION = 30;
+const FORGIVENESS_OVERDUE_DAYS = 7; // Cards overdue by 7+ days get forgiveness treatment
+
 // Rating multipliers for difficulty adjustment
 const RATING_MULTIPLIERS = {
   again: 0,
@@ -185,6 +189,107 @@ export const getDue = query({
       : cardsWithContent;
 
     return filtered.slice(0, args.limit ?? 100);
+  },
+});
+
+// Get due cards with priority sorting (most at-risk first based on retrievability)
+// This is the smart query that prioritizes cards most likely to be forgotten
+export const getDueWithPriority = query({
+  args: {
+    userId: v.string(),
+    limit: v.optional(v.number()), // Default: DEFAULT_MAX_REVIEWS_PER_SESSION (30)
+    language: v.optional(v.string()),
+    uiLanguage: v.optional(uiLanguageValidator),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const maxCards = args.limit ?? DEFAULT_MAX_REVIEWS_PER_SESSION;
+    const uiLang = normalizeUILanguage(args.uiLanguage);
+
+    // Get all due cards
+    const cards = await ctx.db
+      .query("flashcards")
+      .withIndex("by_user_and_due", (q) => q.eq("userId", args.userId).lte("due", now))
+      .take(maxCards * (args.language ? 3 : 1));
+
+    // Calculate retrievability and sort by priority (lowest retrievability first)
+    const cardsWithPriority = cards.map((card) => {
+      // Calculate elapsed days since card was due
+      const elapsedMs = now - card.due;
+      const elapsedDays = Math.max(0, elapsedMs / (1000 * 60 * 60 * 24));
+
+      // Calculate current retrievability
+      // For cards that haven't been reviewed yet, use a low retrievability
+      const retrievability =
+        card.stability > 0
+          ? calculateRetrievability(elapsedDays + card.elapsedDays, card.stability)
+          : 0.5; // New cards get medium priority
+
+      // Priority score: lower is more urgent
+      // Cards with low retrievability and high elapsed days are most urgent
+      const priority = retrievability;
+
+      // Check if this card qualifies for forgiveness mode (7+ days overdue)
+      const needsForgiveness = elapsedDays >= FORGIVENESS_OVERDUE_DAYS;
+
+      return { ...card, retrievability, priority, elapsedDays, needsForgiveness };
+    });
+
+    // Sort by priority (lowest retrievability first - most at risk of being forgotten)
+    cardsWithPriority.sort((a, b) => a.priority - b.priority);
+
+    // Fetch content for the limited set
+    const limitedCards = cardsWithPriority.slice(0, maxCards * (args.language ? 3 : 1));
+
+    const cardsWithContent = await Promise.all(
+      limitedCards.map(async (card) => {
+        const [vocab, sentence, image] = await Promise.all([
+          ctx.db.get(card.vocabularyId),
+          card.sentenceId ? ctx.db.get(card.sentenceId) : null,
+          card.imageId ? ctx.db.get(card.imageId) : null,
+        ]);
+
+        const wordAudio = vocab
+          ? await ctx.db
+              .query("wordAudio")
+              .withIndex("by_word_language", (q) =>
+                q.eq("word", vocab.word).eq("language", vocab.language)
+              )
+              .first()
+          : null;
+
+        const sentenceTranslation = sentence?.translations
+          ? getSentenceTranslation(sentence.translations, uiLang)
+          : null;
+
+        const resolvedVocab = vocab
+          ? {
+              ...vocab,
+              definitions: getDefinitions(vocab.definitionTranslations, vocab.definitions, uiLang),
+            }
+          : null;
+
+        return {
+          ...card,
+          vocabulary: resolvedVocab,
+          sentence: sentence
+            ? {
+                ...sentence,
+                sentenceTranslation,
+              }
+            : null,
+          image,
+          wordAudio,
+        };
+      })
+    );
+
+    // Filter by language if specified
+    const filtered = args.language
+      ? cardsWithContent.filter((c) => c.vocabulary?.language === args.language)
+      : cardsWithContent;
+
+    return filtered.slice(0, maxCards);
   },
 });
 
@@ -535,28 +640,55 @@ export const review = mutation({
       }
     } else {
       // Review state
-      const retrievability = calculateRetrievability(elapsedDays, card.stability);
-      newDifficulty = calculateNextDifficulty(card.difficulty, rating);
+      // Check if card qualifies for forgiveness mode (7+ days overdue)
+      const overdueMs = now - card.due;
+      const overdueDays = overdueMs / (1000 * 60 * 60 * 24);
+      const needsForgiveness = overdueDays >= FORGIVENESS_OVERDUE_DAYS;
 
-      if (rating === "again") {
-        newState = "relearning";
-        newStability = calculateNextStability(
-          card.difficulty,
-          card.stability,
-          retrievability,
-          rating
-        );
-        scheduledDays = FSRS_PARAMS.relearningSteps[0] / (60 * 24);
-        lapses++;
-      } else {
+      if (needsForgiveness && rating !== "again") {
+        // Forgiveness mode: Instead of penalizing severely overdue cards,
+        // treat them as if they were reviewed on time but with reduced stability
+        // This prevents overwhelming users who return after a break
+        newDifficulty = card.difficulty;
         newState = "review";
-        newStability = calculateNextStability(
-          card.difficulty,
-          card.stability,
-          retrievability,
-          rating
-        );
+
+        // Reset stability based on the rating, but don't penalize for the overdue period
+        // Use initial stability calculation as a fresh start
+        newStability = calculateInitialStability(rating);
+
+        // Apply a small bonus for remembering despite the long gap
+        if (rating === "easy") {
+          newStability *= 1.5;
+        } else if (rating === "good") {
+          newStability *= 1.2;
+        }
+
         scheduledDays = calculateNextInterval(newStability, FSRS_PARAMS.requestRetention);
+      } else {
+        // Normal review path
+        const retrievability = calculateRetrievability(elapsedDays, card.stability);
+        newDifficulty = calculateNextDifficulty(card.difficulty, rating);
+
+        if (rating === "again") {
+          newState = "relearning";
+          newStability = calculateNextStability(
+            card.difficulty,
+            card.stability,
+            retrievability,
+            rating
+          );
+          scheduledDays = FSRS_PARAMS.relearningSteps[0] / (60 * 24);
+          lapses++;
+        } else {
+          newState = "review";
+          newStability = calculateNextStability(
+            card.difficulty,
+            card.stability,
+            retrievability,
+            rating
+          );
+          scheduledDays = calculateNextInterval(newStability, FSRS_PARAMS.requestRetention);
+        }
       }
     }
 
@@ -866,5 +998,223 @@ export const updateSentenceInternal = internalMutation({
       sentenceId,
       updatedAt: now,
     });
+  },
+});
+
+// ============================================
+// VACATION MODE & SMART SETTINGS
+// ============================================
+
+// Toggle vacation mode - pauses SRS scheduling
+export const toggleVacationMode = mutation({
+  args: {
+    userId: v.string(),
+    enabled: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Get or create user preferences
+    const prefs = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (!prefs) {
+      // Create default preferences with vacation mode
+      await ctx.db.insert("userPreferences", {
+        userId: args.userId,
+        display: { showFurigana: true },
+        audio: {},
+        srs: {
+          vacationMode: args.enabled,
+          vacationStartedAt: args.enabled ? now : undefined,
+        },
+        updatedAt: now,
+      });
+      return { success: true, vacationMode: args.enabled };
+    }
+
+    // Update existing preferences
+    const newSrs = {
+      ...prefs.srs,
+      vacationMode: args.enabled,
+      vacationStartedAt: args.enabled ? now : undefined,
+    };
+
+    // If disabling vacation mode, adjust all card due dates
+    if (!args.enabled && prefs.srs.vacationMode && prefs.srs.vacationStartedAt) {
+      const vacationDays = Math.floor((now - prefs.srs.vacationStartedAt) / (1000 * 60 * 60 * 24));
+
+      if (vacationDays > 0) {
+        // Get all user's cards and push their due dates forward
+        const cards = await ctx.db
+          .query("flashcards")
+          .withIndex("by_user", (q) => q.eq("userId", args.userId))
+          .collect();
+
+        const vacationMs = vacationDays * 24 * 60 * 60 * 1000;
+
+        await Promise.all(
+          cards.map((card) =>
+            ctx.db.patch(card._id, {
+              due: card.due + vacationMs,
+              updatedAt: now,
+            })
+          )
+        );
+      }
+    }
+
+    await ctx.db.patch(prefs._id, {
+      srs: newSrs,
+      updatedAt: now,
+    });
+
+    return { success: true, vacationMode: args.enabled };
+  },
+});
+
+// Update max reviews per session
+export const updateMaxReviewsPerSession = mutation({
+  args: {
+    userId: v.string(),
+    maxReviews: v.number(), // 10-100
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const maxReviews = Math.max(10, Math.min(100, args.maxReviews));
+
+    const prefs = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (!prefs) {
+      await ctx.db.insert("userPreferences", {
+        userId: args.userId,
+        display: { showFurigana: true },
+        audio: {},
+        srs: { maxReviewsPerSession: maxReviews },
+        updatedAt: now,
+      });
+    } else {
+      await ctx.db.patch(prefs._id, {
+        srs: { ...prefs.srs, maxReviewsPerSession: maxReviews },
+        updatedAt: now,
+      });
+    }
+
+    return { success: true, maxReviews };
+  },
+});
+
+// Toggle forgiveness mode
+export const toggleForgivenessMode = mutation({
+  args: {
+    userId: v.string(),
+    enabled: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    const prefs = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (!prefs) {
+      await ctx.db.insert("userPreferences", {
+        userId: args.userId,
+        display: { showFurigana: true },
+        audio: {},
+        srs: { forgivenessMode: args.enabled },
+        updatedAt: now,
+      });
+    } else {
+      await ctx.db.patch(prefs._id, {
+        srs: { ...prefs.srs, forgivenessMode: args.enabled },
+        updatedAt: now,
+      });
+    }
+
+    return { success: true, forgivenessMode: args.enabled };
+  },
+});
+
+// Get SRS settings for a user
+export const getSrsSettings = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const prefs = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    return {
+      maxReviewsPerSession: prefs?.srs?.maxReviewsPerSession ?? DEFAULT_MAX_REVIEWS_PER_SESSION,
+      forgivenessMode: prefs?.srs?.forgivenessMode ?? true, // Enabled by default
+      vacationMode: prefs?.srs?.vacationMode ?? false,
+      vacationStartedAt: prefs?.srs?.vacationStartedAt,
+      dailyReviewGoal: prefs?.srs?.dailyReviewGoal,
+      newCardsPerDay: prefs?.srs?.newCardsPerDay,
+    };
+  },
+});
+
+// Get words for micro-review (recently learned words that need quick reinforcement)
+// These are used for embedded repetition during reading/output activities
+export const getWordsForMicroReview = query({
+  args: {
+    userId: v.string(),
+    language: v.optional(v.string()),
+    limit: v.optional(v.number()), // Default 5
+    uiLanguage: v.optional(uiLanguageValidator),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 5;
+    const uiLang = normalizeUILanguage(args.uiLanguage);
+
+    // Get cards that were recently reviewed (within last 7 days) and are in learning/review state
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+    const cards = await ctx.db
+      .query("flashcards")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) =>
+        q.and(
+          q.or(q.eq(q.field("state"), "learning"), q.eq(q.field("state"), "review")),
+          q.gte(q.field("lastReview"), sevenDaysAgo)
+        )
+      )
+      .take(limit * 3);
+
+    // Fetch vocabulary for each card
+    const cardsWithVocab = await Promise.all(
+      cards.map(async (card) => {
+        const vocab = await ctx.db.get(card.vocabularyId);
+        return { card, vocab };
+      })
+    );
+
+    // Filter by language if specified
+    const filtered = args.language
+      ? cardsWithVocab.filter((c) => c.vocab?.language === args.language)
+      : cardsWithVocab;
+
+    // Sort by stability (lower stability = needs more reinforcement) and take limit
+    const sorted = filtered
+      .filter((c) => c.vocab !== null)
+      .sort((a, b) => a.card.stability - b.card.stability)
+      .slice(0, limit);
+
+    // Format for MicroReview component
+    return sorted.map(({ card, vocab }) => ({
+      id: card._id,
+      word: vocab!.word,
+      reading: vocab!.reading,
+      definitions: getDefinitions(vocab!.definitionTranslations, vocab!.definitions, uiLang),
+      language: vocab!.language,
+    }));
   },
 });

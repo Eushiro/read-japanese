@@ -1,7 +1,7 @@
 {
   "welcome": {
     "title": "Welcome to {{brandName}}",
-    "subtitle": "Let's set up your personalized exam prep",
+    "subtitle": "Let's personalize your learning experience",
     "getStarted": "Get Started"
   },
   "actions": {
@@ -36,9 +36,54 @@
     "title": "What language are you studying?",
     "subtitle": "Choose the language you want to focus on"
   },
+  "goalSelection": {
+    "title": "What's your main goal?",
+    "subtitle": "We'll tailor your experience to help you achieve it",
+    "goals": {
+      "exam": {
+        "label": "Pass an Exam",
+        "description": "JLPT, TOEFL, DELF, etc."
+      },
+      "travel": {
+        "label": "Travel & Conversation",
+        "description": "Speak confidently abroad"
+      },
+      "professional": {
+        "label": "Professional Use",
+        "description": "Business & workplace"
+      },
+      "media": {
+        "label": "Media Consumption",
+        "description": "Anime, films, books"
+      },
+      "casual": {
+        "label": "Just Exploring",
+        "description": "Learn at my own pace"
+      }
+    }
+  },
+  "interestSelection": {
+    "title": "What interests you?",
+    "subtitle": "Pick 3-5 topics for personalized content",
+    "interests": {
+      "food": "Food & Cooking",
+      "sports": "Sports & Fitness",
+      "technology": "Technology",
+      "nature": "Nature & Travel",
+      "relationships": "Relationships",
+      "business": "Business",
+      "popCulture": "Pop Culture",
+      "history": "History",
+      "music": "Music",
+      "art": "Art & Design",
+      "gaming": "Gaming",
+      "science": "Science"
+    },
+    "minSelection": "Select at least 3 topics"
+  },
   "examSelection": {
-    "title": "Any exams coming up?",
-    "subtitle": "We'll tailor content to your target exams (optional)",
+    "title": "Which exam are you preparing for?",
+    "subtitle": "We'll focus your study on exam-specific content",
     "skipForNow": "Skip for now"
   }
 }

@@ -1,0 +1,47 @@
+{
+  "title": "基礎",
+  "subtitle": "最初の100単語をマスターしよう",
+  "progress": {
+    "wordsLearned": "{{count}}単語を学習済み",
+    "wordsUnlocked": "{{count}}単語をアンロック済み",
+    "percentComplete": "{{percent}}%完了",
+    "storiesUnlocked": "{{count}}話をアンロック済み"
+  },
+  "cards": {
+    "dueTitle": "復習カード",
+    "dueDescription": "アンロック済みの単語を復習する",
+    "newTitle": "新しい単語",
+    "newDescription": "新しい単語を学ぶ",
+    "startReview": "復習を始める",
+    "noCardsDue": "現在復習カードはありません"
+  },
+  "unlock": {
+    "title": "もっと単語をアンロック",
+    "description": "{{count}}個の新しい単語を追加する",
+    "button": "単語をアンロック",
+    "allUnlocked": "すべての単語がアンロック済み"
+  },
+  "stories": {
+    "title": "ミニストーリー",
+    "description": "学習した単語だけを使った短いストーリー",
+    "storyNumber": "ストーリー{{number}}",
+    "locked": "アンロックにはあと{{count}}単語必要",
+    "read": "読む",
+    "comingSoon": "近日公開"
+  },
+  "completion": {
+    "title": "おめでとうございます！",
+    "description": "基礎トラックを完了しました！",
+    "continueButton": "学習を続ける",
+    "stats": {
+      "wordsLearned": "学習した単語",
+      "storiesRead": "読んだストーリー",
+      "daysActive": "学習日数"
+    }
+  },
+  "emptyState": {
+    "title": "基礎へようこそ",
+    "description": "最初の単語をアンロックして学習を始めましょう",
+    "startButton": "始める"
+  }
+}

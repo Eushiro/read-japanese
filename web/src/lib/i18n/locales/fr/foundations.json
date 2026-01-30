@@ -1,0 +1,47 @@
+{
+  "title": "Les bases",
+  "subtitle": "Maîtrisez vos 100 premiers mots",
+  "progress": {
+    "wordsLearned": "{{count}} mots appris",
+    "wordsUnlocked": "{{count}} mots débloqués",
+    "percentComplete": "{{percent}}% terminé",
+    "storiesUnlocked": "{{count}} histoires débloquées"
+  },
+  "cards": {
+    "dueTitle": "Cartes à réviser",
+    "dueDescription": "Révisez votre vocabulaire débloqué",
+    "newTitle": "Nouveaux mots",
+    "newDescription": "Apprenez du nouveau vocabulaire",
+    "startReview": "Commencer la révision",
+    "noCardsDue": "Aucune carte à réviser pour le moment"
+  },
+  "unlock": {
+    "title": "Débloquer plus de mots",
+    "description": "Ajoutez {{count}} nouveaux mots à votre vocabulaire",
+    "button": "Débloquer des mots",
+    "allUnlocked": "Tous les mots sont débloqués"
+  },
+  "stories": {
+    "title": "Micro-histoires",
+    "description": "Courtes histoires utilisant uniquement les mots appris",
+    "storyNumber": "Histoire {{number}}",
+    "locked": "Apprenez {{count}} mots de plus pour débloquer",
+    "read": "Lire l'histoire",
+    "comingSoon": "Bientôt disponible"
+  },
+  "completion": {
+    "title": "Félicitations !",
+    "description": "Vous avez terminé le parcours Les bases !",
+    "continueButton": "Continuer à apprendre",
+    "stats": {
+      "wordsLearned": "Mots appris",
+      "storiesRead": "Histoires lues",
+      "daysActive": "Jours actifs"
+    }
+  },
+  "emptyState": {
+    "title": "Bienvenue aux Bases",
+    "description": "Commencez votre parcours en débloquant vos premiers mots",
+    "startButton": "Commencer"
+  }
+}

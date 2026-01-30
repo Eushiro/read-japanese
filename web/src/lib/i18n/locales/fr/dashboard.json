@@ -73,6 +73,41 @@
     "findYourLevel": "Trouver votre niveau",
     "setUpLanguages": "Configurer les langues"
   },
+  "goalBanner": {
+    "exam": {
+      "title": "{{percent}}% prêt pour {{exam}}",
+      "subtitle": "Continuez à étudier pour atteindre votre objectif",
+      "cta": "Passer un test pratique"
+    },
+    "travel": {
+      "title": "{{count}} phrases de conversation maîtrisées",
+      "subtitle": "Pratiquez pour gagner en confiance",
+      "cta": "Pratiquer un dialogue"
+    },
+    "media": {
+      "title": "Amélioration de la compréhension orale",
+      "subtitle": "Regardez du contenu à votre niveau",
+      "cta": "Regarder une vidéo"
+    },
+    "professional": {
+      "title": "Construction de votre vocabulaire professionnel",
+      "subtitle": "Apprenez les termes commerciaux et expressions formelles",
+      "cta": "Pratiquer l'écriture"
+    },
+    "casual": {
+      "title": "{{streak}} jours de suite !",
+      "subtitle": "Gardez l'élan",
+      "cta": "Lire une histoire"
+    }
+  },
+  "foundations": {
+    "banner": {
+      "title": "Continuez votre parcours",
+      "subtitle": "Encore {{count}} mots pour les Bases",
+      "progress": "{{percent}}% terminé",
+      "cta": "Continuer à apprendre"
+    }
+  },
   "crossLanguage": {
     "dueCards": "Vous avez {{count}} cartes à réviser en {{language}}",
     "switchPrompt": "Appuyez pour changer et réviser"

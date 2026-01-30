@@ -1,6 +1,9 @@
 import type { SessionActivity, SessionPlan } from "@/contexts/StudySessionContext";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 
+// Learning goals that affect session content
+export type LearningGoal = "exam" | "travel" | "professional" | "media" | "casual";
+
 interface PlannerInput {
   dueCardCount: number;
   newCardCount: number;
@@ -13,6 +16,7 @@ interface PlannerInput {
     duration?: number; // in seconds for videos
   } | null;
   selectedDuration: number | null; // null = automatic
+  learningGoal?: LearningGoal; // User's learning goal affects content selection
 }
 
 // Time estimates in minutes
@@ -20,8 +24,44 @@ const CARD_REVIEW_TIME = 0.5; // 30 seconds per card
 const INPUT_BASE_TIME = 6; // 6 minutes for reading/video
 const SENTENCE_WRITE_TIME = 2; // 2 minutes per sentence
 
+// Goal-based activity weights (how much time to allocate to each activity type)
+interface GoalWeights {
+  review: number; // Fraction of time for flashcard review
+  input: number; // Fraction of time for reading/watching
+  output: number; // Fraction of time for writing practice
+  preferVideo: boolean; // Whether to prefer video over reading
+}
+
+function getGoalWeights(goal?: LearningGoal): GoalWeights {
+  switch (goal) {
+    case "exam":
+      // Exam focus: more review (drilling), balanced input/output
+      return { review: 0.5, input: 0.3, output: 0.2, preferVideo: false };
+    case "travel":
+      // Travel focus: conversation practice, more output
+      return { review: 0.3, input: 0.3, output: 0.4, preferVideo: true };
+    case "professional":
+      // Professional focus: reading comprehension, formal writing
+      return { review: 0.3, input: 0.4, output: 0.3, preferVideo: false };
+    case "media":
+      // Media focus: listening comprehension, video content
+      return { review: 0.3, input: 0.5, output: 0.2, preferVideo: true };
+    case "casual":
+    default:
+      // Balanced approach for casual learners
+      return { review: 0.4, input: 0.4, output: 0.2, preferVideo: false };
+  }
+}
+
 export function buildSessionPlan(input: PlannerInput): SessionPlan {
-  const { dueCardCount, newCardCount, vocabToReview, recommendedContent, selectedDuration } = input;
+  const {
+    dueCardCount,
+    newCardCount,
+    vocabToReview,
+    recommendedContent,
+    selectedDuration,
+    learningGoal,
+  } = input;
 
   const totalCards = dueCardCount + newCardCount;
   const activities: SessionActivity[] = [];
@@ -29,6 +69,9 @@ export function buildSessionPlan(input: PlannerInput): SessionPlan {
 
   // Determine time budget
   const duration = selectedDuration ?? calculateAutoDuration(totalCards, vocabToReview);
+
+  // Goal-based activity weights
+  const goalWeights = getGoalWeights(learningGoal);
 
   // Edge case: Massive backlog (>50 cards) - Review-only session
   if (totalCards > 50) {
@@ -44,12 +87,13 @@ export function buildSessionPlan(input: PlannerInput): SessionPlan {
     };
   }
 
-  // Build session based on selected duration
+  // Build session based on selected duration and goal weights
   let remainingTime = duration;
 
   // Phase 1: Review (if cards are due)
   if (totalCards > 0) {
-    const reviewTime = Math.min(remainingTime * 0.5, totalCards * CARD_REVIEW_TIME);
+    const reviewTimeAllocation = remainingTime * goalWeights.review;
+    const reviewTime = Math.min(reviewTimeAllocation, totalCards * CARD_REVIEW_TIME);
     const cardsToReview = Math.min(totalCards, Math.floor(reviewTime / CARD_REVIEW_TIME));
 
     if (cardsToReview > 0) {
@@ -68,17 +112,20 @@ export function buildSessionPlan(input: PlannerInput): SessionPlan {
       title: recommendedContent.title,
       language: recommendedContent.language,
     });
-    const inputTime = Math.min(remainingTime * 0.6, INPUT_BASE_TIME);
+    const inputTimeAllocation = duration * goalWeights.input;
+    const inputTime = Math.min(remainingTime * 0.6, inputTimeAllocation, INPUT_BASE_TIME);
     estimatedMinutes += Math.ceil(inputTime);
     remainingTime -= inputTime;
   }
 
-  // Phase 3: Output (if vocabulary needs practice)
+  // Phase 3: Output (if vocabulary needs practice and goal emphasizes output)
   if (vocabToReview > 0 && remainingTime >= SENTENCE_WRITE_TIME) {
+    // Adjust max sentences based on goal
+    const maxSentences = goalWeights.output >= 0.3 ? 3 : 2;
     const sentenceCount = Math.min(
       vocabToReview,
       Math.floor(remainingTime / SENTENCE_WRITE_TIME),
-      2 // Max 2 sentences per session
+      maxSentences
     );
 
     if (sentenceCount > 0) {

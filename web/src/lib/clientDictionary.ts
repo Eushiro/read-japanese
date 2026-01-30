@@ -14,12 +14,10 @@
 import * as wanakana from "wanakana";
 
 import type { ContentLanguage } from "@/lib/contentLanguages";
+import type { UILanguage } from "@/lib/i18n/types";
 
 // R2 base URL from environment, falls back to local /dictionaries for development
 const R2_BASE_URL = import.meta.env.VITE_R2_PUBLIC_URL || "";
-
-// UI language type (matches backend)
-export type UILanguage = "en" | "ja" | "fr" | "zh";
 
 export interface DictionaryEntry {
   word: string;

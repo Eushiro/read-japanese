@@ -71,6 +71,7 @@
   "auth": {
     "signInPrompt": "请登录以继续",
     "signInDescription": "创建账户或登录以访问所有功能。",
+    "signInRequired": "请登录以访问此功能。",
     "signedInAs": "已以{{name}}身份登录",
     "syncDescription": "登录以在设备间同步您的词汇和学习进度。"
   },

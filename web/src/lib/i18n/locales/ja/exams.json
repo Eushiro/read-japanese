@@ -77,6 +77,26 @@
     "delf_b2": {
       "name": "DELF B2",
       "description": "中上級フランス語"
+    },
+    "dalf_c1": {
+      "name": "DALF C1",
+      "description": "上級フランス語能力"
+    },
+    "dalf_c2": {
+      "name": "DALF C2",
+      "description": "フランス語マスターレベル"
+    },
+    "tcf": {
+      "name": "TCF",
+      "description": "フランス語能力認定テスト"
+    },
+    "sat": {
+      "name": "SAT",
+      "description": "大学入学共通テスト"
+    },
+    "gre": {
+      "name": "GRE",
+      "description": "大学院入学テスト"
     }
   }
 }

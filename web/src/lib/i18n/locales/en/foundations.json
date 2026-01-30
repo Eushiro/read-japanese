@@ -1,0 +1,47 @@
+{
+  "title": "Foundations",
+  "subtitle": "Master your first 100 words",
+  "progress": {
+    "wordsLearned": "{{count}} words learned",
+    "wordsUnlocked": "{{count}} words unlocked",
+    "percentComplete": "{{percent}}% complete",
+    "storiesUnlocked": "{{count}} stories unlocked"
+  },
+  "cards": {
+    "dueTitle": "Cards Due",
+    "dueDescription": "Review your unlocked vocabulary",
+    "newTitle": "New Words",
+    "newDescription": "Learn new vocabulary",
+    "startReview": "Start Review",
+    "noCardsDue": "No cards due right now"
+  },
+  "unlock": {
+    "title": "Unlock More Words",
+    "description": "Add {{count}} new words to your vocabulary",
+    "button": "Unlock Words",
+    "allUnlocked": "All words unlocked"
+  },
+  "stories": {
+    "title": "Micro-Stories",
+    "description": "Short stories using only words you've learned",
+    "storyNumber": "Story {{number}}",
+    "locked": "Learn {{count}} more words to unlock",
+    "read": "Read Story",
+    "comingSoon": "Coming Soon"
+  },
+  "completion": {
+    "title": "Congratulations!",
+    "description": "You've completed the Foundations track!",
+    "continueButton": "Continue Learning",
+    "stats": {
+      "wordsLearned": "Words Learned",
+      "storiesRead": "Stories Read",
+      "daysActive": "Days Active"
+    }
+  },
+  "emptyState": {
+    "title": "Welcome to Foundations",
+    "description": "Start your journey by unlocking your first words",
+    "startButton": "Get Started"
+  }
+}

@@ -41,6 +41,7 @@ export {
   generateFlashcardAudio,
   generateFlashcardsBulk,
   generateFlashcardWithAudio,
+  generatePersonalizedStoryInternal,
   generateSentence,
   generateSentenceHelper,
   generateSentenceHelperTracked,

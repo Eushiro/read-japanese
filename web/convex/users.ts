@@ -7,7 +7,7 @@ import {
   getYesterdayString,
   requireUserByClerkId,
 } from "./lib/helpers";
-import { examTypeValidator, languageValidator } from "./schema";
+import { examTypeValidator, languageValidator, learningGoalValidator } from "./schema";
 
 // ============================================
 // QUERIES
@@ -44,6 +44,8 @@ export const upsert = mutation({
     name: v.optional(v.string()),
     languages: v.optional(v.array(languageValidator)),
     targetExams: v.optional(v.array(examTypeValidator)),
+    learningGoal: v.optional(learningGoalValidator),
+    interests: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -56,6 +58,8 @@ export const upsert = mutation({
       if (args.name !== undefined) updates.name = args.name;
       if (args.languages !== undefined) updates.languages = args.languages;
       if (args.targetExams !== undefined) updates.targetExams = args.targetExams;
+      if (args.learningGoal !== undefined) updates.learningGoal = args.learningGoal;
+      if (args.interests !== undefined) updates.interests = args.interests;
 
       await ctx.db.patch(existing._id, updates);
       return existing._id;
@@ -68,6 +72,8 @@ export const upsert = mutation({
       name: args.name,
       languages: args.languages ?? ["japanese"],
       targetExams: args.targetExams ?? [],
+      learningGoal: args.learningGoal,
+      interests: args.interests,
       createdAt: now,
       updatedAt: now,
     });
@@ -101,6 +107,38 @@ export const updateTargetExams = mutation({
 
     await ctx.db.patch(user._id, {
       targetExams: args.targetExams,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Update learning goal
+export const updateLearningGoal = mutation({
+  args: {
+    clerkId: v.string(),
+    learningGoal: learningGoalValidator,
+  },
+  handler: async (ctx, args) => {
+    const user = await requireUserByClerkId(ctx, args.clerkId);
+
+    await ctx.db.patch(user._id, {
+      learningGoal: args.learningGoal,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Update user interests
+export const updateInterests = mutation({
+  args: {
+    clerkId: v.string(),
+    interests: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireUserByClerkId(ctx, args.clerkId);
+
+    await ctx.db.patch(user._id, {
+      interests: args.interests,
       updatedAt: Date.now(),
     });
   },

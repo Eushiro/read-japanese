@@ -73,6 +73,41 @@
     "findYourLevel": "确定您的水平",
     "setUpLanguages": "设置语言"
   },
+  "goalBanner": {
+    "exam": {
+      "title": "{{exam}}准备完成{{percent}}%",
+      "subtitle": "继续学习以达成目标",
+      "cta": "参加模拟测试"
+    },
+    "travel": {
+      "title": "已掌握{{count}}个会话短语",
+      "subtitle": "通过口语练习建立信心",
+      "cta": "练习对话"
+    },
+    "media": {
+      "title": "正在提升听力理解能力",
+      "subtitle": "观看适合您水平的内容",
+      "cta": "观看视频"
+    },
+    "professional": {
+      "title": "正在构建专业词汇",
+      "subtitle": "学习商务术语和正式表达",
+      "cta": "练习写作"
+    },
+    "casual": {
+      "title": "连续{{streak}}天！",
+      "subtitle": "保持这个势头",
+      "cta": "阅读故事"
+    }
+  },
+  "foundations": {
+    "banner": {
+      "title": "继续你的旅程",
+      "subtitle": "基础课程还剩{{count}}个单词",
+      "progress": "完成{{percent}}%",
+      "cta": "继续学习"
+    }
+  },
   "crossLanguage": {
     "dueCards": "您有{{count}}张{{language}}卡片待复习",
     "switchPrompt": "点击切换并复习"

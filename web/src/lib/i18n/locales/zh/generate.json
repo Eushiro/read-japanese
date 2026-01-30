@@ -18,7 +18,14 @@
     "chaptersCount": "{{count}}章",
     "wordsPerChapter": "每章字数",
     "wordsCount": "约{{count}}字",
-    "options": "选项"
+    "options": "选项",
+    "storyType": "故事类型",
+    "storyTypes": {
+      "standard": "标准",
+      "standardDescription": "根据等级和类型创建故事",
+      "personalized": "为我个性化",
+      "personalizedDescription": "使用您的词汇和兴趣"
+    }
   },
   "genres": {
     "dailyLife": "日常生活",
@@ -51,6 +58,15 @@
   },
   "info": {
     "generationTime": "根据所选选项，故事生成可能需要2-5分钟。",
-    "generationTimeBrief": "生成需要2-5分钟"
+    "generationTimeBrief": "生成需要2-5分钟",
+    "personalizedBrief": "使用您的词汇生成短篇故事"
+  },
+  "personalized": {
+    "wordCount": "{{count}}个词",
+    "newWords": "{{count}}个新词",
+    "vocabulary": "词汇",
+    "new": "新",
+    "generateAnother": "再生成一个",
+    "topicHint": "留空则使用您保存的兴趣"
   }
 }

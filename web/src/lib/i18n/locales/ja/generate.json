@@ -18,7 +18,14 @@
     "chaptersCount": "{{count}}章",
     "wordsPerChapter": "章あたりの単語数",
     "wordsCount": "約{{count}}語",
-    "options": "オプション"
+    "options": "オプション",
+    "storyType": "ストーリータイプ",
+    "storyTypes": {
+      "standard": "標準",
+      "standardDescription": "レベルとジャンルに基づいてストーリーを作成",
+      "personalized": "パーソナライズ",
+      "personalizedDescription": "あなたの語彙と興味を使用"
+    }
   },
   "genres": {
     "dailyLife": "日常",
@@ -51,6 +58,15 @@
   },
   "info": {
     "generationTime": "ストーリーの生成には、選択したオプションにより2〜5分かかる場合があります。",
-    "generationTimeBrief": "生成には2〜5分かかります"
+    "generationTimeBrief": "生成には2〜5分かかります",
+    "personalizedBrief": "あなたの語彙を使った短いストーリーを生成します"
+  },
+  "personalized": {
+    "wordCount": "{{count}}語",
+    "newWords": "{{count}}個の新しい単語",
+    "vocabulary": "語彙",
+    "new": "新規",
+    "generateAnother": "別のを生成",
+    "topicHint": "空欄にすると保存された興味が使用されます"
   }
 }

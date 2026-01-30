@@ -15,6 +15,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalAction, internalMutation, internalQuery } from "../_generated/server";
+import type { ContentLanguage } from "../schema";
 import { TIER_LIMITS } from "../subscriptions";
 
 // ============================================
@@ -771,6 +772,158 @@ export const generateAudioForText = internalAction({
       audioUrl: audioResult.audioUrl,
       wasReused: false,
     };
+  },
+});
+
+// ============================================
+// PERSONALIZED STORY GENERATION
+// ============================================
+
+export interface PersonalizedStoryRequest {
+  mustUseWords: string[]; // Words that MUST appear (learning words to reinforce)
+  preferWords: string[]; // Known words to prefer (90% should be from here)
+  newWordBudget: number; // Max new words allowed (i+1 principle)
+  topics: string[]; // User's interests
+  language: ContentLanguage;
+  difficulty: string; // e.g., "N5", "A1"
+  targetWordCount?: number; // Approximate length
+}
+
+export interface GeneratedMicroStory {
+  title: string;
+  content: string; // The story text
+  translation: string; // English translation
+  vocabulary: Array<{
+    word: string;
+    reading?: string;
+    meaning: string;
+    isNew: boolean; // True if this is a new word for the user
+  }>;
+  wordCount: number;
+}
+
+/**
+ * Get user's vocabulary organized for story generation
+ */
+export const getVocabularyForStoryGeneration = internalQuery({
+  args: {
+    userId: v.string(),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    learningWordsLimit: v.optional(v.number()),
+    knownWordsLimit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { userId, language, learningWordsLimit = 5, knownWordsLimit = 100 } = args;
+
+    // Get user's vocabulary
+    const vocabulary = await ctx.db
+      .query("vocabulary")
+      .withIndex("by_user_and_language", (q) => q.eq("userId", userId).eq("language", language))
+      .collect();
+
+    // Separate by mastery state
+    const knownWords: string[] = [];
+    const learningWords: string[] = [];
+
+    for (const v of vocabulary) {
+      if (v.masteryState === "mastered" || v.masteryState === "tested") {
+        knownWords.push(v.word);
+      } else if (v.masteryState === "learning") {
+        learningWords.push(v.word);
+      }
+    }
+
+    // Get user's interests
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", userId))
+      .first();
+
+    const interests = user?.interests ?? [];
+
+    return {
+      mustUseWords: learningWords.slice(0, learningWordsLimit),
+      preferWords: knownWords.slice(0, knownWordsLimit),
+      interests,
+      totalKnown: knownWords.length,
+      totalLearning: learningWords.length,
+    };
+  },
+});
+
+/**
+ * Generate a personalized micro-story using user's vocabulary
+ */
+export const generatePersonalizedMicroStory = internalAction({
+  args: {
+    userId: v.string(),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    difficulty: v.string(),
+    newWordBudget: v.optional(v.number()),
+    targetWordCount: v.optional(v.number()),
+    topic: v.optional(v.string()), // Optional specific topic override
+    skipUsageCheck: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args): Promise<GeneratedMicroStory> => {
+    const {
+      userId,
+      language,
+      difficulty,
+      newWordBudget = 3,
+      targetWordCount = 100,
+      topic,
+      skipUsageCheck = false,
+    } = args;
+
+    // Check usage limits
+    if (!skipUsageCheck) {
+      const usageCheck = await ctx.runQuery(internal.lib.generation.checkUsageLimit, {
+        userId,
+        action: "generatePersonalizedStory",
+      });
+
+      if (!usageCheck.allowed) {
+        throw new Error(
+          `Story generation limit reached. You've used ${usageCheck.used}/${usageCheck.limit} personalized stories this month.`
+        );
+      }
+    }
+
+    // Get user's vocabulary
+    const vocabData = await ctx.runQuery(internal.lib.generation.getVocabularyForStoryGeneration, {
+      userId,
+      language,
+      learningWordsLimit: 5,
+      knownWordsLimit: 100,
+    });
+
+    // Determine topic
+    const storyTopic =
+      topic ||
+      (vocabData.interests.length > 0
+        ? vocabData.interests[Math.floor(Math.random() * vocabData.interests.length)]
+        : "daily life");
+
+    // Generate the story using AI
+    const storyResult = await ctx.runAction(internal.ai.generatePersonalizedStoryInternal, {
+      mustUseWords: vocabData.mustUseWords,
+      preferWords: vocabData.preferWords,
+      newWordBudget,
+      topic: storyTopic,
+      language,
+      difficulty,
+      targetWordCount,
+    });
+
+    // Increment usage
+    if (!skipUsageCheck) {
+      await ctx.runMutation(internal.lib.generation.incrementUsageInternal, {
+        userId,
+        action: "generatePersonalizedStory",
+      });
+    }
+
+    return storyResult;
   },
 });
 

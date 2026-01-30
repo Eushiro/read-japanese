@@ -61,5 +61,13 @@
     "read": "阅读",
     "watch": "观看",
     "write": "写作"
+  },
+  "breadcrumbs": {
+    "review": "复习",
+    "read": "阅读故事",
+    "watch": "观看视频",
+    "practice": "练习",
+    "cardCount": "{{count}}张卡片",
+    "sentenceCount": "{{count}}个句子"
   }
 }

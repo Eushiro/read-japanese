@@ -17,11 +17,13 @@ import enExamResults from "./locales/en/examResults.json";
 import enExams from "./locales/en/exams.json";
 import enExamTaking from "./locales/en/examTaking.json";
 import enFlashcards from "./locales/en/flashcards.json";
+import enFoundations from "./locales/en/foundations.json";
 import enGenerate from "./locales/en/generate.json";
 import enLanding from "./locales/en/landing.json";
 import enLearn from "./locales/en/learn.json";
 import enLegal from "./locales/en/legal.json";
 import enLibrary from "./locales/en/library.json";
+import enMicroReview from "./locales/en/microReview.json";
 import enNavigation from "./locales/en/navigation.json";
 import enOnboarding from "./locales/en/onboarding.json";
 import enPaywall from "./locales/en/paywall.json";
@@ -46,11 +48,13 @@ import frExamResults from "./locales/fr/examResults.json";
 import frExams from "./locales/fr/exams.json";
 import frExamTaking from "./locales/fr/examTaking.json";
 import frFlashcards from "./locales/fr/flashcards.json";
+import frFoundations from "./locales/fr/foundations.json";
 import frGenerate from "./locales/fr/generate.json";
 import frLanding from "./locales/fr/landing.json";
 import frLearn from "./locales/fr/learn.json";
 import frLegal from "./locales/fr/legal.json";
 import frLibrary from "./locales/fr/library.json";
+import frMicroReview from "./locales/fr/microReview.json";
 import frNavigation from "./locales/fr/navigation.json";
 import frOnboarding from "./locales/fr/onboarding.json";
 import frPaywall from "./locales/fr/paywall.json";
@@ -75,11 +79,13 @@ import jaExamResults from "./locales/ja/examResults.json";
 import jaExams from "./locales/ja/exams.json";
 import jaExamTaking from "./locales/ja/examTaking.json";
 import jaFlashcards from "./locales/ja/flashcards.json";
+import jaFoundations from "./locales/ja/foundations.json";
 import jaGenerate from "./locales/ja/generate.json";
 import jaLanding from "./locales/ja/landing.json";
 import jaLearn from "./locales/ja/learn.json";
 import jaLegal from "./locales/ja/legal.json";
 import jaLibrary from "./locales/ja/library.json";
+import jaMicroReview from "./locales/ja/microReview.json";
 import jaNavigation from "./locales/ja/navigation.json";
 import jaOnboarding from "./locales/ja/onboarding.json";
 import jaPaywall from "./locales/ja/paywall.json";
@@ -104,11 +110,13 @@ import zhExamResults from "./locales/zh/examResults.json";
 import zhExams from "./locales/zh/exams.json";
 import zhExamTaking from "./locales/zh/examTaking.json";
 import zhFlashcards from "./locales/zh/flashcards.json";
+import zhFoundations from "./locales/zh/foundations.json";
 import zhGenerate from "./locales/zh/generate.json";
 import zhLanding from "./locales/zh/landing.json";
 import zhLearn from "./locales/zh/learn.json";
 import zhLegal from "./locales/zh/legal.json";
 import zhLibrary from "./locales/zh/library.json";
+import zhMicroReview from "./locales/zh/microReview.json";
 import zhNavigation from "./locales/zh/navigation.json";
 import zhOnboarding from "./locales/zh/onboarding.json";
 import zhPaywall from "./locales/zh/paywall.json";
@@ -138,7 +146,9 @@ const resources = {
     settings: enSettings,
     vocabulary: enVocabulary,
     flashcards: enFlashcards,
+    foundations: enFoundations,
     library: enLibrary,
+    microReview: enMicroReview,
     practice: enPractice,
     pricing: enPricing,
     exams: enExams,
@@ -169,7 +179,9 @@ const resources = {
     settings: frSettings,
     vocabulary: frVocabulary,
     flashcards: frFlashcards,
+    foundations: frFoundations,
     library: frLibrary,
+    microReview: frMicroReview,
     practice: frPractice,
     pricing: frPricing,
     exams: frExams,
@@ -200,7 +212,9 @@ const resources = {
     settings: jaSettings,
     vocabulary: jaVocabulary,
     flashcards: jaFlashcards,
+    foundations: jaFoundations,
     library: jaLibrary,
+    microReview: jaMicroReview,
     practice: jaPractice,
     pricing: jaPricing,
     exams: jaExams,
@@ -231,7 +245,9 @@ const resources = {
     settings: zhSettings,
     vocabulary: zhVocabulary,
     flashcards: zhFlashcards,
+    foundations: zhFoundations,
     library: zhLibrary,
+    microReview: zhMicroReview,
     practice: zhPractice,
     pricing: zhPricing,
     exams: zhExams,
@@ -274,7 +290,9 @@ i18n
       "settings",
       "vocabulary",
       "flashcards",
+      "foundations",
       "library",
+      "microReview",
       "practice",
       "pricing",
       "exams",

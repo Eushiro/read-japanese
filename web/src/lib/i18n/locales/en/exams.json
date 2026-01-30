@@ -77,6 +77,26 @@
     "delf_b2": {
       "name": "DELF B2",
       "description": "Upper intermediate French"
+    },
+    "dalf_c1": {
+      "name": "DALF C1",
+      "description": "Advanced French proficiency"
+    },
+    "dalf_c2": {
+      "name": "DALF C2",
+      "description": "Mastery level French"
+    },
+    "tcf": {
+      "name": "TCF",
+      "description": "French Knowledge Test"
+    },
+    "sat": {
+      "name": "SAT",
+      "description": "College admission test"
+    },
+    "gre": {
+      "name": "GRE",
+      "description": "Graduate school admission test"
     }
   }
 }

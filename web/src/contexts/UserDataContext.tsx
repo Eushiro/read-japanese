@@ -8,6 +8,15 @@ import type { TierId } from "@/lib/tiers";
 import { api } from "../../convex/_generated/api";
 
 // Type definitions based on actual Convex schema
+type LearningGoal = "exam" | "travel" | "professional" | "media" | "casual";
+
+interface FoundationsProgress {
+  wordsUnlocked: number;
+  wordsLearned: number;
+  storiesUnlocked: number;
+  completedAt?: number;
+}
+
 interface UserProfile {
   _id: string;
   clerkId: string;
@@ -17,6 +26,9 @@ interface UserProfile {
   targetExams?: string[];
   proficiencyLevels?: Record<string, string>;
   isAdminMode?: boolean;
+  learningGoal?: LearningGoal;
+  interests?: string[];
+  foundationsProgress?: FoundationsProgress;
 }
 
 interface Subscription {

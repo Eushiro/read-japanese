@@ -77,6 +77,26 @@
     "delf_b2": {
       "name": "DELF B2",
       "description": "Français intermédiaire supérieur"
+    },
+    "dalf_c1": {
+      "name": "DALF C1",
+      "description": "Français avancé"
+    },
+    "dalf_c2": {
+      "name": "DALF C2",
+      "description": "Maîtrise du français"
+    },
+    "tcf": {
+      "name": "TCF",
+      "description": "Test de connaissance du français"
+    },
+    "sat": {
+      "name": "SAT",
+      "description": "Test d'admission universitaire"
+    },
+    "gre": {
+      "name": "GRE",
+      "description": "Test d'admission aux études supérieures"
     }
   }
 }

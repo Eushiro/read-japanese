@@ -36,6 +36,7 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { ExamResultsPage } from "@/pages/ExamResultsPage";
 import { ExamsPage } from "@/pages/ExamsPage";
 import { ExamTakingPage } from "@/pages/ExamTakingPage";
+import { FoundationsPage } from "@/pages/FoundationsPage";
 import { GeneratePage } from "@/pages/GeneratePage";
 import { LandingPage } from "@/pages/LandingPage";
 import { LearnPage } from "@/pages/LearnPage";
@@ -416,6 +417,12 @@ const progressRoute = createRoute({
   component: ProgressPage,
 });
 
+const foundationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/foundations",
+  component: FoundationsPage,
+});
+
 // Legal pages
 const privacyRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -526,6 +533,8 @@ const routeTree = rootRoute.addChildren([
   examTakingRoute,
   examResultsRoute,
   progressRoute,
+  // Foundations track
+  foundationsRoute,
   // Legal pages
   privacyRoute,
   termsRoute,

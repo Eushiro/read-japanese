@@ -71,6 +71,7 @@
   "auth": {
     "signInPrompt": "続行するにはログインしてください",
     "signInDescription": "アカウントを作成またはログインして、すべての機能にアクセスしてください。",
+    "signInRequired": "この機能にアクセスするにはログインしてください。",
     "signedInAs": "{{name}}としてログイン中",
     "syncDescription": "ログインして、語彙と進捗をデバイス間で同期しましょう。"
   },

@@ -69,6 +69,9 @@ export type QuestionSourceType = "exam" | "placement" | "comprehension" | "flash
 // Skill types
 export type SkillType = "vocabulary" | "grammar" | "reading" | "listening" | "writing" | "speaking";
 
+// Learning goals
+export type LearningGoal = "exam" | "travel" | "professional" | "media" | "casual";
+
 // ============================================
 // VALIDATORS
 // ============================================
@@ -184,6 +187,15 @@ export const skillTypeValidator = v.union(
   v.literal("speaking")
 );
 
+// Learning goals
+export const learningGoalValidator = v.union(
+  v.literal("exam"),
+  v.literal("travel"),
+  v.literal("professional"),
+  v.literal("media"),
+  v.literal("casual")
+);
+
 // Question types for exams
 export const examQuestionTypeValidator = v.union(
   v.literal("multiple_choice"),
@@ -213,6 +225,10 @@ export default defineSchema({
     name: v.optional(v.string()),
     languages: v.array(languageValidator), // Languages user is learning
     targetExams: v.array(examTypeValidator), // Exams user is preparing for
+    // Primary learning goal
+    learningGoal: v.optional(learningGoalValidator),
+    // User interests for personalized content (e.g., ["food", "sports", "technology"])
+    interests: v.optional(v.array(v.string())),
     // Proficiency levels determined by placement tests
     proficiencyLevels: v.optional(
       v.object({
@@ -237,6 +253,15 @@ export default defineSchema({
             testId: v.optional(v.id("placementTests")),
           })
         ),
+      })
+    ),
+    // Foundations track progress for beginners
+    foundationsProgress: v.optional(
+      v.object({
+        wordsUnlocked: v.number(),
+        wordsLearned: v.number(),
+        storiesUnlocked: v.number(),
+        completedAt: v.optional(v.number()),
       })
     ),
     // Streak tracking
@@ -536,6 +561,10 @@ export default defineSchema({
       maximumInterval: v.optional(v.number()), // Max days between reviews
       customWeights: v.optional(v.array(v.number())), // 17 FSRS weights
       preset: v.optional(v.string()), // "default" | "aggressive" | "relaxed" | "custom"
+      maxReviewsPerSession: v.optional(v.number()), // Cap reviews per session (default 30)
+      forgivenessMode: v.optional(v.boolean()), // Restart interval for 7+ day overdue cards
+      vacationMode: v.optional(v.boolean()), // Pause all SRS scheduling
+      vacationStartedAt: v.optional(v.number()), // When vacation mode was enabled
     }),
 
     // Content preferences (from contentPreferences)
@@ -1540,4 +1569,27 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_exam", ["userId", "examType"]),
+
+  // ============================================
+  // CONCEPT PRACTICE HISTORY (for grammar/pattern SRS)
+  // ============================================
+  // Track when concepts (not just vocab) were last practiced for spaced review
+  conceptPracticeHistory: defineTable({
+    userId: v.string(),
+    language: languageValidator,
+    conceptType: v.union(v.literal("grammar"), v.literal("pattern")),
+    conceptId: v.string(), // "passive_voice", "te_form", "counters", etc.
+
+    // Practice history
+    lastPracticedAt: v.number(),
+    practiceCount: v.number(),
+    correctCount: v.number(),
+    currentScore: v.number(), // 0-100
+
+    // SRS-like scheduling for concepts
+    nextReviewAt: v.optional(v.number()),
+    intervalDays: v.optional(v.number()),
+  })
+    .index("by_user_language", ["userId", "language"])
+    .index("by_user_due", ["userId", "nextReviewAt"]),
 });

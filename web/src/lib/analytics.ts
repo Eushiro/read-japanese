@@ -99,6 +99,7 @@ export const AnalyticsEvents = {
   // Onboarding
   ONBOARDING_STARTED: "onboarding_started",
   ONBOARDING_LANGUAGE_SELECTED: "onboarding_language_selected",
+  ONBOARDING_GOAL_SELECTED: "onboarding_goal_selected",
   ONBOARDING_EXAM_SELECTED: "onboarding_exam_selected",
   ONBOARDING_COMPLETED: "onboarding_completed",
 

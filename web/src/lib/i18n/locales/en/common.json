@@ -71,6 +71,7 @@
   "auth": {
     "signInPrompt": "Sign in to continue",
     "signInDescription": "Create an account or sign in to access all features.",
+    "signInRequired": "Please sign in to access this feature.",
     "signedInAs": "Signed in as {{name}}",
     "syncDescription": "Sign in to sync your vocabulary and reading progress across devices."
   },

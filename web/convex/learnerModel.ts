@@ -48,6 +48,59 @@ function updateSkillScore(currentScore: number, newScore: number, sampleSize: nu
   return Math.round(currentScore * existingWeight + newScore * newWeight);
 }
 
+/**
+ * Convert IRT ability estimate (-3 to +3) to proficiency level
+ * Applies i+1 principle by adding a small buffer to target slightly above current level
+ */
+export function abilityToProficiency(
+  abilityEstimate: number,
+  language: ContentLanguage,
+  applyI1: boolean = true
+): string {
+  // Apply i+1 targeting (+0.3 ability boost)
+  const targetAbility = applyI1 ? abilityEstimate + 0.3 : abilityEstimate;
+
+  if (language === "japanese") {
+    // JLPT scale: N5 (easiest) to N1 (hardest)
+    // Map ability to levels: -3 to 3 → N5 to N1
+    if (targetAbility <= -2) return "N5";
+    if (targetAbility <= -1) return "N4";
+    if (targetAbility <= 0.5) return "N3";
+    if (targetAbility <= 1.5) return "N2";
+    return "N1";
+  } else {
+    // CEFR scale: A1 (easiest) to C2 (hardest)
+    // Map ability to levels: -3 to 3 → A1 to C2
+    if (targetAbility <= -2) return "A1";
+    if (targetAbility <= -1) return "A2";
+    if (targetAbility <= 0) return "B1";
+    if (targetAbility <= 1) return "B2";
+    if (targetAbility <= 2) return "C1";
+    return "C2";
+  }
+}
+
+/**
+ * Get levels within a buffer range of the target level
+ * Returns an array of levels that are within +/- buffer of the target
+ */
+export function getLevelsInRange(
+  targetLevel: string,
+  language: ContentLanguage,
+  buffer: number = 1
+): string[] {
+  const levels =
+    language === "japanese" ? ["N5", "N4", "N3", "N2", "N1"] : ["A1", "A2", "B1", "B2", "C1", "C2"];
+
+  const targetIndex = levels.indexOf(targetLevel);
+  if (targetIndex === -1) return levels;
+
+  const minIndex = Math.max(0, targetIndex - buffer);
+  const maxIndex = Math.min(levels.length - 1, targetIndex + buffer);
+
+  return levels.slice(minIndex, maxIndex + 1);
+}
+
 function getDefaultProfile(userId: string, language: string) {
   const now = Date.now();
   return {
@@ -165,6 +218,40 @@ export const getReadiness = query({
       confidence: profile.readiness.confidence,
       skills: profile.skills,
       vocabCoverage: profile.vocabCoverage,
+    };
+  },
+});
+
+// Get recommended difficulty level for content selection
+export const getRecommendedDifficulty = query({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    buffer: v.optional(v.number()), // Level buffer (default 1)
+  },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    const abilityEstimate = profile?.abilityEstimate ?? 0;
+    const language = args.language as ContentLanguage;
+    const buffer = args.buffer ?? 1;
+
+    // Get target level with i+1 applied
+    const targetLevel = abilityToProficiency(abilityEstimate, language, true);
+
+    // Get acceptable level range
+    const acceptableLevels = getLevelsInRange(targetLevel, language, buffer);
+
+    return {
+      abilityEstimate,
+      targetLevel,
+      acceptableLevels,
+      hasProfile: !!profile,
     };
   },
 });

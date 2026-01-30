@@ -267,6 +267,30 @@ CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-domain.clerk.accounts.dev
 
 ---
 
+## Shared Type Definitions
+
+Always import these types instead of redefining them:
+
+| Type              | Frontend Import          | Backend Import      |
+| ----------------- | ------------------------ | ------------------- |
+| `ContentLanguage` | `@/lib/contentLanguages` | `./schema`          |
+| `UILanguage`      | `@/lib/i18n/types`       | `./lib/translation` |
+| `ExamType`        | `../../convex/schema`    | `./schema`          |
+
+**Source of truth files:**
+
+- `shared/contentLanguages.json` - Content language configuration
+- `web/convex/schema.ts` - All Convex types and validators
+- `web/src/lib/i18n/types.ts` - UI language types
+- `web/src/lib/contentLanguages.ts` - Frontend language utilities and exam lists
+
+**Never:**
+
+- Redefine types locally that exist in shared locations
+- Hardcode language lists - use exported arrays (`LANGUAGES`, `UI_LANGUAGES`, `EXAMS_BY_LANGUAGE`)
+
+---
+
 ## Key Files
 
 | File                           | Purpose                                               |

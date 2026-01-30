@@ -36,7 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import type { ContentLanguage } from "@/lib/contentLanguages";
+import { type ContentLanguage, LANGUAGES } from "@/lib/contentLanguages";
 
 import { api } from "../../../convex/_generated/api";
 
@@ -278,9 +278,11 @@ export function DecksPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="japanese">Japanese</SelectItem>
-                      <SelectItem value="english">English</SelectItem>
-                      <SelectItem value="french">French</SelectItem>
+                      {LANGUAGES.map((lang) => (
+                        <SelectItem key={lang.value} value={lang.value}>
+                          {lang.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

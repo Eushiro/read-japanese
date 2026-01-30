@@ -9,6 +9,10 @@ import {
   ChevronRight,
   Flame,
   Globe,
+  GraduationCap,
+  MessageCircle,
+  Mic,
+  PenLine,
   Play,
   Sparkles,
   TrendingUp,
@@ -135,6 +139,12 @@ export function DashboardPage() {
   // Fetch vocabulary
   const vocabulary = useQuery(api.vocabulary.list, isAuthenticated ? { userId } : "skip");
 
+  // Fetch foundations progress
+  const foundationsProgress = useQuery(
+    api.foundations.getProgress,
+    isAuthenticated ? { userId } : "skip"
+  );
+
   // User profile and subscription from shared context (prevents refetching on navigation)
   const { userProfile, isPremium: isPremiumUser } = useUserData();
 
@@ -243,6 +253,26 @@ export function DashboardPage() {
         {isAuthenticated && <CreditAlert />}
 
         <div className="space-y-10">
+          {/* Foundations Banner - Show for beginners who haven't completed */}
+          {isAuthenticated &&
+            foundationsProgress &&
+            !foundationsProgress.isComplete &&
+            foundationsProgress.wordsUnlocked > 0 && (
+              <FoundationsBanner progress={foundationsProgress} />
+            )}
+
+          {/* Goal Banner - Show for users with a goal set (and completed foundations or no foundations) */}
+          {isAuthenticated &&
+            userProfile?.learningGoal &&
+            (foundationsProgress?.isComplete || !foundationsProgress?.wordsUnlocked) && (
+              <GoalBanner
+                goal={userProfile.learningGoal}
+                streak={currentStreak}
+                totalWords={totalWords}
+                targetExam={userProfile.targetExams?.[0]}
+              />
+            )}
+
           {/* Start Studying CTA - Floating with ambient glow */}
           {isPreviewMode ? (
             <motion.div
@@ -683,5 +713,218 @@ function DashboardSkeleton() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Goal-aware banner component
+function GoalBanner({
+  goal,
+  streak,
+  totalWords,
+  targetExam,
+}: {
+  goal: string | undefined;
+  streak: number;
+  totalWords: number;
+  targetExam?: string;
+}) {
+  const t = useT();
+  const navigate = useNavigate();
+
+  if (!goal) return null;
+
+  const goalConfig: Record<
+    string,
+    {
+      icon: React.ElementType;
+      gradient: string;
+      iconBg: string;
+      iconColor: string;
+    }
+  > = {
+    exam: {
+      icon: GraduationCap,
+      gradient: "from-blue-500/10 to-purple-500/10",
+      iconBg: "bg-blue-500/20",
+      iconColor: "text-blue-400",
+    },
+    travel: {
+      icon: MessageCircle,
+      gradient: "from-green-500/10 to-teal-500/10",
+      iconBg: "bg-green-500/20",
+      iconColor: "text-green-400",
+    },
+    media: {
+      icon: Mic,
+      gradient: "from-pink-500/10 to-orange-500/10",
+      iconBg: "bg-pink-500/20",
+      iconColor: "text-pink-400",
+    },
+    professional: {
+      icon: PenLine,
+      gradient: "from-indigo-500/10 to-blue-500/10",
+      iconBg: "bg-indigo-500/20",
+      iconColor: "text-indigo-400",
+    },
+    casual: {
+      icon: Flame,
+      gradient: "from-orange-500/10 to-yellow-500/10",
+      iconBg: "bg-orange-500/20",
+      iconColor: "text-orange-400",
+    },
+  };
+
+  const config = goalConfig[goal] || goalConfig.casual;
+  const Icon = config.icon;
+
+  // Calculate a simple "readiness" percentage based on words learned
+  const readinessPercent = Math.min(100, Math.round((totalWords / 500) * 100));
+
+  const handleCta = () => {
+    switch (goal) {
+      case "exam":
+        navigate({ to: "/exams" });
+        break;
+      case "travel":
+      case "professional":
+        navigate({ to: "/learn", search: { tab: "practice" } });
+        break;
+      case "media":
+        navigate({ to: "/library" });
+        break;
+      default:
+        navigate({ to: "/library" });
+    }
+  };
+
+  // Get the appropriate title based on goal
+  const getTitle = () => {
+    switch (goal) {
+      case "exam":
+        return t("dashboard.goalBanner.exam.title", {
+          percent: readinessPercent,
+          exam: targetExam?.toUpperCase() || "exam",
+        });
+      case "travel":
+        return t("dashboard.goalBanner.travel.title", { count: totalWords });
+      case "media":
+        return t("dashboard.goalBanner.media.title");
+      case "professional":
+        return t("dashboard.goalBanner.professional.title");
+      case "casual":
+        return t("dashboard.goalBanner.casual.title", { streak });
+      default:
+        return t("dashboard.goalBanner.casual.title", { streak });
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.15, duration: 0.5 }}
+      className="relative"
+    >
+      <div
+        className={`relative rounded-2xl backdrop-blur-xl bg-gradient-to-r ${config.gradient} border border-white/10 p-5 overflow-hidden`}
+      >
+        {/* Subtle glow */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/[0.02] to-transparent pointer-events-none" />
+
+        <div className="relative flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div
+              className={`w-12 h-12 rounded-xl ${config.iconBg} flex items-center justify-center flex-shrink-0`}
+            >
+              <Icon className={`w-6 h-6 ${config.iconColor}`} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">{getTitle()}</h3>
+              <p className="text-sm text-muted-foreground">
+                {t(`dashboard.goalBanner.${goal}.subtitle`)}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleCta}
+            className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all"
+          >
+            {t(`dashboard.goalBanner.${goal}.cta`)}
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// Foundations banner for beginners
+function FoundationsBanner({
+  progress,
+}: {
+  progress: {
+    wordsLearned: number;
+    wordsUnlocked: number;
+    percentComplete: number;
+    totalWords: number;
+    isComplete: boolean;
+  };
+}) {
+  const t = useT();
+  const navigate = useNavigate();
+
+  // Don't show if complete or no progress data
+  if (progress.isComplete) return null;
+
+  const wordsRemaining = progress.totalWords - progress.wordsLearned;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1, duration: 0.5 }}
+      className="relative"
+    >
+      <div className="relative rounded-2xl backdrop-blur-xl bg-gradient-to-r from-orange-500/10 to-purple-500/10 border border-white/10 p-5 overflow-hidden">
+        {/* Subtle glow */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/[0.02] to-transparent pointer-events-none" />
+
+        <div className="relative flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-6 h-6 text-orange-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">
+                {t("dashboard.foundations.banner.title")}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {t("dashboard.foundations.banner.subtitle", { count: wordsRemaining })}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground hidden sm:block">
+              {t("dashboard.foundations.banner.progress", { percent: progress.percentComplete })}
+            </span>
+            <button
+              onClick={() => navigate({ to: "/foundations" })}
+              className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-orange-500 to-purple-500 text-white hover:opacity-90 transition-all"
+            >
+              {t("dashboard.foundations.banner.cta")}
+            </button>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mt-4 h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progress.percentComplete}%` }}
+            transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+            className="h-full bg-gradient-to-r from-orange-500 to-purple-500 rounded-full"
+          />
+        </div>
+      </div>
+    </motion.div>
   );
 }

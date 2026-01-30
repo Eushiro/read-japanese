@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import type { CEFRLevel, JLPTLevel, ProficiencyLevel, StoryListItem } from "@/types/story";
 
+import type { ExamType } from "../../convex/schema";
+
 // Simple seeded PRNG for stable-but-varied shuffling
 function seededRandom(seed: number): () => number {
   return () => {
@@ -21,24 +23,6 @@ function shuffleWithSeed<T>(array: T[], seed: number): T[] {
   }
   return shuffled;
 }
-
-// Exam types from Convex schema
-type ExamType =
-  | "jlpt_n5"
-  | "jlpt_n4"
-  | "jlpt_n3"
-  | "jlpt_n2"
-  | "jlpt_n1"
-  | "toefl"
-  | "sat"
-  | "gre"
-  | "delf_a1"
-  | "delf_a2"
-  | "delf_b1"
-  | "delf_b2"
-  | "dalf_c1"
-  | "dalf_c2"
-  | "tcf";
 
 // User profile structure from Convex
 interface UserProfile {

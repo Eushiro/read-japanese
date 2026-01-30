@@ -72,6 +72,41 @@
     "findYourLevel": "Find Your Level",
     "setUpLanguages": "Set Up Languages"
   },
+  "goalBanner": {
+    "exam": {
+      "title": "{{percent}}% ready for {{exam}}",
+      "subtitle": "Keep studying to reach your goal",
+      "cta": "Take Practice Test"
+    },
+    "travel": {
+      "title": "{{count}} conversation phrases mastered",
+      "subtitle": "Practice speaking to build confidence",
+      "cta": "Practice Dialogue"
+    },
+    "media": {
+      "title": "Expanding your listening comprehension",
+      "subtitle": "Watch content at your level to improve",
+      "cta": "Watch Video"
+    },
+    "professional": {
+      "title": "Building your professional vocabulary",
+      "subtitle": "Learn business terms and formal expressions",
+      "cta": "Practice Writing"
+    },
+    "casual": {
+      "title": "{{streak}}-day streak!",
+      "subtitle": "Keep the momentum going",
+      "cta": "Read Story"
+    }
+  },
+  "foundations": {
+    "banner": {
+      "title": "Continue your journey",
+      "subtitle": "{{count}} words to go in Foundations",
+      "progress": "{{percent}}% complete",
+      "cta": "Continue Learning"
+    }
+  },
   "crossLanguage": {
     "dueCards": "You have {{count}} cards due in {{language}}",
     "switchPrompt": "Tap to switch and review"

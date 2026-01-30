@@ -71,6 +71,7 @@
   "auth": {
     "signInPrompt": "Connectez-vous pour continuer",
     "signInDescription": "Créez un compte ou connectez-vous pour accéder à toutes les fonctionnalités.",
+    "signInRequired": "Veuillez vous connecter pour accéder à cette fonctionnalité.",
     "signedInAs": "Connecté en tant que {{name}}",
     "syncDescription": "Connectez-vous pour synchroniser votre vocabulaire et votre progression sur tous vos appareils."
   },

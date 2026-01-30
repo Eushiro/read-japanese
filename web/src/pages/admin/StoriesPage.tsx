@@ -39,6 +39,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
+import { type ContentLanguage, LANGUAGES } from "@/lib/contentLanguages";
 
 import { api } from "../../../convex/_generated/api";
 
@@ -234,9 +235,7 @@ function TopologyCard() {
 
 export function StoriesPage() {
   const { user } = useAuth();
-  const [selectedLanguage, setSelectedLanguage] = useState<"japanese" | "english" | "french">(
-    "japanese"
-  );
+  const [selectedLanguage, setSelectedLanguage] = useState<ContentLanguage>("japanese");
   const [selectedLevel, setSelectedLevel] = useState("N4");
   const [selectedGenre, setSelectedGenre] = useState("slice of life");
   const [selectedStyle, setSelectedStyle] = useState("anime");
@@ -583,17 +582,17 @@ export function StoriesPage() {
                   <label className="text-sm font-medium">Language</label>
                   <Select
                     value={selectedLanguage}
-                    onValueChange={(v) =>
-                      setSelectedLanguage(v as "japanese" | "english" | "french")
-                    }
+                    onValueChange={(v) => setSelectedLanguage(v as ContentLanguage)}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="japanese">Japanese</SelectItem>
-                      <SelectItem value="english">English</SelectItem>
-                      <SelectItem value="french">French</SelectItem>
+                      {LANGUAGES.map((lang) => (
+                        <SelectItem key={lang.value} value={lang.value}>
+                          {lang.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -1,7 +1,7 @@
 {
   "welcome": {
     "title": "{{brandName}}へようこそ",
-    "subtitle": "あなた専用の試験対策を設定しましょう",
+    "subtitle": "あなた専用の学習体験を設定しましょう",
     "getStarted": "始めましょう"
   },
   "actions": {
@@ -36,9 +36,54 @@
     "title": "勉強している言語は？",
     "subtitle": "学習したい言語を選んでください"
   },
+  "goalSelection": {
+    "title": "学習の目標は何ですか？",
+    "subtitle": "目標に合わせて学習体験をカスタマイズします",
+    "goals": {
+      "exam": {
+        "label": "試験に合格する",
+        "description": "JLPT、TOEFL、DELFなど"
+      },
+      "travel": {
+        "label": "旅行・会話",
+        "description": "海外で自信を持って話す"
+      },
+      "professional": {
+        "label": "ビジネス利用",
+        "description": "仕事・職場で使う"
+      },
+      "media": {
+        "label": "メディア消費",
+        "description": "アニメ、映画、本"
+      },
+      "casual": {
+        "label": "趣味で学ぶ",
+        "description": "自分のペースで学習"
+      }
+    }
+  },
+  "interestSelection": {
+    "title": "何に興味がありますか？",
+    "subtitle": "パーソナライズされたコンテンツのために3〜5つのトピックを選択",
+    "interests": {
+      "food": "料理・グルメ",
+      "sports": "スポーツ・フィットネス",
+      "technology": "テクノロジー",
+      "nature": "自然・旅行",
+      "relationships": "人間関係",
+      "business": "ビジネス",
+      "popCulture": "ポップカルチャー",
+      "history": "歴史",
+      "music": "音楽",
+      "art": "アート・デザイン",
+      "gaming": "ゲーム",
+      "science": "科学"
+    },
+    "minSelection": "少なくとも3つのトピックを選択してください"
+  },
   "examSelection": {
-    "title": "受験予定の試験はありますか？",
-    "subtitle": "目標の試験に合わせてコンテンツを調整します（任意）",
+    "title": "どの試験を準備していますか？",
+    "subtitle": "試験に特化したコンテンツに集中します",
     "skipForNow": "今はスキップ"
   }
 }

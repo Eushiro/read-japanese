@@ -61,5 +61,13 @@
     "read": "Read",
     "watch": "Watch",
     "write": "Write"
+  },
+  "breadcrumbs": {
+    "review": "Review",
+    "read": "Read Story",
+    "watch": "Watch Video",
+    "practice": "Practice",
+    "cardCount": "{{count}} cards",
+    "sentenceCount": "{{count}} sentences"
   }
 }

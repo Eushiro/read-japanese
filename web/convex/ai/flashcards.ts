@@ -1211,3 +1211,157 @@ Provide detailed feedback and corrections if needed.`;
     }
   },
 });
+
+// ============================================
+// PERSONALIZED STORY GENERATION
+// ============================================
+
+interface GeneratedMicroStory {
+  title: string;
+  content: string;
+  translation: string;
+  vocabulary: Array<{
+    word: string;
+    reading?: string;
+    meaning: string;
+    isNew: boolean;
+  }>;
+  wordCount: number;
+}
+
+interface RawMicroStory {
+  title: string;
+  content: string;
+  translation: string;
+  vocabulary: Array<{
+    word: string;
+    reading?: string;
+    meaning: string;
+    isNew: boolean;
+  }>;
+}
+
+/**
+ * Internal action to generate a personalized micro-story using user's vocabulary
+ */
+export const generatePersonalizedStoryInternal = internalAction({
+  args: {
+    mustUseWords: v.array(v.string()),
+    preferWords: v.array(v.string()),
+    newWordBudget: v.number(),
+    topic: v.string(),
+    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    difficulty: v.string(),
+    targetWordCount: v.number(),
+  },
+  handler: async (_ctx, args): Promise<GeneratedMicroStory> => {
+    const languageName = languageNames[args.language];
+    const mustUseList = args.mustUseWords.join(", ") || "none specified";
+    const preferList = args.preferWords.slice(0, 50).join(", ") || "any appropriate words";
+
+    const systemPrompt = `You are a language learning content creator specializing in creating engaging, level-appropriate short stories for language learners.
+
+Your task is to create a micro-story in ${languageName} that:
+1. Uses the learner's known vocabulary as much as possible (90%+ of words)
+2. MUST include the specified reinforcement words naturally in the story
+3. Introduces only ${args.newWordBudget} new words (i+1 principle)
+4. Is appropriate for ${args.difficulty} level learners
+5. Is engaging and memorable
+6. Relates to the specified topic/theme
+
+Important guidelines:
+- Keep the story simple but interesting
+- Use natural, everyday language
+- The story should be self-contained and have a clear beginning, middle, and end
+- New words should be inferable from context
+
+Respond ONLY with valid JSON.`;
+
+    const prompt = `Create a micro-story in ${languageName} with these requirements:
+
+**Topic/Theme:** ${args.topic}
+**Difficulty Level:** ${args.difficulty}
+**Target Word Count:** approximately ${args.targetWordCount} words
+
+**Words that MUST appear in the story (reinforcement words):**
+${mustUseList}
+
+**Preferred vocabulary (use these words as much as possible):**
+${preferList}
+
+**Maximum new words allowed:** ${args.newWordBudget}
+
+Generate a JSON response with:
+1. "title": A catchy title in ${languageName}
+2. "content": The story text in ${languageName}
+3. "translation": English translation of the story
+4. "vocabulary": Array of vocabulary items used, each with:
+   - "word": the word in ${languageName}
+   - "reading": reading/pronunciation (for Japanese, include furigana)
+   - "meaning": English meaning
+   - "isNew": true if this is a new word (not in the preferred list), false otherwise`;
+
+    const storySchema: JsonSchema = {
+      name: "micro_story",
+      schema: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Story title in target language" },
+          content: { type: "string", description: "The story text in target language" },
+          translation: { type: "string", description: "English translation" },
+          vocabulary: {
+            type: "array",
+            description: "Vocabulary items used in the story",
+            items: {
+              type: "object",
+              properties: {
+                word: { type: "string" },
+                reading: { type: "string" },
+                meaning: { type: "string" },
+                isNew: { type: "boolean" },
+              },
+              required: ["word", "meaning", "isNew"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["title", "content", "translation", "vocabulary"],
+        additionalProperties: false,
+      },
+    };
+
+    const result = await callWithRetry<RawMicroStory>({
+      prompt,
+      systemPrompt,
+      maxTokens: 2000,
+      jsonSchema: storySchema,
+      parse: (response) => parseJson<RawMicroStory>(response),
+      validate: (parsed) => {
+        if (!parsed.title || !parsed.content || !parsed.translation) {
+          return "Missing required fields";
+        }
+        if (!Array.isArray(parsed.vocabulary)) {
+          return "Vocabulary must be an array";
+        }
+        // Check that new words don't exceed budget
+        const newWordCount = parsed.vocabulary.filter((v) => v.isNew).length;
+        if (newWordCount > args.newWordBudget + 2) {
+          // Allow small buffer
+          return `Too many new words: ${newWordCount} (max: ${args.newWordBudget})`;
+        }
+        return null;
+      },
+    });
+
+    // Count words in the content
+    const wordCount = result.content.split(/\s+/).length;
+
+    return {
+      title: result.title,
+      content: result.content,
+      translation: result.translation,
+      vocabulary: result.vocabulary,
+      wordCount,
+    };
+  },
+});

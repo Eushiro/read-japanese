@@ -73,6 +73,41 @@
     "findYourLevel": "レベルを確認",
     "setUpLanguages": "言語を設定"
   },
+  "goalBanner": {
+    "exam": {
+      "title": "{{exam}}への準備が{{percent}}%完了",
+      "subtitle": "目標達成に向けて学習を続けましょう",
+      "cta": "練習テストを受ける"
+    },
+    "travel": {
+      "title": "{{count}}個の会話フレーズをマスター",
+      "subtitle": "自信をつけるために会話練習をしましょう",
+      "cta": "会話練習"
+    },
+    "media": {
+      "title": "リスニング力を向上中",
+      "subtitle": "レベルに合ったコンテンツを視聴しましょう",
+      "cta": "動画を見る"
+    },
+    "professional": {
+      "title": "ビジネス語彙を構築中",
+      "subtitle": "ビジネス用語とフォーマルな表現を学びましょう",
+      "cta": "ライティング練習"
+    },
+    "casual": {
+      "title": "{{streak}}日連続！",
+      "subtitle": "この勢いを維持しましょう",
+      "cta": "ストーリーを読む"
+    }
+  },
+  "foundations": {
+    "banner": {
+      "title": "学習を続けよう",
+      "subtitle": "基礎まであと{{count}}単語",
+      "progress": "{{percent}}%完了",
+      "cta": "学習を続ける"
+    }
+  },
   "crossLanguage": {
     "dueCards": "{{language}}で{{count}}枚のカードが復習待ち",
     "switchPrompt": "タップして切り替えて復習"

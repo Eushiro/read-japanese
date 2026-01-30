@@ -1,7 +1,7 @@
 {
   "welcome": {
     "title": "欢迎来到{{brandName}}",
-    "subtitle": "来设置你的个性化备考方案吧",
+    "subtitle": "来设置你的个性化学习体验吧",
     "getStarted": "开始吧"
   },
   "actions": {
@@ -36,9 +36,54 @@
     "title": "你在学习哪种语言？",
     "subtitle": "选择你想专注学习的语言"
   },
+  "goalSelection": {
+    "title": "你的主要目标是什么？",
+    "subtitle": "我们会根据你的目标定制学习体验",
+    "goals": {
+      "exam": {
+        "label": "通过考试",
+        "description": "JLPT、TOEFL、DELF等"
+      },
+      "travel": {
+        "label": "旅行与会话",
+        "description": "在国外自信交流"
+      },
+      "professional": {
+        "label": "职场应用",
+        "description": "商务与工作场景"
+      },
+      "media": {
+        "label": "媒体消费",
+        "description": "动漫、电影、书籍"
+      },
+      "casual": {
+        "label": "随便看看",
+        "description": "按自己的节奏学习"
+      }
+    }
+  },
+  "interestSelection": {
+    "title": "你对什么感兴趣？",
+    "subtitle": "选择3-5个话题来获取个性化内容",
+    "interests": {
+      "food": "美食烹饪",
+      "sports": "运动健身",
+      "technology": "科技",
+      "nature": "自然旅行",
+      "relationships": "人际关系",
+      "business": "商业",
+      "popCulture": "流行文化",
+      "history": "历史",
+      "music": "音乐",
+      "art": "艺术设计",
+      "gaming": "游戏",
+      "science": "科学"
+    },
+    "minSelection": "请至少选择3个话题"
+  },
   "examSelection": {
-    "title": "有即将到来的考试吗？",
-    "subtitle": "我们会根据你的目标考试调整内容（可选）",
+    "title": "你在准备哪门考试？",
+    "subtitle": "我们会专注于考试相关的内容",
     "skipForNow": "暂时跳过"
   }
 }

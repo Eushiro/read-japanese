@@ -23,10 +23,15 @@ const EXAM_COLORS: Record<string, string> = {
   jlpt_n2: "bg-orange-500",
   jlpt_n1: "bg-red-500",
   toefl: "bg-blue-500",
+  sat: "bg-blue-600",
+  gre: "bg-blue-700",
   delf_a1: "bg-indigo-400",
   delf_a2: "bg-indigo-500",
   delf_b1: "bg-indigo-600",
   delf_b2: "bg-indigo-700",
+  dalf_c1: "bg-purple-600",
+  dalf_c2: "bg-purple-700",
+  tcf: "bg-violet-500",
 };
 
 export function ExamsPage() {

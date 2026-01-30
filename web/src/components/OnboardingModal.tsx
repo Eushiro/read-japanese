@@ -3,12 +3,16 @@ import {
   BookmarkCheck,
   BookOpen,
   Brain,
+  Briefcase,
   Check,
   ChevronRight,
+  Compass,
   Globe,
   GraduationCap,
   PenLine,
+  Plane,
   Sparkles,
+  Tv,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -27,6 +31,34 @@ import { useT } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
 
+// Learning goal type matching the schema
+type LearningGoal = "exam" | "travel" | "professional" | "media" | "casual";
+
+// Interest options
+const INTEREST_OPTIONS = [
+  "food",
+  "sports",
+  "technology",
+  "nature",
+  "relationships",
+  "business",
+  "popCulture",
+  "history",
+  "music",
+  "art",
+  "gaming",
+  "science",
+] as const;
+
+// Goal icons mapping
+const GOAL_ICONS = {
+  exam: GraduationCap,
+  travel: Plane,
+  professional: Briefcase,
+  media: Tv,
+  casual: Compass,
+};
+
 interface OnboardingModalProps {
   userId: string;
   userEmail?: string | null;
@@ -37,6 +69,8 @@ interface OnboardingModalProps {
 export function OnboardingModal({ userId, userEmail, userName, onComplete }: OnboardingModalProps) {
   const [step, setStep] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState<ContentLanguage | null>(null);
+  const [selectedGoal, setSelectedGoal] = useState<LearningGoal | null>(null);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const startTime = useRef(Date.now());
@@ -46,6 +80,15 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
   const ensureStripeCustomer = useAction(api.stripe.ensureStripeCustomer);
   const { trackEvent, events } = useAnalytics();
   const hasTrackedOnboardingRef = useRef(false);
+
+  // Calculate total steps based on goal selection
+  // If exam goal, show exam selection. Otherwise skip it.
+  const getTotalSteps = () => {
+    if (selectedGoal === "exam") {
+      return 6; // Welcome, HowItWorks, Language, Goal, Interests, Exam
+    }
+    return 5; // Welcome, HowItWorks, Language, Goal, Interests
+  };
 
   // Track onboarding started
   useEffect(() => {
@@ -69,6 +112,21 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
     setSelectedExams([]);
   };
 
+  const handleGoalSelect = (goal: LearningGoal) => {
+    setSelectedGoal(goal);
+    trackEvent(events.ONBOARDING_GOAL_SELECTED, { goal });
+    // Clear exams if switching away from exam goal
+    if (goal !== "exam") {
+      setSelectedExams([]);
+    }
+  };
+
+  const handleInterestToggle = (interest: string) => {
+    setSelectedInterests((prev) =>
+      prev.includes(interest) ? prev.filter((i) => i !== interest) : [...prev, interest]
+    );
+  };
+
   const handleExamToggle = (exam: string) => {
     const isRemoving = selectedExams.includes(exam);
     setSelectedExams((prev) => (isRemoving ? prev.filter((e) => e !== exam) : [...prev, exam]));
@@ -78,7 +136,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
   };
 
   const handleComplete = async () => {
-    if (!selectedLanguage) return;
+    if (!selectedLanguage || !selectedGoal) return;
 
     setIsSubmitting(true);
     try {
@@ -89,6 +147,8 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         languages: [selectedLanguage],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- selectedExams values come from EXAMS_BY_LANGUAGE
         targetExams: selectedExams as any,
+        learningGoal: selectedGoal,
+        interests: selectedInterests,
       });
 
       // Pre-create Stripe customer in background for faster checkout later
@@ -100,6 +160,8 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
 
       trackEvent(events.ONBOARDING_COMPLETED, {
         selected_languages: [selectedLanguage],
+        selected_goal: selectedGoal,
+        selected_interests: selectedInterests,
         selected_exams: selectedExams,
         duration_seconds: Math.round((Date.now() - startTime.current) / 1000),
       });
@@ -112,6 +174,20 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
     }
   };
 
+  // Handle step navigation with conditional exam step
+  const handleNextStep = () => {
+    if (step === 4) {
+      // After interests step
+      if (selectedGoal === "exam") {
+        setStep(5); // Go to exam selection
+      } else {
+        handleComplete(); // Skip exam selection and complete
+      }
+    } else {
+      setStep(step + 1);
+    }
+  };
+
   return (
     <Dialog open={true} onOpenChange={() => {}}>
       <DialogContent
@@ -120,7 +196,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
       >
         {/* Progress indicator */}
         <div className="flex gap-1 p-4 bg-muted/30">
-          {[0, 1, 2, 3].map((i) => (
+          {Array.from({ length: getTotalSteps() }).map((_, i) => (
             <div
               key={i}
               className={`h-1 flex-1 rounded-full transition-colors ${
@@ -301,8 +377,154 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
             </div>
           )}
 
-          {/* Step 3: Exam Selection */}
-          {step === 3 && selectedLanguage && (
+          {/* Step 3: Goal Selection */}
+          {step === 3 && (
+            <div className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-orange-500/10" />
+              <div className="absolute top-0 left-1/4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-orange-500/10 rounded-full blur-3xl" />
+              <div className="relative p-8">
+                <div className="flex items-center gap-3 mb-2">
+                  <Compass className="w-5 h-5 text-accent" />
+                  <h2
+                    className="text-xl font-bold text-foreground"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {t("onboarding.goalSelection.title")}
+                  </h2>
+                </div>
+                <p className="text-foreground mb-6">{t("onboarding.goalSelection.subtitle")}</p>
+
+                <div className="space-y-3 mb-8">
+                  {(["exam", "travel", "professional", "media", "casual"] as const).map((goal) => {
+                    const isSelected = selectedGoal === goal;
+                    const Icon = GOAL_ICONS[goal];
+                    return (
+                      <button
+                        key={goal}
+                        onClick={() => handleGoalSelect(goal)}
+                        className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all ${
+                          isSelected
+                            ? "border-accent bg-accent/5"
+                            : "border-border hover:border-foreground-muted"
+                        }`}
+                      >
+                        <div
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            isSelected ? "bg-accent/20" : "bg-muted"
+                          }`}
+                        >
+                          <Icon
+                            className={`w-5 h-5 ${isSelected ? "text-accent" : "text-foreground-muted"}`}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground">
+                            {t(`onboarding.goalSelection.goals.${goal}.label`)}
+                          </div>
+                          <div className="text-sm text-foreground-muted">
+                            {t(`onboarding.goalSelection.goals.${goal}.description`)}
+                          </div>
+                        </div>
+                        {isSelected && <Check className="w-5 h-5 text-accent" />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                    {t("onboarding.actions.back")}
+                  </Button>
+                  <Button
+                    onClick={() => setStep(4)}
+                    disabled={!selectedGoal}
+                    className="flex-1 gap-2"
+                  >
+                    {t("onboarding.actions.continue")}
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Interest Selection */}
+          {step === 4 && (
+            <div className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-blue-500/10" />
+              <div className="absolute top-0 right-1/4 w-32 h-32 bg-green-500/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-1/4 w-24 h-24 bg-blue-500/10 rounded-full blur-3xl" />
+              <div className="relative p-8">
+                <div className="flex items-center gap-3 mb-2">
+                  <Sparkles className="w-5 h-5 text-accent" />
+                  <h2
+                    className="text-xl font-bold text-foreground"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {t("onboarding.interestSelection.title")}
+                  </h2>
+                </div>
+                <p className="text-foreground mb-6">{t("onboarding.interestSelection.subtitle")}</p>
+
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {INTEREST_OPTIONS.map((interest) => {
+                    const isSelected = selectedInterests.includes(interest);
+                    return (
+                      <button
+                        key={interest}
+                        onClick={() => handleInterestToggle(interest)}
+                        className={`p-3 rounded-lg border text-left transition-all ${
+                          isSelected
+                            ? "border-accent bg-accent/10 text-foreground"
+                            : "border-border hover:border-foreground-muted text-foreground-muted"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">
+                            {t(`onboarding.interestSelection.interests.${interest}`)}
+                          </span>
+                          {isSelected && <Check className="w-4 h-4 text-accent" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {selectedInterests.length < 3 && (
+                  <p className="text-sm text-foreground-muted text-center mb-4">
+                    {t("onboarding.interestSelection.minSelection")}
+                  </p>
+                )}
+
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+                    {t("onboarding.actions.back")}
+                  </Button>
+                  <Button
+                    onClick={handleNextStep}
+                    disabled={selectedInterests.length < 3 || isSubmitting}
+                    className="flex-1 gap-2"
+                  >
+                    {isSubmitting
+                      ? t("onboarding.actions.saving")
+                      : selectedGoal === "exam"
+                        ? t("onboarding.actions.continue")
+                        : t("onboarding.actions.startLearning")}
+                    {!isSubmitting &&
+                      (selectedGoal === "exam" ? (
+                        <ChevronRight className="w-4 h-4" />
+                      ) : (
+                        <Sparkles className="w-4 h-4" />
+                      ))}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Exam Selection (only for exam goal) */}
+          {step === 5 && selectedLanguage && selectedGoal === "exam" && (
             <div className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-orange-500/10" />
               <div className="absolute top-0 left-1/4 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl" />
@@ -363,7 +585,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                 </div>
 
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                  <Button variant="outline" onClick={() => setStep(4)} className="flex-1">
                     {t("onboarding.actions.back")}
                   </Button>
                   <Button onClick={handleComplete} disabled={isSubmitting} className="flex-1 gap-2">
