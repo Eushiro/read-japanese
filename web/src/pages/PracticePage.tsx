@@ -19,8 +19,8 @@ import { PremiumBackground } from "@/components/ui/premium-background";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
-import { useUserData } from "@/contexts/UserDataContext";
 import { useAIAction } from "@/hooks/useAIAction";
+import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
@@ -86,8 +86,8 @@ export function PracticePage() {
   const verifySentence = useAIAction(api.ai.verifySentence);
   const submitSentence = useMutation(api.userSentences.submit);
 
-  // Subscription from shared context (prevents refetching on navigation)
-  const { isPremium: isPremiumUser } = useUserData();
+  // Check credit balance for AI features (free users have credits too)
+  const { remaining } = useCreditBalance();
 
   // Filter vocabulary for practice (prefer new/learning words, respect language filter)
   const practiceWords = useMemo(() => {
@@ -113,7 +113,7 @@ export function PracticePage() {
   const handleSubmit = async () => {
     if (!selectedWord || !sentence.trim()) return;
 
-    if (!isPremiumUser) {
+    if (remaining < 1) {
       setShowPaywall(true);
       return;
     }
@@ -556,7 +556,12 @@ export function PracticePage() {
       </div>
 
       {/* Paywall Modal */}
-      <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="sentences" />
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="sentences"
+        creditsNeeded={1}
+      />
     </div>
   );
 }

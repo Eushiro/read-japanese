@@ -31,6 +31,7 @@ import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useReviewSession } from "@/contexts/ReviewSessionContext";
 import { useUserData } from "@/contexts/UserDataContext";
 import { useAIAction } from "@/hooks/useAIAction";
+import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { preloadFlashcardAssets } from "@/hooks/useFlashcard";
 import { type ContentLanguage, contentLanguageMatchesUI } from "@/lib/contentLanguages";
 import type { CardState, Id, Rating } from "@/lib/convex-types";
@@ -77,7 +78,7 @@ export function FlashcardsPage() {
   const userId = user?.id ?? "anonymous";
 
   // User profile and subscription from shared context (prevents refetching on navigation)
-  const { userProfile, isPremium: isPremiumUser } = useUserData();
+  const { userProfile } = useUserData();
   const userLanguages = (userProfile?.languages ?? []) as ContentLanguage[];
   const firstLanguage = userLanguages[0];
   const hasMultipleLanguages = userLanguages.length > 1;
@@ -642,7 +643,6 @@ export function FlashcardsPage() {
               card={currentCard}
               showAnswer={showAnswer}
               onShowAnswer={() => setShowAnswer(true)}
-              isPremiumUser={!!isPremiumUser}
               onSentenceRefreshed={(newSentence, newTranslation, newAudioUrl) => {
                 // Update the card in the session queue so the change persists
                 setSessionQueue((prev) =>
@@ -746,7 +746,6 @@ interface FlashcardDisplayProps {
   card: CardType;
   showAnswer: boolean;
   onShowAnswer: () => void;
-  isPremiumUser: boolean;
   onSentenceRefreshed?: (
     newSentence: string,
     newTranslation: string | null,
@@ -758,11 +757,13 @@ function FlashcardDisplay({
   card,
   showAnswer,
   onShowAnswer,
-  isPremiumUser,
   onSentenceRefreshed,
 }: FlashcardDisplayProps) {
   const t = useT();
   const { language: uiLanguage } = useUILanguage();
+
+  // Check credit balance for AI features (free users have credits too)
+  const { remaining } = useCreditBalance();
   const vocab = card.vocabulary;
   const isJapanese = vocab?.language === "japanese";
   const languageFont = isJapanese ? "var(--font-japanese)" : "inherit";
@@ -800,7 +801,7 @@ function FlashcardDisplay({
   ]);
 
   const handleRefresh = async () => {
-    if (!isPremiumUser) {
+    if (remaining < 1) {
       setShowPaywall(true);
       return;
     }
@@ -940,7 +941,12 @@ function FlashcardDisplay({
       )}
 
       {/* Paywall for sentence refresh */}
-      <Paywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} feature="flashcards" />
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature="flashcards"
+        creditsNeeded={1}
+      />
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
+import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useStory } from "@/hooks/useStory";
 import { isAdmin as checkIsAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
@@ -67,9 +68,11 @@ export function ComprehensionPage() {
     isAuthenticated && user ? { clerkId: user.id } : "skip"
   );
 
-  // Check subscription for AI features
+  // Check subscription for waiting on initial load
   const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
-  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
+
+  // Check credit balance for AI features (free users have credits too)
+  const { remaining } = useCreditBalance();
 
   // Check for existing comprehension quiz
   const existingComprehension = useQuery(
@@ -159,9 +162,9 @@ export function ComprehensionPage() {
       // Wait for subscription to load
       if (subscription === undefined) return;
 
-      // Check if premium user before auto-generating
-      if (!isPremiumUser) {
-        // Not premium - show paywall instead of generating
+      // Check if user has credits before auto-generating
+      if (remaining < 1) {
+        // No credits - show paywall instead of generating
         setShowPaywall(true);
         return;
       }
@@ -237,7 +240,7 @@ export function ComprehensionPage() {
   }, [
     hasAutoStarted,
     subscription,
-    isPremiumUser,
+    remaining,
     isGenerating,
     localQuestions.length,
     story,
@@ -310,7 +313,7 @@ export function ComprehensionPage() {
   const handleGenerateQuestions = async () => {
     if (!story || !isAuthenticated) return;
 
-    if (!isPremiumUser) {
+    if (remaining < 1) {
       setShowPaywall(true);
       return;
     }
@@ -391,10 +394,10 @@ export function ComprehensionPage() {
       };
       setLocalQuestions(updatedQuestions);
 
-      // For short answer and essay, grade with AI (premium only)
+      // For short answer and essay, grade with AI (requires credits)
       if (question.type !== "multiple_choice") {
-        if (!isPremiumUser) {
-          // For free users, skip AI grading and mark as pending review
+        if (remaining < 1) {
+          // No credits - skip AI grading and mark as pending review
           updatedQuestions[currentQuestionIndex] = {
             ...updatedQuestions[currentQuestionIndex],
             aiFeedback: t("comprehension.paywall.freeUserFeedback"),
@@ -837,6 +840,7 @@ export function ComprehensionPage() {
         isOpen={showPaywall}
         onClose={() => setShowPaywall(false)}
         feature="sentences"
+        creditsNeeded={1}
         title={t("comprehension.paywall.title")}
         description={t("comprehension.paywall.description")}
       />
