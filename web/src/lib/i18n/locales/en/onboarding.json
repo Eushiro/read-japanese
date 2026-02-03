@@ -12,23 +12,23 @@
   },
   "howItWorks": {
     "title": "How {{brandName}} Works",
-    "subtitle": "Master vocabulary through our proven learning loop",
+    "subtitle": "AI-powered learning personalized to your interests and goals",
     "steps": {
-      "read": {
-        "title": "1. Read",
-        "description": "Stories at your level"
+      "discover": {
+        "title": "1. Discover",
+        "description": "Content matched to your interests"
       },
-      "save": {
-        "title": "2. Save",
-        "description": "Words you want to learn"
-      },
-      "review": {
-        "title": "3. Review",
-        "description": "AI-powered flashcards"
+      "learn": {
+        "title": "2. Learn",
+        "description": "Vocabulary and grammar at your level"
       },
       "practice": {
-        "title": "4. Practice",
-        "description": "Write sentences, get feedback"
+        "title": "3. Practice",
+        "description": "AI adapts to what you need"
+      },
+      "master": {
+        "title": "4. Master",
+        "description": "Track progress toward your goals"
       }
     }
   },
@@ -84,6 +84,16 @@
   "examSelection": {
     "title": "Which exam are you preparing for?",
     "subtitle": "We'll focus your study on exam-specific content",
+    "skipForNow": "Skip for now"
+  },
+  "placementIntro": {
+    "title": "Let's Find Your Level",
+    "subtitle": "A quick test to personalize your learning experience",
+    "benefit1": "Content matched to your ability",
+    "benefit2": "Not too easy, not too hard",
+    "benefit3": "Faster progress on what matters",
+    "duration": "~10-15 questions • About 5 minutes",
+    "startTest": "Start Placement Test",
     "skipForNow": "Skip for now"
   }
 }

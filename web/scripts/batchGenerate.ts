@@ -19,6 +19,7 @@ import * as path from "path";
 
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
+import { TEXT_MODELS } from "../convex/lib/models";
 
 // ============================================
 // CONFIGURATION
@@ -35,7 +36,7 @@ if (!CONVEX_URL) {
 const convex = new ConvexHttpClient(CONVEX_URL);
 
 // Google Batch API config
-const BATCH_MODEL = "gemini-2.0-flash"; // Or gemini-1.5-flash for cheaper
+const BATCH_MODEL = TEXT_MODELS.GEMINI_3_FLASH; // Uses centralized model config
 const BATCH_API_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 // Cost estimates (per item, with 50% batch discount)
@@ -307,9 +308,7 @@ async function checkBatchStatus(googleJobName: string): Promise<{
   }
 
   // Status endpoint: GET /v1beta/{batch_name}
-  const response = await fetch(
-    `${BATCH_API_URL}/${googleJobName}?key=${GEMINI_API_KEY}`
-  );
+  const response = await fetch(`${BATCH_API_URL}/${googleJobName}?key=${GEMINI_API_KEY}`);
 
   if (!response.ok) {
     const error = await response.text();
@@ -449,7 +448,9 @@ async function pollAndProcessBatch(jobId: Id<"batchJobs">): Promise<void> {
   for (let i = 0; i < MAX_POLLS; i++) {
     const status = await checkBatchStatus(job.googleBatchJobName);
 
-    console.log(`  [${new Date().toLocaleTimeString()}] State: ${status.state}, Done: ${status.done}, Processed: ${status.processedCount || "?"}`);
+    console.log(
+      `  [${new Date().toLocaleTimeString()}] State: ${status.state}, Done: ${status.done}, Processed: ${status.processedCount || "?"}`
+    );
 
     // Update Convex with current status
     if (status.state === "JOB_STATE_RUNNING" || status.state === "JOB_STATE_PENDING") {
@@ -525,10 +526,7 @@ async function pollAndProcessBatch(jobId: Id<"batchJobs">): Promise<void> {
 // INLINE BATCH (for smaller batches without file upload)
 // ============================================
 
-async function submitInlineBatch(
-  items: PremadeVocabItem[],
-  jobId: Id<"batchJobs">
-): Promise<void> {
+async function submitInlineBatch(items: PremadeVocabItem[], jobId: Id<"batchJobs">): Promise<void> {
   if (!GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY environment variable required");
   }
@@ -731,7 +729,10 @@ Examples:
         if (googleStatus.state === "JOB_STATE_SUCCEEDED") {
           console.log(`\n  ✓ Job complete! Process results with:`);
           console.log(`    npx tsx scripts/batchGenerate.ts --process ${statusJobId}`);
-        } else if (googleStatus.state === "JOB_STATE_RUNNING" || googleStatus.state === "JOB_STATE_PENDING") {
+        } else if (
+          googleStatus.state === "JOB_STATE_RUNNING" ||
+          googleStatus.state === "JOB_STATE_PENDING"
+        ) {
           console.log(`\n  ⏳ Job still running. Poll and process with:`);
           console.log(`    npx tsx scripts/batchGenerate.ts --process ${statusJobId}`);
         }
@@ -800,10 +801,7 @@ Examples:
     await submitInlineBatch(items, jobId);
   } else {
     // For larger batches, use file upload
-    const { filePath, jobId } = await generateSentenceBatchFile(
-      deckId,
-      actualCount
-    );
+    const { filePath, jobId } = await generateSentenceBatchFile(deckId, actualCount);
 
     const fileUri = await uploadFileToGoogle(filePath);
     await submitBatchJob(fileUri, jobId);

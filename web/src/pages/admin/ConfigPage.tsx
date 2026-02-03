@@ -26,8 +26,7 @@ const AI_MODELS = [
     purpose: "Sentences",
     icon: MessageSquare,
     models: [
-      { name: "gemini-2.0-flash", provider: "Google", note: "Default, batch API" },
-      { name: "gemini-3-flash-preview", provider: "Google", note: "Alternative" },
+      { name: "google/gemini-3-flash-preview", provider: "Google", note: "Default, batch API" },
     ],
   },
   {
@@ -44,8 +43,9 @@ const AI_MODELS = [
     purpose: "Questions & Verification",
     icon: Cpu,
     models: [
-      { name: "claude-3-5-sonnet", provider: "OpenRouter", note: "Default" },
-      { name: "gpt-4o", provider: "OpenRouter", note: "Alternative" },
+      { name: "moonshotai/kimi-k2.5", provider: "OpenRouter", note: "Default" },
+      { name: "claude-3-5-sonnet", provider: "OpenRouter", note: "Alternative" },
+      { name: "gpt-4o", provider: "OpenRouter", note: "Fallback" },
     ],
   },
 ];

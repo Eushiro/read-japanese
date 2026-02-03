@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { type Doc } from "./_generated/dataModel";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { TEXT_MODELS } from "./lib/models";
 
 // ============================================
 // SENTENCE REFRESH JOB
@@ -80,7 +81,7 @@ export const updateFlashcardSentence = internalMutation({
       translations: {
         en: args.sentenceTranslation,
       },
-      model: "gemini-3-flash",
+      model: TEXT_MODELS.GEMINI_3_FLASH,
       createdAt: now,
     });
 

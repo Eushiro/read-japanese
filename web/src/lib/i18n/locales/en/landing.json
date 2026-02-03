@@ -1,23 +1,23 @@
 {
   "hero": {
-    "tagline": "AI-Powered Exam Prep",
+    "tagline": "AI-Powered Language Learning",
     "title": "Personalized Learning",
-    "titleHighlight": "for Your Exam",
-    "examName1": "Your Exam",
-    "examName2": "TOEFL",
-    "examName3": "SAT",
-    "examName4": "GRE",
-    "examName5": "JLPT",
-    "examName6": "DELF",
-    "subtitle": "AI generates content from your vocabulary, verifies your writing, and creates mock tests tailored to your target exam. Not generic study materials—a learning path built for you.",
+    "titleHighlight": "for Your Goals",
+    "examName1": "Your Goals",
+    "examName2": "Travel",
+    "examName3": "Exams",
+    "examName4": "Media",
+    "examName5": "Career",
+    "examName6": "Culture",
+    "subtitle": "AI generates content from your vocabulary, adapts to your interests, and creates practice tailored to how you learn. Not generic study materials—a learning path built for you.",
     "startLearning": "Start Learning",
     "getStartedFree": "Get Started Free",
     "browseLibrary": "Browse Library",
     "scroll": "Scroll"
   },
   "exams": {
-    "title": "Prep for the exams that matter",
-    "subtitle": "Content and tests aligned with official exam formats and vocabulary lists.",
+    "title": "Learn for what matters to you",
+    "subtitle": "Whether you're preparing for exams, traveling, or exploring media—we've got you covered.",
     "japanese": "Japanese",
     "english": "English",
     "french": "French",
@@ -46,14 +46,14 @@
     "others": "Other Apps",
     "us": {
       "item1": "Write sentences, get AI feedback",
-      "item2": "Content generated from YOUR vocabulary",
-      "item3": "Mock tests in real exam formats",
+      "item2": "Content generated from YOUR interests",
+      "item3": "Adapts to your goals and learning style",
       "item4": "Multi-modal: text, audio, images"
     },
     "them": {
       "item1": "Flip cards, tap correct answer",
       "item2": "Generic word lists for everyone",
-      "item3": "Gamified but not exam-focused",
+      "item3": "One-size-fits-all approach",
       "item4": "Usually single-modal"
     }
   },
@@ -78,8 +78,8 @@
     }
   },
   "features": {
-    "title": "Everything you need to pass your exam",
-    "subtitle": "From vocabulary building to mock tests, we've got you covered.",
+    "title": "Everything you need to reach your goals",
+    "subtitle": "From vocabulary building to personalized practice, we've got you covered.",
     "flashcards": {
       "title": "AI-Powered Flashcards",
       "description": "Cards auto-generated with example sentences at your level. Sentences refresh periodically so you don't just memorize patterns."
@@ -90,10 +90,10 @@
     },
     "personalized": {
       "title": "Personalized Content",
-      "description": "Stories and tests generated from YOUR vocabulary. Practice exactly what you need to learn."
+      "description": "Stories and exercises generated from YOUR vocabulary and interests. Practice exactly what you want to learn."
     },
     "exams": {
-      "title": "Real Exam Formats",
+      "title": "Exam Prep",
       "description": "Mock tests that match JLPT, TOEFL, DELF, and other official exam structures and scoring."
     },
     "audio": {
@@ -115,13 +115,13 @@
   },
   "cta": {
     "title": "Start learning smarter",
-    "subtitle": "Join learners who are preparing for their exams with AI-powered, personalized study materials.",
+    "subtitle": "Join learners who are reaching their language goals with AI-powered, personalized study materials.",
     "goToLibrary": "Go to Library",
     "getStartedFree": "Get Started Free",
     "noCreditCard": "No credit card required"
   },
   "footer": {
-    "tagline": "{{brandName}} - Personalized exam prep powered by AI",
+    "tagline": "{{brandName}} - Personalized language learning powered by AI",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"
   }

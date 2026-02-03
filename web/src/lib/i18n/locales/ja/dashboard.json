@@ -30,7 +30,11 @@
     "streak_other": "日連続",
     "wordsLearned": "学習した語彙",
     "minutesToday": "今日の学習時間",
-    "accuracy": "正答率"
+    "accuracy": "正答率",
+    "phrases": "フレーズ",
+    "conversations": "会話",
+    "contentWatched": "視聴済みコンテンツ",
+    "businessTerms": "ビジネス用語"
   },
   "cta": {
     "startPlacement": "レベルチェックを始める",
@@ -61,7 +65,11 @@
     "title": "あなたのスキル",
     "viewProgress": "進捗を見る",
     "noData": "スキルを追跡するには、レベルチェックを受けてください",
-    "focusAreas": "強化すべき分野"
+    "focusAreas": "強化すべき分野",
+    "best": "得意",
+    "next": "強化すべき",
+    "practice": "{{skill}}を練習",
+    "summary": "得意：{{best}} · 強化すべき：{{focus}}"
   },
   "languageSwitcher": {
     "takeTest": "テスト",
@@ -72,6 +80,21 @@
     "startStudying": "学習を始める",
     "findYourLevel": "レベルを確認",
     "setUpLanguages": "言語を設定"
+  },
+  "primaryCta": {
+    "setupTitle": "Set up your first language",
+    "setupSubtitle": "Pick a language and goal to begin",
+    "setupButton": "Set Up Languages",
+    "placementTitle": "Find your level",
+    "placementSubtitle": "Short adaptive check to start you right",
+    "placementButton": "Take Placement",
+    "continueTitle": "Continue your session",
+    "continueSubtitle": "Pick up where you left off",
+    "continueButton": "Continue Session",
+    "startTitle": "Start a session",
+    "startSubtitleExam": "Exam-focused session at your level",
+    "startSubtitleDefault": "Adaptive session tuned to your goals",
+    "startButton": "Start Session"
   },
   "goalBanner": {
     "exam": {
@@ -100,12 +123,14 @@
       "cta": "ストーリーを読む"
     }
   },
-  "foundations": {
+  "visualNovel": {
     "banner": {
-      "title": "学習を続けよう",
-      "subtitle": "基礎まであと{{count}}単語",
-      "progress": "{{percent}}%完了",
-      "cta": "学習を続ける"
+      "title": "ストーリーを続けよう",
+      "titleNew": "学習アドベンチャーを始めよう",
+      "subtitle": "{{episode}}のシーン{{current}}/{{total}}",
+      "subtitleNew": "インタラクティブなビジュアルノベルで学ぼう",
+      "cta": "続きをプレイ",
+      "ctaNew": "エピソードを始める"
     }
   },
   "crossLanguage": {

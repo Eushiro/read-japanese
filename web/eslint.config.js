@@ -228,6 +228,23 @@ export default defineConfig([
       ],
     },
   },
+  // Ban hardcoded AI model names outside of centralized model file
+  // All model configuration must be defined ONLY in lib/models.ts
+  {
+    files: ["convex/**/*.ts", "scripts/**/*.ts"],
+    ignores: ["convex/lib/models.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "Literal[value=/^(google\\/)?gemini|moonshotai\\/|anthropic\\/claude|gpt-audio/]",
+          message:
+            "Import model constants from lib/models.ts instead (e.g., TEXT_MODELS, AUDIO_MODELS, IMAGE_MODELS).",
+        },
+      ],
+    },
+  },
   // Allow console.log in Convex backend files (server-side logging)
   {
     files: ["convex/**/*.ts"],

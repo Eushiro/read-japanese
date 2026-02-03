@@ -8,6 +8,7 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
 
 import brandConfig from "../../../../shared/brand.json";
+import enAdaptivePractice from "./locales/en/adaptivePractice.json";
 // Import translation files
 import enCommon from "./locales/en/common.json";
 import enComprehension from "./locales/en/comprehension.json";
@@ -17,7 +18,6 @@ import enExamResults from "./locales/en/examResults.json";
 import enExams from "./locales/en/exams.json";
 import enExamTaking from "./locales/en/examTaking.json";
 import enFlashcards from "./locales/en/flashcards.json";
-import enFoundations from "./locales/en/foundations.json";
 import enGenerate from "./locales/en/generate.json";
 import enLanding from "./locales/en/landing.json";
 import enLearn from "./locales/en/learn.json";
@@ -40,6 +40,7 @@ import enUsage from "./locales/en/usage.json";
 import enVideo from "./locales/en/video.json";
 import enVideoQuiz from "./locales/en/videoQuiz.json";
 import enVocabulary from "./locales/en/vocabulary.json";
+import frAdaptivePractice from "./locales/fr/adaptivePractice.json";
 import frCommon from "./locales/fr/common.json";
 import frComprehension from "./locales/fr/comprehension.json";
 import frCredits from "./locales/fr/credits.json";
@@ -48,7 +49,6 @@ import frExamResults from "./locales/fr/examResults.json";
 import frExams from "./locales/fr/exams.json";
 import frExamTaking from "./locales/fr/examTaking.json";
 import frFlashcards from "./locales/fr/flashcards.json";
-import frFoundations from "./locales/fr/foundations.json";
 import frGenerate from "./locales/fr/generate.json";
 import frLanding from "./locales/fr/landing.json";
 import frLearn from "./locales/fr/learn.json";
@@ -71,6 +71,7 @@ import frUsage from "./locales/fr/usage.json";
 import frVideo from "./locales/fr/video.json";
 import frVideoQuiz from "./locales/fr/videoQuiz.json";
 import frVocabulary from "./locales/fr/vocabulary.json";
+import jaAdaptivePractice from "./locales/ja/adaptivePractice.json";
 import jaCommon from "./locales/ja/common.json";
 import jaComprehension from "./locales/ja/comprehension.json";
 import jaCredits from "./locales/ja/credits.json";
@@ -79,7 +80,6 @@ import jaExamResults from "./locales/ja/examResults.json";
 import jaExams from "./locales/ja/exams.json";
 import jaExamTaking from "./locales/ja/examTaking.json";
 import jaFlashcards from "./locales/ja/flashcards.json";
-import jaFoundations from "./locales/ja/foundations.json";
 import jaGenerate from "./locales/ja/generate.json";
 import jaLanding from "./locales/ja/landing.json";
 import jaLearn from "./locales/ja/learn.json";
@@ -102,6 +102,7 @@ import jaUsage from "./locales/ja/usage.json";
 import jaVideo from "./locales/ja/video.json";
 import jaVideoQuiz from "./locales/ja/videoQuiz.json";
 import jaVocabulary from "./locales/ja/vocabulary.json";
+import zhAdaptivePractice from "./locales/zh/adaptivePractice.json";
 import zhCommon from "./locales/zh/common.json";
 import zhComprehension from "./locales/zh/comprehension.json";
 import zhCredits from "./locales/zh/credits.json";
@@ -110,7 +111,6 @@ import zhExamResults from "./locales/zh/examResults.json";
 import zhExams from "./locales/zh/exams.json";
 import zhExamTaking from "./locales/zh/examTaking.json";
 import zhFlashcards from "./locales/zh/flashcards.json";
-import zhFoundations from "./locales/zh/foundations.json";
 import zhGenerate from "./locales/zh/generate.json";
 import zhLanding from "./locales/zh/landing.json";
 import zhLearn from "./locales/zh/learn.json";
@@ -146,7 +146,6 @@ const resources = {
     settings: enSettings,
     vocabulary: enVocabulary,
     flashcards: enFlashcards,
-    foundations: enFoundations,
     library: enLibrary,
     microReview: enMicroReview,
     practice: enPractice,
@@ -168,6 +167,7 @@ const resources = {
     paywall: enPaywall,
     quiz: enQuiz,
     shadowing: enShadowing,
+    adaptivePractice: enAdaptivePractice,
   },
   fr: {
     common: frCommon,
@@ -179,7 +179,6 @@ const resources = {
     settings: frSettings,
     vocabulary: frVocabulary,
     flashcards: frFlashcards,
-    foundations: frFoundations,
     library: frLibrary,
     microReview: frMicroReview,
     practice: frPractice,
@@ -201,6 +200,7 @@ const resources = {
     paywall: frPaywall,
     quiz: frQuiz,
     shadowing: frShadowing,
+    adaptivePractice: frAdaptivePractice,
   },
   ja: {
     common: jaCommon,
@@ -212,7 +212,6 @@ const resources = {
     settings: jaSettings,
     vocabulary: jaVocabulary,
     flashcards: jaFlashcards,
-    foundations: jaFoundations,
     library: jaLibrary,
     microReview: jaMicroReview,
     practice: jaPractice,
@@ -234,6 +233,7 @@ const resources = {
     paywall: jaPaywall,
     quiz: jaQuiz,
     shadowing: jaShadowing,
+    adaptivePractice: jaAdaptivePractice,
   },
   zh: {
     common: zhCommon,
@@ -245,7 +245,6 @@ const resources = {
     settings: zhSettings,
     vocabulary: zhVocabulary,
     flashcards: zhFlashcards,
-    foundations: zhFoundations,
     library: zhLibrary,
     microReview: zhMicroReview,
     practice: zhPractice,
@@ -267,6 +266,7 @@ const resources = {
     paywall: zhPaywall,
     quiz: zhQuiz,
     shadowing: zhShadowing,
+    adaptivePractice: zhAdaptivePractice,
   },
 };
 
@@ -290,7 +290,6 @@ i18n
       "settings",
       "vocabulary",
       "flashcards",
-      "foundations",
       "library",
       "microReview",
       "practice",
@@ -312,6 +311,7 @@ i18n
       "paywall",
       "quiz",
       "shadowing",
+      "adaptivePractice",
     ],
 
     // Detection options

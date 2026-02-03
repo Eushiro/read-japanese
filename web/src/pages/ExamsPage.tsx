@@ -63,16 +63,14 @@ export function ExamsPage() {
   );
 
   // Group templates by exam type
-  const templatesByType = templates?.reduce(
-    (acc, template) => {
-      if (!acc[template.examType]) {
-        acc[template.examType] = [];
-      }
-      acc[template.examType].push(template);
-      return acc;
-    },
-    {} as Record<string, typeof templates>
-  );
+  type ExamTemplate = NonNullable<typeof templates>[number];
+  const templatesByType = templates?.reduce<Record<string, ExamTemplate[]>>((acc, template) => {
+    if (!acc[template.examType]) {
+      acc[template.examType] = [];
+    }
+    acc[template.examType].push(template);
+    return acc;
+  }, {});
 
   // Get analytics as a map
   const analyticsMap = Array.isArray(analytics)
@@ -158,7 +156,7 @@ export function ExamsPage() {
               {t("exams.continueExam.title")}
             </h2>
             <div className="space-y-3">
-              {inProgressAttempts.map((attempt) => (
+              {inProgressAttempts.map((attempt: NonNullable<typeof inProgressAttempts>[number]) => (
                 <Link
                   key={attempt._id}
                   to="/exams/$templateId"
@@ -173,7 +171,9 @@ export function ExamsPage() {
                     </p>
                     <p className="text-sm text-foreground-muted">
                       {t("exams.continueExam.questionsAnswered", {
-                        answered: attempt.questions.filter((q) => q.userAnswer).length,
+                        answered: attempt.questions.filter(
+                          (q: { userAnswer?: string }) => q.userAnswer
+                        ).length,
                         total: attempt.questions.length,
                       })}
                     </p>
@@ -244,7 +244,7 @@ export function ExamsPage() {
 
                     {/* Exam List */}
                     <div className="divide-y divide-border">
-                      {exams?.map((template) => (
+                      {exams?.map((template: ExamTemplate) => (
                         <Link
                           key={template._id}
                           to="/exams/$templateId"
@@ -258,7 +258,8 @@ export function ExamsPage() {
                               <span>
                                 {t("exams.available.questions", {
                                   count: template.sections.reduce(
-                                    (sum, s) => sum + s.questionCount,
+                                    (sum: number, s: { questionCount: number }) =>
+                                      sum + s.questionCount,
                                     0
                                   ),
                                 })}
@@ -292,48 +293,60 @@ export function ExamsPage() {
               {t("exams.progress.title")}
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              {Object.entries(analyticsMap).map(([examType, data]) => {
-                return (
-                  <div key={examType} className="p-4 bg-surface rounded-lg border border-border">
-                    <h4 className="font-medium mb-2">
-                      {t(`exams.examTypes.${examType}.name`, { defaultValue: examType })}
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-foreground-muted">{t("exams.progress.average")}</span>
-                        <span>{data.averageScore}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-foreground-muted">{t("exams.progress.best")}</span>
-                        <span className="text-green-500">{data.highestScore}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-foreground-muted">
-                          {t("exams.progress.attempts")}
-                        </span>
-                        <span>{data.totalAttempts}</span>
-                      </div>
-                    </div>
-                    {data.weakAreas && data.weakAreas.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-border">
-                        <p className="text-xs text-foreground-muted mb-1">
-                          {t("exams.progress.focusAreas")}
-                        </p>
-                        <div className="flex flex-wrap gap-1">
-                          {data.weakAreas.slice(0, 3).map((area) => (
-                            <span
-                              key={area}
-                              className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs rounded"
-                            >
-                              {area}
-                            </span>
-                          ))}
+              {Object.entries(analyticsMap).map(
+                ([examType, data]: [
+                  string,
+                  {
+                    averageScore: number;
+                    highestScore: number;
+                    totalAttempts: number;
+                    weakAreas?: string[];
+                  },
+                ]) => {
+                  return (
+                    <div key={examType} className="p-4 bg-surface rounded-lg border border-border">
+                      <h4 className="font-medium mb-2">
+                        {t(`exams.examTypes.${examType}.name`, { defaultValue: examType })}
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-foreground-muted">
+                            {t("exams.progress.average")}
+                          </span>
+                          <span>{data.averageScore}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-foreground-muted">{t("exams.progress.best")}</span>
+                          <span className="text-green-500">{data.highestScore}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-foreground-muted">
+                            {t("exams.progress.attempts")}
+                          </span>
+                          <span>{data.totalAttempts}</span>
                         </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                      {data.weakAreas && data.weakAreas.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-border">
+                          <p className="text-xs text-foreground-muted mb-1">
+                            {t("exams.progress.focusAreas")}
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {data.weakAreas.slice(0, 3).map((area: string) => (
+                              <span
+                                key={area}
+                                className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs rounded"
+                              >
+                                {area}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+              )}
             </div>
           </div>
         )}

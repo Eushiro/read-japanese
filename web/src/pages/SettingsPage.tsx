@@ -10,7 +10,6 @@ import {
   EyeOff,
   Globe,
   GraduationCap,
-  Lock,
   LogOut,
   Monitor,
   Moon,
@@ -22,12 +21,13 @@ import {
 import { useEffect, useState } from "react";
 
 import { Footer } from "@/components/Footer";
-import { Paywall } from "@/components/Paywall";
 import { PlacementTestPromptDialog } from "@/components/PlacementTestPromptDialog";
 import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { PremiumBackground } from "@/components/ui/premium-background";
 import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -54,7 +54,6 @@ export function SettingsPage() {
   const t = useT();
 
   // State for dialogs
-  const [showPaywall, setShowPaywall] = useState(false);
   const [placementPromptLanguage, setPlacementPromptLanguage] = useState<ContentLanguage | null>(
     null
   );
@@ -81,7 +80,7 @@ export function SettingsPage() {
   } = useCreditBalance();
 
   // User profile and subscription from shared context (prevents refetching on navigation)
-  const { userProfile, subscription, isPremium: isPremiumUser } = useUserData();
+  const { userProfile, subscription } = useUserData();
   const createPortal = useAction(api.stripe.createPortalSession);
 
   const updateLanguages = useMutation(api.users.updateLanguages);
@@ -100,24 +99,17 @@ export function SettingsPage() {
     }
   }, [isAuthenticated, user, userProfile, upsertUser]);
 
-  const handleLanguageToggle = async (lang: ContentLanguage) => {
+  const handleLanguageChange = async (lang: ContentLanguage) => {
     if (!user || !userProfile) return;
 
     const currentLanguages = userProfile.languages || [];
-    const isRemoving = currentLanguages.includes(lang);
+    const isAlreadySelected = currentLanguages.includes(lang);
 
-    // Don't allow removing all languages
-    if (isRemoving && currentLanguages.length <= 1) return;
+    // If already selected, do nothing
+    if (isAlreadySelected) return;
 
-    // If trying to add a language and user is not premium, show paywall
-    if (!isRemoving && !isPremiumUser && currentLanguages.length >= 1) {
-      setShowPaywall(true);
-      return;
-    }
-
-    const newLanguages = isRemoving
-      ? currentLanguages.filter((l) => l !== lang)
-      : [...currentLanguages, lang];
+    // Single language selection - replace existing
+    const newLanguages = [lang];
 
     await updateLanguages({
       clerkId: user.id,
@@ -127,13 +119,11 @@ export function SettingsPage() {
     trackEvent(events.SETTING_CHANGED, {
       setting: "languages",
       value: newLanguages,
-      action: isRemoving ? "remove" : "add",
+      action: "change",
     });
 
-    // If adding a language (not removing), show placement test prompt
-    if (!isRemoving) {
-      setPlacementPromptLanguage(lang);
-    }
+    // Show placement test prompt for the new language
+    setPlacementPromptLanguage(lang);
   };
 
   const handleExamToggle = async (exam: string) => {
@@ -531,42 +521,36 @@ export function SettingsPage() {
                   </div>
                 ) : (
                   <>
-                    {/* Languages */}
+                    {/* Languages - Single Selection */}
                     <div className="mb-6">
                       <label className="block text-sm font-medium text-foreground mb-3">
-                        {t("settings.languages.learningLanguages")}
+                        {t("settings.languages.learningLanguage")}
                       </label>
-                      {!isPremiumUser && (userProfile?.languages?.length ?? 0) >= 1 && (
-                        <p className="text-xs text-foreground-muted mb-3">
-                          {t("settings.languages.premiumHint")}
-                        </p>
-                      )}
-                      <div className="flex flex-wrap gap-2">
-                        {LANGUAGES.map((lang) => {
-                          const isSelected = userProfile?.languages?.includes(lang.value) ?? false;
-                          const isLocked =
-                            !isSelected &&
-                            !isPremiumUser &&
-                            (userProfile?.languages?.length ?? 0) >= 1;
-                          return (
-                            <button
-                              key={lang.value}
-                              onClick={() => handleLanguageToggle(lang.value)}
-                              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all flex items-center gap-2 ${
-                                isSelected
-                                  ? "border-accent bg-accent/10 text-accent"
-                                  : isLocked
-                                    ? "border-border bg-muted/50 text-foreground-muted cursor-pointer"
-                                    : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
-                              }`}
+                      <RadioGroup
+                        value={userProfile?.languages?.[0] ?? ""}
+                        onValueChange={(value) => handleLanguageChange(value as ContentLanguage)}
+                        className="flex flex-col gap-3"
+                      >
+                        {LANGUAGES.map((lang) => (
+                          <div
+                            key={lang.value}
+                            className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                              userProfile?.languages?.[0] === lang.value
+                                ? "border-accent bg-accent/10"
+                                : "border-border bg-surface hover:border-foreground-muted"
+                            }`}
+                            onClick={() => handleLanguageChange(lang.value)}
+                          >
+                            <RadioGroupItem value={lang.value} id={lang.value} />
+                            <Label
+                              htmlFor={lang.value}
+                              className="text-sm font-medium cursor-pointer flex-1"
                             >
-                              {isLocked && <Lock className="w-3 h-3" />}
                               {t(`common.languages.${lang.value}`)}
-                              {isSelected && <Check className="w-4 h-4" />}
-                            </button>
-                          );
-                        })}
-                      </div>
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
                     </div>
 
                     {/* Target Exams */}
@@ -747,15 +731,6 @@ export function SettingsPage() {
       </div>
 
       <Footer />
-
-      {/* Paywall for premium languages */}
-      <Paywall
-        isOpen={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        feature="additionalLanguages"
-        title={t("settings.languages.premiumRequired")}
-        description={t("settings.languages.premiumDescription")}
-      />
 
       {/* Placement test prompt dialog */}
       {placementPromptLanguage && (

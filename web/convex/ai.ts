@@ -8,23 +8,23 @@
 
 // Core utilities and shared interfaces
 export {
-  calculateCostCents,
   callOpenRouter,
   callOpenRouterWithUsage,
   callWithRetry,
   type CallWithRetryResult,
   callWithRetryTracked,
   cleanJsonResponse,
-  DEFAULT_MODEL,
   type GeneratedSentence,
   type JsonSchema,
   languageNames,
-  MODEL_CHAIN,
   OPENROUTER_API_URL,
   parseJson,
   type SentenceTranslations,
   uiLanguageNames,
 } from "./ai/core";
+
+// Model configuration (single source of truth)
+export { TEXT_MODEL_CHAIN, TEXT_MODELS } from "./lib/models";
 
 // Media generation (TTS and images)
 export {

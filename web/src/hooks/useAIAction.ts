@@ -73,7 +73,7 @@ export function useAIAction<Args extends AnyArgs, Result>(
   options?: {
     /** Override the auto-detected operation name */
     operationName?: string;
-    /** Model name for tracking (default: "gemini-2.0-flash") */
+    /** Model name for tracking (default: "google/gemini-3-flash-preview") */
     model?: string;
   }
 ) {
@@ -85,7 +85,7 @@ export function useAIAction<Args extends AnyArgs, Result>(
     () => options?.operationName || extractOperationName(actionRef),
     [actionRef, options?.operationName]
   );
-  const model = options?.model || "gemini-2.0-flash";
+  const model = options?.model || "google/gemini-3-flash-preview";
 
   const trackedAction = useCallback(
     async (args: Args): Promise<Result> => {

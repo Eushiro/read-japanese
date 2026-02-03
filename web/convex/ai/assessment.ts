@@ -4,17 +4,31 @@ import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { action, internalAction } from "../_generated/server";
-import { BRAND } from "../lib/brand";
-import {
-  callWithRetry,
-  cleanJsonResponse,
-  type JsonSchema,
-  languageNames,
-  OPENROUTER_API_URL,
-  parseJson,
-  uiLanguageNames,
-} from "./core";
 import { generateTTSAudio } from "./media";
+import {
+  cleanJsonResponse,
+  evaluateAudioInput,
+  generateAndParse,
+  GRADING_MODEL_CHAIN,
+  type JsonSchema,
+  parseJson,
+  TEXT_MODEL_CHAIN,
+} from "./models";
+
+// Language name mappings
+const languageNames: Record<string, string> = {
+  japanese: "Japanese",
+  english: "English",
+  french: "French",
+};
+
+// UI language names for feedback
+const uiLanguageNames: Record<string, string> = {
+  en: "English",
+  ja: "日本語",
+  fr: "français",
+  zh: "中文",
+};
 
 // ============================================
 // PLACEMENT TEST QUESTION GENERATION
@@ -29,6 +43,9 @@ interface PlacementQuestion {
   options: string[];
   correctAnswer: string;
   difficulty: number;
+  audioUrl?: string; // For listening questions
+  audioTranscript?: string; // Transcript of the audio
+  isWarmup?: boolean; // Flag for warm-up questions
 }
 
 // Map difficulty (-3 to +3) to level names
@@ -65,6 +82,7 @@ export const generatePlacementQuestion = action({
       v.literal("listening")
     ),
     previousQuestions: v.optional(v.array(v.string())), // To avoid duplicates
+    isWarmup: v.optional(v.boolean()), // Flag for warm-up questions
   },
   handler: async (ctx, args): Promise<PlacementQuestion> => {
     const languageName = languageNames[args.language];
@@ -108,6 +126,17 @@ For READING questions:
     : ""
 }
 
+${
+  args.questionType === "listening"
+    ? `
+For LISTENING questions:
+- Create a short passage (1-2 sentences) that would be read aloud at ${level} level
+- The passage should be natural spoken ${languageName}
+- Include the audioTranscript field with the exact text to be read
+- Ask a comprehension question about what was said`
+    : ""
+}
+
 Respond ONLY with valid JSON in this exact format:
 {
   "question": "the question text in ${languageName}",
@@ -137,6 +166,10 @@ IMPORTANT:
           options: { type: "array", items: { type: "string" }, minItems: 4, maxItems: 4 },
           correctAnswer: { type: "string", description: "Must exactly match one of the options" },
           explanation: { type: "string", description: "Brief explanation of the correct answer" },
+          audioTranscript: {
+            type: "string",
+            description: "For listening questions: the text to be read aloud",
+          },
         },
         required: ["question", "questionTranslation", "options", "correctAnswer"],
         additionalProperties: false,
@@ -154,6 +187,7 @@ IMPORTANT:
         questionTranslation: string;
         options: string[];
         correctAnswer: string;
+        audioTranscript?: string;
       }>(response);
 
       // Fix correctAnswer if not in options
@@ -173,11 +207,12 @@ IMPORTANT:
       return parsed;
     };
 
-    const parsed = await callWithRetry({
+    const result = await generateAndParse({
       prompt,
       systemPrompt,
-      maxTokens: 500,
+      maxTokens: 600,
       jsonSchema: placementSchema,
+      models: TEXT_MODEL_CHAIN,
       parse: parseResponse,
       validate: (parsed) => {
         if (!parsed.question || !parsed.options || parsed.options.length !== 4) {
@@ -186,12 +221,37 @@ IMPORTANT:
         return null;
       },
     });
+    const parsed = result.result;
+
+    // Generate audio for listening questions
+    let audioUrl: string | undefined;
+    let audioTranscript: string | undefined;
+
+    if (args.questionType === "listening" && parsed.audioTranscript) {
+      audioTranscript = parsed.audioTranscript;
+      try {
+        const audioResult = await generateTTSAudio(parsed.audioTranscript, args.language);
+        if (audioResult) {
+          // Convert to base64 data URL for immediate use
+          let binaryString = "";
+          for (let i = 0; i < audioResult.audioData.length; i++) {
+            binaryString += String.fromCharCode(audioResult.audioData[i]);
+          }
+          audioUrl = `data:${audioResult.mimeType};base64,${btoa(binaryString)}`;
+        }
+      } catch (error) {
+        console.error("Failed to generate audio for listening question:", error);
+      }
+    }
 
     const questionData: PlacementQuestion = {
       questionId: `pq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       level,
       type: args.questionType,
       question: parsed.question,
+      audioUrl,
+      audioTranscript,
+      isWarmup: args.isWarmup,
       questionTranslation: parsed.questionTranslation,
       options: parsed.options,
       correctAnswer: parsed.correctAnswer,
@@ -210,7 +270,8 @@ IMPORTANT:
 
 /**
  * Calculate the next optimal difficulty for CAT
- * Based on current ability estimate
+ * Now supports adaptive type selection based on per-skill uncertainty
+ * and warm-up questions for the first 2 questions
  */
 export const getNextQuestionDifficulty = action({
   args: {
@@ -221,9 +282,10 @@ export const getNextQuestionDifficulty = action({
     args
   ): Promise<{
     targetDifficulty: number;
-    suggestedType: "vocabulary" | "grammar" | "reading";
+    suggestedType: "vocabulary" | "grammar" | "reading" | "listening";
     shouldContinue: boolean;
     reason?: string;
+    isWarmup?: boolean;
   }> => {
     // Get the current test state
     const test = await ctx.runQuery(internal.aiHelpers.getPlacementTest, {
@@ -236,6 +298,21 @@ export const getNextQuestionDifficulty = action({
         suggestedType: "vocabulary",
         shouldContinue: false,
         reason: "Test not found or not in progress",
+      };
+    }
+
+    // Warm-up phase: first 2 questions are easy
+    const WARMUP_QUESTIONS = 2;
+    const WARMUP_DIFFICULTY = -2.5; // Very easy (low N5 / A1)
+
+    if (test.questionsAnswered < WARMUP_QUESTIONS) {
+      // Fixed easy difficulty, cycle through vocabulary and grammar
+      const warmupTypes: Array<"vocabulary" | "grammar"> = ["vocabulary", "grammar"];
+      return {
+        targetDifficulty: WARMUP_DIFFICULTY,
+        suggestedType: warmupTypes[test.questionsAnswered % 2],
+        shouldContinue: true,
+        isWarmup: true,
       };
     }
 
@@ -262,30 +339,38 @@ export const getNextQuestionDifficulty = action({
       };
     }
 
-    // Calculate optimal difficulty based on test progress
-    // Start easy and increase difficulty based on performance
-    let targetDifficulty: number;
-    if (test.questionsAnswered === 0) {
-      // First question: start at lower-middle level (N4 for Japanese, A2 for CEFR)
-      targetDifficulty = -1.0;
-    } else if (test.questionsAnswered < 3) {
-      // Early questions: slightly above current ability but capped low
-      targetDifficulty = Math.min(0, test.currentAbilityEstimate + 0.3);
-    } else {
-      // After initial questions: normal CAT behavior
-      targetDifficulty = test.currentAbilityEstimate + 0.3 + (Math.random() * 0.4 - 0.2);
-    }
+    // Calculate optimal difficulty based on current ability
+    // Normal CAT behavior: target slightly above current ability
+    const targetDifficulty = test.currentAbilityEstimate + 0.3 + (Math.random() * 0.4 - 0.2);
     const clampedDifficulty = Math.max(-3, Math.min(3, targetDifficulty));
 
-    // Cycle through question types
-    const typeCycle: Array<"vocabulary" | "grammar" | "reading"> = [
-      "vocabulary",
-      "grammar",
-      "reading",
-      "vocabulary",
-      "grammar",
-    ];
-    const suggestedType = typeCycle[test.questionsAnswered % typeCycle.length];
+    // Adaptive type selection based on per-skill uncertainty
+    // Select the skill with highest standard error (most uncertain)
+    let suggestedType: "vocabulary" | "grammar" | "reading" | "listening";
+
+    const skillAbilities = test.skillAbilities as
+      | Record<string, { estimate: number; se: number }>
+      | undefined;
+    if (skillAbilities && Object.keys(skillAbilities).length >= 2) {
+      // Find skill with highest SE (most uncertain)
+      const skills = Object.entries(skillAbilities) as Array<
+        [string, { estimate: number; se: number }]
+      >;
+      skills.sort((a, b) => b[1].se - a[1].se);
+      const mostUncertain = skills[0][0] as "vocabulary" | "grammar" | "reading" | "listening";
+      suggestedType = mostUncertain;
+    } else {
+      // Fallback to cycle through question types including listening
+      const typeCycle: Array<"vocabulary" | "grammar" | "reading" | "listening"> = [
+        "vocabulary",
+        "grammar",
+        "reading",
+        "listening",
+        "vocabulary",
+        "grammar",
+      ];
+      suggestedType = typeCycle[test.questionsAnswered % typeCycle.length];
+    }
 
     return {
       targetDifficulty: clampedDifficulty,
@@ -329,11 +414,6 @@ export const evaluateShadowing = action({
       action: "shadowing",
       metadata: { targetText: args.targetText.substring(0, 50) },
     });
-
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      throw new Error("OPENROUTER_API_KEY environment variable is not set");
-    }
 
     const languageName = languageNames[args.targetLanguage];
     const feedbackLang = args.feedbackLanguage;
@@ -394,59 +474,26 @@ Common issues to listen for:
     };
 
     try {
-      const response = await fetch(OPENROUTER_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-          "HTTP-Referer": BRAND.url,
-          "X-Title": BRAND.name,
+      // Use the centralized audio evaluation function
+      const response = await evaluateAudioInput({
+        prompt: "Here is my attempt at saying the sentence. Please evaluate my pronunciation.",
+        systemPrompt,
+        audioBase64: args.userAudioBase64,
+        audioFormat: "wav",
+        jsonSchema: {
+          name: "shadowing_feedback",
+          schema: shadowingSchema.json_schema.schema,
         },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt,
-            },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: "Here is my attempt at saying the sentence. Please evaluate my pronunciation.",
-                },
-                {
-                  type: "input_audio",
-                  input_audio: {
-                    data: args.userAudioBase64,
-                    format: "wav",
-                  },
-                },
-              ],
-            },
-          ],
-          response_format: shadowingSchema,
-        }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Shadowing evaluation error: ${response.status} - ${errorText}`);
-        throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log("Shadowing evaluation response:", JSON.stringify(result, null, 2));
+      console.log("Shadowing evaluation response:", response.content);
 
       // Parse structured output
-      const textContent = result.choices?.[0]?.message?.content ?? "";
-
       let parsed;
       try {
-        parsed = JSON.parse(cleanJsonResponse(textContent));
+        parsed = JSON.parse(cleanJsonResponse(response.content));
       } catch {
-        console.error("Failed to parse shadowing feedback JSON:", textContent);
+        console.error("Failed to parse shadowing feedback JSON:", response.content);
         throw new Error("Failed to parse AI response");
       }
 
@@ -663,11 +710,12 @@ Grade this answer.`;
     };
 
     try {
-      const result = await callWithRetry<ExamGradingResult>({
+      const result = await generateAndParse<ExamGradingResult>({
         prompt,
         systemPrompt,
         maxTokens: 800,
         jsonSchema: gradingSchema,
+        models: GRADING_MODEL_CHAIN,
         parse: (response) => parseJson<ExamGradingResult>(response),
         validate: (parsed) => {
           if (typeof parsed.score !== "number") {
@@ -684,7 +732,7 @@ Grade this answer.`;
         metadata: { examType: args.examType, questionType: args.questionType },
       });
 
-      return result;
+      return result.result;
     } catch (error) {
       console.error("AI grading failed:", error);
       // Return a conservative fallback - no credits charged since AI failed
@@ -915,17 +963,19 @@ Student's answer: "${args.userAnswer}"`;
     };
 
     try {
-      return await callWithRetry<ExamGradingResult>({
+      const result = await generateAndParse<ExamGradingResult>({
         prompt,
         systemPrompt,
         maxTokens: 600,
         jsonSchema: gradingSchema,
+        models: GRADING_MODEL_CHAIN,
         parse: (response) => parseJson<ExamGradingResult>(response),
         validate: (parsed) => {
           if (typeof parsed.score !== "number") return "Missing score";
           return null;
         },
       });
+      return result.result;
     } catch {
       return {
         score: 50,

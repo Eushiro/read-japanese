@@ -30,7 +30,11 @@
     "streak_other": "jours consécutifs",
     "wordsLearned": "mots appris",
     "minutesToday": "minutes aujourd'hui",
-    "accuracy": "précision"
+    "accuracy": "précision",
+    "phrases": "phrases",
+    "conversations": "conversations",
+    "contentWatched": "contenu regardé",
+    "businessTerms": "termes professionnels"
   },
   "cta": {
     "startPlacement": "Commencer le test de niveau",
@@ -61,7 +65,11 @@
     "title": "Vos compétences",
     "viewProgress": "Voir la progression",
     "noData": "Passez un test de niveau pour suivre vos compétences",
-    "focusAreas": "Points à améliorer"
+    "focusAreas": "Points à améliorer",
+    "best": "Point fort",
+    "next": "À améliorer",
+    "practice": "Pratiquer {{skill}}",
+    "summary": "Point fort : {{best}} · À améliorer : {{focus}}"
   },
   "languageSwitcher": {
     "takeTest": "Test",
@@ -72,6 +80,21 @@
     "startStudying": "Commencer",
     "findYourLevel": "Trouver votre niveau",
     "setUpLanguages": "Configurer les langues"
+  },
+  "primaryCta": {
+    "setupTitle": "Set up your first language",
+    "setupSubtitle": "Pick a language and goal to begin",
+    "setupButton": "Set Up Languages",
+    "placementTitle": "Find your level",
+    "placementSubtitle": "Short adaptive check to start you right",
+    "placementButton": "Take Placement",
+    "continueTitle": "Continue your session",
+    "continueSubtitle": "Pick up where you left off",
+    "continueButton": "Continue Session",
+    "startTitle": "Start a session",
+    "startSubtitleExam": "Exam-focused session at your level",
+    "startSubtitleDefault": "Adaptive session tuned to your goals",
+    "startButton": "Start Session"
   },
   "goalBanner": {
     "exam": {
@@ -100,12 +123,14 @@
       "cta": "Lire une histoire"
     }
   },
-  "foundations": {
+  "visualNovel": {
     "banner": {
-      "title": "Continuez votre parcours",
-      "subtitle": "Encore {{count}} mots pour les Bases",
-      "progress": "{{percent}}% terminé",
-      "cta": "Continuer à apprendre"
+      "title": "Continuez votre histoire",
+      "titleNew": "Commencez votre aventure d'apprentissage",
+      "subtitle": "Scène {{current}} sur {{total}} dans {{episode}}",
+      "subtitleNew": "Apprenez avec des romans visuels interactifs",
+      "cta": "Continuer à jouer",
+      "ctaNew": "Commencer l'épisode"
     }
   },
   "crossLanguage": {

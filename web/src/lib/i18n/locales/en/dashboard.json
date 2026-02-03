@@ -29,7 +29,11 @@
     "streak": "day streak",
     "wordsLearned": "words learned",
     "minutesToday": "minutes today",
-    "accuracy": "accuracy"
+    "accuracy": "accuracy",
+    "phrases": "phrases",
+    "conversations": "conversations",
+    "contentWatched": "content watched",
+    "businessTerms": "business terms"
   },
   "cta": {
     "startPlacement": "Start Placement Test",
@@ -60,7 +64,11 @@
     "title": "Your Skills",
     "viewProgress": "View Progress",
     "noData": "Complete a placement test to track your skills",
-    "focusAreas": "Focus Areas"
+    "focusAreas": "Focus Areas",
+    "best": "Best",
+    "next": "Focus next",
+    "practice": "Practice {{skill}}",
+    "summary": "Best: {{best}} · Focus next: {{focus}}"
   },
   "languageSwitcher": {
     "takeTest": "Test",
@@ -71,6 +79,21 @@
     "startStudying": "Start Studying",
     "findYourLevel": "Find Your Level",
     "setUpLanguages": "Set Up Languages"
+  },
+  "primaryCta": {
+    "setupTitle": "Set up your first language",
+    "setupSubtitle": "Pick a language and goal to begin",
+    "setupButton": "Set Up Languages",
+    "placementTitle": "Find your level",
+    "placementSubtitle": "Short adaptive check to start you right",
+    "placementButton": "Take Placement",
+    "continueTitle": "Continue your session",
+    "continueSubtitle": "Pick up where you left off",
+    "continueButton": "Continue Session",
+    "startTitle": "Start a session",
+    "startSubtitleExam": "Exam-focused session at your level",
+    "startSubtitleDefault": "Adaptive session tuned to your goals",
+    "startButton": "Start Session"
   },
   "goalBanner": {
     "exam": {
@@ -99,12 +122,14 @@
       "cta": "Read Story"
     }
   },
-  "foundations": {
+  "visualNovel": {
     "banner": {
-      "title": "Continue your journey",
-      "subtitle": "{{count}} words to go in Foundations",
-      "progress": "{{percent}}% complete",
-      "cta": "Continue Learning"
+      "title": "Continue your story",
+      "titleNew": "Start your learning adventure",
+      "subtitle": "Scene {{current}} of {{total}} in {{episode}}",
+      "subtitleNew": "Learn through interactive visual novels",
+      "cta": "Continue Playing",
+      "ctaNew": "Start Episode"
     }
   },
   "crossLanguage": {

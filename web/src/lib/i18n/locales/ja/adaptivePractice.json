@@ -1,0 +1,47 @@
+{
+  "title": "適応型練習",
+  "signInPrompt": "適応型練習セッションを開始するにはサインインしてください。",
+  "loading": {
+    "analyzingSkills": "スキルプロファイルを分析中...",
+    "selectingContent": "パーソナライズされたコンテンツを選択中...",
+    "generatingQuestions": "練習問題を生成中...",
+    "personalizingDifficulty": "難易度を調整中...",
+    "preparingPractice": "練習セッションを準備中..."
+  },
+  "contentType": {
+    "dialogue": "会話",
+    "microStory": "ミニストーリー"
+  },
+  "vocabulary": "重要な語彙",
+  "startQuestions": "練習を開始（{{count}}問）",
+  "questionProgress": "問題 {{current}} / {{total}}",
+  "questionType": {
+    "mcq_vocabulary": "語彙",
+    "mcq_grammar": "文法",
+    "mcq_comprehension": "読解",
+    "fill_blank": "穴埋め",
+    "translation": "翻訳",
+    "listening_mcq": "リスニング",
+    "free_input": "自由記述"
+  },
+  "points": "点",
+  "playAudio": "音声を再生",
+  "playing": "再生中...",
+  "typeAnswer": "回答を入力してください...",
+  "feedback": {
+    "correct": "正解！",
+    "incorrect": "惜しい",
+    "correctAnswer": "正しい答え"
+  },
+  "nextQuestion": "次の問題",
+  "finishPractice": "結果を見る",
+  "results": {
+    "title": "練習完了",
+    "excellent": "素晴らしい！",
+    "goodJob": "よくできました！",
+    "keepPracticing": "練習を続けましょう！",
+    "correct": "正解",
+    "practiceAgain": "もう一度練習",
+    "backToLearn": "学習に戻る"
+  }
+}

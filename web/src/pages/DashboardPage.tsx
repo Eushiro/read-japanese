@@ -11,8 +11,6 @@ import {
   Globe,
   GraduationCap,
   MessageCircle,
-  Mic,
-  PenLine,
   Play,
   Sparkles,
   TrendingUp,
@@ -27,11 +25,13 @@ import { VideoCard, type VideoItem } from "@/components/library/VideoCard";
 import { Paywall } from "@/components/Paywall";
 import { PremiumBackground } from "@/components/ui/premium-background";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
+import { useStudySession } from "@/contexts/StudySessionContext";
 import { useUserData } from "@/contexts/UserDataContext";
+import { useRecommendedStories } from "@/hooks/useRecommendedStories";
+import { useRecommendedVideos } from "@/hooks/useRecommendedVideos";
 import { useStories } from "@/hooks/useStories";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
-import { getLanguageColorScheme, languageButtonGradients } from "@/lib/languageColors";
 import type { StoryListItem } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
@@ -124,6 +124,7 @@ export function DashboardPage() {
   const userId = user?.id ?? "anonymous";
   const navigate = useNavigate();
   const t = useT();
+  const { state: sessionState } = useStudySession();
 
   const [streakAnimating, setStreakAnimating] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -139,17 +140,14 @@ export function DashboardPage() {
   // Fetch vocabulary
   const vocabulary = useQuery(api.vocabulary.list, isAuthenticated ? { userId } : "skip");
 
-  // Fetch foundations progress
-  const foundationsProgress = useQuery(
-    api.foundations.getProgress,
-    isAuthenticated ? { userId } : "skip"
-  );
-
   // User profile and subscription from shared context (prevents refetching on navigation)
   const { userProfile, isPremium: isPremiumUser } = useUserData();
 
   // Get user languages from shared context
   const userLanguages = (userProfile?.languages ?? []) as ContentLanguage[];
+
+  // Get primary language for adaptive content (first user language or default to japanese)
+  const primaryLanguage = userLanguages[0] ?? "japanese";
 
   // Fetch streak data
   const streakData = useQuery(
@@ -157,37 +155,30 @@ export function DashboardPage() {
     isAuthenticated && user ? { clerkId: user.id } : "skip"
   );
 
-  // Fetch all videos and filter by user's languages
-  const allVideos = useQuery(api.youtubeContent.list, {}) as VideoItem[] | undefined;
-  const videos =
-    allVideos?.filter((v) =>
-      userLanguages.length > 0 ? userLanguages.includes(v.language as ContentLanguage) : true
-    ) ?? [];
+  // Use adaptive video recommendations based on learner model
+  const { videos: adaptiveVideos } = useRecommendedVideos(
+    primaryLanguage,
+    4,
+    isAuthenticated ? userId : undefined
+  );
 
   // Fetch stories for recommendations
   const { data: allStories } = useStories();
 
-  // Filter stories by user's languages and levels
-  const suggestedStories =
-    allStories
-      ?.filter((story) => {
-        // Filter by user's languages (or show all if no languages set)
-        if (
-          userLanguages.length > 0 &&
-          !userLanguages.includes(story.language as ContentLanguage)
-        ) {
-          return false;
-        }
-        // Filter by valid levels for the story's language
-        if (story.language === "japanese") {
-          return ["N5", "N4", "N3", "N2", "N1"].includes(story.level);
-        }
-        return ["A1", "A2", "B1", "B2", "C1", "C2"].includes(story.level);
-      })
-      .slice(0, 8) ?? [];
+  // Use adaptive story recommendations based on learner model
+  const { stories: adaptiveStories, reason: storyReason } = useRecommendedStories(
+    allStories,
+    userProfile,
+    primaryLanguage,
+    8,
+    isAuthenticated ? userId : undefined
+  );
 
-  // Get suggested videos from user's languages
-  const suggestedVideos = videos.slice(0, 4);
+  // Use adaptive stories directly (single language)
+  const suggestedStories = adaptiveStories;
+
+  // Use adaptive videos directly
+  const suggestedVideos = adaptiveVideos as VideoItem[];
 
   // Handle story click with premium check
   const handleStoryClick = (story: StoryListItem) => {
@@ -206,6 +197,53 @@ export function DashboardPage() {
   const dueCards = isPreviewMode ? 12 : (flashcardStats?.dueNow ?? 0) + (flashcardStats?.new ?? 0);
   const totalWords = isPreviewMode ? 247 : (vocabulary?.length ?? 0);
   const currentStreak = isPreviewMode ? 3 : (streakData?.currentStreak ?? 0);
+
+  // Get user's learning goal for goal-aware stats
+  const learningGoal = userProfile?.learningGoal;
+
+  // Goal-specific stat configuration
+  const getGoalAwareStat = () => {
+    switch (learningGoal) {
+      case "travel":
+        // For travel: show phrases instead of raw word count
+        return {
+          icon: MessageCircle,
+          value: Math.floor(totalWords * 0.6), // Estimate conversational phrases
+          label: t("dashboard.stats.phrases"),
+          color: "blue" as const,
+          to: "/learn?tab=words",
+        };
+      case "media":
+        // For media: emphasize listening content
+        return {
+          icon: BookmarkCheck,
+          value: totalWords,
+          label: t("dashboard.stats.words"),
+          color: "blue" as const,
+          to: "/learn?tab=words",
+        };
+      case "professional":
+        // For professional: show business terms
+        return {
+          icon: BookmarkCheck,
+          value: totalWords,
+          label: t("dashboard.stats.businessTerms"),
+          color: "blue" as const,
+          to: "/learn?tab=words",
+        };
+      default:
+        // Default: words
+        return {
+          icon: BookmarkCheck,
+          value: totalWords,
+          label: t("dashboard.stats.words"),
+          color: "blue" as const,
+          to: "/learn?tab=words",
+        };
+    }
+  };
+
+  const goalStat = getGoalAwareStat();
 
   // Helper to check if a language has a placement test
   const hasPlacementTest = (lang: ContentLanguage): boolean => {
@@ -253,27 +291,7 @@ export function DashboardPage() {
         {isAuthenticated && <CreditAlert />}
 
         <div className="space-y-10">
-          {/* Foundations Banner - Show for beginners who haven't completed */}
-          {isAuthenticated &&
-            foundationsProgress &&
-            !foundationsProgress.isComplete &&
-            foundationsProgress.wordsUnlocked > 0 && (
-              <FoundationsBanner progress={foundationsProgress} />
-            )}
-
-          {/* Goal Banner - Show for users with a goal set (and completed foundations or no foundations) */}
-          {isAuthenticated &&
-            userProfile?.learningGoal &&
-            (foundationsProgress?.isComplete || !foundationsProgress?.wordsUnlocked) && (
-              <GoalBanner
-                goal={userProfile.learningGoal}
-                streak={currentStreak}
-                totalWords={totalWords}
-                targetExam={userProfile.targetExams?.[0]}
-              />
-            )}
-
-          {/* Start Studying CTA - Floating with ambient glow */}
+          {/* Primary CTA */}
           {isPreviewMode ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -285,73 +303,27 @@ export function DashboardPage() {
                 <PreviewStartStudying />
               </div>
             </motion.div>
-          ) : userLanguages.length > 0 ? (
-            /* Your Languages Section - Side by side buttons */
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-              className="text-center"
-            >
-              {/* Language buttons side by side */}
-              <div className="flex flex-wrap justify-center gap-4">
-                {userLanguages.map((lang, index, arr) => {
-                  const hasTakenTest = hasPlacementTest(lang);
-                  const colorScheme = getLanguageColorScheme(index, arr.length);
-                  const gradient = languageButtonGradients[colorScheme];
-
-                  return (
-                    <button
-                      key={lang}
-                      onClick={() => {
-                        if (hasTakenTest) {
-                          navigate({ to: "/study-session" });
-                        } else {
-                          navigate({ to: "/placement-test", search: { language: lang } });
-                        }
-                      }}
-                      className={`group relative min-w-[260px] px-10 py-5 text-lg font-semibold rounded-2xl transition-all duration-300 overflow-hidden text-white isolate transform-gpu bg-gradient-to-r ${gradient} border border-white/20 shadow-xl hover:shadow-2xl hover:scale-[1.02] hover:border-white/30 active:scale-[0.98]`}
-                    >
-                      {/* Inner glow */}
-                      <span className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.1)]" />
-                      {/* Shimmer effect */}
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                      <span className="relative flex flex-col items-center gap-1">
-                        <span className="flex items-center gap-2">
-                          {hasTakenTest ? (
-                            <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                          ) : (
-                            <Globe className="w-5 h-5" />
-                          )}
-                          {t(`common.languages.${lang}`)}
-                        </span>
-                        <span className="text-sm opacity-90">
-                          {hasTakenTest
-                            ? t("dashboard.languages.startStudying")
-                            : t("dashboard.languages.findYourLevel")}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.section>
           ) : (
-            /* No languages set - prompt to set up */
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-              className="text-center py-8"
-            >
-              <Link
-                to="/settings"
-                className="inline-flex items-center gap-2 px-6 py-3 text-lg font-medium rounded-xl bg-muted hover:bg-muted/80 transition-colors"
-              >
-                <Globe className="w-5 h-5" />
-                {t("dashboard.languages.setUpLanguages")}
-              </Link>
-            </motion.section>
+            <PrimarySessionCTA
+              config={getPrimaryCtaConfig({
+                hasLanguages: userLanguages.length > 0,
+                hasPlacement: userLanguages.length > 0 ? hasPlacementTest(primaryLanguage) : false,
+                sessionStatus: sessionState.status,
+                learningGoal: userProfile?.learningGoal,
+                t,
+              })}
+              onAction={(action) => {
+                if (action === "setup") {
+                  navigate({ to: "/settings" });
+                  return;
+                }
+                if (action === "placement") {
+                  navigate({ to: "/placement-test", search: { language: primaryLanguage } });
+                  return;
+                }
+                navigate({ to: "/study-session" });
+              }}
+            />
           )}
 
           {/* Quick Stats - Floating horizontal row with subtle dividers */}
@@ -407,13 +379,13 @@ export function DashboardPage() {
                 />
                 <div className="w-px h-12 bg-border" />
                 <FloatingStat
-                  icon={BookmarkCheck}
-                  value={totalWords}
-                  label={t("dashboard.stats.words")}
-                  color="blue"
+                  icon={goalStat.icon}
+                  value={goalStat.value}
+                  label={goalStat.label}
+                  color={goalStat.color}
                   index={1}
                   isLink
-                  to="/learn?tab=words"
+                  to={goalStat.to}
                 />
                 <div className="w-px h-12 bg-border" />
                 <FloatingStat
@@ -469,7 +441,7 @@ export function DashboardPage() {
                   </Link>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {t("dashboard.sections.popularPicks")}
+                  {storyReason || t("dashboard.sections.popularPicks")}
                 </p>
 
                 {/* Stories */}
@@ -716,213 +688,107 @@ function DashboardSkeleton() {
   );
 }
 
-// Goal-aware banner component
-function GoalBanner({
-  goal,
-  streak,
-  totalWords,
-  targetExam,
-}: {
-  goal: string | undefined;
-  streak: number;
-  totalWords: number;
-  targetExam?: string;
+type PrimaryCtaAction = "session" | "placement" | "setup";
+
+function getPrimaryCtaConfig(args: {
+  hasLanguages: boolean;
+  hasPlacement: boolean;
+  sessionStatus: "idle" | "planning" | "active" | "complete";
+  learningGoal?: "exam" | "travel" | "professional" | "media" | "casual";
+  t: ReturnType<typeof useT>;
 }) {
-  const t = useT();
-  const navigate = useNavigate();
+  const t = args.t;
+  if (!args.hasLanguages) {
+    return {
+      title: t("dashboard.primaryCta.setupTitle"),
+      subtitle: t("dashboard.primaryCta.setupSubtitle"),
+      cta: t("dashboard.primaryCta.setupButton"),
+      action: "setup" as const,
+      icon: Globe,
+      gradient: "from-slate-500/10 to-slate-500/5",
+    };
+  }
 
-  if (!goal) return null;
-
-  const goalConfig: Record<
-    string,
-    {
-      icon: React.ElementType;
-      gradient: string;
-      iconBg: string;
-      iconColor: string;
-    }
-  > = {
-    exam: {
+  if (!args.hasPlacement) {
+    return {
+      title: t("dashboard.primaryCta.placementTitle"),
+      subtitle: t("dashboard.primaryCta.placementSubtitle"),
+      cta: t("dashboard.primaryCta.placementButton"),
+      action: "placement" as const,
       icon: GraduationCap,
       gradient: "from-blue-500/10 to-purple-500/10",
-      iconBg: "bg-blue-500/20",
-      iconColor: "text-blue-400",
-    },
-    travel: {
-      icon: MessageCircle,
-      gradient: "from-green-500/10 to-teal-500/10",
-      iconBg: "bg-green-500/20",
-      iconColor: "text-green-400",
-    },
-    media: {
-      icon: Mic,
-      gradient: "from-pink-500/10 to-orange-500/10",
-      iconBg: "bg-pink-500/20",
-      iconColor: "text-pink-400",
-    },
-    professional: {
-      icon: PenLine,
-      gradient: "from-indigo-500/10 to-blue-500/10",
-      iconBg: "bg-indigo-500/20",
-      iconColor: "text-indigo-400",
-    },
-    casual: {
-      icon: Flame,
-      gradient: "from-orange-500/10 to-yellow-500/10",
-      iconBg: "bg-orange-500/20",
-      iconColor: "text-orange-400",
-    },
-  };
+    };
+  }
 
-  const config = goalConfig[goal] || goalConfig.casual;
+  if (args.sessionStatus === "active" || args.sessionStatus === "planning") {
+    return {
+      title: t("dashboard.primaryCta.continueTitle"),
+      subtitle: t("dashboard.primaryCta.continueSubtitle"),
+      cta: t("dashboard.primaryCta.continueButton"),
+      action: "session" as const,
+      icon: Play,
+      gradient: "from-emerald-500/10 to-sky-500/10",
+    };
+  }
+
+  const goalSubtitle =
+    args.learningGoal === "exam"
+      ? t("dashboard.primaryCta.startSubtitleExam")
+      : t("dashboard.primaryCta.startSubtitleDefault");
+
+  return {
+    title: t("dashboard.primaryCta.startTitle"),
+    subtitle: goalSubtitle,
+    cta: t("dashboard.primaryCta.startButton"),
+    action: "session" as const,
+    icon: Sparkles,
+    gradient: "from-orange-500/10 to-purple-500/10",
+  };
+}
+
+function PrimarySessionCTA({
+  config,
+  onAction,
+}: {
+  config: {
+    title: string;
+    subtitle: string;
+    cta: string;
+    action: PrimaryCtaAction;
+    icon: React.ElementType;
+    gradient: string;
+  };
+  onAction: (action: PrimaryCtaAction) => void;
+}) {
   const Icon = config.icon;
-
-  // Calculate a simple "readiness" percentage based on words learned
-  const readinessPercent = Math.min(100, Math.round((totalWords / 500) * 100));
-
-  const handleCta = () => {
-    switch (goal) {
-      case "exam":
-        navigate({ to: "/exams" });
-        break;
-      case "travel":
-      case "professional":
-        navigate({ to: "/learn", search: { tab: "practice" } });
-        break;
-      case "media":
-        navigate({ to: "/library" });
-        break;
-      default:
-        navigate({ to: "/library" });
-    }
-  };
-
-  // Get the appropriate title based on goal
-  const getTitle = () => {
-    switch (goal) {
-      case "exam":
-        return t("dashboard.goalBanner.exam.title", {
-          percent: readinessPercent,
-          exam: targetExam?.toUpperCase() || "exam",
-        });
-      case "travel":
-        return t("dashboard.goalBanner.travel.title", { count: totalWords });
-      case "media":
-        return t("dashboard.goalBanner.media.title");
-      case "professional":
-        return t("dashboard.goalBanner.professional.title");
-      case "casual":
-        return t("dashboard.goalBanner.casual.title", { streak });
-      default:
-        return t("dashboard.goalBanner.casual.title", { streak });
-    }
-  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.15, duration: 0.5 }}
+      transition={{ delay: 0.08, duration: 0.5 }}
       className="relative"
     >
-      <div
-        className={`relative rounded-2xl backdrop-blur-xl bg-gradient-to-r ${config.gradient} border border-white/10 p-5 overflow-hidden`}
-      >
+      <div className="relative rounded-2xl backdrop-blur-xl bg-white/[0.04] border border-white/10 p-5 overflow-hidden">
         {/* Subtle glow */}
         <div className="absolute inset-0 bg-gradient-to-r from-white/[0.02] to-transparent pointer-events-none" />
 
-        <div className="relative flex items-center justify-between gap-4">
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div
-              className={`w-12 h-12 rounded-xl ${config.iconBg} flex items-center justify-center flex-shrink-0`}
-            >
-              <Icon className={`w-6 h-6 ${config.iconColor}`} />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+              <Icon className="w-6 h-6 text-foreground" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground">{getTitle()}</h3>
-              <p className="text-sm text-muted-foreground">
-                {t(`dashboard.goalBanner.${goal}.subtitle`)}
-              </p>
+              <h3 className="text-lg font-semibold text-foreground">{config.title}</h3>
+              <p className="text-sm text-muted-foreground">{config.subtitle}</p>
             </div>
           </div>
           <button
-            onClick={handleCta}
-            className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all"
+            onClick={() => onAction(config.action)}
+            className="flex-shrink-0 px-3 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-orange-500 to-purple-500 text-white hover:opacity-90 transition-all"
           >
-            {t(`dashboard.goalBanner.${goal}.cta`)}
+            {config.cta}
           </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// Foundations banner for beginners
-function FoundationsBanner({
-  progress,
-}: {
-  progress: {
-    wordsLearned: number;
-    wordsUnlocked: number;
-    percentComplete: number;
-    totalWords: number;
-    isComplete: boolean;
-  };
-}) {
-  const t = useT();
-  const navigate = useNavigate();
-
-  // Don't show if complete or no progress data
-  if (progress.isComplete) return null;
-
-  const wordsRemaining = progress.totalWords - progress.wordsLearned;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1, duration: 0.5 }}
-      className="relative"
-    >
-      <div className="relative rounded-2xl backdrop-blur-xl bg-gradient-to-r from-orange-500/10 to-purple-500/10 border border-white/10 p-5 overflow-hidden">
-        {/* Subtle glow */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/[0.02] to-transparent pointer-events-none" />
-
-        <div className="relative flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-6 h-6 text-orange-400" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">
-                {t("dashboard.foundations.banner.title")}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {t("dashboard.foundations.banner.subtitle", { count: wordsRemaining })}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden sm:block">
-              {t("dashboard.foundations.banner.progress", { percent: progress.percentComplete })}
-            </span>
-            <button
-              onClick={() => navigate({ to: "/foundations" })}
-              className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-orange-500 to-purple-500 text-white hover:opacity-90 transition-all"
-            >
-              {t("dashboard.foundations.banner.cta")}
-            </button>
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="mt-4 h-1.5 bg-white/10 rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progress.percentComplete}%` }}
-            transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-            className="h-full bg-gradient-to-r from-orange-500 to-purple-500 rounded-full"
-          />
         </div>
       </div>
     </motion.div>

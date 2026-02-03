@@ -952,6 +952,7 @@ export const updateSentenceInternal = internalMutation({
     sentence: v.string(),
     sentenceTranslation: v.string(),
     audioUrl: v.optional(v.string()),
+    model: v.optional(v.string()), // Model that generated the sentence (passed from generation function)
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -990,7 +991,7 @@ export const updateSentenceInternal = internalMutation({
         en: args.sentenceTranslation,
       },
       audioUrl: args.audioUrl,
-      model: "gemini-3-flash",
+      model: args.model ?? "unknown", // Use model from args, or "unknown" for legacy calls
       createdAt: now,
     });
 

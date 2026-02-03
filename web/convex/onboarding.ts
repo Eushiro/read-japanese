@@ -9,7 +9,9 @@
 
 import { v } from "convex/values";
 
+import { internal } from "./_generated/api";
 import { internalAction, internalMutation, mutation, query } from "./_generated/server";
+import { TEXT_MODELS } from "./lib/models";
 import { languageValidator, learningGoalValidator } from "./schema";
 
 // ============================================
@@ -186,7 +188,7 @@ export const initializeBeginnerSetup = mutation({
     if (!user.foundationsProgress) {
       await ctx.db.patch(user._id, {
         foundationsProgress: {
-          wordsUnlocked: 0,
+          wordsUnlocked: 100,
           wordsLearned: 0,
           storiesUnlocked: 0,
         },
@@ -321,13 +323,14 @@ export const updateFoundationsProgress = mutation({
     }
 
     const current = user.foundationsProgress ?? {
-      wordsUnlocked: 0,
+      wordsUnlocked: 100,
       wordsLearned: 0,
       storiesUnlocked: 0,
     };
 
     const newProgress = {
       ...current,
+      wordsUnlocked: current.wordsUnlocked > 0 ? current.wordsUnlocked : 100,
       wordsLearned: args.wordsLearned ?? current.wordsLearned,
       storiesUnlocked: args.storiesUnlocked ?? current.storiesUnlocked,
     };
@@ -343,45 +346,6 @@ export const updateFoundationsProgress = mutation({
     });
 
     return newProgress;
-  },
-});
-
-// Unlock more words in foundations track (daily drip)
-export const unlockFoundationsWords = mutation({
-  args: {
-    userId: v.string(),
-    count: v.optional(v.number()), // Default: 10
-  },
-  handler: async (ctx, args) => {
-    const unlockCount = args.count ?? 10;
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.userId))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const current = user.foundationsProgress ?? {
-      wordsUnlocked: 0,
-      wordsLearned: 0,
-      storiesUnlocked: 0,
-    };
-
-    // Cap at 100 words for foundations
-    const newUnlocked = Math.min(100, current.wordsUnlocked + unlockCount);
-
-    await ctx.db.patch(user._id, {
-      foundationsProgress: {
-        ...current,
-        wordsUnlocked: newUnlocked,
-      },
-      updatedAt: Date.now(),
-    });
-
-    return { wordsUnlocked: newUnlocked };
   },
 });
 
@@ -449,6 +413,26 @@ export const storeGeneratedVocabulary = internalMutation({
 // AI VOCABULARY GENERATION (for non-exam goals)
 // ============================================
 
+// Vocabulary item structure for AI generation output
+interface GeneratedVocabItem {
+  word: string;
+  reading?: string;
+  definitions: string[];
+  partOfSpeech?: string;
+  exampleSentence?: string;
+}
+
+interface VocabListResponse {
+  vocabulary: GeneratedVocabItem[];
+}
+
+// Language name mapping for prompts
+const LANGUAGE_NAMES: Record<string, string> = {
+  japanese: "Japanese",
+  english: "English",
+  french: "French",
+};
+
 // Generate vocabulary list based on goal and interests
 // This uses the AI to create a personalized starter vocabulary
 export const generateGoalBasedVocabulary = internalAction({
@@ -459,8 +443,9 @@ export const generateGoalBasedVocabulary = internalAction({
     interests: v.array(v.string()),
     count: v.optional(v.number()), // Default: 50 words
   },
-  handler: async (_ctx, args): Promise<{ generated: number; stored: number }> => {
+  handler: async (ctx, args): Promise<{ generated: number; stored: number }> => {
     const wordCount = args.count ?? 50;
+    const languageName = LANGUAGE_NAMES[args.language] || args.language;
 
     // Build themes from goal and interests
     const goalThemes = GOAL_TO_THEMES[args.goal] ?? [];
@@ -470,17 +455,145 @@ export const generateGoalBasedVocabulary = internalAction({
 
     const allThemes = [...new Set([...goalThemes, ...interestThemes])];
 
-    // For now, we'll use a simple prompt-based generation
-    // In production, this would call the AI generation function
-    // TODO: Implement actual AI vocabulary generation
+    // Build the AI prompt
+    const systemPrompt = `You are a language learning expert who creates beginner-friendly vocabulary lists.
+Your task is to generate practical, high-frequency vocabulary words that a ${languageName} learner would need.
 
-    // Placeholder: return empty for now
-    // Real implementation would call internal.ai.generateVocabularyList
-    console.log(
-      `Would generate ${wordCount} words for ${args.language} with themes:`,
-      allThemes.join(", ")
-    );
+Guidelines:
+1. Focus on practical, everyday words
+2. Include a mix of nouns, verbs, adjectives, and useful phrases
+3. Ensure words are appropriate for beginners (A1-A2 level)
+4. For Japanese, include readings (hiragana) for kanji words
+5. Provide clear, concise definitions
+6. Prioritize words that match the user's goals and interests
 
-    return { generated: 0, stored: 0 };
+Respond ONLY with valid JSON.`;
+
+    const prompt = `Generate ${wordCount} ${languageName} vocabulary words for a beginner learner.
+
+**Learning Goal:** ${args.goal}
+**Topics/Themes to focus on:** ${allThemes.join(", ")}
+**User Interests:** ${args.interests.join(", ")}
+
+Generate vocabulary that:
+- Matches the learning goal (${args.goal === "travel" ? "travel and conversation phrases" : args.goal === "professional" ? "business and formal language" : args.goal === "media" ? "entertainment and media vocabulary" : "general everyday words"})
+- Relates to the user's interests where possible
+- Is practical and immediately useful
+- Is appropriate for beginners
+
+Return a JSON object with this structure:
+{
+  "vocabulary": [
+    {
+      "word": "the word in ${languageName}",
+      "reading": "reading/pronunciation (for Japanese only, use hiragana)",
+      "definitions": ["definition 1", "definition 2"],
+      "partOfSpeech": "noun/verb/adjective/phrase/etc"
+    }
+  ]
+}`;
+
+    try {
+      // Call OpenRouter API
+      const apiKey = process.env.OPENROUTER_API_KEY;
+      if (!apiKey) {
+        console.error("OPENROUTER_API_KEY not set");
+        return { generated: 0, stored: 0 };
+      }
+
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://sanlang.app",
+          "X-Title": "SanLang",
+        },
+        body: JSON.stringify({
+          model: TEXT_MODELS.GEMINI_3_FLASH,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 4000,
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "vocabulary_list",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  vocabulary: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        word: { type: "string" },
+                        reading: { type: "string" },
+                        definitions: { type: "array", items: { type: "string" } },
+                        partOfSpeech: { type: "string" },
+                      },
+                      required: ["word", "definitions"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["vocabulary"],
+                additionalProperties: false,
+              },
+            },
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`OpenRouter API error: ${response.status} - ${errorText}`);
+        return { generated: 0, stored: 0 };
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content ?? "";
+
+      // Parse the response
+      let cleaned = content.trim();
+      if (cleaned.startsWith("```json")) {
+        cleaned = cleaned.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+      } else if (cleaned.startsWith("```")) {
+        cleaned = cleaned.replace(/^```\n?/, "").replace(/\n?```$/, "");
+      }
+
+      const parsed: VocabListResponse = JSON.parse(cleaned);
+
+      if (!parsed.vocabulary || !Array.isArray(parsed.vocabulary)) {
+        console.error("Invalid response format: missing vocabulary array");
+        return { generated: 0, stored: 0 };
+      }
+
+      // Store the generated vocabulary
+      const result = await ctx.runMutation(internal.onboarding.storeGeneratedVocabulary, {
+        userId: args.userId,
+        language: args.language,
+        items: parsed.vocabulary.map((item) => ({
+          word: item.word,
+          reading: item.reading,
+          definitions: item.definitions,
+          partOfSpeech: item.partOfSpeech,
+        })),
+        source: `goal_based_${args.goal}`,
+      });
+
+      console.log(
+        `Generated ${parsed.vocabulary.length} words for ${args.language} with themes:`,
+        allThemes.join(", ")
+      );
+
+      return { generated: parsed.vocabulary.length, stored: result.added };
+    } catch (error) {
+      console.error("Error generating vocabulary:", error);
+      return { generated: 0, stored: 0 };
+    }
   },
 });

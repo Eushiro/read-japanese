@@ -90,6 +90,33 @@ export const listForUser = query({
   },
 });
 
+/**
+ * Get videos filtered by acceptable difficulty levels (for adaptive content)
+ * Uses the learner model's recommended levels to filter videos
+ */
+export const listByLevels = query({
+  args: {
+    language: languageValidator,
+    levels: v.array(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 10;
+
+    // Get all videos for the language
+    const videos = await ctx.db
+      .query("youtubeContent")
+      .withIndex("by_language", (q) => q.eq("language", args.language))
+      .collect();
+
+    // Filter by acceptable levels
+    const filtered = videos.filter((v) => v.level && args.levels.includes(v.level));
+
+    // Return limited results
+    return filtered.slice(0, limit);
+  },
+});
+
 // ============================================
 // MUTATIONS
 // ============================================

@@ -30,7 +30,11 @@
     "streak_other": "天连续",
     "wordsLearned": "已学单词",
     "minutesToday": "今日学习时间",
-    "accuracy": "正确率"
+    "accuracy": "正确率",
+    "phrases": "短语",
+    "conversations": "会话",
+    "contentWatched": "已观看内容",
+    "businessTerms": "商务术语"
   },
   "cta": {
     "startPlacement": "开始分级测试",
@@ -61,7 +65,11 @@
     "title": "您的技能",
     "viewProgress": "查看进度",
     "noData": "完成分级测试以追踪您的技能",
-    "focusAreas": "需要加强的领域"
+    "focusAreas": "需要加强的领域",
+    "best": "最强",
+    "next": "需加强",
+    "practice": "练习{{skill}}",
+    "summary": "最强：{{best}} · 需加强：{{focus}}"
   },
   "languageSwitcher": {
     "takeTest": "测试",
@@ -72,6 +80,21 @@
     "startStudying": "开始学习",
     "findYourLevel": "确定您的水平",
     "setUpLanguages": "设置语言"
+  },
+  "primaryCta": {
+    "setupTitle": "Set up your first language",
+    "setupSubtitle": "Pick a language and goal to begin",
+    "setupButton": "Set Up Languages",
+    "placementTitle": "Find your level",
+    "placementSubtitle": "Short adaptive check to start you right",
+    "placementButton": "Take Placement",
+    "continueTitle": "Continue your session",
+    "continueSubtitle": "Pick up where you left off",
+    "continueButton": "Continue Session",
+    "startTitle": "Start a session",
+    "startSubtitleExam": "Exam-focused session at your level",
+    "startSubtitleDefault": "Adaptive session tuned to your goals",
+    "startButton": "Start Session"
   },
   "goalBanner": {
     "exam": {
@@ -100,12 +123,14 @@
       "cta": "阅读故事"
     }
   },
-  "foundations": {
+  "visualNovel": {
     "banner": {
-      "title": "继续你的旅程",
-      "subtitle": "基础课程还剩{{count}}个单词",
-      "progress": "完成{{percent}}%",
-      "cta": "继续学习"
+      "title": "继续你的故事",
+      "titleNew": "开始你的学习冒险",
+      "subtitle": "{{episode}}的第{{current}}/{{total}}场景",
+      "subtitleNew": "通过互动视觉小说学习",
+      "cta": "继续游玩",
+      "ctaNew": "开始章节"
     }
   },
   "crossLanguage": {

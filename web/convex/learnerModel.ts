@@ -48,6 +48,14 @@ function updateSkillScore(currentScore: number, newScore: number, sampleSize: nu
   return Math.round(currentScore * existingWeight + newScore * newWeight);
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function lerp(start: number, end: number, t: number): number {
+  return start + (end - start) * t;
+}
+
 /**
  * Convert IRT ability estimate (-3 to +3) to proficiency level
  * Applies i+1 principle by adding a small buffer to target slightly above current level
@@ -108,6 +116,14 @@ function getDefaultProfile(userId: string, language: string) {
     language: language as "japanese" | "english" | "french",
     abilityEstimate: 0,
     abilityConfidence: 1.0,
+    abilityBySkill: {
+      vocabulary: 0,
+      grammar: 0,
+      reading: 0,
+      listening: 0,
+      writing: 0,
+      speaking: 0,
+    },
     skills: {
       vocabulary: 50,
       grammar: 50,
@@ -127,6 +143,21 @@ function getDefaultProfile(userId: string, language: string) {
     readiness: {
       level: "not_ready" as const,
       confidence: 0,
+    },
+    interestWeights: [],
+    engagementStats: {
+      avgDwellMs: 0,
+      completionRate: 0,
+      skipRate: 0,
+      replayRate: 0,
+      lastRating: undefined,
+      engagementMean: 0,
+      engagementVariance: 1,
+    },
+    difficultyCalibration: {
+      targetAccuracy: 0.75,
+      recentAccuracy: 0.75,
+      lastAdjustAt: now,
     },
     totalStudyMinutes: 0,
     // NOTE: Streak data lives in `users` table, not here
@@ -581,6 +612,203 @@ export const updateFromComprehension = mutation({
       questionsAnswered: args.questionsAnswered,
       questionsCorrect: args.questionsCorrect,
       contentConsumed: 1,
+    });
+  },
+});
+
+// Update profile after adaptive content interaction
+export const updateFromAdaptiveContent = internalMutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    contentId: v.string(),
+    contentType: v.string(),
+    difficultyEstimate: v.number(),
+    skillsTested: v.array(
+      v.object({
+        skill: v.string(),
+        weight: v.number(),
+      })
+    ),
+    score: v.number(), // 0-100
+    rating: v.optional(v.number()),
+    dwellMs: v.optional(v.number()),
+    replays: v.optional(v.number()),
+    skips: v.optional(v.number()),
+    topicTags: v.optional(v.array(v.string())),
+    confidence: v.optional(v.number()),
+    estimatedWordCount: v.optional(v.number()),
+    completed: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Get or create profile
+    let profile = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (!profile) {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      const id = await ctx.db.insert("learnerProfile", defaultProfile);
+      profile = (await ctx.db.get(id))!;
+    }
+
+    const p = clamp(args.score / 100, 0, 1);
+    const confidence = clamp(args.confidence ?? 0.5, 0, 1);
+    const k = lerp(0.08, 0.03, confidence);
+
+    const expected = 1 / (1 + Math.exp(-1.7 * (profile.abilityEstimate - args.difficultyEstimate)));
+    const abilityEstimate = clamp(profile.abilityEstimate + k * (p - expected), -3, 3);
+
+    // Update per-skill ability estimates
+    const abilityBySkill = { ...(profile.abilityBySkill ?? {}) } as SkillScores;
+    for (const skill of [
+      "vocabulary",
+      "grammar",
+      "reading",
+      "listening",
+      "writing",
+      "speaking",
+    ] as const) {
+      if (abilityBySkill[skill] === undefined) {
+        abilityBySkill[skill] = profile.abilityEstimate;
+      }
+    }
+
+    const skillWeightSum =
+      args.skillsTested.reduce((sum, s) => sum + s.weight, 0) || args.skillsTested.length || 1;
+
+    for (const { skill, weight } of args.skillsTested) {
+      const normalizedWeight = weight / skillWeightSum;
+      if (skill in abilityBySkill) {
+        abilityBySkill[skill as keyof SkillScores] = clamp(
+          abilityBySkill[skill as keyof SkillScores] + k * normalizedWeight * (p - expected),
+          -3,
+          3
+        );
+      }
+    }
+
+    // Skill EMA update (0-100)
+    const sampleSize = Math.max(1, Math.round(profile.totalStudyMinutes / 5));
+    const alpha = clamp(2 / (sampleSize + 2), 0.05, 0.25);
+    const newSkills = { ...profile.skills };
+    for (const { skill, weight } of args.skillsTested) {
+      if (skill in newSkills) {
+        const current = newSkills[skill as keyof SkillScores];
+        const weightedDelta = alpha * (weight / skillWeightSum) * (args.score - current);
+        newSkills[skill as keyof SkillScores] = Math.round(current + weightedDelta);
+      }
+    }
+
+    // Recent accuracy EMA
+    const calibration = profile.difficultyCalibration ?? {
+      targetAccuracy: 0.75,
+      recentAccuracy: 0.75,
+      lastAdjustAt: now,
+    };
+    const recentAccuracy = calibration.recentAccuracy + 0.1 * (p - calibration.recentAccuracy);
+
+    // Engagement normalization
+    const dwellMs = args.dwellMs ?? 0;
+    const replays = args.replays ?? 0;
+    const skips = args.skips ?? 0;
+    const rating = args.rating ?? 0;
+    const estimatedWordCount = args.estimatedWordCount ?? 100;
+    const expectedDwellMs = estimatedWordCount * 250;
+    const dwellRatio = expectedDwellMs > 0 ? dwellMs / expectedDwellMs : 0;
+
+    const engagementRaw = 1000 * dwellRatio + 2 * replays - 3 * skips + 500 * rating;
+
+    const prevEngagement = profile.engagementStats ?? {
+      avgDwellMs: 0,
+      completionRate: 0,
+      skipRate: 0,
+      replayRate: 0,
+      lastRating: undefined,
+      engagementMean: 0,
+      engagementVariance: 1,
+    };
+
+    const engagementEma = 0.1;
+    const engagementMean =
+      prevEngagement.engagementMean +
+      engagementEma * (engagementRaw - prevEngagement.engagementMean);
+    const engagementVariance =
+      prevEngagement.engagementVariance +
+      engagementEma * ((engagementRaw - engagementMean) ** 2 - prevEngagement.engagementVariance);
+    const engagementStd = Math.sqrt(Math.max(engagementVariance, 1));
+    const engagement = clamp((engagementRaw - engagementMean) / Math.max(engagementStd, 1), -3, 3);
+
+    // Interest updates
+    const interestWeightsMap = new Map(
+      (profile.interestWeights ?? []).map((entry) => [entry.tag, entry])
+    );
+    const tags = args.topicTags ?? [];
+    for (const tag of tags) {
+      const current = interestWeightsMap.get(tag)?.weight ?? 0;
+      const updated = clamp(current * 0.98 + 0.05 * engagement, -1, 1);
+      interestWeightsMap.set(tag, { tag, weight: updated, updatedAt: now });
+    }
+
+    const interestWeights = Array.from(interestWeightsMap.values());
+
+    const completionRate =
+      args.completed === undefined
+        ? prevEngagement.completionRate
+        : prevEngagement.completionRate +
+          engagementEma * ((args.completed ? 1 : 0) - prevEngagement.completionRate);
+
+    const skipRate =
+      prevEngagement.skipRate + engagementEma * ((skips > 0 ? 1 : 0) - prevEngagement.skipRate);
+    const replayRate =
+      prevEngagement.replayRate +
+      engagementEma * ((replays > 0 ? 1 : 0) - prevEngagement.replayRate);
+    const avgDwellMs =
+      prevEngagement.avgDwellMs + engagementEma * (dwellMs - prevEngagement.avgDwellMs);
+
+    const engagementStats = {
+      avgDwellMs,
+      completionRate,
+      skipRate,
+      replayRate,
+      lastRating: args.rating ?? prevEngagement.lastRating,
+      engagementMean,
+      engagementVariance,
+    };
+
+    const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
+    const studyMinutes = dwellMs > 0 ? Math.max(1, Math.round(dwellMs / 60000)) : 0;
+
+    await ctx.db.patch(profile._id, {
+      abilityEstimate,
+      abilityBySkill,
+      skills: newSkills,
+      interestWeights,
+      engagementStats,
+      difficultyCalibration: {
+        ...calibration,
+        recentAccuracy,
+        lastAdjustAt: now,
+      },
+      readiness: {
+        ...profile.readiness,
+        level: newReadiness,
+      },
+      totalStudyMinutes: profile.totalStudyMinutes + studyMinutes,
+      lastActivityAt: now,
+      updatedAt: now,
+    });
+
+    await updateDailyProgressInternal(ctx, {
+      userId: args.userId,
+      language: args.language,
+      contentConsumed: 1,
+      studyMinutes,
     });
   },
 });

@@ -15,6 +15,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalAction, internalMutation, internalQuery } from "../_generated/server";
+import { AUDIO_MODELS, IMAGE_MODELS, TEXT_MODELS } from "../lib/models";
 import type { ContentLanguage } from "../schema";
 import { TIER_LIMITS } from "../subscriptions";
 
@@ -567,7 +568,7 @@ export const generateSentenceForWord = internalAction({
       difficulty,
       sentence: generated.sentence,
       translations: generated.translations,
-      model: "gemini-3-flash",
+      model: TEXT_MODELS.GEMINI_3_FLASH,
     });
 
     // Step 5: Increment usage (only if not skipped)
@@ -663,7 +664,7 @@ export const generateImageForWord = internalAction({
       word: args.word,
       language: args.language,
       imageUrl: imageResult.imageUrl,
-      model: "gemini-2.5-flash-image",
+      model: IMAGE_MODELS.GEMINI_IMAGE,
     });
 
     // Step 5: Increment usage (only if not skipped)
@@ -756,7 +757,7 @@ export const generateAudioForText = internalAction({
         word: args.text,
         language: args.language,
         audioUrl: audioResult.audioUrl,
-        model: "gemini-2.5-flash-preview-tts",
+        model: AUDIO_MODELS.GEMINI_TTS,
       });
     }
 

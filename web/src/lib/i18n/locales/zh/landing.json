@@ -1,23 +1,23 @@
 {
   "hero": {
-    "tagline": "AI驱动的考试准备",
-    "title": "为您的考试量身定制的",
+    "tagline": "AI驱动的语言学习",
+    "title": "为您的目标量身定制的",
     "titleHighlight": "个性化学习",
-    "examName1": "您的考试",
-    "examName2": "TOEFL",
-    "examName3": "SAT",
-    "examName4": "GRE",
-    "examName5": "JLPT",
-    "examName6": "DELF",
-    "subtitle": "AI从您的词汇生成内容，批改您的写作，并创建针对您目标考试的模拟考试。不是通用学习材料——是为您打造的学习路径。",
+    "examName1": "您的目标",
+    "examName2": "旅行",
+    "examName3": "考试",
+    "examName4": "媒体",
+    "examName5": "事业",
+    "examName6": "文化",
+    "subtitle": "AI从您的词汇生成内容，适应您的兴趣，并创建针对您学习方式的练习。不是通用学习材料——是为您打造的学习路径。",
     "startLearning": "开始学习",
     "getStartedFree": "免费开始",
     "browseLibrary": "浏览图书馆",
     "scroll": "滚动"
   },
   "exams": {
-    "title": "备考重要的考试",
-    "subtitle": "内容和测试与官方考试形式和词汇表保持一致。",
+    "title": "学习对您重要的内容",
+    "subtitle": "无论您是准备考试、旅行还是探索媒体——我们都为您准备好了。",
     "japanese": "日语",
     "english": "英语",
     "french": "法语",
@@ -46,14 +46,14 @@
     "others": "其他应用",
     "us": {
       "item1": "写句子，获得AI反馈",
-      "item2": "从你的词汇生成内容",
-      "item3": "真实考试形式的模拟考试",
+      "item2": "从您的兴趣生成内容",
+      "item3": "适应您的目标和学习风格",
       "item4": "多模态：文本、音频、图片"
     },
     "them": {
       "item1": "翻卡片，点击正确答案",
       "item2": "人人相同的通用词汇表",
-      "item3": "游戏化但不专注于考试",
+      "item3": "千人一面的方法",
       "item4": "通常是单模态"
     }
   },
@@ -78,8 +78,8 @@
     }
   },
   "features": {
-    "title": "通过考试所需的一切",
-    "subtitle": "从词汇构建到模拟考试，我们都为您准备好了。",
+    "title": "达成目标所需的一切",
+    "subtitle": "从词汇构建到个性化练习，我们都为您准备好了。",
     "flashcards": {
       "title": "AI驱动的闪卡",
       "description": "自动生成适合您水平的例句卡片。句子定期刷新，防止只是记忆模式。"
@@ -90,10 +90,10 @@
     },
     "personalized": {
       "title": "个性化内容",
-      "description": "从您的词汇生成的故事和测试。精确练习您需要学习的内容。"
+      "description": "从您的词汇和兴趣生成的故事和练习。精确练习您想学习的内容。"
     },
     "exams": {
-      "title": "真实考试形式",
+      "title": "考试准备",
       "description": "与JLPT、TOEFL、DELF等官方考试结构和评分相匹配的模拟考试。"
     },
     "audio": {
@@ -115,13 +115,13 @@
   },
   "cta": {
     "title": "开始更聪明地学习",
-    "subtitle": "加入正在用AI驱动的个性化学习材料准备考试的学习者。",
+    "subtitle": "加入正在用AI驱动的个性化学习材料实现语言目标的学习者。",
     "goToLibrary": "前往图书馆",
     "getStartedFree": "免费开始",
     "noCreditCard": "无需信用卡"
   },
   "footer": {
-    "tagline": "{{brandName}} - AI驱动的个性化考试准备",
+    "tagline": "{{brandName}} - AI驱动的个性化语言学习",
     "privacy": "隐私政策",
     "terms": "服务条款"
   }

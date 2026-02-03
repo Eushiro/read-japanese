@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { type Id } from "../_generated/dataModel";
 import { action, internalAction } from "../_generated/server";
+import { GRADING_MODEL_CHAIN } from "../lib/models";
 import { uploadSentenceAudio, uploadWordAudio, uploadWordImage } from "../lib/storage";
 import {
   callWithRetry,
@@ -276,25 +277,12 @@ export const generateFlashcard = action({
     });
 
     // Generate the sentence using the tracked helper
-    const { result: generated, usage } = await generateSentenceHelperTracked({
+    const { result: generated } = await generateSentenceHelperTracked({
       word: vocab.word,
       reading: vocab.reading ?? undefined,
       definitions: vocab.definitions,
       language: vocab.language,
       examLevel: vocab.examLevel ?? undefined,
-    });
-
-    // Log AI usage for cost tracking
-    await ctx.runMutation(internal.aiUsage.log, {
-      userId: vocab.userId,
-      action: "sentence_generation",
-      model: usage.model,
-      inputTokens: usage.inputTokens,
-      outputTokens: usage.outputTokens,
-      totalTokens: usage.totalTokens,
-      latencyMs: usage.latencyMs,
-      success: true,
-      metadata: { word: vocab.word, language: vocab.language },
     });
 
     // Create or update the flashcard
@@ -514,7 +502,7 @@ Provide detailed feedback and corrections if needed.`;
     };
 
     try {
-      const { result, usage } = await callWithRetryTracked<VerificationResult>({
+      const { result } = await callWithRetryTracked<VerificationResult>({
         prompt,
         systemPrompt,
         maxTokens: 1000,
@@ -528,30 +516,8 @@ Provide detailed feedback and corrections if needed.`;
         },
       });
 
-      // Log AI usage for cost tracking
-      await ctx.runMutation(internal.aiUsage.log, {
-        userId: identity.subject,
-        action: "sentence_verification",
-        model: usage.model,
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens,
-        totalTokens: usage.totalTokens,
-        latencyMs: usage.latencyMs,
-        success: true,
-        metadata: { targetWord: args.targetWord, language: args.language },
-      });
-
       return result;
-    } catch (error) {
-      // Log failed attempt
-      await ctx.runMutation(internal.aiUsage.logError, {
-        userId: identity.subject,
-        action: "sentence_verification",
-        model: "unknown",
-        error: error instanceof Error ? error.message : "Unknown error",
-        metadata: { targetWord: args.targetWord, language: args.language },
-      });
-
+    } catch {
       // Return a default response if all retries fail
       return {
         isCorrect: false,
@@ -1171,6 +1137,7 @@ Provide detailed feedback and corrections if needed.`;
         systemPrompt,
         maxTokens: 1000,
         jsonSchema: verificationSchema,
+        models: GRADING_MODEL_CHAIN,
         parse: (response) => parseJson<InternalVerificationResult>(response),
         validate: (parsed) => {
           if (typeof parsed.overallScore !== "number") {

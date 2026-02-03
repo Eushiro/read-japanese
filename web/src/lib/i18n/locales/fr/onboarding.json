@@ -12,23 +12,23 @@
   },
   "howItWorks": {
     "title": "Comment ça marche",
-    "subtitle": "Maîtrise le vocabulaire avec notre méthode éprouvée",
+    "subtitle": "Apprentissage par IA personnalisé selon tes intérêts et objectifs",
     "steps": {
-      "read": {
-        "title": "1. Lis",
-        "description": "Des histoires adaptées à ton niveau"
+      "discover": {
+        "title": "1. Découvre",
+        "description": "Contenu adapté à tes centres d'intérêt"
       },
-      "save": {
-        "title": "2. Enregistre",
-        "description": "Les mots que tu veux apprendre"
-      },
-      "review": {
-        "title": "3. Révise",
-        "description": "Flashcards intelligentes"
+      "learn": {
+        "title": "2. Apprends",
+        "description": "Vocabulaire et grammaire à ton niveau"
       },
       "practice": {
-        "title": "4. Pratique",
-        "description": "Écris des phrases, reçois des conseils"
+        "title": "3. Pratique",
+        "description": "L'IA s'adapte à tes besoins"
+      },
+      "master": {
+        "title": "4. Maîtrise",
+        "description": "Suis ta progression vers tes objectifs"
       }
     }
   },
@@ -84,6 +84,16 @@
   "examSelection": {
     "title": "Quel examen prépares-tu ?",
     "subtitle": "On se concentrera sur le contenu spécifique à l'examen",
+    "skipForNow": "Passer pour l'instant"
+  },
+  "placementIntro": {
+    "title": "Trouvons ton niveau",
+    "subtitle": "Un test rapide pour personnaliser ton expérience d'apprentissage",
+    "benefit1": "Contenu adapté à ton niveau",
+    "benefit2": "Ni trop facile, ni trop difficile",
+    "benefit3": "Progresse plus vite sur ce qui compte",
+    "duration": "~10-15 questions • Environ 5 minutes",
+    "startTest": "Commencer le test de niveau",
     "skipForNow": "Passer pour l'instant"
   }
 }

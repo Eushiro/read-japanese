@@ -1,23 +1,23 @@
 {
   "hero": {
-    "tagline": "Préparation aux examens par l'IA",
+    "tagline": "Apprentissage des langues par l'IA",
     "title": "Apprentissage personnalisé",
-    "titleHighlight": "pour votre examen",
-    "examName1": "votre examen",
-    "examName2": "TOEFL",
-    "examName3": "SAT",
-    "examName4": "GRE",
-    "examName5": "JLPT",
-    "examName6": "DELF",
-    "subtitle": "L'IA génère du contenu à partir de votre vocabulaire, corrige vos écrits et crée des examens blancs adaptés à votre objectif. Pas de matériel générique—un parcours d'apprentissage conçu pour vous.",
+    "titleHighlight": "pour vos objectifs",
+    "examName1": "vos objectifs",
+    "examName2": "Voyage",
+    "examName3": "Examens",
+    "examName4": "Médias",
+    "examName5": "Carrière",
+    "examName6": "Culture",
+    "subtitle": "L'IA génère du contenu à partir de votre vocabulaire, s'adapte à vos intérêts et crée des exercices adaptés à votre façon d'apprendre. Pas de matériel générique—un parcours d'apprentissage conçu pour vous.",
     "startLearning": "Commencer à apprendre",
     "getStartedFree": "Commencer gratuitement",
     "browseLibrary": "Parcourir la bibliothèque",
     "scroll": "Défiler"
   },
   "exams": {
-    "title": "Préparez les examens qui comptent",
-    "subtitle": "Contenu et tests alignés sur les formats officiels et les listes de vocabulaire.",
+    "title": "Apprenez pour ce qui compte pour vous",
+    "subtitle": "Que vous prépariez des examens, voyagiez ou exploriez les médias—nous avons tout prévu.",
     "japanese": "Japonais",
     "english": "Anglais",
     "french": "Français",
@@ -46,14 +46,14 @@
     "others": "Autres applications",
     "us": {
       "item1": "Écrivez des phrases, obtenez des retours de l'IA",
-      "item2": "Contenu généré à partir de VOTRE vocabulaire",
-      "item3": "Examens blancs au format réel",
+      "item2": "Contenu généré à partir de VOS intérêts",
+      "item3": "S'adapte à vos objectifs et votre style d'apprentissage",
       "item4": "Multimodal : texte, audio, images"
     },
     "them": {
       "item1": "Retournez les cartes, tapez la bonne réponse",
       "item2": "Listes de mots génériques pour tous",
-      "item3": "Gamifié mais pas axé sur les examens",
+      "item3": "Approche unique pour tous",
       "item4": "Généralement monomodal"
     }
   },
@@ -78,8 +78,8 @@
     }
   },
   "features": {
-    "title": "Tout ce dont vous avez besoin pour réussir",
-    "subtitle": "De la construction du vocabulaire aux examens blancs, nous avons tout prévu.",
+    "title": "Tout ce dont vous avez besoin pour atteindre vos objectifs",
+    "subtitle": "De la construction du vocabulaire à la pratique personnalisée, nous avons tout prévu.",
     "flashcards": {
       "title": "Flashcards par l'IA",
       "description": "Cartes auto-générées avec des phrases exemples à votre niveau. Les phrases sont actualisées régulièrement pour éviter la mémorisation de schémas."
@@ -90,10 +90,10 @@
     },
     "personalized": {
       "title": "Contenu personnalisé",
-      "description": "Histoires et tests générés à partir de VOTRE vocabulaire. Pratiquez exactement ce que vous devez apprendre."
+      "description": "Histoires et exercices générés à partir de VOTRE vocabulaire et vos intérêts. Pratiquez exactement ce que vous voulez apprendre."
     },
     "exams": {
-      "title": "Formats d'examen réels",
+      "title": "Préparation aux examens",
       "description": "Examens blancs correspondant aux structures et notations officielles du JLPT, TOEFL, DELF et autres."
     },
     "audio": {
@@ -115,13 +115,13 @@
   },
   "cta": {
     "title": "Commencez à apprendre plus intelligemment",
-    "subtitle": "Rejoignez les apprenants qui préparent leurs examens avec des matériaux d'étude personnalisés par l'IA.",
+    "subtitle": "Rejoignez les apprenants qui atteignent leurs objectifs linguistiques avec des matériaux d'étude personnalisés par l'IA.",
     "goToLibrary": "Aller à la bibliothèque",
     "getStartedFree": "Commencer gratuitement",
     "noCreditCard": "Aucune carte de crédit requise"
   },
   "footer": {
-    "tagline": "{{brandName}} - Préparation aux examens personnalisée par l'IA",
+    "tagline": "{{brandName}} - Apprentissage des langues personnalisé par l'IA",
     "privacy": "Politique de confidentialité",
     "terms": "Conditions d'utilisation"
   }

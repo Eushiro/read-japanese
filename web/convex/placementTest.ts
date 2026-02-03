@@ -286,12 +286,14 @@ export const addQuestion = mutation({
 
 /**
  * Submit an answer and update ability estimate
+ * Now supports response time tracking and per-skill ability updates
  */
 export const submitAnswer = mutation({
   args: {
     testId: v.id("placementTests"),
     questionIndex: v.number(),
     answer: v.string(),
+    responseTimeMs: v.optional(v.number()), // Time from question shown to answer
   },
   handler: async (ctx, args) => {
     const test = await ctx.db.get(args.testId);
@@ -317,21 +319,46 @@ export const submitAnswer = mutation({
       userAnswer: args.answer,
       isCorrect,
       answeredAt: Date.now(),
+      responseTimeMs: args.responseTimeMs,
     };
 
     // Build response history for IRT estimation
-    const responses = questions
-      .filter((q) => q.userAnswer !== undefined && q.isCorrect !== undefined)
+    // Exclude warm-up questions from ability estimation
+    const nonWarmupResponses = questions
+      .filter((q) => q.userAnswer !== undefined && q.isCorrect !== undefined && !q.isWarmup)
       .map((q) => ({
         difficulty: q.difficulty,
         correct: q.isCorrect!,
+        // Flag potential guesses (very fast responses)
+        weight: q.responseTimeMs && q.responseTimeMs < 2000 ? 0.5 : 1.0,
       }));
 
-    // Update ability estimate
+    // Update overall ability estimate
     const { ability, standardError } = updateAbilityEstimate(
       test.currentAbilityEstimate,
-      responses
+      nonWarmupResponses
     );
+
+    // Update per-skill ability estimate
+    const skillAbilities = test.skillAbilities ?? {};
+    const questionType = question.type as "vocabulary" | "grammar" | "reading" | "listening";
+    if (
+      !question.isWarmup &&
+      ["vocabulary", "grammar", "reading", "listening"].includes(questionType)
+    ) {
+      const skillResponses = nonWarmupResponses.filter((_r, i) => {
+        const q = questions.filter((q) => q.userAnswer !== undefined && !q.isWarmup)[i];
+        return q?.type === questionType;
+      });
+      if (skillResponses.length > 0) {
+        const currentSkill = skillAbilities[questionType] ?? { estimate: 0, se: 1.5 };
+        const { ability: skillAbility, standardError: skillSE } = updateAbilityEstimate(
+          currentSkill.estimate,
+          skillResponses
+        );
+        skillAbilities[questionType] = { estimate: skillAbility, se: skillSE };
+      }
+    }
 
     await ctx.db.patch(args.testId, {
       questions,
@@ -339,6 +366,7 @@ export const submitAnswer = mutation({
       abilityStandardError: standardError,
       questionsAnswered: test.questionsAnswered + 1,
       correctAnswers: test.correctAnswers + (isCorrect ? 1 : 0),
+      skillAbilities,
     });
 
     return {
@@ -519,6 +547,9 @@ export const addQuestionFromAI = internalMutation({
       options: v.array(v.string()),
       correctAnswer: v.string(),
       difficulty: v.number(),
+      audioUrl: v.optional(v.string()),
+      audioTranscript: v.optional(v.string()),
+      isWarmup: v.optional(v.boolean()),
     }),
   },
   handler: async (ctx, args) => {

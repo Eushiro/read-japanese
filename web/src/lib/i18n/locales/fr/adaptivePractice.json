@@ -1,0 +1,47 @@
+{
+  "title": "Pratique adaptative",
+  "signInPrompt": "Connectez-vous pour commencer des sessions de pratique adaptative.",
+  "loading": {
+    "analyzingSkills": "Analyse de votre profil de compétences...",
+    "selectingContent": "Sélection de contenu personnalisé...",
+    "generatingQuestions": "Génération des questions...",
+    "personalizingDifficulty": "Calibrage du niveau de difficulté...",
+    "preparingPractice": "Préparation de votre session..."
+  },
+  "contentType": {
+    "dialogue": "Dialogue",
+    "microStory": "Micro-histoire"
+  },
+  "vocabulary": "Vocabulaire clé",
+  "startQuestions": "Commencer ({{count}} questions)",
+  "questionProgress": "Question {{current}} sur {{total}}",
+  "questionType": {
+    "mcq_vocabulary": "Vocabulaire",
+    "mcq_grammar": "Grammaire",
+    "mcq_comprehension": "Compréhension",
+    "fill_blank": "Texte à trous",
+    "translation": "Traduction",
+    "listening_mcq": "Écoute",
+    "free_input": "Réponse libre"
+  },
+  "points": "pts",
+  "playAudio": "Écouter",
+  "playing": "Lecture...",
+  "typeAnswer": "Tapez votre réponse...",
+  "feedback": {
+    "correct": "Correct !",
+    "incorrect": "Pas tout à fait",
+    "correctAnswer": "Bonne réponse"
+  },
+  "nextQuestion": "Question suivante",
+  "finishPractice": "Voir les résultats",
+  "results": {
+    "title": "Pratique terminée",
+    "excellent": "Excellent travail !",
+    "goodJob": "Bon travail !",
+    "keepPracticing": "Continuez à pratiquer !",
+    "correct": "correct",
+    "practiceAgain": "Recommencer",
+    "backToLearn": "Retour à Apprendre"
+  }
+}

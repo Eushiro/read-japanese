@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { TrendingUp } from "lucide-react";
 import {
@@ -95,12 +96,19 @@ export function SkillsRadarCard({
     { skill: t("progress.skills.speaking"), value: skills.speaking, fullMark: 100 },
   ];
 
-  // Find weak areas (skills below 50% are red, 50-70% are yellow)
+  // Find weak areas (skills below 70%)
   const weakAreas = Object.entries(skills)
     .map(([skill, value]) => ({ skill, value }))
     .filter((s) => s.value < 70)
     .sort((a, b) => a.value - b.value)
     .slice(0, 3);
+
+  const sortedSkills = Object.entries(skills)
+    .map(([skill, value]) => ({ skill, value }))
+    .sort((a, b) => b.value - a.value);
+
+  const bestSkill = sortedSkills[0];
+  const focusSkill = sortedSkills[sortedSkills.length - 1];
 
   const cardContent = (
     <motion.div
@@ -168,6 +176,28 @@ export function SkillsRadarCard({
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Best + Focus summary */}
+          {bestSkill && focusSkill && (
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-muted-foreground">
+                {t("dashboard.skills.summary", {
+                  best: t(`progress.skills.${bestSkill.skill}`),
+                  focus: t(`progress.skills.${focusSkill.skill}`),
+                })}
+              </p>
+              {!isPreview && (
+                <Link
+                  to="/adaptive-practice"
+                  className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-full bg-white/10 border border-white/10 hover:bg-white/15 transition-colors"
+                >
+                  {t("dashboard.skills.practice", {
+                    skill: t(`progress.skills.${focusSkill.skill}`),
+                  })}
+                </Link>
+              )}
             </div>
           )}
         </div>

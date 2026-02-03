@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as adaptivePractice from "../adaptivePractice.js";
+import type * as adaptivePracticeQueries from "../adaptivePracticeQueries.js";
 import type * as admin from "../admin.js";
 import type * as ai from "../ai.js";
 import type * as ai_assessment from "../ai/assessment.js";
@@ -16,10 +18,17 @@ import type * as ai_core from "../ai/core.js";
 import type * as ai_definitions from "../ai/definitions.js";
 import type * as ai_flashcards from "../ai/flashcards.js";
 import type * as ai_media from "../ai/media.js";
+import type * as ai_models from "../ai/models.js";
+import type * as ai_providers_google from "../ai/providers/google.js";
+import type * as ai_providers_index from "../ai/providers/index.js";
+import type * as ai_providers_openrouter from "../ai/providers/openrouter.js";
+import type * as ai_providers_types from "../ai/providers/types.js";
 import type * as aiHelpers from "../aiHelpers.js";
-import type * as aiUsage from "../aiUsage.js";
 import type * as batchJobs from "../batchJobs.js";
+import type * as contentEngine from "../contentEngine.js";
+import type * as contentEngineQueries from "../contentEngineQueries.js";
 import type * as contentLibrary from "../contentLibrary.js";
+import type * as contentReadiness from "../contentReadiness.js";
 import type * as crons from "../crons.js";
 import type * as examAttempts from "../examAttempts.js";
 import type * as examQuestions from "../examQuestions.js";
@@ -48,6 +57,7 @@ import type * as migrations_settingsMigration from "../migrations/settingsMigrat
 import type * as migrations_storyMigration from "../migrations/storyMigration.js";
 import type * as migrations_translationData from "../migrations/translationData.js";
 import type * as mockTests from "../mockTests.js";
+import type * as onboarding from "../onboarding.js";
 import type * as payments from "../payments.js";
 import type * as placementTest from "../placementTest.js";
 import type * as premadeDecks from "../premadeDecks.js";
@@ -69,13 +79,11 @@ import type * as videoQuestions from "../videoQuestions.js";
 import type * as vocabulary from "../vocabulary.js";
 import type * as youtubeContent from "../youtubeContent.js";
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
+import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adaptivePractice: typeof adaptivePractice;
+  adaptivePracticeQueries: typeof adaptivePracticeQueries;
   admin: typeof admin;
   ai: typeof ai;
   "ai/assessment": typeof ai_assessment;
@@ -84,10 +92,17 @@ declare const fullApi: ApiFromModules<{
   "ai/definitions": typeof ai_definitions;
   "ai/flashcards": typeof ai_flashcards;
   "ai/media": typeof ai_media;
+  "ai/models": typeof ai_models;
+  "ai/providers/google": typeof ai_providers_google;
+  "ai/providers/index": typeof ai_providers_index;
+  "ai/providers/openrouter": typeof ai_providers_openrouter;
+  "ai/providers/types": typeof ai_providers_types;
   aiHelpers: typeof aiHelpers;
-  aiUsage: typeof aiUsage;
   batchJobs: typeof batchJobs;
+  contentEngine: typeof contentEngine;
+  contentEngineQueries: typeof contentEngineQueries;
   contentLibrary: typeof contentLibrary;
+  contentReadiness: typeof contentReadiness;
   crons: typeof crons;
   examAttempts: typeof examAttempts;
   examQuestions: typeof examQuestions;
@@ -116,6 +131,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/storyMigration": typeof migrations_storyMigration;
   "migrations/translationData": typeof migrations_translationData;
   mockTests: typeof mockTests;
+  onboarding: typeof onboarding;
   payments: typeof payments;
   placementTest: typeof placementTest;
   premadeDecks: typeof premadeDecks;
@@ -146,10 +162,7 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "public">
->;
+export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -159,9 +172,6 @@ export declare const api: FilterApi<
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "internal">
->;
+export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
 
 export declare const components: {};

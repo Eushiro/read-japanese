@@ -149,7 +149,7 @@ export function VideoFormPage() {
   const [videoId, setVideoId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [language, setLanguage] = useState<"japanese" | "english" | "french">("japanese");
+  const [language, setLanguage] = useState<ContentLanguage>("japanese");
   const [level, setLevel] = useState("");
   const [transcriptText, setTranscriptText] = useState("");
   const [transcript, setTranscript] = useState<TranscriptSegment[]>([]);

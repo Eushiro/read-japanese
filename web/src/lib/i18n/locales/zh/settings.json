@@ -32,11 +32,8 @@
   },
   "languages": {
     "title": "语言与考试",
-    "learningLanguages": "您正在学习的语言",
-    "targetExams": "目标考试",
-    "premiumHint": "升级以添加更多语言",
-    "premiumRequired": "升级以学习更多语言",
-    "premiumDescription": "免费用户只能学习一种语言。升级到Plus或Pro来添加更多语言。"
+    "learningLanguage": "我在学",
+    "targetExams": "目标考试"
   },
   "proficiency": {
     "title": "水平级别",

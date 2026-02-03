@@ -12,23 +12,23 @@
   },
   "howItWorks": {
     "title": "{{brandName}}の使い方",
-    "subtitle": "効果的な学習サイクルで語彙をマスター",
+    "subtitle": "あなたの興味と目標に合わせたAI搭載の学習",
     "steps": {
-      "read": {
-        "title": "1. 読む",
-        "description": "レベルに合ったストーリー"
+      "discover": {
+        "title": "1. 発見",
+        "description": "あなたの興味に合ったコンテンツ"
       },
-      "save": {
-        "title": "2. 保存",
-        "description": "覚えたい単語を追加"
-      },
-      "review": {
-        "title": "3. 復習",
-        "description": "AIフラッシュカード"
+      "learn": {
+        "title": "2. 学習",
+        "description": "レベルに合った語彙と文法"
       },
       "practice": {
-        "title": "4. 練習",
-        "description": "文を書いてフィードバック"
+        "title": "3. 練習",
+        "description": "AIがあなたに必要なものに適応"
+      },
+      "master": {
+        "title": "4. 習得",
+        "description": "目標への進捗を追跡"
       }
     }
   },
@@ -84,6 +84,16 @@
   "examSelection": {
     "title": "どの試験を準備していますか？",
     "subtitle": "試験に特化したコンテンツに集中します",
+    "skipForNow": "今はスキップ"
+  },
+  "placementIntro": {
+    "title": "あなたのレベルを確認しましょう",
+    "subtitle": "学習体験をパーソナライズするための簡単なテスト",
+    "benefit1": "あなたの能力に合ったコンテンツ",
+    "benefit2": "簡単すぎず、難しすぎない",
+    "benefit3": "重要なことに集中して効率的に進歩",
+    "duration": "約10〜15問 • 約5分",
+    "startTest": "レベルテストを始める",
     "skipForNow": "今はスキップ"
   }
 }

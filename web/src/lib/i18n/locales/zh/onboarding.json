@@ -12,23 +12,23 @@
   },
   "howItWorks": {
     "title": "{{brandName}}是怎么运作的",
-    "subtitle": "通过我们的学习循环掌握词汇",
+    "subtitle": "根据你的兴趣和目标量身定制的AI学习",
     "steps": {
-      "read": {
-        "title": "1. 阅读",
-        "description": "适合你水平的故事"
+      "discover": {
+        "title": "1. 发现",
+        "description": "匹配你兴趣的内容"
       },
-      "save": {
-        "title": "2. 收藏",
-        "description": "想学习的单词"
-      },
-      "review": {
-        "title": "3. 复习",
-        "description": "AI智能闪卡"
+      "learn": {
+        "title": "2. 学习",
+        "description": "适合你水平的词汇和语法"
       },
       "practice": {
-        "title": "4. 练习",
-        "description": "写句子，获得反馈"
+        "title": "3. 练习",
+        "description": "AI根据你的需求调整"
+      },
+      "master": {
+        "title": "4. 掌握",
+        "description": "追踪你的目标进度"
       }
     }
   },
@@ -84,6 +84,16 @@
   "examSelection": {
     "title": "你在准备哪门考试？",
     "subtitle": "我们会专注于考试相关的内容",
+    "skipForNow": "暂时跳过"
+  },
+  "placementIntro": {
+    "title": "让我们确定你的水平",
+    "subtitle": "一个快速测试来个性化你的学习体验",
+    "benefit1": "匹配你能力水平的内容",
+    "benefit2": "不会太简单，也不会太难",
+    "benefit3": "更快地在重要内容上取得进步",
+    "duration": "约10-15道题 • 大约5分钟",
+    "startTest": "开始水平测试",
     "skipForNow": "暂时跳过"
   }
 }

@@ -7,6 +7,7 @@ import {
   Navigate,
   Outlet,
   useLocation,
+  useNavigate,
   useSearch,
 } from "@tanstack/react-router";
 import { BookOpen, CreditCard, Crown, GraduationCap, Home, Shield, User, Zap } from "lucide-react";
@@ -20,8 +21,8 @@ import { useUserData } from "@/contexts/UserDataContext";
 import { isAdmin } from "@/lib/admin";
 import { trackPageView } from "@/lib/analytics";
 import { useT } from "@/lib/i18n";
+import { AdaptivePracticePage } from "@/pages/AdaptivePracticePage";
 import { AdminDashboard } from "@/pages/admin/AdminDashboard";
-import { AIUsagePage } from "@/pages/admin/AIUsagePage";
 import { ConfigPage } from "@/pages/admin/ConfigPage";
 import { DeckDetailPage } from "@/pages/admin/DeckDetailPage";
 import { DecksPage } from "@/pages/admin/DecksPage";
@@ -36,7 +37,6 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { ExamResultsPage } from "@/pages/ExamResultsPage";
 import { ExamsPage } from "@/pages/ExamsPage";
 import { ExamTakingPage } from "@/pages/ExamTakingPage";
-import { FoundationsPage } from "@/pages/FoundationsPage";
 import { GeneratePage } from "@/pages/GeneratePage";
 import { LandingPage } from "@/pages/LandingPage";
 import { LearnPage } from "@/pages/LearnPage";
@@ -54,6 +54,8 @@ import { UsageHistoryPage } from "@/pages/UsageHistoryPage";
 import { VideoPage } from "@/pages/VideoPage";
 import { VideoQuizPage } from "@/pages/VideoQuizPage";
 
+import type { LearningGoal } from "../convex/schema";
+
 // Root layout
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -66,6 +68,7 @@ function RootLayout() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [forceOnboarding, setForceOnboarding] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Check URL for onboarding trigger
   useState(() => {
@@ -94,12 +97,14 @@ function RootLayout() {
     (userProfile === null || forceOnboarding) &&
     !onboardingComplete;
 
-  const handleOnboardingComplete = () => {
+  const handleOnboardingComplete = (_learningGoal?: LearningGoal) => {
     setOnboardingComplete(true);
     setForceOnboarding(false);
-    // Navigate to dashboard after onboarding
+
+    // Navigate to dashboard after onboarding using client-side routing
+    // (avoids browser "leave site" warning from Radix UI Dialog state)
     if (window.location.pathname === "/" || window.location.pathname === "/settings") {
-      window.location.href = "/dashboard";
+      navigate({ to: "/dashboard" });
     }
   };
 
@@ -385,6 +390,12 @@ const studySessionRoute = createRoute({
   component: StudySessionPage,
 });
 
+const adaptivePracticeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/adaptive-practice",
+  component: AdaptivePracticePage,
+});
+
 const pricingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/pricing",
@@ -415,12 +426,6 @@ const progressRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/progress",
   component: ProgressPage,
-});
-
-const foundationsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/foundations",
-  component: FoundationsPage,
 });
 
 // Legal pages
@@ -503,12 +508,6 @@ const adminMediaRoute = createRoute({
   component: MediaPage,
 });
 
-const adminAIUsageRoute = createRoute({
-  getParentRoute: () => adminRoute,
-  path: "/ai-usage",
-  component: AIUsagePage,
-});
-
 // Route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -527,14 +526,13 @@ const routeTree = rootRoute.addChildren([
   usageHistoryRoute,
   placementTestRoute,
   studySessionRoute,
+  adaptivePracticeRoute,
   pricingRoute,
   // Exam routes
   examsRoute,
   examTakingRoute,
   examResultsRoute,
   progressRoute,
-  // Foundations track
-  foundationsRoute,
   // Legal pages
   privacyRoute,
   termsRoute,
@@ -550,7 +548,6 @@ const routeTree = rootRoute.addChildren([
     adminStoryQuestionsRoute,
     adminConfigRoute,
     adminMediaRoute,
-    adminAIUsageRoute,
   ]),
 ]);
 

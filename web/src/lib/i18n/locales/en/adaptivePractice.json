@@ -1,0 +1,47 @@
+{
+  "title": "Adaptive Practice",
+  "signInPrompt": "Sign in to start adaptive practice sessions.",
+  "loading": {
+    "analyzingSkills": "Analyzing your skill profile...",
+    "selectingContent": "Selecting personalized content...",
+    "generatingQuestions": "Generating practice questions...",
+    "personalizingDifficulty": "Calibrating difficulty level...",
+    "preparingPractice": "Preparing your practice session..."
+  },
+  "contentType": {
+    "dialogue": "Dialogue",
+    "microStory": "Micro Story"
+  },
+  "vocabulary": "Key Vocabulary",
+  "startQuestions": "Start Practice ({{count}} questions)",
+  "questionProgress": "Question {{current}} of {{total}}",
+  "questionType": {
+    "mcq_vocabulary": "Vocabulary",
+    "mcq_grammar": "Grammar",
+    "mcq_comprehension": "Comprehension",
+    "fill_blank": "Fill in the Blank",
+    "translation": "Translation",
+    "listening_mcq": "Listening",
+    "free_input": "Free Response"
+  },
+  "points": "pts",
+  "playAudio": "Play Audio",
+  "playing": "Playing...",
+  "typeAnswer": "Type your answer...",
+  "feedback": {
+    "correct": "Correct!",
+    "incorrect": "Not quite right",
+    "correctAnswer": "Correct answer"
+  },
+  "nextQuestion": "Next Question",
+  "finishPractice": "See Results",
+  "results": {
+    "title": "Practice Complete",
+    "excellent": "Excellent work!",
+    "goodJob": "Good job!",
+    "keepPracticing": "Keep practicing!",
+    "correct": "correct",
+    "practiceAgain": "Practice Again",
+    "backToLearn": "Back to Learn"
+  }
+}

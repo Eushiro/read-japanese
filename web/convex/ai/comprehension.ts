@@ -5,6 +5,7 @@ import { YoutubeTranscript } from "youtube-transcript";
 
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
+import { GRADING_MODEL_CHAIN } from "../lib/models";
 import { callWithRetry, type JsonSchema, languageNames, parseJson } from "./core";
 
 // ============================================
@@ -423,6 +424,7 @@ Provide a score (0-100), detailed feedback in English, and a possible answer in 
         systemPrompt,
         maxTokens: 500,
         jsonSchema: gradingSchema,
+        models: GRADING_MODEL_CHAIN,
         parse: (response) => parseJson(response),
         validate: (parsed) => {
           if (typeof parsed.aiScore !== "number") {

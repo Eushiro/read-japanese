@@ -4,17 +4,22 @@ import { v } from "convex/values";
 
 import { internalAction } from "../_generated/server";
 import { convertPcmToMp3 } from "../lib/audioCompression";
-import { BRAND } from "../lib/brand";
-import { compressToWebp } from "../lib/imageCompression";
+import { AUDIO_MODELS } from "../lib/models";
 import { uploadSentenceAudio, uploadWordAudio, uploadWordImage } from "../lib/storage";
 import type { ContentLanguage } from "../schema";
-import { languageNames } from "./core";
+import { generateImage as generateImageNew } from "./models";
+
+// Language name mappings
+const languageNames: Record<string, string> = {
+  japanese: "Japanese",
+  english: "English",
+  french: "French",
+};
 
 // ============================================
 // GEMINI TTS CONFIGURATION (Generative Language API)
 // ============================================
 
-const GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 // Consistent voice for all languages
@@ -62,7 +67,7 @@ export async function generateTTSAudio(
 
   try {
     const response = await fetch(
-      `${GEMINI_API_URL}/models/${GEMINI_TTS_MODEL}:generateContent?key=${apiKey}`,
+      `${GEMINI_API_URL}/models/${AUDIO_MODELS.GEMINI_TTS}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: {
@@ -128,23 +133,18 @@ export async function generateTTSAudio(
 }
 
 // ============================================
-// IMAGE GENERATION (OpenRouter + Gemini)
+// IMAGE GENERATION (via new provider abstraction)
 // ============================================
 
 /**
- * Generate an image for a flashcard using OpenRouter with Gemini
+ * Generate an image for a flashcard
+ * Now uses the unified provider abstraction (routes to Google direct API)
  */
 export async function generateFlashcardImage(
   word: string,
   sentence: string,
   language: string
 ): Promise<{ imageData: Uint8Array; mimeType: string } | null> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    console.error("OPENROUTER_API_KEY not configured");
-    return null;
-  }
-
   const languageName = languageNames[language] || "English";
 
   const prompt = `Generate an illustration that helps a language learner remember this ${languageName} vocabulary word: "${word}"
@@ -157,95 +157,8 @@ The image should:
 - Avoid any text in the image
 - Be colorful but not cluttered`;
 
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": BRAND.url,
-        "X-Title": BRAND.name,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        modalities: ["image", "text"],
-        // Square aspect ratio for flashcards
-        image_generation_config: {
-          aspect_ratio: "1:1",
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Image generation error: ${response.status} - ${errorText}`);
-      return null;
-    }
-
-    const result = await response.json();
-    console.log("Image generation response:", JSON.stringify(result, null, 2));
-
-    // Extract raw image bytes from response
-    let rawImageBytes: Uint8Array | null = null;
-
-    // Check for images array in the response (OpenRouter format)
-    const images = result.choices?.[0]?.message?.images;
-    if (images && images.length > 0) {
-      const imageUrl = images[0]?.image_url?.url;
-      if (imageUrl && imageUrl.startsWith("data:image/")) {
-        const base64Match = imageUrl.match(/data:image\/(\w+);base64,(.+)/);
-        if (base64Match) {
-          const base64Data = base64Match[2];
-          const binaryString = atob(base64Data);
-          rawImageBytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            rawImageBytes[i] = binaryString.charCodeAt(i);
-          }
-        }
-      }
-    }
-
-    // Fallback: Check content for base64 data URL
-    if (!rawImageBytes) {
-      const content = result.choices?.[0]?.message?.content;
-      if (content && typeof content === "string") {
-        const base64Match = content.match(/data:image\/(\w+);base64,([A-Za-z0-9+/=]+)/);
-        if (base64Match) {
-          const base64Data = base64Match[2];
-          const binaryString = atob(base64Data);
-          rawImageBytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            rawImageBytes[i] = binaryString.charCodeAt(i);
-          }
-        }
-      }
-    }
-
-    if (!rawImageBytes) {
-      console.error("No image data found in response");
-      return null;
-    }
-
-    // Compress to WebP for ~70% storage savings
-    const compressedBytes = await compressToWebp(rawImageBytes);
-    console.log(
-      `Image compressed: ${rawImageBytes.length} bytes -> ${compressedBytes.length} bytes (${Math.round((1 - compressedBytes.length / rawImageBytes.length) * 100)}% savings)`
-    );
-
-    return {
-      imageData: compressedBytes,
-      mimeType: "image/webp",
-    };
-  } catch (error) {
-    console.error("Image generation failed:", error);
-    return null;
-  }
+  // Use the unified provider abstraction
+  return generateImageNew({ prompt, aspectRatio: "1:1" });
 }
 
 // ============================================

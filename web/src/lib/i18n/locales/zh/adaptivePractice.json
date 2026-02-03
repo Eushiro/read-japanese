@@ -1,0 +1,47 @@
+{
+  "title": "自适应练习",
+  "signInPrompt": "登录以开始自适应练习会话。",
+  "loading": {
+    "analyzingSkills": "正在分析您的技能档案...",
+    "selectingContent": "正在选择个性化内容...",
+    "generatingQuestions": "正在生成练习题...",
+    "personalizingDifficulty": "正在校准难度级别...",
+    "preparingPractice": "正在准备您的练习会话..."
+  },
+  "contentType": {
+    "dialogue": "对话",
+    "microStory": "微型故事"
+  },
+  "vocabulary": "关键词汇",
+  "startQuestions": "开始练习（{{count}}题）",
+  "questionProgress": "第 {{current}} 题，共 {{total}} 题",
+  "questionType": {
+    "mcq_vocabulary": "词汇",
+    "mcq_grammar": "语法",
+    "mcq_comprehension": "理解",
+    "fill_blank": "填空",
+    "translation": "翻译",
+    "listening_mcq": "听力",
+    "free_input": "自由作答"
+  },
+  "points": "分",
+  "playAudio": "播放音频",
+  "playing": "播放中...",
+  "typeAnswer": "请输入您的答案...",
+  "feedback": {
+    "correct": "正确！",
+    "incorrect": "不太对",
+    "correctAnswer": "正确答案"
+  },
+  "nextQuestion": "下一题",
+  "finishPractice": "查看结果",
+  "results": {
+    "title": "练习完成",
+    "excellent": "太棒了！",
+    "goodJob": "做得好！",
+    "keepPracticing": "继续加油！",
+    "correct": "正确",
+    "practiceAgain": "再次练习",
+    "backToLearn": "返回学习"
+  }
+}

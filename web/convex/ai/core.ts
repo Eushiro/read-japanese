@@ -1,6 +1,12 @@
 "use node";
 
-import { BRAND } from "../lib/brand";
+import { isGoogleModel, type ModelConfig, TEXT_MODEL_CHAIN } from "../lib/models";
+import {
+  cleanJsonResponse as cleanJsonResponseNew,
+  generateAndParse,
+  generateText as generateTextNew,
+  parseJson as parseJsonNew,
+} from "./models";
 
 // ============================================
 // OPENROUTER CONFIGURATION & SHARED UTILITIES
@@ -21,7 +27,7 @@ export interface OpenRouterResponse {
     };
   }>;
   usage?: OpenRouterUsage;
-  model?: string; // Actual model used (may differ from requested)
+  model?: string;
 }
 
 export interface AICallResult {
@@ -31,50 +37,32 @@ export interface AICallResult {
   latencyMs: number;
 }
 
-// Cost per 1M tokens in cents (as of Jan 2025)
-// Source: https://openrouter.ai/docs#models
-const MODEL_COSTS: Record<string, { input: number; output: number }> = {
-  "google/gemini-3-flash-preview": { input: 10, output: 40 }, // $0.10/$0.40 per 1M
-  "google/gemini-2.0-flash": { input: 10, output: 40 },
-  "anthropic/claude-haiku-4.5": { input: 80, output: 400 }, // $0.80/$4.00 per 1M
-  "anthropic/claude-3-haiku": { input: 25, output: 125 },
-};
-
-/**
- * Calculate estimated cost in cents for an AI call
- */
-export function calculateCostCents(
-  model: string,
-  inputTokens: number,
-  outputTokens: number
-): number {
-  const costs = MODEL_COSTS[model] || { input: 100, output: 400 }; // Default fallback
-  const inputCost = (inputTokens / 1_000_000) * costs.input;
-  const outputCost = (outputTokens / 1_000_000) * costs.output;
-  return inputCost + outputCost;
-}
-
-// Model configuration - ordered by preference (primary first, then fallbacks)
-export const MODEL_CHAIN = [
-  "google/gemini-3-flash-preview", // Primary: fast and cheap
-  "anthropic/claude-haiku-4.5", // Fallback: reliable structured output
-];
-
-// For backward compatibility
-export const DEFAULT_MODEL = MODEL_CHAIN[0];
-
 export interface JsonSchema {
   name: string;
   schema: Record<string, unknown>;
 }
 
 /**
- * Call OpenRouter and return content string (legacy interface)
+ * Convert string model names to ModelConfig array
+ */
+function toModelConfigs(models: string[]): ModelConfig[] {
+  return models.map((model) => {
+    // Route Google models to Google direct API
+    if (isGoogleModel(model)) {
+      return { model, provider: "google" as const };
+    }
+    // OpenRouter models
+    return { model, provider: "openrouter" as const };
+  });
+}
+
+/**
+ * Call AI and return content string
  */
 export async function callOpenRouter(
   prompt: string,
   systemPrompt: string,
-  model: string = DEFAULT_MODEL,
+  model?: string,
   maxTokens: number = 500,
   jsonSchema?: JsonSchema
 ): Promise<string> {
@@ -83,66 +71,34 @@ export async function callOpenRouter(
 }
 
 /**
- * Call OpenRouter and return full result including usage data
+ * Call AI and return full result including usage data
  */
 export async function callOpenRouterWithUsage(
   prompt: string,
   systemPrompt: string,
-  model: string = DEFAULT_MODEL,
+  model?: string,
   maxTokens: number = 500,
   jsonSchema?: JsonSchema
 ): Promise<AICallResult> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    throw new Error("OPENROUTER_API_KEY environment variable is not set");
-  }
+  const models = model ? toModelConfigs([model]) : TEXT_MODEL_CHAIN;
 
-  const body: Record<string, unknown> = {
-    model,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: prompt },
-    ],
-    temperature: 0.7,
-    max_tokens: maxTokens,
-  };
-
-  // Enable structured JSON output with schema for Gemini
-  if (jsonSchema) {
-    body.response_format = {
-      type: "json_schema",
-      json_schema: {
-        name: jsonSchema.name,
-        strict: true,
-        schema: jsonSchema.schema,
-      },
-    };
-  }
-
-  const startTime = Date.now();
-  const response = await fetch(OPENROUTER_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      "HTTP-Referer": BRAND.url,
-      "X-Title": BRAND.name,
-    },
-    body: JSON.stringify(body),
+  const result = await generateTextNew({
+    prompt,
+    systemPrompt,
+    maxTokens,
+    jsonSchema,
+    models,
   });
-  const latencyMs = Date.now() - startTime;
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
-  }
-
-  const data = (await response.json()) as OpenRouterResponse;
   return {
-    content: data.choices[0]?.message?.content ?? "",
-    usage: data.usage,
-    model: data.model || model,
-    latencyMs,
+    content: result.content,
+    usage: {
+      prompt_tokens: result.usage.inputTokens,
+      completion_tokens: result.usage.outputTokens,
+      total_tokens: result.usage.totalTokens,
+    },
+    model: result.model,
+    latencyMs: result.latencyMs,
   };
 }
 
@@ -150,22 +106,14 @@ export async function callOpenRouterWithUsage(
  * Clean JSON response - strips markdown code blocks and whitespace
  */
 export function cleanJsonResponse(response: string): string {
-  let cleaned = response.trim();
-  // Remove markdown code blocks
-  if (cleaned.startsWith("```json")) {
-    cleaned = cleaned.replace(/^```json\n?/, "").replace(/\n?```$/, "");
-  } else if (cleaned.startsWith("```")) {
-    cleaned = cleaned.replace(/^```\n?/, "").replace(/\n?```$/, "");
-  }
-  return cleaned.trim();
+  return cleanJsonResponseNew(response);
 }
 
 /**
  * Parse JSON response with automatic cleanup
  */
 export function parseJson<T>(response: string): T {
-  const cleaned = cleanJsonResponse(response);
-  return JSON.parse(cleaned) as T;
+  return parseJsonNew<T>(response);
 }
 
 export interface CallWithRetryOptions<T> {
@@ -177,8 +125,8 @@ export interface CallWithRetryOptions<T> {
   parse: (response: string) => T;
   /** Optional validation - return error message if invalid, null if valid */
   validate?: (parsed: T) => string | null;
-  /** Model chain to try (defaults to MODEL_CHAIN) */
-  models?: string[];
+  /** Model configs to try (defaults to TEXT_MODEL_CHAIN) */
+  models?: ModelConfig[];
 }
 
 export interface CallWithRetryResult<T> {
@@ -188,13 +136,12 @@ export interface CallWithRetryResult<T> {
     inputTokens: number;
     outputTokens: number;
     totalTokens: number;
-    estimatedCostCents: number;
     latencyMs: number;
   };
 }
 
 /**
- * Call OpenRouter with automatic retry through model chain
+ * Call AI with automatic retry through model chain
  * Retries on API errors AND validation failures
  */
 export async function callWithRetry<T>(options: CallWithRetryOptions<T>): Promise<T> {
@@ -203,78 +150,27 @@ export async function callWithRetry<T>(options: CallWithRetryOptions<T>): Promis
 }
 
 /**
- * Call OpenRouter with automatic retry and return usage tracking data
- * Use this when you need to log AI costs
+ * Call AI with automatic retry and return usage tracking data
  */
 export async function callWithRetryTracked<T>(
   options: CallWithRetryOptions<T>
 ): Promise<CallWithRetryResult<T>> {
-  const {
+  const { prompt, systemPrompt, maxTokens = 500, jsonSchema, parse, validate, models } = options;
+
+  const result = await generateAndParse<T>({
     prompt,
     systemPrompt,
-    maxTokens = 500,
+    maxTokens,
     jsonSchema,
+    models: models || TEXT_MODEL_CHAIN,
     parse,
     validate,
-    models = MODEL_CHAIN,
-  } = options;
+  });
 
-  let lastError: Error | null = null;
-
-  for (let i = 0; i < models.length; i++) {
-    const model = models[i];
-    const isRetry = i > 0;
-
-    if (isRetry) {
-      console.log(`Retrying with model: ${model}`);
-    }
-
-    try {
-      const response = await callOpenRouterWithUsage(
-        prompt,
-        systemPrompt,
-        model,
-        maxTokens,
-        jsonSchema
-      );
-      const parsed = parse(response.content);
-
-      // Run validation if provided
-      if (validate) {
-        const validationError = validate(parsed);
-        if (validationError) {
-          console.warn(`Validation failed for model ${model}: ${validationError}`);
-          lastError = new Error(validationError);
-          continue; // Try next model
-        }
-      }
-
-      // Calculate usage data
-      const usage = response.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
-      const estimatedCostCents = calculateCostCents(
-        response.model,
-        usage.prompt_tokens,
-        usage.completion_tokens
-      );
-
-      return {
-        result: parsed,
-        usage: {
-          model: response.model,
-          inputTokens: usage.prompt_tokens,
-          outputTokens: usage.completion_tokens,
-          totalTokens: usage.total_tokens,
-          estimatedCostCents,
-          latencyMs: response.latencyMs,
-        },
-      };
-    } catch (error) {
-      console.error(`Model ${model} failed:`, error);
-      lastError = error as Error;
-    }
-  }
-
-  throw lastError || new Error(`Failed after trying ${models.length} models`);
+  return {
+    result: result.result,
+    usage: result.usage,
+  };
 }
 
 // ============================================
@@ -287,7 +183,6 @@ export const languageNames: Record<string, string> = {
   french: "French",
 };
 
-// UI language names for feedback
 export const uiLanguageNames: Record<string, string> = {
   en: "English",
   ja: "日本語",
@@ -308,6 +203,6 @@ export interface SentenceTranslations {
 
 export interface GeneratedSentence {
   sentence: string;
-  translation: string; // Kept for backwards compatibility (English)
-  translations: SentenceTranslations; // All UI language translations
+  translation: string;
+  translations: SentenceTranslations;
 }

@@ -1,17 +1,16 @@
+import { useNavigate } from "@tanstack/react-router";
 import { useAction, useMutation } from "convex/react";
 import {
-  BookmarkCheck,
   BookOpen,
-  Brain,
   Briefcase,
   Check,
   ChevronRight,
   Compass,
   Globe,
   GraduationCap,
-  PenLine,
   Plane,
   Sparkles,
+  Target,
   Tv,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -30,9 +29,7 @@ import {
 import { useT } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
-
-// Learning goal type matching the schema
-type LearningGoal = "exam" | "travel" | "professional" | "media" | "casual";
+import type { LearningGoal } from "../../convex/schema";
 
 // Interest options
 const INTEREST_OPTIONS = [
@@ -63,7 +60,7 @@ interface OnboardingModalProps {
   userId: string;
   userEmail?: string | null;
   userName?: string | null;
-  onComplete: () => void;
+  onComplete: (learningGoal: LearningGoal) => void;
 }
 
 export function OnboardingModal({ userId, userEmail, userName, onComplete }: OnboardingModalProps) {
@@ -75,6 +72,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
   const [isSubmitting, setIsSubmitting] = useState(false);
   const startTime = useRef(Date.now());
   const t = useT();
+  const navigate = useNavigate();
 
   const upsertUser = useMutation(api.users.upsert);
   const ensureStripeCustomer = useAction(api.stripe.ensureStripeCustomer);
@@ -83,11 +81,12 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
 
   // Calculate total steps based on goal selection
   // If exam goal, show exam selection. Otherwise skip it.
+  // All paths end with placement intro step.
   const getTotalSteps = () => {
     if (selectedGoal === "exam") {
-      return 6; // Welcome, HowItWorks, Language, Goal, Interests, Exam
+      return 7; // Welcome, HowItWorks, Language, Goal, Interests, Exam, PlacementIntro
     }
-    return 5; // Welcome, HowItWorks, Language, Goal, Interests
+    return 6; // Welcome, HowItWorks, Language, Goal, Interests, PlacementIntro
   };
 
   // Track onboarding started
@@ -166,7 +165,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         duration_seconds: Math.round((Date.now() - startTime.current) / 1000),
       });
 
-      onComplete();
+      onComplete(selectedGoal);
     } catch (error) {
       console.error("Failed to save preferences:", error);
     } finally {
@@ -181,17 +180,31 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
       if (selectedGoal === "exam") {
         setStep(5); // Go to exam selection
       } else {
-        handleComplete(); // Skip exam selection and complete
+        setStep(5); // Go to placement intro (non-exam path)
       }
+    } else if (step === 5 && selectedGoal === "exam") {
+      setStep(6); // After exam selection, go to placement intro
     } else {
       setStep(step + 1);
     }
   };
 
+  // Handle starting placement test
+  const handleStartPlacementTest = async () => {
+    await handleComplete(); // Save user data first
+    navigate({ to: "/placement-test", search: { language: selectedLanguage! } });
+  };
+
+  // Handle skipping placement test
+  const handleSkipPlacementTest = async () => {
+    await handleComplete();
+    // onComplete callback will navigate to dashboard
+  };
+
   return (
     <Dialog open={true} onOpenChange={() => {}}>
       <DialogContent
-        className="bg-surface max-w-lg p-0 rounded-2xl border-border overflow-hidden"
+        className="bg-surface max-w-lg p-0 rounded-2xl border-0 overflow-hidden outline-none"
         showCloseButton={false}
       >
         {/* Progress indicator */}
@@ -254,49 +267,49 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                 <div className="grid grid-cols-2 gap-3 mb-8">
                   <div className="bg-gradient-to-br from-blue-500/15 to-blue-500/5 rounded-xl border border-blue-500/20 p-4 text-center">
                     <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
-                      <BookOpen className="w-5 h-5 text-blue-400" />
+                      <Compass className="w-5 h-5 text-blue-400" />
                     </div>
                     <div className="text-sm font-semibold text-foreground">
-                      {t("onboarding.howItWorks.steps.read.title")}
+                      {t("onboarding.howItWorks.steps.discover.title")}
                     </div>
                     <div className="text-xs text-foreground/80">
-                      {t("onboarding.howItWorks.steps.read.description")}
+                      {t("onboarding.howItWorks.steps.discover.description")}
                     </div>
                   </div>
 
                   <div className="bg-gradient-to-br from-amber-500/15 to-amber-500/5 rounded-xl border border-amber-500/20 p-4 text-center">
                     <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center mx-auto mb-2">
-                      <BookmarkCheck className="w-5 h-5 text-amber-400" />
+                      <BookOpen className="w-5 h-5 text-amber-400" />
                     </div>
                     <div className="text-sm font-semibold text-foreground">
-                      {t("onboarding.howItWorks.steps.save.title")}
+                      {t("onboarding.howItWorks.steps.learn.title")}
                     </div>
                     <div className="text-xs text-foreground/80">
-                      {t("onboarding.howItWorks.steps.save.description")}
+                      {t("onboarding.howItWorks.steps.learn.description")}
                     </div>
                   </div>
 
                   <div className="bg-gradient-to-br from-purple-500/15 to-purple-500/5 rounded-xl border border-purple-500/20 p-4 text-center">
                     <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
-                      <Brain className="w-5 h-5 text-purple-400" />
-                    </div>
-                    <div className="text-sm font-semibold text-foreground">
-                      {t("onboarding.howItWorks.steps.review.title")}
-                    </div>
-                    <div className="text-xs text-foreground/80">
-                      {t("onboarding.howItWorks.steps.review.description")}
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-green-500/15 to-green-500/5 rounded-xl border border-green-500/20 p-4 text-center">
-                    <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mx-auto mb-2">
-                      <PenLine className="w-5 h-5 text-green-400" />
+                      <Sparkles className="w-5 h-5 text-purple-400" />
                     </div>
                     <div className="text-sm font-semibold text-foreground">
                       {t("onboarding.howItWorks.steps.practice.title")}
                     </div>
                     <div className="text-xs text-foreground/80">
                       {t("onboarding.howItWorks.steps.practice.description")}
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-green-500/15 to-green-500/5 rounded-xl border border-green-500/20 p-4 text-center">
+                    <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mx-auto mb-2">
+                      <Target className="w-5 h-5 text-green-400" />
+                    </div>
+                    <div className="text-sm font-semibold text-foreground">
+                      {t("onboarding.howItWorks.steps.master.title")}
+                    </div>
+                    <div className="text-xs text-foreground/80">
+                      {t("onboarding.howItWorks.steps.master.description")}
                     </div>
                   </div>
                 </div>
@@ -503,20 +516,11 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                   </Button>
                   <Button
                     onClick={handleNextStep}
-                    disabled={selectedInterests.length < 3 || isSubmitting}
+                    disabled={selectedInterests.length < 3}
                     className="flex-1 gap-2"
                   >
-                    {isSubmitting
-                      ? t("onboarding.actions.saving")
-                      : selectedGoal === "exam"
-                        ? t("onboarding.actions.continue")
-                        : t("onboarding.actions.startLearning")}
-                    {!isSubmitting &&
-                      (selectedGoal === "exam" ? (
-                        <ChevronRight className="w-4 h-4" />
-                      ) : (
-                        <Sparkles className="w-4 h-4" />
-                      ))}
+                    {t("onboarding.actions.continue")}
+                    <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -588,23 +592,92 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                   <Button variant="outline" onClick={() => setStep(4)} className="flex-1">
                     {t("onboarding.actions.back")}
                   </Button>
-                  <Button onClick={handleComplete} disabled={isSubmitting} className="flex-1 gap-2">
-                    {isSubmitting
-                      ? t("onboarding.actions.saving")
-                      : t("onboarding.actions.startLearning")}
-                    <Sparkles className="w-4 h-4" />
+                  <Button onClick={handleNextStep} className="flex-1 gap-2">
+                    {t("onboarding.actions.continue")}
+                    <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
 
                 {selectedExams.length === 0 && (
                   <button
-                    onClick={handleComplete}
-                    disabled={isSubmitting}
+                    onClick={handleNextStep}
                     className="w-full mt-3 text-sm text-foreground-muted hover:text-foreground transition-colors"
                   >
                     {t("onboarding.examSelection.skipForNow")}
                   </button>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Placement Test Intro Step (final step for all paths) */}
+          {((step === 5 && selectedGoal !== "exam") || (step === 6 && selectedGoal === "exam")) && (
+            <div className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-teal-500/10" />
+              <div className="absolute top-0 right-1/4 w-32 h-32 bg-green-500/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-1/4 w-24 h-24 bg-teal-500/10 rounded-full blur-3xl" />
+              <div className="relative p-8 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500/20 to-teal-500/20 flex items-center justify-center mx-auto mb-6">
+                  <Target className="w-8 h-8 text-green-400" />
+                </div>
+                <h2
+                  className="text-2xl font-bold text-foreground mb-2"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {t("onboarding.placementIntro.title")}
+                </h2>
+                <p className="text-foreground mb-6">{t("onboarding.placementIntro.subtitle")}</p>
+
+                <div className="space-y-3 mb-6 text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4 text-green-400" />
+                    </div>
+                    <span className="text-foreground">
+                      {t("onboarding.placementIntro.benefit1")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4 text-green-400" />
+                    </div>
+                    <span className="text-foreground">
+                      {t("onboarding.placementIntro.benefit2")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4 text-green-400" />
+                    </div>
+                    <span className="text-foreground">
+                      {t("onboarding.placementIntro.benefit3")}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-sm text-foreground-muted mb-6">
+                  {t("onboarding.placementIntro.duration")}
+                </p>
+
+                <Button
+                  onClick={handleStartPlacementTest}
+                  disabled={isSubmitting}
+                  className="w-full gap-2 mb-3"
+                  size="lg"
+                >
+                  {isSubmitting
+                    ? t("onboarding.actions.saving")
+                    : t("onboarding.placementIntro.startTest")}
+                  {!isSubmitting && <ChevronRight className="w-4 h-4" />}
+                </Button>
+
+                <button
+                  onClick={handleSkipPlacementTest}
+                  disabled={isSubmitting}
+                  className="w-full text-sm text-foreground-muted hover:text-foreground transition-colors"
+                >
+                  {t("onboarding.placementIntro.skipForNow")}
+                </button>
               </div>
             </div>
           )}

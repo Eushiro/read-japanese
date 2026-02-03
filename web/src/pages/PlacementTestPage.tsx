@@ -1,13 +1,14 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { motion } from "framer-motion";
-import { ArrowLeft, ChevronRight, Loader2, RotateCcw, Target, Trophy } from "lucide-react";
+import { ArrowLeft, ChevronRight, RotateCcw, Target, Trophy } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { QuestionDisplay, QuestionNavigation } from "@/components/quiz";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PremiumBackground } from "@/components/ui/premium-background";
+import { SkeletonLoadingCard } from "@/components/ui/skeleton-loading-card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
@@ -403,8 +404,11 @@ export function PlacementTestPage() {
   // Loading states
   if (authLoading || existingTest === undefined) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      <div className="min-h-screen bg-background">
+        <PremiumBackground colorScheme="purple" intensity="minimal" />
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <SkeletonLoadingCard loadingPhrase={t("common.status.loading")} />
+        </div>
       </div>
     );
   }
@@ -434,7 +438,8 @@ export function PlacementTestPage() {
   if (isTestComplete && currentTest) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <PremiumBackground colorScheme="purple" intensity="minimal" />
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -452,7 +457,7 @@ export function PlacementTestPage() {
           </div>
 
           {/* Results Card */}
-          <div className="bg-surface rounded-2xl border border-border p-8 text-center">
+          <div className="bg-surface rounded-xl border border-border p-8 text-center">
             <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6">
               <Trophy className="w-10 h-10 text-accent" />
             </div>
@@ -518,8 +523,11 @@ export function PlacementTestPage() {
   // Auto-starting view - show loading while test initializes
   if (!testId || (currentTest && currentTest.questions.length === 0 && !isGeneratingQuestion)) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      <div className="min-h-screen bg-background">
+        <PremiumBackground colorScheme="purple" intensity="minimal" />
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <SkeletonLoadingCard loadingPhrase={t("common.status.loading")} />
+        </div>
       </div>
     );
   }
@@ -528,9 +536,9 @@ export function PlacementTestPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Animated background */}
-      <PremiumBackground colorScheme="purple" />
+      <PremiumBackground colorScheme="purple" intensity="minimal" />
 
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -571,7 +579,7 @@ export function PlacementTestPage() {
             </div>
             <div className="h-2 bg-white/5 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-accent rounded-full"
+                className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full shadow-[0_0_10px_rgba(255,132,0,0.5)]"
                 initial={{ width: 0 }}
                 animate={{ width: `${maxConfidence}%` }}
                 transition={{ duration: 0.5 }}
@@ -593,51 +601,7 @@ export function PlacementTestPage() {
 
         {/* Question Card */}
         {isGeneratingQuestion ? (
-          <div className="relative rounded-2xl overflow-hidden">
-            {/* Glass background */}
-            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
-            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
-
-            <div className="relative p-6 sm:p-8">
-              {/* Skeleton structure matching multiple choice layout */}
-              <div>
-                {/* Skeleton for type badge */}
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="h-6 w-28 rounded-full bg-white/10 animate-pulse" />
-                </div>
-                {/* Skeleton for question text */}
-                <div className="mb-6 space-y-2">
-                  <div className="h-5 w-full rounded-md bg-white/10 animate-pulse" />
-                  <div className="h-5 w-4/5 rounded-md bg-white/10 animate-pulse" />
-                </div>
-                {/* Skeleton for 4 options */}
-                <div className="space-y-3">
-                  <div className="h-14 w-full rounded-xl bg-white/10 animate-pulse" />
-                  <div className="h-14 w-full rounded-xl bg-white/10 animate-pulse" />
-                  <div className="h-14 w-full rounded-xl bg-white/10 animate-pulse" />
-                  <div className="h-14 w-full rounded-xl bg-white/10 animate-pulse" />
-                </div>
-              </div>
-
-              {/* Centered overlay with shimmering text */}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/70 rounded-2xl">
-                <p
-                  key={loadingPhrase}
-                  className="text-2xl sm:text-3xl font-bold text-center px-4 relative z-10"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, var(--foreground) 0%, #a855f7 25%, #06b6d4 50%, #ec4899 75%, var(--foreground) 100%)",
-                    backgroundSize: "200% 100%",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    animation: "shimmer 2s ease-in-out infinite",
-                  }}
-                >
-                  {loadingPhrase}
-                </p>
-              </div>
-            </div>
-          </div>
+          <SkeletonLoadingCard loadingPhrase={loadingPhrase} />
         ) : viewingQuestion ? (
           <>
             <QuestionDisplay
@@ -685,20 +649,7 @@ export function PlacementTestPage() {
             />
           </>
         ) : (
-          <div className="relative rounded-2xl overflow-hidden">
-            {/* Glass background */}
-            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
-            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
-
-            <div className="relative p-6 sm:p-8">
-              <div className="flex flex-col items-center justify-center py-8 gap-3">
-                <Loader2 className="w-6 h-6 animate-spin text-accent" />
-                <span className="text-muted-foreground">
-                  {t("placement.question.loadingQuestion")}
-                </span>
-              </div>
-            </div>
-          </div>
+          <SkeletonLoadingCard loadingPhrase={t("placement.question.loadingQuestion")} />
         )}
       </div>
     </div>

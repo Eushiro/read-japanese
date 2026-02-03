@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { internalMutation, internalQuery } from "./_generated/server";
 import { isAdminEmail } from "./lib/admin";
+import { AUDIO_MODELS, IMAGE_MODELS, TEXT_MODELS } from "./lib/models";
 import { CREDIT_COSTS, type CreditAction, TIER_CREDITS } from "./subscriptions";
 
 // ============================================
@@ -77,7 +78,7 @@ export const upsertFlashcard = internalMutation({
       translations: {
         en: args.sentenceTranslation,
       },
-      model: "gemini-3-flash",
+      model: TEXT_MODELS.GEMINI_3_FLASH,
       createdAt: now,
     });
 
@@ -177,7 +178,7 @@ export const updateFlashcardImage = internalMutation({
         word: vocab.word,
         language: vocab.language,
         imageUrl: args.imageUrl,
-        model: "gemini-2.5-flash-image",
+        model: IMAGE_MODELS.GEMINI_IMAGE,
         createdAt: now,
       });
     }
@@ -224,7 +225,7 @@ export const updateFlashcardWordAudio = internalMutation({
         word: vocab.word,
         language: vocab.language,
         audioUrl: args.wordAudioUrl,
-        model: "gemini-2.5-flash-preview-tts",
+        model: AUDIO_MODELS.GEMINI_TTS,
         createdAt: now,
       });
     }
@@ -419,7 +420,7 @@ export const updatePremadeVocabularyContent = internalMutation({
           en: args.sentenceTranslation,
         },
         audioUrl: args.audioUrl,
-        model: "gemini-3-flash",
+        model: TEXT_MODELS.GEMINI_3_FLASH,
         createdAt: now,
       });
       updates.sentenceId = sentenceId;
@@ -442,7 +443,7 @@ export const updatePremadeVocabularyContent = internalMutation({
           word: premade.word,
           language: premade.language,
           audioUrl: args.wordAudioUrl,
-          model: "gemini-2.5-flash-preview-tts",
+          model: AUDIO_MODELS.GEMINI_TTS,
           createdAt: now,
         });
       }
@@ -462,7 +463,7 @@ export const updatePremadeVocabularyContent = internalMutation({
           word: premade.word,
           language: premade.language,
           imageUrl: args.imageUrl,
-          model: "gemini-2.5-flash-image",
+          model: IMAGE_MODELS.GEMINI_IMAGE,
           createdAt: now,
         });
         updates.imageId = imageId;
