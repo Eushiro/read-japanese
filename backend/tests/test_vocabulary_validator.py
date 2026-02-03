@@ -1,12 +1,9 @@
 """Tests for the JLPT vocabulary validator - Learning Value Score Algorithm"""
+
 import pytest
+
 from app.services.generation.vocabulary_validator import (
-    VocabularyValidator,
     get_validator,
-    MIN_TARGET_WORDS,
-    MAX_ABOVE_WORDS,
-    UNKNOWN_WORDS_BASE,
-    UNKNOWN_WORDS_SCALE,
 )
 
 
@@ -69,8 +66,24 @@ class TestLearningValueCheck:
         # Create 500 tokens with enough N3 words
         # Threshold for N3 at 500 tokens: 5 + (500 // 60) = 13
         # Use actual N3 words from word list
-        n3_words = ["環境", "影響", "議論", "共通", "権利", "結果", "現在", "現実", "交換",
-                    "効果", "構成", "行動", "不安", "不満", "世間", "世紀"]  # 16 N3 words
+        n3_words = [
+            "環境",
+            "影響",
+            "議論",
+            "共通",
+            "権利",
+            "結果",
+            "現在",
+            "現実",
+            "交換",
+            "効果",
+            "構成",
+            "行動",
+            "不安",
+            "不満",
+            "世間",
+            "世紀",
+        ]  # 16 N3 words
         n5_words = ["私", "学校", "先生", "本", "車"] * 20  # 100 N5 words
         # Pad with particles to reach 500 tokens
         padding = ["は", "が", "を", "に", "で"] * 76  # 380 tokens (ignored)
@@ -79,7 +92,9 @@ class TestLearningValueCheck:
         tokens = make_tokens(all_words)
 
         result = validator.validate_tokens(tokens, "N3")
-        assert result.has_learning_value, f"Should have learning value: {result.target_level_count}/{result.min_target_threshold}"
+        assert result.has_learning_value, (
+            f"Should have learning value: {result.target_level_count}/{result.min_target_threshold}"
+        )
 
     def test_not_enough_target_level_words_fails(self, validator):
         """Story with too few target-level words should fail learning value check"""
@@ -93,7 +108,9 @@ class TestLearningValueCheck:
         tokens = make_tokens(all_words)
 
         result = validator.validate_tokens(tokens, "N3")
-        assert not result.has_learning_value, f"Should NOT have learning value: {result.target_level_count}/{result.min_target_threshold}"
+        assert not result.has_learning_value, (
+            f"Should NOT have learning value: {result.target_level_count}/{result.min_target_threshold}"
+        )
 
 
 class TestTooHardCheck:
@@ -112,7 +129,9 @@ class TestTooHardCheck:
         tokens = make_tokens(all_words)
 
         result = validator.validate_tokens(tokens, "N3")
-        assert result.not_too_hard, f"Should NOT be too hard: {result.above_level_count}/{result.max_above_threshold}"
+        assert result.not_too_hard, (
+            f"Should NOT be too hard: {result.above_level_count}/{result.max_above_threshold}"
+        )
 
     def test_many_above_level_words_fails(self, validator):
         """Story with many above-level words should fail too-hard check"""
@@ -121,15 +140,38 @@ class TestTooHardCheck:
         n5_words = ["私", "学校", "先生"] * 20  # 60 N5 words
         n3_words = ["環境", "影響", "議論"] * 10  # 30 N3 words (target)
         # Need 21+ N1/N2 words to exceed threshold of 20
-        n1_words = ["曖昧", "一切", "一同", "一変", "一律", "一括", "一気", "一連", "上位", "上司",
-                    "一息", "一敗", "一様", "一目", "一筋", "一見", "一面", "丁目", "万人", "万能", "上昇"]  # 21 N1 words
+        n1_words = [
+            "曖昧",
+            "一切",
+            "一同",
+            "一変",
+            "一律",
+            "一括",
+            "一気",
+            "一連",
+            "上位",
+            "上司",
+            "一息",
+            "一敗",
+            "一様",
+            "一目",
+            "一筋",
+            "一見",
+            "一面",
+            "丁目",
+            "万人",
+            "万能",
+            "上昇",
+        ]  # 21 N1 words
         padding = ["は", "が", "を", "に", "で"] * 77  # 385 tokens (ignored)
 
         all_words = n5_words + n3_words + n1_words + padding
         tokens = make_tokens(all_words)
 
         result = validator.validate_tokens(tokens, "N3")
-        assert not result.not_too_hard, f"Should be too hard: {result.above_level_count}/{result.max_above_threshold}"
+        assert not result.not_too_hard, (
+            f"Should be too hard: {result.above_level_count}/{result.max_above_threshold}"
+        )
 
 
 class TestTooObscureCheck:
@@ -146,22 +188,41 @@ class TestTooObscureCheck:
         tokens = make_tokens(all_words)
 
         result = validator.validate_tokens(tokens, "N5")
-        assert result.not_too_obscure, f"Should NOT be too obscure: {result.unknown_count}/{result.max_unknown_threshold}"
+        assert result.not_too_obscure, (
+            f"Should NOT be too obscure: {result.unknown_count}/{result.max_unknown_threshold}"
+        )
 
     def test_many_unknown_words_fails(self, validator):
         """Story with many unknown words should fail too-obscure check"""
         # Threshold at 500 tokens: 8 + (500 // 100) = 13
         n5_words = ["私", "学校", "先生"] * 30  # 90 N5 words
         # Need 14+ unknown words to exceed threshold
-        unknown_words = ["xyz1", "xyz2", "xyz3", "xyz4", "xyz5", "xyz6", "xyz7", "xyz8",
-                         "xyz9", "xyz10", "xyz11", "xyz12", "xyz13", "xyz14", "xyz15"]  # 15 unknown
+        unknown_words = [
+            "xyz1",
+            "xyz2",
+            "xyz3",
+            "xyz4",
+            "xyz5",
+            "xyz6",
+            "xyz7",
+            "xyz8",
+            "xyz9",
+            "xyz10",
+            "xyz11",
+            "xyz12",
+            "xyz13",
+            "xyz14",
+            "xyz15",
+        ]  # 15 unknown
         padding = ["は", "が", "を", "に", "で"] * 79  # 395 tokens (ignored)
 
         all_words = n5_words + unknown_words + padding
         tokens = make_tokens(all_words)
 
         result = validator.validate_tokens(tokens, "N5")
-        assert not result.not_too_obscure, f"Should be too obscure: {result.unknown_count}/{result.max_unknown_threshold}"
+        assert not result.not_too_obscure, (
+            f"Should be too obscure: {result.unknown_count}/{result.max_unknown_threshold}"
+        )
 
 
 class TestThresholdScaling:
@@ -282,6 +343,7 @@ class TestEdgeCases:
 
     def test_handles_token_objects(self, validator):
         """Should handle Token objects (not just dicts)"""
+
         class MockToken:
             def __init__(self, surface, base_form):
                 self.surface = surface
@@ -304,25 +366,25 @@ class TestValidationResult:
         result = validator.validate_tokens(tokens, "N5")
 
         # New fields
-        assert hasattr(result, 'total_tokens')
-        assert hasattr(result, 'unique_words')
-        assert hasattr(result, 'words_by_level')
-        assert hasattr(result, 'target_level_count')
-        assert hasattr(result, 'above_level_count')
-        assert hasattr(result, 'unknown_count')
-        assert hasattr(result, 'min_target_threshold')
-        assert hasattr(result, 'max_above_threshold')
-        assert hasattr(result, 'max_unknown_threshold')
-        assert hasattr(result, 'has_learning_value')
-        assert hasattr(result, 'not_too_hard')
-        assert hasattr(result, 'not_too_obscure')
-        assert hasattr(result, 'passed')
-        assert hasattr(result, 'readability_score')
-        assert hasattr(result, 'target_level')
-        assert hasattr(result, 'message')
-        assert hasattr(result, 'target_level_words')
-        assert hasattr(result, 'above_level_words')
-        assert hasattr(result, 'unknown_words')
+        assert hasattr(result, "total_tokens")
+        assert hasattr(result, "unique_words")
+        assert hasattr(result, "words_by_level")
+        assert hasattr(result, "target_level_count")
+        assert hasattr(result, "above_level_count")
+        assert hasattr(result, "unknown_count")
+        assert hasattr(result, "min_target_threshold")
+        assert hasattr(result, "max_above_threshold")
+        assert hasattr(result, "max_unknown_threshold")
+        assert hasattr(result, "has_learning_value")
+        assert hasattr(result, "not_too_hard")
+        assert hasattr(result, "not_too_obscure")
+        assert hasattr(result, "passed")
+        assert hasattr(result, "readability_score")
+        assert hasattr(result, "target_level")
+        assert hasattr(result, "message")
+        assert hasattr(result, "target_level_words")
+        assert hasattr(result, "above_level_words")
+        assert hasattr(result, "unknown_words")
 
     def test_to_dict_conversion(self, validator):
         """to_dict should convert result to JSON-serializable dict"""
@@ -346,9 +408,31 @@ class TestRealWorldScenarios:
         # From plan: 500 tokens, need 13+ N3 words, max 6 above, max 5 unknown
         n5_words = ["私", "学校", "先生", "本", "車", "家", "人", "男", "女", "子"] * 4  # 40 N5
         # Use actual N3 words from the word list
-        n3_words = ["環境", "影響", "議論", "共通", "権利", "結果", "現在", "現実", "交換",
-                    "効果", "構成", "行動", "不安", "不満", "世間", "世紀", "上京", "上達",
-                    "不幸", "一致", "一般", "一瞬", "一種"]  # 23 N3 words
+        n3_words = [
+            "環境",
+            "影響",
+            "議論",
+            "共通",
+            "権利",
+            "結果",
+            "現在",
+            "現実",
+            "交換",
+            "効果",
+            "構成",
+            "行動",
+            "不安",
+            "不満",
+            "世間",
+            "世紀",
+            "上京",
+            "上達",
+            "不幸",
+            "一致",
+            "一般",
+            "一瞬",
+            "一種",
+        ]  # 23 N3 words
         n2_words = ["銅", "統一", "投資"]  # 3 N2 (above level)
         padding = ["は", "が", "を", "に", "で"] * 86  # 430 tokens (ignored)
 
@@ -358,16 +442,42 @@ class TestRealWorldScenarios:
         result = validator.validate_tokens(tokens, "N3")
 
         # Should pass all checks
-        assert result.has_learning_value, f"Need learning value: {result.target_level_count}/{result.min_target_threshold}"
-        assert result.not_too_hard, f"Should not be too hard: {result.above_level_count}/{result.max_above_threshold}"
-        assert result.not_too_obscure, f"Should not be too obscure: {result.unknown_count}/{result.max_unknown_threshold}"
+        assert result.has_learning_value, (
+            f"Need learning value: {result.target_level_count}/{result.min_target_threshold}"
+        )
+        assert result.not_too_hard, (
+            f"Should not be too hard: {result.above_level_count}/{result.max_above_threshold}"
+        )
+        assert result.not_too_obscure, (
+            f"Should not be too obscure: {result.unknown_count}/{result.max_unknown_threshold}"
+        )
         assert result.passed, f"Should pass overall: {result.message}"
 
     def test_too_easy_n3_story_fails(self, validator):
         """N3 story with only N5 vocabulary should fail"""
         # All N5 words - no N3 learning value
-        n5_words = ["私", "学校", "先生", "本", "車", "家", "人", "男", "女", "子",
-                    "友達", "子供", "父", "母", "兄", "姉", "弟", "妹", "犬", "猫"]
+        n5_words = [
+            "私",
+            "学校",
+            "先生",
+            "本",
+            "車",
+            "家",
+            "人",
+            "男",
+            "女",
+            "子",
+            "友達",
+            "子供",
+            "父",
+            "母",
+            "兄",
+            "姉",
+            "弟",
+            "妹",
+            "犬",
+            "猫",
+        ]
         tokens = make_tokens(n5_words * 25)  # 500 tokens
 
         result = validator.validate_tokens(tokens, "N3")
@@ -383,7 +493,19 @@ class TestRealWorldScenarios:
         # Threshold for N5 at 500 tokens: 5 + (500 // 100) = 10
         n5_words = ["私", "学校", "先生", "本", "車"] * 20  # 100 N5 words
         # Need 11+ N4+ words to exceed threshold (use actual N4 words)
-        above_words = ["経験", "規則", "原因", "国際", "字", "届ける", "準備", "予定", "連絡", "説明", "普通"]  # 11 N4 words
+        above_words = [
+            "経験",
+            "規則",
+            "原因",
+            "国際",
+            "字",
+            "届ける",
+            "準備",
+            "予定",
+            "連絡",
+            "説明",
+            "普通",
+        ]  # 11 N4 words
         padding = ["は", "が", "を", "に", "で"] * 77  # 385 tokens (ignored)
 
         all_words = n5_words + above_words + padding
@@ -399,14 +521,16 @@ class TestRealWorldScenarios:
     def test_words_by_level_tracked_correctly(self, validator):
         """Words should be correctly categorized by level"""
         # Use words that are actually at the expected levels
-        tokens = make_tokens([
-            "私",      # N5
-            "経験",    # N4 (not N3 as I thought!)
-            "環境",    # N3
-            "銅",      # N2
-            "曖昧",    # N1
-            "xyzabc",  # Unknown
-        ])
+        tokens = make_tokens(
+            [
+                "私",  # N5
+                "経験",  # N4 (not N3 as I thought!)
+                "環境",  # N3
+                "銅",  # N2
+                "曖昧",  # N1
+                "xyzabc",  # Unknown
+            ]
+        )
 
         result = validator.validate_tokens(tokens, "N3")
 
@@ -420,5 +544,5 @@ class TestRealWorldScenarios:
 
         # Check categorization for N3 target
         assert result.target_level_count == 1  # N3 words (環境)
-        assert result.above_level_count == 2   # N2 + N1 words
-        assert result.unknown_count == 1       # xyzabc
+        assert result.above_level_count == 2  # N2 + N1 words
+        assert result.unknown_count == 1  # xyzabc

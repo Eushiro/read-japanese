@@ -12,13 +12,14 @@ Requirements:
     - Current tokenizer configured in app/services/tokenizer.py
     - Optional: Install additional tokenizers to compare against
 """
-import sys
+
 import json
-from typing import Dict, List, Any
+import sys
 from dataclasses import dataclass
+from typing import Any
 
 # Add parent directory to path for imports
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
 
 from app.services.tokenizer import get_tokenizer_service
 
@@ -26,6 +27,7 @@ from app.services.tokenizer import get_tokenizer_service
 @dataclass
 class BenchmarkCase:
     """A single benchmark test case."""
+
     word: str
     expected_reading: str = None
     expected_single_token: bool = True
@@ -46,7 +48,6 @@ BENCHMARK_CASES = [
     BenchmarkCase("子供", "こども", category="common_readings"),
     BenchmarkCase("上手", "じょうず", category="common_readings"),
     BenchmarkCase("下手", "へた", category="common_readings"),
-
     # Yojijukugo (four-character idioms - should be single token)
     BenchmarkCase("一期一会", "いちごいちえ", category="yojijukugo"),
     BenchmarkCase("四面楚歌", "しめんそか", category="yojijukugo"),
@@ -56,21 +57,18 @@ BENCHMARK_CASES = [
     BenchmarkCase("万物流転", "ばんぶつるてん", category="yojijukugo"),
     BenchmarkCase("七転八倒", "しちてんばっとう", category="yojijukugo"),
     BenchmarkCase("弱肉強食", "じゃくにくきょうしょく", category="yojijukugo"),
-
     # Katakana compounds (should be single token)
     BenchmarkCase("スマートフォン", category="katakana"),
     BenchmarkCase("インターネット", category="katakana"),
     BenchmarkCase("コンピューター", category="katakana"),
     BenchmarkCase("アイスクリーム", category="katakana"),
     BenchmarkCase("クレジットカード", category="katakana"),
-
     # Common kanji compounds (should be single token)
     BenchmarkCase("店員", "てんいん", category="compounds"),
     BenchmarkCase("学校", "がっこう", category="compounds"),
     BenchmarkCase("図書館", "としょかん", category="compounds"),
     BenchmarkCase("新幹線", "しんかんせん", category="compounds"),
     BenchmarkCase("電車", "でんしゃ", category="compounds"),
-
     # N5 vocabulary
     BenchmarkCase("水", "みず", category="n5"),
     BenchmarkCase("山", "やま", category="n5"),
@@ -82,7 +80,7 @@ BENCHMARK_CASES = [
 ]
 
 
-def run_benchmark(verbose: bool = False) -> Dict[str, Any]:
+def run_benchmark(verbose: bool = False) -> dict[str, Any]:
     """Run the benchmark suite and return results."""
     tokenizer = get_tokenizer_service()
 
@@ -110,10 +108,7 @@ def run_benchmark(verbose: bool = False) -> Dict[str, Any]:
         if tokens and tokens[0].parts:
             reading = tokens[0].parts[0].reading
 
-        reading_correct = (
-            case.expected_reading is None or
-            reading == case.expected_reading
-        )
+        reading_correct = case.expected_reading is None or reading == case.expected_reading
 
         passed = is_single_token and reading_correct
 
@@ -147,9 +142,7 @@ def run_benchmark(verbose: bool = False) -> Dict[str, Any]:
 
     # Calculate percentages
     total = results["summary"]["total"]
-    results["summary"]["pass_rate"] = (
-        results["summary"]["passed"] / total * 100 if total > 0 else 0
-    )
+    results["summary"]["pass_rate"] = results["summary"]["passed"] / total * 100 if total > 0 else 0
 
     for cat in categories.values():
         cat["pass_rate"] = cat["passed"] / cat["total"] * 100 if cat["total"] > 0 else 0
@@ -157,7 +150,7 @@ def run_benchmark(verbose: bool = False) -> Dict[str, Any]:
     return results
 
 
-def print_results(results: Dict[str, Any], verbose: bool = False):
+def print_results(results: dict[str, Any], verbose: bool = False):
     """Print benchmark results in a readable format."""
     print("\n" + "=" * 60)
     print("TOKENIZER BENCHMARK RESULTS")
@@ -169,7 +162,9 @@ def print_results(results: Dict[str, Any], verbose: bool = False):
     print("\nBy Category:")
     for cat_name, cat_data in results["by_category"].items():
         status = "✓" if cat_data["pass_rate"] == 100 else "✗"
-        print(f"  {status} {cat_name}: {cat_data['passed']}/{cat_data['total']} ({cat_data['pass_rate']:.1f}%)")
+        print(
+            f"  {status} {cat_name}: {cat_data['passed']}/{cat_data['total']} ({cat_data['pass_rate']:.1f}%)"
+        )
 
     if verbose:
         print("\n" + "-" * 60)
@@ -184,8 +179,13 @@ def print_results(results: Dict[str, Any], verbose: bool = False):
                 if not case["passed"]:
                     if not case["is_single_token"]:
                         print(f"      Split into: {case['tokens']}")
-                    if case["expected_reading"] and case["actual_reading"] != case["expected_reading"]:
-                        print(f"      Reading: expected={case['expected_reading']}, actual={case['actual_reading']}")
+                    if (
+                        case["expected_reading"]
+                        and case["actual_reading"] != case["expected_reading"]
+                    ):
+                        print(
+                            f"      Reading: expected={case['expected_reading']}, actual={case['actual_reading']}"
+                        )
 
     # Failed cases summary
     failed = [d for d in results["details"] if not d["passed"]]
@@ -198,7 +198,9 @@ def print_results(results: Dict[str, Any], verbose: bool = False):
             if not case["is_single_token"]:
                 print(f"      Split into: {case['tokens']}")
             if case["expected_reading"] and case["actual_reading"] != case["expected_reading"]:
-                print(f"      Reading: expected={case['expected_reading']}, actual={case['actual_reading']}")
+                print(
+                    f"      Reading: expected={case['expected_reading']}, actual={case['actual_reading']}"
+                )
 
     print("\n" + "=" * 60)
 

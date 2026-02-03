@@ -1,9 +1,9 @@
 """Japanese tokenization service using fugashi with IPADIC dictionary"""
-from typing import List, Optional
+
 import fugashi
 import ipadic
-from app.models.story import Token, TokenPart
 
+from app.models.story import Token, TokenPart
 
 # Katakana compounds that should be kept together
 # These are common loanwords that may be incorrectly split
@@ -32,7 +32,7 @@ class TokenizerService:
         """Check if tokenization is available"""
         return self.tagger is not None
 
-    def tokenize_text(self, text: str) -> List[Token]:
+    def tokenize_text(self, text: str) -> list[Token]:
         """
         Tokenize Japanese text into tokens with readings and parts of speech.
         """
@@ -45,7 +45,7 @@ class TokenizerService:
             feature = word.feature
 
             # Extract reading (index 7 in IPADIC)
-            reading_katakana = feature[7] if len(feature) > 7 and feature[7] != '*' else None
+            reading_katakana = feature[7] if len(feature) > 7 and feature[7] != "*" else None
 
             if reading_katakana:
                 reading_hiragana = self._katakana_to_hiragana(reading_katakana)
@@ -56,17 +56,12 @@ class TokenizerService:
             pos = self._get_part_of_speech(feature[0] if feature else "")
 
             # Extract base form (index 6)
-            base_form = feature[6] if len(feature) > 6 and feature[6] != '*' else surface
+            base_form = feature[6] if len(feature) > 6 and feature[6] != "*" else surface
 
             # Create token parts with readings for kanji
             parts = self._create_token_parts(surface, reading_hiragana)
 
-            token = Token(
-                surface=surface,
-                parts=parts,
-                baseForm=base_form,
-                partOfSpeech=pos
-            )
+            token = Token(surface=surface, parts=parts, baseForm=base_form, partOfSpeech=pos)
             tokens.append(token)
 
         # Post-process to merge katakana compounds
@@ -74,7 +69,7 @@ class TokenizerService:
 
         return tokens
 
-    def _merge_katakana_compounds(self, tokens: List[Token]) -> List[Token]:
+    def _merge_katakana_compounds(self, tokens: list[Token]) -> list[Token]:
         """Merge consecutive tokens that form known katakana compounds."""
         if len(tokens) < 2:
             return tokens
@@ -94,7 +89,7 @@ class TokenizerService:
                         surface=merged_surface,
                         parts=[TokenPart(text=merged_surface)],
                         baseForm=merged_surface,
-                        partOfSpeech=tokens[i].partOfSpeech
+                        partOfSpeech=tokens[i].partOfSpeech,
                     )
                     result.append(merged_token)
                     i += 2
@@ -132,7 +127,7 @@ class TokenizerService:
 
         return pos_mapping.get(pos, pos.lower() if pos else "unknown")
 
-    def _create_token_parts(self, surface: str, reading: str) -> Optional[List[TokenPart]]:
+    def _create_token_parts(self, surface: str, reading: str) -> list[TokenPart] | None:
         """
         Create token parts with readings for kanji characters.
         """
@@ -158,7 +153,7 @@ class TokenizerService:
         else:
             return [TokenPart(text=surface)]
 
-    def _align_reading_to_kanji(self, surface: str, reading: str) -> List[TokenPart]:
+    def _align_reading_to_kanji(self, surface: str, reading: str) -> list[TokenPart]:
         """
         Align reading to kanji parts only, leaving kana parts without reading.
 
@@ -209,7 +204,9 @@ class TokenizerService:
             if self._is_kanji(char):
                 # Find extent of consecutive kanji
                 kanji_start = surface_idx
-                while surface_idx < len(surface) - len(surface_kana_suffix) and self._is_kanji(surface[surface_idx]):
+                while surface_idx < len(surface) - len(surface_kana_suffix) and self._is_kanji(
+                    surface[surface_idx]
+                ):
                     surface_idx += 1
                 kanji_text = surface[kanji_start:surface_idx]
 
@@ -217,7 +214,9 @@ class TokenizerService:
                 if surface_idx < len(surface) - len(surface_kana_suffix):
                     # There's more content - find the middle kana
                     mid_kana_start = surface_idx
-                    while surface_idx < len(surface) - len(surface_kana_suffix) and not self._is_kanji(surface[surface_idx]):
+                    while surface_idx < len(surface) - len(
+                        surface_kana_suffix
+                    ) and not self._is_kanji(surface[surface_idx]):
                         surface_idx += 1
                     mid_kana = surface[mid_kana_start:surface_idx]
                     mid_kana_hira = self._katakana_to_hiragana(mid_kana)
@@ -263,11 +262,11 @@ class TokenizerService:
                 result.append(chr(code - 0x60))
             else:
                 result.append(char)
-        return ''.join(result)
+        return "".join(result)
 
 
 # Global instance
-_tokenizer_service: Optional[TokenizerService] = None
+_tokenizer_service: TokenizerService | None = None
 
 
 def get_tokenizer_service() -> TokenizerService:

@@ -8,7 +8,6 @@ that can be loaded in the browser for instant autocomplete.
 import json
 import sqlite3
 from pathlib import Path
-import sys
 
 # Output directory
 OUTPUT_DIR = Path(__file__).parent.parent.parent / "web" / "public" / "dictionaries"
@@ -37,7 +36,8 @@ def export_english():
     conn = sqlite3.connect(str(db_path))
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT f.form,
                GROUP_CONCAT(d.definition, '|||'),
                GROUP_CONCAT(e.pos, ','),
@@ -54,9 +54,11 @@ def export_english():
         GROUP BY f.form
         ORDER BY freq DESC, LENGTH(f.form)
         LIMIT ?
-    """, (CACHE_SIZE,))
+    """,
+        (CACHE_SIZE,),
+    )
 
-    pos_map = {'n': 'n', 'v': 'v', 'a': 'adj', 's': 'adj', 'r': 'adv'}
+    pos_map = {"n": "n", "v": "v", "a": "adj", "s": "adj", "r": "adv"}
     words = []
 
     for row in cursor.fetchall():
@@ -65,11 +67,11 @@ def export_english():
             continue
 
         # Take first 2 meanings, truncate to save space
-        meanings = [m[:100] for m in definitions_str.split('|||')[:2] if m]
+        meanings = [m[:100] for m in definitions_str.split("|||")[:2] if m]
         if not meanings:
             continue
 
-        pos_tags = set(pos_str.split(',')) if pos_str else set()
+        pos_tags = set(pos_str.split(",")) if pos_str else set()
         pos = next((pos_map.get(p) for p in pos_tags if p in pos_map), None)
 
         # Compact format: [word, meanings_array, pos_or_null]
@@ -83,8 +85,8 @@ def export_english():
     # Save as compact JSON
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     output_file = OUTPUT_DIR / "en.json"
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(words, f, ensure_ascii=False, separators=(',', ':'))
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(words, f, ensure_ascii=False, separators=(",", ":"))
 
     size_kb = output_file.stat().st_size / 1024
     print(f"Exported {len(words)} English words to {output_file} ({size_kb:.1f} KB)")
@@ -101,7 +103,8 @@ def export_french():
     conn = sqlite3.connect(str(db_path))
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT f.form,
                GROUP_CONCAT(en_d.definition, '|||'),
                GROUP_CONCAT(e.pos, ','),
@@ -123,9 +126,11 @@ def export_french():
         HAVING GROUP_CONCAT(en_d.definition, '|||') IS NOT NULL
         ORDER BY freq DESC, LENGTH(f.form)
         LIMIT ?
-    """, (CACHE_SIZE,))
+    """,
+        (CACHE_SIZE,),
+    )
 
-    pos_map = {'n': 'n', 'v': 'v', 'a': 'adj', 's': 'adj', 'r': 'adv'}
+    pos_map = {"n": "n", "v": "v", "a": "adj", "s": "adj", "r": "adv"}
     words = []
 
     for row in cursor.fetchall():
@@ -133,11 +138,11 @@ def export_french():
         if not definitions_str:
             continue
 
-        meanings = [m[:100] for m in definitions_str.split('|||')[:2] if m]
+        meanings = [m[:100] for m in definitions_str.split("|||")[:2] if m]
         if not meanings:
             continue
 
-        pos_tags = set(pos_str.split(',')) if pos_str else set()
+        pos_tags = set(pos_str.split(",")) if pos_str else set()
         pos = next((pos_map.get(p) for p in pos_tags if p in pos_map), None)
 
         entry = [word, meanings]
@@ -148,8 +153,8 @@ def export_french():
     conn.close()
 
     output_file = OUTPUT_DIR / "fr.json"
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(words, f, ensure_ascii=False, separators=(',', ':'))
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(words, f, ensure_ascii=False, separators=(",", ":"))
 
     size_kb = output_file.stat().st_size / 1024
     print(f"Exported {len(words)} French words to {output_file} ({size_kb:.1f} KB)")
@@ -158,8 +163,9 @@ def export_french():
 def export_japanese():
     """Export Japanese words from jamdict using efficient direct database access."""
     try:
-        from jamdict import Jamdict
         import sqlite3 as jamdict_sqlite
+
+        from jamdict import Jamdict
     except ImportError:
         print("jamdict not installed, skipping Japanese export")
         return
@@ -172,8 +178,9 @@ def export_japanese():
     db_path = None
     try:
         # Find jamdict database path - check multiple locations
-        import jamdict
         from pathlib import Path
+
+        import jamdict
 
         possible_paths = [
             Path(jamdict.__file__).parent / "data" / "jamdict.db",
@@ -185,6 +192,7 @@ def export_japanese():
         # Also try to find jamdict_data package directly
         try:
             import jamdict_data
+
             possible_paths.insert(0, Path(jamdict_data.__file__).parent / "jamdict.db")
         except ImportError:
             pass
@@ -220,7 +228,8 @@ def export_japanese():
         # - ichi1 alone (no nfXX): priority 60
         # - news1 alone: priority 50
         # - Lower nfXX or ichi2/news2: priority 30-49
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 COALESCE(k.text, r.text) as word,
                 r.text as reading,
@@ -269,7 +278,9 @@ def export_japanese():
             GROUP BY e.idseq
             ORDER BY priority DESC, LENGTH(COALESCE(k.text, r.text))
             LIMIT ?
-        """, (CACHE_SIZE,))
+        """,
+            (CACHE_SIZE,),
+        )
 
         words = []
         seen = set()
@@ -286,7 +297,7 @@ def export_japanese():
             if not glosses_str:
                 continue
 
-            meanings = [m[:80] for m in glosses_str.split('|||')[:2] if m]
+            meanings = [m[:80] for m in glosses_str.split("|||")[:2] if m]
             if not meanings:
                 continue
 
@@ -295,8 +306,8 @@ def export_japanese():
         conn.close()
 
         output_file = OUTPUT_DIR / "ja.json"
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(words, f, ensure_ascii=False, separators=(',', ':'))
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(words, f, ensure_ascii=False, separators=(",", ":"))
 
         size_kb = output_file.stat().st_size / 1024
         print(f"Exported {len(words)} Japanese words to {output_file} ({size_kb:.1f} KB)")
@@ -322,7 +333,9 @@ def export_japanese_search_method():
     seen = set()
 
     # Use all hiragana as search prefixes
-    hiragana = list("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
+    hiragana = list(
+        "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"
+    )
 
     for char in hiragana:
         if len(words) >= 5000:  # Limit to 5k for speed
@@ -363,8 +376,8 @@ def export_japanese_search_method():
             continue
 
     output_file = OUTPUT_DIR / "ja.json"
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(words, f, ensure_ascii=False, separators=(',', ':'))
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(words, f, ensure_ascii=False, separators=(",", ":"))
 
     size_kb = output_file.stat().st_size / 1024
     print(f"Exported {len(words)} Japanese words to {output_file} ({size_kb:.1f} KB)")

@@ -1,57 +1,62 @@
 """Pydantic models for Story data"""
-from typing import Optional, List
+
 from pydantic import BaseModel
 
 
 class TokenPart(BaseModel):
     """A part of a token with optional reading"""
+
     text: str
-    reading: Optional[str] = None
+    reading: str | None = None
 
 
 class Token(BaseModel):
     """A tokenized word with furigana and grammar info"""
+
     surface: str
-    parts: Optional[List[TokenPart]] = None
-    baseForm: Optional[str] = None
-    partOfSpeech: Optional[str] = None
+    parts: list[TokenPart] | None = None
+    baseForm: str | None = None
+    partOfSpeech: str | None = None
 
 
 class AudioWord(BaseModel):
     """Word-level audio timing from Whisper alignment"""
+
     text: str
     start: float
     end: float
-    confidence: Optional[float] = None
+    confidence: float | None = None
 
 
 class ContentSegment(BaseModel):
     """A segment of content (paragraph or dialogue)"""
+
     id: str
     segmentType: str
-    tokens: List[Token]
+    tokens: list[Token]
     # Audio timing for sentence sync (in seconds)
-    audioStartTime: Optional[float] = None
-    audioEndTime: Optional[float] = None
+    audioStartTime: float | None = None
+    audioEndTime: float | None = None
     # Word-level audio timing from Whisper
-    audioWords: Optional[List[AudioWord]] = None
+    audioWords: list[AudioWord] | None = None
 
 
 class Chapter(BaseModel):
     """A chapter in a story"""
+
     # Support both id/title and chapterNumber/chapterTitle formats
-    id: Optional[str] = None
-    chapterNumber: Optional[int] = None
-    title: Optional[str] = None
-    chapterTitle: Optional[str] = None
-    chapterTitleEnglish: Optional[str] = None
-    titleJapanese: Optional[str] = None
-    titleTokens: Optional[List[Token]] = None
-    titleEnglish: Optional[str] = None
-    segments: Optional[List[ContentSegment]] = None
-    content: Optional[List[ContentSegment]] = None  # Alias for segments
-    imageURL: Optional[str] = None
-    audioURL: Optional[str] = None  # Audio file for this chapter
+    id: str | None = None
+    chapterNumber: int | None = None
+    title: str | None = None
+    chapterTitle: str | None = None
+    chapterTitleEnglish: str | None = None
+    titleJapanese: str | None = None
+    titleTokens: list[Token] | None = None
+    titleEnglish: str | None = None
+    segments: list[ContentSegment] | None = None
+    content: list[ContentSegment] | None = None  # Alias for segments
+    imageURL: str | None = None
+    audioURL: str | None = None  # Audio file for this chapter
 
     @property
     def chapter_id(self) -> str:
@@ -64,85 +69,89 @@ class Chapter(BaseModel):
         return self.title or self.chapterTitleEnglish or self.chapterTitle or "Untitled"
 
     @property
-    def all_segments(self) -> List[ContentSegment]:
+    def all_segments(self) -> list[ContentSegment]:
         """Get segments from either field"""
         return self.segments or self.content or []
 
 
 class VocabularyValidation(BaseModel):
     """Result of JLPT vocabulary validation using Learning Value Score"""
+
     # Story metrics
-    totalTokens: int                              # Total token count (for threshold scaling)
-    uniqueWords: int                              # Unique word count
-    wordsByLevel: dict = {}                       # {"N5": 40, "N4": 30, ..., "unknown": 5}
+    totalTokens: int  # Total token count (for threshold scaling)
+    uniqueWords: int  # Unique word count
+    wordsByLevel: dict = {}  # {"N5": 40, "N4": 30, ..., "unknown": 5}
 
     # Unique counts (what we test against thresholds)
-    targetLevelCount: int                         # Unique words AT target level
-    aboveLevelCount: int                          # Unique words ABOVE target level
-    unknownCount: int                             # Unique words not in any JLPT list
+    targetLevelCount: int  # Unique words AT target level
+    aboveLevelCount: int  # Unique words ABOVE target level
+    unknownCount: int  # Unique words not in any JLPT list
 
     # Calculated thresholds (for transparency)
     minTargetThreshold: int
-    maxAboveThreshold: int                        # -1 means no limit (N1)
+    maxAboveThreshold: int  # -1 means no limit (N1)
     maxUnknownThreshold: int
 
     # Pass/fail checks
-    hasLearningValue: bool                        # target_level_count >= min_target_threshold
-    notTooHard: bool                              # above_level_count <= max_above_threshold
-    notTooObscure: bool                           # unknown_count <= max_unknown_threshold
-    passed: bool                                  # All three checks pass
+    hasLearningValue: bool  # target_level_count >= min_target_threshold
+    notTooHard: bool  # above_level_count <= max_above_threshold
+    notTooObscure: bool  # unknown_count <= max_unknown_threshold
+    passed: bool  # All three checks pass
 
     # Informational
-    readabilityScore: float                       # % of tokens at or below target level
+    readabilityScore: float  # % of tokens at or below target level
     targetLevel: str
     message: str
 
     # Detailed word lists for debugging/display
-    targetLevelWords: List[str] = []
-    aboveLevelWords: List[str] = []
-    unknownWords: List[str] = []
+    targetLevelWords: list[str] = []
+    aboveLevelWords: list[str] = []
+    unknownWords: list[str] = []
 
 
 class StoryMetadata(BaseModel):
     """Metadata for a story"""
+
     title: str
-    titleJapanese: Optional[str] = None
-    titleTokens: Optional[List[Token]] = None
+    titleJapanese: str | None = None
+    titleTokens: list[Token] | None = None
     author: str
-    tokenizerSource: Optional[str] = None
+    tokenizerSource: str | None = None
     jlptLevel: str
     wordCount: int
     characterCount: int
     genre: str
-    tags: List[str]
+    tags: list[str]
     summary: str
-    summaryJapanese: Optional[str] = None
-    coverImageURL: Optional[str] = None
-    audioURL: Optional[str] = None
+    summaryJapanese: str | None = None
+    coverImageURL: str | None = None
+    audioURL: str | None = None
     createdDate: str
     isPremium: bool = False  # Whether this story requires premium subscription
-    vocabularyValidation: Optional[VocabularyValidation] = None  # JLPT vocabulary validation result
+    vocabularyValidation: VocabularyValidation | None = None  # JLPT vocabulary validation result
 
 
 class Story(BaseModel):
     """A complete story with all data"""
+
     id: str
     metadata: StoryMetadata
-    chapters: Optional[List[Chapter]] = None
-    content: Optional[List[ContentSegment]] = None  # For non-chapter stories
-    vocabulary: Optional[List[str]] = None
-    grammarPoints: Optional[List[str]] = None
+    chapters: list[Chapter] | None = None
+    content: list[ContentSegment] | None = None  # For non-chapter stories
+    vocabulary: list[str] | None = None
+    grammarPoints: list[str] | None = None
 
 
 class StoryListItem(BaseModel):
     """Summary view of a story for listing"""
+
     id: str
     title: str
-    titleJapanese: Optional[str] = None
+    titleJapanese: str | None = None
     jlptLevel: str
     wordCount: int
     genre: str
     summary: str
-    coverImageURL: Optional[str] = None
+    coverImageURL: str | None = None
     chapterCount: int
     isPremium: bool = False

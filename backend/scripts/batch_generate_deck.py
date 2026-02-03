@@ -26,40 +26,38 @@ import json
 import logging
 import os
 import sys
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Load environment variables from web/.env.local (shared with frontend)
 from dotenv import load_dotenv
+
 env_path = Path(__file__).parent.parent.parent / "web" / ".env.local"
 load_dotenv(env_path)
 
 from google import genai
 from google.genai import types
-import httpx
 from pydantic import BaseModel
+
+from app.config.languages import (
+    CODE_TO_ISO,
+    LANGUAGE_NAMES,
+    get_translation_targets_for,
+)
+from app.services.generation.batch import BatchJobRunner
 
 # Import shared utilities
 from app.services.generation.media import get_audio_bytes_as_mp3, get_image_bytes_as_webp
-from app.services.generation.batch import BatchJobRunner, BatchRequest
 from app.services.storage import (
-    upload_word_audio,
     upload_sentence_audio,
+    upload_word_audio,
     upload_word_image,
 )
-from app.config.languages import (
-    LANGUAGE_CODES,
-    LANGUAGE_NAMES,
-    TRANSLATION_TARGETS,
-    CODE_TO_ISO,
-    get_translation_targets_for,
-)
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # ============================================
@@ -90,35 +88,38 @@ OUTPUT_DIR = Path(__file__).parent.parent / "generated"
 @dataclass
 class VocabWord:
     """A vocabulary word to generate content for"""
+
     id: str  # Convex ID or local ID
     word: str
-    reading: Optional[str] = None
-    definitions: List[str] = None
+    reading: str | None = None
+    definitions: list[str] = None
     language: str = "japanese"
     level: str = "N5"
 
     # Generated content
-    sentence: Optional[str] = None
-    sentence_translations: Optional[Dict[str, str]] = None  # {"en": "...", "ja": "...", "fr": "..."}
-    audio_url: Optional[str] = None  # R2 URL for sentence audio
-    word_audio_url: Optional[str] = None  # R2 URL for word audio
-    image_url: Optional[str] = None  # R2 URL for image
+    sentence: str | None = None
+    sentence_translations: dict[str, str] | None = None  # {"en": "...", "ja": "...", "fr": "..."}
+    audio_url: str | None = None  # R2 URL for sentence audio
+    word_audio_url: str | None = None  # R2 URL for word audio
+    image_url: str | None = None  # R2 URL for image
 
 
 @dataclass
 class GeneratedSentence:
     """Result from sentence generation (dataclass for internal use)"""
+
     word: str
     sentence: str
-    translations: Dict[str, str]  # {"en": "...", "ja": "...", "fr": "..."}
+    translations: dict[str, str]  # {"en": "...", "ja": "...", "fr": "..."}
 
 
 # Pydantic model for structured output from Gemini
 class SentenceOutputItem(BaseModel):
     """Pydantic model for Gemini structured output"""
+
     word: str
     sentence: str
-    translations: Dict[str, str]  # {"en": "...", "ja": "...", "fr": "..."}
+    translations: dict[str, str]  # {"en": "...", "ja": "...", "fr": "..."}
 
 
 # ============================================
@@ -201,7 +202,8 @@ LEVEL_CONTEXT = {
 # SENTENCE GENERATION (BATCH)
 # ============================================
 
-def build_multi_word_prompt(words: List[VocabWord], level: str, language: str) -> str:
+
+def build_multi_word_prompt(words: list[VocabWord], level: str, language: str) -> str:
     """
     Build a prompt for generating sentences for multiple words at once.
     Includes level-appropriate difficulty context and multi-language translations.
@@ -216,7 +218,7 @@ def build_multi_word_prompt(words: List[VocabWord], level: str, language: str) -
     for i, w in enumerate(words):
         reading_part = f" ({w.reading})" if w.reading else ""
         defs = ", ".join(w.definitions) if w.definitions else "(no definition)"
-        word_entries.append(f'{i+1}. "{w.word}"{reading_part} - {defs}')
+        word_entries.append(f'{i + 1}. "{w.word}"{reading_part} - {defs}')
 
     word_list = "\n".join(word_entries)
 
@@ -235,10 +237,10 @@ def build_multi_word_prompt(words: List[VocabWord], level: str, language: str) -
 
     prompt = f"""Generate example sentences for these {len(words)} {lang_name} vocabulary words.
 
-DIFFICULTY LEVEL: {level} ({level_info['description']})
-- Grammar to use: {level_info['grammar']}
-- Vocabulary style: {level_info['vocab_hint']}
-- Sentence length: {level_info['sentence_length']}
+DIFFICULTY LEVEL: {level} ({level_info["description"]})
+- Grammar to use: {level_info["grammar"]}
+- Vocabulary style: {level_info["vocab_hint"]}
+- Sentence length: {level_info["sentence_length"]}
 
 WORDS TO PROCESS:
 {word_list}
@@ -263,11 +265,11 @@ Use ISO language codes as keys: {", ".join(translation_iso_codes)}
 
 
 async def generate_sentences_batch(
-    words: List[VocabWord],
+    words: list[VocabWord],
     level: str,
     language: str,
     use_batch_api: bool = True,
-) -> List[GeneratedSentence]:
+) -> list[GeneratedSentence]:
     """
     Generate sentences for a batch of words using Gemini.
 
@@ -293,10 +295,10 @@ async def generate_sentences_batch(
 
 
 async def _generate_sentences_sync(
-    words: List[VocabWord],
+    words: list[VocabWord],
     level: str,
     language: str,
-) -> List[GeneratedSentence]:
+) -> list[GeneratedSentence]:
     """
     Generate sentences using synchronous API calls.
     Better for small batches where speed matters more than cost.
@@ -306,7 +308,7 @@ async def _generate_sentences_sync(
 
     # Process in batches of WORDS_PER_PROMPT
     for i in range(0, len(words), WORDS_PER_PROMPT):
-        batch = words[i:i + WORDS_PER_PROMPT]
+        batch = words[i : i + WORDS_PER_PROMPT]
         logger.info(f"Processing batch {i // WORDS_PER_PROMPT + 1}: {len(batch)} words")
 
         prompt = build_multi_word_prompt(batch, level, language)
@@ -318,17 +320,19 @@ async def _generate_sentences_sync(
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=list[SentenceOutputItem],
-                )
+                ),
             )
 
             sentences_data = json.loads(response.text)
 
             for item in sentences_data:
-                results.append(GeneratedSentence(
-                    word=item["word"],
-                    sentence=item["sentence"],
-                    translations=item.get("translations", {})
-                ))
+                results.append(
+                    GeneratedSentence(
+                        word=item["word"],
+                        sentence=item["sentence"],
+                        translations=item.get("translations", {}),
+                    )
+                )
 
             logger.info(f"  Generated {len(sentences_data)} sentences")
 
@@ -341,10 +345,10 @@ async def _generate_sentences_sync(
 
 
 async def _generate_sentences_batch_api(
-    words: List[VocabWord],
+    words: list[VocabWord],
     level: str,
     language: str,
-) -> List[GeneratedSentence]:
+) -> list[GeneratedSentence]:
     """
     Generate sentences using Google Batch API.
     50% cost savings, but asynchronous (may take minutes to hours).
@@ -359,15 +363,17 @@ async def _generate_sentences_batch_api(
     word_batches = []  # Track which words are in each batch
 
     for i in range(0, len(words), WORDS_PER_PROMPT):
-        batch = words[i:i + WORDS_PER_PROMPT]
+        batch = words[i : i + WORDS_PER_PROMPT]
         word_batches.append(batch)
 
         prompt = build_multi_word_prompt(batch, level, language)
 
-        batch_requests.append({
-            "key": f"batch_{i // WORDS_PER_PROMPT}",
-            "prompt": prompt,
-        })
+        batch_requests.append(
+            {
+                "key": f"batch_{i // WORDS_PER_PROMPT}",
+                "prompt": prompt,
+            }
+        )
 
     logger.info(f"Created {len(batch_requests)} batch requests")
 
@@ -398,11 +404,13 @@ Make sentences appropriate for the specified difficulty level."""
             try:
                 sentences_data = json.loads(response_text)
                 for item in sentences_data:
-                    results.append(GeneratedSentence(
-                        word=item["word"],
-                        sentence=item["sentence"],
-                        translations=item.get("translations", {})
-                    ))
+                    results.append(
+                        GeneratedSentence(
+                            word=item["word"],
+                            sentence=item["sentence"],
+                            translations=item.get("translations", {}),
+                        )
+                    )
             except json.JSONDecodeError:
                 logger.error(f"Failed to parse response for {batch_key}")
                 for w in batch:
@@ -424,13 +432,14 @@ Make sentences appropriate for the specified difficulty level."""
 
 TTS_VOICES = ["Leda", "Aoede", "Alnilam", "Rasalgethi"]
 
+
 async def generate_sentence_audio(
     text: str,
     word: str,
     language: str,
     item_id: str,
     voice: str = "Aoede",
-) -> Optional[str]:
+) -> str | None:
     """
     Generate audio for a sentence using Gemini TTS and upload to R2.
 
@@ -456,7 +465,7 @@ async def generate_sentence_audio(
                         )
                     )
                 ),
-            )
+            ),
         )
 
         # Extract PCM audio data
@@ -478,7 +487,7 @@ async def generate_word_audio(
     word: str,
     language: str,
     voice: str = "Aoede",
-) -> Optional[str]:
+) -> str | None:
     """
     Generate audio for a single word using Gemini TTS and upload to R2.
 
@@ -504,7 +513,7 @@ async def generate_word_audio(
                         )
                     )
                 ),
-            )
+            ),
         )
 
         # Extract PCM audio data
@@ -526,14 +535,10 @@ async def generate_word_audio(
 # IMAGE GENERATION (uploads directly to R2)
 # ============================================
 
+
 async def generate_image(
-    word: str,
-    sentence: str,
-    language: str,
-    image_id: str,
-    max_size: int = 400,
-    quality: int = 80
-) -> Optional[str]:
+    word: str, sentence: str, language: str, image_id: str, max_size: int = 400, quality: int = 80
+) -> str | None:
     """
     Generate a flashcard image using Gemini and upload to R2.
 
@@ -566,7 +571,7 @@ Style: Simple vector-like illustration with clean lines."""
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_modalities=["IMAGE"],
-            )
+            ),
         )
 
         # Extract image data
@@ -588,30 +593,33 @@ Style: Simple vector-like illustration with clean lines."""
 # CSV IMPORT
 # ============================================
 
-def load_words_from_csv(csv_path: Path, language: str, level: str) -> List[VocabWord]:
+
+def load_words_from_csv(csv_path: Path, language: str, level: str) -> list[VocabWord]:
     """Load vocabulary words from a CSV file"""
     words = []
 
-    with open(csv_path, 'r', encoding='utf-8') as f:
+    with open(csv_path, encoding="utf-8") as f:
         reader = csv.DictReader(f)
 
         for i, row in enumerate(reader):
             # Flexible column names
-            word = row.get('word') or row.get('expression') or row.get('kanji') or ''
-            reading = row.get('reading') or row.get('kana') or row.get('hiragana')
-            definition = row.get('definition') or row.get('meaning') or row.get('english') or ''
+            word = row.get("word") or row.get("expression") or row.get("kanji") or ""
+            reading = row.get("reading") or row.get("kana") or row.get("hiragana")
+            definition = row.get("definition") or row.get("meaning") or row.get("english") or ""
 
             if not word.strip():
                 continue
 
-            words.append(VocabWord(
-                id=f"csv_{i}",
-                word=word.strip(),
-                reading=reading.strip() if reading else None,
-                definitions=[definition.strip()] if definition else [],
-                language=language,
-                level=level,
-            ))
+            words.append(
+                VocabWord(
+                    id=f"csv_{i}",
+                    word=word.strip(),
+                    reading=reading.strip() if reading else None,
+                    definitions=[definition.strip()] if definition else [],
+                    language=language,
+                    level=level,
+                )
+            )
 
     logger.info(f"Loaded {len(words)} words from {csv_path}")
     return words
@@ -624,29 +632,32 @@ def load_words_from_csv(csv_path: Path, language: str, level: str) -> List[Vocab
 # Output directory for results JSON (if save_results is enabled)
 OUTPUT_DIR = Path(__file__).parent.parent / "generated"
 
-def save_results_json(words: List[VocabWord], output_path: Path):
+
+def save_results_json(words: list[VocabWord], output_path: Path):
     """
     Save generated content to JSON for reference/debugging.
     Note: Media is already uploaded to R2, this just saves metadata.
     """
     data = []
     for w in words:
-        data.append({
-            "id": w.id,
-            "word": w.word,
-            "reading": w.reading,
-            "definitions": w.definitions,
-            "language": w.language,
-            "level": w.level,
-            "sentence": w.sentence,
-            "translations": w.sentence_translations or {},
-            "audioUrl": w.audio_url,
-            "wordAudioUrl": w.word_audio_url,
-            "imageUrl": w.image_url,
-        })
+        data.append(
+            {
+                "id": w.id,
+                "word": w.word,
+                "reading": w.reading,
+                "definitions": w.definitions,
+                "language": w.language,
+                "level": w.level,
+                "sentence": w.sentence,
+                "translations": w.sentence_translations or {},
+                "audioUrl": w.audio_url,
+                "wordAudioUrl": w.word_audio_url,
+                "imageUrl": w.image_url,
+            }
+        )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     logger.info(f"Results saved to {output_path}")
@@ -656,12 +667,13 @@ def save_results_json(words: List[VocabWord], output_path: Path):
 # MAIN PIPELINE
 # ============================================
 
+
 async def run_pipeline(
-    words: List[VocabWord],
+    words: list[VocabWord],
     generate_sentences: bool = True,
     generate_audio_flag: bool = False,
     generate_images_flag: bool = False,
-    count: Optional[int] = None,
+    count: int | None = None,
     use_batch_api: bool = True,
     save_results: bool = True,
 ):
@@ -683,7 +695,9 @@ async def run_pipeline(
     # Step 1: Generate sentences
     if generate_sentences:
         logger.info("=== Generating Sentences ===")
-        sentences = await generate_sentences_batch(words, level, language, use_batch_api=use_batch_api)
+        sentences = await generate_sentences_batch(
+            words, level, language, use_batch_api=use_batch_api
+        )
 
         # Match results back to words
         word_map = {w.word: w for w in words}
@@ -703,7 +717,7 @@ async def run_pipeline(
             if not w.sentence:
                 continue
 
-            logger.info(f"[{i+1}/{len(words)}] Audio for: {w.word}")
+            logger.info(f"[{i + 1}/{len(words)}] Audio for: {w.word}")
 
             # Sentence audio -> R2
             audio_url = await generate_sentence_audio(
@@ -733,7 +747,7 @@ async def run_pipeline(
             if not w.sentence:
                 continue
 
-            logger.info(f"[{i+1}/{len(words)}] Image for: {w.word}")
+            logger.info(f"[{i + 1}/{len(words)}] Image for: {w.word}")
 
             image_url = await generate_image(
                 word=w.word,
@@ -756,23 +770,28 @@ async def run_pipeline(
 # CLI
 # ============================================
 
+
 def main():
     parser = argparse.ArgumentParser(description="Batch generate deck content (uploads to R2)")
     parser.add_argument("--import-csv", type=Path, help="Import words from CSV file")
     parser.add_argument("--deck", type=str, help="Deck ID (for Convex integration)")
-    parser.add_argument("--language", type=str, default="japanese", choices=["japanese", "english", "french"])
+    parser.add_argument(
+        "--language", type=str, default="japanese", choices=["japanese", "english", "french"]
+    )
     parser.add_argument("--level", type=str, default="N5", help="Difficulty level (N5-N1 or A1-C2)")
-    parser.add_argument("--type", type=str, default="sentences", choices=["sentences", "audio", "images", "all"])
+    parser.add_argument(
+        "--type", type=str, default="sentences", choices=["sentences", "audio", "images", "all"]
+    )
     parser.add_argument("--count", type=int, help="Limit number of words to process")
     parser.add_argument(
         "--no-batch-api",
         action="store_true",
-        help="Disable Batch API (faster for small batches, but full price)"
+        help="Disable Batch API (faster for small batches, but full price)",
     )
     parser.add_argument(
         "--no-save",
         action="store_true",
-        help="Don't save results.json (all media goes directly to R2)"
+        help="Don't save results.json (all media goes directly to R2)",
     )
 
     args = parser.parse_args()
@@ -790,15 +809,17 @@ def main():
         return
 
     # Run pipeline
-    asyncio.run(run_pipeline(
-        words=words,
-        generate_sentences=args.type in ["sentences", "all"],
-        generate_audio_flag=args.type in ["audio", "all"],
-        generate_images_flag=args.type in ["images", "all"],
-        count=args.count,
-        use_batch_api=not args.no_batch_api,
-        save_results=not args.no_save,
-    ))
+    asyncio.run(
+        run_pipeline(
+            words=words,
+            generate_sentences=args.type in ["sentences", "all"],
+            generate_audio_flag=args.type in ["audio", "all"],
+            generate_images_flag=args.type in ["images", "all"],
+            count=args.count,
+            use_batch_api=not args.no_batch_api,
+            save_results=not args.no_save,
+        )
+    )
 
 
 if __name__ == "__main__":

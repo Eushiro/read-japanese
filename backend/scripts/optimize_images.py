@@ -1,8 +1,10 @@
 """
 Script to optimize existing images by converting to WebP and resizing.
 """
+
 import json
 from pathlib import Path
+
 from PIL import Image
 
 IMAGES_DIR = Path(__file__).parent.parent / "app" / "static" / "images"
@@ -11,13 +13,13 @@ STORY_FILE = Path(__file__).parent.parent / "app" / "data" / "stories" / "n5_my_
 
 def optimize_image(input_path: Path, max_size: int = 800, quality: int = 85) -> Path:
     """Convert image to optimized WebP"""
-    output_path = input_path.with_suffix('.webp')
+    output_path = input_path.with_suffix(".webp")
 
     img = Image.open(input_path)
 
     # Convert to RGB if necessary
-    if img.mode in ('RGBA', 'P'):
-        img = img.convert('RGB')
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
 
     original_size = input_path.stat().st_size
 
@@ -26,10 +28,12 @@ def optimize_image(input_path: Path, max_size: int = 800, quality: int = 85) -> 
         img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
 
     # Save as WebP
-    img.save(output_path, 'WEBP', quality=quality, method=6)
+    img.save(output_path, "WEBP", quality=quality, method=6)
 
     final_size = output_path.stat().st_size
-    print(f"  {input_path.name}: {original_size/1024:.1f}KB -> {final_size/1024:.1f}KB ({100-final_size/original_size*100:.0f}% smaller)")
+    print(
+        f"  {input_path.name}: {original_size / 1024:.1f}KB -> {final_size / 1024:.1f}KB ({100 - final_size / original_size * 100:.0f}% smaller)"
+    )
 
     return output_path
 
@@ -61,7 +65,7 @@ def main():
     print("Updating story JSON...")
 
     # Update story JSON with new filenames
-    with open(STORY_FILE, "r", encoding="utf-8") as f:
+    with open(STORY_FILE, encoding="utf-8") as f:
         story = json.load(f)
 
     # Update cover image URL

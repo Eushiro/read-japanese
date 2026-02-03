@@ -2,18 +2,19 @@
 Japanese Reader API
 FastAPI backend for serving stories, audio, and images
 """
-import os
+
 import logging
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
-from pathlib import Path
-from dotenv import load_dotenv
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 # Load environment variables from web/.env.local (shared with frontend)
 env_path = Path(__file__).parent.parent.parent / "web" / ".env.local"
@@ -23,11 +24,11 @@ load_dotenv(env_path)
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=getattr(logging, log_level, logging.INFO),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
-from app.routers import stories, health, tokenize, generate, dictionary, admin_batch, admin_stories
+from app.routers import admin_batch, admin_stories, dictionary, generate, health, stories, tokenize  # noqa: E402
 
 # Environment configuration
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
@@ -91,7 +92,7 @@ async def startup_event():
 
     async def warm_dictionaries():
         try:
-            from app.routers.dictionary import preload_caches, get_jamdict
+            from app.routers.dictionary import get_jamdict, preload_caches
 
             logger.info("Pre-warming dictionary caches...")
 
@@ -116,12 +117,13 @@ async def root(request: Request):
     return {
         "name": "Japanese Reader API",
         "version": "0.1.0",
-        "docs": "/docs" if ENVIRONMENT == "development" else None
+        "docs": "/docs" if ENVIRONMENT == "development" else None,
     }
 
 
 # Debug endpoint (only in development)
 if ENVIRONMENT == "development":
+
     @app.get("/debug/static")
     async def debug_static():
         """Debug endpoint to check static file configuration"""
@@ -133,5 +135,5 @@ if ENVIRONMENT == "development":
             "static_path": str(static_path.resolve()),
             "static_exists": static_path.exists(),
             "audio_path": str(audio_path.resolve()) if audio_path.exists() else None,
-            "audio_files": [f.name for f in audio_path.iterdir()] if audio_path.exists() else []
+            "audio_files": [f.name for f in audio_path.iterdir()] if audio_path.exists() else [],
         }

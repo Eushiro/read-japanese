@@ -1,7 +1,8 @@
 """Service for loading and managing stories"""
+
 import json
 from pathlib import Path
-from typing import List, Optional
+
 from app.models.story import Story, StoryListItem
 
 
@@ -20,14 +21,14 @@ class StoryService:
 
         for json_file in self.stories_path.glob("*.json"):
             try:
-                with open(json_file, "r", encoding="utf-8") as f:
+                with open(json_file, encoding="utf-8") as f:
                     data = json.load(f)
                     story = Story(**data)
                     self._stories_cache[story.id] = story
             except Exception as e:
                 print(f"Error loading story from {json_file}: {e}")
 
-    def get_all_stories(self) -> List[StoryListItem]:
+    def get_all_stories(self) -> list[StoryListItem]:
         """Get list of all stories (summary view)"""
         return [
             StoryListItem(
@@ -40,16 +41,16 @@ class StoryService:
                 summary=story.metadata.summary,
                 coverImageURL=story.metadata.coverImageURL,
                 chapterCount=len(story.chapters),
-                isPremium=story.metadata.isPremium
+                isPremium=story.metadata.isPremium,
             )
             for story in self._stories_cache.values()
         ]
 
-    def get_story_by_id(self, story_id: str) -> Optional[Story]:
+    def get_story_by_id(self, story_id: str) -> Story | None:
         """Get a specific story by ID"""
         return self._stories_cache.get(story_id)
 
-    def get_stories_by_level(self, jlpt_level: str) -> List[StoryListItem]:
+    def get_stories_by_level(self, jlpt_level: str) -> list[StoryListItem]:
         """Get all stories for a specific JLPT level"""
         return [
             StoryListItem(
@@ -62,7 +63,7 @@ class StoryService:
                 summary=story.metadata.summary,
                 coverImageURL=story.metadata.coverImageURL,
                 chapterCount=len(story.chapters),
-                isPremium=story.metadata.isPremium
+                isPremium=story.metadata.isPremium,
             )
             for story in self._stories_cache.values()
             if story.metadata.jlptLevel.upper() == jlpt_level.upper()
@@ -75,7 +76,7 @@ class StoryService:
 
 
 # Global instance
-_story_service: Optional[StoryService] = None
+_story_service: StoryService | None = None
 
 
 def get_story_service() -> StoryService:

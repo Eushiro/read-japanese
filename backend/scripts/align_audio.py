@@ -20,6 +20,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+
 env_path = Path(__file__).parent.parent.parent / "web" / ".env.local"
 load_dotenv(env_path)
 
@@ -34,7 +35,7 @@ AUDIO_ORIGINALS_DIR = AUDIO_DIR / "originals"
 
 def load_story(story_path: Path) -> dict:
     """Load a story JSON file."""
-    with open(story_path, "r", encoding="utf-8") as f:
+    with open(story_path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -104,24 +105,28 @@ def align_story(story_path: Path, model) -> bool:
             for seg_idx, segment in enumerate(chapter.get("content", [])):
                 text = get_segment_text(segment)
                 if text.strip():
-                    story_segments.append({
-                        "chapter_idx": ch_idx,
-                        "segment_idx": seg_idx,
-                        "id": segment["id"],
-                        "text": text,
-                        "segment_ref": segment
-                    })
+                    story_segments.append(
+                        {
+                            "chapter_idx": ch_idx,
+                            "segment_idx": seg_idx,
+                            "id": segment["id"],
+                            "text": text,
+                            "segment_ref": segment,
+                        }
+                    )
     elif story.get("content"):
         for seg_idx, segment in enumerate(story["content"]):
             text = get_segment_text(segment)
             if text.strip():
-                story_segments.append({
-                    "chapter_idx": None,
-                    "segment_idx": seg_idx,
-                    "id": segment["id"],
-                    "text": text,
-                    "segment_ref": segment
-                })
+                story_segments.append(
+                    {
+                        "chapter_idx": None,
+                        "segment_idx": seg_idx,
+                        "id": segment["id"],
+                        "text": text,
+                        "segment_ref": segment,
+                    }
+                )
 
     if not story_segments:
         print("  Error: No segments found in story")
@@ -134,13 +139,15 @@ def align_story(story_path: Path, model) -> bool:
     # Strategy: For each story segment, find overlapping whisper words
     all_words = []
     for whisper_seg in result.segments:
-        if hasattr(whisper_seg, 'words') and whisper_seg.words:
+        if hasattr(whisper_seg, "words") and whisper_seg.words:
             for word in whisper_seg.words:
-                all_words.append({
-                    "text": word.word.strip(),
-                    "start": round(word.start, 3),
-                    "end": round(word.end, 3),
-                })
+                all_words.append(
+                    {
+                        "text": word.word.strip(),
+                        "start": round(word.start, 3),
+                        "end": round(word.end, 3),
+                    }
+                )
 
     print(f"  Total words detected: {len(all_words)}")
 
@@ -171,14 +178,16 @@ def align_story(story_path: Path, model) -> bool:
                 if seg_start is None:
                     seg_start = word["start"]
                 seg_end = word["end"]
-                seg_words.append({
-                    "text": word_text,
-                    "start": word["start"],
-                    "end": word["end"],
-                })
+                seg_words.append(
+                    {
+                        "text": word_text,
+                        "start": word["start"],
+                        "end": word["end"],
+                    }
+                )
                 # Remove matched portion from remaining text
                 idx = remaining_text.find(word_text)
-                remaining_text = remaining_text[idx + len(word_text):]
+                remaining_text = remaining_text[idx + len(word_text) :]
                 word_idx += 1
             elif not word_text.strip():
                 # Skip empty words
@@ -215,7 +224,9 @@ def main():
     parser.add_argument("story_file", nargs="?", help="Path to story JSON file")
     parser.add_argument("--all", action="store_true", help="Process all stories with audio")
     parser.add_argument("--level", help="Process stories of specific JLPT level (e.g., N5)")
-    parser.add_argument("--model", default=WHISPER_MODEL, help=f"Whisper model size (default: {WHISPER_MODEL})")
+    parser.add_argument(
+        "--model", default=WHISPER_MODEL, help=f"Whisper model size (default: {WHISPER_MODEL})"
+    )
     args = parser.parse_args()
 
     # Load Whisper model

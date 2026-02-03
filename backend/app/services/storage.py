@@ -10,10 +10,9 @@ Structure:
     └── image-{id}.webp       # Images
 """
 
-import os
 import logging
+import os
 from pathlib import Path
-from typing import Optional
 from urllib.parse import quote
 
 import boto3
@@ -35,7 +34,9 @@ R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "")
 def get_r2_client():
     """Get configured R2 client"""
     if not all([R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY]):
-        raise ValueError("R2 credentials not configured. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY")
+        raise ValueError(
+            "R2 credentials not configured. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY"
+        )
 
     return boto3.client(
         "s3",
@@ -50,6 +51,7 @@ def get_r2_client():
 # ============================================
 # PATH HELPERS
 # ============================================
+
 
 def get_word_folder_path(word: str, language: str) -> str:
     """
@@ -82,6 +84,7 @@ def get_image_key(word: str, language: str, image_id: str) -> str:
 # ============================================
 # UPLOAD FUNCTIONS
 # ============================================
+
 
 def upload_to_r2(
     data: bytes,
@@ -164,6 +167,7 @@ def upload_word_image(
 # STORY PATH HELPERS
 # ============================================
 
+
 def get_story_folder_path(story_id: str, language: str) -> str:
     """
     Get the folder path for a story's media files.
@@ -199,6 +203,7 @@ def get_story_audio_key(story_id: str, language: str) -> str:
 # ============================================
 # STORY UPLOAD FUNCTIONS
 # ============================================
+
 
 def upload_story_json(
     data: bytes,
@@ -257,13 +262,14 @@ def upload_story_audio(
 # FILE-BASED UPLOAD (for existing local files)
 # ============================================
 
+
 def upload_file(
     file_path: Path,
     word: str,
     language: str,
     file_type: str,
     item_id: str,
-) -> Optional[str]:
+) -> str | None:
     """
     Upload a local file to R2 with word-centric organization.
 

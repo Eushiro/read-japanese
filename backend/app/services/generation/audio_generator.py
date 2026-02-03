@@ -4,15 +4,15 @@ Generates audio narration for Japanese graded reader stories.
 
 Audio is uploaded directly to R2 storage - no local files are saved.
 """
+
 import logging
 import os
-from typing import List, Optional
 
 from google import genai
 from google.genai import types
 
-from .media import get_audio_bytes_as_mp3
 from ..storage import upload_story_audio
+from .media import get_audio_bytes_as_mp3
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,7 @@ NARRATION_PROMPT = "Read aloud clearly and slowly for language learners:\n\n"
 def select_voice() -> str:
     """Select a random voice based on weighted probabilities."""
     import random
+
     return random.choices(VOICES, weights=VOICE_WEIGHTS, k=1)[0]
 
 
@@ -52,10 +53,10 @@ class AudioGenerator:
     async def generate_story_audio(
         self,
         story_id: str,
-        chapters: List[dict],
-        voice: Optional[str] = None,
+        chapters: list[dict],
+        voice: str | None = None,
         language: str = "japanese",
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """
         Generate audio for an entire story.
         Uploads directly to R2 - no local files saved.
@@ -98,7 +99,7 @@ class AudioGenerator:
                 "audioURL": audio_url,
                 "audioModel": GEMINI_MODEL,
                 "audioPrompt": NARRATION_PROMPT.strip(),
-                "audioVoice": voice
+                "audioVoice": voice,
             }
         return None
 
@@ -106,10 +107,10 @@ class AudioGenerator:
         self,
         story_id: str,
         chapter_number: int,
-        content: List[dict],
-        voice: Optional[str] = None,
+        content: list[dict],
+        voice: str | None = None,
         language: str = "japanese",
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Generate audio for a single chapter.
         Note: Currently not supported for R2 - story audio is generated as one file.
@@ -143,8 +144,8 @@ class AudioGenerator:
         self,
         segment_id: str,
         text: str,
-        voice: Optional[str] = None,
-    ) -> Optional[str]:
+        voice: str | None = None,
+    ) -> str | None:
         """
         Generate audio for a single segment/sentence.
         Note: Currently not supported for R2.
@@ -170,7 +171,7 @@ class AudioGenerator:
         voice: str,
         story_id: str,
         language: str,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Generate audio using Google Gemini TTS API and upload to R2.
 
@@ -200,7 +201,7 @@ class AudioGenerator:
                             )
                         )
                     ),
-                )
+                ),
             )
 
             # Extract PCM audio data from response
@@ -219,7 +220,7 @@ class AudioGenerator:
             logger.error(f"Audio generation failed: {e}")
             return None
 
-    def get_pcm_audio(self, text: str, voice: str) -> Optional[bytes]:
+    def get_pcm_audio(self, text: str, voice: str) -> bytes | None:
         """
         Generate PCM audio without saving (for alignment or further processing).
 
@@ -244,14 +245,14 @@ class AudioGenerator:
                             )
                         )
                     ),
-                )
+                ),
             )
             return response.candidates[0].content.parts[0].inline_data.data
         except Exception as e:
             logger.error(f"PCM audio generation failed: {e}")
             return None
 
-    def _extract_story_text(self, chapters: List[dict]) -> str:
+    def _extract_story_text(self, chapters: list[dict]) -> str:
         """Extract all text from story chapters"""
         texts = []
 
@@ -268,22 +269,17 @@ class AudioGenerator:
 
         return "\n".join(texts)
 
-    def _extract_text_from_segments(self, segments: List[dict]) -> str:
+    def _extract_text_from_segments(self, segments: list[dict]) -> str:
         """Extract text from a list of segments"""
         return "\n".join(
-            self._get_segment_text(seg)
-            for seg in segments
-            if self._get_segment_text(seg)
+            self._get_segment_text(seg) for seg in segments if self._get_segment_text(seg)
         )
 
     def _get_segment_text(self, segment: dict) -> str:
         """Get plain text from a segment, handling tokenized content"""
         # If segment has tokens, join surface forms
         if "tokens" in segment and segment["tokens"]:
-            return "".join(
-                token.get("surface", "")
-                for token in segment["tokens"]
-            )
+            return "".join(token.get("surface", "") for token in segment["tokens"])
         return segment.get("text", "")
 
     @staticmethod

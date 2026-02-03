@@ -2,10 +2,10 @@
 OpenRouter API client for accessing free and paid LLM models.
 Uses OpenAI-compatible API format.
 """
-import os
+
 import json
 import logging
-from typing import Optional
+
 from openai import AsyncOpenAI
 
 from ..config.models import ModelConfig
@@ -19,7 +19,7 @@ class OpenRouterClient:
     Provides access to various LLMs including Gemini models.
     """
 
-    def __init__(self, model: Optional[str] = None):
+    def __init__(self, model: str | None = None):
         """
         Initialize OpenRouter client.
 
@@ -30,17 +30,16 @@ class OpenRouterClient:
             raise ValueError("OPENROUTER_API_KEY environment variable not set")
 
         self.client = AsyncOpenAI(
-            base_url=ModelConfig.OPENROUTER_BASE_URL,
-            api_key=ModelConfig.OPENROUTER_API_KEY
+            base_url=ModelConfig.OPENROUTER_BASE_URL, api_key=ModelConfig.OPENROUTER_API_KEY
         )
         self.model = model or ModelConfig.TEXT_MODEL
 
     async def generate(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         json_mode: bool = False,
-        temperature: float = 0.7
+        temperature: float = 0.7,
     ) -> str:
         """
         Generate text completion.
@@ -77,10 +76,7 @@ class OpenRouterClient:
         return content
 
     async def generate_json(
-        self,
-        prompt: str,
-        system_prompt: Optional[str] = None,
-        temperature: float = 0.7
+        self, prompt: str, system_prompt: str | None = None, temperature: float = 0.7
     ) -> dict:
         """
         Generate JSON response.
@@ -94,16 +90,13 @@ class OpenRouterClient:
             Parsed JSON response as dict
         """
         response = await self.generate(
-            prompt=prompt,
-            system_prompt=system_prompt,
-            json_mode=True,
-            temperature=temperature
+            prompt=prompt, system_prompt=system_prompt, json_mode=True, temperature=temperature
         )
         return json.loads(response)
 
 
 # Singleton instance
-_client: Optional[OpenRouterClient] = None
+_client: OpenRouterClient | None = None
 
 
 def get_openrouter_client() -> OpenRouterClient:

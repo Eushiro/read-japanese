@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Load environment variables from web/.env.local (shared with frontend)
 from dotenv import load_dotenv
+
 env_path = Path(__file__).parent.parent.parent / "web" / ".env.local"
 load_dotenv(env_path)
 
@@ -35,9 +36,7 @@ from app.services.generation.pipeline import StoryPipeline
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%H:%M:%S"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%H:%M:%S"
 )
 logger = logging.getLogger(__name__)
 
@@ -113,25 +112,25 @@ async def generate_story(
         print("=" * 60)
         print(f"Story ID: {story['id']}")
         print(f"Title: {story['metadata']['title']}")
-        if story['metadata'].get('titleJapanese'):
+        if story["metadata"].get("titleJapanese"):
             print(f"Japanese: {story['metadata']['titleJapanese']}")
         print(f"Chapters: {len(story.get('chapters', []))}")
 
-        if story['metadata'].get('coverImageURL'):
+        if story["metadata"].get("coverImageURL"):
             print(f"Cover: {story['metadata']['coverImageURL']}")
 
-        chapter_images = sum(1 for ch in story.get('chapters', []) if ch.get('imageURL'))
+        chapter_images = sum(1 for ch in story.get("chapters", []) if ch.get("imageURL"))
         if chapter_images:
             print(f"Chapter Images: {chapter_images}")
 
-        if story['metadata'].get('audioURL'):
+        if story["metadata"].get("audioURL"):
             print(f"Audio: {story['metadata']['audioURL']}")
 
         # Check for audio alignment
         aligned_segments = 0
-        for ch in story.get('chapters', []):
-            for seg in ch.get('content', []):
-                if seg.get('audioStartTime') is not None:
+        for ch in story.get("chapters", []):
+            for seg in ch.get("content", []):
+                if seg.get("audioStartTime") is not None:
                     aligned_segments += 1
         if aligned_segments:
             print(f"Aligned Segments: {aligned_segments}")
@@ -165,91 +164,70 @@ Available genres:
 
 Available image styles:
   anime, watercolor, minimalist, realistic, ghibli
-        """
+        """,
     )
 
     # Required arguments
     parser.add_argument(
-        "--level", "-l",
+        "--level",
+        "-l",
         required=True,
         choices=["N5", "N4", "N3", "N2", "N1"],
-        help="JLPT level (N5-N1)"
+        help="JLPT level (N5-N1)",
     )
     parser.add_argument(
-        "--genre", "-g",
-        required=True,
-        help="Story genre (e.g., 'slice of life', 'adventure')"
+        "--genre", "-g", required=True, help="Story genre (e.g., 'slice of life', 'adventure')"
     )
 
     # Optional content arguments
+    parser.add_argument("--theme", "-t", help="Optional theme or topic for the story")
     parser.add_argument(
-        "--theme", "-t",
-        help="Optional theme or topic for the story"
+        "--chapters", "-c", type=int, default=5, help="Number of chapters (default: 5)"
     )
     parser.add_argument(
-        "--chapters", "-c",
-        type=int,
-        default=5,
-        help="Number of chapters (default: 5)"
-    )
-    parser.add_argument(
-        "--words",
-        type=int,
-        default=100,
-        help="Approximate words per chapter (default: 100)"
+        "--words", type=int, default=100, help="Approximate words per chapter (default: 100)"
     )
 
     # Style arguments
     parser.add_argument(
-        "--style", "-s",
+        "--style",
+        "-s",
         default="anime",
         choices=["anime", "watercolor", "minimalist", "realistic", "ghibli"],
-        help="Image art style (default: anime)"
+        help="Image art style (default: anime)",
     )
-    parser.add_argument(
-        "--voice", "-v",
-        default="makoto",
-        help="TTS voice name (default: makoto)"
-    )
+    parser.add_argument("--voice", "-v", default="makoto", help="TTS voice name (default: makoto)")
 
     # Feature toggles
+    parser.add_argument("--no-audio", action="store_true", help="Skip audio generation")
     parser.add_argument(
-        "--no-audio",
-        action="store_true",
-        help="Skip audio generation"
-    )
-    parser.add_argument(
-        "--no-images",
-        action="store_true",
-        help="Skip all image generation (cover and chapters)"
+        "--no-images", action="store_true", help="Skip all image generation (cover and chapters)"
     )
     parser.add_argument(
         "--no-chapter-images",
         action="store_true",
-        help="Skip chapter image generation (still generates cover)"
+        help="Skip chapter image generation (still generates cover)",
     )
-    parser.add_argument(
-        "--no-alignment",
-        action="store_true",
-        help="Skip audio alignment"
-    )
+    parser.add_argument("--no-alignment", action="store_true", help="Skip audio alignment")
 
     args = parser.parse_args()
 
     # Run the pipeline
-    asyncio.run(generate_story(
-        jlpt_level=args.level,
-        genre=args.genre,
-        theme=args.theme,
-        num_chapters=args.chapters,
-        words_per_chapter=args.words,
-        voice=args.voice,
-        image_style=args.style,
-        generate_audio=not args.no_audio,
-        generate_image=not args.no_images,
-        generate_chapter_images=not args.no_images and not args.no_chapter_images,
-        align_audio=not args.no_alignment,
-    ))
+    asyncio.run(
+        generate_story(
+            jlpt_level=args.level,
+            genre=args.genre,
+            theme=args.theme,
+            num_chapters=args.chapters,
+            words_per_chapter=args.words,
+            voice=args.voice,
+            image_style=args.style,
+            generate_audio=not args.no_audio,
+            generate_image=not args.no_images,
+            generate_chapter_images=not args.no_images and not args.no_chapter_images,
+            align_audio=not args.no_alignment,
+        )
+    )
 
 
 if __name__ == "__main__":

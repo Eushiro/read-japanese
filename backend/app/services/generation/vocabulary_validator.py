@@ -14,12 +14,11 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Set, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 # Regex to detect katakana words (loanwords)
-KATAKANA_PATTERN = re.compile(r'^[ァ-ヶー]+$')
+KATAKANA_PATTERN = re.compile(r"^[ァ-ヶー]+$")
 
 # JLPT levels in order from easiest to hardest
 JLPT_LEVELS = ["N5", "N4", "N3", "N2", "N1"]
@@ -28,22 +27,22 @@ JLPT_LEVELS = ["N5", "N4", "N3", "N2", "N1"]
 # Formula: min_target = base + (total_tokens // scaling_factor)
 # Relaxed thresholds to account for natural vocabulary variation
 MIN_TARGET_WORDS = {
-    "N5": (2, 150),   # 500 tokens → 5, 1000 tokens → 8
-    "N4": (3, 120),   # 500 tokens → 7, 1000 tokens → 11
-    "N3": (4, 100),   # 500 tokens → 9, 1000 tokens → 14
-    "N2": (5, 80),    # 500 tokens → 11, 1000 tokens → 17
-    "N1": (6, 80),    # 500 tokens → 12, 1000 tokens → 18
+    "N5": (2, 150),  # 500 tokens → 5, 1000 tokens → 8
+    "N4": (3, 120),  # 500 tokens → 7, 1000 tokens → 11
+    "N3": (4, 100),  # 500 tokens → 9, 1000 tokens → 14
+    "N2": (5, 80),  # 500 tokens → 11, 1000 tokens → 17
+    "N1": (6, 80),  # 500 tokens → 12, 1000 tokens → 18
 }
 
 # Maximum unique words ABOVE target level (base, scaling_factor)
 # Formula: max_above = base + (total_tokens // scaling_factor)
 # Relaxed to allow more natural vocabulary mixing
 MAX_ABOVE_WORDS = {
-    "N5": (5, 100),   # 500 tokens → 10, 1000 tokens → 15
-    "N4": (10, 50),   # 500 tokens → 20, 1000 tokens → 30 (relaxed for N4)
-    "N3": (10, 50),   # 500 tokens → 20, 1000 tokens → 30
-    "N2": (10, 50),   # 500 tokens → 20, 1000 tokens → 30
-    "N1": None,       # N1 has no limit (highest level)
+    "N5": (5, 100),  # 500 tokens → 10, 1000 tokens → 15
+    "N4": (10, 50),  # 500 tokens → 20, 1000 tokens → 30 (relaxed for N4)
+    "N3": (10, 50),  # 500 tokens → 20, 1000 tokens → 30
+    "N2": (10, 50),  # 500 tokens → 20, 1000 tokens → 30
+    "N1": None,  # N1 has no limit (highest level)
 }
 
 # Maximum unknown words: 8 + (total_tokens // 100)
@@ -55,73 +54,233 @@ UNKNOWN_WORDS_SCALE = 100
 # These appear at all levels and shouldn't count against the score
 IGNORED_WORDS = {
     # Particles
-    "は", "が", "を", "に", "で", "と", "も", "の", "へ", "から", "まで", "より", "や",
-    "か", "ね", "よ", "な", "わ", "さ", "ぞ", "ぜ", "け", "こそ", "だけ", "しか", "ばかり",
+    "は",
+    "が",
+    "を",
+    "に",
+    "で",
+    "と",
+    "も",
+    "の",
+    "へ",
+    "から",
+    "まで",
+    "より",
+    "や",
+    "か",
+    "ね",
+    "よ",
+    "な",
+    "わ",
+    "さ",
+    "ぞ",
+    "ぜ",
+    "け",
+    "こそ",
+    "だけ",
+    "しか",
+    "ばかり",
     # Common punctuation-like words
-    "。", "、", "！", "？", "「", "」", "『", "』", "…", "ー", "・",
+    "。",
+    "、",
+    "！",
+    "？",
+    "「",
+    "」",
+    "『",
+    "』",
+    "…",
+    "ー",
+    "・",
     # Numbers
-    "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "百", "千", "万",
+    "一",
+    "二",
+    "三",
+    "四",
+    "五",
+    "六",
+    "七",
+    "八",
+    "九",
+    "十",
+    "百",
+    "千",
+    "万",
     # Very basic words that appear everywhere
-    "する", "いる", "ある", "なる", "できる", "くる", "いく", "みる", "くれる", "もらう",
-    "この", "その", "あの", "どの",
-    "これ", "それ", "あれ", "どれ",
-    "ここ", "そこ", "あそこ", "どこ",
-    "こう", "そう", "ああ", "どう",
+    "する",
+    "いる",
+    "ある",
+    "なる",
+    "できる",
+    "くる",
+    "いく",
+    "みる",
+    "くれる",
+    "もらう",
+    "この",
+    "その",
+    "あの",
+    "どの",
+    "これ",
+    "それ",
+    "あれ",
+    "どれ",
+    "ここ",
+    "そこ",
+    "あそこ",
+    "どこ",
+    "こう",
+    "そう",
+    "ああ",
+    "どう",
     # Auxiliary verbs and grammatical endings (not vocabulary)
-    "です", "ます", "た", "て", "ない", "ば", "う", "よう", "だ", "だろう", "でしょう",
-    "れる", "られる", "せる", "させる", "たい", "ほしい", "ぬ", "ん",
-    "ている", "てある", "ておく", "てしまう", "ていく", "てくる", "しまう",
-    "し", "ながら", "たり", "つつ",  # Conjunctive forms
+    "です",
+    "ます",
+    "た",
+    "て",
+    "ない",
+    "ば",
+    "う",
+    "よう",
+    "だ",
+    "だろう",
+    "でしょう",
+    "れる",
+    "られる",
+    "せる",
+    "させる",
+    "たい",
+    "ほしい",
+    "ぬ",
+    "ん",
+    "ている",
+    "てある",
+    "ておく",
+    "てしまう",
+    "ていく",
+    "てくる",
+    "しまう",
+    "し",
+    "ながら",
+    "たり",
+    "つつ",  # Conjunctive forms
     # Common grammatical patterns
-    "ので", "のに", "のは", "のが", "のを", "について", "として", "によって", "において",
-    "という", "ということ", "というのは",
+    "ので",
+    "のに",
+    "のは",
+    "のが",
+    "のを",
+    "について",
+    "として",
+    "によって",
+    "において",
+    "という",
+    "ということ",
+    "というのは",
     # Basic adverbs and expressions (fundamental grammar)
-    "とても", "すごく", "本当に", "もう", "まだ", "もっと", "ちょっと", "すぐ", "ずっと",
-    "たくさん", "少し", "全然", "絶対", "きっと", "たぶん", "やっぱり", "やはり",
+    "とても",
+    "すごく",
+    "本当に",
+    "もう",
+    "まだ",
+    "もっと",
+    "ちょっと",
+    "すぐ",
+    "ずっと",
+    "たくさん",
+    "少し",
+    "全然",
+    "絶対",
+    "きっと",
+    "たぶん",
+    "やっぱり",
+    "やはり",
     # Basic conjunctions
-    "そして", "でも", "しかし", "だから", "けれど", "けど", "または", "あるいは",
+    "そして",
+    "でも",
+    "しかし",
+    "だから",
+    "けれど",
+    "けど",
+    "または",
+    "あるいは",
     # Fundamental time/counter words used at all levels
-    "時", "日", "年", "月", "週", "分", "秒", "回", "度", "番", "目",
-    "時間", "今日", "明日", "昨日", "毎日", "毎週", "毎月", "毎年",
+    "時",
+    "日",
+    "年",
+    "月",
+    "週",
+    "分",
+    "秒",
+    "回",
+    "度",
+    "番",
+    "目",
+    "時間",
+    "今日",
+    "明日",
+    "昨日",
+    "毎日",
+    "毎週",
+    "毎月",
+    "毎年",
     # Common words that appear in all levels regardless of official JLPT classification
-    "人", "物", "事", "所", "方", "前", "後", "中", "上", "下", "外", "内",
-    "ぐらい", "くらい", "ころ", "頃", "ため", "まま", "ほう", "よう",
+    "人",
+    "物",
+    "事",
+    "所",
+    "方",
+    "前",
+    "後",
+    "中",
+    "上",
+    "下",
+    "外",
+    "内",
+    "ぐらい",
+    "くらい",
+    "ころ",
+    "頃",
+    "ため",
+    "まま",
+    "ほう",
 }
 
 
 @dataclass
 class ValidationResult:
     """Result of vocabulary validation using Learning Value Score"""
+
     # Story metrics
-    total_tokens: int                           # Total token count (for threshold scaling)
-    unique_words: int                           # Unique word count
-    words_by_level: Dict[str, int]              # {"N5": 40, "N4": 30, ..., "unknown": 5}
+    total_tokens: int  # Total token count (for threshold scaling)
+    unique_words: int  # Unique word count
+    words_by_level: dict[str, int]  # {"N5": 40, "N4": 30, ..., "unknown": 5}
 
     # Unique counts (what we test against thresholds)
-    target_level_count: int                     # Unique words AT target level
-    above_level_count: int                      # Unique words ABOVE target level
-    unknown_count: int                          # Unique words not in any JLPT list
+    target_level_count: int  # Unique words AT target level
+    above_level_count: int  # Unique words ABOVE target level
+    unknown_count: int  # Unique words not in any JLPT list
 
     # Calculated thresholds (for transparency)
     min_target_threshold: int
-    max_above_threshold: int                    # -1 means no limit (N1)
+    max_above_threshold: int  # -1 means no limit (N1)
     max_unknown_threshold: int
 
     # Pass/fail checks
-    has_learning_value: bool                    # target_level_count >= min_target_threshold
-    not_too_hard: bool                          # above_level_count <= max_above_threshold
-    not_too_obscure: bool                       # unknown_count <= max_unknown_threshold
-    passed: bool                                # All three checks pass
+    has_learning_value: bool  # target_level_count >= min_target_threshold
+    not_too_hard: bool  # above_level_count <= max_above_threshold
+    not_too_obscure: bool  # unknown_count <= max_unknown_threshold
+    passed: bool  # All three checks pass
 
     # Informational
-    readability_score: float                    # % of tokens at or below target level
+    readability_score: float  # % of tokens at or below target level
     target_level: str
     message: str
 
     # Detailed word lists for debugging/display
-    target_level_words: List[str] = field(default_factory=list)
-    above_level_words: List[str] = field(default_factory=list)
-    unknown_words: List[str] = field(default_factory=list)
+    target_level_words: list[str] = field(default_factory=list)
+    above_level_words: list[str] = field(default_factory=list)
+    unknown_words: list[str] = field(default_factory=list)
 
 
 class VocabularyValidator:
@@ -136,8 +295,8 @@ class VocabularyValidator:
     """
 
     def __init__(self):
-        self._word_lists: Dict[str, Set[str]] = {}  # Cumulative lists
-        self._level_specific: Dict[str, Set[str]] = {}  # Non-cumulative, level-specific words
+        self._word_lists: dict[str, set[str]] = {}  # Cumulative lists
+        self._level_specific: dict[str, set[str]] = {}  # Non-cumulative, level-specific words
         self._load_word_lists()
 
     def _load_word_lists(self):
@@ -152,7 +311,7 @@ class VocabularyValidator:
         for level in JLPT_LEVELS:
             filename = data_dir / f"{level.lower()}.txt"
             if filename.exists():
-                with open(filename, 'r', encoding='utf-8') as f:
+                with open(filename, encoding="utf-8") as f:
                     words = {line.strip() for line in f if line.strip()}
                 self._level_specific[level] = words
                 logger.info(f"Loaded {len(words)} words for {level}")
@@ -167,7 +326,7 @@ class VocabularyValidator:
             self._word_lists[level] = cumulative.copy()
             logger.info(f"Cumulative {level}: {len(self._word_lists[level])} words")
 
-    def get_word_level(self, word: str) -> Optional[str]:
+    def get_word_level(self, word: str) -> str | None:
         """
         Get the JLPT level of a word.
         Returns the easiest level where this word appears, or None if not in any list.
@@ -177,7 +336,7 @@ class VocabularyValidator:
                 return level
         return None
 
-    def validate_tokens(self, tokens: List[dict], target_level: str) -> ValidationResult:
+    def validate_tokens(self, tokens: list[dict], target_level: str) -> ValidationResult:
         """
         Validate a list of tokens against a target JLPT level.
 
@@ -205,7 +364,7 @@ class VocabularyValidator:
                 passed=False,
                 readability_score=0.0,
                 target_level=target_level,
-                message=f"Invalid JLPT level: {target_level}"
+                message=f"Invalid JLPT level: {target_level}",
             )
 
         if not self._word_lists:
@@ -226,7 +385,7 @@ class VocabularyValidator:
                 passed=True,
                 readability_score=1.0,
                 target_level=target_level,
-                message="Validation skipped - word lists not loaded"
+                message="Validation skipped - word lists not loaded",
             )
 
         target_level_idx = JLPT_LEVELS.index(target_level)
@@ -238,10 +397,10 @@ class VocabularyValidator:
         words_to_check = set()
         for token in tokens:
             if isinstance(token, dict):
-                word = token.get('baseForm') or token.get('surface', '')
+                word = token.get("baseForm") or token.get("surface", "")
             else:
                 # Handle Token objects
-                word = getattr(token, 'baseForm', None) or getattr(token, 'surface', '')
+                word = getattr(token, "baseForm", None) or getattr(token, "surface", "")
 
             if word and word not in IGNORED_WORDS:
                 words_to_check.add(word)
@@ -263,11 +422,11 @@ class VocabularyValidator:
                 passed=True,
                 readability_score=1.0,
                 target_level=target_level,
-                message="No words to validate"
+                message="No words to validate",
             )
 
         # Categorize words by level
-        words_by_level: Dict[str, List[str]] = {level: [] for level in JLPT_LEVELS}
+        words_by_level: dict[str, list[str]] = {level: [] for level in JLPT_LEVELS}
         words_by_level["unknown"] = []
         words_by_level["katakana"] = []  # Track katakana separately
 
@@ -350,9 +509,13 @@ class VocabularyValidator:
         else:
             issues = []
             if not has_learning_value:
-                issues.append(f"not enough {target_level} words ({target_level_count}/{min_target_threshold})")
+                issues.append(
+                    f"not enough {target_level} words ({target_level_count}/{min_target_threshold})"
+                )
             if not not_too_hard:
-                issues.append(f"too many above-level words ({above_level_count}/{max_above_threshold})")
+                issues.append(
+                    f"too many above-level words ({above_level_count}/{max_above_threshold})"
+                )
             if not not_too_obscure:
                 issues.append(f"too many unknown words ({unknown_count}/{max_unknown_threshold})")
             message = f"Story failed {target_level} validation: {', '.join(issues)}"
@@ -405,7 +568,7 @@ class VocabularyValidator:
 
 
 # Singleton instance
-_validator: Optional[VocabularyValidator] = None
+_validator: VocabularyValidator | None = None
 
 
 def get_validator() -> VocabularyValidator:

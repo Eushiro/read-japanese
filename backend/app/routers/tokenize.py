@@ -1,5 +1,5 @@
 """Tokenization endpoints for story creation"""
-from typing import List
+
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -11,12 +11,14 @@ router = APIRouter()
 
 class TokenizeRequest(BaseModel):
     """Request body for tokenization"""
+
     text: str
 
 
 class TokenizeResponse(BaseModel):
     """Response with tokenized text"""
-    tokens: List[Token]
+
+    tokens: list[Token]
     original: str
 
 
@@ -31,7 +33,4 @@ async def tokenize_text(request: TokenizeRequest):
     service = get_tokenizer_service()
     tokens = service.tokenize_text(request.text)
 
-    return TokenizeResponse(
-        tokens=tokens,
-        original=request.text
-    )
+    return TokenizeResponse(tokens=tokens, original=request.text)

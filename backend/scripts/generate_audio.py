@@ -10,14 +10,11 @@ Environment Variables:
     GEMINI_API_KEY - Your Google AI API key (required)
 """
 
-import os
-import io
 import json
-import wave
-import asyncio
+import os
 import sys
+import wave
 from pathlib import Path
-from typing import Optional
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -37,7 +34,6 @@ except ImportError:
     sys.exit(1)
 
 import subprocess
-import tempfile
 
 # Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_AI_API_KEY")
@@ -55,7 +51,9 @@ NARRATION_PROMPT = "You are a skilled storyteller reading a story aloud. Use nat
 def select_voice() -> str:
     """Select a random voice based on weighted probabilities."""
     import random
+
     return random.choices(VOICES, weights=VOICE_WEIGHTS, k=1)[0]
+
 
 # Paths
 STORIES_DIR = Path(__file__).parent.parent / "app" / "data" / "stories"
@@ -70,7 +68,7 @@ def extract_text_from_tokens(tokens: list) -> str:
 
 def load_story(story_path: Path) -> dict:
     """Load a story JSON file."""
-    with open(story_path, "r", encoding="utf-8") as f:
+    with open(story_path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -100,20 +98,14 @@ def extract_story_text(story_data: dict) -> list[dict]:
             for segment in chapter.get("content", []):
                 text = get_segment_text(segment)
                 if text.strip():
-                    segments.append({
-                        "id": segment["id"],
-                        "text": text
-                    })
+                    segments.append({"id": segment["id"], "text": text})
 
     # Handle non-chapter stories
     elif "content" in story_data:
         for segment in story_data["content"]:
             text = get_segment_text(segment)
             if text.strip():
-                segments.append({
-                    "id": segment["id"],
-                    "text": text
-                })
+                segments.append({"id": segment["id"], "text": text})
 
     return segments
 
@@ -156,7 +148,7 @@ def save_audio(pcm_data: bytes, output_path: Path) -> bool:
         result = subprocess.run(
             ["ffmpeg", "-y", "-i", str(wav_path), "-b:a", "64k", str(output_path)],
             capture_output=True,
-            text=True
+            text=True,
         )
         if result.returncode != 0:
             print(f"  ffmpeg error: {result.stderr}")
@@ -185,7 +177,7 @@ def generate_audio(client: genai.Client, text: str, output_path: Path, voice: st
                         )
                     )
                 ),
-            )
+            ),
         )
 
         # Extract PCM audio data from response
@@ -253,7 +245,7 @@ def generate_story_audio(client: genai.Client, story_id: str) -> bool:
     return False
 
 
-def generate_all_audio(client: genai.Client, level: Optional[str] = None):
+def generate_all_audio(client: genai.Client, level: str | None = None):
     """Generate audio for all stories (optionally filtered by level)."""
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -279,6 +271,7 @@ def generate_all_audio(client: genai.Client, level: Optional[str] = None):
         # Rate limit - wait between requests
         print("  Waiting 1 second before next request...")
         import time
+
         time.sleep(1)
 
 

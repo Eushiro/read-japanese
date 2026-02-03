@@ -4,15 +4,15 @@ Generates cover art and chapter illustrations for Japanese graded reader stories
 
 Images are uploaded directly to R2 storage - no local files are saved.
 """
+
 import base64
 import logging
-from typing import Optional
 
 import httpx
 
 from ...config.models import ModelConfig
+from ..storage import upload_story_chapter_image, upload_story_cover
 from .media import get_image_bytes_as_webp
-from ..storage import upload_story_cover, upload_story_chapter_image
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class ImageGenerator:
         "watercolor": "painted in a delicate watercolor style with soft edges, translucent washes of color, and an ethereal dreamy quality",
         "minimalist": "illustrated in a minimalist Japanese art style with clean precise lines, a limited refined color palette, and elegant simplicity",
         "realistic": "depicted in a realistic digital art style with careful attention to lighting, natural proportions, and cinematic composition",
-        "ghibli": "rendered in the warm, whimsical style of Studio Ghibli with rich detailed backgrounds, expressive characters, and a sense of wonder"
+        "ghibli": "rendered in the warm, whimsical style of Studio Ghibli with rich detailed backgrounds, expressive characters, and a sense of wonder",
     }
 
     def __init__(self):
@@ -40,10 +40,8 @@ class ImageGenerator:
         return bool(self.api_key)
 
     async def _call_openrouter_image(
-        self,
-        prompt: str,
-        reference_image: Optional[bytes] = None
-    ) -> Optional[bytes]:
+        self, prompt: str, reference_image: bytes | None = None
+    ) -> bytes | None:
         """
         Call OpenRouter API to generate an image.
 
@@ -58,7 +56,7 @@ class ImageGenerator:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
             "HTTP-Referer": "https://read-japanese.onrender.com",
-            "X-Title": "Read Japanese"
+            "X-Title": "Read Japanese",
         }
 
         # Build messages with optional reference image
@@ -67,41 +65,36 @@ class ImageGenerator:
         if reference_image:
             # Add reference image as a user message with image
             ref_b64 = base64.b64encode(reference_image).decode()
-            messages.append({
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{ref_b64}"
-                        }
-                    },
-                    {
-                        "type": "text",
-                        "text": "Use this image as a style reference. Maintain the same artistic style, color palette, and character appearances."
-                    }
-                ]
-            })
+            messages.append(
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/png;base64,{ref_b64}"},
+                        },
+                        {
+                            "type": "text",
+                            "text": "Use this image as a style reference. Maintain the same artistic style, color palette, and character appearances.",
+                        },
+                    ],
+                }
+            )
 
         # Add the main prompt
-        messages.append({
-            "role": "user",
-            "content": prompt
-        })
+        messages.append({"role": "user", "content": prompt})
 
         payload = {
             "model": self.model,
             "messages": messages,
             "modalities": ["image"],  # Request image output
-            "max_tokens": 4096
+            "max_tokens": 4096,
         }
 
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
-                    f"{self.base_url}/chat/completions",
-                    headers=headers,
-                    json=payload
+                    f"{self.base_url}/chat/completions", headers=headers, json=payload
                 )
                 response.raise_for_status()
                 result = response.json()
@@ -145,16 +138,16 @@ class ImageGenerator:
     async def generate_from_description(
         self,
         description: str,
-        visual_tags: Optional[str] = None,
-        character_descriptions: Optional[dict] = None,
-        color_palette: Optional[str] = None,
+        visual_tags: str | None = None,
+        character_descriptions: dict | None = None,
+        color_palette: str | None = None,
         style: str = "anime",
         aspect_ratio: str = "16:9",
-        reference_image: Optional[bytes] = None,
-        story_id: Optional[str] = None,
+        reference_image: bytes | None = None,
+        story_id: str | None = None,
         language: str = "japanese",
-        chapter_num: Optional[int] = None,
-    ) -> Optional[dict]:
+        chapter_num: int | None = None,
+    ) -> dict | None:
         """
         Generate an image from a synthesized description with optional reference.
         Uploads directly to R2 - no local files saved.
@@ -186,7 +179,9 @@ class ImageGenerator:
         # Build character context as narrative
         char_narrative = ""
         if character_descriptions:
-            char_parts = [f"{name} appears as {desc}" for name, desc in character_descriptions.items()]
+            char_parts = [
+                f"{name} appears as {desc}" for name, desc in character_descriptions.items()
+            ]
             char_narrative = f"\n\nThe characters are: {'; '.join(char_parts)}."
 
         # Add visual tags if provided
@@ -198,7 +193,7 @@ class ImageGenerator:
 
 Scene: {description}{char_narrative}{visual_context}
 
-The overall color mood is {color_palette or 'warm and inviting'}. The image is {style_narrative}.
+The overall color mood is {color_palette or "warm and inviting"}. The image is {style_narrative}.
 
 The composition should feel like a key moment from a storybook, with careful attention to atmosphere and emotional resonance. No text, letters, or writing should appear in the image.
 
@@ -225,7 +220,7 @@ Aspect ratio: {aspect_ratio}"""
                 "url": url,
                 "model": self.model,
                 "model_name": "Gemini Image (OpenRouter)",
-                "image_bytes": image_bytes
+                "image_bytes": image_bytes,
             }
 
         return None
@@ -238,9 +233,9 @@ Aspect ratio: {aspect_ratio}"""
         jlpt_level: str,
         style: str = "anime",
         aspect_ratio: str = "4:5",
-        story_id: Optional[str] = None,
+        story_id: str | None = None,
         language: str = "japanese",
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """
         Generate a cover image for a story (legacy method).
         Uploads directly to R2 if story_id provided.
@@ -280,7 +275,7 @@ Aspect ratio: {aspect_ratio}"""
                 "url": url,
                 "model": self.model,
                 "model_name": "Gemini Image (OpenRouter)",
-                "image_bytes": image_bytes
+                "image_bytes": image_bytes,
             }
 
         return None
@@ -293,10 +288,10 @@ Aspect ratio: {aspect_ratio}"""
         genre: str,
         style: str = "anime",
         aspect_ratio: str = "16:9",
-        story_id: Optional[str] = None,
+        story_id: str | None = None,
         language: str = "japanese",
         chapter_num: int = 1,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """
         Generate an illustration for a story chapter (legacy method).
         Uploads directly to R2 if story_id provided.
@@ -336,8 +331,7 @@ Aspect ratio: {aspect_ratio}"""
                 "url": url,
                 "model": self.model,
                 "model_name": "Gemini Image (OpenRouter)",
-                "image_bytes": image_bytes
+                "image_bytes": image_bytes,
             }
 
         return None
-

@@ -68,9 +68,10 @@ def check_file(path: Path) -> list[str]:
         # Check 2: Creating WAV files without using compress_audio_to_mp3
         if re.search(r'["\'].*\.wav["\']', line, re.IGNORECASE):
             # Allow reading WAV (input), flag writing WAV (output)
-            if any(write_pattern in line.lower() for write_pattern in [
-                "open(", "write", "save", "export", "output"
-            ]):
+            if any(
+                write_pattern in line.lower()
+                for write_pattern in ["open(", "write", "save", "export", "output"]
+            ):
                 if "compress_audio_to_mp3" not in content:
                     violations.append(
                         f"{path}:{line_num}: Writing WAV file. "
@@ -82,7 +83,11 @@ def check_file(path: Path) -> list[str]:
         # Skip Literal type definitions (they're a known pattern for type safety)
         is_literal_type = "Literal[" in line or "Literal [" in line
 
-        if re.search(r'\[\s*["\']japanese["\']\s*,\s*["\']english["\']\s*,\s*["\']french["\']\s*\]', line, re.IGNORECASE):
+        if re.search(
+            r'\[\s*["\']japanese["\']\s*,\s*["\']english["\']\s*,\s*["\']french["\']\s*\]',
+            line,
+            re.IGNORECASE,
+        ):
             if is_literal_type:
                 # Literal types are OK for now - they need the actual values
                 # TODO: Consider exporting SupportedLanguage from languages.py

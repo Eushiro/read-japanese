@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Run the Japanese Reader API server"""
+
 import os
-import uvicorn
 from pathlib import Path
+
+import uvicorn
 from dotenv import load_dotenv
 
 # Load environment variables from web/.env.local (shared with frontend)
@@ -29,5 +31,5 @@ if __name__ == "__main__":
         port=port,
         reload=reload,
         workers=workers if not reload else 1,
-        log_level=os.getenv("LOG_LEVEL", "info").lower()
+        log_level=os.getenv("LOG_LEVEL", "info").lower(),
     )

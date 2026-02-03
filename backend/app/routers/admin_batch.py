@@ -5,13 +5,13 @@ Endpoints for triggering content generation from the admin UI.
 Generates sentences, audio, and images for vocabulary decks.
 """
 
-import os
-import logging
 import asyncio
-import httpx
 import json
-from typing import Optional, Literal
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+import logging
+import os
+
+import httpx
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/admin", tags=["Admin Batch"])
 # Configuration
 CONVEX_URL = os.getenv("VITE_CONVEX_URL") or os.getenv("CONVEX_URL")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
 
 # Track active jobs
 active_jobs: dict[str, dict] = {}
@@ -30,13 +30,13 @@ active_jobs: dict[str, dict] = {}
 class GenerateRequest(BaseModel):
     deckId: str
     count: int = 50
-    model: Optional[str] = None
+    model: str | None = None
 
 
 class GenerateResponse(BaseModel):
     success: bool
     message: str
-    jobId: Optional[str] = None
+    jobId: str | None = None
     itemsQueued: int = 0
 
 
@@ -118,7 +118,9 @@ async def call_convex_mutation(function_name: str, args: dict) -> dict:
         return result
 
 
-def build_sentence_prompt(word: str, reading: Optional[str], definitions: list[str], language: str, level: str) -> str:
+def build_sentence_prompt(
+    word: str, reading: str | None, definitions: list[str], language: str, level: str
+) -> str:
     """Build prompt for sentence generation"""
     lang_names = {"japanese": "Japanese", "english": "English", "french": "French"}
     lang_name = lang_names.get(language, "English")
@@ -196,7 +198,7 @@ async def process_sentences_batch(deck_id: str, count: int, model: str, job_id: 
         # Get pending items from Convex
         items = await call_convex_query(
             "premadeDecks:getVocabularyForDeck",
-            {"deckId": deck_id, "limit": count, "status": "pending"}
+            {"deckId": deck_id, "limit": count, "status": "pending"},
         )
 
         if not items:
@@ -227,7 +229,7 @@ async def process_sentences_batch(deck_id: str, count: int, model: str, job_id: 
                             "sentence": result["sentence"],
                             "sentenceTranslation": result["translation"],
                             "generationStatus": "complete",
-                        }
+                        },
                     )
                     active_jobs[job_id]["processed"] = i + 1
                 else:
@@ -239,7 +241,7 @@ async def process_sentences_batch(deck_id: str, count: int, model: str, job_id: 
                             "deckId": deck_id,
                             "word": item["word"],
                             "generationStatus": "failed",
-                        }
+                        },
                     )
 
                 # Small delay to avoid rate limits

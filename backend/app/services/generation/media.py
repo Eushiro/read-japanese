@@ -15,7 +15,6 @@ import subprocess
 import tempfile
 import wave
 from pathlib import Path
-from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +22,7 @@ logger = logging.getLogger(__name__)
 # ============================================
 # AUDIO COMPRESSION
 # ============================================
+
 
 def compress_audio_to_mp3(
     pcm_data: bytes,
@@ -83,7 +83,7 @@ def compress_audio_to_mp3(
         final_size = output_path.stat().st_size
         savings = (1 - final_size / original_size) * 100
         logger.info(
-            f"Audio compressed: {original_size/1024:.1f}KB -> {final_size/1024:.1f}KB ({savings:.0f}% savings)"
+            f"Audio compressed: {original_size / 1024:.1f}KB -> {final_size / 1024:.1f}KB ({savings:.0f}% savings)"
         )
 
         return output_path
@@ -126,11 +126,12 @@ def get_audio_bytes_as_mp3(
 # IMAGE COMPRESSION
 # ============================================
 
+
 def compress_image_to_webp(
     image_data: bytes,
     output_path: Path,
     quality: int = 85,
-    max_size: Optional[int] = 800,
+    max_size: int | None = 800,
 ) -> Path:
     """
     Compress an image to WebP format.
@@ -175,7 +176,7 @@ def compress_image_to_webp(
     final_size = output_path.stat().st_size
     savings = (1 - final_size / original_size) * 100
     logger.info(
-        f"Image compressed: {original_size/1024:.1f}KB -> {final_size/1024:.1f}KB ({savings:.0f}% savings)"
+        f"Image compressed: {original_size / 1024:.1f}KB -> {final_size / 1024:.1f}KB ({savings:.0f}% savings)"
     )
 
     return output_path
@@ -184,7 +185,7 @@ def compress_image_to_webp(
 def get_image_bytes_as_webp(
     image_data: bytes,
     quality: int = 85,
-    max_size: Optional[int] = 800,
+    max_size: int | None = 800,
 ) -> bytes:
     """
     Compress an image to WebP and return as bytes.
@@ -221,8 +222,8 @@ def save_with_original(
     output_dir: Path,
     filename_base: str,
     quality: int = 85,
-    max_size: Optional[int] = 800,
-) -> Tuple[Path, Path]:
+    max_size: int | None = 800,
+) -> tuple[Path, Path]:
     """
     Save both original PNG and optimized WebP versions of an image.
 

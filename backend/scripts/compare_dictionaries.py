@@ -4,8 +4,10 @@ Compare different MeCab dictionaries for Japanese tokenization quality.
 
 Tests: ipadic, unidic-lite, unidic (full)
 """
+
 import sys
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
 
 import fugashi
 
@@ -53,7 +55,7 @@ def get_reading(tagger, word, dict_type):
     feature = tokens[0].feature
 
     if dict_type == "ipadic":
-        if len(feature) > 7 and feature[7] != '*':
+        if len(feature) > 7 and feature[7] != "*":
             reading = feature[7]
             # Convert katakana to hiragana
             return katakana_to_hiragana(reading)
@@ -61,7 +63,7 @@ def get_reading(tagger, word, dict_type):
         # UniDic stores reading differently
         # Try common positions
         for idx in [6, 7, 8, 9, 10]:
-            if len(feature) > idx and feature[idx] and feature[idx] != '*':
+            if len(feature) > idx and feature[idx] and feature[idx] != "*":
                 reading = feature[idx]
                 if is_japanese(reading):
                     return katakana_to_hiragana(reading)
@@ -79,7 +81,7 @@ def katakana_to_hiragana(text):
             result.append(chr(code - 0x60))
         else:
             result.append(char)
-    return ''.join(result)
+    return "".join(result)
 
 
 def is_japanese(text):
@@ -101,9 +103,9 @@ def is_single_token(tagger, word):
 
 def test_dictionary(name, tagger, dict_type):
     """Test a dictionary and return results."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Testing: {name}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     results = {
         "common_readings": {"passed": 0, "total": 0, "details": []},
@@ -122,9 +124,9 @@ def test_dictionary(name, tagger, dict_type):
             print(f"  ✓ {word} = {actual}")
         else:
             print(f"  ✗ {word}: expected={expected}, got={actual}")
-        results["common_readings"]["details"].append({
-            "word": word, "expected": expected, "actual": actual, "passed": passed
-        })
+        results["common_readings"]["details"].append(
+            {"word": word, "expected": expected, "actual": actual, "passed": passed}
+        )
 
     # Test yojijukugo
     print("\nYojijukugo (should be single token):")
@@ -136,9 +138,9 @@ def test_dictionary(name, tagger, dict_type):
             print(f"  ✓ {word}")
         else:
             print(f"  ✗ {word} -> {tokens}")
-        results["yojijukugo"]["details"].append({
-            "word": word, "is_single": single, "tokens": tokens
-        })
+        results["yojijukugo"]["details"].append(
+            {"word": word, "is_single": single, "tokens": tokens}
+        )
 
     # Test katakana
     print("\nKatakana Compounds:")
@@ -150,19 +152,19 @@ def test_dictionary(name, tagger, dict_type):
             print(f"  ✓ {word}")
         else:
             print(f"  ✗ {word} -> {tokens}")
-        results["katakana"]["details"].append({
-            "word": word, "is_single": single, "tokens": tokens
-        })
+        results["katakana"]["details"].append({"word": word, "is_single": single, "tokens": tokens})
 
     # Summary
     total_passed = sum(r["passed"] for r in results.values())
     total_tests = sum(r["total"] for r in results.values())
 
     print(f"\n--- Summary for {name} ---")
-    print(f"Common Readings: {results['common_readings']['passed']}/{results['common_readings']['total']}")
+    print(
+        f"Common Readings: {results['common_readings']['passed']}/{results['common_readings']['total']}"
+    )
     print(f"Yojijukugo: {results['yojijukugo']['passed']}/{results['yojijukugo']['total']}")
     print(f"Katakana: {results['katakana']['passed']}/{results['katakana']['total']}")
-    print(f"TOTAL: {total_passed}/{total_tests} ({total_passed/total_tests*100:.1f}%)")
+    print(f"TOTAL: {total_passed}/{total_tests} ({total_passed / total_tests * 100:.1f}%)")
 
     return results, total_passed, total_tests
 
@@ -173,6 +175,7 @@ def main():
     # Test IPADIC
     try:
         import ipadic
+
         tagger = fugashi.GenericTagger(ipadic.MECAB_ARGS)
         results, passed, total = test_dictionary("fugashi + ipadic", tagger, "ipadic")
         all_results["ipadic"] = (passed, total)
@@ -182,6 +185,7 @@ def main():
     # Test UniDic-lite
     try:
         import unidic_lite
+
         # Create mecabrc arg
         mecabrc = f'-r /dev/null -d "{unidic_lite.DICDIR}"'
         tagger = fugashi.GenericTagger(mecabrc)
@@ -193,6 +197,7 @@ def main():
     # Test UniDic (full)
     try:
         import unidic
+
         if unidic.DICDIR:
             # Create mecabrc arg
             mecabrc = f'-r /dev/null -d "{unidic.DICDIR}"'
@@ -203,12 +208,12 @@ def main():
         print(f"UniDic error: {e}")
 
     # Final comparison
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("FINAL COMPARISON")
-    print("="*60)
+    print("=" * 60)
 
     for name, (passed, total) in sorted(all_results.items(), key=lambda x: -x[1][0]):
-        pct = passed/total*100
+        pct = passed / total * 100
         print(f"{name:20} {passed:2}/{total} ({pct:5.1f}%)")
 
 

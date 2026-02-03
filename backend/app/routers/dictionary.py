@@ -3,11 +3,12 @@
 Uses in-memory cache of top 15k words per language for fast autocomplete.
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
-from typing import Literal
 import sqlite3
 from pathlib import Path
+from typing import Literal
+
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -38,6 +39,7 @@ def get_jamdict():
     if _jamdict_instance is None:
         try:
             from jamdict import Jamdict
+
             _jamdict_instance = Jamdict()
         except Exception as e:
             print(f"Failed to initialize jamdict: {e}")
@@ -49,6 +51,7 @@ def convert_romaji_to_hiragana(text: str) -> str:
     """Convert romaji to hiragana using wanakana-python library."""
     try:
         import wanakana
+
         if wanakana.is_romaji(text):
             return wanakana.to_hiragana(text)
         return text
@@ -60,6 +63,7 @@ def is_romaji(text: str) -> bool:
     """Check if text appears to be romaji."""
     try:
         import wanakana
+
         return wanakana.is_romaji(text)
     except Exception:
         return all(c.isascii() and (c.isalpha() or c in "'-") for c in text) and len(text) > 0
@@ -95,7 +99,8 @@ def load_english_cache() -> list[dict]:
         cursor = conn.cursor()
 
         # Get top words by frequency, with definitions
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT f.form,
                    GROUP_CONCAT(d.definition, '|||'),
                    GROUP_CONCAT(e.pos, ','),
@@ -112,9 +117,11 @@ def load_english_cache() -> list[dict]:
             GROUP BY f.form
             ORDER BY freq DESC, LENGTH(f.form)
             LIMIT ?
-        """, (CACHE_SIZE,))
+        """,
+            (CACHE_SIZE,),
+        )
 
-        pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
+        pos_map = {"n": "noun", "v": "verb", "a": "adjective", "s": "adjective", "r": "adverb"}
         _english_cache = []
 
         for row in cursor.fetchall():
@@ -122,16 +129,18 @@ def load_english_cache() -> list[dict]:
             if not definitions_str:
                 continue
 
-            meanings = definitions_str.split('|||')[:2]
-            pos_tags = set(pos_str.split(',')) if pos_str else set()
+            meanings = definitions_str.split("|||")[:2]
+            pos_tags = set(pos_str.split(",")) if pos_str else set()
             pos = ", ".join(pos_map.get(p, p) for p in pos_tags if p and p in pos_map)
 
-            _english_cache.append({
-                'word': word,
-                'word_lower': word.lower(),
-                'meanings': meanings,
-                'pos': pos if pos else None,
-            })
+            _english_cache.append(
+                {
+                    "word": word,
+                    "word_lower": word.lower(),
+                    "meanings": meanings,
+                    "pos": pos if pos else None,
+                }
+            )
 
         conn.close()
         print(f"Loaded {len(_english_cache)} English words into cache")
@@ -159,7 +168,8 @@ def load_french_cache() -> list[dict]:
         cursor = conn.cursor()
 
         # Get top French words by frequency, with English definitions via ILI
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT f.form,
                    GROUP_CONCAT(en_d.definition, '|||'),
                    GROUP_CONCAT(e.pos, ','),
@@ -181,9 +191,11 @@ def load_french_cache() -> list[dict]:
             HAVING GROUP_CONCAT(en_d.definition, '|||') IS NOT NULL
             ORDER BY freq DESC, LENGTH(f.form)
             LIMIT ?
-        """, (CACHE_SIZE,))
+        """,
+            (CACHE_SIZE,),
+        )
 
-        pos_map = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 's': 'adjective', 'r': 'adverb'}
+        pos_map = {"n": "noun", "v": "verb", "a": "adjective", "s": "adjective", "r": "adverb"}
         _french_cache = []
 
         for row in cursor.fetchall():
@@ -191,19 +203,21 @@ def load_french_cache() -> list[dict]:
             if not definitions_str:
                 continue
 
-            meanings = [m for m in definitions_str.split('|||')[:2] if m]
+            meanings = [m for m in definitions_str.split("|||")[:2] if m]
             if not meanings:
                 continue
 
-            pos_tags = set(pos_str.split(',')) if pos_str else set()
+            pos_tags = set(pos_str.split(",")) if pos_str else set()
             pos = ", ".join(pos_map.get(p, p) for p in pos_tags if p and p in pos_map)
 
-            _french_cache.append({
-                'word': word,
-                'word_lower': word.lower(),
-                'meanings': meanings,
-                'pos': pos if pos else None,
-            })
+            _french_cache.append(
+                {
+                    "word": word,
+                    "word_lower": word.lower(),
+                    "meanings": meanings,
+                    "pos": pos if pos else None,
+                }
+            )
 
         conn.close()
         print(f"Loaded {len(_french_cache)} French words into cache")
@@ -222,13 +236,15 @@ def search_english_memory(query: str, limit: int) -> list[DictionaryEntry]:
 
     results = []
     for item in cache:
-        if item['word_lower'].startswith(query_lower):
-            results.append(DictionaryEntry(
-                word=item['word'],
-                reading="",
-                meanings=item['meanings'],
-                partOfSpeech=item['pos'],
-            ))
+        if item["word_lower"].startswith(query_lower):
+            results.append(
+                DictionaryEntry(
+                    word=item["word"],
+                    reading="",
+                    meanings=item["meanings"],
+                    partOfSpeech=item["pos"],
+                )
+            )
             if len(results) >= limit:
                 break
 
@@ -242,13 +258,15 @@ def search_french_memory(query: str, limit: int) -> list[DictionaryEntry]:
 
     results = []
     for item in cache:
-        if item['word_lower'].startswith(query_lower):
-            results.append(DictionaryEntry(
-                word=item['word'],
-                reading="",
-                meanings=item['meanings'],
-                partOfSpeech=item['pos'],
-            ))
+        if item["word_lower"].startswith(query_lower):
+            results.append(
+                DictionaryEntry(
+                    word=item["word"],
+                    reading="",
+                    meanings=item["meanings"],
+                    partOfSpeech=item["pos"],
+                )
+            )
             if len(results) >= limit:
                 break
 
@@ -288,12 +306,16 @@ def lookup_japanese_exact(word: str) -> list[DictionaryEntry]:
                     parts_of_speech.update(sense.pos)
 
             if meanings:
-                entries.append(DictionaryEntry(
-                    word=word_text,
-                    reading=reading,
-                    meanings=meanings,
-                    partOfSpeech=", ".join(list(parts_of_speech)[:2]) if parts_of_speech else None,
-                ))
+                entries.append(
+                    DictionaryEntry(
+                        word=word_text,
+                        reading=reading,
+                        meanings=meanings,
+                        partOfSpeech=", ".join(list(parts_of_speech)[:2])
+                        if parts_of_speech
+                        else None,
+                    )
+                )
 
         return entries
 
@@ -351,12 +373,16 @@ def search_japanese(query: str, limit: int) -> list[DictionaryEntry]:
                     parts_of_speech.update(sense.pos)
 
             if meanings:
-                entries.append(DictionaryEntry(
-                    word=word_text,
-                    reading=reading,
-                    meanings=meanings,
-                    partOfSpeech=", ".join(list(parts_of_speech)[:2]) if parts_of_speech else None,
-                ))
+                entries.append(
+                    DictionaryEntry(
+                        word=word_text,
+                        reading=reading,
+                        meanings=meanings,
+                        partOfSpeech=", ".join(list(parts_of_speech)[:2])
+                        if parts_of_speech
+                        else None,
+                    )
+                )
 
         return entries
 
@@ -371,13 +397,15 @@ def lookup_english_exact(word: str) -> list[DictionaryEntry]:
     word_lower = word.lower()
 
     for item in cache:
-        if item['word_lower'] == word_lower:
-            return [DictionaryEntry(
-                word=item['word'],
-                reading="",
-                meanings=item['meanings'],
-                partOfSpeech=item['pos'],
-            )]
+        if item["word_lower"] == word_lower:
+            return [
+                DictionaryEntry(
+                    word=item["word"],
+                    reading="",
+                    meanings=item["meanings"],
+                    partOfSpeech=item["pos"],
+                )
+            ]
 
     return []
 
@@ -388,13 +416,15 @@ def lookup_french_exact(word: str) -> list[DictionaryEntry]:
     word_lower = word.lower()
 
     for item in cache:
-        if item['word_lower'] == word_lower:
-            return [DictionaryEntry(
-                word=item['word'],
-                reading="",
-                meanings=item['meanings'],
-                partOfSpeech=item['pos'],
-            )]
+        if item["word_lower"] == word_lower:
+            return [
+                DictionaryEntry(
+                    word=item["word"],
+                    reading="",
+                    meanings=item["meanings"],
+                    partOfSpeech=item["pos"],
+                )
+            ]
 
     return []
 
@@ -418,7 +448,7 @@ async def lookup_word(
         return DictionaryResponse(entries=entries)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Dictionary lookup failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Dictionary lookup failed: {str(e)}") from e
 
 
 @router.get("/dictionary/search/{query}", response_model=DictionaryResponse)
@@ -441,7 +471,7 @@ async def search_dictionary(
         return DictionaryResponse(entries=entries)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Dictionary search failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Dictionary search failed: {str(e)}") from e
 
 
 # Preload caches on module import (optional - can be triggered on first request instead)

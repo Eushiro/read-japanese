@@ -7,6 +7,7 @@ Usage:
     python scripts/generate_story_images.py app/data/stories/n5_my_day_at_school.json
     python scripts/generate_story_images.py app/data/stories/n5_my_day_at_school.json --style ghibli
 """
+
 import argparse
 import asyncio
 import json
@@ -18,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Load environment variables from web/.env.local (shared with frontend)
 from dotenv import load_dotenv
+
 env_path = Path(__file__).parent.parent.parent / "web" / ".env.local"
 load_dotenv(env_path)
 
@@ -48,7 +50,9 @@ def extract_chapter_description(chapter: dict) -> str:
     return full_text or chapter.get("title", "")
 
 
-async def generate_images(story_path: str, style: str = "anime", skip_cover: bool = False, skip_chapters: bool = False):
+async def generate_images(
+    story_path: str, style: str = "anime", skip_cover: bool = False, skip_chapters: bool = False
+):
     """Generate all images for a story"""
 
     story_file = Path(story_path)
@@ -57,11 +61,11 @@ async def generate_images(story_path: str, style: str = "anime", skip_cover: boo
         return
 
     # Load the story
-    with open(story_file, "r", encoding="utf-8") as f:
+    with open(story_file, encoding="utf-8") as f:
         story = json.load(f)
 
     print(f"Loaded story: {story['metadata']['title']}")
-    if story['metadata'].get('titleJapanese'):
+    if story["metadata"].get("titleJapanese"):
         print(f"Japanese title: {story['metadata']['titleJapanese']}")
     print(f"Style: {style}")
     print()
@@ -90,7 +94,7 @@ async def generate_images(story_path: str, style: str = "anime", skip_cover: boo
             genre=story["metadata"].get("genre", "general"),
             jlpt_level=story["metadata"].get("jlptLevel", "N5"),
             style=style,
-            aspect_ratio="4:5"
+            aspect_ratio="4:5",
         )
 
         if cover_result:
@@ -107,7 +111,7 @@ async def generate_images(story_path: str, style: str = "anime", skip_cover: boo
     # Generate chapter images (16:9 landscape)
     if not skip_chapters and story.get("chapters"):
         for i, chapter in enumerate(story["chapters"]):
-            chapter_title = chapter.get("titleJapanese") or chapter.get("title", f"Chapter {i+1}")
+            chapter_title = chapter.get("titleJapanese") or chapter.get("title", f"Chapter {i + 1}")
 
             print("=" * 50)
             print(f"Generating image for: {chapter_title}")
@@ -122,7 +126,7 @@ async def generate_images(story_path: str, style: str = "anime", skip_cover: boo
                 story_title=story["metadata"]["title"],
                 genre=story["metadata"].get("genre", "general"),
                 style=style,
-                aspect_ratio="16:9"
+                aspect_ratio="16:9",
             )
 
             if chapter_result:
@@ -155,20 +159,27 @@ async def generate_images(story_path: str, style: str = "anime", skip_cover: boo
 def main():
     parser = argparse.ArgumentParser(description="Generate AI images for a story")
     parser.add_argument("story_file", help="Path to the story JSON file")
-    parser.add_argument("--style", default="anime",
-                       choices=["anime", "watercolor", "minimalist", "realistic", "ghibli"],
-                       help="Art style for images (default: anime)")
+    parser.add_argument(
+        "--style",
+        default="anime",
+        choices=["anime", "watercolor", "minimalist", "realistic", "ghibli"],
+        help="Art style for images (default: anime)",
+    )
     parser.add_argument("--skip-cover", action="store_true", help="Skip cover image generation")
-    parser.add_argument("--skip-chapters", action="store_true", help="Skip chapter image generation")
+    parser.add_argument(
+        "--skip-chapters", action="store_true", help="Skip chapter image generation"
+    )
 
     args = parser.parse_args()
 
-    asyncio.run(generate_images(
-        args.story_file,
-        style=args.style,
-        skip_cover=args.skip_cover,
-        skip_chapters=args.skip_chapters
-    ))
+    asyncio.run(
+        generate_images(
+            args.story_file,
+            style=args.style,
+            skip_cover=args.skip_cover,
+            skip_chapters=args.skip_chapters,
+        )
+    )
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 """Story endpoints"""
-from typing import List, Optional
+
 from fastapi import APIRouter, HTTPException, Query
 
 from app.models.story import Story, StoryListItem
@@ -8,9 +8,9 @@ from app.services.story_service import get_story_service
 router = APIRouter()
 
 
-@router.get("/stories", response_model=List[StoryListItem])
+@router.get("/stories", response_model=list[StoryListItem])
 async def list_stories(
-    level: Optional[str] = Query(None, description="Filter by JLPT level (N5, N4, N3, N2, N1)")
+    level: str | None = Query(None, description="Filter by JLPT level (N5, N4, N3, N2, N1)"),
 ):
     """
     Get list of all available stories.

@@ -4,13 +4,13 @@ Admin Stories Router
 Endpoints for story generation, content analysis, and AI suggestions from the admin UI.
 """
 
-import os
-import logging
 import asyncio
-from typing import Optional, Literal
-from pathlib import Path
+import logging
 from collections import defaultdict
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from pathlib import Path
+from typing import Literal
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
 from app.services.generation.story_generator import StoryGenerator
@@ -29,6 +29,7 @@ Language = Literal["japanese", "english", "french"]
 
 class GenerateStoryRequest(BaseModel):
     """Request body for story generation."""
+
     language: Language = "japanese"
     level: str  # JLPT (N5-N1) or CEFR (A1-C2)
     genre: str = "slice of life"
@@ -42,14 +43,16 @@ class GenerateStoryRequest(BaseModel):
 
 class GenerateStoryResponse(BaseModel):
     """Response for story generation request."""
+
     success: bool
     message: str
-    job_id: Optional[str] = None
-    story_id: Optional[str] = None
+    job_id: str | None = None
+    story_id: str | None = None
 
 
 class TopologyResponse(BaseModel):
     """Response for content topology."""
+
     total_stories: int
     by_language: dict[str, int]
     by_level: dict[str, int]
@@ -59,6 +62,7 @@ class TopologyResponse(BaseModel):
 
 class SuggestionRequest(BaseModel):
     """Request for AI story suggestions."""
+
     language: Language = "japanese"
     level: str = "N4"
     count: int = 5
@@ -66,6 +70,7 @@ class SuggestionRequest(BaseModel):
 
 class StorySuggestion(BaseModel):
     """A single story suggestion."""
+
     prompt: str
     genre: str
     reason: str
@@ -74,6 +79,7 @@ class StorySuggestion(BaseModel):
 
 class SuggestionsResponse(BaseModel):
     """Response for AI suggestions."""
+
     suggestions: list[StorySuggestion]
 
 
@@ -113,6 +119,7 @@ async def generate_story_task(
         stories_dir.mkdir(parents=True, exist_ok=True)
 
         import json
+
         story_path = stories_dir / f"{story['id']}.json"
         with open(story_path, "w", encoding="utf-8") as f:
             json.dump(story, f, ensure_ascii=False, indent=2)
@@ -148,8 +155,7 @@ async def generate_story(request: GenerateStoryRequest, background_tasks: Backgr
     """
     if not request.detailed_prompt or len(request.detailed_prompt.strip()) < 10:
         raise HTTPException(
-            status_code=400,
-            detail="detailed_prompt must be at least 10 characters"
+            status_code=400, detail="detailed_prompt must be at least 10 characters"
         )
 
     # Create job ID
@@ -237,8 +243,14 @@ async def get_story_topology():
 
     # Expected genres
     expected_genres = [
-        "slice of life", "mystery", "adventure", "romance",
-        "comedy", "fantasy", "school life", "travel"
+        "slice of life",
+        "mystery",
+        "adventure",
+        "romance",
+        "comedy",
+        "fantasy",
+        "school life",
+        "travel",
     ]
 
     # Check level gaps for each language
@@ -246,26 +258,30 @@ async def get_story_topology():
         for level in levels:
             count = by_level.get(level, 0)
             if count < 3:  # Want at least 3 stories per level
-                gaps.append({
-                    "type": "level",
-                    "language": lang,
-                    "value": level,
-                    "current": count,
-                    "suggested": 5,
-                    "severity": "high" if count == 0 else "medium",
-                })
+                gaps.append(
+                    {
+                        "type": "level",
+                        "language": lang,
+                        "value": level,
+                        "current": count,
+                        "suggested": 5,
+                        "severity": "high" if count == 0 else "medium",
+                    }
+                )
 
     # Check genre gaps
     for genre in expected_genres:
         count = by_genre.get(genre, 0)
         if count < 2:
-            gaps.append({
-                "type": "genre",
-                "value": genre,
-                "current": count,
-                "suggested": 3,
-                "severity": "low" if count > 0 else "medium",
-            })
+            gaps.append(
+                {
+                    "type": "genre",
+                    "value": genre,
+                    "current": count,
+                    "suggested": 3,
+                    "severity": "low" if count > 0 else "medium",
+                }
+            )
 
     # Sort gaps by severity
     severity_order = {"high": 0, "medium": 1, "low": 2}
@@ -296,8 +312,7 @@ async def get_story_suggestions(
     # Get current topology to identify gaps
     topology = await get_story_topology()
     relevant_gaps = [
-        g for g in topology.gaps
-        if g.get("language") == language or g.get("type") == "genre"
+        g for g in topology.gaps if g.get("language") == language or g.get("type") == "genre"
     ]
 
     # Build prompt for AI
@@ -306,10 +321,12 @@ async def get_story_suggestions(
     language_name = {"japanese": "Japanese", "english": "English", "french": "French"}[language]
     level_system = "JLPT" if language == "japanese" else "CEFR"
 
-    gaps_text = "\n".join([
-        f"- {g['type']}: {g.get('value', 'unknown')} (current: {g['current']}, need: {g['suggested']})"
-        for g in relevant_gaps[:5]
-    ])
+    gaps_text = "\n".join(
+        [
+            f"- {g['type']}: {g.get('value', 'unknown')} (current: {g['current']}, need: {g['suggested']})"
+            for g in relevant_gaps[:5]
+        ]
+    )
 
     prompt = f"""Generate {count} story prompt suggestions for a {language_name} language learning platform.
 
@@ -354,32 +371,36 @@ Output as JSON:
 
         suggestions = []
         for s in result.get("suggestions", [])[:count]:
-            suggestions.append(StorySuggestion(
-                prompt=s.get("prompt", ""),
-                genre=s.get("genre", "slice of life"),
-                reason=s.get("reason", ""),
-                vocabulary_themes=s.get("vocabulary_themes", []),
-            ))
+            suggestions.append(
+                StorySuggestion(
+                    prompt=s.get("prompt", ""),
+                    genre=s.get("genre", "slice of life"),
+                    reason=s.get("reason", ""),
+                    vocabulary_themes=s.get("vocabulary_themes", []),
+                )
+            )
 
         return SuggestionsResponse(suggestions=suggestions)
 
     except Exception as e:
         logger.error(f"Failed to generate suggestions: {e}")
         # Return fallback suggestions
-        return SuggestionsResponse(suggestions=[
-            StorySuggestion(
-                prompt=f"A {level} learner discovers a hidden cafe in their neighborhood and befriends the owner.",
-                genre="slice of life",
-                reason="Classic language learning scenario with everyday vocabulary",
-                vocabulary_themes=["food", "conversation", "neighborhood"],
-            ),
-            StorySuggestion(
-                prompt=f"A mystery unfolds at a local library when books start disappearing.",
-                genre="mystery",
-                reason="Engaging plot with academic vocabulary",
-                vocabulary_themes=["books", "investigation", "buildings"],
-            ),
-        ])
+        return SuggestionsResponse(
+            suggestions=[
+                StorySuggestion(
+                    prompt=f"A {level} learner discovers a hidden cafe in their neighborhood and befriends the owner.",
+                    genre="slice of life",
+                    reason="Classic language learning scenario with everyday vocabulary",
+                    vocabulary_themes=["food", "conversation", "neighborhood"],
+                ),
+                StorySuggestion(
+                    prompt="A mystery unfolds at a local library when books start disappearing.",
+                    genre="mystery",
+                    reason="Engaging plot with academic vocabulary",
+                    vocabulary_themes=["books", "investigation", "buildings"],
+                ),
+            ]
+        )
 
 
 @router.get("/jobs")

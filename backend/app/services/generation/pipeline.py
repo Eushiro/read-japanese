@@ -4,16 +4,17 @@ Orchestrates story, image, and audio generation into a single workflow.
 
 All media is uploaded directly to R2 - no local files are saved.
 """
-import logging
+
 import json
+import logging
 from pathlib import Path
-from typing import Optional
-from .story_generator import StoryGenerator
-from .image_generator import ImageGenerator
+
+from ..storage import upload_story_json
 from .audio_generator import AudioGenerator
 from .image_describer import get_image_describer
+from .image_generator import ImageGenerator
+from .story_generator import StoryGenerator
 from .vocabulary_validator import get_validator
-from ..storage import upload_story_json
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +37,9 @@ class StoryPipeline:
     async def generate_complete_story(
         self,
         jlpt_level: str,
-        genre: Optional[str] = None,
-        theme: Optional[str] = None,
-        user_prompt: Optional[str] = None,
+        genre: str | None = None,
+        theme: str | None = None,
+        user_prompt: str | None = None,
         refine_prompt: bool = True,
         num_chapters: int = 5,
         words_per_chapter: int = 100,
@@ -49,7 +50,7 @@ class StoryPipeline:
         generate_chapter_images: bool = True,
         align_audio: bool = True,
         tokenize: bool = True,
-        max_regeneration_attempts: int = 3
+        max_regeneration_attempts: int = 3,
     ) -> dict:
         """
         Generate a complete story with all assets.
@@ -86,7 +87,7 @@ class StoryPipeline:
             num_chapters=num_chapters,
             words_per_chapter=words_per_chapter,
             tokenize=tokenize,
-            max_attempts=max_regeneration_attempts
+            max_attempts=max_regeneration_attempts,
         )
 
         # Step 3: Generate image descriptions (all at once for consistency)
@@ -98,7 +99,9 @@ class StoryPipeline:
             try:
                 image_descriptions = await self.image_describer.describe_all_images(story)
                 story["imageDescriptions"] = image_descriptions
-                logger.info(f"  Generated descriptions for cover + {len(image_descriptions.get('chapters', []))} chapters")
+                logger.info(
+                    f"  Generated descriptions for cover + {len(image_descriptions.get('chapters', []))} chapters"
+                )
             except Exception as e:
                 logger.warning(f"  Image description generation failed: {e}, using fallback")
                 image_descriptions = None
@@ -191,7 +194,7 @@ class StoryPipeline:
             # Tokenize chapter title
             if chapter.get("titleJapanese"):
                 chapter["titleTokens"] = [
-                    token.__dict__ if hasattr(token, '__dict__') else token
+                    token.__dict__ if hasattr(token, "__dict__") else token
                     for token in tokenizer.tokenize_text(chapter["titleJapanese"])
                 ]
 
@@ -199,9 +202,7 @@ class StoryPipeline:
             for segment in chapter.get("content", []):
                 if segment.get("text"):
                     tokens = tokenizer.tokenize_text(segment["text"])
-                    segment["tokens"] = [
-                        self._token_to_dict(token) for token in tokens
-                    ]
+                    segment["tokens"] = [self._token_to_dict(token) for token in tokens]
 
         # Tokenize story title
         if story["metadata"].get("titleJapanese"):
@@ -217,7 +218,7 @@ class StoryPipeline:
         result = {
             "surface": token.surface,
             "baseForm": token.baseForm,
-            "partOfSpeech": token.partOfSpeech
+            "partOfSpeech": token.partOfSpeech,
         }
         if token.parts:
             result["parts"] = [
@@ -258,7 +259,9 @@ class StoryPipeline:
 
         # Log result
         if result.passed:
-            logger.info(f"  ✓ Vocabulary validation passed: {result.difficulty_score:.1%} appropriate")
+            logger.info(
+                f"  ✓ Vocabulary validation passed: {result.difficulty_score:.1%} appropriate"
+            )
         else:
             logger.warning(f"  ✗ Vocabulary validation failed: {result.message}")
             if result.above_level_words:
@@ -271,14 +274,14 @@ class StoryPipeline:
     async def _generate_with_validation_loop(
         self,
         jlpt_level: str,
-        genre: Optional[str],
-        theme: Optional[str],
-        user_prompt: Optional[str],
+        genre: str | None,
+        theme: str | None,
+        user_prompt: str | None,
         refine_prompt: bool,
         num_chapters: int,
         words_per_chapter: int,
         tokenize: bool,
-        max_attempts: int = 3
+        max_attempts: int = 3,
     ) -> dict:
         """
         Generate story with validation loop.
@@ -320,7 +323,9 @@ class StoryPipeline:
                             genre=refined_params.get("genre", genre or "slice of life"),
                             theme=refined_params.get("refined_theme", user_prompt),
                             num_chapters=refined_params.get("num_chapters", num_chapters),
-                            words_per_chapter=refined_params.get("words_per_chapter", words_per_chapter)
+                            words_per_chapter=refined_params.get(
+                                "words_per_chapter", words_per_chapter
+                            ),
                         )
                         story["metadata"]["promptRefinement"] = refined_params
                         story["metadata"]["originalPrompt"] = user_prompt
@@ -330,7 +335,7 @@ class StoryPipeline:
                             genre=genre or "slice of life",
                             theme=user_prompt,
                             num_chapters=num_chapters,
-                            words_per_chapter=words_per_chapter
+                            words_per_chapter=words_per_chapter,
                         )
                         story["metadata"]["originalPrompt"] = user_prompt
                 else:
@@ -340,7 +345,7 @@ class StoryPipeline:
                         genre=genre or "slice of life",
                         theme=theme,
                         num_chapters=num_chapters,
-                        words_per_chapter=words_per_chapter
+                        words_per_chapter=words_per_chapter,
                     )
             else:
                 # Subsequent attempts: regenerate with feedback
@@ -366,7 +371,7 @@ class StoryPipeline:
                     theme=regen_theme,
                     num_chapters=regen_chapters,
                     words_per_chapter=regen_words,
-                    attempt=attempt
+                    attempt=attempt,
                 )
 
                 # Preserve original prompt and refinement info
@@ -399,9 +404,8 @@ class StoryPipeline:
                 # After 2nd failure, try simplifier before full regeneration
                 if attempt == 2:
                     logger.info("  Trying sentence simplifier before regeneration...")
-                    problematic_words = (
-                        validation.get("aboveLevelWords", []) +
-                        validation.get("unknownWords", [])
+                    problematic_words = validation.get("aboveLevelWords", []) + validation.get(
+                        "unknownWords", []
                     )
                     if problematic_words:
                         simplified_story = await self.story_generator.simplify_sentences(
@@ -409,11 +413,15 @@ class StoryPipeline:
                         )
                         # Re-tokenize the simplified story
                         simplified_story = await self._tokenize_story(simplified_story)
-                        simplified_story = await self._validate_vocabulary(simplified_story, jlpt_level)
-                        simplified_validation = simplified_story["metadata"].get("vocabularyValidation", {})
+                        simplified_story = await self._validate_vocabulary(
+                            simplified_story, jlpt_level
+                        )
+                        simplified_validation = simplified_story["metadata"].get(
+                            "vocabularyValidation", {}
+                        )
 
                         if simplified_validation.get("passed", False):
-                            logger.info(f"  ✓ Simplifier fixed vocabulary issues!")
+                            logger.info("  ✓ Simplifier fixed vocabulary issues!")
                             simplified_story["metadata"]["generationAttempts"] = attempt
                             simplified_story["metadata"]["simplifierUsed"] = True
                             return simplified_story
@@ -422,13 +430,17 @@ class StoryPipeline:
                         if self._is_better_validation(simplified_validation, best_validation):
                             best_story = simplified_story
                             best_validation = simplified_validation
-                            logger.info("  Simplifier improved validation, continuing with attempts...")
+                            logger.info(
+                                "  Simplifier improved validation, continuing with attempts..."
+                            )
                         else:
-                            logger.info("  Simplifier didn't fix all issues, continuing with regeneration...")
+                            logger.info(
+                                "  Simplifier didn't fix all issues, continuing with regeneration..."
+                            )
 
                 # Log failure and prepare for retry
                 if attempt < max_attempts:
-                    logger.warning(f"  Vocabulary validation failed, regenerating...")
+                    logger.warning("  Vocabulary validation failed, regenerating...")
                     # Brief pause before retry
                     await asyncio.sleep(1)
             else:
@@ -448,16 +460,20 @@ class StoryPipeline:
             return True
 
         # Count how many checks pass
-        new_passes = sum([
-            new_val.get("hasLearningValue", False),
-            new_val.get("notTooHard", False),
-            new_val.get("notTooObscure", False)
-        ])
-        old_passes = sum([
-            old_val.get("hasLearningValue", False),
-            old_val.get("notTooHard", False),
-            old_val.get("notTooObscure", False)
-        ])
+        new_passes = sum(
+            [
+                new_val.get("hasLearningValue", False),
+                new_val.get("notTooHard", False),
+                new_val.get("notTooObscure", False),
+            ]
+        )
+        old_passes = sum(
+            [
+                old_val.get("hasLearningValue", False),
+                old_val.get("notTooHard", False),
+                old_val.get("notTooObscure", False),
+            ]
+        )
 
         if new_passes != old_passes:
             return new_passes > old_passes
@@ -471,16 +487,16 @@ class StoryPipeline:
         voice: str,
         language: str,
         align: bool,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """
         Generate audio, optionally align, then upload to R2.
 
         This keeps audio in memory for alignment before uploading,
         avoiding the need to download from R2 for alignment.
         """
-        from .media import get_audio_bytes_as_mp3
         from ..storage import upload_story_audio
-        from .audio_generator import select_voice, GEMINI_MODEL, NARRATION_PROMPT
+        from .audio_generator import GEMINI_MODEL, NARRATION_PROMPT, select_voice
+        from .media import get_audio_bytes_as_mp3
 
         if not self.audio_generator.is_configured:
             return None
@@ -557,13 +573,15 @@ class StoryPipeline:
             # Collect all words with timestamps
             all_words = []
             for whisper_seg in result.segments:
-                if hasattr(whisper_seg, 'words') and whisper_seg.words:
+                if hasattr(whisper_seg, "words") and whisper_seg.words:
                     for word in whisper_seg.words:
-                        all_words.append({
-                            "text": word.word.strip(),
-                            "start": round(word.start, 3),
-                            "end": round(word.end, 3),
-                        })
+                        all_words.append(
+                            {
+                                "text": word.word.strip(),
+                                "start": round(word.start, 3),
+                                "end": round(word.end, 3),
+                            }
+                        )
 
             if not all_words:
                 logger.warning("No words detected in audio")
@@ -594,13 +612,15 @@ class StoryPipeline:
                             if seg_start is None:
                                 seg_start = word["start"]
                             seg_end = word["end"]
-                            seg_words.append({
-                                "text": word_text,
-                                "start": word["start"],
-                                "end": word["end"],
-                            })
+                            seg_words.append(
+                                {
+                                    "text": word_text,
+                                    "start": word["start"],
+                                    "end": word["end"],
+                                }
+                            )
                             idx = remaining_text.find(word_text)
-                            remaining_text = remaining_text[idx + len(word_text):]
+                            remaining_text = remaining_text[idx + len(word_text) :]
                             word_idx += 1
                         elif not word_text.strip():
                             word_idx += 1
@@ -620,6 +640,7 @@ class StoryPipeline:
         finally:
             # Clean up temp file
             import os
+
             os.unlink(tmp_path)
 
         return story
@@ -654,20 +675,22 @@ class StoryPipeline:
         story: dict,
         genre: str,
         style: str,
-        image_descriptions: Optional[dict] = None,
-        reference_image: Optional[bytes] = None,
+        image_descriptions: dict | None = None,
+        reference_image: bytes | None = None,
         language: str = "japanese",
     ) -> dict:
         """Generate images for each chapter using descriptions and reference image for consistency"""
         import asyncio
 
         chapter_descriptions = image_descriptions.get("chapters", []) if image_descriptions else []
-        character_descriptions = image_descriptions.get("characterDescriptions") if image_descriptions else None
+        character_descriptions = (
+            image_descriptions.get("characterDescriptions") if image_descriptions else None
+        )
         color_palette = image_descriptions.get("colorPalette") if image_descriptions else None
 
         for i, chapter in enumerate(story.get("chapters", [])):
-            chapter_title = chapter.get("titleJapanese") or chapter.get("title", f"Chapter {i+1}")
-            logger.info(f"  Generating image for chapter {i+1}: {chapter_title}")
+            chapter_title = chapter.get("titleJapanese") or chapter.get("title", f"Chapter {i + 1}")
+            logger.info(f"  Generating image for chapter {i + 1}: {chapter_title}")
 
             # Use pre-generated description if available
             if i < len(chapter_descriptions):
@@ -711,9 +734,9 @@ class StoryPipeline:
                 chapter["imageURL"] = chapter_result["url"]
                 chapter["imageModel"] = chapter_result["model"]
                 chapter["imageModelName"] = chapter_result["model_name"]
-                logger.info(f"  Chapter {i+1} image: {chapter_result['url']}")
+                logger.info(f"  Chapter {i + 1} image: {chapter_result['url']}")
             else:
-                logger.warning(f"  Failed to generate image for chapter {i+1}")
+                logger.warning(f"  Failed to generate image for chapter {i + 1}")
 
             # Brief pause between image generations
             if i < len(story["chapters"]) - 1:
@@ -772,16 +795,10 @@ class StoryPipeline:
             "sports",
             "music",
             "family",
-            "friendship"
+            "friendship",
         ]
 
     @staticmethod
     def get_available_image_styles() -> list:
         """Get available cover art styles"""
-        return [
-            "anime",
-            "watercolor",
-            "minimalist",
-            "realistic",
-            "ghibli"
-        ]
+        return ["anime", "watercolor", "minimalist", "realistic", "ghibli"]

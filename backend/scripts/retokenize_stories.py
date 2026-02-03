@@ -14,16 +14,14 @@ Options:
     --verbose            Show detailed output
     --single FILE        Retokenize a single file only
 """
-import sys
-import os
-import json
+
 import argparse
+import json
+import sys
 from pathlib import Path
-from typing import Optional
-from datetime import datetime
 
 # Add parent directory to path for imports
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
 
 from app.services.tokenizer import get_tokenizer_service
 
@@ -54,7 +52,9 @@ def tokenize_segments(segments: list, tokenizer) -> list:
                 "parts": [
                     {"text": p.text, "reading": p.reading} if p.reading else {"text": p.text}
                     for p in token.parts
-                ] if token.parts else None,
+                ]
+                if token.parts
+                else None,
                 "baseForm": token.baseForm,
                 "partOfSpeech": token.partOfSpeech,
             }
@@ -81,7 +81,9 @@ def tokenize_title(title: str, tokenizer) -> list:
             "parts": [
                 {"text": p.text, "reading": p.reading} if p.reading else {"text": p.text}
                 for p in token.parts
-            ] if token.parts else None,
+            ]
+            if token.parts
+            else None,
             "baseForm": token.baseForm,
             "partOfSpeech": token.partOfSpeech,
         }
@@ -144,23 +146,13 @@ def main():
         "--stories-dir",
         type=Path,
         default=Path("../Japanese Reader/Resources/Stories"),
-        help="Path to stories directory"
+        help="Path to stories directory",
     )
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be changed without modifying files"
+        "--dry-run", action="store_true", help="Show what would be changed without modifying files"
     )
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Show detailed output"
-    )
-    parser.add_argument(
-        "--single",
-        type=Path,
-        help="Retokenize a single file only"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed output")
+    parser.add_argument("--single", type=Path, help="Retokenize a single file only")
 
     args = parser.parse_args()
 
@@ -172,7 +164,7 @@ def main():
         print("ERROR: Tokenizer is not available")
         sys.exit(1)
 
-    print(f"Tokenizer ready: fugashi with IPADIC dictionary")
+    print("Tokenizer ready: fugashi with IPADIC dictionary")
 
     # Find story files
     if args.single:
@@ -218,13 +210,13 @@ def main():
             print(f"\nProcessing: {story_file.name}")
 
             # Load story
-            with open(story_file, 'r', encoding='utf-8') as f:
+            with open(story_file, encoding="utf-8") as f:
                 story_data = json.load(f)
 
             # Validate it's a story file
             if "metadata" not in story_data or "id" not in story_data:
                 if args.verbose:
-                    print(f"  Skipping: Not a valid story file")
+                    print("  Skipping: Not a valid story file")
                 continue
 
             # Retokenize
@@ -232,11 +224,11 @@ def main():
 
             # Save
             if not args.dry_run:
-                with open(story_file, 'w', encoding='utf-8') as f:
+                with open(story_file, "w", encoding="utf-8") as f:
                     json.dump(story_data, f, ensure_ascii=False, indent=2)
-                print(f"  ✓ Saved")
+                print("  ✓ Saved")
             else:
-                print(f"  Would save")
+                print("  Would save")
 
             success_count += 1
 

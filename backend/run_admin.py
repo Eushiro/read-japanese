@@ -11,9 +11,11 @@ Usage:
 Or with custom port:
     API_PORT=8002 python run_admin.py
 """
+
 import os
-import uvicorn
 from pathlib import Path
+
+import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,7 +25,7 @@ env_path = Path(__file__).parent.parent / "web" / ".env.local"
 load_dotenv(env_path)
 
 # Import the admin batch router
-from app.routers.admin_batch import router as admin_router
+from app.routers.admin_batch import router as admin_router  # noqa: E402
 
 # Create a minimal FastAPI app
 app = FastAPI(
@@ -58,7 +60,7 @@ async def root():
             "generate_audio": "POST /admin/generate/audio",
             "generate_images": "POST /admin/generate/images",
             "list_jobs": "/admin/jobs",
-        }
+        },
     }
 
 
@@ -83,7 +85,9 @@ if __name__ == "__main__":
     print(f"Docs available at http://localhost:{port}/docs")
     print()
     print("Environment:")
-    print(f"  CONVEX_URL: {'configured' if os.getenv('VITE_CONVEX_URL') or os.getenv('CONVEX_URL') else 'NOT SET'}")
+    print(
+        f"  CONVEX_URL: {'configured' if os.getenv('VITE_CONVEX_URL') or os.getenv('CONVEX_URL') else 'NOT SET'}"
+    )
     print(f"  GEMINI_API_KEY: {'configured' if os.getenv('GEMINI_API_KEY') else 'NOT SET'}")
     print()
 

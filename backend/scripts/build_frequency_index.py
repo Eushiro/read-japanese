@@ -21,13 +21,14 @@ def get_wn_db_path() -> Path:
 def ensure_wn_data():
     """Ensure WordNet data is downloaded."""
     import wn
+
     if not wn.lexicons():
         print("Downloading English WordNet...")
-        wn.download('ewn:2020')
-    if not wn.lexicons(lang='fr'):
+        wn.download("ewn:2020")
+    if not wn.lexicons(lang="fr"):
         print("Downloading French WordNet...")
         try:
-            wn.download('omw-fr:1.4')
+            wn.download("omw-fr:1.4")
         except Exception as e:
             print(f"Failed to download French: {e}")
 
@@ -75,16 +76,15 @@ def build_frequency_table():
     print("Computing English frequencies...")
     en_freqs = []
     for i, word in enumerate(en_words):
-        freq = word_frequency(word.lower(), 'en')
+        freq = word_frequency(word.lower(), "en")
         if freq > 0:
-            en_freqs.append((word.lower(), 'en', freq))
+            en_freqs.append((word.lower(), "en", freq))
         if (i + 1) % 10000 == 0:
             print(f"  Processed {i + 1}/{len(en_words)} English words...")
 
     print(f"Inserting {len(en_freqs)} English frequencies...")
     cursor.executemany(
-        "INSERT OR REPLACE INTO word_frequencies (word, lang, frequency) VALUES (?, ?, ?)",
-        en_freqs
+        "INSERT OR REPLACE INTO word_frequencies (word, lang, frequency) VALUES (?, ?, ?)", en_freqs
     )
 
     # Get all unique French words
@@ -103,16 +103,15 @@ def build_frequency_table():
     print("Computing French frequencies...")
     fr_freqs = []
     for i, word in enumerate(fr_words):
-        freq = word_frequency(word.lower(), 'fr')
+        freq = word_frequency(word.lower(), "fr")
         if freq > 0:
-            fr_freqs.append((word.lower(), 'fr', freq))
+            fr_freqs.append((word.lower(), "fr", freq))
         if (i + 1) % 10000 == 0:
             print(f"  Processed {i + 1}/{len(fr_words)} French words...")
 
     print(f"Inserting {len(fr_freqs)} French frequencies...")
     cursor.executemany(
-        "INSERT OR REPLACE INTO word_frequencies (word, lang, frequency) VALUES (?, ?, ?)",
-        fr_freqs
+        "INSERT OR REPLACE INTO word_frequencies (word, lang, frequency) VALUES (?, ?, ?)", fr_freqs
     )
 
     conn.commit()

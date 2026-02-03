@@ -47,11 +47,13 @@ cd ..
 if echo "$STAGED_FILES" | grep -q "^backend/"; then
     echo "Linting Python with Ruff..."
     cd backend
+    source venv/bin/activate
     ruff check . || exit 1
     ruff format --check . || exit 1
 
     echo "Checking backend patterns..."
     python scripts/lint_patterns.py || exit 1
+    deactivate
     cd ..
 fi
 

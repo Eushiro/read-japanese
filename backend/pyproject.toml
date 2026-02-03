@@ -25,7 +25,10 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # Allow unused imports in __init__.py
-"scripts/*" = ["E402"]     # Allow imports not at top for scripts
+"scripts/*" = ["E402", "F841", "SIM102"]  # Less strict for scripts
+"tests/*" = ["F401", "F841"]  # Less strict for tests
+"app/main.py" = ["E402", "I001"]  # Import after env loading
+"run_admin.py" = ["E402", "I001"]  # Import after env loading
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

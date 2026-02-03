@@ -1,13 +1,14 @@
 """
 Story generation API endpoints
 """
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from pydantic import BaseModel, Field
-from typing import Optional, List
+
 import logging
 
-from app.services.generation.pipeline import StoryPipeline
+from fastapi import APIRouter, BackgroundTasks, HTTPException
+from pydantic import BaseModel, Field
+
 from app.services.generation.audio_generator import AudioGenerator
+from app.services.generation.pipeline import StoryPipeline
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/generate", tags=["Generation"])
@@ -18,9 +19,10 @@ _generation_status = {}
 
 class StoryGenerationRequest(BaseModel):
     """Request body for story generation"""
+
     jlpt_level: str = Field(..., pattern="^N[1-5]$", description="JLPT level (N5-N1)")
     genre: str = Field(..., min_length=2, description="Story genre")
-    theme: Optional[str] = Field(None, description="Optional theme/topic")
+    theme: str | None = Field(None, description="Optional theme/topic")
     num_chapters: int = Field(5, ge=1, le=10, description="Number of chapters")
     words_per_chapter: int = Field(100, ge=50, le=500, description="Approx characters per chapter")
     voice: str = Field("makoto", description="TTS voice name")
@@ -33,13 +35,15 @@ class StoryGenerationRequest(BaseModel):
 
 class IdeaGenerationRequest(BaseModel):
     """Request body for idea generation"""
+
     jlpt_level: str = Field(..., pattern="^N[1-5]$")
 
 
 class StoryGenerationResponse(BaseModel):
     """Response for story generation"""
+
     status: str
-    story_id: Optional[str] = None
+    story_id: str | None = None
     message: str
 
 
@@ -58,16 +62,12 @@ async def generate_story(request: StoryGenerationRequest, background_tasks: Back
     _generation_status[job_id] = {"status": "pending", "progress": "Starting..."}
 
     # Run generation in background
-    background_tasks.add_task(
-        _generate_story_task,
-        job_id,
-        request
-    )
+    background_tasks.add_task(_generate_story_task, job_id, request)
 
     return StoryGenerationResponse(
         status="pending",
         story_id=job_id,
-        message="Story generation started. Check /generate/status/{story_id} for progress."
+        message="Story generation started. Check /generate/status/{story_id} for progress.",
     )
 
 
@@ -88,23 +88,19 @@ async def _generate_story_task(job_id: str, request: StoryGenerationRequest):
             generate_audio=request.generate_audio,
             generate_image=request.generate_image,
             generate_chapter_images=request.generate_chapter_images,
-            align_audio=request.align_audio
+            align_audio=request.align_audio,
         )
 
         _generation_status[job_id] = {
             "status": "completed",
             "progress": "Done",
             "story_id": story["id"],
-            "story": story
+            "story": story,
         }
 
     except Exception as e:
         logger.error(f"Story generation failed: {e}")
-        _generation_status[job_id] = {
-            "status": "failed",
-            "progress": str(e),
-            "error": str(e)
-        }
+        _generation_status[job_id] = {"status": "failed", "progress": str(e), "error": str(e)}
 
 
 @router.post("/story/sync")
@@ -126,14 +122,14 @@ async def generate_story_sync(request: StoryGenerationRequest):
             generate_audio=request.generate_audio,
             generate_image=request.generate_image,
             generate_chapter_images=request.generate_chapter_images,
-            align_audio=request.align_audio
+            align_audio=request.align_audio,
         )
 
         return {"status": "completed", "story": story}
 
     except Exception as e:
         logger.error(f"Story generation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/status/{job_id}")
@@ -155,7 +151,7 @@ async def generate_ideas(request: IdeaGenerationRequest):
 
     except Exception as e:
         logger.error(f"Idea generation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/voices")

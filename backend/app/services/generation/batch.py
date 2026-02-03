@@ -28,9 +28,10 @@ import logging
 import os
 import tempfile
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from google import genai
 from google.genai import types
@@ -48,7 +49,7 @@ class BatchRequest:
 
     key: str  # Unique identifier to match response
     prompt: str  # User prompt
-    system_prompt: Optional[str] = None  # Optional system instruction
+    system_prompt: str | None = None  # Optional system instruction
 
 
 @dataclass
@@ -69,7 +70,7 @@ class BatchJobRunner:
     This provides 50% cost savings for large generation tasks.
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_AI_API_KEY")
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY not set")
@@ -77,29 +78,27 @@ class BatchJobRunner:
 
     def _build_jsonl_content(
         self,
-        requests: List[BatchRequest],
+        requests: list[BatchRequest],
         model: str,
-        response_mime_type: Optional[str] = None,
-        response_schema: Optional[Any] = None,
+        response_mime_type: str | None = None,
+        response_schema: Any | None = None,
     ) -> str:
         """Build JSONL content for batch upload"""
         lines = []
 
         for req in requests:
             # Build the request object
-            request_obj: Dict[str, Any] = {
+            request_obj: dict[str, Any] = {
                 "contents": [{"role": "user", "parts": [{"text": req.prompt}]}],
             }
 
             # Add system instruction if provided
             if req.system_prompt:
-                request_obj["systemInstruction"] = {
-                    "parts": [{"text": req.system_prompt}]
-                }
+                request_obj["systemInstruction"] = {"parts": [{"text": req.system_prompt}]}
 
             # Add generation config for structured output
             if response_mime_type or response_schema:
-                gen_config: Dict[str, Any] = {}
+                gen_config: dict[str, Any] = {}
                 if response_mime_type:
                     gen_config["responseMimeType"] = response_mime_type
                 if response_schema:
@@ -137,11 +136,11 @@ class BatchJobRunner:
 
     async def create_batch_job(
         self,
-        requests: List[BatchRequest],
+        requests: list[BatchRequest],
         model: str = "gemini-3-flash-preview",
-        display_name: Optional[str] = None,
-        response_mime_type: Optional[str] = None,
-        response_schema: Optional[Any] = None,
+        display_name: str | None = None,
+        response_mime_type: str | None = None,
+        response_schema: Any | None = None,
     ) -> BatchJobStatus:
         """
         Create a batch job from a list of requests.
@@ -195,8 +194,8 @@ class BatchJobRunner:
         job_name: str,
         poll_interval: int = BATCH_API_POLL_INTERVAL,
         max_wait: int = BATCH_API_MAX_WAIT,
-        on_progress: Optional[Callable[[BatchJobStatus], None]] = None,
-    ) -> Dict[str, str]:
+        on_progress: Callable[[BatchJobStatus], None] | None = None,
+    ) -> dict[str, str]:
         """
         Wait for a batch job to complete and return results.
 
@@ -210,7 +209,12 @@ class BatchJobRunner:
             Dict mapping request keys to response texts
         """
         start_time = time.time()
-        final_states = {"JOB_STATE_SUCCEEDED", "JOB_STATE_FAILED", "JOB_STATE_CANCELLED", "JOB_STATE_EXPIRED"}
+        final_states = {
+            "JOB_STATE_SUCCEEDED",
+            "JOB_STATE_FAILED",
+            "JOB_STATE_CANCELLED",
+            "JOB_STATE_EXPIRED",
+        }
 
         while True:
             elapsed = time.time() - start_time
@@ -237,7 +241,7 @@ class BatchJobRunner:
         # Download results
         return await self._download_results(job)
 
-    async def _download_results(self, job) -> Dict[str, str]:
+    async def _download_results(self, job) -> dict[str, str]:
         """Download and parse batch job results"""
         results = {}
 
@@ -287,15 +291,15 @@ class BatchJobRunner:
 
     async def run_batch(
         self,
-        requests: List[Dict[str, str]],
-        system_prompt: Optional[str] = None,
+        requests: list[dict[str, str]],
+        system_prompt: str | None = None,
         model: str = "gemini-3-flash-preview",
-        display_name: Optional[str] = None,
-        response_mime_type: Optional[str] = None,
-        response_schema: Optional[Any] = None,
+        display_name: str | None = None,
+        response_mime_type: str | None = None,
+        response_schema: Any | None = None,
         poll_interval: int = BATCH_API_POLL_INTERVAL,
-        on_progress: Optional[Callable[[BatchJobStatus], None]] = None,
-    ) -> Dict[str, str]:
+        on_progress: Callable[[BatchJobStatus], None] | None = None,
+    ) -> dict[str, str]:
         """
         Convenience method to create, run, and get results from a batch job.
 
@@ -341,10 +345,10 @@ class BatchJobRunner:
 
 # Convenience function for simple text generation batches
 async def run_text_batch(
-    prompts: Dict[str, str],
-    system_prompt: Optional[str] = None,
+    prompts: dict[str, str],
+    system_prompt: str | None = None,
     model: str = "gemini-3-flash-preview",
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Simple wrapper for running a batch of text generation requests.
 

@@ -3,14 +3,15 @@ Story generation service using OpenRouter.
 Generates graded reader stories with appropriate vocabulary and grammar for JLPT/CEFR levels.
 Supports Japanese, English, and French.
 """
+
 import json
 import logging
 import random
 from pathlib import Path
-from typing import Optional, List, Literal
+from typing import Literal
 
-from ..openrouter_client import get_openrouter_client
 from ...config.models import ModelConfig
+from ..openrouter_client import get_openrouter_client
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +41,7 @@ class StoryGenerator:
         self._grammar_cache: dict[str, dict] = {}  # Cache grammar constraints by language
 
     def _load_vocabulary_examples(
-        self,
-        language: Language,
-        target_level: str,
-        sample_size: int = 20
+        self, language: Language, target_level: str, sample_size: int = 20
     ) -> list[str]:
         """
         Load a small sample of vocabulary to illustrate the target difficulty level.
@@ -63,7 +61,7 @@ class StoryGenerator:
             logger.warning(f"Vocabulary file not found: {level_file}")
             return []
 
-        with open(level_file, "r", encoding="utf-8") as f:
+        with open(level_file, encoding="utf-8") as f:
             words = [line.strip() for line in f if line.strip()]
 
         # Return a small random sample as examples
@@ -81,11 +79,7 @@ class StoryGenerator:
         else:
             return CEFR_DIR / "grammar" / f"{language}_grammar_constraints.json"
 
-    def _load_grammar_constraints(
-        self,
-        target_level: str,
-        language: Language = "japanese"
-    ) -> dict:
+    def _load_grammar_constraints(self, target_level: str, language: Language = "japanese") -> dict:
         """
         Load grammar constraints for the target level and language.
 
@@ -106,12 +100,14 @@ class StoryGenerator:
         grammar_file = self._get_grammar_file_path(language)
         if grammar_file.exists():
             try:
-                with open(grammar_file, "r", encoding="utf-8") as f:
+                with open(grammar_file, encoding="utf-8") as f:
                     all_constraints = json.load(f)
                 logger.info(f"Loaded {language} grammar constraints from {grammar_file}")
 
                 # Cache the specific level
-                level_constraints = all_constraints.get(target_level.upper(), {"allowed": [], "forbidden": []})
+                level_constraints = all_constraints.get(
+                    target_level.upper(), {"allowed": [], "forbidden": []}
+                )
                 self._grammar_cache[cache_key] = level_constraints
                 return level_constraints
 
@@ -139,7 +135,7 @@ class StoryGenerator:
             lines.append("FORBIDDEN GRAMMAR (DO NOT USE):")
             for item in forbidden:
                 if isinstance(item, dict):
-                    example = f" (e.g., {item['example']})" if item.get('example') else ""
+                    example = f" (e.g., {item['example']})" if item.get("example") else ""
                     lines.append(f"  ✗ {item['pattern']}: {item['description']}{example}")
                 elif isinstance(item, str):
                     lines.append(f"  ✗ {item}")
@@ -156,11 +152,7 @@ class StoryGenerator:
         return "\n".join(lines)
 
     async def simplify_sentences(
-        self,
-        story: dict,
-        problematic_words: List[str],
-        level: str,
-        language: Language = "japanese"
+        self, story: dict, problematic_words: list[str], level: str, language: Language = "japanese"
     ) -> dict:
         """
         Rewrite specific sentences containing problematic vocabulary.
@@ -178,7 +170,9 @@ class StoryGenerator:
         if not problematic_words:
             return story
 
-        logger.info(f"Simplifying {language} sentences with {len(problematic_words)} problematic words...")
+        logger.info(
+            f"Simplifying {language} sentences with {len(problematic_words)} problematic words..."
+        )
 
         # Find segments containing problematic words
         segments_to_fix = []
@@ -186,10 +180,7 @@ class StoryGenerator:
             for segment in chapter.get("content", []):
                 text = segment.get("text", "")
                 if any(word in text for word in problematic_words):
-                    segments_to_fix.append({
-                        "segment_id": segment.get("id", ""),
-                        "text": text
-                    })
+                    segments_to_fix.append({"segment_id": segment.get("id", ""), "text": text})
 
         if not segments_to_fix:
             logger.info("No segments found with problematic words")
@@ -205,7 +196,7 @@ class StoryGenerator:
 
         prompt = f"""Rewrite these {language_name} sentences for {level} learners.
 
-PROBLEMATIC WORDS TO REPLACE: {', '.join(problematic_words[:20])}
+PROBLEMATIC WORDS TO REPLACE: {", ".join(problematic_words[:20])}
 
 GRAMMAR CONSTRAINTS:
 {grammar_section}
@@ -246,11 +237,11 @@ Output as JSON:
         self,
         level: str,
         genre: str,
-        theme: Optional[str] = None,
-        detailed_prompt: Optional[str] = None,
+        theme: str | None = None,
+        detailed_prompt: str | None = None,
         num_chapters: int = 5,
         words_per_chapter: int = 100,
-        language: Language = "japanese"
+        language: Language = "japanese",
     ) -> dict:
         """
         Generate a complete story with chapters.
@@ -280,9 +271,7 @@ Output as JSON:
 
         try:
             story_json = await self.client.generate_json(
-                prompt=user_prompt,
-                system_prompt=system_prompt,
-                temperature=0.8
+                prompt=user_prompt, system_prompt=system_prompt, temperature=0.8
             )
             return self._format_story(story_json, level, genre, language)
 
@@ -296,11 +285,11 @@ Output as JSON:
         validation_result: dict,
         level: str,
         genre: str,
-        theme: Optional[str] = None,
+        theme: str | None = None,
         num_chapters: int = 5,
         words_per_chapter: int = 100,
         attempt: int = 1,
-        language: Language = "japanese"
+        language: Language = "japanese",
     ) -> dict:
         """
         Regenerate a story with feedback from vocabulary validation.
@@ -319,7 +308,9 @@ Output as JSON:
         Returns:
             Regenerated story dict
         """
-        logger.info(f"Regenerating {language} story (attempt {attempt}) with vocabulary feedback...")
+        logger.info(
+            f"Regenerating {language} story (attempt {attempt}) with vocabulary feedback..."
+        )
 
         # Load example vocabulary to illustrate the target level
         vocab_examples = self._load_vocabulary_examples(language, level)
@@ -353,7 +344,11 @@ Output as JSON:
             )
 
         level_system = "JLPT" if language == "japanese" else "CEFR"
-        feedback_prompt = "\n".join(feedback_parts) if feedback_parts else f"Please use more standard {level_system} vocabulary."
+        feedback_prompt = (
+            "\n".join(feedback_parts)
+            if feedback_parts
+            else f"Please use more standard {level_system} vocabulary."
+        )
 
         # Build system prompt with vocabulary examples
         system_prompt = self._get_system_prompt(level, vocab_examples, language)
@@ -365,7 +360,7 @@ Output as JSON:
             story_json = await self.client.generate_json(
                 prompt=user_prompt,
                 system_prompt=system_prompt,
-                temperature=0.7  # Slightly lower for more focused output
+                temperature=0.7,  # Slightly lower for more focused output
             )
             result = self._format_story(story_json, level, genre, language)
             result["metadata"]["regenerationAttempt"] = attempt
@@ -379,11 +374,11 @@ Output as JSON:
         self,
         level: str,
         genre: str,
-        theme: Optional[str],
+        theme: str | None,
         num_chapters: int,
         words_per_chapter: int,
         feedback: str,
-        language: Language = "japanese"
+        language: Language = "japanese",
     ) -> str:
         """Build prompt for regeneration with vocabulary feedback and grammar reminders"""
         theme_text = f" about {theme}" if theme else ""
@@ -422,10 +417,7 @@ Requirements:
 Generate the complete story now as a JSON object."""
 
     def _get_system_prompt(
-        self,
-        level: str,
-        vocabulary: list[str] = None,
-        language: Language = "japanese"
+        self, level: str, vocabulary: list[str] = None, language: Language = "japanese"
     ) -> str:
         """Get system prompt with level guidelines, vocabulary, and grammar constraints"""
 
@@ -470,7 +462,7 @@ Generate the complete story now as a JSON object."""
 - Sophisticated idioms
 - Complex nested clauses
 - Any topic or register
-"""
+""",
         }
 
         cefr_guidelines = {
@@ -521,7 +513,7 @@ Generate the complete story now as a JSON object."""
 - Stylistic devices
 - Any topic or register
 - Full command of grammar
-"""
+""",
         }
 
         language_name = {"japanese": "Japanese", "english": "English", "french": "French"}[language]
@@ -611,11 +603,11 @@ Your response must be a JSON object with this exact structure:
         self,
         level: str,
         genre: str,
-        theme: Optional[str],
-        detailed_prompt: Optional[str],
+        theme: str | None,
+        detailed_prompt: str | None,
         num_chapters: int,
         words_per_chapter: int,
-        language: Language = "japanese"
+        language: Language = "japanese",
     ) -> str:
         """Build the user prompt for story generation"""
         language_name = {"japanese": "Japanese", "english": "English", "french": "French"}[language]
@@ -646,11 +638,7 @@ Requirements:
 Generate the complete story now as a JSON object."""
 
     def _format_story(
-        self,
-        raw_story: dict,
-        level: str,
-        genre: str,
-        language: Language = "japanese"
+        self, raw_story: dict, level: str, genre: str, language: Language = "japanese"
     ) -> dict:
         """Format the generated story into the app's expected structure"""
         import uuid
@@ -664,13 +652,13 @@ Generate the complete story now as a JSON object."""
         native_title_key = {
             "japanese": "titleJapanese",
             "english": "titleEnglish",
-            "french": "titleFrench"
+            "french": "titleFrench",
         }[language]
 
         native_summary_key = {
             "japanese": "summaryJapanese",
             "english": "summaryEnglish",
-            "french": "summaryFrench"
+            "french": "summaryFrench",
         }[language]
 
         chapters = []
@@ -678,19 +666,19 @@ Generate the complete story now as a JSON object."""
             segments = []
             for j, content in enumerate(chapter.get("content", [])):
                 segment = {
-                    "id": f"{story_id}_ch{i+1}_seg{j+1}",
+                    "id": f"{story_id}_ch{i + 1}_seg{j + 1}",
                     "type": content.get("type", "narration"),
-                    "text": content.get("text", "")
+                    "text": content.get("text", ""),
                 }
                 if content.get("speaker"):
                     segment["speaker"] = content["speaker"]
                 segments.append(segment)
 
             chapter_data = {
-                "id": f"{story_id}_ch{i+1}",
+                "id": f"{story_id}_ch{i + 1}",
                 "number": i + 1,
-                "title": chapter.get("title", f"Chapter {i+1}"),
-                "content": segments
+                "title": chapter.get("title", f"Chapter {i + 1}"),
+                "content": segments,
             }
             # Add native title if present
             if chapter.get(native_title_key):
@@ -703,9 +691,7 @@ Generate the complete story now as a JSON object."""
 
         # Calculate word count
         total_chars = sum(
-            len(seg.get("text", ""))
-            for ch in chapters
-            for seg in ch.get("content", [])
+            len(seg.get("text", "")) for ch in chapters for seg in ch.get("content", [])
         )
 
         # Build metadata
@@ -719,7 +705,7 @@ Generate the complete story now as a JSON object."""
             "createdDate": datetime.utcnow().isoformat() + "Z",
             "generationModel": self.model,
             "coverImageURL": None,
-            "audioURL": None
+            "audioURL": None,
         }
 
         # Add native title/summary
@@ -736,18 +722,14 @@ Generate the complete story now as a JSON object."""
             if raw_story.get("summaryJapanese"):
                 metadata["summaryJapanese"] = raw_story["summaryJapanese"]
 
-        return {
-            "id": story_id,
-            "metadata": metadata,
-            "chapters": chapters
-        }
+        return {"id": story_id, "metadata": metadata, "chapters": chapters}
 
     async def refine_user_prompt(
         self,
         user_prompt: str,
         level: str,
-        genre: Optional[str] = None,
-        language: Language = "japanese"
+        genre: str | None = None,
+        language: Language = "japanese",
     ) -> dict:
         """
         Refine and expand a user's story prompt into detailed story parameters.
@@ -799,9 +781,7 @@ Output a JSON object with:
 
         try:
             result = await self.client.generate_json(
-                prompt=prompt,
-                system_prompt=system_prompt,
-                temperature=0.7
+                prompt=prompt, system_prompt=system_prompt, temperature=0.7
             )
             logger.info(f"  Refined theme: {result.get('refined_theme', '')[:50]}...")
             return result
@@ -815,16 +795,16 @@ Output a JSON object with:
                 "num_chapters": 5,
                 "words_per_chapter": words_per_chapter,
                 "level_appropriate": True,
-                "adjustments_made": "Using original prompt"
+                "adjustments_made": "Using original prompt",
             }
 
     async def generate_from_user_prompt(
         self,
         user_prompt: str,
         level: str,
-        genre: Optional[str] = None,
+        genre: str | None = None,
         refine_prompt: bool = True,
-        language: Language = "japanese"
+        language: Language = "japanese",
     ) -> dict:
         """
         Generate a story from a user's prompt, optionally refining it first.
@@ -861,7 +841,7 @@ Output a JSON object with:
             theme=theme,
             num_chapters=num_chapters,
             words_per_chapter=words_per_chapter,
-            language=language
+            language=language,
         )
 
         # Add refinement info to metadata
@@ -870,11 +850,7 @@ Output a JSON object with:
 
         return story
 
-    async def generate_story_idea(
-        self,
-        level: str,
-        language: Language = "japanese"
-    ) -> dict:
+    async def generate_story_idea(self, level: str, language: Language = "japanese") -> dict:
         """Generate a story idea/outline without full content"""
         language_name = {"japanese": "Japanese", "english": "English", "french": "French"}[language]
         level_system = "JLPT" if language == "japanese" else "CEFR"
@@ -893,9 +869,7 @@ Output as JSON: {{"ideas": [...]}}"""
 
         try:
             return await self.client.generate_json(
-                prompt=prompt,
-                system_prompt=system_prompt,
-                temperature=1.0
+                prompt=prompt, system_prompt=system_prompt, temperature=1.0
             )
         except Exception as e:
             logger.error(f"Idea generation failed: {e}")

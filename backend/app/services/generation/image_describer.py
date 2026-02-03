@@ -2,9 +2,9 @@
 Image description generator for story illustrations.
 Generates consistent image descriptions for all story images in one call.
 """
+
 import json
 import logging
-from typing import Optional
 
 from ..openrouter_client import get_openrouter_client
 
@@ -93,7 +93,9 @@ VISUAL_TAGS EXAMPLES:
 
         try:
             result = await self.client.generate_json(prompt, temperature=0.7)
-            logger.info(f"Generated descriptions for cover + {len(result.get('chapters', []))} chapters")
+            logger.info(
+                f"Generated descriptions for cover + {len(result.get('chapters', []))} chapters"
+            )
             return result
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse image descriptions JSON: {e}")
@@ -120,8 +122,8 @@ VISUAL_TAGS EXAMPLES:
 
         # Chapters with content
         for i, chapter in enumerate(story.get("chapters", [])):
-            title = chapter.get("titleJapanese") or chapter.get("title", f"Chapter {i+1}")
-            parts.append(f"=== CHAPTER {i+1}: {title} ===")
+            title = chapter.get("titleJapanese") or chapter.get("title", f"Chapter {i + 1}")
+            parts.append(f"=== CHAPTER {i + 1}: {title} ===")
 
             for segment in chapter.get("content", []):
                 text = self._extract_segment_text(segment)
@@ -146,22 +148,22 @@ VISUAL_TAGS EXAMPLES:
         return {
             "cover": {
                 "description": f"A book cover for '{metadata.get('title', 'Story')}', a {metadata.get('genre', 'Japanese')} story.",
-                "visual_tags": "warm lighting, portrait composition, soft focus background"
+                "visual_tags": "warm lighting, portrait composition, soft focus background",
             },
             "chapters": [
                 {
-                    "description": f"An illustration for chapter {i+1}: {ch.get('title', 'Chapter')}",
-                    "visual_tags": "medium shot, natural lighting, soft atmosphere"
+                    "description": f"An illustration for chapter {i + 1}: {ch.get('title', 'Chapter')}",
+                    "visual_tags": "medium shot, natural lighting, soft atmosphere",
                 }
                 for i, ch in enumerate(chapters)
             ],
             "characterDescriptions": {},
-            "colorPalette": "warm, inviting colors"
+            "colorPalette": "warm, inviting colors",
         }
 
 
 # Singleton instance
-_describer: Optional[ImageDescriber] = None
+_describer: ImageDescriber | None = None
 
 
 def get_image_describer() -> ImageDescriber:

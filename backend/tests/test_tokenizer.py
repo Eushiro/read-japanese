@@ -1,6 +1,8 @@
 """Tests for the Japanese tokenizer service"""
+
 import pytest
-from app.services.tokenizer import get_tokenizer_service, TokenizerService
+
+from app.services.tokenizer import get_tokenizer_service
 
 
 @pytest.fixture
@@ -277,7 +279,9 @@ class TestQualityAssurance:
         for kanji, expected_reading in n5_words.items():
             tokens = tokenizer.tokenize_text(kanji)
             actual_reading = tokens[0].parts[0].reading
-            assert actual_reading == expected_reading, f"{kanji} should be {expected_reading}, got {actual_reading}"
+            assert actual_reading == expected_reading, (
+                f"{kanji} should be {expected_reading}, got {actual_reading}"
+            )
 
     def test_common_verbs(self, tokenizer):
         """Common verb stems should have correct readings"""
@@ -297,8 +301,9 @@ class TestQualityAssurance:
                 if kanji in token.surface:
                     kanji_part = [p for p in token.parts if p.text == kanji]
                     if kanji_part:
-                        assert kanji_part[0].reading == expected_reading, \
+                        assert kanji_part[0].reading == expected_reading, (
                             f"{kanji} in {verb_form} should be {expected_reading}, got {kanji_part[0].reading}"
+                        )
 
     def test_no_duplicate_readings(self, tokenizer):
         """Ensure no duplicate kana in output"""
@@ -321,9 +326,10 @@ class TestQualityAssurance:
 
             # Should not have 3 consecutive identical characters
             for i in range(len(output) - 2):
-                three_chars = output[i:i+3]
-                assert not (three_chars[0] == three_chars[1] == three_chars[2]), \
+                three_chars = output[i : i + 3]
+                assert not (three_chars[0] == three_chars[1] == three_chars[2]), (
                     f"Found duplicate in {text}: {output}"
+                )
 
 
 class TestYojijukugo:
@@ -397,7 +403,7 @@ class TestComparisonBenchmark:
                 results["common_readings"][word] = {
                     "expected": expected,
                     "actual": actual,
-                    "passed": actual == expected
+                    "passed": actual == expected,
                 }
 
         # Yojijukugo test cases (should be single token)
@@ -409,7 +415,7 @@ class TestComparisonBenchmark:
             results["yojijukugo"][word] = {
                 "is_single_token": is_single,
                 "token_count": len(tokens),
-                "tokens": [t.surface for t in tokens]
+                "tokens": [t.surface for t in tokens],
             }
 
         # Katakana compounds (should be single token)
@@ -421,7 +427,7 @@ class TestComparisonBenchmark:
             results["katakana"][word] = {
                 "is_single_token": is_single,
                 "token_count": len(tokens),
-                "tokens": [t.surface for t in tokens]
+                "tokens": [t.surface for t in tokens],
             }
 
         return results
