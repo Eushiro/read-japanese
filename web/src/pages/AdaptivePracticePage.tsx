@@ -17,7 +17,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PremiumBackground } from "@/components/ui/premium-background";
-import { Progress } from "@/components/ui/progress";
 import { SkeletonLoadingCard } from "@/components/ui/skeleton-loading-card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserData } from "@/contexts/UserDataContext";
@@ -430,8 +429,8 @@ export function AdaptivePracticePage() {
 
     return (
       <div className="min-h-screen bg-background">
-        <PremiumBackground colorScheme="cool" />
-        <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <PremiumBackground colorScheme="cool" intensity="minimal" />
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -449,169 +448,165 @@ export function AdaptivePracticePage() {
           </div>
 
           {/* Progress bar */}
-          <Progress
-            value={((currentQuestionIndex + 1) / practiceSet.questions.length) * 100}
-            className="mb-6 h-2"
-          />
+          <div className="mb-6">
+            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full shadow-[0_0_10px_rgba(255,132,0,0.5)]"
+                initial={{ width: 0 }}
+                animate={{
+                  width: `${((currentQuestionIndex + 1) / practiceSet.questions.length) * 100}%`,
+                }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+          </div>
 
           {/* Question Card */}
           {question && (
-            <div className="relative rounded-2xl overflow-hidden mb-6">
-              <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
-              <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
-
-              <div className="relative p-6">
-                {/* Question metadata */}
-                <div className="flex items-center gap-2 mb-4">
-                  <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                    {t(`adaptivePractice.questionType.${question.type}`)}
-                  </Badge>
-                  <Badge variant="outline">{t(`common.skillTypes.${question.targetSkill}`)}</Badge>
-                  <span className="text-xs text-foreground-muted ml-auto">
-                    {question.points} {t("adaptivePractice.points")}
-                  </span>
-                </div>
-
-                {/* Audio for listening questions */}
-                {question.audioUrl && (
-                  <div className="mb-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => handlePlayAudio(question.audioUrl!)}
-                      disabled={isPlayingAudio}
-                      className="w-full"
-                    >
-                      <Volume2 className={`w-4 h-4 mr-2 ${isPlayingAudio ? "text-accent" : ""}`} />
-                      {isPlayingAudio
-                        ? t("adaptivePractice.playing")
-                        : t("adaptivePractice.playAudio")}
-                    </Button>
-                  </div>
-                )}
-
-                {/* Question text */}
-                <h2 className="text-lg font-semibold mb-2" style={{ fontFamily }}>
-                  {question.question}
-                </h2>
-                {question.questionTranslation && (
-                  <p className="text-sm text-foreground-muted mb-6">
-                    {question.questionTranslation}
-                  </p>
-                )}
-
-                {/* Answer input */}
-                {question.options && question.options.length > 0 ? (
-                  // MCQ options
-                  <div className="space-y-3">
-                    {question.options.map((option, index) => {
-                      const isSelected = selectedAnswer === option;
-                      const isCorrectOption = option === question.correctAnswer;
-                      const showCorrectness = showFeedback;
-
-                      let ringClass = "";
-                      if (showCorrectness) {
-                        if (isCorrectOption) {
-                          ringClass = "ring-2 ring-green-500";
-                        } else if (isSelected && !isCorrectOption) {
-                          ringClass = "ring-2 ring-red-500";
-                        }
-                      } else if (isSelected) {
-                        ringClass = "ring-2 ring-accent";
-                      }
-
-                      let glassBgClass = "bg-white/[0.03] border-white/10";
-                      if (showCorrectness && isCorrectOption) {
-                        glassBgClass = "bg-green-500/10 border-green-500/30";
-                      } else if (showCorrectness && isSelected && !isCorrectOption) {
-                        glassBgClass = "bg-red-500/10 border-red-500/30";
-                      }
-
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => !showFeedback && setSelectedAnswer(option)}
-                          disabled={showFeedback || isSubmitting}
-                          className={`group relative w-full p-4 rounded-xl text-left transition-all overflow-hidden ${ringClass} ${
-                            showFeedback || isSubmitting ? "cursor-not-allowed" : ""
-                          }`}
-                          style={{ fontFamily }}
-                        >
-                          <div
-                            className={`absolute inset-0 backdrop-blur-sm border transition-colors rounded-xl ${glassBgClass} ${
-                              !showFeedback && !isSubmitting
-                                ? "group-hover:bg-white/[0.06] group-hover:border-white/15"
-                                : ""
-                            }`}
-                          />
-                          <div className="relative flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                              {!showCorrectness && (
-                                <div
-                                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                                    isSelected ? "border-accent" : "border-foreground/30"
-                                  }`}
-                                >
-                                  {isSelected && <div className="w-3 h-3 rounded-full bg-accent" />}
-                                </div>
-                              )}
-                              <span className="text-foreground">{option}</span>
-                            </div>
-                            {showCorrectness && isCorrectOption && (
-                              <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                            )}
-                            {showCorrectness && isSelected && !isCorrectOption && (
-                              <XCircle className="w-5 h-5 text-red-500 shrink-0" />
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  // Free input
-                  <textarea
-                    value={selectedAnswer}
-                    onChange={(e) => setSelectedAnswer(e.target.value)}
-                    disabled={showFeedback || isSubmitting}
-                    placeholder={t("adaptivePractice.typeAnswer")}
-                    rows={4}
-                    className="w-full p-4 rounded-xl border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent resize-none disabled:cursor-not-allowed disabled:opacity-60"
-                    style={{ fontFamily }}
-                  />
-                )}
-
-                {/* Feedback */}
-                {showFeedback && currentAnswer && (
-                  <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      {currentAnswer.isCorrect ? (
-                        <>
-                          <CheckCircle2 className="w-5 h-5 text-green-500" />
-                          <span className="font-medium text-green-500">
-                            {t("adaptivePractice.feedback.correct")}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="w-5 h-5 text-red-500" />
-                          <span className="font-medium text-red-500">
-                            {t("adaptivePractice.feedback.incorrect")}
-                          </span>
-                        </>
-                      )}
-                      <span className="text-sm text-foreground-muted ml-auto">
-                        +{currentAnswer.earnedPoints} {t("adaptivePractice.points")}
-                      </span>
-                    </div>
-                    {!currentAnswer.isCorrect && question.correctAnswer && (
-                      <p className="text-sm text-foreground-muted">
-                        {t("adaptivePractice.feedback.correctAnswer")}:{" "}
-                        <span style={{ fontFamily }}>{question.correctAnswer}</span>
-                      </p>
-                    )}
-                  </div>
-                )}
+            <div className="bg-surface rounded-xl border border-border p-6 mb-6">
+              {/* Question metadata */}
+              <div className="flex items-center gap-2 mb-4">
+                <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                  {t(`adaptivePractice.questionType.${question.type}`)}
+                </Badge>
+                <Badge variant="outline">{t(`common.skillTypes.${question.targetSkill}`)}</Badge>
+                <span className="text-xs text-foreground-muted ml-auto">
+                  {question.points} {t("adaptivePractice.points")}
+                </span>
               </div>
+
+              {/* Audio for listening questions */}
+              {question.audioUrl && (
+                <div className="mb-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePlayAudio(question.audioUrl!)}
+                    disabled={isPlayingAudio}
+                    className="w-full"
+                  >
+                    <Volume2 className={`w-4 h-4 mr-2 ${isPlayingAudio ? "text-accent" : ""}`} />
+                    {isPlayingAudio
+                      ? t("adaptivePractice.playing")
+                      : t("adaptivePractice.playAudio")}
+                  </Button>
+                </div>
+              )}
+
+              {/* Question text */}
+              <h2 className="text-lg font-semibold mb-2" style={{ fontFamily }}>
+                {question.question}
+              </h2>
+              {question.questionTranslation && (
+                <p className="text-sm text-foreground-muted mb-6">{question.questionTranslation}</p>
+              )}
+
+              {/* Answer input */}
+              {question.options && question.options.length > 0 ? (
+                // MCQ options
+                <div className="space-y-3">
+                  {question.options.map((option, index) => {
+                    const isSelected = selectedAnswer === option;
+                    const isCorrectOption = option === question.correctAnswer;
+                    const showCorrectness = showFeedback;
+
+                    let ringClass = "";
+                    if (showCorrectness) {
+                      if (isCorrectOption) {
+                        ringClass = "ring-2 ring-green-500";
+                      } else if (isSelected && !isCorrectOption) {
+                        ringClass = "ring-2 ring-red-500";
+                      }
+                    } else if (isSelected) {
+                      ringClass = "ring-2 ring-accent";
+                    }
+
+                    let bgClass = "bg-muted border-border";
+                    if (showCorrectness && isCorrectOption) {
+                      bgClass = "bg-green-500/10 border-green-500/30";
+                    } else if (showCorrectness && isSelected && !isCorrectOption) {
+                      bgClass = "bg-red-500/10 border-red-500/30";
+                    }
+
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => !showFeedback && setSelectedAnswer(option)}
+                        disabled={showFeedback || isSubmitting}
+                        className={`w-full p-4 rounded-xl text-left transition-all border ${bgClass} ${ringClass} ${
+                          showFeedback || isSubmitting
+                            ? "cursor-not-allowed"
+                            : "hover:bg-muted/80 hover:border-border/80"
+                        }`}
+                        style={{ fontFamily }}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            {!showCorrectness && (
+                              <div
+                                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                                  isSelected ? "border-accent" : "border-foreground/30"
+                                }`}
+                              >
+                                {isSelected && <div className="w-3 h-3 rounded-full bg-accent" />}
+                              </div>
+                            )}
+                            <span className="text-foreground">{option}</span>
+                          </div>
+                          {showCorrectness && isCorrectOption && (
+                            <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                          )}
+                          {showCorrectness && isSelected && !isCorrectOption && (
+                            <XCircle className="w-5 h-5 text-red-500 shrink-0" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                // Free input
+                <textarea
+                  value={selectedAnswer}
+                  onChange={(e) => setSelectedAnswer(e.target.value)}
+                  disabled={showFeedback || isSubmitting}
+                  placeholder={t("adaptivePractice.typeAnswer")}
+                  rows={4}
+                  className="w-full p-4 rounded-xl border border-border bg-background text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent resize-none disabled:cursor-not-allowed disabled:opacity-60"
+                  style={{ fontFamily }}
+                />
+              )}
+
+              {/* Feedback */}
+              {showFeedback && currentAnswer && (
+                <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border">
+                  <div className="flex items-center gap-2 mb-2">
+                    {currentAnswer.isCorrect ? (
+                      <>
+                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        <span className="font-medium text-green-500">
+                          {t("adaptivePractice.feedback.correct")}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-5 h-5 text-red-500" />
+                        <span className="font-medium text-red-500">
+                          {t("adaptivePractice.feedback.incorrect")}
+                        </span>
+                      </>
+                    )}
+                    <span className="text-sm text-foreground-muted ml-auto">
+                      +{currentAnswer.earnedPoints} {t("adaptivePractice.points")}
+                    </span>
+                  </div>
+                  {!currentAnswer.isCorrect && question.correctAnswer && (
+                    <p className="text-sm text-foreground-muted">
+                      {t("adaptivePractice.feedback.correctAnswer")}:{" "}
+                      <span style={{ fontFamily }}>{question.correctAnswer}</span>
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -647,8 +642,8 @@ export function AdaptivePracticePage() {
 
     return (
       <div className="min-h-screen bg-background">
-        <PremiumBackground colorScheme="cool" />
-        <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <PremiumBackground colorScheme="cool" intensity="minimal" />
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="flex items-center gap-3 mb-8">
             <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/learn" })}>
@@ -658,61 +653,56 @@ export function AdaptivePracticePage() {
           </div>
 
           {/* Results Card */}
-          <div className="relative rounded-2xl overflow-hidden mb-6">
-            <div className="absolute inset-0 backdrop-blur-md bg-white/[0.03] border border-white/10 rounded-2xl" />
-            <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-2xl" />
+          <div className="bg-surface rounded-xl border border-border p-8 text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15 }}
+              className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6"
+            >
+              <Trophy className="w-10 h-10 text-accent" />
+            </motion.div>
 
-            <div className="relative p-8 text-center">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6"
-              >
-                <Trophy className="w-10 h-10 text-accent" />
-              </motion.div>
+            <h2 className="text-2xl font-bold mb-2">
+              {percentScore >= 80
+                ? t("adaptivePractice.results.excellent")
+                : percentScore >= 60
+                  ? t("adaptivePractice.results.goodJob")
+                  : t("adaptivePractice.results.keepPracticing")}
+            </h2>
 
-              <h2 className="text-2xl font-bold mb-2">
-                {percentScore >= 80
-                  ? t("adaptivePractice.results.excellent")
-                  : percentScore >= 60
-                    ? t("adaptivePractice.results.goodJob")
-                    : t("adaptivePractice.results.keepPracticing")}
-              </h2>
+            <div className="text-5xl font-bold text-accent my-6">{percentScore}%</div>
 
-              <div className="text-5xl font-bold text-accent my-6">{percentScore}%</div>
-
-              {/* Stats */}
-              <div className="flex justify-center gap-8 text-sm text-foreground-muted mb-8">
-                <div>
-                  <span className="font-medium text-foreground">{correctCount}</span> /{" "}
-                  {practiceSet.questions.length} {t("adaptivePractice.results.correct")}
-                </div>
-                <div>
-                  <span className="font-medium text-foreground">{totalScore}</span> / {maxScore}{" "}
-                  {t("adaptivePractice.points")}
-                </div>
+            {/* Stats */}
+            <div className="flex justify-center gap-8 text-sm text-foreground-muted mb-8">
+              <div>
+                <span className="font-medium text-foreground">{correctCount}</span> /{" "}
+                {practiceSet.questions.length} {t("adaptivePractice.results.correct")}
               </div>
-
-              {/* Skills practiced */}
-              <div className="flex flex-wrap justify-center gap-2 mb-8">
-                {practiceSet.targetSkills.map((skill) => (
-                  <Badge key={skill} className="bg-accent/10 text-accent border-accent/20">
-                    {t(`common.skillTypes.${skill}`)}
-                  </Badge>
-                ))}
+              <div>
+                <span className="font-medium text-foreground">{totalScore}</span> / {maxScore}{" "}
+                {t("adaptivePractice.points")}
               </div>
+            </div>
 
-              {/* Action buttons */}
-              <div className="flex flex-col gap-3">
-                <Button onClick={handleRestart}>
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  {t("adaptivePractice.results.practiceAgain")}
-                </Button>
-                <Button variant="outline" onClick={() => navigate({ to: "/learn" })}>
-                  {t("adaptivePractice.results.backToLearn")}
-                </Button>
-              </div>
+            {/* Skills practiced */}
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
+              {practiceSet.targetSkills.map((skill) => (
+                <Badge key={skill} className="bg-accent/10 text-accent border-accent/20">
+                  {t(`common.skillTypes.${skill}`)}
+                </Badge>
+              ))}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-col gap-3">
+              <Button onClick={handleRestart}>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                {t("adaptivePractice.results.practiceAgain")}
+              </Button>
+              <Button variant="outline" onClick={() => navigate({ to: "/learn" })}>
+                {t("adaptivePractice.results.backToLearn")}
+              </Button>
             </div>
           </div>
         </div>

@@ -74,19 +74,25 @@ export async function generateText(
 
   // Enable structured JSON output with schema
   if (options.jsonSchema) {
-    // Only use strict mode for models known to support it well (OpenAI, Claude)
-    // Other models like Kimi may return empty responses with strict: true
-    const supportsStrictMode =
+    // Only use full json_schema mode for models known to support it well (OpenAI, Claude)
+    // Other models (Kimi, etc.) may return empty responses or malformed JSON with json_schema
+    // Fall back to simple json_object mode which just asks for JSON output
+    const supportsJsonSchema =
       options.model.includes("openai/") || options.model.includes("anthropic/");
 
-    body.response_format = {
-      type: "json_schema",
-      json_schema: {
-        name: options.jsonSchema.name,
-        strict: supportsStrictMode,
-        schema: options.jsonSchema.schema,
-      },
-    };
+    if (supportsJsonSchema) {
+      body.response_format = {
+        type: "json_schema",
+        json_schema: {
+          name: options.jsonSchema.name,
+          strict: true,
+          schema: options.jsonSchema.schema,
+        },
+      };
+    } else {
+      // Fall back to simple JSON mode - model will follow schema from prompt
+      body.response_format = { type: "json_object" };
+    }
   }
 
   const startTime = Date.now();
@@ -273,19 +279,25 @@ export async function generateTextWithAudio(
 
   // Enable structured JSON output with schema
   if (options.jsonSchema) {
-    // Only use strict mode for models known to support it well (OpenAI, Claude)
-    // Other models like Kimi may return empty responses with strict: true
-    const supportsStrictMode =
+    // Only use full json_schema mode for models known to support it well (OpenAI, Claude)
+    // Other models (Kimi, etc.) may return empty responses or malformed JSON with json_schema
+    // Fall back to simple json_object mode which just asks for JSON output
+    const supportsJsonSchema =
       options.model.includes("openai/") || options.model.includes("anthropic/");
 
-    body.response_format = {
-      type: "json_schema",
-      json_schema: {
-        name: options.jsonSchema.name,
-        strict: supportsStrictMode,
-        schema: options.jsonSchema.schema,
-      },
-    };
+    if (supportsJsonSchema) {
+      body.response_format = {
+        type: "json_schema",
+        json_schema: {
+          name: options.jsonSchema.name,
+          strict: true,
+          schema: options.jsonSchema.schema,
+        },
+      };
+    } else {
+      // Fall back to simple JSON mode - model will follow schema from prompt
+      body.response_format = { type: "json_object" };
+    }
   }
 
   const startTime = Date.now();

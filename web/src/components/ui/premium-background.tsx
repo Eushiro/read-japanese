@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 
 type ColorScheme = "warm" | "cool" | "purple" | "green";
+type Intensity = "normal" | "low" | "minimal";
 
 interface PremiumBackgroundProps {
   colorScheme?: ColorScheme;
@@ -10,7 +11,16 @@ interface PremiumBackgroundProps {
   showOrbs?: boolean;
   animateStars?: boolean;
   animateOrbs?: boolean;
+  /** Controls orb opacity - use "low" for content pages, "minimal" for focus pages like tests */
+  intensity?: Intensity;
 }
+
+// Intensity mapping for orb opacity
+const INTENSITY_MAP = {
+  normal: { primary: "opacity-20", secondary: "opacity-15" },
+  low: { primary: "opacity-10", secondary: "opacity-[0.08]" },
+  minimal: { primary: "opacity-5", secondary: "opacity-[0.03]" },
+};
 
 // Color schemes with hex values for direct use
 const COLOR_SCHEMES = {
@@ -26,8 +36,10 @@ export function PremiumBackground({
   showOrbs = true,
   animateStars = false,
   animateOrbs = false,
+  intensity = "normal",
 }: PremiumBackgroundProps) {
   const { primary, secondary } = COLOR_SCHEMES[colorScheme];
+  const { primary: primaryOpacity, secondary: secondaryOpacity } = INTENSITY_MAP[intensity];
 
   // Theme detection for stars (dark mode only)
   const { theme } = useTheme();
@@ -69,7 +81,7 @@ export function PremiumBackground({
       {showOrbs && (
         <>
           <div
-            className={`absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-20 ${animateOrbs ? "animate-orb-float" : ""}`}
+            className={`absolute w-[500px] h-[500px] rounded-full blur-3xl ${primaryOpacity} ${animateOrbs ? "animate-orb-float" : ""}`}
             style={{
               background: `radial-gradient(circle, ${primary} 0%, transparent 70%)`,
               top: "10%",
@@ -77,7 +89,7 @@ export function PremiumBackground({
             }}
           />
           <div
-            className={`absolute w-[400px] h-[400px] rounded-full blur-3xl opacity-15 ${animateOrbs ? "animate-orb-float-alt" : ""}`}
+            className={`absolute w-[400px] h-[400px] rounded-full blur-3xl ${secondaryOpacity} ${animateOrbs ? "animate-orb-float-alt" : ""}`}
             style={{
               background: `radial-gradient(circle, ${secondary} 0%, transparent 70%)`,
               bottom: "20%",
