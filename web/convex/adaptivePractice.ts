@@ -50,6 +50,7 @@ interface PracticeSet {
   targetSkills: SkillType[];
   difficulty: number;
   generatedAt: number;
+  modelUsed?: string; // AI model that generated the questions
 }
 
 // ============================================
@@ -177,7 +178,7 @@ export const getNextPractice = action({
 
     // 5. Generate questions based on weak skills
     const questionTypes = selectQuestionTypes(weakSkills);
-    const questions = await generateQuestionsFromContent(
+    const generatedResult = await generateQuestionsFromContent(
       contentPayload,
       weakSkills,
       questionTypes,
@@ -187,13 +188,19 @@ export const getNextPractice = action({
     return {
       practiceId,
       content: contentPayload,
-      questions,
+      questions: generatedResult.questions,
       targetSkills: weakSkills,
       difficulty: profile?.abilityEstimate ?? 0,
       generatedAt: Date.now(),
+      modelUsed: generatedResult.modelUsed,
     };
   },
 });
+
+interface GeneratedQuestionsResult {
+  questions: PracticeQuestion[];
+  modelUsed?: string;
+}
 
 /**
  * Generate questions from adaptive content
@@ -203,7 +210,7 @@ async function generateQuestionsFromContent(
   targetSkills: SkillType[],
   questionTypes: PracticeQuestionType[],
   language: string
-): Promise<PracticeQuestion[]> {
+): Promise<GeneratedQuestionsResult> {
   const languageNames: Record<string, string> = {
     japanese: "Japanese",
     english: "English",
@@ -293,29 +300,35 @@ Return JSON with an array of questions.`;
     });
 
     // Add unique IDs to questions
-    return result.result.questions.map((q, index) => ({
-      ...q,
-      questionId: `pq_${Date.now()}_${index}`,
-    }));
+    return {
+      questions: result.result.questions.map((q, index) => ({
+        ...q,
+        questionId: `pq_${Date.now()}_${index}`,
+      })),
+      modelUsed: result.usage.model,
+    };
   } catch (error) {
     console.error("Failed to generate questions:", error);
     // Return a fallback comprehension question
-    return [
-      {
-        questionId: `pq_${Date.now()}_fallback`,
-        type: "mcq_comprehension",
-        targetSkill: "reading",
-        question: `What is the main topic of "${content.title}"?`,
-        options: [
-          "The main idea of the story",
-          "A different topic",
-          "Something unrelated",
-          "None of the above",
-        ],
-        correctAnswer: "The main idea of the story",
-        points: 10,
-      },
-    ];
+    return {
+      questions: [
+        {
+          questionId: `pq_${Date.now()}_fallback`,
+          type: "mcq_comprehension",
+          targetSkill: "reading",
+          question: `What is the main topic of "${content.title}"?`,
+          options: [
+            "The main idea of the story",
+            "A different topic",
+            "Something unrelated",
+            "None of the above",
+          ],
+          correctAnswer: "The main idea of the story",
+          points: 10,
+        },
+      ],
+      modelUsed: undefined,
+    };
   }
 }
 

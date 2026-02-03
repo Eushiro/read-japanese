@@ -21,10 +21,11 @@
  *     --exam-type jlpt_n5
  */
 
-import { readdirSync,readFileSync, writeFileSync } from "fs";
-import { basename, dirname,join } from "path";
+import { readdirSync, readFileSync, writeFileSync } from "fs";
+import { basename, dirname, join } from "path";
 
 import brandConfig from "../../shared/brand.json";
+import { TEXT_MODELS } from "../convex/lib/models";
 
 // Exam types and their languages
 const EXAM_LANGUAGES: Record<string, string> = {
@@ -98,9 +99,7 @@ async function readPdfContent(filePath: string): Promise<string> {
     const data = await pdfParse(dataBuffer);
     return data.text;
   } catch (error) {
-    console.error(
-      "pdf-parse not available. Install with: npm install pdf-parse"
-    );
+    console.error("pdf-parse not available. Install with: npm install pdf-parse");
     console.error("For testing, you can provide a .txt file instead.");
     throw error;
   }
@@ -120,11 +119,7 @@ async function extractQuestionsWithAI(
 
   const language = EXAM_LANGUAGES[examType] || "japanese";
   const languageName =
-    language === "japanese"
-      ? "Japanese"
-      : language === "french"
-        ? "French"
-        : "English";
+    language === "japanese" ? "Japanese" : language === "french" ? "French" : "English";
 
   const systemPrompt = `You are an expert at extracting exam questions from ${languageName} language proficiency tests.
 
@@ -174,7 +169,7 @@ IMPORTANT:
       "X-Title": `${brandConfig.name} Exam Extractor`,
     },
     body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
+      model: `google/${TEXT_MODELS.GEMINI_3_FLASH}`,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -229,12 +224,7 @@ async function extractFromFile(
 
   // Extract questions with AI
   console.log("Extracting questions with AI...");
-  const questions = await extractQuestionsWithAI(
-    content,
-    answersContent,
-    examType,
-    section
-  );
+  const questions = await extractQuestionsWithAI(content, answersContent, examType, section);
 
   console.log(`Extracted ${questions.length} questions`);
 
@@ -275,9 +265,7 @@ async function processFile(
 
 // Process a directory
 async function processDirectory(dirPath: string, examType: string) {
-  const files = readdirSync(dirPath).filter(
-    (f) => f.endsWith(".pdf") || f.endsWith(".txt")
-  );
+  const files = readdirSync(dirPath).filter((f) => f.endsWith(".pdf") || f.endsWith(".txt"));
 
   // Group files by base name to match exams with answer keys
   const fileGroups: Record<string, { exam?: string; answers?: string }> = {};
@@ -285,10 +273,7 @@ async function processDirectory(dirPath: string, examType: string) {
   for (const file of files) {
     if (file.includes("_extracted")) continue; // Skip already extracted
 
-    const base = file
-      .replace("_answers", "")
-      .replace(".pdf", "")
-      .replace(".txt", "");
+    const base = file.replace("_answers", "").replace(".pdf", "").replace(".txt", "");
 
     if (!fileGroups[base]) {
       fileGroups[base] = {};
@@ -344,12 +329,7 @@ async function main() {
     } else if (args.file) {
       // Process single file
       const section = (args.section || "reading") as SectionType;
-      await processFile(
-        args.file,
-        args.answers || null,
-        args["exam-type"],
-        section
-      );
+      await processFile(args.file, args.answers || null, args["exam-type"], section);
     } else {
       console.error("Error: Either --file or --dir is required");
       process.exit(1);

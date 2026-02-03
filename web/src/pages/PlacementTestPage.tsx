@@ -30,6 +30,7 @@ interface PlacementQuestion {
   difficulty: number;
   userAnswer?: string;
   isCorrect?: boolean;
+  modelUsed?: string;
 }
 
 export function PlacementTestPage() {
@@ -263,6 +264,7 @@ export function PlacementTestPage() {
           targetDifficulty: nextInfo.targetDifficulty,
           questionType: nextInfo.suggestedType,
           previousQuestions,
+          isWarmup: nextInfo.isWarmup,
         }),
         minDelayPromise,
       ]);
@@ -628,6 +630,14 @@ export function PlacementTestPage() {
               }}
               language={language}
             />
+
+            {/* Model indicator for debugging (admin only) */}
+            {isAdmin && viewingQuestion.modelUsed && (
+              // eslint-disable-next-line i18next/no-literal-string
+              <div className="mt-2 text-xs text-muted-foreground text-right">
+                Model: {viewingQuestion.modelUsed}
+              </div>
+            )}
 
             <QuestionNavigation
               currentIndex={viewingIndex}

@@ -550,6 +550,7 @@ export const addQuestionFromAI = internalMutation({
       audioUrl: v.optional(v.string()),
       audioTranscript: v.optional(v.string()),
       isWarmup: v.optional(v.boolean()),
+      modelUsed: v.optional(v.string()),
     }),
   },
   handler: async (ctx, args) => {

@@ -1014,6 +1014,8 @@ export default defineSchema({
         responseTimeMs: v.optional(v.number()), // Time from question shown to answer submitted
         // Warm-up flag
         isWarmup: v.optional(v.boolean()), // First 2 questions are warm-up
+        // AI model tracking
+        modelUsed: v.optional(v.string()), // Which AI model generated this question
       })
     ),
 

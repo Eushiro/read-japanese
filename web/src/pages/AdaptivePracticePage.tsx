@@ -21,6 +21,7 @@ import { SkeletonLoadingCard } from "@/components/ui/skeleton-loading-card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserData } from "@/contexts/UserDataContext";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
+import { isAdmin as checkIsAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 
@@ -57,6 +58,7 @@ interface PracticeSet {
   targetSkills: string[];
   difficulty: number;
   generatedAt: number;
+  modelUsed?: string;
 }
 
 interface AnswerRecord {
@@ -108,6 +110,9 @@ export function AdaptivePracticePage() {
 
   // Get language display name
   const languageName = t(`common.languages.${language}`);
+
+  // Admin check
+  const isAdmin = checkIsAdmin(user?.email);
 
   // Convex actions/mutations
   const getNextPractice = useAction(api.adaptivePractice.getNextPractice);
@@ -605,6 +610,14 @@ export function AdaptivePracticePage() {
                       <span style={{ fontFamily }}>{question.correctAnswer}</span>
                     </p>
                   )}
+                </div>
+              )}
+
+              {/* Model indicator for debugging (admin only) */}
+              {isAdmin && practiceSet.modelUsed && (
+                // eslint-disable-next-line i18next/no-literal-string
+                <div className="mt-4 text-xs text-muted-foreground text-right">
+                  Model: {practiceSet.modelUsed}
                 </div>
               )}
             </div>

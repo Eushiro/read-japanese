@@ -46,6 +46,7 @@ interface PlacementQuestion {
   audioUrl?: string; // For listening questions
   audioTranscript?: string; // Transcript of the audio
   isWarmup?: boolean; // Flag for warm-up questions
+  modelUsed?: string; // AI model that generated the question
 }
 
 // Map difficulty (-3 to +3) to level names
@@ -256,6 +257,7 @@ IMPORTANT:
       options: parsed.options,
       correctAnswer: parsed.correctAnswer,
       difficulty: args.targetDifficulty,
+      modelUsed: result.usage.model,
     };
 
     // Add the question to the test
