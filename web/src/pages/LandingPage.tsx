@@ -24,6 +24,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { PremiumBackground } from "@/components/ui/premium-background";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 
@@ -180,9 +181,9 @@ function HeroSection({
         </div>
       </div>
 
-      {/* Scroll indicator - bouncing chevron */}
+      {/* Scroll indicator - bouncing chevron (hidden on mobile for performance) */}
       <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        className="hidden sm:block absolute bottom-8 left-1/2 -translate-x-1/2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5 }}
@@ -208,7 +209,10 @@ function HeroSection({
 
 function ExamsSection({ t }: { t: ReturnType<typeof useT> }) {
   return (
-    <section className="py-32 relative">
+    <section
+      className="py-32 relative"
+      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 800px" }}
+    >
       {/* Subtle gradient backdrop */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-orange-500/5 to-transparent" />
 
@@ -287,6 +291,29 @@ function ExamsSection({ t }: { t: ReturnType<typeof useT> }) {
 }
 
 function TiltCard({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return <TiltCardMobile delay={delay}>{children}</TiltCardMobile>;
+  }
+  return <TiltCardDesktop delay={delay}>{children}</TiltCardDesktop>;
+}
+
+function TiltCardMobile({ children, delay }: { children: React.ReactNode; delay: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 60 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.8, delay, ease: [0.19, 1, 0.22, 1] }}
+      className="h-full"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function TiltCardDesktop({ children, delay }: { children: React.ReactNode; delay: number }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -457,7 +484,7 @@ function LanguageExamCard({
 
   return (
     <div
-      className={`relative h-full min-h-[280px] p-6 rounded-2xl bg-gradient-to-br ${gradient} border ${borderColor} backdrop-blur-md transition-all duration-300 group overflow-hidden`}
+      className={`relative h-full min-h-[280px] p-6 rounded-2xl bg-gradient-to-br ${gradient} border ${borderColor} backdrop-blur-none md:backdrop-blur-md transition-all duration-300 group overflow-hidden`}
       style={{ transformStyle: "preserve-3d" }}
     >
       {/* Glass highlight */}
@@ -475,7 +502,7 @@ function LanguageExamCard({
         {/* Icon and language */}
         <div className="flex items-center gap-3 mb-1">
           <div
-            className={`p-2 rounded-lg ${accentColor.replace("text-", "bg-")}/20 backdrop-blur-sm`}
+            className={`p-2 rounded-lg ${accentColor.replace("text-", "bg-")}/20 backdrop-blur-none md:backdrop-blur-sm`}
           >
             <Icon className={`w-5 h-5 ${accentColor}`} />
           </div>
@@ -517,7 +544,7 @@ function LanguageExamCard({
             return (
               <span
                 key={exam}
-                className="px-3 py-1.5 rounded-lg backdrop-blur-md text-base font-semibold whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] bg-white/80 dark:bg-black/30"
+                className="px-3 py-1.5 rounded-lg backdrop-blur-none md:backdrop-blur-md text-base font-semibold whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] bg-white/80 dark:bg-black/30"
                 style={{
                   borderWidth: "1px",
                   borderColor: badgeColor,
@@ -540,9 +567,12 @@ function LanguageExamCard({
 
 function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
   return (
-    <section className="py-32 relative">
-      {/* Static background glow - reduced blur for performance */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-orange-500/10 rounded-full blur-3xl" />
+    <section
+      className="py-32 relative"
+      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 700px" }}
+    >
+      {/* Static background glow - hidden on mobile for performance */}
+      <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-orange-500/10 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 sm:px-6 relative">
         <motion.div
@@ -663,6 +693,7 @@ function ComparisonSection({ t }: { t: ReturnType<typeof useT> }) {
 // ============================================================================
 
 function LearningLoopSection({ t }: { t: ReturnType<typeof useT> }) {
+  const isMobile = useIsMobile();
   const steps = [
     {
       icon: BookOpen,
@@ -718,7 +749,10 @@ function LearningLoopSection({ t }: { t: ReturnType<typeof useT> }) {
   };
 
   return (
-    <section className="py-32 relative">
+    <section
+      className="py-32 relative"
+      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 800px" }}
+    >
       <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           className="text-center mb-20"
@@ -755,11 +789,11 @@ function LearningLoopSection({ t }: { t: ReturnType<typeof useT> }) {
                   whileInView={{ opacity: 1, y: 0, scale: 1 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ duration: 0.6, delay: index * 0.15, ease: [0.19, 1, 0.22, 1] }}
-                  whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                  whileHover={isMobile ? undefined : { y: -8, transition: { duration: 0.3 } }}
                   className="relative"
                 >
                   <div
-                    className={`h-full p-6 rounded-2xl bg-white/[0.03] border ${colors.border} backdrop-blur-sm relative overflow-hidden group`}
+                    className={`h-full p-6 rounded-2xl bg-white/[0.03] border ${colors.border} backdrop-blur-none md:backdrop-blur-sm relative overflow-hidden group`}
                   >
                     {/* Glow effect on hover */}
                     <div
@@ -777,7 +811,7 @@ function LearningLoopSection({ t }: { t: ReturnType<typeof useT> }) {
                       {/* Icon with glow */}
                       <motion.div
                         className={`w-14 h-14 rounded-xl ${colors.bg} flex items-center justify-center mb-4 shadow-lg ${colors.glow}`}
-                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        whileHover={isMobile ? undefined : { scale: 1.1, rotate: 5 }}
                         transition={{ type: "spring", stiffness: 400 }}
                       >
                         <Icon className={`w-7 h-7 ${colors.text}`} />
@@ -802,11 +836,15 @@ function LearningLoopSection({ t }: { t: ReturnType<typeof useT> }) {
 // ============================================================================
 
 function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
+  const isMobile = useIsMobile();
   return (
-    <section className="py-32 relative">
-      {/* Background gradients - reduced blur for performance */}
-      <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] bg-orange-500/10 rounded-full blur-3xl" />
+    <section
+      className="py-32 relative"
+      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 900px" }}
+    >
+      {/* Background gradients - hidden on mobile for performance */}
+      <div className="hidden md:block absolute top-0 left-1/4 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-3xl" />
+      <div className="hidden md:block absolute bottom-0 right-1/4 w-[300px] h-[300px] bg-orange-500/10 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 sm:px-6 relative">
         <motion.div
@@ -844,6 +882,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
               gradient="from-orange-500/20 to-yellow-500/10"
               iconColor="text-orange-400"
               iconBg="bg-orange-500/20"
+              isMobile={isMobile}
               large
             />
           </motion.div>
@@ -862,6 +901,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
               gradient="from-purple-500/20 to-pink-500/10"
               iconColor="text-purple-400"
               iconBg="bg-purple-500/20"
+              isMobile={isMobile}
             />
           </motion.div>
 
@@ -879,6 +919,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
               gradient="from-yellow-500/20 to-orange-500/10"
               iconColor="text-yellow-400"
               iconBg="bg-yellow-500/20"
+              isMobile={isMobile}
             />
           </motion.div>
 
@@ -896,6 +937,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
               gradient="from-emerald-500/20 to-teal-500/10"
               iconColor="text-emerald-400"
               iconBg="bg-emerald-500/20"
+              isMobile={isMobile}
             />
           </motion.div>
 
@@ -913,6 +955,7 @@ function FeaturesSection({ t }: { t: ReturnType<typeof useT> }) {
               gradient="from-pink-500/20 to-rose-500/10"
               iconColor="text-pink-400"
               iconBg="bg-pink-500/20"
+              isMobile={isMobile}
             />
           </motion.div>
         </div>
@@ -928,6 +971,7 @@ function BentoCard({
   gradient,
   iconColor,
   iconBg,
+  isMobile = false,
   large = false,
 }: {
   icon: React.ComponentType<{ className?: string }>;
@@ -936,14 +980,13 @@ function BentoCard({
   gradient: string;
   iconColor: string;
   iconBg: string;
+  isMobile?: boolean;
   large?: boolean;
 }) {
   return (
     <motion.div
-      className={`group relative h-full rounded-2xl backdrop-blur-md bg-white/[0.03] border border-border dark:border-white/10 overflow-hidden ${large ? "p-8" : "p-6"} shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]`}
-      whileHover={{
-        boxShadow: "0 0 30px rgba(255,255,255,0.05)",
-      }}
+      className={`group relative h-full rounded-2xl backdrop-blur-none md:backdrop-blur-md bg-white/[0.03] border border-border dark:border-white/10 overflow-hidden ${large ? "p-8" : "p-6"} shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]`}
+      whileHover={isMobile ? undefined : { boxShadow: "0 0 30px rgba(255,255,255,0.05)" }}
       transition={{ duration: 0.3 }}
     >
       {/* Glass highlight */}
@@ -956,8 +999,8 @@ function BentoCard({
 
       <div className="relative z-10">
         <motion.div
-          className={`${large ? "w-16 h-16" : "w-12 h-12"} rounded-xl ${iconBg} backdrop-blur-sm flex items-center justify-center mb-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]`}
-          whileHover={{ scale: 1.1, rotate: 5 }}
+          className={`${large ? "w-16 h-16" : "w-12 h-12"} rounded-xl ${iconBg} backdrop-blur-none md:backdrop-blur-sm flex items-center justify-center mb-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]`}
+          whileHover={isMobile ? undefined : { scale: 1.1, rotate: 5 }}
           transition={{ type: "spring", stiffness: 400 }}
         >
           <Icon className={`${large ? "w-8 h-8" : "w-6 h-6"} ${iconColor}`} />
@@ -986,9 +1029,12 @@ function CTASection({
   t: ReturnType<typeof useT>;
 }) {
   return (
-    <section className="pt-32 relative">
-      {/* Static background - reduced blur for performance */}
-      <div className="absolute inset-0">
+    <section
+      className="pt-32 relative"
+      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 500px" }}
+    >
+      {/* Static background - hidden on mobile for performance */}
+      <div className="hidden md:block absolute inset-0">
         <div
           className="absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-15"
           style={{

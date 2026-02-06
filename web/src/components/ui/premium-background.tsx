@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { useTheme } from "@/components/ThemeProvider";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 type ColorScheme = "warm" | "cool" | "purple" | "green";
 type Intensity = "normal" | "low" | "minimal";
@@ -58,18 +59,24 @@ export function PremiumBackground({
 
   const isDark = theme === "dark" || (theme === "system" && systemPrefersDark);
 
+  // On mobile: fewer stars, no animations, smaller orbs
+  const isMobile = useIsMobile();
+  const effectiveStarCount = isMobile ? Math.min(starCount, 5) : starCount;
+  const effectiveAnimateStars = isMobile ? false : animateStars;
+  const effectiveAnimateOrbs = isMobile ? false : animateOrbs;
+
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
       {/* Stars - only in dark mode */}
       {isDark &&
-        [...Array(starCount)].map((_, i) => (
+        [...Array(effectiveStarCount)].map((_, i) => (
           <div
             key={i}
-            className={`absolute w-1 h-1 bg-white rounded-full ${animateStars ? "animate-star-fade" : "star-static"}`}
+            className={`absolute w-1 h-1 bg-white rounded-full ${effectiveAnimateStars ? "animate-star-fade" : "star-static"}`}
             style={{
               left: `${(i * 13 + 3) % 100}%`,
               top: `${(i * 17 + 7) % 100}%`,
-              ...(animateStars && {
+              ...(effectiveAnimateStars && {
                 animationDelay: `${(i % 8) * 0.5}s`,
                 animationDuration: `${2.5 + (i % 4) * 0.5}s`,
               }),
@@ -81,7 +88,7 @@ export function PremiumBackground({
       {showOrbs && (
         <>
           <div
-            className={`absolute w-[500px] h-[500px] rounded-full blur-3xl ${primaryOpacity} ${animateOrbs ? "animate-orb-float" : ""}`}
+            className={`absolute rounded-full blur-3xl ${primaryOpacity} ${effectiveAnimateOrbs ? "animate-orb-float" : ""} ${isMobile ? "w-[300px] h-[300px]" : "w-[500px] h-[500px]"}`}
             style={{
               background: `radial-gradient(circle, ${primary} 0%, transparent 70%)`,
               top: "10%",
@@ -89,7 +96,7 @@ export function PremiumBackground({
             }}
           />
           <div
-            className={`absolute w-[400px] h-[400px] rounded-full blur-3xl ${secondaryOpacity} ${animateOrbs ? "animate-orb-float-alt" : ""}`}
+            className={`absolute rounded-full blur-3xl ${secondaryOpacity} ${effectiveAnimateOrbs ? "animate-orb-float-alt" : ""} ${isMobile ? "w-[250px] h-[250px]" : "w-[400px] h-[400px]"}`}
             style={{
               background: `radial-gradient(circle, ${secondary} 0%, transparent 70%)`,
               bottom: "20%",

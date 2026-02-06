@@ -22,19 +22,35 @@
     "fill_blank": "填空",
     "translation": "翻译",
     "listening_mcq": "听力",
-    "free_input": "自由作答"
+    "free_input": "自由作答",
+    "dictation": "听写",
+    "shadow_record": "发音"
   },
   "points": "分",
   "playAudio": "播放音频",
   "playing": "播放中...",
+  "playAgain": "重新播放",
+  "listenAndType": "听录音并输入您听到的内容",
+  "playingAudio": "正在播放...",
+  "tapToReplay": "点击重播",
+  "tapToPlayAudio": "点击播放音频",
+  "listenFirst": "先听一遍",
+  "tapToRecord": "点击录音",
+  "recordingTapToStop": "录音中... 点击停止",
+  "evaluating": "评估中...",
+  "done": "完成",
   "typeAnswer": "请输入您的答案...",
+  "aiScore": "AI评分",
+  "accuracy": "准确度",
   "feedback": {
     "correct": "正确！",
     "incorrect": "不太对",
-    "correctAnswer": "正确答案"
+    "correctAnswer": "正确答案",
+    "evaluationFailed": "评估失败，请重试。"
   },
   "nextQuestion": "下一题",
   "finishPractice": "查看结果",
+  "skipAudioQuestion": "现在无法说话/听音",
   "results": {
     "title": "练习完成",
     "excellent": "太棒了！",
@@ -42,6 +58,8 @@
     "keepPracticing": "继续加油！",
     "correct": "正确",
     "practiceAgain": "再次练习",
-    "backToLearn": "返回学习"
+    "backToLearn": "返回学习",
+    "diagnosticNote": "我们正在了解你的水平 — 下次练习将有个性化内容！",
+    "skipped": "已跳过"
   }
 }

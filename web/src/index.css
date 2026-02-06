@@ -462,6 +462,28 @@
       transform: none !important;
     }
   }
+
+  /* Mobile performance - disable expensive background animations */
+  @media (max-width: 768px) {
+    .animate-star-fade {
+      animation: none;
+      opacity: 0.15;
+    }
+
+    .animate-orb-float,
+    .animate-orb-float-alt {
+      animation: none;
+    }
+
+    .animate-pulse-glow {
+      animation: none;
+      box-shadow: 0 0 20px rgba(255, 132, 0, 0.2);
+    }
+
+    .animate-shimmer {
+      animation: none;
+    }
+  }
 }
 
 /* Entrance animations */

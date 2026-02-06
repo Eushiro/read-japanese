@@ -95,5 +95,14 @@
     "duration": "~10-15 questions • About 5 minutes",
     "startTest": "Start Placement Test",
     "skipForNow": "Skip for now"
+  },
+  "adaptiveIntro": {
+    "title": "Practice That Adapts to You",
+    "subtitle": "Your first session will help us understand your level — no test required",
+    "benefit1": "Starts easy and adjusts to your ability",
+    "benefit2": "Every answer makes the system smarter",
+    "benefit3": "Content at your level from session two",
+    "startPractice": "Start Practicing",
+    "skipForNow": "Skip for now"
   }
 }

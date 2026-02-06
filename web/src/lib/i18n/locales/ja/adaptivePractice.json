@@ -22,19 +22,35 @@
     "fill_blank": "穴埋め",
     "translation": "翻訳",
     "listening_mcq": "リスニング",
-    "free_input": "自由記述"
+    "free_input": "自由記述",
+    "dictation": "ディクテーション",
+    "shadow_record": "発音"
   },
   "points": "点",
   "playAudio": "音声を再生",
   "playing": "再生中...",
+  "playAgain": "もう一度再生",
+  "listenAndType": "聴いて、聞こえたことを入力してください",
+  "playingAudio": "音声再生中...",
+  "tapToReplay": "タップして再生",
+  "tapToPlayAudio": "タップして音声を再生",
+  "listenFirst": "まず聴いてください",
+  "tapToRecord": "タップして録音",
+  "recordingTapToStop": "録音中... タップして停止",
+  "evaluating": "評価中...",
+  "done": "完了",
   "typeAnswer": "回答を入力してください...",
+  "aiScore": "AIスコア",
+  "accuracy": "正確度",
   "feedback": {
     "correct": "正解！",
     "incorrect": "惜しい",
-    "correctAnswer": "正しい答え"
+    "correctAnswer": "正しい答え",
+    "evaluationFailed": "評価できませんでした。もう一度お試しください。"
   },
   "nextQuestion": "次の問題",
   "finishPractice": "結果を見る",
+  "skipAudioQuestion": "今は話せません・聴けません",
   "results": {
     "title": "練習完了",
     "excellent": "素晴らしい！",
@@ -42,6 +58,8 @@
     "keepPracticing": "練習を続けましょう！",
     "correct": "正解",
     "practiceAgain": "もう一度練習",
-    "backToLearn": "学習に戻る"
+    "backToLearn": "学習に戻る",
+    "diagnosticNote": "あなたのレベルを把握中です — 次のセッションではパーソナライズされたコンテンツが表示されます！",
+    "skipped": "スキップ"
   }
 }

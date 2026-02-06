@@ -95,5 +95,14 @@
     "duration": "~10-15 questions • Environ 5 minutes",
     "startTest": "Commencer le test de niveau",
     "skipForNow": "Passer pour l'instant"
+  },
+  "adaptiveIntro": {
+    "title": "Une pratique qui s'adapte à toi",
+    "subtitle": "Ta première session nous aidera à comprendre ton niveau — aucun test requis",
+    "benefit1": "Commence facile et s'ajuste à ton niveau",
+    "benefit2": "Chaque réponse rend le système plus intelligent",
+    "benefit3": "Contenu à ton niveau dès la deuxième session",
+    "startPractice": "Commencer à pratiquer",
+    "skipForNow": "Passer pour l'instant"
   }
 }

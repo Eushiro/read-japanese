@@ -219,8 +219,10 @@ Usage limits (example):
 | Vocabulary coverage check           | ❌ Not Started | Check user knows enough words before recommending                     |
 | Story recommendation by known words | ❌ Not Started | Personalized ranking based on vocabulary                              |
 | Stories from your words             | ❌ Not Started | Generate stories featuring words user is learning                     |
-| Questions from your weak areas      | 🚧 In Progress | Adaptive practice targets learner profile                             |
-| i+1 comprehensible input            | 🚧 In Progress | Content difficulty matched to user ability                            |
+| Questions from your weak areas      | ✅ Complete    | Diagnostic + adaptive practice targets learner profile per-question   |
+| i+1 comprehensible input            | ✅ Complete    | Content difficulty matched to user ability via IRT confidence         |
+| Smart adaptive practice             | ✅ Complete    | Diagnostic mode, per-question updates, client-side ordering           |
+| Remove placement test gate          | ✅ Complete    | Replaced with adaptive diagnostic first session                       |
 | Integration with flashcards         | ❌ Not Started | Link stories to vocabulary learning                                   |
 
 ---
@@ -748,5 +750,5 @@ UsageLimits (per tier)
 ## Document Control
 
 **Version**: 4.0
-**Last Updated**: 2026-01-23
+**Last Updated**: 2026-02-05
 **Status**: Active development - Core complete, focusing on compression and personalization

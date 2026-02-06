@@ -38,6 +38,7 @@
   },
   "cta": {
     "startPlacement": "Commencer le test de niveau",
+    "startPractice": "Commencer la pratique",
     "findLevel": "Trouvez votre niveau",
     "placementExplainer": "~10 questions \u2022 adaptatif",
     "durationQuestion": "Combien de temps voulez-vous étudier ?",
@@ -64,7 +65,7 @@
   "skills": {
     "title": "Vos compétences",
     "viewProgress": "Voir la progression",
-    "noData": "Passez un test de niveau pour suivre vos compétences",
+    "noData": "Commencez à pratiquer pour suivre vos compétences",
     "focusAreas": "Points à améliorer",
     "best": "Point fort",
     "next": "À améliorer",

@@ -18,10 +18,9 @@ import {
   User,
   Volume2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { Footer } from "@/components/Footer";
-import { PlacementTestPromptDialog } from "@/components/PlacementTestPromptDialog";
 import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -52,11 +51,6 @@ import type { ExamType } from "../../convex/schema";
 export function SettingsPage() {
   const { trackEvent, events } = useAnalytics();
   const t = useT();
-
-  // State for dialogs
-  const [placementPromptLanguage, setPlacementPromptLanguage] = useState<ContentLanguage | null>(
-    null
-  );
 
   const {
     settings,
@@ -121,9 +115,6 @@ export function SettingsPage() {
       value: newLanguages,
       action: "change",
     });
-
-    // Show placement test prompt for the new language
-    setPlacementPromptLanguage(lang);
   };
 
   const handleExamToggle = async (exam: string) => {
@@ -731,16 +722,6 @@ export function SettingsPage() {
       </div>
 
       <Footer />
-
-      {/* Placement test prompt dialog */}
-      {placementPromptLanguage && (
-        <PlacementTestPromptDialog
-          isOpen={!!placementPromptLanguage}
-          onClose={() => setPlacementPromptLanguage(null)}
-          language={placementPromptLanguage}
-          onSkip={() => setPlacementPromptLanguage(null)}
-        />
-      )}
     </div>
   );
 }

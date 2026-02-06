@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Flame,
   Globe,
-  GraduationCap,
   MessageCircle,
   Play,
   Sparkles,
@@ -245,10 +244,7 @@ export function DashboardPage() {
 
   const goalStat = getGoalAwareStat();
 
-  // Helper to check if a language has a placement test
-  const hasPlacementTest = (lang: ContentLanguage): boolean => {
-    return !!userProfile?.proficiencyLevels?.[lang as keyof typeof userProfile.proficiencyLevels];
-  };
+  // No longer gated on placement test — always ready for practice
 
   if (authLoading) {
     return <DashboardSkeleton />;
@@ -307,7 +303,6 @@ export function DashboardPage() {
             <PrimarySessionCTA
               config={getPrimaryCtaConfig({
                 hasLanguages: userLanguages.length > 0,
-                hasPlacement: userLanguages.length > 0 ? hasPlacementTest(primaryLanguage) : false,
                 sessionStatus: sessionState.status,
                 learningGoal: userProfile?.learningGoal,
                 t,
@@ -317,8 +312,8 @@ export function DashboardPage() {
                   navigate({ to: "/settings" });
                   return;
                 }
-                if (action === "placement") {
-                  navigate({ to: "/placement-test", search: { language: primaryLanguage } });
+                if (action === "practice") {
+                  navigate({ to: "/adaptive-practice" });
                   return;
                 }
                 navigate({ to: "/study-session" });
@@ -688,11 +683,10 @@ function DashboardSkeleton() {
   );
 }
 
-type PrimaryCtaAction = "session" | "placement" | "setup";
+type PrimaryCtaAction = "session" | "practice" | "setup";
 
 function getPrimaryCtaConfig(args: {
   hasLanguages: boolean;
-  hasPlacement: boolean;
   sessionStatus: "idle" | "planning" | "active" | "complete";
   learningGoal?: "exam" | "travel" | "professional" | "media" | "casual";
   t: ReturnType<typeof useT>;
@@ -706,17 +700,6 @@ function getPrimaryCtaConfig(args: {
       action: "setup" as const,
       icon: Globe,
       gradient: "from-slate-500/10 to-slate-500/5",
-    };
-  }
-
-  if (!args.hasPlacement) {
-    return {
-      title: t("dashboard.primaryCta.placementTitle"),
-      subtitle: t("dashboard.primaryCta.placementSubtitle"),
-      cta: t("dashboard.primaryCta.placementButton"),
-      action: "placement" as const,
-      icon: GraduationCap,
-      gradient: "from-blue-500/10 to-purple-500/10",
     };
   }
 
@@ -740,7 +723,7 @@ function getPrimaryCtaConfig(args: {
     title: t("dashboard.primaryCta.startTitle"),
     subtitle: goalSubtitle,
     cta: t("dashboard.primaryCta.startButton"),
-    action: "session" as const,
+    action: "practice" as const,
     icon: Sparkles,
     gradient: "from-orange-500/10 to-purple-500/10",
   };

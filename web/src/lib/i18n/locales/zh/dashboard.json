@@ -38,6 +38,7 @@
   },
   "cta": {
     "startPlacement": "开始分级测试",
+    "startPractice": "开始练习",
     "findLevel": "确定您的水平",
     "placementExplainer": "约10题 \u2022 自适应",
     "durationQuestion": "您想学习多长时间？",
@@ -64,7 +65,7 @@
   "skills": {
     "title": "您的技能",
     "viewProgress": "查看进度",
-    "noData": "完成分级测试以追踪您的技能",
+    "noData": "开始练习以追踪您的技能",
     "focusAreas": "需要加强的领域",
     "best": "最强",
     "next": "需加强",

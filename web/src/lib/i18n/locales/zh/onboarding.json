@@ -95,5 +95,14 @@
     "duration": "约10-15道题 • 大约5分钟",
     "startTest": "开始水平测试",
     "skipForNow": "暂时跳过"
+  },
+  "adaptiveIntro": {
+    "title": "适应你的练习",
+    "subtitle": "第一次练习将帮助我们了解你的水平 — 无需测试",
+    "benefit1": "从简单开始，根据你的能力调整",
+    "benefit2": "每个回答都让系统更了解你",
+    "benefit3": "第二次练习起提供适合你水平的内容",
+    "startPractice": "开始练习",
+    "skipForNow": "暂时跳过"
   }
 }

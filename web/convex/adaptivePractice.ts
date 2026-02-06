@@ -18,12 +18,15 @@ type PracticeQuestionType =
   | "fill_blank"
   | "translation"
   | "listening_mcq"
-  | "free_input";
+  | "free_input"
+  | "dictation"
+  | "shadow_record";
 
 interface PracticeQuestion {
   questionId: string;
   type: PracticeQuestionType;
   targetSkill: SkillType;
+  difficulty?: "easy" | "medium" | "hard";
   question: string;
   questionTranslation?: string;
   options?: string[];
@@ -45,12 +48,18 @@ interface PracticeContent {
 
 interface PracticeSet {
   practiceId: string;
-  content: PracticeContent;
+  isDiagnostic: boolean;
+  content?: PracticeContent;
   questions: PracticeQuestion[];
   targetSkills: SkillType[];
   difficulty: number;
   generatedAt: number;
-  modelUsed?: string; // AI model that generated the questions
+  modelUsed?: string;
+  profileSnapshot: {
+    abilityEstimate: number;
+    abilityConfidence: number;
+    skillScores: Record<string, number>;
+  };
 }
 
 // ============================================
@@ -78,9 +87,9 @@ function selectQuestionTypes(weakSkills: SkillType[]): PracticeQuestionType[] {
     vocabulary: ["mcq_vocabulary", "fill_blank"],
     grammar: ["mcq_grammar", "fill_blank"],
     reading: ["mcq_comprehension", "translation"],
-    listening: ["listening_mcq"],
+    listening: ["listening_mcq", "dictation"],
     writing: ["free_input", "translation"],
-    speaking: [], // Handled separately via shadowing
+    speaking: ["shadow_record"],
   };
 
   const types: PracticeQuestionType[] = [];
@@ -136,7 +145,7 @@ export const getNextPractice = action({
       language: args.language,
     });
 
-    // 2. Determine weak skills
+    // 2. Build profile snapshot for client
     const skills = profile?.skills ?? {
       vocabulary: 50,
       grammar: 50,
@@ -145,9 +154,62 @@ export const getNextPractice = action({
       writing: 50,
       speaking: 50,
     };
+    const profileSnapshot = {
+      abilityEstimate: profile?.abilityEstimate ?? 0,
+      abilityConfidence: profile?.abilityConfidence ?? 1.0,
+      skillScores: skills as Record<string, number>,
+    };
+
+    // 3. Determine weak skills
     const weakSkills = identifyWeakSkills(skills);
 
-    // 3. Get adaptive content
+    // 4. Diagnostic vs Normal mode
+    // High SE (> 0.5) means uncertain about ability → diagnostic mode
+    const isDiagnostic = (profile?.abilityConfidence ?? 1.0) > 0.5;
+
+    if (isDiagnostic) {
+      // ===== DIAGNOSTIC MODE =====
+      // Skip content generation, generate standalone questions
+      const diagnosticResult = await generateDiagnosticQuestions(
+        args.language,
+        profile?.abilityEstimate ?? 0
+      );
+
+      // Generate TTS audio for audio-based question types (max 1-2)
+      const audioTypes: PracticeQuestionType[] = ["listening_mcq", "dictation", "shadow_record"];
+      const questionsWithAudio = await Promise.all(
+        diagnosticResult.questions.map(async (q) => {
+          if (audioTypes.includes(q.type) && !q.audioUrl) {
+            try {
+              const result = await ctx.runAction(internal.ai.generateTTSAudioAction, {
+                text: q.question,
+                language: args.language,
+              });
+              if (result.success && result.audioUrl) {
+                return { ...q, audioUrl: result.audioUrl };
+              }
+            } catch (error) {
+              console.error(`Failed to generate TTS for question ${q.questionId}:`, error);
+            }
+          }
+          return q;
+        })
+      );
+
+      return {
+        practiceId,
+        isDiagnostic: true,
+        questions: questionsWithAudio,
+        targetSkills: ["vocabulary", "grammar", "reading", "listening", "writing", "speaking"],
+        difficulty: profile?.abilityEstimate ?? 0,
+        generatedAt: Date.now(),
+        modelUsed: diagnosticResult.modelUsed,
+        profileSnapshot,
+      };
+    }
+
+    // ===== NORMAL MODE =====
+    // 5. Get adaptive content
     const contentType = args.preferredContentType ?? selectContentType(weakSkills);
     const contentResult = await ctx.runAction(api.contentEngine.getBestContent, {
       userId: args.userId,
@@ -155,7 +217,7 @@ export const getNextPractice = action({
       contentType,
     });
 
-    // 4. Fetch the content payload
+    // 6. Fetch the content payload
     const contentUrl = contentResult.contentUrl;
     let contentPayload: PracticeContent;
 
@@ -176,7 +238,7 @@ export const getNextPractice = action({
       throw new Error("Failed to fetch practice content");
     }
 
-    // 5. Generate questions based on weak skills
+    // 7. Generate questions based on weak skills (8-10 questions)
     const questionTypes = selectQuestionTypes(weakSkills);
     const generatedResult = await generateQuestionsFromContent(
       contentPayload,
@@ -185,14 +247,38 @@ export const getNextPractice = action({
       args.language
     );
 
+    // 8. Generate TTS audio for audio-based question types
+    const audioTypes: PracticeQuestionType[] = ["listening_mcq", "dictation", "shadow_record"];
+    const questionsWithAudio = await Promise.all(
+      generatedResult.questions.map(async (q) => {
+        if (audioTypes.includes(q.type) && !q.audioUrl) {
+          try {
+            const ttsText = q.type === "listening_mcq" ? contentPayload.content : q.question;
+            const result = await ctx.runAction(internal.ai.generateTTSAudioAction, {
+              text: ttsText,
+              language: args.language,
+            });
+            if (result.success && result.audioUrl) {
+              return { ...q, audioUrl: result.audioUrl };
+            }
+          } catch (error) {
+            console.error(`Failed to generate TTS for question ${q.questionId}:`, error);
+          }
+        }
+        return q;
+      })
+    );
+
     return {
       practiceId,
+      isDiagnostic: false,
       content: contentPayload,
-      questions: generatedResult.questions,
+      questions: questionsWithAudio,
       targetSkills: weakSkills,
       difficulty: profile?.abilityEstimate ?? 0,
       generatedAt: Date.now(),
       modelUsed: generatedResult.modelUsed,
+      profileSnapshot,
     };
   },
 });
@@ -224,10 +310,20 @@ Generate questions that test: ${targetSkills.join(", ")}
 Question types to include: ${questionTypes.join(", ")}
 
 For each question:
-- MCQ should have 4 options with plausible distractors
-- Fill-in-blank should test vocabulary or grammar patterns from the content
+- MCQ should have exactly 4 options with plausible distractors
+- Fill-in-blank: use "___" in the question field to mark the blank (e.g. "毎朝___を食べます"). The correctAnswer is the word that fills the blank.
 - Comprehension questions should test understanding of the main ideas
-- Translation questions should be from ${languageName} to English
+- Translation questions should be from ${languageName} to the language used in the provided translation. Set questionTranslation to a short prompt like "Translate:".
+- listening_mcq: provide a question about audio content with 4 MCQ options. The audio will be generated from the content.
+- dictation: set question to a sentence from the content that the user will hear and type. The correctAnswer is the exact sentence.
+- shadow_record: set question to a sentence for pronunciation practice. Set questionTranslation to the translation (matching the language used in the provided translation). The correctAnswer is the sentence itself.
+
+Each question MUST have a "difficulty" field: "easy", "medium", or "hard".
+- easy: basic recognition, common words, simple patterns
+- medium: sentence-level understanding, grammar patterns
+- hard: inference, production, complex structures
+
+Include at least 4 different question types. Aim for a mix: 3 easy, 3-4 medium, 2-3 hard.
 
 IMPORTANT: All questions must be directly based on the provided content.`;
 
@@ -238,7 +334,8 @@ Content: ${content.content}
 Translation: ${content.translation}
 Vocabulary: ${content.vocabulary.map((v) => `${v.word} - ${v.meaning}`).join(", ")}
 
-Create 3-5 questions of varied types based on the weak skills: ${targetSkills.join(", ")}
+Create 8-10 questions of varied types based on the weak skills: ${targetSkills.join(", ")}
+Include at least 4 different question types. Tag each question with difficulty: "easy", "medium", or "hard".
 
 Return JSON with an array of questions.`;
 
@@ -260,20 +357,25 @@ Return JSON with an array of questions.`;
                   "mcq_comprehension",
                   "fill_blank",
                   "translation",
+                  "listening_mcq",
                   "free_input",
+                  "dictation",
+                  "shadow_record",
                 ],
               },
               targetSkill: {
                 type: "string",
-                enum: ["vocabulary", "grammar", "reading", "listening", "writing"],
+                enum: ["vocabulary", "grammar", "reading", "listening", "writing", "speaking"],
               },
               question: { type: "string" },
               questionTranslation: { type: "string" },
               options: { type: "array", items: { type: "string" } },
               correctAnswer: { type: "string" },
+              acceptableAnswers: { type: "array", items: { type: "string" } },
+              difficulty: { type: "string", enum: ["easy", "medium", "hard"] },
               points: { type: "number" },
             },
-            required: ["type", "targetSkill", "question", "correctAnswer", "points"],
+            required: ["type", "targetSkill", "question", "correctAnswer", "difficulty", "points"],
             additionalProperties: false,
           },
         },
@@ -287,7 +389,7 @@ Return JSON with an array of questions.`;
     const result = await generateAndParse<{ questions: PracticeQuestion[] }>({
       prompt,
       systemPrompt,
-      maxTokens: 1500,
+      maxTokens: 10000,
       jsonSchema: questionSchema,
       models: TEXT_MODEL_CHAIN,
       parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
@@ -324,6 +426,170 @@ Return JSON with an array of questions.`;
             "None of the above",
           ],
           correctAnswer: "The main idea of the story",
+          points: 10,
+        },
+      ],
+      modelUsed: undefined,
+    };
+  }
+}
+
+/**
+ * Generate standalone diagnostic questions (no content piece)
+ * Used for first-time users or when ability confidence is low.
+ * Covers all 6 skills with varied difficulty.
+ */
+async function generateDiagnosticQuestions(
+  language: string,
+  abilityEstimate: number
+): Promise<GeneratedQuestionsResult> {
+  const languageNames: Record<string, string> = {
+    japanese: "Japanese",
+    english: "English",
+    french: "French",
+  };
+  const languageName = languageNames[language] || "English";
+
+  // Determine approximate level for context
+  const levelHint =
+    abilityEstimate <= -2
+      ? "beginner"
+      : abilityEstimate <= 0
+        ? "elementary to intermediate"
+        : abilityEstimate <= 1.5
+          ? "intermediate to advanced"
+          : "advanced";
+
+  const systemPrompt = `You are a language assessment question generator for ${languageName} learners.
+Create standalone practice questions that do NOT reference any reading passage — each question must be self-contained.
+
+These questions are for a diagnostic session to assess the learner's level. The learner appears to be at a ${levelHint} level.
+
+Generate questions covering ALL of these skills:
+- vocabulary (mcq_vocabulary, fill_blank)
+- grammar (mcq_grammar)
+- reading (mcq_comprehension — use a SHORT 1-2 sentence passage embedded in the question itself)
+- writing (free_input, translation)
+- listening (listening_mcq, dictation — keep to max 1)
+- speaking (shadow_record — keep to max 1)
+
+Difficulty spread: 3 easy, 3 medium, 2 hard.
+
+For each question:
+- MCQ: exactly 4 options with plausible distractors
+- fill_blank: use "___" in the question to mark the blank
+- translation: ask the learner to translate a sentence. Set questionTranslation to "Translate:"
+- free_input: ask the learner to write a short response in ${languageName}
+- mcq_comprehension: embed a short ${languageName} text (1-2 sentences) directly in the question
+- listening_mcq: provide a question about what was heard (audio will be generated from the question text)
+- dictation: set question to a ${languageName} sentence the user will type after hearing
+- shadow_record: set question to a ${languageName} sentence for pronunciation. Set questionTranslation to the English translation
+
+IMPORTANT: Questions must be standalone — no external reading passage.
+Each question MUST have a "difficulty" field: "easy", "medium", or "hard".`;
+
+  const prompt = `Generate 8 standalone diagnostic ${languageName} practice questions.
+Cover at least 5 different skills. Use at least 4 different question types.
+Maximum 1 listening/dictation question and 1 shadow_record question.
+Return JSON.`;
+
+  const questionSchema: JsonSchema = {
+    name: "diagnostic_questions",
+    schema: {
+      type: "object",
+      properties: {
+        questions: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              type: {
+                type: "string",
+                enum: [
+                  "mcq_vocabulary",
+                  "mcq_grammar",
+                  "mcq_comprehension",
+                  "fill_blank",
+                  "translation",
+                  "listening_mcq",
+                  "free_input",
+                  "dictation",
+                  "shadow_record",
+                ],
+              },
+              targetSkill: {
+                type: "string",
+                enum: ["vocabulary", "grammar", "reading", "listening", "writing", "speaking"],
+              },
+              difficulty: { type: "string", enum: ["easy", "medium", "hard"] },
+              question: { type: "string" },
+              questionTranslation: { type: "string" },
+              options: { type: "array", items: { type: "string" } },
+              correctAnswer: { type: "string" },
+              acceptableAnswers: { type: "array", items: { type: "string" } },
+              points: { type: "number" },
+            },
+            required: ["type", "targetSkill", "difficulty", "question", "correctAnswer", "points"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["questions"],
+      additionalProperties: false,
+    },
+  };
+
+  try {
+    const result = await generateAndParse<{ questions: PracticeQuestion[] }>({
+      prompt,
+      systemPrompt,
+      maxTokens: 10000,
+      jsonSchema: questionSchema,
+      models: TEXT_MODEL_CHAIN,
+      parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
+      validate: (parsed) => {
+        if (!parsed.questions || parsed.questions.length < 4) {
+          return "Not enough questions generated";
+        }
+        return null;
+      },
+    });
+
+    return {
+      questions: result.result.questions.map((q, index) => ({
+        ...q,
+        questionId: `diag_${Date.now()}_${index}`,
+      })),
+      modelUsed: result.usage.model,
+    };
+  } catch (error) {
+    console.error("Failed to generate diagnostic questions:", error);
+    // Fallback with basic questions
+    return {
+      questions: [
+        {
+          questionId: `diag_${Date.now()}_0`,
+          type: "mcq_vocabulary",
+          targetSkill: "vocabulary",
+          difficulty: "easy",
+          question:
+            language === "japanese"
+              ? "「ありがとう」の意味は？"
+              : language === "french"
+                ? "Que signifie « bonjour » ?"
+                : "What does 'hello' mean?",
+          options:
+            language === "japanese"
+              ? ["Thank you", "Hello", "Goodbye", "Sorry"]
+              : language === "french"
+                ? ["Good morning", "Goodbye", "Thank you", "Sorry"]
+                : ["A greeting", "A farewell", "An apology", "A question"],
+          correctAnswer:
+            language === "japanese"
+              ? "Thank you"
+              : language === "french"
+                ? "Good morning"
+                : "A greeting",
           points: 10,
         },
       ],

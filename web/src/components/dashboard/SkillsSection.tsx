@@ -166,10 +166,10 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
             </div>
             <p className="text-muted-foreground mb-4">{t("dashboard.skills.noData")}</p>
             <Link
-              to="/placement-test"
+              to="/adaptive-practice"
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 hover:opacity-90 transition-opacity"
             >
-              {t("dashboard.cta.startPlacement")}
+              {t("dashboard.cta.startPractice")}
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>

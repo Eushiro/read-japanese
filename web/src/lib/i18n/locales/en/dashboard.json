@@ -37,6 +37,7 @@
   },
   "cta": {
     "startPlacement": "Start Placement Test",
+    "startPractice": "Start Practice",
     "findLevel": "Find your level",
     "placementExplainer": "~10 questions \u2022 adaptive",
     "durationQuestion": "How long do you want to study?",
@@ -63,7 +64,7 @@
   "skills": {
     "title": "Your Skills",
     "viewProgress": "View Progress",
-    "noData": "Complete a placement test to track your skills",
+    "noData": "Start practicing to track your skills",
     "focusAreas": "Focus Areas",
     "best": "Best",
     "next": "Focus next",

@@ -8,7 +8,6 @@ import {
   Outlet,
   useLocation,
   useNavigate,
-  useSearch,
 } from "@tanstack/react-router";
 import { BookOpen, CreditCard, Crown, GraduationCap, Home, Shield, User, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -42,7 +41,7 @@ import { LandingPage } from "@/pages/LandingPage";
 import { LearnPage } from "@/pages/LearnPage";
 import { LibraryPage } from "@/pages/LibraryPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
-import { PlacementTestPage } from "@/pages/PlacementTestPage";
+// PlacementTestPage removed — adaptive practice replaces placement tests
 import { PricingPage } from "@/pages/PricingPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
 import { ProgressPage } from "@/pages/ProgressPage";
@@ -321,10 +320,7 @@ function FlashcardsRedirect() {
 }
 
 function PracticeRedirect() {
-  const search = useSearch({ strict: false }) as { vocabularyId?: string };
-  return (
-    <Navigate to="/learn" search={{ tab: "practice", vocabularyId: search.vocabularyId }} replace />
-  );
+  return <Navigate to="/adaptive-practice" replace />;
 }
 
 const vocabularyRoute = createRoute({
@@ -343,9 +339,6 @@ const practiceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/practice",
   component: PracticeRedirect,
-  validateSearch: (search: Record<string, unknown>) => ({
-    vocabularyId: search.vocabularyId as string | undefined,
-  }),
 });
 
 const generateRoute = createRoute({
@@ -366,10 +359,15 @@ const usageHistoryRoute = createRoute({
   component: UsageHistoryPage,
 });
 
+// Redirect old placement test URLs to adaptive practice
+function PlacementRedirect() {
+  return <Navigate to="/adaptive-practice" replace />;
+}
+
 const placementTestRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/placement-test",
-  component: PlacementTestPage,
+  component: PlacementRedirect,
 });
 
 const videoRoute = createRoute({

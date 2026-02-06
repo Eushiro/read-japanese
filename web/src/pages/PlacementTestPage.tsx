@@ -70,6 +70,8 @@ export function PlacementTestPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Synchronous ref guard to prevent double-submission race condition
+  const isSubmittingRef = useRef(false);
   const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false);
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([]);
   // Pre-generated next question for instant transitions
@@ -308,6 +310,9 @@ export function PlacementTestPage() {
   const handleSubmitAnswer = async () => {
     if (!testId || selectedAnswer === null || currentQuestionIndex < 0) return;
 
+    // Synchronous guard to prevent double-submission from rapid clicks
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     try {
@@ -322,6 +327,7 @@ export function PlacementTestPage() {
     } catch (error) {
       console.error("Failed to submit answer:", error);
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };

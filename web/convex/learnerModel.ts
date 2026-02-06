@@ -658,8 +658,10 @@ export const updateFromAdaptiveContent = internalMutation({
     }
 
     const p = clamp(args.score / 100, 0, 1);
-    const confidence = clamp(args.confidence ?? 0.5, 0, 1);
-    const k = lerp(0.08, 0.03, confidence);
+    // Use profile's abilityConfidence (SE) for learning rate:
+    // High SE (uncertain) → k=0.15 (learn fast). Low SE (confident) → k=0.03 (fine-tune).
+    const se = profile.abilityConfidence;
+    const k = lerp(0.03, 0.15, se);
 
     const expected = 1 / (1 + Math.exp(-1.7 * (profile.abilityEstimate - args.difficultyEstimate)));
     const abilityEstimate = clamp(profile.abilityEstimate + k * (p - expected), -3, 3);
@@ -784,8 +786,14 @@ export const updateFromAdaptiveContent = internalMutation({
     const newReadiness = calculateReadinessLevel(newSkills, profile.vocabCoverage);
     const studyMinutes = dwellMs > 0 ? Math.max(1, Math.round(dwellMs / 60000)) : 0;
 
+    // Decay SE (abilityConfidence) after each interaction
+    // More questions → more confidence (lower SE). Floor at 0.15 (very confident).
+    const numQuestions = args.skillsTested.length || 1;
+    const newSE = Math.max(0.15, se * Math.pow(0.85, numQuestions));
+
     await ctx.db.patch(profile._id, {
       abilityEstimate,
+      abilityConfidence: newSE,
       abilityBySkill,
       skills: newSkills,
       interestWeights,

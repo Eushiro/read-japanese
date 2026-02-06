@@ -38,6 +38,7 @@
   },
   "cta": {
     "startPlacement": "レベルチェックを始める",
+    "startPractice": "練習を始める",
     "findLevel": "レベルを確認",
     "placementExplainer": "約10問 \u2022 適応型",
     "durationQuestion": "どのくらい学習しますか？",
@@ -64,7 +65,7 @@
   "skills": {
     "title": "あなたのスキル",
     "viewProgress": "進捗を見る",
-    "noData": "スキルを追跡するには、レベルチェックを受けてください",
+    "noData": "スキルを追跡するには、練習を始めてください",
     "focusAreas": "強化すべき分野",
     "best": "得意",
     "next": "強化すべき",

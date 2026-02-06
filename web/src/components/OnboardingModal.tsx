@@ -81,12 +81,12 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
 
   // Calculate total steps based on goal selection
   // If exam goal, show exam selection. Otherwise skip it.
-  // All paths end with placement intro step.
+  // All paths end with adaptive learning intro step.
   const getTotalSteps = () => {
     if (selectedGoal === "exam") {
-      return 7; // Welcome, HowItWorks, Language, Goal, Interests, Exam, PlacementIntro
+      return 7; // Welcome, HowItWorks, Language, Goal, Interests, Exam, AdaptiveIntro
     }
-    return 6; // Welcome, HowItWorks, Language, Goal, Interests, PlacementIntro
+    return 6; // Welcome, HowItWorks, Language, Goal, Interests, AdaptiveIntro
   };
 
   // Track onboarding started
@@ -189,14 +189,14 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
     }
   };
 
-  // Handle starting placement test
-  const handleStartPlacementTest = async () => {
+  // Handle starting adaptive practice (replaces placement test)
+  const handleStartPractice = async () => {
     await handleComplete(); // Save user data first
-    navigate({ to: "/placement-test", search: { language: selectedLanguage! } });
+    navigate({ to: "/adaptive-practice" });
   };
 
-  // Handle skipping placement test
-  const handleSkipPlacementTest = async () => {
+  // Handle skipping to dashboard
+  const handleSkipToDashboard = async () => {
     await handleComplete();
     // onComplete callback will navigate to dashboard
   };
@@ -610,7 +610,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
             </div>
           )}
 
-          {/* Placement Test Intro Step (final step for all paths) */}
+          {/* Adaptive Learning Intro Step (final step for all paths) */}
           {((step === 5 && selectedGoal !== "exam") || (step === 6 && selectedGoal === "exam")) && (
             <div className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-teal-500/10" />
@@ -624,9 +624,9 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                   className="text-2xl font-bold text-foreground mb-2"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  {t("onboarding.placementIntro.title")}
+                  {t("onboarding.adaptiveIntro.title")}
                 </h2>
-                <p className="text-foreground mb-6">{t("onboarding.placementIntro.subtitle")}</p>
+                <p className="text-foreground mb-6">{t("onboarding.adaptiveIntro.subtitle")}</p>
 
                 <div className="space-y-3 mb-6 text-left">
                   <div className="flex items-center gap-3">
@@ -634,7 +634,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                       <Check className="w-4 h-4 text-green-400" />
                     </div>
                     <span className="text-foreground">
-                      {t("onboarding.placementIntro.benefit1")}
+                      {t("onboarding.adaptiveIntro.benefit1")}
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -642,7 +642,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                       <Check className="w-4 h-4 text-green-400" />
                     </div>
                     <span className="text-foreground">
-                      {t("onboarding.placementIntro.benefit2")}
+                      {t("onboarding.adaptiveIntro.benefit2")}
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -650,33 +650,29 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                       <Check className="w-4 h-4 text-green-400" />
                     </div>
                     <span className="text-foreground">
-                      {t("onboarding.placementIntro.benefit3")}
+                      {t("onboarding.adaptiveIntro.benefit3")}
                     </span>
                   </div>
                 </div>
 
-                <p className="text-sm text-foreground-muted mb-6">
-                  {t("onboarding.placementIntro.duration")}
-                </p>
-
                 <Button
-                  onClick={handleStartPlacementTest}
+                  onClick={handleStartPractice}
                   disabled={isSubmitting}
                   className="w-full gap-2 mb-3"
                   size="lg"
                 >
                   {isSubmitting
                     ? t("onboarding.actions.saving")
-                    : t("onboarding.placementIntro.startTest")}
+                    : t("onboarding.adaptiveIntro.startPractice")}
                   {!isSubmitting && <ChevronRight className="w-4 h-4" />}
                 </Button>
 
                 <button
-                  onClick={handleSkipPlacementTest}
+                  onClick={handleSkipToDashboard}
                   disabled={isSubmitting}
                   className="w-full text-sm text-foreground-muted hover:text-foreground transition-colors"
                 >
-                  {t("onboarding.placementIntro.skipForNow")}
+                  {t("onboarding.adaptiveIntro.skipForNow")}
                 </button>
               </div>
             </div>

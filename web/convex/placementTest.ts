@@ -309,7 +309,13 @@ export const submitAnswer = mutation({
     const question = questions[args.questionIndex];
 
     if (question.userAnswer !== undefined) {
-      throw new Error("Question already answered");
+      // Question already answered - return existing result (idempotent)
+      return {
+        isCorrect: question.isCorrect!,
+        newAbilityEstimate: test.currentAbilityEstimate,
+        standardError: test.abilityStandardError,
+        questionsAnswered: test.questionsAnswered,
+      };
     }
 
     const isCorrect = args.answer === question.correctAnswer;

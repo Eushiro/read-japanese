@@ -22,19 +22,35 @@
     "fill_blank": "Fill in the Blank",
     "translation": "Translation",
     "listening_mcq": "Listening",
-    "free_input": "Free Response"
+    "free_input": "Free Response",
+    "dictation": "Dictation",
+    "shadow_record": "Pronunciation"
   },
   "points": "pts",
   "playAudio": "Play Audio",
   "playing": "Playing...",
+  "playAgain": "Play again",
+  "listenAndType": "Listen and type what you hear",
+  "playingAudio": "Playing audio...",
+  "tapToReplay": "Tap to replay",
+  "tapToPlayAudio": "Tap to play audio",
+  "listenFirst": "Listen first",
+  "tapToRecord": "Tap to record",
+  "recordingTapToStop": "Recording... tap to stop",
+  "evaluating": "Evaluating...",
+  "done": "Done",
   "typeAnswer": "Type your answer...",
+  "aiScore": "AI Score",
+  "accuracy": "Accuracy",
   "feedback": {
     "correct": "Correct!",
     "incorrect": "Not quite right",
-    "correctAnswer": "Correct answer"
+    "correctAnswer": "Correct answer",
+    "evaluationFailed": "Unable to evaluate. Please try again."
   },
   "nextQuestion": "Next Question",
   "finishPractice": "See Results",
+  "skipAudioQuestion": "Can't talk/listen right now",
   "results": {
     "title": "Practice Complete",
     "excellent": "Excellent work!",
@@ -42,6 +58,8 @@
     "keepPracticing": "Keep practicing!",
     "correct": "correct",
     "practiceAgain": "Practice Again",
-    "backToLearn": "Back to Learn"
+    "backToLearn": "Back to Learn",
+    "diagnosticNote": "We're getting to know your level — your next session will have personalized content!",
+    "skipped": "skipped"
   }
 }

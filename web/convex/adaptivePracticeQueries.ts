@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { adaptiveContentTypeValidator, languageValidator } from "./schema";
 
@@ -37,15 +37,81 @@ export const getRecentSessions = query({
 // ============================================
 
 /**
- * Submit practice answers and get results
+ * Record a single answer immediately — updates learner model per-question.
+ * Called fire-and-forget on each answer so no data is lost if user closes mid-session.
+ */
+export const recordAnswer = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    practiceId: v.string(),
+    questionId: v.string(),
+    questionText: v.string(),
+    questionType: v.string(),
+    targetSkill: v.string(),
+    difficulty: v.optional(v.string()),
+    userAnswer: v.string(),
+    isCorrect: v.boolean(),
+    earnedPoints: v.number(),
+    maxPoints: v.number(),
+    responseTimeMs: v.optional(v.number()),
+    skipped: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    // Don't record or update model for skipped questions
+    if (args.skipped) return;
+
+    // 1. Save to questionHistory
+    await ctx.db.insert("questionHistory", {
+      userId: args.userId,
+      language: args.language,
+      sourceType: "comprehension",
+      sourceId: args.practiceId,
+      questionContent: {
+        questionText: args.questionText,
+        questionType: args.questionType,
+      },
+      userAnswer: args.userAnswer,
+      responseTimeMs: args.responseTimeMs,
+      skills: [{ skill: args.targetSkill, weight: 1 }],
+      difficulty: args.difficulty === "easy" ? -1 : args.difficulty === "hard" ? 1 : 0,
+      grading: {
+        isCorrect: args.isCorrect,
+        score: args.maxPoints > 0 ? args.earnedPoints / args.maxPoints : 0,
+        gradedAt: Date.now(),
+      },
+      answeredAt: Date.now(),
+    });
+
+    // 2. Update learner model per-question
+    const score =
+      args.maxPoints > 0 ? (args.earnedPoints / args.maxPoints) * 100 : args.isCorrect ? 100 : 0;
+    const difficultyEstimate = args.difficulty === "easy" ? -1 : args.difficulty === "hard" ? 1 : 0;
+
+    await ctx.runMutation(internal.learnerModel.updateFromAdaptiveContent, {
+      userId: args.userId,
+      language: args.language,
+      contentId: args.practiceId,
+      contentType: "dialogue",
+      difficultyEstimate,
+      skillsTested: [{ skill: args.targetSkill, weight: 1 }],
+      score,
+    });
+  },
+});
+
+/**
+ * Submit practice session — lightweight, just records session-level stats.
+ * Individual answers are already recorded via recordAnswer.
  */
 export const submitPractice = mutation({
   args: {
     userId: v.string(),
     practiceId: v.string(),
-    contentId: v.string(),
-    contentType: adaptiveContentTypeValidator,
+    contentId: v.optional(v.string()),
+    contentType: v.optional(adaptiveContentTypeValidator),
     language: languageValidator,
+    isDiagnostic: v.optional(v.boolean()),
     answers: v.array(
       v.object({
         questionId: v.string(),
@@ -63,48 +129,27 @@ export const submitPractice = mutation({
   handler: async (ctx, args) => {
     const percentScore = args.maxScore > 0 ? (args.totalScore / args.maxScore) * 100 : 0;
 
-    // Log exposure with engagement
-    await ctx.runMutation(api.contentEngineQueries.logExposure, {
-      userId: args.userId,
-      contentId: args.contentId,
-      contentType: args.contentType,
-      language: args.language,
-      servedAt: Date.now() - (args.dwellMs ?? 0),
-      completedAt: Date.now(),
-      score: percentScore,
-      source: "generated",
-      dwellMs: args.dwellMs,
-      skillsTested: args.targetSkills.map((skill) => ({
-        skill,
-        weight: 1 / args.targetSkills.length,
-      })),
-    });
-
-    // Store individual question responses for analysis
-    for (const answer of args.answers) {
-      await ctx.db.insert("questionHistory", {
+    // Log exposure (only for normal mode with content)
+    if (!args.isDiagnostic && args.contentId && args.contentType) {
+      await ctx.runMutation(api.contentEngineQueries.logExposure, {
         userId: args.userId,
+        contentId: args.contentId,
+        contentType: args.contentType,
         language: args.language,
-        sourceType: "comprehension",
-        sourceId: args.practiceId,
-        questionContent: {
-          questionText: answer.questionId,
-          questionType: "practice",
-        },
-        userAnswer: answer.userAnswer,
-        responseTimeMs: answer.responseTimeMs,
-        skills: args.targetSkills.map((skill) => ({
+        servedAt: Date.now() - (args.dwellMs ?? 0),
+        completedAt: Date.now(),
+        score: percentScore,
+        source: "generated",
+        dwellMs: args.dwellMs,
+        skillsTested: args.targetSkills.map((skill) => ({
           skill,
           weight: 1 / args.targetSkills.length,
         })),
-        grading: {
-          isCorrect: answer.isCorrect,
-          score: answer.earnedPoints,
-          gradedAt: Date.now(),
-        },
-        answeredAt: Date.now(),
       });
     }
+
+    // No need to insert questionHistory or update learner model here —
+    // recordAnswer already handles per-question updates.
 
     return {
       totalScore: args.totalScore,
