@@ -81,7 +81,6 @@ export const TEXT_MODEL_CHAIN: ModelConfig[] = [
 export const TEST_MODELS = {
   GROK_CODE_FAST: "x-ai/grok-code-fast-1",
   GPT_OSS_20B: "openai/gpt-oss-20b",
-  GPT_5_MINI: "openai/gpt-5-mini",
   CLAUDE_SONNET_4_5: "anthropic/claude-sonnet-4.5",
 } as const;
 
@@ -89,10 +88,9 @@ export const TEST_MODELS = {
  * Test mode models: all models to compare in parallel (admin model test mode)
  */
 export const TEST_MODE_MODELS: ModelConfig[] = [
-  ...TEXT_MODEL_CHAIN,
+  { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
   { model: TEST_MODELS.GROK_CODE_FAST, provider: "openrouter" },
   { model: TEST_MODELS.GPT_OSS_20B, provider: "openrouter" },
-  { model: TEST_MODELS.GPT_5_MINI, provider: "openrouter" },
   { model: TEST_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
 ];
 

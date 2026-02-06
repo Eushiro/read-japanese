@@ -46,6 +46,7 @@ import type * as lib_helpers from "../lib/helpers.js";
 import type * as lib_imageCompression from "../lib/imageCompression.js";
 import type * as lib_models from "../lib/models.js";
 import type * as lib_paymentTypes from "../lib/paymentTypes.js";
+import type * as lib_promptHelpers from "../lib/promptHelpers.js";
 import type * as lib_storage from "../lib/storage.js";
 import type * as lib_translation from "../lib/translation.js";
 import type * as migrations_definitionTranslations from "../migrations/definitionTranslations.js";
@@ -120,6 +121,7 @@ declare const fullApi: ApiFromModules<{
   "lib/imageCompression": typeof lib_imageCompression;
   "lib/models": typeof lib_models;
   "lib/paymentTypes": typeof lib_paymentTypes;
+  "lib/promptHelpers": typeof lib_promptHelpers;
   "lib/storage": typeof lib_storage;
   "lib/translation": typeof lib_translation;
   "migrations/definitionTranslations": typeof migrations_definitionTranslations;

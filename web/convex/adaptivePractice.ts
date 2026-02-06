@@ -359,7 +359,7 @@ Question types to include: ${questionTypes.join(", ")}
 
 For each question:
 - MCQ should have exactly 4 options
-- Fill-in-blank: use "___" in the question field to mark the blank (e.g. "毎朝___を食べます"). The correctAnswer is the word that fills the blank.
+- Fill-in-blank: use "___" in the question field to mark the blank (e.g. "毎朝___を食べます"). The correctAnswer is the word that fills the blank. Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
 - Comprehension questions should test understanding of the main ideas
 - Translation questions should be from ${languageName} to ${uiLanguageName}. Set questionTranslation to a short prompt like "Translate:".
 - listening_mcq: provide a question about audio content with 4 MCQ options. The audio will be generated from the content.
@@ -458,9 +458,25 @@ Return JSON with an array of questions.`;
       },
     });
 
+    // Filter out broken questions (e.g. MCQ types with no options)
+    const MCQ_TYPES: PracticeQuestionType[] = [
+      "mcq_vocabulary",
+      "mcq_grammar",
+      "mcq_comprehension",
+      "fill_blank",
+      "listening_mcq",
+    ];
+    const validQuestions = result.result.questions.filter((q) => {
+      if (MCQ_TYPES.includes(q.type) && (!q.options || q.options.length < 2)) {
+        console.warn(`Dropping ${q.type} question with insufficient options`);
+        return false;
+      }
+      return true;
+    });
+
     // Add unique IDs to questions
     return {
-      questions: result.result.questions.map((q, index) => ({
+      questions: validQuestions.map((q, index) => ({
         ...q,
         questionId: `pq_${Date.now()}_${index}`,
       })),
@@ -570,7 +586,7 @@ ${interestBlock}
 
 For each question:
 - MCQ: exactly 4 options
-- fill_blank: use "___" in the question to mark the blank
+- fill_blank: use "___" in the question to mark the blank. Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
 - translation: ask the learner to translate a sentence. Set questionTranslation to "Translate:"
 - free_input: ask the learner to write a short response in ${languageName}
 - mcq_comprehension: embed a short ${languageName} text (1-2 sentences) directly in the question
@@ -652,8 +668,24 @@ Return JSON.`;
       },
     });
 
+    // Filter out broken questions (e.g. MCQ types with no options)
+    const MCQ_TYPES: PracticeQuestionType[] = [
+      "mcq_vocabulary",
+      "mcq_grammar",
+      "mcq_comprehension",
+      "fill_blank",
+      "listening_mcq",
+    ];
+    const validQuestions = result.result.questions.filter((q) => {
+      if (MCQ_TYPES.includes(q.type) && (!q.options || q.options.length < 2)) {
+        console.warn(`Dropping ${q.type} question with insufficient options`);
+        return false;
+      }
+      return true;
+    });
+
     return {
-      questions: result.result.questions.map((q, index) => ({
+      questions: validQuestions.map((q, index) => ({
         ...q,
         questionId: `diag_${Date.now()}_${index}`,
       })),

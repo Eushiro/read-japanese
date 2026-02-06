@@ -1072,11 +1072,12 @@ export function AdaptivePracticePage() {
                 </Button>
               </div>
 
-              {/* Render the question */}
-              {activeQuestion && renderTestQuestion(activeQuestion)}
-
-              {/* Raw JSON toggle */}
-              <div className="mt-4">
+              {/* Actions row */}
+              <div className="flex items-center gap-2 mb-4">
+                <Button variant="outline" size="sm" onClick={handleRestart}>
+                  <RotateCcw className="w-4 h-4 mr-1" />
+                  Generate Again
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1086,12 +1087,15 @@ export function AdaptivePracticePage() {
                   <Code className="w-4 h-4 mr-1" />
                   {showRawJson ? "Hide" : "Show"} Raw JSON
                 </Button>
-                {showRawJson && activeQuestion && (
-                  <pre className="mt-2 p-3 rounded-lg bg-muted/50 border border-border text-xs overflow-x-auto max-h-80 overflow-y-auto">
-                    {JSON.stringify(activeQuestion, null, 2)}
-                  </pre>
-                )}
               </div>
+              {showRawJson && activeQuestion && (
+                <pre className="mb-4 p-3 rounded-lg bg-muted/50 border border-border text-xs overflow-x-auto max-h-80 overflow-y-auto">
+                  {JSON.stringify(activeQuestion, null, 2)}
+                </pre>
+              )}
+
+              {/* Render the question */}
+              {activeQuestion && renderTestQuestion(activeQuestion)}
             </>
           )}
 
@@ -1101,14 +1105,6 @@ export function AdaptivePracticePage() {
               <strong>{getModelShortName(activeResult.model)}</strong> failed: {activeResult.error}
             </div>
           )}
-
-          {/* Restart button */}
-          <div className="mt-6">
-            <Button variant="outline" onClick={handleRestart} className="w-full">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Generate Again
-            </Button>
-          </div>
         </div>
       </div>
     );
