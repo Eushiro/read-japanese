@@ -79,7 +79,7 @@ export const TEXT_MODEL_CHAIN: ModelConfig[] = [
  * Additional models used only in admin test mode comparisons
  */
 export const TEST_MODELS = {
-  GROK_CODE_FAST: "x-ai/grok-code-fast-1",
+  GROK_FAST: "x-ai/grok-4.1-fast",
   GPT_OSS_20B: "openai/gpt-oss-20b",
   CLAUDE_SONNET_4_5: "anthropic/claude-sonnet-4.5",
 } as const;
@@ -89,7 +89,7 @@ export const TEST_MODELS = {
  */
 export const TEST_MODE_MODELS: ModelConfig[] = [
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
-  { model: TEST_MODELS.GROK_CODE_FAST, provider: "openrouter" },
+  { model: TEST_MODELS.GROK_FAST, provider: "openrouter" },
   { model: TEST_MODELS.GPT_OSS_20B, provider: "openrouter" },
   { model: TEST_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
 ];
@@ -109,7 +109,7 @@ export const GRADING_MODEL_CHAIN: ModelConfig[] = [
  */
 export const CONTENT_MODELS = {
   primary: { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" as ProviderType },
-  secondary: { model: TEXT_MODELS.KIMI_K2_5, provider: "openrouter" as ProviderType },
+  secondary: { model: TEST_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" as ProviderType },
 };
 
 /**
