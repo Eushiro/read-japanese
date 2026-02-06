@@ -110,7 +110,7 @@ const MODEL_SHORT_NAMES: Record<string, string> = {
   "gemini-3-flash-preview": "Gemini Flash",
   "moonshotai/kimi-k2.5": "Kimi K2.5",
   "anthropic/claude-haiku-4.5": "Claude Haiku",
-  "x-ai/grok-code-fast-1": "Grok Code",
+  "x-ai/grok-4.1-fast": "Grok 4.1 Fast",
   "openai/gpt-oss-20b": "GPT-OSS 20B",
   "openai/gpt-5-mini": "GPT-5 Mini",
   "anthropic/claude-sonnet-4.5": "Claude Sonnet",
@@ -239,6 +239,64 @@ function isAdjacentDifficulty(a?: string, b?: string): boolean {
 }
 
 // ============================================
+// ADMIN RAW JSON PANEL
+// ============================================
+
+/* eslint-disable i18next/no-literal-string -- Admin-only UI */
+function AdminRawJsonPanel({
+  showRawJson,
+  setShowRawJson,
+  jsonTab,
+  setJsonTab,
+  inputData,
+  outputData,
+}: {
+  showRawJson: boolean;
+  setShowRawJson: (v: boolean) => void;
+  jsonTab: "input" | "output";
+  setJsonTab: (v: "input" | "output") => void;
+  inputData: unknown;
+  outputData: unknown;
+}) {
+  return (
+    <div className="mb-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setShowRawJson(!showRawJson)}
+        className="text-foreground-muted"
+      >
+        <Code className="w-4 h-4 mr-1" />
+        {showRawJson ? "Hide" : "Show"} Raw JSON
+      </Button>
+      {showRawJson && (
+        <div className="mt-2">
+          <div className="flex gap-1 mb-2">
+            {(["input", "output"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setJsonTab(tab)}
+                className={`px-3 py-1 text-xs font-medium rounded-t-md transition-colors ${
+                  jsonTab === tab
+                    ? "bg-muted border border-b-0 border-border text-foreground"
+                    : "text-foreground-muted hover:text-foreground"
+                }`}
+              >
+                {tab === "input" ? "Input" : "Output"}
+              </button>
+            ))}
+          </div>
+          <pre className="p-3 rounded-lg bg-muted/50 border border-border text-xs overflow-x-auto max-h-64 overflow-y-auto">
+            {JSON.stringify(jsonTab === "input" ? inputData : outputData, null, 2)}
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+}
+/* eslint-enable i18next/no-literal-string */
+
+// ============================================
 // MAIN COMPONENT
 // ============================================
 
@@ -277,6 +335,7 @@ export function AdaptivePracticePage() {
   const [activeModelIndex, setActiveModelIndex] = useState(0);
   const [testQuestionIndex, setTestQuestionIndex] = useState(0);
   const [showRawJson, setShowRawJson] = useState(false);
+  const [jsonTab, setJsonTab] = useState<"input" | "output">("input");
 
   // Audio state
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -1078,21 +1137,19 @@ export function AdaptivePracticePage() {
                   <RotateCcw className="w-4 h-4 mr-1" />
                   Generate Again
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowRawJson((v) => !v)}
-                  className="text-foreground-muted"
-                >
-                  <Code className="w-4 h-4 mr-1" />
-                  {showRawJson ? "Hide" : "Show"} Raw JSON
-                </Button>
               </div>
-              {showRawJson && activeQuestion && (
-                <pre className="mb-4 p-3 rounded-lg bg-muted/50 border border-border text-xs overflow-x-auto max-h-80 overflow-y-auto">
-                  {JSON.stringify(activeQuestion, null, 2)}
-                </pre>
-              )}
+              <AdminRawJsonPanel
+                showRawJson={showRawJson}
+                setShowRawJson={setShowRawJson}
+                jsonTab={jsonTab}
+                setJsonTab={setJsonTab}
+                inputData={{
+                  model: activeResult?.model,
+                  language,
+                  models: testModeModels,
+                }}
+                outputData={activeQuestion ?? activeResult}
+              />
 
               {/* Render the question */}
               {activeQuestion && renderTestQuestion(activeQuestion)}
@@ -1175,6 +1232,27 @@ export function AdaptivePracticePage() {
 
     return (
       <div>
+        {isAdmin(user?.email) && (
+           
+          <div className="container mx-auto px-4 max-w-4xl">
+            <AdminRawJsonPanel
+              showRawJson={showRawJson}
+              setShowRawJson={setShowRawJson}
+              jsonTab={jsonTab}
+              setJsonTab={setJsonTab}
+              inputData={{
+                profileSnapshot: practiceSet.profileSnapshot,
+                targetSkills: practiceSet.targetSkills,
+                difficulty: practiceSet.difficulty,
+                content: practiceSet.content,
+                modelUsed: practiceSet.modelUsed,
+                isDiagnostic: practiceSet.isDiagnostic,
+                generatedAt: practiceSet.generatedAt,
+              }}
+              outputData={currentQuestion}
+            />
+          </div>
+        )}
         {renderQuestion()}
         {/* Skip button for audio/mic questions */}
         {isAudioMicQuestion && !showFeedback && (
