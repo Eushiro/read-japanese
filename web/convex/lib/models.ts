@@ -26,12 +26,13 @@ export interface ModelConfig {
 // ============================================
 
 export const TEXT_MODELS = {
-  // Google direct API models (free tier)
-  GEMINI_3_FLASH: "gemini-3-flash-preview",
-
-  // OpenRouter-routed models (fallbacks)
+  // OpenRouter-routed models
+  CLAUDE_SONNET_4_5: "anthropic/claude-sonnet-4.5",
   KIMI_K2_5: "moonshotai/kimi-k2.5",
   CLAUDE_HAIKU_4_5: "anthropic/claude-haiku-4.5",
+
+  // Google direct API models
+  GEMINI_3_FLASH: "gemini-3-flash-preview",
 } as const;
 
 // ============================================
@@ -66,13 +67,11 @@ export const SPECIAL_MODELS = {
 // ============================================
 
 /**
- * Default text generation chain: Gemini (Google) -> Kimi (OpenRouter) -> Claude (OpenRouter)
- * Primary model is Gemini via Google direct API (free tier)
+ * Default text generation chain: Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
  */
 export const TEXT_MODEL_CHAIN: ModelConfig[] = [
+  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
-  { model: TEXT_MODELS.KIMI_K2_5, provider: "openrouter" },
-  { model: TEXT_MODELS.CLAUDE_HAIKU_4_5, provider: "openrouter" },
 ];
 
 /**
@@ -81,7 +80,6 @@ export const TEXT_MODEL_CHAIN: ModelConfig[] = [
 export const TEST_MODELS = {
   GROK_FAST: "x-ai/grok-4.1-fast",
   GPT_OSS_20B: "openai/gpt-oss-20b",
-  CLAUDE_SONNET_4_5: "anthropic/claude-sonnet-4.5",
 } as const;
 
 /**
@@ -91,16 +89,16 @@ export const TEST_MODE_MODELS: ModelConfig[] = [
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
   { model: TEST_MODELS.GROK_FAST, provider: "openrouter" },
   { model: TEST_MODELS.GPT_OSS_20B, provider: "openrouter" },
-  { model: TEST_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
+  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
 ];
 
 /**
- * Grading model chain: Gemini first (fast & free), Kimi as fallback
+ * Grading model chain: Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
  * Used for structured evaluation tasks
  */
 export const GRADING_MODEL_CHAIN: ModelConfig[] = [
+  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
-  { model: TEXT_MODELS.KIMI_K2_5, provider: "openrouter" },
 ];
 
 /**
@@ -109,7 +107,7 @@ export const GRADING_MODEL_CHAIN: ModelConfig[] = [
  */
 export const CONTENT_MODELS = {
   primary: { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" as ProviderType },
-  secondary: { model: TEST_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" as ProviderType },
+  secondary: { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" as ProviderType },
 };
 
 /**
