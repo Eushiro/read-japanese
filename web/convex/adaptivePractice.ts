@@ -322,6 +322,8 @@ export const getNextPractice = action({
 interface GeneratedQuestionsResult {
   questions: PracticeQuestion[];
   modelUsed?: string;
+  systemPrompt?: string;
+  prompt?: string;
 }
 
 /**
@@ -446,7 +448,7 @@ Return JSON with an array of questions.`;
     const result = await generateAndParse<{ questions: PracticeQuestion[] }>({
       prompt,
       systemPrompt,
-      maxTokens: 10000,
+      maxTokens: 3000,
       jsonSchema: questionSchema,
       models: modelOverride ?? TEXT_MODEL_CHAIN,
       parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
@@ -656,7 +658,7 @@ Return JSON.`;
     const result = await generateAndParse<{ questions: PracticeQuestion[] }>({
       prompt,
       systemPrompt,
-      maxTokens: 10000,
+      maxTokens: 3000,
       jsonSchema: questionSchema,
       models: modelOverride ?? TEXT_MODEL_CHAIN,
       parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
@@ -690,6 +692,8 @@ Return JSON.`;
         questionId: `diag_${Date.now()}_${index}`,
       })),
       modelUsed: result.usage.model,
+      systemPrompt,
+      prompt,
     };
   } catch (error) {
     console.error("Failed to generate diagnostic questions:", error);
@@ -723,6 +727,8 @@ Return JSON.`;
         },
       ],
       modelUsed: undefined,
+      systemPrompt,
+      prompt,
     };
   }
 }
@@ -762,6 +768,8 @@ export const generateForModel = action({
         model: args.modelId,
         questions: result.questions,
         latencyMs: Date.now() - startTime,
+        systemPrompt: result.systemPrompt,
+        prompt: result.prompt,
       };
     } catch (error) {
       return {

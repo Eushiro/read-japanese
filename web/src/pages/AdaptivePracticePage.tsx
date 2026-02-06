@@ -70,6 +70,8 @@ interface ModelPracticeResult {
   latencyMs: number;
   error?: string;
   status: "pending" | "success" | "failed";
+  systemPrompt?: string;
+  prompt?: string;
 }
 
 interface PracticeSet {
@@ -409,6 +411,8 @@ export function AdaptivePracticePage() {
                       latencyMs: result.latencyMs,
                       error: result.error,
                       status: hasError ? ("failed" as const) : ("success" as const),
+                      systemPrompt: result.systemPrompt,
+                      prompt: result.prompt,
                     }
                   : r
               )
@@ -431,6 +435,71 @@ export function AdaptivePracticePage() {
     },
     [generateForModel, language]
   );
+
+  // Regenerate questions for a single model (the currently active one)
+  const regenerateSingleModel = useCallback(() => {
+    if (!testModeModels) return;
+    const activeResult = modelResults[activeModelIndex];
+    if (!activeResult) return;
+    const cfg = testModeModels.find((m) => m.model === activeResult.model);
+    if (!cfg) return;
+
+    // Reset only the active model to pending
+    setModelResults((prev) =>
+      prev.map((r) =>
+        r.model === cfg.model
+          ? {
+              ...r,
+              questions: [],
+              latencyMs: 0,
+              error: undefined,
+              status: "pending" as const,
+              systemPrompt: undefined,
+              prompt: undefined,
+            }
+          : r
+      )
+    );
+    setTestQuestionIndex(0);
+
+    generateForModel({
+      language,
+      abilityEstimate: 0,
+      modelId: cfg.model,
+      modelProvider: cfg.provider as "google" | "openrouter",
+    })
+      .then((result) => {
+        const hasError = !result.questions || result.questions.length === 0;
+        setModelResults((prev) =>
+          prev.map((r) =>
+            r.model === cfg.model
+              ? {
+                  ...r,
+                  questions: result.questions ?? [],
+                  latencyMs: result.latencyMs,
+                  error: result.error,
+                  status: hasError ? ("failed" as const) : ("success" as const),
+                  systemPrompt: result.systemPrompt,
+                  prompt: result.prompt,
+                }
+              : r
+          )
+        );
+      })
+      .catch((error) => {
+        setModelResults((prev) =>
+          prev.map((r) =>
+            r.model === cfg.model
+              ? {
+                  ...r,
+                  error: error instanceof Error ? error.message : "Unknown error",
+                  status: "failed" as const,
+                }
+              : r
+          )
+        );
+      });
+  }, [testModeModels, modelResults, activeModelIndex, generateForModel, language]);
 
   // Fetch practice set on mount
   useEffect(() => {
@@ -1133,9 +1202,13 @@ export function AdaptivePracticePage() {
 
               {/* Actions row */}
               <div className="flex items-center gap-2 mb-4">
+                <Button variant="outline" size="sm" onClick={regenerateSingleModel}>
+                  <RotateCcw className="w-4 h-4 mr-1" />
+                  Regenerate
+                </Button>
                 <Button variant="outline" size="sm" onClick={handleRestart}>
                   <RotateCcw className="w-4 h-4 mr-1" />
-                  Generate Again
+                  Regenerate All
                 </Button>
               </div>
               <AdminRawJsonPanel
@@ -1144,9 +1217,9 @@ export function AdaptivePracticePage() {
                 jsonTab={jsonTab}
                 setJsonTab={setJsonTab}
                 inputData={{
+                  systemPrompt: activeResult?.systemPrompt,
+                  prompt: activeResult?.prompt,
                   model: activeResult?.model,
-                  language,
-                  models: testModeModels,
                 }}
                 outputData={activeQuestion ?? activeResult}
               />
