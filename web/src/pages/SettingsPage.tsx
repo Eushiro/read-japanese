@@ -8,6 +8,7 @@ import {
   Crown,
   Eye,
   EyeOff,
+  FlaskConical,
   Globe,
   GraduationCap,
   LogOut,
@@ -18,7 +19,7 @@ import {
   User,
   Volume2,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { Footer } from "@/components/Footer";
 import { useTheme } from "@/components/ThemeProvider";
@@ -714,6 +715,9 @@ export function SettingsPage() {
                       }}
                     />
                   </div>
+
+                  {/* Model Test Mode Toggle */}
+                  <ModelTestModeToggle />
                 </div>
               </div>
             </section>
@@ -725,6 +729,35 @@ export function SettingsPage() {
     </div>
   );
 }
+
+/* eslint-disable i18next/no-literal-string -- Admin-only component */
+function ModelTestModeToggle() {
+  const [enabled, setEnabled] = useState(() => localStorage.getItem("modelTestMode") === "true");
+
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-purple-500/10">
+          <FlaskConical className="w-4 h-4 text-purple-500" />
+        </div>
+        <div>
+          <div className="font-medium text-foreground">Model Test Mode</div>
+          <div className="text-sm text-foreground-muted">
+            Compare all AI models side-by-side in practice
+          </div>
+        </div>
+      </div>
+      <Switch
+        checked={enabled}
+        onCheckedChange={(checked) => {
+          setEnabled(checked);
+          localStorage.setItem("modelTestMode", String(checked));
+        }}
+      />
+    </div>
+  );
+}
+/* eslint-enable i18next/no-literal-string */
 
 // Skeleton loading state
 function SettingsSkeleton() {

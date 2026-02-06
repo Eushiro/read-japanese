@@ -5,7 +5,22 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { action } from "./_generated/server";
 import { generateAndParse, type JsonSchema, parseJson, TEXT_MODEL_CHAIN } from "./ai/models";
-import { adaptiveContentTypeValidator, languageValidator, type SkillType } from "./schema";
+import { isAdminEmail } from "./lib/admin";
+import type { ModelConfig, ProviderType } from "./lib/models";
+import {
+  buildDistractorRules,
+  buildInterestTheming,
+  buildLanguageMixingDirective,
+  buildLearnerContextBlock,
+  buildStemVarietyRules,
+  buildWeakAreaTargeting,
+  getContentLanguageName,
+  getUILanguageName,
+  type ContentLanguage,
+  type LearnerContext,
+  type UILanguage,
+} from "./lib/promptHelpers";
+import { adaptiveContentTypeValidator, languageValidator, uiLanguageValidator, type SkillType } from "./schema";
 
 // ============================================
 // TYPES
@@ -295,7 +310,8 @@ async function generateQuestionsFromContent(
   content: PracticeContent,
   targetSkills: SkillType[],
   questionTypes: PracticeQuestionType[],
-  language: string
+  language: string,
+  modelOverride?: ModelConfig[]
 ): Promise<GeneratedQuestionsResult> {
   const languageNames: Record<string, string> = {
     japanese: "Japanese",
@@ -391,7 +407,7 @@ Return JSON with an array of questions.`;
       systemPrompt,
       maxTokens: 10000,
       jsonSchema: questionSchema,
-      models: TEXT_MODEL_CHAIN,
+      models: modelOverride ?? TEXT_MODEL_CHAIN,
       parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
       validate: (parsed) => {
         if (!parsed.questions || parsed.questions.length === 0) {
@@ -441,7 +457,8 @@ Return JSON with an array of questions.`;
  */
 async function generateDiagnosticQuestions(
   language: string,
-  abilityEstimate: number
+  abilityEstimate: number,
+  modelOverride?: ModelConfig[]
 ): Promise<GeneratedQuestionsResult> {
   const languageNames: Record<string, string> = {
     japanese: "Japanese",
@@ -545,7 +562,7 @@ Return JSON.`;
       systemPrompt,
       maxTokens: 10000,
       jsonSchema: questionSchema,
-      models: TEXT_MODEL_CHAIN,
+      models: modelOverride ?? TEXT_MODEL_CHAIN,
       parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
       validate: (parsed) => {
         if (!parsed.questions || parsed.questions.length < 4) {
@@ -597,6 +614,49 @@ Return JSON.`;
     };
   }
 }
+
+/**
+ * Generate diagnostic questions for a single model (used by frontend model test mode).
+ * The frontend calls this per-model in parallel so results stream in as each resolves.
+ */
+export const generateForModel = action({
+  args: {
+    language: languageValidator,
+    abilityEstimate: v.number(),
+    modelId: v.string(),
+    modelProvider: v.union(v.literal("google"), v.literal("openrouter")),
+  },
+  handler: async (ctx, args) => {
+    // Admin-only: verify caller is an admin
+    const identity = await ctx.auth.getUserIdentity();
+    if (!isAdminEmail(identity?.email)) {
+      throw new Error("Unauthorized: admin access required");
+    }
+
+    const startTime = Date.now();
+    try {
+      const modelConfig: ModelConfig = {
+        model: args.modelId,
+        provider: args.modelProvider,
+      };
+      const result = await generateDiagnosticQuestions(args.language, args.abilityEstimate, [
+        modelConfig,
+      ]);
+      return {
+        model: args.modelId,
+        questions: result.questions,
+        latencyMs: Date.now() - startTime,
+      };
+    } catch (error) {
+      return {
+        model: args.modelId,
+        questions: [],
+        latencyMs: Date.now() - startTime,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+});
 
 /**
  * Grade a free-form answer using AI

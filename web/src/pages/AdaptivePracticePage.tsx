@@ -1,10 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useAction, useMutation } from "convex/react";
-import { motion } from "framer-motion";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   BookOpen,
+  ChevronLeft,
   ChevronRight,
+  Code,
   RotateCcw,
   SkipForward,
   Target,
@@ -31,6 +33,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserData } from "@/contexts/UserDataContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
+import { isAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 
@@ -59,6 +62,14 @@ interface PracticeContent {
   translation: string;
   vocabulary: Array<{ word: string; reading?: string; meaning: string }>;
   audioUrl?: string;
+}
+
+interface ModelPracticeResult {
+  model: string;
+  questions: PracticeQuestion[];
+  latencyMs: number;
+  error?: string;
+  status: "pending" | "success" | "failed";
 }
 
 interface PracticeSet {
@@ -90,6 +101,24 @@ type PracticePhase = "loading" | "content" | "questions" | "results";
 
 // Audio/mic question types that need a skip option
 const AUDIO_MIC_TYPES = ["listening_mcq", "dictation", "shadow_record"];
+
+// ============================================
+// MODEL TEST MODE HELPERS
+// ============================================
+
+const MODEL_SHORT_NAMES: Record<string, string> = {
+  "gemini-3-flash-preview": "Gemini Flash",
+  "moonshotai/kimi-k2.5": "Kimi K2.5",
+  "anthropic/claude-haiku-4.5": "Claude Haiku",
+  "x-ai/grok-code-fast-1": "Grok Code",
+  "openai/gpt-oss-20b": "GPT-OSS 20B",
+  "openai/gpt-5-mini": "GPT-5 Mini",
+  "anthropic/claude-sonnet-4.5": "Claude Sonnet",
+};
+
+function getModelShortName(model: string): string {
+  return MODEL_SHORT_NAMES[model] ?? model;
+}
 
 // ============================================
 // SMART QUESTION ORDERING
@@ -234,6 +263,20 @@ export function AdaptivePracticePage() {
   const [maxScore, setMaxScore] = useState(0);
   const [contentReadTime, setContentReadTime] = useState<number>(0);
 
+  // Model test mode state (admin only)
+  const isModelTestMode =
+    isAdmin(user?.email) && typeof window !== "undefined"
+      ? localStorage.getItem("modelTestMode") === "true"
+      : false;
+  const testModeModels = useQuery(
+    api.adaptivePracticeQueries.getTestModeModels,
+    isModelTestMode ? {} : "skip"
+  );
+  const [modelResults, setModelResults] = useState<ModelPracticeResult[]>([]);
+  const [activeModelIndex, setActiveModelIndex] = useState(0);
+  const [testQuestionIndex, setTestQuestionIndex] = useState(0);
+  const [showRawJson, setShowRawJson] = useState(false);
+
   // Audio state
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -256,6 +299,7 @@ export function AdaptivePracticePage() {
 
   // Convex actions/mutations
   const getNextPractice = useAction(api.adaptivePractice.getNextPractice);
+  const generateForModel = useAction(api.adaptivePractice.generateForModel);
   const submitPractice = useMutation(api.adaptivePracticeQueries.submitPractice);
   const recordAnswer = useMutation(api.adaptivePracticeQueries.recordAnswer);
   const gradeFreeAnswer = useAction(api.adaptivePractice.gradeFreeAnswer);
@@ -273,9 +317,72 @@ export function AdaptivePracticePage() {
     setQuestionStartTime(Date.now());
   }, [practiceSet, answers]);
 
+  // Fire per-model streaming calls for test mode
+  const fireModelTests = useCallback(
+    (models: Array<{ model: string; provider: string }>) => {
+      const initialResults: ModelPracticeResult[] = models.map((cfg) => ({
+        model: cfg.model,
+        questions: [],
+        latencyMs: 0,
+        status: "pending" as const,
+      }));
+      setModelResults(initialResults);
+      setActiveModelIndex(0);
+      setTestQuestionIndex(0);
+      setPhase("questions");
+
+      for (const cfg of models) {
+        generateForModel({
+          language,
+          abilityEstimate: 0,
+          modelId: cfg.model,
+          modelProvider: cfg.provider as "google" | "openrouter",
+        })
+          .then((result) => {
+            const hasError = !result.questions || result.questions.length === 0;
+            setModelResults((prev) =>
+              prev.map((r) =>
+                r.model === cfg.model
+                  ? {
+                      ...r,
+                      questions: result.questions ?? [],
+                      latencyMs: result.latencyMs,
+                      error: result.error,
+                      status: hasError ? ("failed" as const) : ("success" as const),
+                    }
+                  : r
+              )
+            );
+          })
+          .catch((error) => {
+            setModelResults((prev) =>
+              prev.map((r) =>
+                r.model === cfg.model
+                  ? {
+                      ...r,
+                      error: error instanceof Error ? error.message : "Unknown error",
+                      status: "failed" as const,
+                    }
+                  : r
+              )
+            );
+          });
+      }
+    },
+    [generateForModel, language]
+  );
+
   // Fetch practice set on mount
   useEffect(() => {
     if (!user || !isAuthenticated) return;
+
+    if (isModelTestMode && testModeModels) {
+      fireModelTests(testModeModels);
+      return;
+    }
+
+    // Don't fetch normal practice if we're waiting for test mode models to load
+    if (isModelTestMode) return;
 
     const fetchPractice = async () => {
       try {
@@ -284,7 +391,6 @@ export function AdaptivePracticePage() {
           language,
         });
         setPracticeSet(result);
-        // Diagnostic mode → skip content, go straight to questions
         if (result.isDiagnostic) {
           setPhase("questions");
         } else {
@@ -297,7 +403,29 @@ export function AdaptivePracticePage() {
     };
 
     fetchPractice();
-  }, [user, isAuthenticated, language, getNextPractice]);
+  }, [
+    user,
+    isAuthenticated,
+    language,
+    getNextPractice,
+    isModelTestMode,
+    testModeModels,
+    fireModelTests,
+  ]);
+
+  // Auto-select first completed model in test mode
+  useEffect(() => {
+    if (!isModelTestMode || modelResults.length === 0) return;
+    const currentActive = modelResults[activeModelIndex];
+    // If currently selected model is still pending, auto-switch to first success
+    if (currentActive?.status === "pending") {
+      const firstSuccessIdx = modelResults.findIndex((r) => r.status === "success");
+      if (firstSuccessIdx !== -1) {
+        setActiveModelIndex(firstSuccessIdx);
+        setTestQuestionIndex(0);
+      }
+    }
+  }, [isModelTestMode, modelResults, activeModelIndex]);
 
   // Pick first question when entering questions phase
   useEffect(() => {
@@ -581,19 +709,29 @@ export function AdaptivePracticePage() {
     setShowFeedback(false);
     setTotalScore(0);
     setMaxScore(0);
+    setShowRawJson(false);
+    setModelResults([]);
 
-    if (user) {
-      getNextPractice({ userId: user.id, language }).then((result) => {
-        setPracticeSet(result);
-        if (result.isDiagnostic) {
-          setPhase("questions");
-        } else {
-          setPhase("content");
-          setContentReadTime(Date.now());
-        }
-      });
+    if (!user) return;
+
+    if (isModelTestMode && testModeModels) {
+      fireModelTests(testModeModels);
+      return;
     }
-  }, [user, language, getNextPractice]);
+
+    getNextPractice({
+      userId: user.id,
+      language,
+    }).then((result) => {
+      setPracticeSet(result);
+      if (result.isDiagnostic) {
+        setPhase("questions");
+      } else {
+        setPhase("content");
+        setContentReadTime(Date.now());
+      }
+    });
+  }, [user, language, getNextPractice, isModelTestMode, testModeModels, fireModelTests]);
 
   // Loading state
   if (authLoading) {
@@ -625,17 +763,31 @@ export function AdaptivePracticePage() {
   // Loading phase
   if (phase === "loading") {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <PremiumBackground colorScheme="cool" intensity="minimal" />
         <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/learn" })}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <h1 className="text-xl font-bold">{t("adaptivePractice.title")}</h1>
           </div>
-
-          <SkeletonLoadingCard loadingPhrase={loadingPhrase} />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-2xl sm:text-3xl font-bold text-center px-4">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={loadingPhrase}
+                className="inline-block bg-gradient-to-r from-yellow-300 via-orange-400 to-purple-400 bg-clip-text text-transparent"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
+              >
+                {loadingPhrase}
+              </motion.span>
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     );
@@ -739,6 +891,209 @@ export function AdaptivePracticePage() {
       </div>
     );
   }
+
+  // Model Test Mode: comparison view
+  /* eslint-disable i18next/no-literal-string -- Admin-only UI */
+  if (isModelTestMode && phase === "questions" && modelResults.length > 0) {
+    const activeResult = modelResults[activeModelIndex];
+    const activeQuestions = activeResult?.questions ?? [];
+    const activeQuestion = activeQuestions[testQuestionIndex];
+    const completedCount = modelResults.filter((r) => r.status !== "pending").length;
+
+    const dummyContent: PracticeContent = {
+      contentId: "test-mode",
+      contentType: "dialogue",
+      title: "",
+      content: "",
+      translation: "",
+      vocabulary: [],
+    };
+
+    const renderTestQuestion = (q: PracticeQuestion) => {
+      const testProps = {
+        question: q,
+        content: dummyContent,
+        language,
+        totalQuestions: activeQuestions.length,
+        currentIndex: testQuestionIndex,
+        previousResults: [] as QuestionResult[],
+        showFeedback: true, // Always show answer
+        isSubmitting: false,
+        currentAnswer: { isCorrect: true, earnedPoints: q.points }, // Simulate correct for green state
+        selectedAnswer: q.correctAnswer, // Pre-select correct answer
+        onSelectAnswer: () => {},
+        onSubmit: () => {},
+        onNext: () => {},
+        isLastQuestion: false,
+      };
+
+      switch (q.type) {
+        case "mcq_vocabulary":
+        case "mcq_grammar":
+        case "fill_blank":
+          return <QuestionMCQ key={q.questionId} {...testProps} />;
+        case "mcq_comprehension":
+          return <QuestionReading key={q.questionId} {...testProps} />;
+        case "listening_mcq":
+          return <QuestionListening key={q.questionId} {...testProps} />;
+        case "translation":
+        case "free_input":
+          return <QuestionTranslation key={q.questionId} {...testProps} />;
+        case "dictation":
+          return <QuestionDictation key={q.questionId} {...testProps} />;
+        case "shadow_record":
+          return (
+            <QuestionShadowRecord
+              key={q.questionId}
+              {...testProps}
+              onSubmitAudio={async () => ({ score: 0, feedback: "" })}
+            />
+          );
+        default:
+          return <QuestionMCQ key={q.questionId} {...testProps} />;
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-background">
+        <PremiumBackground colorScheme="cool" intensity="minimal" />
+        <div className="container mx-auto px-4 py-4 max-w-4xl">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/learn" })}>
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <h1 className="text-xl font-bold">Model Test Mode</h1>
+            <Badge variant="outline" className="border-purple-500/30 text-purple-400">
+              {completedCount}/{modelResults.length} models
+            </Badge>
+          </div>
+
+          {/* Model Tabs */}
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm pb-3 -mx-4 px-4">
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {modelResults.map((result, idx) => {
+                const isPending = result.status === "pending";
+                const isFailed = result.status === "failed";
+                const isActive = idx === activeModelIndex;
+                return (
+                  <button
+                    key={result.model}
+                    onClick={() => {
+                      if (!isFailed && !isPending) {
+                        setActiveModelIndex(idx);
+                        setTestQuestionIndex(0);
+                      }
+                    }}
+                    disabled={isFailed || isPending}
+                    className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-all border ${
+                      isPending
+                        ? "border-yellow-500/30 bg-yellow-500/5 text-yellow-400 cursor-wait"
+                        : isFailed
+                          ? "border-red-500/30 bg-red-500/5 text-red-400 opacity-60 cursor-not-allowed"
+                          : isActive
+                            ? "border-accent bg-accent/10 text-accent"
+                            : "border-border bg-surface text-foreground-muted hover:border-foreground-muted"
+                    }`}
+                  >
+                    <div>{getModelShortName(result.model)}</div>
+                    <div className="text-[10px] mt-0.5 opacity-70">
+                      {isPending ? (
+                        <span className="animate-pulse">Loading...</span>
+                      ) : isFailed ? (
+                        "Failed"
+                      ) : (
+                        `${result.questions.length}q · ${result.latencyMs}ms`
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Active Model: Pending state */}
+          {activeResult?.status === "pending" && (
+            <div className="p-8 text-center text-foreground-muted">
+              <div className="animate-pulse text-lg mb-2">Waiting for models...</div>
+              <div className="text-sm">
+                {completedCount}/{modelResults.length} completed
+              </div>
+            </div>
+          )}
+
+          {/* Active Model: Success state */}
+          {activeResult?.status === "success" && activeQuestions.length > 0 && (
+            <>
+              {/* Question Navigation */}
+              <div className="flex items-center justify-between mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTestQuestionIndex((i) => Math.max(0, i - 1))}
+                  disabled={testQuestionIndex === 0}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Prev
+                </Button>
+                <span className="text-sm text-foreground-muted font-medium">
+                  {testQuestionIndex + 1} / {activeQuestions.length}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setTestQuestionIndex((i) => Math.min(activeQuestions.length - 1, i + 1))
+                  }
+                  disabled={testQuestionIndex === activeQuestions.length - 1}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Render the question */}
+              {activeQuestion && renderTestQuestion(activeQuestion)}
+
+              {/* Raw JSON toggle */}
+              <div className="mt-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowRawJson((v) => !v)}
+                  className="text-foreground-muted"
+                >
+                  <Code className="w-4 h-4 mr-1" />
+                  {showRawJson ? "Hide" : "Show"} Raw JSON
+                </Button>
+                {showRawJson && activeQuestion && (
+                  <pre className="mt-2 p-3 rounded-lg bg-muted/50 border border-border text-xs overflow-x-auto max-h-80 overflow-y-auto">
+                    {JSON.stringify(activeQuestion, null, 2)}
+                  </pre>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Error state for active model */}
+          {activeResult?.status === "failed" && activeResult?.error && (
+            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+              <strong>{getModelShortName(activeResult.model)}</strong> failed: {activeResult.error}
+            </div>
+          )}
+
+          {/* Restart button */}
+          <div className="mt-6">
+            <Button variant="outline" onClick={handleRestart} className="w-full">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Generate Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  /* eslint-enable i18next/no-literal-string */
 
   // Questions phase
   if (phase === "questions" && practiceSet && currentQuestion) {

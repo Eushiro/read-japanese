@@ -2,6 +2,8 @@ import { v } from "convex/values";
 
 import { api, internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
+import { isAdminEmail } from "./lib/admin";
+import { TEST_MODE_MODELS } from "./lib/models";
 import { adaptiveContentTypeValidator, languageValidator } from "./schema";
 
 // ============================================
@@ -29,6 +31,19 @@ export const getRecentSessions = query({
       .take(limit);
 
     return exposures;
+  },
+});
+
+/**
+ * Get the list of models used in admin test mode.
+ * Single source of truth: TEST_MODE_MODELS from convex/lib/models.ts
+ */
+export const getTestModeModels = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!isAdminEmail(identity?.email)) return [];
+    return TEST_MODE_MODELS.map((m) => ({ model: m.model, provider: m.provider }));
   },
 });
 

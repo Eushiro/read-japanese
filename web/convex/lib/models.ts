@@ -76,6 +76,27 @@ export const TEXT_MODEL_CHAIN: ModelConfig[] = [
 ];
 
 /**
+ * Additional models used only in admin test mode comparisons
+ */
+export const TEST_MODELS = {
+  GROK_CODE_FAST: "x-ai/grok-code-fast-1",
+  GPT_OSS_20B: "openai/gpt-oss-20b",
+  GPT_5_MINI: "openai/gpt-5-mini",
+  CLAUDE_SONNET_4_5: "anthropic/claude-sonnet-4.5",
+} as const;
+
+/**
+ * Test mode models: all models to compare in parallel (admin model test mode)
+ */
+export const TEST_MODE_MODELS: ModelConfig[] = [
+  ...TEXT_MODEL_CHAIN,
+  { model: TEST_MODELS.GROK_CODE_FAST, provider: "openrouter" },
+  { model: TEST_MODELS.GPT_OSS_20B, provider: "openrouter" },
+  { model: TEST_MODELS.GPT_5_MINI, provider: "openrouter" },
+  { model: TEST_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
+];
+
+/**
  * Grading model chain: Gemini first (fast & free), Kimi as fallback
  * Used for structured evaluation tasks
  */
