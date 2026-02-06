@@ -911,9 +911,9 @@ export function AdaptivePracticePage() {
   // Loading phase
   if (phase === "loading") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col relative">
         <PremiumBackground colorScheme="cool" intensity="minimal" />
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="container mx-auto px-4 py-8 max-w-4xl relative z-10">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
               <ArrowLeft className="w-4 h-4" />
@@ -921,7 +921,7 @@ export function AdaptivePracticePage() {
             <h1 className="text-xl font-bold">{t("adaptivePractice.title")}</h1>
           </div>
         </div>
-        <div className="flex-1 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-2xl sm:text-3xl font-bold text-center px-4">
             <AnimatePresence mode="wait">
               <motion.span

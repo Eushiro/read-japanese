@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { MCQGrid } from "./MCQGrid";
 import { ProgressSquares } from "./ProgressSquares";
@@ -16,11 +16,19 @@ export function QuestionReading({
   currentIndex,
   previousResults,
   onSelectAnswer,
+  onSubmit,
   onNext,
   isLastQuestion,
 }: QuestionViewProps) {
   const [confirmedOption, setConfirmedOption] = useState<number | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
+
+  // Auto-submit answer when user selects an option so it gets recorded
+  useEffect(() => {
+    if (confirmedOption !== null) {
+      onSubmit();
+    }
+  }, [confirmedOption, onSubmit]);
 
   const options = useMemo(() => question.options ?? [], [question.options]);
   const correctAnswerIndex = options.indexOf(question.correctAnswer);

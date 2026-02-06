@@ -16,6 +16,7 @@ export function QuestionListening({
   currentIndex,
   previousResults,
   onSelectAnswer,
+  onSubmit,
   onNext,
   isLastQuestion,
 }: QuestionViewProps) {
@@ -25,6 +26,13 @@ export function QuestionListening({
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasPlayed, setHasPlayed] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Auto-submit answer when user selects an option so it gets recorded
+  useEffect(() => {
+    if (confirmedOption !== null) {
+      onSubmit();
+    }
+  }, [confirmedOption, onSubmit]);
 
   const options = useMemo(() => question.options ?? [], [question.options]);
   const correctAnswerIndex = options.indexOf(question.correctAnswer);
