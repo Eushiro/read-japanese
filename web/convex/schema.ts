@@ -1552,6 +1552,7 @@ export default defineSchema({
 
     // USER'S RAW ANSWER (stored for re-grading)
     userAnswer: v.string(), // Exactly what the user submitted
+    selectedOption: v.optional(v.string()), // For MCQ: which option was picked (for distractor analysis)
     responseTimeMs: v.optional(v.number()),
 
     // Multi-skill tagging

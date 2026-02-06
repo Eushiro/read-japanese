@@ -18,7 +18,7 @@ import { useAIAction } from "@/hooks/useAIAction";
 import { useSettings } from "@/hooks/useSettings";
 import { useStory } from "@/hooks/useStory";
 import type { ContentLanguage } from "@/lib/contentLanguages";
-import { useT } from "@/lib/i18n";
+import { useT, useUILanguage } from "@/lib/i18n";
 import type { ProficiencyLevel, Token } from "@/types/story";
 import { difficultyLevelToTestLevel, testLevelToDifficultyLevel } from "@/types/story";
 
@@ -44,6 +44,7 @@ export function ReaderPage() {
   const { storyId, language } = useParams({ from: "/read/$language/$storyId" });
   const navigate = useNavigate();
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
   const { story, isLoading, error } = useStory(storyId, language as ContentLanguage);
   const { user, isAuthenticated } = useAuth();
   const { trackEvent, events } = useAnalytics();
@@ -221,6 +222,7 @@ export function ReaderPage() {
       userId,
       difficulty: getUserDifficulty(),
       userLevel: getUserDisplayLevel(),
+      uiLanguage,
     }).catch((err) => {
       console.error("Background comprehension question generation failed:", err);
     });
@@ -235,6 +237,7 @@ export function ReaderPage() {
     subscription,
     isPremiumUser,
     userProfile,
+    uiLanguage,
   ]);
 
   // Use refs to access latest values in the time update callback without causing re-renders

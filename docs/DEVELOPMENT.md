@@ -550,3 +550,50 @@ const result = await generateAndParse<MyType>({
 - Hardcode model name strings (use constants from `lib/models.ts`)
 - Call AI providers directly (use the provider abstraction layer)
 - Skip the centralized routing (it handles errors and fallbacks)
+
+---
+
+## 12. Use Shared Prompt Helpers for AI Question Generation
+
+All AI question generation prompts (placement tests, adaptive practice, comprehension) must use the shared helpers from `web/convex/lib/promptHelpers.ts` rather than building prompt sections ad hoc.
+
+**Import pattern:**
+
+```typescript
+import {
+  buildLanguageMixingDirective,
+  buildLearnerContextBlock,
+  buildDistractorRules,
+  buildStemVarietyRules,
+  buildWeakAreaTargeting,
+  buildInterestTheming,
+  type LearnerContext,
+  type UILanguage,
+} from "./lib/promptHelpers";
+```
+
+**Available helpers:**
+
+| Function                                                    | Purpose                                                                                     |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `getProficiencyTier(ability)`                               | Returns `"beginner"` / `"intermediate"` / `"advanced"` based on IRT ability estimate        |
+| `buildLanguageMixingDirective(uiLang, ability, targetLang)` | Language mixing rules (L1 vs target language) based on proficiency tier                     |
+| `buildLearnerContextBlock(context, levelHint)`              | Formats learner profile (weak areas, interests, skills, vocab coverage) into a prompt block |
+| `buildDistractorRules(targetLang, level)`                   | MCQ distractor construction rules with language-specific patterns                           |
+| `buildStemVarietyRules()`                                   | Question stem variety and cognitive level distribution rules                                |
+| `buildWeakAreaTargeting(weakAreas)`                         | Instructions to target specific weak areas in diagnostic prompts                            |
+| `buildInterestTheming(interests)`                           | Instructions to theme content around learner interests                                      |
+
+**Language mixing tiers:**
+
+- **Beginner** (ability < -1.0): Question stems in user's UI language, answers in target language
+- **Intermediate** (-1.0 to 1.0): Everything in target language with simplified stems, translations as scaffold
+- **Advanced** (>= 1.0): Everything in target language, no translations
+
+**UILanguage type:** Defined locally in `promptHelpers.ts` (mirrors `web/src/lib/i18n/types.ts`) because Convex server code cannot import from the frontend `src/` directory. Keep in sync with `uiLanguageValidator` in `schema.ts`.
+
+**DO NOT:**
+
+- Hardcode `"English translation"` in prompts — use `getUILanguageName(uiLanguage)` to respect the user's UI language
+- Build language mixing rules inline — use `buildLanguageMixingDirective()`
+- Skip distractor rules for MCQ generation — use `buildDistractorRules()`

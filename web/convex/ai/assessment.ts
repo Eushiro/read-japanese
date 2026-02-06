@@ -4,6 +4,14 @@ import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { action, internalAction } from "../_generated/server";
+import {
+  buildDistractorRules,
+  buildLanguageMixingDirective,
+  buildStemVarietyRules,
+  type ContentLanguage,
+  getUILanguageName,
+  type UILanguage,
+} from "../lib/promptHelpers";
 import { generateTTSAudio } from "./media";
 import {
   cleanJsonResponse,
@@ -84,18 +92,36 @@ export const generatePlacementQuestion = action({
     ),
     previousQuestions: v.optional(v.array(v.string())), // To avoid duplicates
     isWarmup: v.optional(v.boolean()), // Flag for warm-up questions
+    uiLanguage: v.optional(
+      v.union(v.literal("en"), v.literal("ja"), v.literal("fr"), v.literal("zh"))
+    ),
   },
   handler: async (ctx, args): Promise<PlacementQuestion> => {
     const languageName = languageNames[args.language];
     const level = difficultyToLevel(args.targetDifficulty, args.language);
+    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
+    const uiLanguageName = getUILanguageName(uiLang);
 
     const previousQuestionsNote = args.previousQuestions?.length
       ? `\n\nIMPORTANT: Do NOT generate questions similar to these (already asked):\n${args.previousQuestions.slice(-5).join("\n")}`
       : "";
 
+    // Language mixing directive based on current difficulty
+    const langMixing = buildLanguageMixingDirective(
+      uiLang,
+      args.targetDifficulty,
+      args.language as ContentLanguage
+    );
+
+    // Distractor and stem variety rules
+    const distractorRules = buildDistractorRules(args.language as ContentLanguage, level);
+    const stemVariety = buildStemVarietyRules();
+
     const systemPrompt = `You are a ${languageName} language proficiency test creator. Generate a ${args.questionType} question appropriate for ${level} level learners.
 
 The question should test ${args.questionType} at ${level} level difficulty.
+
+${langMixing}
 
 ${
   args.questionType === "vocabulary"
@@ -138,17 +164,20 @@ For LISTENING questions:
     : ""
 }
 
+${distractorRules}
+
+${stemVariety}
+
 Respond ONLY with valid JSON in this exact format:
 {
-  "question": "the question text in ${languageName}",
-  "questionTranslation": "English translation of the question",
+  "question": "the question text",
+  "questionTranslation": "translation in ${uiLanguageName}",
   "options": ["option A", "option B", "option C", "option D"],
   "correctAnswer": "the exact text of the correct option",
   "explanation": "brief explanation of why this is the correct answer"
 }
 
 IMPORTANT:
-- All options must be plausible distractors
 - The correct answer must EXACTLY match one of the options
 - Questions should clearly test ${level} level knowledge${previousQuestionsNote}`;
 
@@ -159,10 +188,10 @@ IMPORTANT:
       schema: {
         type: "object",
         properties: {
-          question: { type: "string", description: "The question text in the target language" },
+          question: { type: "string", description: "The question text" },
           questionTranslation: {
             type: "string",
-            description: "English translation of the question",
+            description: "Translation of the question in the user's UI language",
           },
           options: { type: "array", items: { type: "string" }, minItems: 4, maxItems: 4 },
           correctAnswer: { type: "string", description: "Must exactly match one of the options" },

@@ -14,13 +14,18 @@ import {
   buildLearnerContextBlock,
   buildStemVarietyRules,
   buildWeakAreaTargeting,
+  type ContentLanguage,
   getContentLanguageName,
   getUILanguageName,
-  type ContentLanguage,
   type LearnerContext,
   type UILanguage,
 } from "./lib/promptHelpers";
-import { adaptiveContentTypeValidator, languageValidator, uiLanguageValidator, type SkillType } from "./schema";
+import {
+  adaptiveContentTypeValidator,
+  languageValidator,
+  type SkillType,
+  uiLanguageValidator,
+} from "./schema";
 
 // ============================================
 // TYPES
@@ -150,9 +155,11 @@ export const getNextPractice = action({
     userId: v.string(),
     language: languageValidator,
     preferredContentType: v.optional(adaptiveContentTypeValidator),
+    uiLanguage: v.optional(uiLanguageValidator),
   },
   handler: async (ctx, args): Promise<PracticeSet> => {
     const practiceId = crypto.randomUUID();
+    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
 
     // 1. Get learner profile
     const profile = await ctx.runQuery(internal.learnerModel.getProfileInternal, {
@@ -185,9 +192,20 @@ export const getNextPractice = action({
     if (isDiagnostic) {
       // ===== DIAGNOSTIC MODE =====
       // Skip content generation, generate standalone questions
+      const learnerContext: LearnerContext = {
+        abilityEstimate: profile?.abilityEstimate ?? 0,
+        weakAreas: profile?.weakAreas,
+        interestWeights: profile?.interestWeights ?? undefined,
+        examType: profile?.examType ?? undefined,
+        vocabCoverage: profile?.vocabCoverage,
+        difficultyCalibration: profile?.difficultyCalibration ?? undefined,
+        skills: skills as Record<string, number>,
+      };
       const diagnosticResult = await generateDiagnosticQuestions(
         args.language,
-        profile?.abilityEstimate ?? 0
+        profile?.abilityEstimate ?? 0,
+        uiLang,
+        learnerContext
       );
 
       // Generate TTS audio for audio-based question types (max 1-2)
@@ -259,7 +277,10 @@ export const getNextPractice = action({
       contentPayload,
       weakSkills,
       questionTypes,
-      args.language
+      args.language,
+      uiLang,
+      profile?.abilityEstimate ?? 0,
+      profile?.weakAreas
     );
 
     // 8. Generate TTS audio for audio-based question types
@@ -311,28 +332,40 @@ async function generateQuestionsFromContent(
   targetSkills: SkillType[],
   questionTypes: PracticeQuestionType[],
   language: string,
+  uiLanguage: UILanguage = "en",
+  abilityEstimate: number = 0,
+  weakAreas?: Array<{ skill: string; topic: string; score: number }>,
   modelOverride?: ModelConfig[]
 ): Promise<GeneratedQuestionsResult> {
-  const languageNames: Record<string, string> = {
-    japanese: "Japanese",
-    english: "English",
-    french: "French",
-  };
-  const languageName = languageNames[language] || "English";
+  const languageName = getContentLanguageName(language as ContentLanguage);
+  const uiLanguageName = getUILanguageName(uiLanguage);
+
+  // Build prompt enhancement blocks
+  const langMixing = buildLanguageMixingDirective(
+    uiLanguage,
+    abilityEstimate,
+    language as ContentLanguage
+  );
+  const distractorRules = buildDistractorRules(language as ContentLanguage, "current level");
+  const stemVariety = buildStemVarietyRules();
+  const weakAreaBlock = weakAreas ? buildWeakAreaTargeting(weakAreas) : "";
 
   const systemPrompt = `You are a language learning question generator. Create practice questions for ${languageName} learners based on the provided content.
+
+${langMixing}
 
 Generate questions that test: ${targetSkills.join(", ")}
 Question types to include: ${questionTypes.join(", ")}
 
 For each question:
-- MCQ should have exactly 4 options with plausible distractors
+- MCQ should have exactly 4 options
 - Fill-in-blank: use "___" in the question field to mark the blank (e.g. "毎朝___を食べます"). The correctAnswer is the word that fills the blank.
 - Comprehension questions should test understanding of the main ideas
-- Translation questions should be from ${languageName} to the language used in the provided translation. Set questionTranslation to a short prompt like "Translate:".
+- Translation questions should be from ${languageName} to ${uiLanguageName}. Set questionTranslation to a short prompt like "Translate:".
 - listening_mcq: provide a question about audio content with 4 MCQ options. The audio will be generated from the content.
 - dictation: set question to a sentence from the content that the user will hear and type. The correctAnswer is the exact sentence.
-- shadow_record: set question to a sentence for pronunciation practice. Set questionTranslation to the translation (matching the language used in the provided translation). The correctAnswer is the sentence itself.
+- shadow_record: set question to a sentence for pronunciation practice. Set questionTranslation to the ${uiLanguageName} translation. The correctAnswer is the sentence itself.
+- Include at least 2 inferential questions (not just surface-level recall)
 
 Each question MUST have a "difficulty" field: "easy", "medium", or "hard".
 - easy: basic recognition, common words, simple patterns
@@ -340,6 +373,14 @@ Each question MUST have a "difficulty" field: "easy", "medium", or "hard".
 - hard: inference, production, complex structures
 
 Include at least 4 different question types. Aim for a mix: 3 easy, 3-4 medium, 2-3 hard.
+
+${distractorRules}
+
+For vocabulary MCQs, distractors should be other words from the content when possible.
+
+${stemVariety}
+
+${weakAreaBlock}
 
 IMPORTANT: All questions must be directly based on the provided content.`;
 
@@ -458,14 +499,12 @@ Return JSON with an array of questions.`;
 async function generateDiagnosticQuestions(
   language: string,
   abilityEstimate: number,
+  uiLanguage: UILanguage = "en",
+  learnerContext?: LearnerContext,
   modelOverride?: ModelConfig[]
 ): Promise<GeneratedQuestionsResult> {
-  const languageNames: Record<string, string> = {
-    japanese: "Japanese",
-    english: "English",
-    french: "French",
-  };
-  const languageName = languageNames[language] || "English";
+  const languageName = getContentLanguageName(language as ContentLanguage);
+  const uiLanguageName = getUILanguageName(uiLanguage);
 
   // Determine approximate level for context
   const levelHint =
@@ -477,10 +516,45 @@ async function generateDiagnosticQuestions(
           ? "intermediate to advanced"
           : "advanced";
 
-  const systemPrompt = `You are a language assessment question generator for ${languageName} learners.
+  // Build prompt enhancement blocks
+  const langMixing = buildLanguageMixingDirective(
+    uiLanguage,
+    abilityEstimate,
+    language as ContentLanguage
+  );
+  const distractorRules = buildDistractorRules(language as ContentLanguage, levelHint);
+  const stemVariety = buildStemVarietyRules();
+
+  // Learner context block (if available)
+  const learnerBlock = learnerContext
+    ? buildLearnerContextBlock(learnerContext, levelHint)
+    : `LEARNER PROFILE:\n- Estimated level: ${levelHint} (ability: ${abilityEstimate.toFixed(1)})`;
+
+  // Weak area targeting
+  const weakAreaBlock = learnerContext?.weakAreas
+    ? buildWeakAreaTargeting(learnerContext.weakAreas)
+    : "";
+
+  // Interest theming
+  const interests =
+    learnerContext?.interestWeights
+      ?.filter((iw) => iw.weight > 0)
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 5)
+      .map((iw) => iw.tag) ?? [];
+  const interestBlock = buildInterestTheming(interests);
+
+  const systemPrompt = `You are a ${languageName} diagnostic assessment generator.
 Create standalone practice questions that do NOT reference any reading passage — each question must be self-contained.
 
-These questions are for a diagnostic session to assess the learner's level. The learner appears to be at a ${levelHint} level.
+${learnerBlock}
+
+${langMixing}
+
+DIAGNOSTIC STRATEGY:
+- 2 questions BELOW estimated level (confirm strengths)
+- 4 questions AT estimated level (calibrate precisely)
+- 2 questions ABOVE estimated level (probe ceiling)
 
 Generate questions covering ALL of these skills:
 - vocabulary (mcq_vocabulary, fill_blank)
@@ -490,17 +564,23 @@ Generate questions covering ALL of these skills:
 - listening (listening_mcq, dictation — keep to max 1)
 - speaking (shadow_record — keep to max 1)
 
-Difficulty spread: 3 easy, 3 medium, 2 hard.
+${weakAreaBlock}
+
+${interestBlock}
 
 For each question:
-- MCQ: exactly 4 options with plausible distractors
+- MCQ: exactly 4 options
 - fill_blank: use "___" in the question to mark the blank
 - translation: ask the learner to translate a sentence. Set questionTranslation to "Translate:"
 - free_input: ask the learner to write a short response in ${languageName}
 - mcq_comprehension: embed a short ${languageName} text (1-2 sentences) directly in the question
 - listening_mcq: provide a question about what was heard (audio will be generated from the question text)
 - dictation: set question to a ${languageName} sentence the user will type after hearing
-- shadow_record: set question to a ${languageName} sentence for pronunciation. Set questionTranslation to the English translation
+- shadow_record: set question to a ${languageName} sentence for pronunciation. Set questionTranslation to the ${uiLanguageName} translation
+
+${distractorRules}
+
+${stemVariety}
 
 IMPORTANT: Questions must be standalone — no external reading passage.
 Each question MUST have a "difficulty" field: "easy", "medium", or "hard".`;
@@ -637,11 +717,15 @@ export const generateForModel = action({
     try {
       const modelConfig: ModelConfig = {
         model: args.modelId,
-        provider: args.modelProvider,
+        provider: args.modelProvider as ProviderType,
       };
-      const result = await generateDiagnosticQuestions(args.language, args.abilityEstimate, [
-        modelConfig,
-      ]);
+      const result = await generateDiagnosticQuestions(
+        args.language,
+        args.abilityEstimate,
+        "en",
+        undefined,
+        [modelConfig]
+      );
       return {
         model: args.modelId,
         questions: result.questions,

@@ -27,7 +27,7 @@ import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useStory } from "@/hooks/useStory";
 import { isAdmin as checkIsAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
-import { useT } from "@/lib/i18n";
+import { useT, useUILanguage } from "@/lib/i18n";
 import { difficultyLevelToTestLevel, testLevelToDifficultyLevel } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
@@ -55,6 +55,7 @@ export function ComprehensionPage() {
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id ?? "anonymous";
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
 
   const {
     story,
@@ -227,6 +228,7 @@ export function ComprehensionPage() {
             userId,
             difficulty,
             userLevel: computeUserDisplayLevel(language),
+            uiLanguage,
           });
           setLocalQuestions(result.questions as Question[]);
         } catch (error) {
@@ -249,6 +251,7 @@ export function ComprehensionPage() {
     storyId,
     userId,
     userProfile,
+    uiLanguage,
   ]);
 
   // Get the full story content for AI
@@ -330,6 +333,7 @@ export function ComprehensionPage() {
         userId,
         difficulty,
         userLevel: getUserDisplayLevel(),
+        uiLanguage,
       });
 
       setLocalQuestions(result.questions as Question[]);

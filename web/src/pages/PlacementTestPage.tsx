@@ -14,7 +14,7 @@ import { useAIAction } from "@/hooks/useAIAction";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
 import { isAdmin as checkIsAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
-import { useT } from "@/lib/i18n";
+import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -37,6 +37,7 @@ export function PlacementTestPage() {
   const navigate = useNavigate();
   const t = useT();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { language: uiLanguage } = useUILanguage();
   const search = useSearch({ strict: false }) as { language?: string };
   const language = (search.language as ContentLanguage) || "japanese";
 
@@ -267,6 +268,7 @@ export function PlacementTestPage() {
           questionType: nextInfo.suggestedType,
           previousQuestions,
           isWarmup: nextInfo.isWarmup,
+          uiLanguage,
         }),
         minDelayPromise,
       ]);

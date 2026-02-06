@@ -6,6 +6,12 @@ import { YoutubeTranscript } from "youtube-transcript";
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { GRADING_MODEL_CHAIN } from "../lib/models";
+import {
+  buildLanguageMixingDirective,
+  type ContentLanguage,
+  getUILanguageName,
+  type UILanguage,
+} from "../lib/promptHelpers";
 import { callWithRetry, type JsonSchema, languageNames, parseJson } from "./core";
 
 // ============================================
@@ -44,6 +50,9 @@ export const generateComprehensionQuestions = action({
     userId: v.string(),
     difficulty: v.number(), // 1-6 scale (required for caching)
     userLevel: v.optional(v.string()), // User's proficiency level (N3, B2, etc.) for display
+    uiLanguage: v.optional(
+      v.union(v.literal("en"), v.literal("ja"), v.literal("fr"), v.literal("zh"))
+    ),
   },
   handler: async (
     ctx,
@@ -78,6 +87,16 @@ export const generateComprehensionQuestions = action({
     // No cached questions - generate new ones
     const languageName = languageNames[args.language];
     const levelInfo = args.userLevel ? ` The learner is at ${args.userLevel} level.` : "";
+    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
+    const uiLanguageName = getUILanguageName(uiLang);
+
+    // Compute ability estimate from difficulty (1-6 scale → -3 to +3)
+    const abilityFromDifficulty = args.difficulty - 3.5; // Maps 1→-2.5, 3→-0.5, 6→2.5
+    const langMixing = buildLanguageMixingDirective(
+      uiLang,
+      abilityFromDifficulty,
+      args.language as ContentLanguage
+    );
 
     // Grammar examples for Japanese
     const grammarExamples =
@@ -97,6 +116,8 @@ export const generateComprehensionQuestions = action({
     const workBudget = 6;
 
     const systemPrompt = `You are a language learning assistant creating comprehension questions for a ${languageName} reading passage.${levelInfo}
+
+${langMixing}
 
 Create questions with a MIX of difficulty levels. Each question type has a "work cost":
 - multiple_choice: 1 work (quick to answer)
@@ -137,7 +158,7 @@ JSON format:
     {
       "type": "multiple_choice",
       "question": "question in ${languageName}",
-      "questionTranslation": "English translation",
+      "questionTranslation": "translation in ${uiLanguageName}",
       "options": ["A", "B", "C", "D"],
       "correctAnswer": "B",
       "points": 10
@@ -145,7 +166,7 @@ JSON format:
     {
       "type": "opinion",
       "question": "What do you think?",
-      "questionTranslation": "English translation",
+      "questionTranslation": "translation in ${uiLanguageName}",
       "rubric": "opinion, evidence, clarity",
       "points": 25
     }
@@ -540,6 +561,9 @@ export const generateVideoQuestions = action({
     language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
     videoTitle: v.string(),
     userLevel: v.optional(v.string()),
+    uiLanguage: v.optional(
+      v.union(v.literal("en"), v.literal("ja"), v.literal("fr"), v.literal("zh"))
+    ),
   },
   handler: async (
     ctx,
@@ -547,11 +571,32 @@ export const generateVideoQuestions = action({
   ): Promise<{ success: boolean; questionCount: number; error?: string }> => {
     const languageName = languageNames[args.language];
     const levelInfo = args.userLevel ? ` The learner is at ${args.userLevel} level.` : "";
+    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
 
     // Work budget system for video questions (slightly smaller than stories since videos are shorter)
     const workBudget = 4;
 
+    // Estimate ability from user level string (rough mapping)
+    const videoAbility = args.userLevel
+      ? ["N5", "A1"].includes(args.userLevel)
+        ? -2
+        : ["N4", "A2"].includes(args.userLevel)
+          ? -1
+          : ["N3", "B1"].includes(args.userLevel)
+            ? 0
+            : ["N2", "B2"].includes(args.userLevel)
+              ? 1
+              : 2
+      : 0;
+    const videoLangMixing = buildLanguageMixingDirective(
+      uiLang,
+      videoAbility,
+      args.language as ContentLanguage
+    );
+
     const systemPrompt = `You are a language learning assistant creating comprehension questions for a ${languageName} video transcript.${levelInfo}
+
+${videoLangMixing}
 
 This is a listening comprehension exercise. Create questions that test understanding of the video content.
 

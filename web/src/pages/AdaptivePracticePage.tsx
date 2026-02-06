@@ -35,7 +35,7 @@ import { useAIAction } from "@/hooks/useAIAction";
 import { useRotatingMessages } from "@/hooks/useRotatingMessages";
 import { isAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
-import { useT } from "@/lib/i18n";
+import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
 
@@ -247,6 +247,7 @@ export function AdaptivePracticePage() {
   const t = useT();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { userProfile } = useUserData();
+  const { language: uiLanguage } = useUILanguage();
   const language = (userProfile?.languages?.[0] as ContentLanguage) || "japanese";
 
   // Practice state
@@ -389,6 +390,7 @@ export function AdaptivePracticePage() {
         const result = await getNextPractice({
           userId: user.id,
           language,
+          uiLanguage,
         });
         setPracticeSet(result);
         if (result.isDiagnostic) {
@@ -407,6 +409,7 @@ export function AdaptivePracticePage() {
     user,
     isAuthenticated,
     language,
+    uiLanguage,
     getNextPractice,
     isModelTestMode,
     testModeModels,
@@ -457,6 +460,13 @@ export function AdaptivePracticePage() {
   const recordAnswerToBackend = useCallback(
     (question: PracticeQuestion, answer: AnswerRecord) => {
       if (!practiceSet || !user) return;
+      // For MCQ questions, track which option was selected for distractor analysis
+      const isMCQ = [
+        "mcq_vocabulary",
+        "mcq_grammar",
+        "mcq_comprehension",
+        "listening_mcq",
+      ].includes(question.type);
       recordAnswer({
         userId: user.id,
         language,
@@ -467,6 +477,7 @@ export function AdaptivePracticePage() {
         targetSkill: question.targetSkill,
         difficulty: question.difficulty,
         userAnswer: answer.userAnswer,
+        selectedOption: isMCQ ? answer.userAnswer : undefined,
         isCorrect: answer.isCorrect,
         earnedPoints: answer.earnedPoints,
         maxPoints: question.points,
@@ -722,6 +733,7 @@ export function AdaptivePracticePage() {
     getNextPractice({
       userId: user.id,
       language,
+      uiLanguage,
     }).then((result) => {
       setPracticeSet(result);
       if (result.isDiagnostic) {
@@ -731,7 +743,15 @@ export function AdaptivePracticePage() {
         setContentReadTime(Date.now());
       }
     });
-  }, [user, language, getNextPractice, isModelTestMode, testModeModels, fireModelTests]);
+  }, [
+    user,
+    language,
+    uiLanguage,
+    getNextPractice,
+    isModelTestMode,
+    testModeModels,
+    fireModelTests,
+  ]);
 
   // Loading state
   if (authLoading) {

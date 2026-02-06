@@ -66,6 +66,7 @@ export const recordAnswer = mutation({
     targetSkill: v.string(),
     difficulty: v.optional(v.string()),
     userAnswer: v.string(),
+    selectedOption: v.optional(v.string()), // For MCQ: which option was picked (for distractor analysis)
     isCorrect: v.boolean(),
     earnedPoints: v.number(),
     maxPoints: v.number(),
@@ -87,6 +88,7 @@ export const recordAnswer = mutation({
         questionType: args.questionType,
       },
       userAnswer: args.userAnswer,
+      selectedOption: args.selectedOption,
       responseTimeMs: args.responseTimeMs,
       skills: [{ skill: args.targetSkill, weight: 1 }],
       difficulty: args.difficulty === "easy" ? -1 : args.difficulty === "hard" ? 1 : 0,
