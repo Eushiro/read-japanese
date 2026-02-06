@@ -846,7 +846,7 @@ export function AdaptivePracticePage() {
         <PremiumBackground colorScheme="cool" intensity="minimal" />
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/learn" })}>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <h1 className="text-xl font-bold">{t("adaptivePractice.title")}</h1>
@@ -884,7 +884,7 @@ export function AdaptivePracticePage() {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/learn" })}>
+              <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
               <h1 className="text-xl font-bold">{t("adaptivePractice.title")}</h1>
@@ -1039,7 +1039,7 @@ export function AdaptivePracticePage() {
         <div className="container mx-auto px-4 py-4 max-w-4xl">
           {/* Header */}
           <div className="flex items-center gap-3 mb-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/learn" })}>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <h1 className="text-xl font-bold">Model Test Mode</h1>
@@ -1233,7 +1233,6 @@ export function AdaptivePracticePage() {
     return (
       <div>
         {isAdmin(user?.email) && (
-           
           <div className="container mx-auto px-4 max-w-4xl">
             <AdminRawJsonPanel
               showRawJson={showRawJson}
@@ -1285,7 +1284,7 @@ export function AdaptivePracticePage() {
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="flex items-center gap-3 mb-8">
-            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/learn" })}>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <h1 className="text-xl font-bold">{t("adaptivePractice.results.title")}</h1>
@@ -1351,7 +1350,7 @@ export function AdaptivePracticePage() {
                 <RotateCcw className="w-4 h-4 mr-2" />
                 {t("adaptivePractice.results.practiceAgain")}
               </Button>
-              <Button variant="outline" onClick={() => navigate({ to: "/learn" })}>
+              <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>
                 {t("adaptivePractice.results.backToLearn")}
               </Button>
             </div>
