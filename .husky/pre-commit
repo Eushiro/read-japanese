@@ -69,19 +69,39 @@ if [ -n "$diff" ]; then
         claude_md=$(cat CLAUDE.md 2>/dev/null || echo "")
         dev_md=$(cat docs/DEVELOPMENT.md 2>/dev/null || echo "")
 
-        review_prompt="You are reviewing staged changes before commit. Review for:
+        review_prompt="You are reviewing staged changes before commit. You are a senior engineer — only flag issues you are highly confident about.
 
-1. **Bugs or logic errors**
+## Review Categories
+1. **Bugs or logic errors** in the changed code
 2. **Security issues** (hardcoded secrets, injection vulnerabilities)
-3. **CLAUDE.md violations** - Check against project guidelines below
-4. **docs/ violations** - Check against development patterns below
-5. **Documentation updates needed** - If adding new patterns, features, or changing architecture, docs may need updating
+3. **CLAUDE.md violations** — Must cite the specific guideline being violated
+4. **docs/ violations** — Must cite the specific pattern being violated
+5. **Documentation updates needed** — New patterns, features, or architecture changes that need docs
 
-If issues found, output clear instructions for the agent to fix them. Use these keywords for blocking issues:
-- \"BLOCKER:\" for issues that must be fixed
-- \"UPDATE_DOCS:\" if documentation needs to be updated
+## Confidence Scoring
+For each potential issue, assign a confidence score 0-100:
+- 0-25: Likely false positive or pre-existing issue
+- 50: Might be real but unverified or minor
+- 75: Verified real, important, impacts functionality
+- 100: Absolutely certain, strong evidence
 
-If everything looks good, say \"LGTM\" briefly.
+**Only report issues with confidence ≥80.**
+
+## Ignore (other tools already check these)
+- TypeScript type errors (tsc already ran)
+- ESLint violations (ESLint already ran)
+- Formatting issues (Prettier already ran)
+- Import ordering or unused imports
+- Pre-existing issues in unchanged code
+- Pedantic nitpicks a senior engineer wouldn't flag
+- General code quality suggestions unless explicitly in CLAUDE.md
+
+## Output Format
+If issues found with confidence ≥80:
+- Use \"BLOCKER:\" prefix for bugs/security/guideline violations. Include the confidence score and cite evidence.
+- Use \"UPDATE_DOCS:\" prefix if documentation needs updating. Specify which doc file and what to add.
+
+If no issues meet the ≥80 threshold, respond with only: \"LGTM\"
 
 === CLAUDE.md Guidelines ===
 $claude_md
