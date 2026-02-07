@@ -127,12 +127,39 @@ export async function generateText(
 function stripUnsupportedFields(obj: Record<string, unknown>): Record<string, unknown> {
   // Fields not supported by Gemini's responseSchema
   const unsupportedKeys = ["additionalProperties", "minItems", "maxItems", "minimum", "maximum"];
+
+  // Gemini requires uppercase type names
+  const typeMap: Record<string, string> = {
+    string: "STRING",
+    number: "NUMBER",
+    integer: "INTEGER",
+    boolean: "BOOLEAN",
+    array: "ARRAY",
+    object: "OBJECT",
+  };
+
   const result: Record<string, unknown> = {};
+
+  // Handle nullable types: ["string", "null"] → { type: "STRING", nullable: true }
+  if (Array.isArray(obj.type)) {
+    const types = obj.type as string[];
+    const nonNullType = types.find((t) => t !== "null");
+    if (nonNullType) {
+      result.type = typeMap[nonNullType] || nonNullType.toUpperCase();
+      if (types.includes("null")) {
+        result.nullable = true;
+      }
+    }
+  }
 
   for (const [key, value] of Object.entries(obj)) {
     if (unsupportedKeys.includes(key)) continue;
+    // Skip "type" if we already handled the array case above
+    if (key === "type" && result.type !== undefined) continue;
 
-    if (value && typeof value === "object" && !Array.isArray(value)) {
+    if (key === "type" && typeof value === "string") {
+      result[key] = typeMap[value] || value.toUpperCase();
+    } else if (value && typeof value === "object" && !Array.isArray(value)) {
       result[key] = stripUnsupportedFields(value as Record<string, unknown>);
     } else if (Array.isArray(value)) {
       result[key] = value.map((item) =>
