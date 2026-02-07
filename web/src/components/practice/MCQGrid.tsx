@@ -91,7 +91,6 @@ export function MCQGrid({
               className="cursor-pointer disabled:cursor-default rounded-xl px-8 py-7 outline-none text-center"
               style={{
                 fontFamily,
-                textDecoration,
                 borderWidth: 1,
                 borderStyle: "solid",
                 borderColor,
@@ -147,7 +146,9 @@ export function MCQGrid({
                   : undefined
               }
             >
-              <span className="text-2xl md:text-3xl">{option}</span>
+              <span className="text-2xl md:text-3xl" style={{ textDecoration }}>
+                {option}
+              </span>
             </motion.button>
           );
         })}
