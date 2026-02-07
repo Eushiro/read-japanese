@@ -116,14 +116,15 @@ export function QuestionReading({
                   <span style={{ color: "#4ade80" }}>{question.correctAnswer}</span>
                   {blank.after}
                 </p>
-                {question.questionTranslation && (
-                  <p
-                    className="text-lg mt-3 italic text-foreground/60"
-                    style={{ fontFamily: "var(--font-sans)" }}
-                  >
-                    {question.questionTranslation}
-                  </p>
-                )}
+                {question.questionTranslation &&
+                  question.questionTranslation !== question.question && (
+                    <p
+                      className="text-lg mt-3 italic text-foreground/60"
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      {question.questionTranslation}
+                    </p>
+                  )}
               </motion.div>
             ) : (
               <motion.div
@@ -144,17 +145,18 @@ export function QuestionReading({
                     question.question
                   )}
                 </p>
-                {question.questionTranslation && (
-                  <motion.p
-                    className="text-lg mt-3 italic text-foreground/60"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    style={{ fontFamily: "var(--font-sans)" }}
-                  >
-                    {question.questionTranslation}
-                  </motion.p>
-                )}
+                {question.questionTranslation &&
+                  question.questionTranslation !== question.question && (
+                    <motion.p
+                      className="text-lg mt-3 italic text-foreground/60"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                      style={{ fontFamily: "var(--font-sans)" }}
+                    >
+                      {question.questionTranslation}
+                    </motion.p>
+                  )}
               </motion.div>
             )}
           </AnimatePresence>

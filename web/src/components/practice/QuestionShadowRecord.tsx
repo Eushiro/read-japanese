@@ -170,7 +170,7 @@ export function QuestionShadowRecord({
           </motion.p>
 
           {/* Translation */}
-          {question.questionTranslation && (
+          {question.questionTranslation && question.questionTranslation !== question.question && (
             <motion.p
               className="text-sm italic text-foreground/60 mt-3"
               initial={{ opacity: 0 }}

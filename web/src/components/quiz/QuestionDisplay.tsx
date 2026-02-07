@@ -129,7 +129,9 @@ export function QuestionDisplay({
         <h2 className="text-lg font-semibold text-foreground mb-2" style={{ fontFamily }}>
           {question}
         </h2>
-        {questionTranslation && <p className="text-foreground-muted mb-6">{questionTranslation}</p>}
+        {questionTranslation && questionTranslation !== question && (
+          <p className="text-foreground-muted mb-6">{questionTranslation}</p>
+        )}
 
         {/* Answer input */}
         {isMultipleChoice ? (
