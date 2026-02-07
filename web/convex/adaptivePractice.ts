@@ -546,6 +546,11 @@ export const getNextPractice = action({
       language: args.language,
     });
 
+    // Beginner detection: mirror contentEngine logic for appropriate starting difficulty
+    const isBeginner = !profile || profile.totalStudyMinutes === 0;
+    const storedAbility = profile?.abilityEstimate ?? 0;
+    const effectiveAbility = isBeginner && storedAbility === 0 ? -1.6 : storedAbility;
+
     // 2. Build profile snapshot for client
     const skills = profile?.skills ?? {
       vocabulary: 50,
@@ -556,7 +561,7 @@ export const getNextPractice = action({
       speaking: 50,
     };
     const profileSnapshot = {
-      abilityEstimate: profile?.abilityEstimate ?? 0,
+      abilityEstimate: effectiveAbility,
       abilityConfidence: profile?.abilityConfidence ?? 1.0,
       skillScores: skills as Record<string, number>,
     };
@@ -572,7 +577,7 @@ export const getNextPractice = action({
       // ===== DIAGNOSTIC MODE =====
       // Skip content generation, generate standalone questions
       const learnerContext: LearnerContext = {
-        abilityEstimate: profile?.abilityEstimate ?? 0,
+        abilityEstimate: effectiveAbility,
         weakAreas: profile?.weakAreas,
         interestWeights: profile?.interestWeights ?? undefined,
         examType: profile?.examType ?? undefined,
@@ -582,7 +587,7 @@ export const getNextPractice = action({
       };
       const diagnosticResult = await generateDiagnosticQuestions(
         args.language,
-        profile?.abilityEstimate ?? 0,
+        effectiveAbility,
         uiLang,
         learnerContext
       );
@@ -638,7 +643,7 @@ export const getNextPractice = action({
         isDiagnostic: true,
         questions: questionsWithAudio,
         targetSkills: ["vocabulary", "grammar", "reading", "listening", "writing", "speaking"],
-        difficulty: profile?.abilityEstimate ?? 0,
+        difficulty: effectiveAbility,
         generatedAt: Date.now(),
         modelUsed: diagnosticResult.modelUsed,
         systemPrompt: diagnosticResult.systemPrompt,
