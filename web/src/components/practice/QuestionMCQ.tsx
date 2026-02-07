@@ -80,7 +80,7 @@ export function QuestionMCQ({
       >
         {hasPassage ? (
           /* ── Layout with separate passage + instruction ── */
-          <div className="max-w-lg w-full space-y-4 text-center">
+          <div className="max-w-2xl w-full space-y-4 text-center">
             <AnimatePresence mode="wait">
               {showCompleted && blank ? (
                 <motion.div
@@ -89,7 +89,10 @@ export function QuestionMCQ({
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.4 }}
                 >
-                  <p className="text-xl leading-relaxed text-foreground" style={{ fontFamily }}>
+                  <p
+                    className="text-3xl md:text-4xl leading-relaxed text-foreground"
+                    style={{ fontFamily }}
+                  >
                     {blank.before}
                     <span style={{ color: "#4ade80" }}>{question.correctAnswer}</span>
                     {blank.after}
@@ -103,7 +106,10 @@ export function QuestionMCQ({
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <p className="text-xl leading-relaxed text-foreground" style={{ fontFamily }}>
+                  <p
+                    className="text-3xl md:text-4xl leading-relaxed text-foreground"
+                    style={{ fontFamily }}
+                  >
                     {blank ? (
                       <>
                         {blank.before}
@@ -118,10 +124,10 @@ export function QuestionMCQ({
               )}
             </AnimatePresence>
 
-            <p className="text-base text-foreground/80">{question.question}</p>
+            <p className="text-2xl text-foreground/80">{question.question}</p>
             {question.questionTranslation && (
               <p
-                className="text-sm italic text-foreground/60"
+                className="text-lg italic text-foreground/60"
                 style={{ fontFamily: "var(--font-sans)" }}
               >
                 {question.questionTranslation}
@@ -149,7 +155,7 @@ export function QuestionMCQ({
                 </p>
                 {question.questionTranslation && (
                   <p
-                    className="text-base mt-6 italic text-foreground/60"
+                    className="text-lg mt-3 italic text-foreground/60"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
                     {question.questionTranslation}
@@ -179,7 +185,7 @@ export function QuestionMCQ({
                 </p>
                 {question.questionTranslation && (
                   <motion.p
-                    className="text-base mt-6 italic text-foreground/60"
+                    className="text-lg mt-3 italic text-foreground/60"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}

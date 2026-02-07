@@ -487,7 +487,7 @@ export function StoriesPage() {
                           <TableCell>
                             <div>
                               <p className="font-medium">{story.title}</p>
-                              {story.language !== "english" && (
+                              {story.language !== "english" && story.titleTranslations && (
                                 <p className="text-sm text-foreground-muted">
                                   {story.titleTranslations.en}
                                 </p>
