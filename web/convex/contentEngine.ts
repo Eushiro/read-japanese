@@ -476,16 +476,16 @@ function getSchema(contentType: "dialogue" | "micro_story"): JsonSchema {
           type: "object",
           properties: {
             word: { type: "string" },
-            reading: { type: "string" },
+            reading: { type: ["string", "null"] },
             meaning: { type: "string" },
           },
-          required: ["word", "meaning"],
+          required: ["word", "reading", "meaning"],
           additionalProperties: false,
         },
       },
-      grammarTags: { type: "array", items: { type: "string" } },
+      grammarTags: { type: ["array", "null"], items: { type: "string" } },
     },
-    required: ["title", "content", "translation", "vocabulary"],
+    required: ["title", "content", "translation", "vocabulary", "grammarTags"],
     additionalProperties: false,
   };
 
@@ -502,6 +502,7 @@ function getSchema(contentType: "dialogue" | "micro_story"): JsonSchema {
         additionalProperties: false,
       },
     };
+    (base.required as string[]).push("dialogueTurns");
   }
 
   return { name: "adaptive_content", schema: base };

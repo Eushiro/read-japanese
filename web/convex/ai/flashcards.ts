@@ -1283,11 +1283,11 @@ Generate a JSON response with:
               type: "object",
               properties: {
                 word: { type: "string" },
-                reading: { type: "string" },
+                reading: { type: ["string", "null"] },
                 meaning: { type: "string" },
                 isNew: { type: "boolean" },
               },
-              required: ["word", "meaning", "isNew"],
+              required: ["word", "reading", "meaning", "isNew"],
               additionalProperties: false,
             },
           },

@@ -194,13 +194,23 @@ IMPORTANT:
           },
           options: { type: "array", items: { type: "string" }, minItems: 4, maxItems: 4 },
           correctAnswer: { type: "string", description: "Must exactly match one of the options" },
-          explanation: { type: "string", description: "Brief explanation of the correct answer" },
+          explanation: {
+            type: ["string", "null"],
+            description: "Brief explanation of the correct answer",
+          },
           audioTranscript: {
-            type: "string",
+            type: ["string", "null"],
             description: "For listening questions: the text to be read aloud",
           },
         },
-        required: ["question", "questionTranslation", "options", "correctAnswer"],
+        required: [
+          "question",
+          "questionTranslation",
+          "options",
+          "correctAnswer",
+          "explanation",
+          "audioTranscript",
+        ],
         additionalProperties: false,
       },
     };
