@@ -75,8 +75,8 @@ export function QuestionMCQ({
 
       {/* Question */}
       <div
-        className="flex flex-col items-center justify-center px-8 pt-16"
-        style={{ height: hasPassage ? "55vh" : "45vh" }}
+        className="flex flex-col items-center justify-center px-8 pt-16 pb-8"
+        style={{ height: "40vh" }}
       >
         {hasPassage ? (
           /* ── Layout with separate passage + instruction ── */
@@ -117,8 +117,6 @@ export function QuestionMCQ({
                 </motion.div>
               )}
             </AnimatePresence>
-
-            <div className="border-b border-border" />
 
             <p className="text-base text-foreground/80">{question.question}</p>
             {question.questionTranslation && (

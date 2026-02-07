@@ -36,6 +36,27 @@ export const TEXT_MODELS = {
 } as const;
 
 // ============================================
+// DEFAULT MODEL SELECTION (LOCAL VS PROD)
+// ============================================
+
+const IS_PROD = process.env.NODE_ENV === "production";
+const DEFAULT_PRIMARY_TEXT_MODEL = IS_PROD
+  ? TEXT_MODELS.CLAUDE_SONNET_4_5
+  : TEXT_MODELS.GPT_OSS_120B;
+const DEFAULT_SECONDARY_TEXT_MODEL = IS_PROD
+  ? TEXT_MODELS.GPT_OSS_120B
+  : TEXT_MODELS.CLAUDE_SONNET_4_5;
+
+export const DEFAULT_TEXT_PRIMARY: ModelConfig = {
+  model: DEFAULT_PRIMARY_TEXT_MODEL,
+  provider: "openrouter",
+};
+export const DEFAULT_TEXT_SECONDARY: ModelConfig = {
+  model: DEFAULT_SECONDARY_TEXT_MODEL,
+  provider: "openrouter",
+};
+
+// ============================================
 // AUDIO MODELS
 // ============================================
 
@@ -67,11 +88,13 @@ export const SPECIAL_MODELS = {
 // ============================================
 
 /**
- * Default text generation chain: Claude Sonnet (OpenRouter) -> GPT-OSS-120B (OpenRouter) -> Gemini Flash (Google)
+ * Default text generation chain:
+ * - Prod: Claude Sonnet (OpenRouter) -> GPT-OSS-120B (OpenRouter) -> Gemini Flash (Google)
+ * - Local: GPT-OSS-120B (OpenRouter) -> Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
  */
 export const TEXT_MODEL_CHAIN: ModelConfig[] = [
-  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
-  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
+  DEFAULT_TEXT_PRIMARY,
+  DEFAULT_TEXT_SECONDARY,
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
 ];
 
@@ -97,8 +120,8 @@ export const TEST_MODE_MODELS: ModelConfig[] = [
  * Used for structured evaluation tasks
  */
 export const GRADING_MODEL_CHAIN: ModelConfig[] = [
-  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
-  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
+  DEFAULT_TEXT_PRIMARY,
+  DEFAULT_TEXT_SECONDARY,
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
 ];
 
@@ -106,8 +129,8 @@ export const GRADING_MODEL_CHAIN: ModelConfig[] = [
  * Content generation models (two-candidate parallel generation)
  */
 export const CONTENT_MODELS = {
-  primary: { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" as ProviderType },
-  secondary: { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" as ProviderType },
+  primary: DEFAULT_TEXT_PRIMARY,
+  secondary: DEFAULT_TEXT_SECONDARY,
 };
 
 /** Number of parallel calls in race mode */
@@ -115,9 +138,9 @@ export const RACE_CONCURRENCY = 4;
 
 /** Race config: model to race + fallback chain */
 export const TEXT_MODEL_RACE_CONFIG = {
-  raceModel: { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" as ProviderType },
+  raceModel: DEFAULT_TEXT_PRIMARY,
   fallbackChain: [
-    { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" as ProviderType },
+    DEFAULT_TEXT_SECONDARY,
     { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" as ProviderType },
   ],
 };

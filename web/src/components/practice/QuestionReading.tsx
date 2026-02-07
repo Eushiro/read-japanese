@@ -74,33 +74,32 @@ export function QuestionReading({
 
       {/* Upper: Passage + Question */}
       <div
-        className="flex flex-col items-center justify-center px-8 pt-16"
-        style={{ height: "55vh" }}
+        className="flex flex-col items-center justify-center px-8 pt-16 pb-8"
+        style={{ height: "40vh" }}
       >
-        <div className="max-w-lg w-full space-y-4">
-          {/* Passage + Separator (hidden when no passage text) */}
+        <div className="max-w-2xl w-full space-y-4 text-center">
+          {/* Passage (hidden when no passage text) */}
           {(question.passageText ?? content.content) && (
-            <>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <p
+                className="text-3xl md:text-4xl leading-relaxed text-foreground"
+                style={{ fontFamily }}
               >
-                <p className="text-xl leading-relaxed text-foreground" style={{ fontFamily }}>
-                  {question.passageText ?? content.content}
+                {question.passageText ?? content.content}
+              </p>
+              {content.translation && !question.passageText && (
+                <p
+                  className="text-sm italic text-foreground/60 mt-2"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  {content.translation}
                 </p>
-                {content.translation && !question.passageText && (
-                  <p
-                    className="text-sm italic text-foreground/60 mt-2"
-                    style={{ fontFamily: "var(--font-sans)" }}
-                  >
-                    {content.translation}
-                  </p>
-                )}
-              </motion.div>
-
-              <div className="border-b border-border" />
-            </>
+              )}
+            </motion.div>
           )}
 
           {/* Question */}
@@ -112,17 +111,14 @@ export function QuestionReading({
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.4 }}
               >
-                <p
-                  className="text-2xl md:text-3xl lg:text-4xl leading-relaxed text-foreground"
-                  style={{ fontFamily }}
-                >
+                <p className="text-2xl leading-relaxed text-foreground/80" style={{ fontFamily }}>
                   {blank.before}
                   <span style={{ color: "#4ade80" }}>{question.correctAnswer}</span>
                   {blank.after}
                 </p>
                 {question.questionTranslation && (
                   <p
-                    className="text-base mt-3 italic text-foreground/60"
+                    className="text-lg mt-3 italic text-foreground/60"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
                     {question.questionTranslation}
@@ -137,10 +133,7 @@ export function QuestionReading({
                 exit={{ opacity: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                <p
-                  className="text-2xl md:text-3xl lg:text-4xl leading-relaxed text-foreground"
-                  style={{ fontFamily }}
-                >
+                <p className="text-2xl leading-relaxed text-foreground/80" style={{ fontFamily }}>
                   {blank ? (
                     <>
                       {blank.before}
@@ -153,7 +146,7 @@ export function QuestionReading({
                 </p>
                 {question.questionTranslation && (
                   <motion.p
-                    className="text-base mt-3 italic text-foreground/60"
+                    className="text-lg mt-3 italic text-foreground/60"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}

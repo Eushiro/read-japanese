@@ -7,7 +7,7 @@ import type { ActionCtx } from "./_generated/server";
 import { action } from "./_generated/server";
 import { generateAndParse, type JsonSchema, type ModelConfig, parseJson } from "./ai/models";
 import { abilityToProficiency } from "./learnerModel";
-import { TEXT_MODELS } from "./lib/models";
+import { CONTENT_MODELS } from "./lib/models";
 import { getStorageProvider } from "./lib/storage";
 import {
   adaptiveContentTypeValidator,
@@ -89,15 +89,9 @@ type ContentItem = {
 // CONSTANTS
 // ============================================
 
-// Model configuration - Sonnet is PRIMARY, GPT-OSS is SECONDARY (with cross-fallback)
-const MODEL_PRIMARY_CHAIN: ModelConfig[] = [
-  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
-  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
-];
-const MODEL_SECONDARY_CHAIN: ModelConfig[] = [
-  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
-  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
-];
+// Model configuration - uses env-aware default ordering from CONTENT_MODELS
+const MODEL_PRIMARY_CHAIN: ModelConfig[] = [CONTENT_MODELS.primary, CONTENT_MODELS.secondary];
+const MODEL_SECONDARY_CHAIN: ModelConfig[] = [CONTENT_MODELS.secondary, CONTENT_MODELS.primary];
 const COVERAGE_THRESHOLD = 0.85;
 const TARGET_COVERAGE = 0.85;
 const REUSE_SCORE_THRESHOLD = 0.65;
