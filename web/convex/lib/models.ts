@@ -40,18 +40,9 @@ export const TEXT_MODELS = {
 // DEFAULT MODEL SELECTION (LOCAL VS PROD)
 // ============================================
 
-const MODEL_ENV = (
-  process.env.AI_DEFAULT_ENV ??
-  process.env.NODE_ENV ??
-  "development"
-).toLowerCase();
-const IS_PROD = MODEL_ENV === "production" || MODEL_ENV === "prod";
-const DEFAULT_PRIMARY_TEXT_MODEL = IS_PROD
-  ? TEXT_MODELS.CLAUDE_SONNET_4_5
-  : TEXT_MODELS.GPT_5_2_CHAT;
-const DEFAULT_SECONDARY_TEXT_MODEL = IS_PROD
-  ? TEXT_MODELS.GPT_5_2_CHAT
-  : TEXT_MODELS.CLAUDE_SONNET_4_5;
+// GPT-5.2-Chat forced as default for testing
+const DEFAULT_PRIMARY_TEXT_MODEL = TEXT_MODELS.GPT_5_2_CHAT;
+const DEFAULT_SECONDARY_TEXT_MODEL = TEXT_MODELS.CLAUDE_SONNET_4_5;
 
 export const DEFAULT_TEXT_PRIMARY: ModelConfig = {
   model: DEFAULT_PRIMARY_TEXT_MODEL,
@@ -137,18 +128,6 @@ export const GRADING_MODEL_CHAIN: ModelConfig[] = [
 export const CONTENT_MODELS = {
   primary: DEFAULT_TEXT_PRIMARY,
   secondary: DEFAULT_TEXT_SECONDARY,
-};
-
-/** Number of parallel calls in race mode */
-export const RACE_CONCURRENCY = 4;
-
-/** Race config: model to race + fallback chain */
-export const TEXT_MODEL_RACE_CONFIG = {
-  raceModel: DEFAULT_TEXT_PRIMARY,
-  fallbackChain: [
-    DEFAULT_TEXT_SECONDARY,
-    { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" as ProviderType },
-  ],
 };
 
 /**
