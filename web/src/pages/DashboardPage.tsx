@@ -300,7 +300,7 @@ export function DashboardPage() {
               </div>
             </motion.div>
           ) : (
-            <PrimarySessionCTA
+            <HybridCCardless
               config={getPrimaryCtaConfig({
                 hasLanguages: userLanguages.length > 0,
                 sessionStatus: sessionState.status,
@@ -729,7 +729,57 @@ function getPrimaryCtaConfig(args: {
   };
 }
 
-function PrimarySessionCTA({
+// Shared pill button with orbiting dot, shimmer, and gradient
+function GradientPillButton({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: React.ElementType;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ scale: 1.04, y: -2 }}
+      whileTap={{ scale: 0.97 }}
+      className="relative group/pill"
+    >
+      {/* Orbiting dot */}
+      <motion.div
+        className="absolute w-2 h-2 rounded-full bg-[#feed7a] shadow-[0_0_8px_rgba(254,237,122,0.6)]"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+        style={{
+          top: "50%",
+          left: "50%",
+          transformOrigin: "-60px 0px",
+        }}
+      />
+
+      {/* Pill button */}
+      <div className="relative px-8 py-4 rounded-full bg-gradient-to-r from-[#ff8400] to-[#df91f7] shadow-xl shadow-[#ff8400]/20 overflow-hidden">
+        {/* Shimmer */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+          animate={{ x: ["-100%", "200%"] }}
+          transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 3, ease: "easeInOut" }}
+          style={{ width: "40%" }}
+        />
+
+        <span className="relative flex items-center gap-3 text-white font-semibold text-base">
+          <Icon className="w-5 h-5" />
+          {label}
+          <ArrowRight className="w-4 h-4 group-hover/pill:translate-x-1 transition-transform" />
+        </span>
+      </div>
+    </motion.button>
+  );
+}
+
+// Card-less / Airy CTA — subtitle + gradient pill, no duplicated title
+function HybridCCardless({
   config,
   onAction,
 }: {
@@ -739,12 +789,9 @@ function PrimarySessionCTA({
     cta: string;
     action: PrimaryCtaAction;
     icon: React.ElementType;
-    gradient: string;
   };
   onAction: (action: PrimaryCtaAction) => void;
 }) {
-  const Icon = config.icon;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -752,27 +799,13 @@ function PrimarySessionCTA({
       transition={{ delay: 0.08, duration: 0.5 }}
       className="relative"
     >
-      <div className="relative rounded-2xl backdrop-blur-xl bg-white/[0.04] border border-white/10 p-5 overflow-hidden">
-        {/* Subtle glow */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/[0.02] to-transparent pointer-events-none" />
-
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
-              <Icon className="w-6 h-6 text-foreground" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">{config.title}</h3>
-              <p className="text-sm text-muted-foreground">{config.subtitle}</p>
-            </div>
-          </div>
-          <button
-            onClick={() => onAction(config.action)}
-            className="flex-shrink-0 px-3 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-orange-500 to-purple-500 text-white hover:opacity-90 transition-all"
-          >
-            {config.cta}
-          </button>
-        </div>
+      <div className="flex flex-col items-center text-center gap-2 py-2">
+        <p className="text-foreground/60 text-base">{config.subtitle}</p>
+        <GradientPillButton
+          icon={config.icon}
+          label={config.cta}
+          onClick={() => onAction(config.action)}
+        />
       </div>
     </motion.div>
   );

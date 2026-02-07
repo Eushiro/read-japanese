@@ -9,6 +9,8 @@ interface ProgressSquaresProps {
   previousResults: QuestionResult[];
   /** Whether the current question has been answered (stops pulsing) */
   isAnswered: boolean;
+  /** Navigate to a previously answered question by its queue index */
+  onGoToQuestion?: (index: number) => void;
 }
 
 export function ProgressSquares({
@@ -16,6 +18,7 @@ export function ProgressSquares({
   currentIndex,
   previousResults,
   isAnswered,
+  onGoToQuestion,
 }: ProgressSquaresProps) {
   // Track previous total to detect newly added squares.
   // Uses "adjust state during render" pattern so animatingFrom is
@@ -58,35 +61,47 @@ export function ProgressSquares({
             borderColor = "#f97316";
           }
 
+          const isClickable = result !== null && !isCurrent && !!onGoToQuestion;
+          const sharedStyle = {
+            width: 18,
+            height: 18,
+            backgroundColor: bgColor,
+            border: `1.5px solid ${isFuture ? "var(--color-foreground-muted)" : borderColor}`,
+          };
+          const sharedMotion = {
+            initial: isNew ? { scale: 0, opacity: 0 } : (false as const),
+            animate:
+              isCurrent && !isAnswered
+                ? { scale: 1, opacity: [0.4, 1, 0.4] }
+                : { scale: 1, opacity: 1 },
+            transition: isNew
+              ? {
+                  type: "spring" as const,
+                  stiffness: 400,
+                  damping: 20,
+                  delay: (i - (animatingFrom ?? 0)) * 0.1,
+                }
+              : isCurrent && !isAnswered
+                ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" as const }
+                : undefined,
+          };
+
+          if (isClickable) {
+            return (
+              <motion.button
+                key={i}
+                className="rounded-sm cursor-pointer"
+                style={sharedStyle}
+                {...sharedMotion}
+                whileHover={{ scale: 1.3 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => onGoToQuestion(i)}
+              />
+            );
+          }
+
           return (
-            <motion.div
-              key={i}
-              className="rounded-sm"
-              style={{
-                width: 12,
-                height: 12,
-                backgroundColor: bgColor,
-                border: `1.5px solid ${isFuture ? "var(--color-foreground-muted)" : borderColor}`,
-              }}
-              initial={isNew ? { scale: 0, opacity: 0 } : false}
-              animate={
-                isCurrent && !isAnswered
-                  ? { scale: 1, opacity: [0.4, 1, 0.4] }
-                  : { scale: 1, opacity: 1 }
-              }
-              transition={
-                isNew
-                  ? {
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 20,
-                      delay: (i - (animatingFrom ?? 0)) * 0.1,
-                    }
-                  : isCurrent && !isAnswered
-                    ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
-                    : undefined
-              }
-            />
+            <motion.div key={i} className="rounded-sm" style={sharedStyle} {...sharedMotion} />
           );
         })}
       </AnimatePresence>

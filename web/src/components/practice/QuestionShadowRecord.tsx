@@ -23,16 +23,25 @@ export function QuestionShadowRecord({
   totalQuestions,
   currentIndex,
   previousResults,
+  currentAnswer,
   onNext,
+  onGoToQuestion,
   isLastQuestion,
   onSubmitAudio,
 }: ShadowRecordProps) {
   const t = useT();
   const fontFamily = getFontFamily(language);
+
+  // When revisiting, initialize in "done" state with the previous score
+  const isRevisiting = !!currentAnswer;
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasPlayed, setHasPlayed] = useState(false);
-  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
-  const [score, setScore] = useState<number | null>(null);
+  const [recordingState, setRecordingState] = useState<RecordingState>(
+    isRevisiting ? "done" : "idle"
+  );
+  const [score, setScore] = useState<number | null>(
+    isRevisiting ? Math.round((currentAnswer.earnedPoints / question.points) * 100) : null
+  );
   const [feedback, setFeedback] = useState<string>("");
   const playAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -106,6 +115,7 @@ export function QuestionShadowRecord({
           currentIndex={currentIndex}
           previousResults={resultsWithCurrent}
           isAnswered={showScore}
+          onGoToQuestion={onGoToQuestion}
         />
       </div>
 

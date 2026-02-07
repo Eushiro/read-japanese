@@ -15,14 +15,26 @@ export function QuestionListening({
   totalQuestions,
   currentIndex,
   previousResults,
+  currentAnswer,
   onSelectAnswer,
   onSubmit,
   onNext,
+  onGoToQuestion,
   isLastQuestion,
 }: QuestionViewProps) {
   const t = useT();
-  const [confirmedOption, setConfirmedOption] = useState<number | null>(null);
-  const [showCompleted, setShowCompleted] = useState(false);
+
+  // When revisiting an answered question, initialize from the existing answer
+  const initOptions = question.options ?? [];
+  const initialOption = currentAnswer?.userAnswer
+    ? initOptions.indexOf(currentAnswer.userAnswer)
+    : null;
+  const initialConfirmed = initialOption !== null && initialOption !== -1 ? initialOption : null;
+
+  const [confirmedOption, setConfirmedOption] = useState<number | null>(initialConfirmed);
+  const [showCompleted, setShowCompleted] = useState(
+    initialConfirmed !== null && currentAnswer?.isCorrect === true
+  );
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasPlayed, setHasPlayed] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -33,11 +45,15 @@ export function QuestionListening({
     onSubmitRef.current = onSubmit;
   }, [onSubmit]);
 
+  // Track whether this is a revisit (already answered on mount)
+  const isRevisit = useRef(initialConfirmed !== null);
+
   // Auto-submit answer when user selects an option so it gets recorded
   useEffect(() => {
-    if (confirmedOption !== null) {
+    if (confirmedOption !== null && !isRevisit.current) {
       onSubmitRef.current();
     }
+    isRevisit.current = false;
   }, [confirmedOption]);
 
   const options = useMemo(() => question.options ?? [], [question.options]);
@@ -100,6 +116,7 @@ export function QuestionListening({
           currentIndex={currentIndex}
           previousResults={resultsWithCurrent}
           isAnswered={confirmedOption !== null}
+          onGoToQuestion={onGoToQuestion}
         />
       </div>
 

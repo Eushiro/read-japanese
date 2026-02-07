@@ -24,13 +24,14 @@ export function QuestionDictation({
   onSelectAnswer,
   onSubmit,
   onNext,
+  onGoToQuestion,
   isLastQuestion,
 }: QuestionViewProps) {
   const t = useT();
   const fontFamily = getFontFamily(language);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasPlayed, setHasPlayed] = useState(false);
-  const [localInput, setLocalInput] = useState("");
+  const [localInput, setLocalInput] = useState(currentAnswer?.userAnswer ?? "");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -86,6 +87,7 @@ export function QuestionDictation({
           currentIndex={currentIndex}
           previousResults={resultsWithCurrent}
           isAnswered={showFeedback}
+          onGoToQuestion={onGoToQuestion}
         />
       </div>
 

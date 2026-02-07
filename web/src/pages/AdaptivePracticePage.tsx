@@ -929,9 +929,29 @@ export function AdaptivePracticePage() {
     triggerBackgroundGeneration,
   ]);
 
+  // Navigate to a previously answered question by queue index
+  const handleGoToQuestion = useCallback(
+    (queueIndex: number) => {
+      if (!practiceSet) return;
+      const questionId = questionQueue[queueIndex];
+      if (!questionId) return;
+      const question = practiceSet.questions.find((q) => q.questionId === questionId);
+      if (!question) return;
+      const answer = answers.find((a) => a.questionId === questionId);
+      if (!answer) return; // Only navigate to answered questions
+      setCurrentQuestion(question);
+      setSelectedAnswer(answer.userAnswer);
+      setShowFeedback(true);
+    },
+    [practiceSet, questionQueue, answers]
+  );
+
   // Submit answer
   const handleSubmitAnswer = useCallback(async () => {
     if (!practiceSet || !currentQuestion) return;
+
+    // Guard: don't re-submit if already answered (e.g. revisiting)
+    if (answers.some((a) => a.questionId === currentQuestion.questionId)) return;
 
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -1575,12 +1595,14 @@ export function AdaptivePracticePage() {
             isCorrect: currentAnswer.isCorrect,
             earnedPoints: currentAnswer.earnedPoints,
             feedback: currentAnswer.feedback,
+            userAnswer: currentAnswer.userAnswer,
           }
         : null,
       selectedAnswer,
       onSelectAnswer: setSelectedAnswer,
       onSubmit: handleSubmitAnswer,
       onNext: handleNextQuestion,
+      onGoToQuestion: handleGoToQuestion,
       isLastQuestion,
     };
 

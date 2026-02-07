@@ -24,11 +24,12 @@ export function QuestionTranslation({
   onSelectAnswer,
   onSubmit,
   onNext,
+  onGoToQuestion,
   isLastQuestion,
 }: QuestionViewProps) {
   const t = useT();
   const fontFamily = getFontFamily(language);
-  const [localInput, setLocalInput] = useState("");
+  const [localInput, setLocalInput] = useState(currentAnswer?.userAnswer ?? "");
 
   const handleInputChange = (value: string) => {
     setLocalInput(value);
@@ -55,6 +56,7 @@ export function QuestionTranslation({
           currentIndex={currentIndex}
           previousResults={resultsWithCurrent}
           isAnswered={showFeedback}
+          onGoToQuestion={onGoToQuestion}
         />
       </div>
 
