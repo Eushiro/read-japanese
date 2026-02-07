@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 export interface QuestionNavigationProps {
   // Navigation state
@@ -88,8 +89,12 @@ export function QuestionNavigation({
           // Submit button
           <Button
             onClick={onSubmit}
-            disabled={!canSubmit || isLoading}
-            className={`gap-2 ${variant === "stacked" ? "w-full" : ""}`}
+            disabled={!isGrading && (!canSubmit || isLoading)}
+            className={cn(
+              "gap-2",
+              variant === "stacked" && "w-full",
+              isGrading && "pointer-events-none animate-pulse"
+            )}
           >
             {isLoading ? (
               <>
