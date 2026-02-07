@@ -51,11 +51,13 @@ export function useRecommendedVideos(
       : "skip"
   );
 
-  // Fallback: fetch all videos for the language
-  const allVideos = useQuery(api.youtubeContent.list, {
-    language,
-    limit: maxVideos * 2, // Fetch more for shuffling
-  });
+  // Fallback: fetch all videos for the language (only when adaptive won't have results)
+  const allVideos = useQuery(
+    api.youtubeContent.list,
+    recommendedDifficulty?.hasProfile && recommendedDifficulty.acceptableLevels.length > 0
+      ? "skip"
+      : { language, limit: maxVideos * 2 }
+  );
 
   return useMemo(() => {
     // Priority 1: Use learner model's adaptive videos

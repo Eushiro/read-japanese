@@ -4,14 +4,7 @@ import { v } from "convex/values";
 
 import { api, internal } from "./_generated/api";
 import { action } from "./_generated/server";
-import {
-  generateAndParse,
-  generateAndParseRace,
-  GRADING_MODEL_CHAIN,
-  type JsonSchema,
-  parseJson,
-  TEXT_MODEL_RACE_CONFIG,
-} from "./ai/models";
+import { generateAndParse, GRADING_MODEL_CHAIN, type JsonSchema, parseJson } from "./ai/models";
 import { isAdminEmail } from "./lib/admin";
 import type { ModelConfig, ProviderType } from "./lib/models";
 import {
@@ -204,6 +197,14 @@ const MCQ_TYPES: PracticeQuestionType[] = [
   "fill_blank",
   "listening_mcq",
 ];
+const REQUIRED_SKILLS: SkillType[] = [
+  "vocabulary",
+  "grammar",
+  "reading",
+  "listening",
+  "writing",
+  "speaking",
+];
 
 /**
  * Build the JSON schema for AI question generation.
@@ -258,6 +259,116 @@ function buildQuestionSchema(name: string): JsonSchema {
   };
 }
 
+type QuestionSetMode = "diagnostic" | "content" | "incremental";
+
+type QuestionSetContext = {
+  mode: QuestionSetMode;
+  minCount: number;
+  maxCount: number;
+  requireAllSkills?: boolean;
+  requireTypeVariety?: number;
+};
+
+function isMCQType(type: PracticeQuestionType): boolean {
+  return MCQ_TYPES.includes(type);
+}
+
+function hasBlankToken(question: string): boolean {
+  return question.includes("___");
+}
+
+function uniqueCount(items: string[]): number {
+  return new Set(items).size;
+}
+
+function validateQuestionSet(
+  questions: PracticeQuestion[],
+  context: QuestionSetContext
+): { errors: string[]; failureCount: number } {
+  const errors: string[] = [];
+
+  if (!questions || questions.length === 0) {
+    return { errors: ["No questions generated"], failureCount: 1 };
+  }
+
+  if (questions.length < context.minCount || questions.length > context.maxCount) {
+    errors.push(
+      `Question count ${questions.length} not in range ${context.minCount}-${context.maxCount}`
+    );
+  }
+
+  const skillSet = new Set<SkillType>();
+  const typeSet = new Set<PracticeQuestionType>();
+  const difficultySet = new Set<string>();
+
+  questions.forEach((q, idx) => {
+    if (!q.type || !q.targetSkill || !q.question || !q.correctAnswer) {
+      errors.push(`Q${idx}: missing required fields`);
+      return;
+    }
+
+    typeSet.add(q.type);
+    skillSet.add(q.targetSkill);
+    if (q.difficulty) difficultySet.add(q.difficulty);
+
+    if (!q.points || q.points <= 0) {
+      errors.push(`Q${idx}: points must be positive`);
+    }
+
+    if (isMCQType(q.type)) {
+      if (!q.options || q.options.length !== 4) {
+        errors.push(`Q${idx}: MCQ must have exactly 4 options`);
+      } else {
+        if (uniqueCount(q.options) !== 4) {
+          errors.push(`Q${idx}: MCQ options must be unique`);
+        }
+        if (!q.options.includes(q.correctAnswer)) {
+          errors.push(`Q${idx}: correctAnswer must match one of the options`);
+        }
+      }
+    }
+
+    if (q.type === "fill_blank" && !hasBlankToken(q.question)) {
+      errors.push(`Q${idx}: fill_blank must include "___"`);
+    }
+
+    if (q.type === "translation" || q.type === "shadow_record") {
+      if (!q.questionTranslation || q.questionTranslation.trim().length === 0) {
+        errors.push(`Q${idx}: ${q.type} must include questionTranslation`);
+      }
+    }
+
+    if (q.type === "mcq_comprehension") {
+      if (context.mode === "content" && q.passageText) {
+        errors.push(`Q${idx}: mcq_comprehension in content mode must omit passageText`);
+      }
+      if ((context.mode === "diagnostic" || context.mode === "incremental") && !q.passageText) {
+        errors.push(`Q${idx}: mcq_comprehension in diagnostic must include passageText`);
+      }
+    }
+
+    if (q.difficulty && !["easy", "medium", "hard"].includes(q.difficulty)) {
+      errors.push(`Q${idx}: invalid difficulty`);
+    }
+  });
+
+  if (context.requireAllSkills && REQUIRED_SKILLS.some((s) => !skillSet.has(s))) {
+    errors.push("Question set must cover all 6 skills");
+  }
+
+  if (context.requireTypeVariety && typeSet.size < context.requireTypeVariety) {
+    errors.push(`Question set must include at least ${context.requireTypeVariety} types`);
+  }
+
+  if (context.mode === "content") {
+    if (!difficultySet.has("easy") || !difficultySet.has("medium") || !difficultySet.has("hard")) {
+      errors.push("Question set must include easy, medium, and hard difficulties");
+    }
+  }
+
+  return { errors, failureCount: errors.length };
+}
+
 /**
  * Filter out broken MCQ questions and assign unique IDs.
  */
@@ -275,6 +386,130 @@ function filterAndAssignIds(questions: PracticeQuestion[], prefix: string): Prac
     options: MCQ_TYPES.includes(q.type) && q.options ? shuffleArray(q.options) : q.options,
     questionId: `${prefix}_${Date.now()}_${index}`,
   }));
+}
+
+type QuestionGenerationMeta = {
+  modelUsed?: string;
+  systemPrompt?: string;
+  prompt?: string;
+  validationFailures?: number;
+  repairAttempts?: number;
+  generationLatencyMs?: number;
+  qualityScore?: number;
+};
+
+function buildRepairPrompt(
+  originalQuestions: PracticeQuestion[],
+  violations: string[],
+  context: QuestionSetContext
+): { systemPrompt: string; prompt: string } {
+  const systemPrompt = `You are a strict JSON editor for language learning questions.
+Fix the issues and return ONLY valid JSON that matches the schema. Do not include explanations.`;
+
+  const prompt = `The following question set has validation errors.
+Fix the questions to satisfy all constraints. Keep the number of questions between ${context.minCount} and ${context.maxCount}.
+
+Violations:
+${violations.join("\n")}
+
+Original questions JSON:
+${JSON.stringify({ questions: originalQuestions }, null, 2)}
+
+Return corrected JSON with a "questions" array.`;
+
+  return { systemPrompt, prompt };
+}
+
+async function generateQuestionsWithRepair(
+  args: {
+    prompt: string;
+    systemPrompt: string;
+    maxTokens: number;
+    jsonSchema: JsonSchema;
+    parse: (response: string) => { questions: PracticeQuestion[] };
+    context: QuestionSetContext;
+    modelOverride?: ModelConfig[];
+  },
+  prefix: string
+): Promise<{ questions: PracticeQuestion[] } & QuestionGenerationMeta> {
+  const start = Date.now();
+  const runGenerate = () =>
+    generateAndParse<{ questions: PracticeQuestion[] }>({
+      prompt: args.prompt,
+      systemPrompt: args.systemPrompt,
+      maxTokens: args.maxTokens,
+      jsonSchema: args.jsonSchema,
+      parse: args.parse,
+      models: args.modelOverride,
+    });
+
+  let repairAttempts = 0;
+  let validationFailures = 0;
+  let modelUsed: string | undefined;
+
+  const initial = await runGenerate();
+  modelUsed = initial.usage.model;
+  const initialValidation = validateQuestionSet(initial.result.questions, args.context);
+  validationFailures = initialValidation.failureCount;
+
+  let finalQuestions = initial.result.questions;
+  let finalValidation = initialValidation;
+
+  if (initialValidation.errors.length > 0) {
+    repairAttempts += 1;
+    try {
+      const repair = buildRepairPrompt(
+        initial.result.questions,
+        initialValidation.errors,
+        args.context
+      );
+      const repaired = await generateAndParse<{ questions: PracticeQuestion[] }>({
+        prompt: repair.prompt,
+        systemPrompt: repair.systemPrompt,
+        maxTokens: Math.min(args.maxTokens, 2000),
+        jsonSchema: args.jsonSchema,
+        parse: args.parse,
+        models: args.modelOverride,
+      });
+      modelUsed = repaired.usage.model;
+      finalQuestions = repaired.result.questions;
+      finalValidation = validateQuestionSet(finalQuestions, args.context);
+    } catch (error) {
+      console.error("Repair attempt failed:", error);
+    }
+  }
+
+  if (finalValidation.errors.length > 0) {
+    try {
+      const regen = await runGenerate();
+      modelUsed = regen.usage.model;
+      finalQuestions = regen.result.questions;
+      finalValidation = validateQuestionSet(finalQuestions, args.context);
+    } catch (error) {
+      console.error("Regeneration attempt failed:", error);
+    }
+  }
+
+  if (finalValidation.errors.length > 0) {
+    console.error("Final question validation failed:", finalValidation.errors);
+  }
+
+  const generationLatencyMs = Date.now() - start;
+  const qualityScore =
+    finalValidation.errors.length === 0
+      ? 100
+      : Math.max(40, 100 - 5 * finalValidation.errors.length);
+
+  return {
+    questions: filterAndAssignIds(finalQuestions, prefix),
+    modelUsed,
+    systemPrompt: args.systemPrompt,
+    prompt: args.prompt,
+    validationFailures,
+    repairAttempts,
+    generationLatencyMs,
+    qualityScore,
+  };
 }
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -391,6 +626,11 @@ export const getNextPractice = action({
           targetSkill: q.targetSkill,
           difficulty: q.difficulty,
         })),
+        modelUsed: diagnosticResult.modelUsed,
+        qualityScore: diagnosticResult.qualityScore,
+        validationFailures: diagnosticResult.validationFailures,
+        repairAttempts: diagnosticResult.repairAttempts,
+        generationLatencyMs: diagnosticResult.generationLatencyMs,
       });
 
       return {
@@ -491,6 +731,11 @@ export const getNextPractice = action({
         targetSkill: q.targetSkill,
         difficulty: q.difficulty,
       })),
+      modelUsed: generatedResult.modelUsed,
+      qualityScore: generatedResult.qualityScore,
+      validationFailures: generatedResult.validationFailures,
+      repairAttempts: generatedResult.repairAttempts,
+      generationLatencyMs: generatedResult.generationLatencyMs,
     });
 
     return {
@@ -512,6 +757,10 @@ interface GeneratedQuestionsResult {
   modelUsed?: string;
   systemPrompt?: string;
   prompt?: string;
+  validationFailures?: number;
+  repairAttempts?: number;
+  generationLatencyMs?: number;
+  qualityScore?: number;
 }
 
 /**
@@ -590,36 +839,28 @@ Return JSON with an array of questions.`;
 
   const questionSchema = buildQuestionSchema("practice_questions");
 
-  const sharedOpts = {
-    prompt,
-    systemPrompt,
-    maxTokens: 3000,
-    jsonSchema: questionSchema,
-    parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
-    validate: (parsed: { questions: PracticeQuestion[] }) => {
-      if (!parsed.questions || parsed.questions.length === 0) {
-        return "No questions generated";
-      }
-      return null;
-    },
+  const context: QuestionSetContext = {
+    mode: "content",
+    minCount: 8,
+    maxCount: 10,
+    requireTypeVariety: 4,
   };
 
   try {
-    const result = modelOverride
-      ? await generateAndParse<{ questions: PracticeQuestion[] }>({
-          ...sharedOpts,
-          models: modelOverride,
-        })
-      : await generateAndParseRace<{ questions: PracticeQuestion[] }>({
-          ...sharedOpts,
-          raceModel: TEXT_MODEL_RACE_CONFIG.raceModel,
-          fallbackChain: TEXT_MODEL_RACE_CONFIG.fallbackChain,
-        });
+    const result = await generateQuestionsWithRepair(
+      {
+        prompt,
+        systemPrompt,
+        maxTokens: 3000,
+        jsonSchema: questionSchema,
+        parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
+        context,
+        modelOverride,
+      },
+      "pq"
+    );
 
-    return {
-      questions: filterAndAssignIds(result.result.questions, "pq"),
-      modelUsed: result.usage.model,
-    };
+    return result;
   } catch (error) {
     console.error("Failed to generate questions:", error);
     // Return a fallback comprehension question
@@ -629,6 +870,7 @@ Return JSON with an array of questions.`;
           questionId: `pq_${Date.now()}_fallback`,
           type: "mcq_comprehension",
           targetSkill: "reading",
+          difficulty: "easy",
           question: `What is the main topic of "${content.title}"?`,
           options: [
             "The main idea of the story",
@@ -699,7 +941,7 @@ async function generateDiagnosticQuestions(
   const interestBlock = buildInterestTheming(interests);
 
   const systemPrompt = `You are a ${languageName} diagnostic assessment generator.
-Create standalone practice questions that do NOT reference any reading passage — each question must be self-contained.
+Create 4 standalone practice questions that do NOT reference any reading passage — each question must be self-contained.
 
 ${learnerBlock}
 
@@ -710,7 +952,7 @@ DIAGNOSTIC STRATEGY:
 - 2 questions AT estimated level (calibrate precisely)
 - 1 question ABOVE estimated level (probe ceiling)
 
-Generate questions covering ALL of these skills:
+Aim to cover at least 3 different skills from this list:
 - vocabulary (mcq_vocabulary, fill_blank)
 - grammar (mcq_grammar)
 - reading (mcq_comprehension — provide a SHORT 1-2 sentence passage in "passageText", and keep "question" as the question only)
@@ -740,42 +982,35 @@ ${stemVariety}
 IMPORTANT: Questions must be standalone — no external reading passage.
 Each question MUST have a "difficulty" field: "easy", "medium", or "hard".`;
 
-  const prompt = `Generate 4 standalone diagnostic ${languageName} practice questions.
+  const prompt = `Generate exactly 4 standalone diagnostic ${languageName} practice questions.
 Cover at least 3 different skills. Use at least 3 different question types.
 Maximum 1 listening/dictation question and 1 shadow_record question.
 Return JSON.`;
 
   const questionSchema = buildQuestionSchema("diagnostic_questions");
 
-  const diagSharedOpts = {
-    prompt,
-    systemPrompt,
-    maxTokens: 2000,
-    jsonSchema: questionSchema,
-    parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
-    validate: (parsed: { questions: PracticeQuestion[] }) => {
-      if (!parsed.questions || parsed.questions.length < 2) {
-        return "Not enough questions generated";
-      }
-      return null;
-    },
-  };
-
   try {
-    const result = modelOverride
-      ? await generateAndParse<{ questions: PracticeQuestion[] }>({
-          ...diagSharedOpts,
-          models: modelOverride,
-        })
-      : await generateAndParseRace<{ questions: PracticeQuestion[] }>({
-          ...diagSharedOpts,
-          raceModel: TEXT_MODEL_RACE_CONFIG.raceModel,
-          fallbackChain: TEXT_MODEL_RACE_CONFIG.fallbackChain,
-        });
+    const result = await generateQuestionsWithRepair(
+      {
+        prompt,
+        systemPrompt,
+        maxTokens: 2500,
+        jsonSchema: questionSchema,
+        parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
+        context: {
+          mode: "diagnostic",
+          minCount: 4,
+          maxCount: 4,
+          requireAllSkills: false,
+          requireTypeVariety: 3,
+        },
+        modelOverride,
+      },
+      "diag"
+    );
 
     return {
-      questions: filterAndAssignIds(result.result.questions, "diag"),
-      modelUsed: result.usage.model,
+      ...result,
       systemPrompt,
       prompt,
     };
@@ -997,23 +1232,24 @@ Return JSON.`;
     const questionSchema = buildQuestionSchema("incremental_diagnostic_questions");
 
     try {
-      const result = await generateAndParseRace<{ questions: PracticeQuestion[] }>({
-        prompt,
-        systemPrompt,
-        maxTokens: 800,
-        jsonSchema: questionSchema,
-        raceModel: TEXT_MODEL_RACE_CONFIG.raceModel,
-        fallbackChain: TEXT_MODEL_RACE_CONFIG.fallbackChain,
-        parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
-        validate: (parsed) => {
-          if (!parsed.questions || parsed.questions.length === 0) {
-            return "No questions generated";
-          }
-          return null;
+      const result = await generateQuestionsWithRepair(
+        {
+          prompt,
+          systemPrompt,
+          maxTokens: 900,
+          jsonSchema: questionSchema,
+          parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
+          context: {
+            mode: "incremental",
+            minCount: 2,
+            maxCount: 2,
+            requireTypeVariety: 2,
+          },
         },
-      });
+        "incr"
+      );
 
-      const withIds = filterAndAssignIds(result.result.questions, "incr");
+      const withIds = result.questions;
       const capped = applyAudioCaps(withIds, existingCounts, caps);
 
       if (capped.accepted.length > 0) {
@@ -1028,14 +1264,23 @@ Return JSON.`;
             targetSkill: q.targetSkill,
             difficulty: q.difficulty,
           })),
+          modelUsed: result.modelUsed,
+          qualityScore: result.qualityScore,
+          validationFailures: result.validationFailures,
+          repairAttempts: result.repairAttempts,
+          generationLatencyMs: result.generationLatencyMs,
         });
       }
 
       return {
         questions: capped.accepted,
-        modelUsed: result.usage.model,
+        modelUsed: result.modelUsed,
         systemPrompt,
         prompt,
+        validationFailures: result.validationFailures,
+        repairAttempts: result.repairAttempts,
+        generationLatencyMs: result.generationLatencyMs,
+        qualityScore: result.qualityScore,
       };
     } catch (error) {
       console.error("Failed to generate incremental questions:", error);

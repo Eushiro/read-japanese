@@ -28,7 +28,7 @@ import { useStudySession } from "@/contexts/StudySessionContext";
 import { useUserData } from "@/contexts/UserDataContext";
 import { useRecommendedStories } from "@/hooks/useRecommendedStories";
 import { useRecommendedVideos } from "@/hooks/useRecommendedVideos";
-import { useStories } from "@/hooks/useStories";
+import { useStoriesByLanguage } from "@/hooks/useStories";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 import type { StoryListItem } from "@/types/story";
@@ -161,8 +161,8 @@ export function DashboardPage() {
     isAuthenticated ? userId : undefined
   );
 
-  // Fetch stories for recommendations
-  const { data: allStories } = useStories();
+  // Fetch stories for this language only (dashboard only shows primary language)
+  const { data: allStories } = useStoriesByLanguage(primaryLanguage);
 
   // Use adaptive story recommendations based on learner model
   const { stories: adaptiveStories, reason: storyReason } = useRecommendedStories(

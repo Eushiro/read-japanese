@@ -38,9 +38,23 @@ interface Subscription {
   stripeCustomerId?: string;
 }
 
+interface CreditBalance {
+  used: number;
+  limit: number;
+  remaining: number;
+  percentage: number;
+  nearLimit: boolean;
+  tier: string;
+  billingPeriod?: string;
+  resetDate?: string;
+  alertDismissed80: boolean;
+  alertDismissed95: boolean;
+}
+
 interface UserDataContextValue {
   userProfile: UserProfile | null | undefined;
   subscription: Subscription | null | undefined;
+  creditBalance: CreditBalance | undefined;
   isPremium: boolean;
   isLoading: boolean;
   isProfileLoading: boolean;
@@ -50,6 +64,7 @@ interface UserDataContextValue {
 const UserDataContext = createContext<UserDataContextValue>({
   userProfile: undefined,
   subscription: undefined,
+  creditBalance: undefined,
   isPremium: false,
   isLoading: true,
   isProfileLoading: true,
@@ -81,6 +96,30 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
     isAuthenticated && user ? { userId: user.id } : "skip"
   ) as Subscription | null | undefined;
 
+  // Single root-level credit balance subscription
+  const creditBalanceRaw = useQuery(
+    api.subscriptions.getCreditBalance,
+    isAuthenticated && user ? { userId: user.id } : "skip"
+  );
+  const creditBalance = useMemo(
+    () =>
+      creditBalanceRaw
+        ? {
+            used: creditBalanceRaw.used,
+            limit: creditBalanceRaw.limit,
+            remaining: creditBalanceRaw.remaining,
+            percentage: creditBalanceRaw.percentage,
+            nearLimit: creditBalanceRaw.nearLimit,
+            tier: creditBalanceRaw.tier,
+            billingPeriod: creditBalanceRaw.billingPeriod,
+            resetDate: creditBalanceRaw.resetDate,
+            alertDismissed80: creditBalanceRaw.alertDismissed80,
+            alertDismissed95: creditBalanceRaw.alertDismissed95,
+          }
+        : undefined,
+    [creditBalanceRaw]
+  );
+
   // Calculate derived values
   const isPremium = useMemo(() => {
     if (!subscription) return false;
@@ -95,12 +134,21 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
     () => ({
       userProfile,
       subscription,
+      creditBalance,
       isPremium,
       isLoading,
       isProfileLoading,
       isSubscriptionLoading,
     }),
-    [userProfile, subscription, isPremium, isLoading, isProfileLoading, isSubscriptionLoading]
+    [
+      userProfile,
+      subscription,
+      creditBalance,
+      isPremium,
+      isLoading,
+      isProfileLoading,
+      isSubscriptionLoading,
+    ]
   );
 
   return <UserDataContext.Provider value={value}>{children}</UserDataContext.Provider>;

@@ -111,7 +111,7 @@ type PracticePhase = "loading" | "content" | "questions" | "results";
 const AUDIO_MIC_TYPES = ["listening_mcq", "dictation", "shadow_record"];
 
 // Diagnostic mode dynamic generation constants
-const DIAG_MIN_QUESTIONS = 6; // Show "Finish" button after this many answered
+const DIAG_MIN_QUESTIONS = 4; // Show "Finish" button after this many answered
 const DIAG_MAX_QUESTIONS = 10; // Auto-finish at this many answered
 const DIAG_GENERATION_BUFFER = 2; // Trigger generation when remaining < this
 
@@ -359,6 +359,14 @@ export function AdaptivePracticePage() {
   const [maxScore, setMaxScore] = useState(0);
   const [contentReadTime, setContentReadTime] = useState<number>(0);
 
+  // Refs for session abandonment flush (beforeunload / unmount)
+  const answersRef = useRef<AnswerRecord[]>([]);
+  const practiceSetRef = useRef<PracticeSet | null>(null);
+  const phaseRef = useRef<PracticePhase>("loading");
+  answersRef.current = answers;
+  practiceSetRef.current = practiceSet;
+  phaseRef.current = phase;
+
   // Diagnostic dynamic generation state
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
   const generationAbortedRef = useRef(false);
@@ -410,6 +418,51 @@ export function AdaptivePracticePage() {
   const gradeFreeAnswer = useAction(api.adaptivePractice.gradeFreeAnswer);
   const generateIncremental = useAction(api.adaptivePractice.generateIncrementalQuestions);
   const evaluateShadowing = useAIAction(api.ai.evaluateShadowing);
+
+  // Flush unsubmitted answers on tab close or navigation away.
+  // submitPractice now handles the batched learner model update,
+  // so we fire it on abandonment to avoid losing the session.
+  useEffect(() => {
+    const flush = () => {
+      const ps = practiceSetRef.current;
+      const ans = answersRef.current;
+      if (!ps || !user || phaseRef.current !== "questions" || ans.length === 0) return;
+      const nonSkipped = ans.filter((a) => !a.skipped);
+      const total = nonSkipped.reduce((s, a) => s + a.earnedPoints, 0);
+      const max = nonSkipped.reduce((s, a) => {
+        const q = ps.questions.find((q) => q.questionId === a.questionId);
+        return s + (q?.points ?? 0);
+      }, 0);
+      // Use sendBeacon-style fire-and-forget; submitPractice is a mutation
+      // so Convex will retry if needed.
+      submitPractice({
+        userId: user.id,
+        practiceId: ps.practiceId,
+        contentId: ps.content?.contentId,
+        contentType: ps.content?.contentType,
+        language,
+        isDiagnostic: ps.isDiagnostic,
+        answers: nonSkipped.map((a) => ({
+          questionId: a.questionId,
+          userAnswer: a.userAnswer,
+          isCorrect: a.isCorrect,
+          earnedPoints: a.earnedPoints,
+          responseTimeMs: a.responseTimeMs,
+        })),
+        totalScore: total,
+        maxScore: max,
+        dwellMs: 0,
+        targetSkills: ps.targetSkills,
+      });
+    };
+
+    const handleBeforeUnload = () => flush();
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      flush(); // Also flush on unmount (e.g., navigating away via React Router)
+    };
+  }, [user, language, submitPractice]);
 
   const totalQuestions = useMemo(() => {
     if (!practiceSet) return 0;
@@ -771,6 +824,8 @@ export function AdaptivePracticePage() {
 
       // Abort any in-flight background generation
       generationAbortedRef.current = true;
+      // Synchronously mark phase so the beforeunload/unmount flush won't double-submit
+      phaseRef.current = "results";
 
       const dwellMs = contentReadTime > 0 ? Math.max(0, Date.now() - contentReadTime) : 0;
       const nonSkippedAnswers = finalAnswers.filter((a) => !a.skipped);
@@ -1037,9 +1092,6 @@ export function AdaptivePracticePage() {
   const handleNextQuestion = useCallback(async () => {
     if (!practiceSet) return;
 
-    setShowFeedback(false);
-    setSelectedAnswer("");
-
     const updatedAnswers = answers;
     const answeredCount = updatedAnswers.filter((a) => !a.skipped).length;
     const remaining = practiceSet.questions.filter(
@@ -1050,26 +1102,51 @@ export function AdaptivePracticePage() {
       // Diagnostic mode: dynamic session end logic
       if (answeredCount >= DIAG_MAX_QUESTIONS) {
         generationAbortedRef.current = true;
+        setShowFeedback(false);
+        setSelectedAnswer("");
         await finishSession(updatedAnswers);
-      } else if (remaining.length === 0) {
-        generationAbortedRef.current = true;
-        await finishSession(updatedAnswers);
-      } else {
-        const next = pickNextQuestion(practiceSet.questions, updatedAnswers);
-        setCurrentQuestion(next);
-        setQuestionStartTime(Date.now());
+        return;
       }
-    } else {
-      // Normal mode: unchanged
       if (remaining.length === 0) {
+        const newQuestions = await triggerBackgroundGeneration(updatedAnswers);
+        if (newQuestions.length > 0) {
+          const mergedQuestions = [...practiceSet.questions, ...newQuestions];
+          const next = pickNextQuestion(mergedQuestions, updatedAnswers);
+          if (next) {
+            setShowFeedback(false);
+            setSelectedAnswer("");
+            setCurrentQuestion(next);
+            setQuestionStartTime(Date.now());
+            return;
+          }
+        }
+        generationAbortedRef.current = true;
+        setShowFeedback(false);
+        setSelectedAnswer("");
         await finishSession(updatedAnswers);
-      } else {
-        const next = pickNextQuestion(practiceSet.questions, updatedAnswers);
-        setCurrentQuestion(next);
-        setQuestionStartTime(Date.now());
+        return;
       }
+      const next = pickNextQuestion(practiceSet.questions, updatedAnswers);
+      setShowFeedback(false);
+      setSelectedAnswer("");
+      setCurrentQuestion(next);
+      setQuestionStartTime(Date.now());
+      return;
     }
-  }, [practiceSet, answers, finishSession]);
+
+    // Normal mode: unchanged
+    if (remaining.length === 0) {
+      setShowFeedback(false);
+      setSelectedAnswer("");
+      await finishSession(updatedAnswers);
+    } else {
+      const next = pickNextQuestion(practiceSet.questions, updatedAnswers);
+      setShowFeedback(false);
+      setSelectedAnswer("");
+      setCurrentQuestion(next);
+      setQuestionStartTime(Date.now());
+    }
+  }, [practiceSet, answers, finishSession, triggerBackgroundGeneration]);
 
   // Restart practice
   const handleRestart = useCallback(() => {
@@ -1466,7 +1543,7 @@ export function AdaptivePracticePage() {
     const queueIndex = questionQueue.indexOf(currentQuestion.questionId);
     const currentIndex = queueIndex !== -1 ? queueIndex : questionQueue.length;
     const isLastQuestion = isDiag
-      ? answeredNonSkipped >= DIAG_MAX_QUESTIONS - 1 || currentIndex >= totalQuestions - 1
+      ? answeredNonSkipped >= DIAG_MAX_QUESTIONS - 1
       : currentIndex >= totalQuestions - 1;
     const previousResultsArray = buildPreviousResults();
     const isAudioMicQuestion = AUDIO_MIC_TYPES.includes(currentQuestion.type);

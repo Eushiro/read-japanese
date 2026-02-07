@@ -1,4 +1,3 @@
-import { useQuery } from "convex/react";
 import { createContext, type ReactNode, useContext, useEffect, useRef } from "react";
 
 import {
@@ -10,8 +9,8 @@ import {
   trackPageView,
 } from "@/lib/analytics";
 
-import { api } from "../../convex/_generated/api";
 import { useAuth } from "./AuthContext";
+import { useUserData } from "./UserDataContext";
 
 interface AnalyticsContextType {
   trackEvent: typeof trackEvent;
@@ -23,20 +22,9 @@ const AnalyticsContext = createContext<AnalyticsContextType | null>(null);
 
 export function AnalyticsProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
+  const { userProfile, subscription } = useUserData();
   const initialized = useRef(false);
   const lastIdentifiedUserId = useRef<string | null>(null);
-
-  // Get user profile for additional properties
-  const userProfile = useQuery(
-    api.users.getByClerkId,
-    isAuthenticated && user ? { clerkId: user.id } : "skip"
-  );
-
-  // Get subscription for tier info
-  const subscription = useQuery(
-    api.subscriptions.get,
-    isAuthenticated && user ? { userId: user.id } : "skip"
-  );
 
   // Initialize PostHog once
   useEffect(() => {

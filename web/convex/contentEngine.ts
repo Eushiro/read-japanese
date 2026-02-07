@@ -89,14 +89,14 @@ type ContentItem = {
 // CONSTANTS
 // ============================================
 
-// Model configuration - GPT-OSS is PRIMARY, Sonnet is SECONDARY (with cross-fallback)
+// Model configuration - Sonnet is PRIMARY, GPT-OSS is SECONDARY (with cross-fallback)
 const MODEL_PRIMARY_CHAIN: ModelConfig[] = [
-  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
   { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
+  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
 ];
 const MODEL_SECONDARY_CHAIN: ModelConfig[] = [
-  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
   { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
+  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
 ];
 const COVERAGE_THRESHOLD = 0.85;
 const TARGET_COVERAGE = 0.85;

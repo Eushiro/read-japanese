@@ -108,8 +108,9 @@ function getModelChainForPreference(preference: "fast" | "smart" | "cheap"): Mod
         { model: TEXT_MODELS.CLAUDE_HAIKU_4_5, provider: "openrouter" },
       ];
     case "smart":
-      // GPT-OSS-120B first (best quality for complex tasks)
+      // Claude Sonnet first (best default quality), then GPT-OSS
       return [
+        { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
         { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
         { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
       ];

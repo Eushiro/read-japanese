@@ -95,6 +95,12 @@ export const upsertPracticeSessionInternal = internalMutation({
         difficulty: v.optional(v.string()),
       })
     ),
+    modelUsed: v.optional(v.string()),
+    scorerModelUsed: v.optional(v.string()),
+    qualityScore: v.optional(v.number()),
+    validationFailures: v.optional(v.number()),
+    repairAttempts: v.optional(v.number()),
+    generationLatencyMs: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -115,6 +121,12 @@ export const upsertPracticeSessionInternal = internalMutation({
         questions: args.questions,
         listeningCount: counts.listeningCount,
         speakingCount: counts.speakingCount,
+        modelUsed: args.modelUsed,
+        scorerModelUsed: args.scorerModelUsed,
+        qualityScore: args.qualityScore,
+        validationFailures: args.validationFailures,
+        repairAttempts: args.repairAttempts,
+        generationLatencyMs: args.generationLatencyMs,
         createdAt: now,
         updatedAt: now,
       });
@@ -144,6 +156,12 @@ export const upsertPracticeSessionInternal = internalMutation({
       questions: mergedQuestions,
       listeningCount: counts.listeningCount,
       speakingCount: counts.speakingCount,
+      modelUsed: args.modelUsed ?? existing.modelUsed,
+      scorerModelUsed: args.scorerModelUsed ?? existing.scorerModelUsed,
+      qualityScore: args.qualityScore ?? existing.qualityScore,
+      validationFailures: args.validationFailures ?? existing.validationFailures,
+      repairAttempts: args.repairAttempts ?? existing.repairAttempts,
+      generationLatencyMs: args.generationLatencyMs ?? existing.generationLatencyMs,
       updatedAt: now,
     });
 
@@ -208,20 +226,8 @@ export const recordAnswer = mutation({
       answeredAt: Date.now(),
     });
 
-    // 2. Update learner model per-question
-    const score =
-      args.maxPoints > 0 ? (args.earnedPoints / args.maxPoints) * 100 : args.isCorrect ? 100 : 0;
-    const difficultyEstimate = args.difficulty === "easy" ? -1 : args.difficulty === "hard" ? 1 : 0;
-
-    await ctx.runMutation(internal.learnerModel.updateFromAdaptiveContent, {
-      userId: args.userId,
-      language: args.language,
-      contentId: args.practiceId,
-      contentType: args.contentType ?? "dialogue",
-      difficultyEstimate,
-      skillsTested: [{ skill: args.targetSkill, weight: 1 }],
-      score,
-    });
+    // Learner model update is deferred to session end (submitPractice / flushLearnerModel)
+    // to avoid N table patches per session that cascade re-evaluations.
   },
 });
 
@@ -273,8 +279,15 @@ export const submitPractice = mutation({
       });
     }
 
-    // No need to insert questionHistory or update learner model here —
-    // recordAnswer already handles per-question updates.
+    // Batch learner model update at session end (one update per unique skill)
+    await ctx.runMutation(internal.adaptivePracticeQueries.flushLearnerModel, {
+      userId: args.userId,
+      language: args.language,
+      practiceId: args.practiceId,
+      contentType: args.contentType ?? "dialogue",
+      targetSkills: args.targetSkills,
+      answers: args.answers,
+    });
 
     return {
       totalScore: args.totalScore,
@@ -283,5 +296,83 @@ export const submitPractice = mutation({
       correctCount: args.answers.filter((a) => a.isCorrect).length,
       totalQuestions: args.answers.length,
     };
+  },
+});
+
+/**
+ * Batch learner model update — aggregates per-question scores by skill
+ * and issues a single updateFromAdaptiveContent call per unique skill.
+ * Called at session end from submitPractice.
+ */
+export const flushLearnerModel = internalMutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    practiceId: v.string(),
+    contentType: v.string(),
+    targetSkills: v.array(v.string()),
+    answers: v.array(
+      v.object({
+        questionId: v.string(),
+        userAnswer: v.string(),
+        isCorrect: v.boolean(),
+        earnedPoints: v.number(),
+        responseTimeMs: v.optional(v.number()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    if (args.answers.length === 0) return;
+
+    // Look up the practice session to get per-question skill + difficulty info
+    const session = await ctx.db
+      .query("practiceSessions")
+      .withIndex("by_practice_id", (q) => q.eq("practiceId", args.practiceId))
+      .first();
+
+    // Build a map of questionId → { targetSkill, difficulty }
+    const questionMeta = new Map<string, { targetSkill: string; difficulty?: string }>();
+    if (session?.questions) {
+      for (const q of session.questions) {
+        questionMeta.set(q.questionId, {
+          targetSkill: q.targetSkill,
+          difficulty: q.difficulty,
+        });
+      }
+    }
+
+    // Aggregate scores per skill
+    const skillAgg = new Map<string, { totalScore: number; count: number; diffSum: number }>();
+    for (const a of args.answers) {
+      const meta = questionMeta.get(a.questionId);
+      const skill = meta?.targetSkill ?? "vocabulary";
+      const diffEstimate = meta?.difficulty === "easy" ? -1 : meta?.difficulty === "hard" ? 1 : 0;
+      const score = a.isCorrect ? 100 : 0;
+
+      const existing = skillAgg.get(skill);
+      if (existing) {
+        existing.totalScore += score;
+        existing.count += 1;
+        existing.diffSum += diffEstimate;
+      } else {
+        skillAgg.set(skill, { totalScore: score, count: 1, diffSum: diffEstimate });
+      }
+    }
+
+    // Issue one learner model update per unique skill
+    for (const [skill, agg] of skillAgg) {
+      const avgScore = agg.totalScore / agg.count;
+      const avgDiff = agg.diffSum / agg.count;
+
+      await ctx.runMutation(internal.learnerModel.updateFromAdaptiveContent, {
+        userId: args.userId,
+        language: args.language,
+        contentId: args.practiceId,
+        contentType: args.contentType,
+        difficultyEstimate: avgDiff,
+        skillsTested: [{ skill, weight: 1 }],
+        score: avgScore,
+      });
+    }
   },
 });

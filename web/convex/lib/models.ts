@@ -67,11 +67,11 @@ export const SPECIAL_MODELS = {
 // ============================================
 
 /**
- * Default text generation chain: GPT-OSS-120B (OpenRouter) -> Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
+ * Default text generation chain: Claude Sonnet (OpenRouter) -> GPT-OSS-120B (OpenRouter) -> Gemini Flash (Google)
  */
 export const TEXT_MODEL_CHAIN: ModelConfig[] = [
-  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
   { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
+  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
 ];
 
@@ -93,22 +93,21 @@ export const TEST_MODE_MODELS: ModelConfig[] = [
 ];
 
 /**
- * Grading model chain: GPT-OSS-120B (OpenRouter) -> Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
+ * Grading model chain: Claude Sonnet (OpenRouter) -> GPT-OSS-120B (OpenRouter) -> Gemini Flash (Google)
  * Used for structured evaluation tasks
  */
 export const GRADING_MODEL_CHAIN: ModelConfig[] = [
-  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
   { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
+  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
 ];
 
 /**
  * Content generation models (two-candidate parallel generation)
- * Gemini is PRIMARY for grading and first candidate
  */
 export const CONTENT_MODELS = {
-  primary: { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" as ProviderType },
-  secondary: { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" as ProviderType },
+  primary: { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" as ProviderType },
+  secondary: { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" as ProviderType },
 };
 
 /** Number of parallel calls in race mode */
@@ -116,9 +115,9 @@ export const RACE_CONCURRENCY = 4;
 
 /** Race config: model to race + fallback chain */
 export const TEXT_MODEL_RACE_CONFIG = {
-  raceModel: { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" as ProviderType },
+  raceModel: { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" as ProviderType },
   fallbackChain: [
-    { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" as ProviderType },
+    { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" as ProviderType },
     { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" as ProviderType },
   ],
 };

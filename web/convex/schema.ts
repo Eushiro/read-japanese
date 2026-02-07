@@ -669,6 +669,12 @@ export default defineSchema({
     ),
     listeningCount: v.number(),
     speakingCount: v.number(),
+    modelUsed: v.optional(v.string()),
+    scorerModelUsed: v.optional(v.string()),
+    qualityScore: v.optional(v.number()),
+    validationFailures: v.optional(v.number()),
+    repairAttempts: v.optional(v.number()),
+    generationLatencyMs: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
