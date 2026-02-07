@@ -96,6 +96,47 @@ interface PracticeSet {
 // HELPER FUNCTIONS
 // ============================================
 
+const LISTENING_TYPES: PracticeQuestionType[] = ["listening_mcq", "dictation"];
+const SPEAKING_TYPES: PracticeQuestionType[] = ["shadow_record"];
+
+function getAudioCaps(isDiagnostic: boolean): { listening: number; speaking: number } {
+  return isDiagnostic ? { listening: 1, speaking: 1 } : { listening: 2, speaking: 1 };
+}
+
+function applyAudioCaps(
+  questions: PracticeQuestion[],
+  existing: { listening: number; speaking: number },
+  caps: { listening: number; speaking: number }
+): {
+  accepted: PracticeQuestion[];
+  dropped: PracticeQuestion[];
+  counts: { listening: number; speaking: number };
+} {
+  const accepted: PracticeQuestion[] = [];
+  const dropped: PracticeQuestion[] = [];
+  const counts = { listening: existing.listening, speaking: existing.speaking };
+
+  for (const q of questions) {
+    if (LISTENING_TYPES.includes(q.type)) {
+      if (counts.listening >= caps.listening) {
+        dropped.push(q);
+        continue;
+      }
+      counts.listening += 1;
+    }
+    if (SPEAKING_TYPES.includes(q.type)) {
+      if (counts.speaking >= caps.speaking) {
+        dropped.push(q);
+        continue;
+      }
+      counts.speaking += 1;
+    }
+    accepted.push(q);
+  }
+
+  return { accepted, dropped, counts };
+}
+
 /**
  * Identify weak skills from learner profile (lowest scoring skills)
  */
@@ -311,10 +352,17 @@ export const getNextPractice = action({
         learnerContext
       );
 
+      const diagnosticCaps = getAudioCaps(true);
+      const cappedDiagnostic = applyAudioCaps(
+        diagnosticResult.questions,
+        { listening: 0, speaking: 0 },
+        diagnosticCaps
+      );
+
       // Generate TTS audio for audio-based question types (max 1-2)
       const audioTypes: PracticeQuestionType[] = ["listening_mcq", "dictation", "shadow_record"];
       const questionsWithAudio = await Promise.all(
-        diagnosticResult.questions.map(async (q) => {
+        cappedDiagnostic.accepted.map(async (q) => {
           if (audioTypes.includes(q.type) && !q.audioUrl) {
             try {
               const result = await ctx.runAction(internal.ai.generateTTSAudioAction, {
@@ -331,6 +379,19 @@ export const getNextPractice = action({
           return q;
         })
       );
+
+      await ctx.runMutation(internal.adaptivePracticeQueries.upsertPracticeSessionInternal, {
+        userId: args.userId,
+        practiceId,
+        language: args.language,
+        isDiagnostic: true,
+        questions: questionsWithAudio.map((q) => ({
+          questionId: q.questionId,
+          type: q.type,
+          targetSkill: q.targetSkill,
+          difficulty: q.difficulty,
+        })),
+      });
 
       return {
         practiceId,
@@ -388,10 +449,17 @@ export const getNextPractice = action({
       profile?.weakAreas
     );
 
+    const normalCaps = getAudioCaps(false);
+    const cappedNormal = applyAudioCaps(
+      generatedResult.questions,
+      { listening: 0, speaking: 0 },
+      normalCaps
+    );
+
     // 8. Generate TTS audio for audio-based question types
     const audioTypes: PracticeQuestionType[] = ["listening_mcq", "dictation", "shadow_record"];
     const questionsWithAudio = await Promise.all(
-      generatedResult.questions.map(async (q) => {
+      cappedNormal.accepted.map(async (q) => {
         if (audioTypes.includes(q.type) && !q.audioUrl) {
           try {
             const ttsText = q.type === "listening_mcq" ? contentPayload.content : q.question;
@@ -409,6 +477,21 @@ export const getNextPractice = action({
         return q;
       })
     );
+
+    await ctx.runMutation(internal.adaptivePracticeQueries.upsertPracticeSessionInternal, {
+      userId: args.userId,
+      practiceId,
+      language: args.language,
+      isDiagnostic: false,
+      contentId: contentPayload.contentId,
+      contentType: contentPayload.contentType,
+      questions: questionsWithAudio.map((q) => ({
+        questionId: q.questionId,
+        type: q.type,
+        targetSkill: q.targetSkill,
+        difficulty: q.difficulty,
+      })),
+    });
 
     return {
       practiceId,
@@ -787,6 +870,7 @@ export const generateForModel = action({
  */
 export const generateIncrementalQuestions = action({
   args: {
+    practiceId: v.string(),
     language: languageValidator,
     abilityEstimate: v.number(),
     targetDifficulty: v.union(v.literal("easy"), v.literal("medium"), v.literal("hard")),
@@ -807,6 +891,29 @@ export const generateIncrementalQuestions = action({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Unauthorized");
+    }
+
+    const session = await ctx.runQuery(
+      internal.adaptivePracticeQueries.getPracticeSessionInternal,
+      {
+        userId: identity.subject,
+        practiceId: args.practiceId,
+      }
+    );
+    const isDiagnostic = session?.isDiagnostic ?? true;
+    const caps = getAudioCaps(isDiagnostic);
+    const existingCounts = {
+      listening: session?.listeningCount ?? 0,
+      speaking: session?.speakingCount ?? 0,
+    };
+
+    const effectiveExcludeTypes = new Set(args.excludeTypes);
+    if (existingCounts.listening >= caps.listening) {
+      effectiveExcludeTypes.add("listening_mcq");
+      effectiveExcludeTypes.add("dictation");
+    }
+    if (existingCounts.speaking >= caps.speaking) {
+      effectiveExcludeTypes.add("shadow_record");
     }
 
     const uiLang = (args.uiLanguage ?? "en") as UILanguage;
@@ -840,8 +947,10 @@ export const generateIncrementalQuestions = action({
         ? `AVOID these skills (recently used): ${args.excludeSkills.join(", ")}`
         : "";
     const excludeTypesNote =
-      args.excludeTypes.length > 0
-        ? `AVOID these question types (recently used): ${args.excludeTypes.join(", ")}`
+      effectiveExcludeTypes.size > 0
+        ? `AVOID these question types (recently used or capped): ${Array.from(
+            effectiveExcludeTypes
+          ).join(", ")}`
         : "";
 
     const systemPrompt = `You are a ${languageName} diagnostic assessment generator.
@@ -901,8 +1010,26 @@ Return JSON.`;
         },
       });
 
+      const withIds = filterAndAssignIds(result.result.questions, "incr");
+      const capped = applyAudioCaps(withIds, existingCounts, caps);
+
+      if (capped.accepted.length > 0) {
+        await ctx.runMutation(internal.adaptivePracticeQueries.upsertPracticeSessionInternal, {
+          userId: identity.subject,
+          practiceId: args.practiceId,
+          language: args.language,
+          isDiagnostic,
+          questions: capped.accepted.map((q) => ({
+            questionId: q.questionId,
+            type: q.type,
+            targetSkill: q.targetSkill,
+            difficulty: q.difficulty,
+          })),
+        });
+      }
+
       return {
-        questions: filterAndAssignIds(result.result.questions, "incr"),
+        questions: capped.accepted,
         modelUsed: result.usage.model,
         systemPrompt,
         prompt,

@@ -14,6 +14,16 @@ import {
 } from "../lib/promptHelpers";
 import { callWithRetry, type JsonSchema, languageNames, parseJson } from "./core";
 
+/** Fisher-Yates shuffle (returns a new array) */
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 // ============================================
 // STORY COMPREHENSION QUESTIONS
 // ============================================
@@ -226,6 +236,7 @@ Create comprehension questions for the story above, aiming for a total of ${work
       return parsed.questions.map((q, index) => ({
         ...q,
         questionId: `q_${Date.now()}_${index}`,
+        options: q.type === "multiple_choice" && q.options ? shuffleArray(q.options) : q.options,
         // For multiple_choice, rubric is not needed - remove it entirely
         // For other types, keep it short
         rubric:
@@ -687,15 +698,21 @@ Create comprehension questions for the video above, aiming for ${workBudget} wor
         },
       });
 
+      // Shuffle MCQ options so the correct answer isn't always first
+      const shuffledQuestions = parsed.questions.map((q) => ({
+        ...q,
+        options: q.type === "multiple_choice" && q.options ? shuffleArray(q.options) : q.options,
+      }));
+
       // Update the video with questions
       await ctx.runMutation(internal.youtubeContent.updateQuestionsInternal, {
         id: args.youtubeContentId,
-        questions: parsed.questions,
+        questions: shuffledQuestions,
       });
 
       return {
         success: true,
-        questionCount: parsed.questions.length,
+        questionCount: shuffledQuestions.length,
       };
     } catch (error) {
       console.error("Error generating video questions:", error);

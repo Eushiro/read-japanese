@@ -168,12 +168,17 @@ bun test              # Run smoke tests
 
 ## Git Workflow for Agents
 
-**After completing work, commit your changes but do NOT push.**
+**After completing work, commit your changes and deploy if needed.**
 
 1. **Commit only files you modified** - Use `git add <specific-files>` not `git add -A` or `git add .`
 2. **Create the commit** - Follow conventional commit format
-3. **Do NOT push** - Let the human review and push when ready
-4. **If commit fails with review feedback** - Follow the instructions to fix issues or update docs, then commit again
+3. **Deploy Convex if needed** - If any files under `web/convex/` were changed, deploy to both dev and prod:
+   ```bash
+   cd web && npx convex dev --once                                    # Deploy to dev
+   cd web && npx convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --yes  # Deploy to prod
+   ```
+4. **Do NOT push** - Let the human review and push when ready
+5. **If commit fails with review feedback** - Follow the instructions to fix issues or update docs, then commit again
 
 This allows:
 
