@@ -617,9 +617,14 @@ export const getNextPractice = action({
         cappedDiagnostic.accepted.map(async (q) => {
           if (audioTypes.includes(q.type) && !q.audioUrl) {
             try {
+              const ttsText =
+                q.type === "listening_mcq" && q.passageText ? q.passageText : q.question;
               const result = await ctx.runAction(internal.ai.generateTTSAudioAction, {
-                text: q.question,
+                text: ttsText,
                 language: args.language,
+                word: `practice-${q.questionId}`,
+                audioType: "sentence",
+                sentenceId: "audio",
               });
               if (result.success && result.audioUrl) {
                 return { ...q, audioUrl: result.audioUrl };
@@ -723,6 +728,9 @@ export const getNextPractice = action({
             const result = await ctx.runAction(internal.ai.generateTTSAudioAction, {
               text: ttsText,
               language: args.language,
+              word: `practice-${q.questionId}`,
+              audioType: "sentence",
+              sentenceId: "audio",
             });
             if (result.success && result.audioUrl) {
               return { ...q, audioUrl: result.audioUrl };
@@ -1269,13 +1277,46 @@ Return JSON.`;
       const withIds = result.questions;
       const capped = applyAudioCaps(withIds, existingCounts, caps);
 
-      if (capped.accepted.length > 0) {
+      // Generate TTS audio for audio-based question types
+      const incrAudioTypes: PracticeQuestionType[] = [
+        "listening_mcq",
+        "dictation",
+        "shadow_record",
+      ];
+      const questionsWithAudio: PracticeQuestion[] = await Promise.all(
+        capped.accepted.map(async (q): Promise<PracticeQuestion> => {
+          if (incrAudioTypes.includes(q.type) && !q.audioUrl) {
+            try {
+              const ttsText =
+                q.type === "listening_mcq" && q.passageText ? q.passageText : q.question;
+              const ttsResult = await ctx.runAction(internal.ai.generateTTSAudioAction, {
+                text: ttsText,
+                language: args.language,
+                word: `practice-${q.questionId}`,
+                audioType: "sentence" as const,
+                sentenceId: "audio",
+              });
+              if (ttsResult.success && ttsResult.audioUrl) {
+                return { ...q, audioUrl: ttsResult.audioUrl };
+              }
+            } catch (error) {
+              console.error(
+                `Failed to generate TTS for incremental question ${q.questionId}:`,
+                error
+              );
+            }
+          }
+          return q;
+        })
+      );
+
+      if (questionsWithAudio.length > 0) {
         await ctx.runMutation(internal.adaptivePracticeQueries.upsertPracticeSessionInternal, {
           userId: identity.subject,
           practiceId: args.practiceId,
           language: args.language,
           isDiagnostic,
-          questions: capped.accepted.map((q) => ({
+          questions: questionsWithAudio.map((q) => ({
             questionId: q.questionId,
             type: q.type,
             targetSkill: q.targetSkill,
@@ -1290,7 +1331,7 @@ Return JSON.`;
       }
 
       return {
-        questions: capped.accepted,
+        questions: questionsWithAudio,
         modelUsed: result.modelUsed,
         systemPrompt,
         prompt,

@@ -146,7 +146,12 @@ function pickNextQuestion(
   if (availableQuestions.length === 0) return null;
 
   const answeredIds = new Set(answeredHistory.map((a) => a.questionId));
-  const remaining = availableQuestions.filter((q) => !answeredIds.has(q.questionId));
+  const remaining = availableQuestions.filter((q) => {
+    if (answeredIds.has(q.questionId)) return false;
+    // Skip audio questions that have no audio URL
+    if (AUDIO_MIC_TYPES.includes(q.type) && !q.audioUrl) return false;
+    return true;
+  });
   if (remaining.length === 0) return null;
 
   const totalAnswered = answeredHistory.filter((a) => !a.skipped).length;
@@ -1619,7 +1624,7 @@ export function AdaptivePracticePage() {
               )}
               {isDiag && isGeneratingMore && (
                 <Badge variant="secondary" className="text-xs animate-pulse">
-                  {"Generating more..."}
+                  {"Loading next questions..."}
                 </Badge>
               )}
             </div>

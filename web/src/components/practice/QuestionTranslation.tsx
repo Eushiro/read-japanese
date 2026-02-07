@@ -92,17 +92,19 @@ export function QuestionTranslation({
                 {question.question}
               </motion.p>
 
-              {question.questionTranslation && (
-                <motion.p
-                  className="text-lg italic text-foreground/60"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  {question.questionTranslation}
-                </motion.p>
-              )}
+              {question.questionTranslation &&
+                question.questionTranslation !== question.question &&
+                question.type !== "translation" && (
+                  <motion.p
+                    className="text-lg italic text-foreground/60"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    {question.questionTranslation}
+                  </motion.p>
+                )}
             </motion.div>
           ) : (
             /* ── Backward compat (no passageText) ── */
@@ -122,17 +124,19 @@ export function QuestionTranslation({
                 {question.question}
               </motion.p>
 
-              {question.questionTranslation && (
-                <motion.p
-                  className="text-lg italic text-foreground/60"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  {question.questionTranslation}
-                </motion.p>
-              )}
+              {question.questionTranslation &&
+                question.questionTranslation !== question.question &&
+                question.type !== "translation" && (
+                  <motion.p
+                    className="text-lg italic text-foreground/60"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    {question.questionTranslation}
+                  </motion.p>
+                )}
             </motion.div>
           )}
         </div>
