@@ -807,7 +807,7 @@ For each question:
 - fill_blank: put the sentence with "___" in "passageText" (e.g. "毎朝___を食べます"). Put the instruction in "question". The correctAnswer is the word that fills the blank. Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
 - Comprehension questions should test understanding of the main ideas
 - For mcq_comprehension, do NOT set "passageText" — the passage is the provided content.
-- Translation questions should be from ${languageName} to ${uiLanguageName}. Set questionTranslation to a short prompt like "Translate:".
+- translation: put the sentence to translate in "passageText" (in ${languageName}), put the instruction in "question" (e.g., "Translate to ${uiLanguageName}"). Set questionTranslation to "Translate".
 - listening_mcq: provide a question about audio content with 4 MCQ options. The audio will be generated from the content.
 - dictation: set question to a sentence from the content that the user will hear and type. The correctAnswer is the exact sentence.
 - shadow_record: set question to a sentence for pronunciation practice. Set questionTranslation to the ${uiLanguageName} translation. The correctAnswer is the sentence itself.
@@ -973,7 +973,7 @@ For each question:
 - MCQ: exactly 4 options
 - mcq_vocabulary / mcq_grammar with a sentence context: put the ${languageName} sentence in "passageText" and the instruction/question stem in "question". For simple "What does X mean?" questions with no sentence context, leave "passageText" empty.
 - fill_blank: put the sentence with "___" in "passageText" (e.g. "毎朝___を食べます"). Put the instruction in "question". Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
-- translation: ask the learner to translate a sentence. Set questionTranslation to "Translate:"
+- translation: put the sentence to translate in "passageText" (in ${languageName}), put the instruction in "question" (e.g., "Translate to ${uiLanguageName}"). Set questionTranslation to "Translate"
 - free_input: ask the learner to write a short response in ${languageName}
 - mcq_comprehension: set "passageText" to a short ${languageName} text (1-2 sentences) and use "question" for the question itself
 - listening_mcq: provide a question about what was heard (audio will be generated from the question text)

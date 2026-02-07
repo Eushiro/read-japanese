@@ -60,39 +60,82 @@ export function QuestionTranslation({
 
       {/* Question */}
       <div
-        className="flex flex-col items-center justify-center px-8 pt-16"
-        style={{ height: "45vh" }}
+        className="flex flex-col items-center justify-center px-8 pt-16 pb-8"
+        style={{ height: "40vh" }}
       >
-        <motion.div
-          className="text-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-        >
-          {/* Prompt */}
-          {question.questionTranslation && (
-            <motion.p
-              className="text-lg md:text-xl mb-4 text-foreground"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              style={{ fontFamily: "var(--font-sans)" }}
+        <div className="max-w-2xl w-full space-y-4 text-center">
+          {question.passageText ? (
+            /* ── Layout with separate passage + instruction ── */
+            <motion.div
+              className="space-y-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4 }}
             >
-              {question.questionTranslation}
-            </motion.p>
-          )}
+              <motion.p
+                className="text-3xl md:text-4xl leading-relaxed text-foreground"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                style={{ fontFamily }}
+              >
+                {question.passageText}
+              </motion.p>
 
-          {/* Question text */}
-          <motion.p
-            className="text-3xl md:text-4xl lg:text-5xl leading-relaxed text-foreground"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            style={{ fontFamily }}
-          >
-            {question.question}
-          </motion.p>
-        </motion.div>
+              <motion.p
+                className="text-2xl text-foreground/80"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                {question.question}
+              </motion.p>
+
+              {question.questionTranslation && (
+                <motion.p
+                  className="text-lg italic text-foreground/60"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  {question.questionTranslation}
+                </motion.p>
+              )}
+            </motion.div>
+          ) : (
+            /* ── Backward compat (no passageText) ── */
+            <motion.div
+              className="space-y-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <motion.p
+                className="text-3xl md:text-4xl leading-relaxed text-foreground"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                style={{ fontFamily }}
+              >
+                {question.question}
+              </motion.p>
+
+              {question.questionTranslation && (
+                <motion.p
+                  className="text-lg italic text-foreground/60"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  {question.questionTranslation}
+                </motion.p>
+              )}
+            </motion.div>
+          )}
+        </div>
       </div>
 
       {/* Lower: Text input + button */}

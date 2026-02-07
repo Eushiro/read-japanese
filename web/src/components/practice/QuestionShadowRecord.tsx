@@ -158,28 +158,30 @@ export function QuestionShadowRecord({
         </motion.div>
 
         {/* Target sentence */}
-        <motion.p
-          className="text-2xl md:text-3xl lg:text-4xl text-center leading-relaxed text-foreground"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          style={{ fontFamily }}
-        >
-          {question.question}
-        </motion.p>
-
-        {/* Translation */}
-        {question.questionTranslation && (
+        <div className="max-w-2xl w-full text-center">
           <motion.p
-            className="text-sm italic text-foreground/60 mt-3 text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            style={{ fontFamily: "var(--font-sans)" }}
+            className="text-2xl md:text-3xl lg:text-4xl leading-relaxed text-foreground"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            style={{ fontFamily }}
           >
-            {question.questionTranslation}
+            {question.question}
           </motion.p>
-        )}
+
+          {/* Translation */}
+          {question.questionTranslation && (
+            <motion.p
+              className="text-sm italic text-foreground/60 mt-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              {question.questionTranslation}
+            </motion.p>
+          )}
+        </div>
       </div>
 
       {/* Lower: Record Interface */}

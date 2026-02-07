@@ -156,32 +156,34 @@ export function QuestionListening({
         </motion.div>
 
         {/* Question */}
-        <AnimatePresence mode="wait">
-          {showCompleted ? (
-            <motion.p
-              key="completed"
-              className="text-2xl md:text-3xl text-center leading-relaxed text-foreground"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4 }}
-              style={{ fontFamily }}
-            >
-              {question.question}
-            </motion.p>
-          ) : (
-            <motion.p
-              key="question"
-              className="text-2xl md:text-3xl text-center leading-relaxed text-foreground"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: 0.4 }}
-              style={{ fontFamily }}
-            >
-              {question.question}
-            </motion.p>
-          )}
-        </AnimatePresence>
+        <div className="max-w-2xl w-full text-center">
+          <AnimatePresence mode="wait">
+            {showCompleted ? (
+              <motion.p
+                key="completed"
+                className="text-2xl md:text-3xl leading-relaxed text-foreground"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4 }}
+                style={{ fontFamily }}
+              >
+                {question.question}
+              </motion.p>
+            ) : (
+              <motion.p
+                key="question"
+                className="text-2xl md:text-3xl leading-relaxed text-foreground"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ delay: 0.4 }}
+                style={{ fontFamily }}
+              >
+                {question.question}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* MCQ Grid */}
