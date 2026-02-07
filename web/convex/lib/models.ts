@@ -27,6 +27,7 @@ export interface ModelConfig {
 
 export const TEXT_MODELS = {
   // OpenRouter-routed models
+  GPT_5_2_CHAT: "openai/gpt-5.2-chat",
   GPT_OSS_120B: "openai/gpt-oss-120b",
   CLAUDE_SONNET_4_5: "anthropic/claude-sonnet-4.5",
   CLAUDE_HAIKU_4_5: "anthropic/claude-haiku-4.5",
@@ -39,12 +40,17 @@ export const TEXT_MODELS = {
 // DEFAULT MODEL SELECTION (LOCAL VS PROD)
 // ============================================
 
-const IS_PROD = process.env.NODE_ENV === "production";
+const MODEL_ENV = (
+  process.env.AI_DEFAULT_ENV ??
+  process.env.NODE_ENV ??
+  "development"
+).toLowerCase();
+const IS_PROD = MODEL_ENV === "production" || MODEL_ENV === "prod";
 const DEFAULT_PRIMARY_TEXT_MODEL = IS_PROD
   ? TEXT_MODELS.CLAUDE_SONNET_4_5
-  : TEXT_MODELS.GPT_OSS_120B;
+  : TEXT_MODELS.GPT_5_2_CHAT;
 const DEFAULT_SECONDARY_TEXT_MODEL = IS_PROD
-  ? TEXT_MODELS.GPT_OSS_120B
+  ? TEXT_MODELS.GPT_5_2_CHAT
   : TEXT_MODELS.CLAUDE_SONNET_4_5;
 
 export const DEFAULT_TEXT_PRIMARY: ModelConfig = {
@@ -89,8 +95,8 @@ export const SPECIAL_MODELS = {
 
 /**
  * Default text generation chain:
- * - Prod: Claude Sonnet (OpenRouter) -> GPT-OSS-120B (OpenRouter) -> Gemini Flash (Google)
- * - Local: GPT-OSS-120B (OpenRouter) -> Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
+ * - Prod: Claude Sonnet (OpenRouter) -> GPT-5.2-Chat (OpenRouter) -> Gemini Flash (Google)
+ * - Local: GPT-5.2-Chat (OpenRouter) -> Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
  */
 export const TEXT_MODEL_CHAIN: ModelConfig[] = [
   DEFAULT_TEXT_PRIMARY,
@@ -111,12 +117,12 @@ export const TEST_MODELS = {
 export const TEST_MODE_MODELS: ModelConfig[] = [
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
   { model: TEST_MODELS.GROK_FAST, provider: "openrouter" },
-  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
+  { model: TEXT_MODELS.GPT_5_2_CHAT, provider: "openrouter" },
   { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
 ];
 
 /**
- * Grading model chain: Claude Sonnet (OpenRouter) -> GPT-OSS-120B (OpenRouter) -> Gemini Flash (Google)
+ * Grading model chain: Claude Sonnet (OpenRouter) -> GPT-5.2-Chat (OpenRouter) -> Gemini Flash (Google)
  * Used for structured evaluation tasks
  */
 export const GRADING_MODEL_CHAIN: ModelConfig[] = [
