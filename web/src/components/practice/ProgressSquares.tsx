@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useReducer } from "react";
+import { useState } from "react";
 
 import type { QuestionResult } from "./types";
 
@@ -11,36 +11,27 @@ interface ProgressSquaresProps {
   isAnswered: boolean;
 }
 
-interface AnimState {
-  prevTotal: number;
-  animatingFrom: number | null;
-}
-
-function animReducer(state: AnimState, totalQuestions: number): AnimState {
-  if (totalQuestions > state.prevTotal) {
-    return { prevTotal: totalQuestions, animatingFrom: state.prevTotal };
-  }
-  if (totalQuestions !== state.prevTotal) {
-    return { prevTotal: totalQuestions, animatingFrom: null };
-  }
-  return state;
-}
-
 export function ProgressSquares({
   totalQuestions,
   currentIndex,
   previousResults,
   isAnswered,
 }: ProgressSquaresProps) {
-  const [animState, dispatch] = useReducer(animReducer, {
+  // Track previous total to detect newly added squares.
+  // Uses "adjust state during render" pattern so animatingFrom is
+  // available on the same render where new squares first appear.
+  const [animState, setAnimState] = useState({
     prevTotal: totalQuestions,
-    animatingFrom: null,
+    animatingFrom: null as number | null,
   });
 
-  // Dispatch on change to avoid state updates during render
-  useEffect(() => {
-    dispatch(totalQuestions);
-  }, [totalQuestions]);
+  if (totalQuestions > animState.prevTotal) {
+    setAnimState({ prevTotal: totalQuestions, animatingFrom: animState.prevTotal });
+  } else if (totalQuestions < animState.prevTotal) {
+    setAnimState({ prevTotal: totalQuestions, animatingFrom: null });
+  }
+
+  const { animatingFrom } = animState;
 
   return (
     <div className="flex items-center gap-2">
@@ -49,7 +40,7 @@ export function ProgressSquares({
           const result = previousResults[i];
           const isCurrent = i === currentIndex;
           const isFuture = result === null && !isCurrent;
-          const isNew = animState.animatingFrom !== null && i >= animState.animatingFrom;
+          const isNew = animatingFrom !== null && i >= animatingFrom;
 
           let bgColor = "transparent";
           let borderColor = "var(--color-border)";
@@ -89,7 +80,7 @@ export function ProgressSquares({
                       type: "spring",
                       stiffness: 400,
                       damping: 20,
-                      delay: (i - (animState.animatingFrom ?? 0)) * 0.1,
+                      delay: (i - (animatingFrom ?? 0)) * 0.1,
                     }
                   : isCurrent && !isAnswered
                     ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
