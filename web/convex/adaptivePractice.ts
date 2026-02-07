@@ -549,7 +549,8 @@ Question types to include: ${questionTypes.join(", ")}
 
 For each question:
 - MCQ should have exactly 4 options
-- Fill-in-blank: use "___" in the question field to mark the blank (e.g. "毎朝___を食べます"). The correctAnswer is the word that fills the blank. Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
+- mcq_vocabulary / mcq_grammar with a sentence context: put the ${languageName} sentence in "passageText" and the instruction/question stem in "question". For simple "What does X mean?" questions with no sentence context, leave "passageText" empty.
+- fill_blank: put the sentence with "___" in "passageText" (e.g. "毎朝___を食べます"). Put the instruction in "question". The correctAnswer is the word that fills the blank. Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
 - Comprehension questions should test understanding of the main ideas
 - For mcq_comprehension, do NOT set "passageText" — the passage is the provided content.
 - Translation questions should be from ${languageName} to ${uiLanguageName}. Set questionTranslation to a short prompt like "Translate:".
@@ -723,7 +724,8 @@ ${interestBlock}
 
 For each question:
 - MCQ: exactly 4 options
-- fill_blank: use "___" in the question to mark the blank. Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
+- mcq_vocabulary / mcq_grammar with a sentence context: put the ${languageName} sentence in "passageText" and the instruction/question stem in "question". For simple "What does X mean?" questions with no sentence context, leave "passageText" empty.
+- fill_blank: put the sentence with "___" in "passageText" (e.g. "毎朝___を食べます"). Put the instruction in "question". Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
 - translation: ask the learner to translate a sentence. Set questionTranslation to "Translate:"
 - free_input: ask the learner to write a short response in ${languageName}
 - mcq_comprehension: set "passageText" to a short ${languageName} text (1-2 sentences) and use "question" for the question itself
@@ -972,7 +974,8 @@ ${excludeTypesNote}
 
 For each question:
 - MCQ: exactly 4 options
-- fill_blank: use "___" in the question to mark the blank. Provide exactly 4 options.
+- mcq_vocabulary / mcq_grammar with a sentence context: put the ${languageName} sentence in "passageText" and the instruction/question stem in "question". For simple "What does X mean?" questions with no sentence context, leave "passageText" empty.
+- fill_blank: put the sentence with "___" in "passageText". Put the instruction in "question". Provide exactly 4 options.
 - translation: set questionTranslation to "Translate:"
 - free_input: ask the learner to write a short response in ${languageName}
 - mcq_comprehension: set "passageText" to a short ${languageName} text (1-2 sentences) and use "question" for the question itself

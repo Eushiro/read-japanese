@@ -114,26 +114,27 @@ export function buildLanguageMixingDirective(
   switch (tier) {
     case "beginner":
       return `LANGUAGE MIXING RULES (Beginner — ability ${abilityEstimate.toFixed(1)}):
-- Question stems and instructions: write in ${l1Name}
+- "question" field (instructions): write in ${l1Name}
+- "passageText" field (sentences, example contexts): write in ${tlName}
 - Answer options (MCQ): write in ${tlName}
-- Passages and example sentences: write in ${tlName}
 - Always include "questionTranslation" as a ${l1Name} translation
-- Fill-in-blank instructions: write in ${l1Name}, sentence in ${tlName}
+- Fill-in-blank: instruction in "question" (${l1Name}), sentence with ___ in "passageText" (${tlName})
 - Translation direction: ${l1Name} → ${tlName}
 - Listening questions: audio in ${tlName}, question and options in ${l1Name}`;
 
     case "intermediate":
       return `LANGUAGE MIXING RULES (Intermediate — ability ${abilityEstimate.toFixed(1)}):
-- Question stems: write in ${tlName} using simpler grammar than the tested level
+- "question" field (instructions): write in ${tlName} using simpler grammar than the tested level
+- "passageText" field (sentences, example contexts): write in ${tlName}
 - Answer options: write in ${tlName}
 - Include "questionTranslation" as a ${l1Name} translation (scaffold)
-- Fill-in-blank: entire sentence in ${tlName}
+- Fill-in-blank: instruction in "question" (${tlName}), sentence with ___ in "passageText" (${tlName})
 - Translation: both directions (${l1Name} ↔ ${tlName})
 - Listening questions: audio and question in ${tlName}`;
 
     case "advanced":
       return `LANGUAGE MIXING RULES (Advanced — ability ${abilityEstimate.toFixed(1)}):
-- Everything in ${tlName} — stems, options, passages, instructions
+- Everything in ${tlName} — "question", "passageText", options, instructions
 - Do NOT include "questionTranslation" unless the question type requires it
 - Translation: ${tlName} → ${l1Name}, or ${tlName} paraphrasing
 - Listening questions: everything in ${tlName}`;

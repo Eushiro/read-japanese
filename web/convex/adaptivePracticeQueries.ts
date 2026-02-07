@@ -173,6 +173,7 @@ export const recordAnswer = mutation({
     difficulty: v.optional(v.string()),
     userAnswer: v.string(),
     selectedOption: v.optional(v.string()), // For MCQ: which option was picked (for distractor analysis)
+    passageText: v.optional(v.string()),
     isCorrect: v.boolean(),
     earnedPoints: v.number(),
     maxPoints: v.number(),
@@ -192,6 +193,7 @@ export const recordAnswer = mutation({
       questionContent: {
         questionText: args.questionText,
         questionType: args.questionType,
+        ...(args.passageText ? { passageText: args.passageText } : {}),
       },
       userAnswer: args.userAnswer,
       selectedOption: args.selectedOption,

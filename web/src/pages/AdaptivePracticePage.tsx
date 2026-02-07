@@ -362,6 +362,7 @@ export function AdaptivePracticePage() {
   // Diagnostic dynamic generation state
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
   const generationAbortedRef = useRef(false);
+  const generationPromiseRef = useRef<Promise<PracticeQuestion[]> | null>(null);
 
   // Model test mode state (admin only)
   const isModelTestMode =
@@ -451,9 +452,10 @@ export function AdaptivePracticePage() {
 
   // Trigger background generation of 2 more questions (diagnostic mode only)
   const triggerBackgroundGeneration = useCallback(
-    (currentAnswers: AnswerRecord[]) => {
-      if (!practiceSet || !practiceSet.isDiagnostic) return;
-      if (isGeneratingMore || generationAbortedRef.current) return;
+    (currentAnswers: AnswerRecord[]): Promise<PracticeQuestion[]> => {
+      if (!practiceSet || !practiceSet.isDiagnostic) return Promise.resolve([]);
+      if (generationAbortedRef.current) return Promise.resolve([]);
+      if (generationPromiseRef.current) return generationPromiseRef.current;
 
       const targetDifficulty = computeTargetDifficulty(practiceSet.questions, currentAnswers);
 
@@ -481,7 +483,7 @@ export function AdaptivePracticePage() {
 
       setIsGeneratingMore(true);
 
-      generateIncremental({
+      const promise = generateIncremental({
         practiceId: practiceSet.practiceId,
         language,
         abilityEstimate: practiceSet.profileSnapshot.abilityEstimate,
@@ -492,7 +494,7 @@ export function AdaptivePracticePage() {
         uiLanguage,
       })
         .then((result) => {
-          if (generationAbortedRef.current) return;
+          if (generationAbortedRef.current) return [];
           if (result.questions && result.questions.length > 0) {
             setPracticeSet((prev) => {
               if (!prev) return prev;
@@ -502,15 +504,20 @@ export function AdaptivePracticePage() {
               };
             });
           }
+          return result.questions ?? [];
         })
         .catch((err) => {
           console.error("Failed to generate incremental questions:", err);
+          return [];
         })
         .finally(() => {
           setIsGeneratingMore(false);
+          generationPromiseRef.current = null;
         });
+      generationPromiseRef.current = promise;
+      return promise;
     },
-    [practiceSet, isGeneratingMore, generateIncremental, language, uiLanguage]
+    [practiceSet, generateIncremental, language, uiLanguage]
   );
 
   // Fire per-model streaming calls for test mode
@@ -751,6 +758,7 @@ export function AdaptivePracticePage() {
         maxPoints: question.points,
         responseTimeMs: answer.responseTimeMs,
         skipped: answer.skipped,
+        passageText: question.passageText,
       }).catch((err) => console.error("Failed to record answer:", err));
     },
     [practiceSet, user, language, recordAnswer]
@@ -800,7 +808,7 @@ export function AdaptivePracticePage() {
   );
 
   // Skip audio/mic question
-  const handleSkipQuestion = useCallback(() => {
+  const handleSkipQuestion = useCallback(async () => {
     if (!currentQuestion || !practiceSet) return;
 
     const answer: AnswerRecord = {
@@ -815,9 +823,6 @@ export function AdaptivePracticePage() {
     // Don't add to score for skipped questions
     recordAnswerToBackend(currentQuestion, answer);
 
-    // Move to next
-    setShowFeedback(false);
-    setSelectedAnswer("");
     const updatedAnswers = [...answers, answer];
     const remaining = practiceSet.questions.filter(
       (q) => !updatedAnswers.some((a) => a.questionId === q.questionId)
@@ -828,10 +833,30 @@ export function AdaptivePracticePage() {
       triggerBackgroundGeneration(updatedAnswers);
     }
 
+    if (practiceSet.isDiagnostic && remaining.length === 0) {
+      const answeredCount = updatedAnswers.filter((a) => !a.skipped).length;
+      if (answeredCount < DIAG_MAX_QUESTIONS) {
+        const newQuestions = await triggerBackgroundGeneration(updatedAnswers);
+        if (newQuestions.length > 0) {
+          const mergedQuestions = [...practiceSet.questions, ...newQuestions];
+          const next = pickNextQuestion(mergedQuestions, updatedAnswers);
+          if (next) {
+            setShowFeedback(false);
+            setSelectedAnswer("");
+            setCurrentQuestion(next);
+            setQuestionStartTime(Date.now());
+            return;
+          }
+        }
+      }
+    }
+
     if (remaining.length === 0) {
       finishSession(updatedAnswers);
     } else {
       const next = pickNextQuestion(practiceSet.questions, updatedAnswers);
+      setShowFeedback(false);
+      setSelectedAnswer("");
       setCurrentQuestion(next);
       setQuestionStartTime(Date.now());
     }

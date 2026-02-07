@@ -39,7 +39,8 @@ export function QuestionMCQ({
   const correctAnswerIndex = options.indexOf(question.correctAnswer);
   const isCorrect = confirmedOption !== null && confirmedOption === correctAnswerIndex;
   const fontFamily = getFontFamily(language);
-  const blank = splitBlankQuestion(question.question);
+  const hasPassage = !!question.passageText;
+  const blank = splitBlankQuestion(question.passageText ?? question.question);
 
   const handleOptionClick = useCallback(
     (index: number) => {
@@ -75,69 +76,124 @@ export function QuestionMCQ({
       {/* Question */}
       <div
         className="flex flex-col items-center justify-center px-8 pt-16"
-        style={{ height: "45vh" }}
+        style={{ height: hasPassage ? "55vh" : "45vh" }}
       >
-        <AnimatePresence mode="wait">
-          {showCompleted && blank ? (
-            <motion.div
-              key="completed"
-              className="text-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4 }}
-            >
-              <p
-                className="text-3xl md:text-4xl lg:text-5xl leading-relaxed text-foreground"
-                style={{ fontFamily }}
-              >
-                {blank.before}
-                <span style={{ color: "#4ade80" }}>{question.correctAnswer}</span>
-                {blank.after}
-              </p>
-              {question.questionTranslation && (
-                <p
-                  className="text-base mt-6 italic text-foreground/60"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  {question.questionTranslation}
-                </p>
-              )}
-            </motion.div>
-          ) : (
-            <motion.div
-              key="question"
-              className="text-center"
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <p
-                className="text-3xl md:text-4xl lg:text-5xl leading-relaxed text-foreground"
-                style={{ fontFamily }}
-              >
-                {blank ? (
-                  <>
-                    {blank.before}
-                    <span className="text-accent">{BLANK}</span>
-                    {blank.after}
-                  </>
-                ) : (
-                  question.question
-                )}
-              </p>
-              {question.questionTranslation && (
-                <motion.p
-                  className="text-base mt-6 italic text-foreground/60"
+        {hasPassage ? (
+          /* ── Layout with separate passage + instruction ── */
+          <div className="max-w-lg w-full space-y-4 text-center">
+            <AnimatePresence mode="wait">
+              {showCompleted && blank ? (
+                <motion.div
+                  key="completed"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  style={{ fontFamily: "var(--font-sans)" }}
+                  transition={{ duration: 0.4 }}
                 >
-                  {question.questionTranslation}
-                </motion.p>
+                  <p className="text-xl leading-relaxed text-foreground" style={{ fontFamily }}>
+                    {blank.before}
+                    <span style={{ color: "#4ade80" }}>{question.correctAnswer}</span>
+                    {blank.after}
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="passage"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <p className="text-xl leading-relaxed text-foreground" style={{ fontFamily }}>
+                    {blank ? (
+                      <>
+                        {blank.before}
+                        <span className="text-accent">{BLANK}</span>
+                        {blank.after}
+                      </>
+                    ) : (
+                      question.passageText
+                    )}
+                  </p>
+                </motion.div>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </AnimatePresence>
+
+            <div className="border-b border-border" />
+
+            <p className="text-base text-foreground/80">{question.question}</p>
+            {question.questionTranslation && (
+              <p
+                className="text-sm italic text-foreground/60"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                {question.questionTranslation}
+              </p>
+            )}
+          </div>
+        ) : (
+          /* ── Original layout (no passageText — backward compat) ── */
+          <AnimatePresence mode="wait">
+            {showCompleted && blank ? (
+              <motion.div
+                key="completed"
+                className="text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4 }}
+              >
+                <p
+                  className="text-3xl md:text-4xl lg:text-5xl leading-relaxed text-foreground"
+                  style={{ fontFamily }}
+                >
+                  {blank.before}
+                  <span style={{ color: "#4ade80" }}>{question.correctAnswer}</span>
+                  {blank.after}
+                </p>
+                {question.questionTranslation && (
+                  <p
+                    className="text-base mt-6 italic text-foreground/60"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    {question.questionTranslation}
+                  </p>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="question"
+                className="text-center"
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <p
+                  className="text-3xl md:text-4xl lg:text-5xl leading-relaxed text-foreground"
+                  style={{ fontFamily }}
+                >
+                  {blank ? (
+                    <>
+                      {blank.before}
+                      <span className="text-accent">{BLANK}</span>
+                      {blank.after}
+                    </>
+                  ) : (
+                    question.question
+                  )}
+                </p>
+                {question.questionTranslation && (
+                  <motion.p
+                    className="text-base mt-6 italic text-foreground/60"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    {question.questionTranslation}
+                  </motion.p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
       </div>
 
       {/* MCQ Grid */}
