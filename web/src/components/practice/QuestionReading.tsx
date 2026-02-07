@@ -78,27 +78,30 @@ export function QuestionReading({
         style={{ height: "55vh" }}
       >
         <div className="max-w-lg w-full space-y-4">
-          {/* Passage */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <p className="text-xl leading-relaxed text-foreground" style={{ fontFamily }}>
-              {question.passageText ?? content.content}
-            </p>
-            {content.translation && !question.passageText && (
-              <p
-                className="text-sm italic text-foreground/60 mt-2"
-                style={{ fontFamily: "var(--font-sans)" }}
+          {/* Passage + Separator (hidden when no passage text) */}
+          {(question.passageText ?? content.content) && (
+            <>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
               >
-                {content.translation}
-              </p>
-            )}
-          </motion.div>
+                <p className="text-xl leading-relaxed text-foreground" style={{ fontFamily }}>
+                  {question.passageText ?? content.content}
+                </p>
+                {content.translation && !question.passageText && (
+                  <p
+                    className="text-sm italic text-foreground/60 mt-2"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    {content.translation}
+                  </p>
+                )}
+              </motion.div>
 
-          {/* Separator */}
-          <div className="border-b border-border" />
+              <div className="border-b border-border" />
+            </>
+          )}
 
           {/* Question */}
           <AnimatePresence mode="wait">

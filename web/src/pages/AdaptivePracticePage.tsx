@@ -102,6 +102,7 @@ interface AnswerRecord {
   responseTimeMs?: number;
   skipped?: boolean;
   scorePercent?: number;
+  feedback?: string;
 }
 
 type PracticePhase = "loading" | "content" | "questions" | "results";
@@ -348,6 +349,7 @@ export function AdaptivePracticePage() {
   const [practiceSet, setPracticeSet] = useState<PracticeSet | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<PracticeQuestion | null>(null);
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
+  const [questionQueue, setQuestionQueue] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
   const [showFeedback, setShowFeedback] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -408,8 +410,6 @@ export function AdaptivePracticePage() {
   const generateIncremental = useAction(api.adaptivePractice.generateIncrementalQuestions);
   const evaluateShadowing = useAIAction(api.ai.evaluateShadowing);
 
-  // Count answered questions (including skipped)
-  const questionsHandled = answers.length;
   const totalQuestions = useMemo(() => {
     if (!practiceSet) return 0;
     if (!practiceSet.isDiagnostic) return practiceSet.questions.length;
@@ -419,6 +419,27 @@ export function AdaptivePracticePage() {
     const lookahead = Math.min(remaining, 3);
     return answers.length + lookahead;
   }, [practiceSet, answers]);
+
+  // Reset queue when a new practice session starts
+  useEffect(() => {
+    if (!practiceSet?.practiceId) return;
+    setQuestionQueue([]);
+  }, [practiceSet?.practiceId]);
+
+  // Track the order questions are shown in (queue)
+  useEffect(() => {
+    const id = currentQuestion?.questionId;
+    if (!id) return;
+    setQuestionQueue((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  }, [currentQuestion?.questionId]);
+
+  // Ensure answered questions are also in the queue (safety)
+  useEffect(() => {
+    if (answers.length === 0) return;
+    const lastAnswerId = answers[answers.length - 1]?.questionId;
+    if (!lastAnswerId) return;
+    setQuestionQueue((prev) => (prev.includes(lastAnswerId) ? prev : [...prev, lastAnswerId]));
+  }, [answers]);
 
   // Pick next question using smart ordering
   const pickNext = useCallback(() => {
@@ -461,6 +482,7 @@ export function AdaptivePracticePage() {
       setIsGeneratingMore(true);
 
       generateIncremental({
+        practiceId: practiceSet.practiceId,
         language,
         abilityEstimate: practiceSet.profileSnapshot.abilityEstimate,
         targetDifficulty,
@@ -838,6 +860,8 @@ export function AdaptivePracticePage() {
 
       let scorePercent: number | undefined;
 
+      let feedback: string | undefined;
+
       if (currentQuestion.type === "free_input" || currentQuestion.type === "translation") {
         const grading = await gradeFreeAnswer({
           question: currentQuestion.question,
@@ -848,6 +872,7 @@ export function AdaptivePracticePage() {
           expectedConcepts: currentQuestion.acceptableAnswers,
         });
         scorePercent = grading.score;
+        feedback = grading.feedback;
         isCorrect = grading.score >= 80;
         earnedPoints = Math.round((grading.score / 100) * currentQuestion.points);
       } else if (currentQuestion.type === "dictation") {
@@ -870,6 +895,7 @@ export function AdaptivePracticePage() {
         earnedPoints,
         responseTimeMs,
         scorePercent,
+        feedback,
       };
 
       setAnswers((prev) => [...prev, answer]);
@@ -961,19 +987,26 @@ export function AdaptivePracticePage() {
     ]
   );
 
-  // Build previous results array for progress squares (sequential answer order)
+  const answerToResult = useCallback((answer?: AnswerRecord): QuestionResult => {
+    if (!answer || answer.skipped) return null;
+    if (answer.scorePercent !== undefined) {
+      if (answer.scorePercent >= 80) return "correct";
+      if (answer.scorePercent >= 50) return "partial";
+      return "incorrect";
+    }
+    return answer.isCorrect ? "correct" : "incorrect";
+  }, []);
+
+  // Build previous results array for progress squares (question queue order)
   const buildPreviousResults = useCallback((): QuestionResult[] => {
     if (!practiceSet) return [];
-    return answers.map((a) => {
-      if (a.skipped) return null;
-      if (a.scorePercent !== undefined) {
-        if (a.scorePercent >= 80) return "correct";
-        if (a.scorePercent >= 50) return "partial";
-        return "incorrect";
-      }
-      return a.isCorrect ? "correct" : "incorrect";
-    });
-  }, [practiceSet, answers]);
+    const answerMap = new Map(answers.map((a) => [a.questionId, a]));
+    const results = questionQueue.map((id) => answerToResult(answerMap.get(id)));
+    if (results.length < totalQuestions) {
+      results.push(...Array(totalQuestions - results.length).fill(null));
+    }
+    return results;
+  }, [practiceSet, answers, questionQueue, totalQuestions, answerToResult]);
 
   // Next question or finish
   const handleNextQuestion = useCallback(async () => {
@@ -1019,6 +1052,7 @@ export function AdaptivePracticePage() {
     setPhase("loading");
     setCurrentQuestion(null);
     setAnswers([]);
+    setQuestionQueue([]);
     setSelectedAnswer("");
     setShowFeedback(false);
     setTotalScore(0);
@@ -1078,7 +1112,7 @@ export function AdaptivePracticePage() {
             <h1 className="text-xl font-bold">{t("adaptivePractice.title")}</h1>
           </div>
         </div>
-        <div className="absolute inset-0 flex items-center justify-center pb-32">
+        <div className="absolute inset-0 flex items-center justify-center pb-48">
           <div className="text-2xl sm:text-3xl font-bold text-center px-4">
             <AnimatePresence mode="wait">
               <motion.span
@@ -1404,7 +1438,8 @@ export function AdaptivePracticePage() {
     const isDiag = practiceSet.isDiagnostic;
     const canFinishDiag = isDiag && answeredNonSkipped >= DIAG_MIN_QUESTIONS;
     const currentAnswer = answers.find((a) => a.questionId === currentQuestion.questionId) ?? null;
-    const currentIndex = currentAnswer ? Math.max(0, questionsHandled - 1) : questionsHandled;
+    const queueIndex = questionQueue.indexOf(currentQuestion.questionId);
+    const currentIndex = queueIndex !== -1 ? queueIndex : questionQueue.length;
     const isLastQuestion = isDiag
       ? answeredNonSkipped >= DIAG_MAX_QUESTIONS - 1 || currentIndex >= totalQuestions - 1
       : currentIndex >= totalQuestions - 1;
@@ -1429,7 +1464,11 @@ export function AdaptivePracticePage() {
       showFeedback,
       isSubmitting,
       currentAnswer: currentAnswer
-        ? { isCorrect: currentAnswer.isCorrect, earnedPoints: currentAnswer.earnedPoints }
+        ? {
+            isCorrect: currentAnswer.isCorrect,
+            earnedPoints: currentAnswer.earnedPoints,
+            feedback: currentAnswer.feedback,
+          }
         : null,
       selectedAnswer,
       onSelectAnswer: setSelectedAnswer,

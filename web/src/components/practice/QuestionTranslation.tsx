@@ -180,6 +180,16 @@ export function QuestionTranslation({
 
                 {/* AI Score Bar */}
                 <ScoreBar label={t("adaptivePractice.aiScore")} score={scorePercent} />
+
+                {/* AI Feedback */}
+                {currentAnswer.feedback && (
+                  <p
+                    className="text-foreground-muted text-sm"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    {currentAnswer.feedback}
+                  </p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

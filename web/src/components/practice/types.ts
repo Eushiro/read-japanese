@@ -35,7 +35,7 @@ export interface QuestionViewProps {
   previousResults: QuestionResult[];
   showFeedback: boolean;
   isSubmitting: boolean;
-  currentAnswer: { isCorrect: boolean; earnedPoints: number } | null;
+  currentAnswer: { isCorrect: boolean; earnedPoints: number; feedback?: string } | null;
   selectedAnswer: string;
   onSelectAnswer: (answer: string) => void;
   onSubmit: () => void;
