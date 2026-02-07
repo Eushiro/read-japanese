@@ -5,7 +5,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { type Id } from "../_generated/dataModel";
 import { action, internalAction } from "../_generated/server";
-import { GRADING_MODEL_CHAIN } from "../lib/models";
+import { TEXT_MODEL_CHAIN } from "../lib/models";
 import { uploadSentenceAudio, uploadWordAudio, uploadWordImage } from "../lib/storage";
 import {
   callWithRetry,
@@ -1137,7 +1137,7 @@ Provide detailed feedback and corrections if needed.`;
         systemPrompt,
         maxTokens: 1000,
         jsonSchema: verificationSchema,
-        models: GRADING_MODEL_CHAIN,
+        models: TEXT_MODEL_CHAIN,
         parse: (response) => parseJson<InternalVerificationResult>(response),
         validate: (parsed) => {
           if (typeof parsed.overallScore !== "number") {

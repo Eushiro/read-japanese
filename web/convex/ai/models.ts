@@ -1,8 +1,6 @@
 "use node";
 
 import {
-  CONTENT_MODELS,
-  GRADING_MODEL_CHAIN,
   IMAGE_MODEL,
   type ModelConfig,
   type ProviderType,
@@ -26,14 +24,7 @@ import {
 } from "./providers";
 
 // Re-export model configuration from lib/models.ts
-export {
-  CONTENT_MODELS,
-  GRADING_MODEL_CHAIN,
-  IMAGE_MODEL,
-  TEXT_MODEL_CHAIN,
-  TEXT_MODELS,
-  TTS_MODEL,
-};
+export { IMAGE_MODEL, TEXT_MODEL_CHAIN, TEXT_MODELS, TTS_MODEL };
 
 // ============================================
 // GENERIC TEXT GENERATION
@@ -79,43 +70,6 @@ export async function generateText(options: GenerateTextOptions): Promise<Genera
   }
 
   throw lastError || new Error(`Failed after trying ${models.length} models`);
-}
-
-/**
- * Generate text with a specific model preference
- */
-export async function generateTextWithPreference(
-  options: TextGenerationOptions,
-  preference: "fast" | "smart" | "cheap"
-): Promise<GenerateTextResult> {
-  const chain = getModelChainForPreference(preference);
-  return generateText({ ...options, models: chain });
-}
-
-/**
- * Get the model chain for a given preference
- */
-function getModelChainForPreference(preference: "fast" | "smart" | "cheap"): ModelConfig[] {
-  switch (preference) {
-    case "fast":
-      // Gemini first (lowest latency)
-      return [
-        { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
-        { model: TEXT_MODELS.CLAUDE_HAIKU_4_5, provider: "openrouter" },
-      ];
-    case "smart":
-      // Claude Sonnet first (best default quality), then GPT-OSS
-      return [
-        { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
-        { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
-        { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
-      ];
-    case "cheap":
-      // Gemini only (free tier)
-      return [{ model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" }];
-    default:
-      return TEXT_MODEL_CHAIN;
-  }
 }
 
 /**

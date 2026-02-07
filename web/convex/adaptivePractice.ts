@@ -4,9 +4,10 @@ import { v } from "convex/values";
 
 import { api, internal } from "./_generated/api";
 import { action } from "./_generated/server";
-import { generateAndParse, GRADING_MODEL_CHAIN, type JsonSchema, parseJson } from "./ai/models";
+import { generateAndParse, type JsonSchema, parseJson } from "./ai/models";
 import { isAdminEmail } from "./lib/admin";
 import type { ModelConfig, ProviderType } from "./lib/models";
+import { TEXT_MODEL_CHAIN } from "./lib/models";
 import {
   buildDistractorRules,
   buildInterestTheming,
@@ -1355,7 +1356,7 @@ Grade this answer.`;
         systemPrompt,
         maxTokens: 300,
         jsonSchema: gradingSchema,
-        models: GRADING_MODEL_CHAIN,
+        models: TEXT_MODEL_CHAIN,
         parse: (response) =>
           parseJson<{ score: number; feedback: string; isCorrect: boolean }>(response),
       });

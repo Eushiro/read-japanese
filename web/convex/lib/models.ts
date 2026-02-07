@@ -37,23 +37,6 @@ export const TEXT_MODELS = {
 } as const;
 
 // ============================================
-// DEFAULT MODEL SELECTION (LOCAL VS PROD)
-// ============================================
-
-// GPT-5.2-Chat forced as default for testing
-const DEFAULT_PRIMARY_TEXT_MODEL = TEXT_MODELS.GPT_5_2_CHAT;
-const DEFAULT_SECONDARY_TEXT_MODEL = TEXT_MODELS.CLAUDE_SONNET_4_5;
-
-export const DEFAULT_TEXT_PRIMARY: ModelConfig = {
-  model: DEFAULT_PRIMARY_TEXT_MODEL,
-  provider: "openrouter",
-};
-export const DEFAULT_TEXT_SECONDARY: ModelConfig = {
-  model: DEFAULT_SECONDARY_TEXT_MODEL,
-  provider: "openrouter",
-};
-
-// ============================================
 // AUDIO MODELS
 // ============================================
 
@@ -85,13 +68,12 @@ export const SPECIAL_MODELS = {
 // ============================================
 
 /**
- * Default text generation chain:
- * - Prod: Claude Sonnet (OpenRouter) -> GPT-5.2-Chat (OpenRouter) -> Gemini Flash (Google)
- * - Local: GPT-5.2-Chat (OpenRouter) -> Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
+ * Single text generation chain used everywhere (generation, grading, content).
+ * GPT-5.2-Chat → Claude Sonnet → Gemini Flash
  */
 export const TEXT_MODEL_CHAIN: ModelConfig[] = [
-  DEFAULT_TEXT_PRIMARY,
-  DEFAULT_TEXT_SECONDARY,
+  { model: TEXT_MODELS.GPT_5_2_CHAT, provider: "openrouter" },
+  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
 ];
 
@@ -111,24 +93,6 @@ export const TEST_MODE_MODELS: ModelConfig[] = [
   { model: TEXT_MODELS.GPT_5_2_CHAT, provider: "openrouter" },
   { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
 ];
-
-/**
- * Grading model chain: Claude Sonnet (OpenRouter) -> GPT-5.2-Chat (OpenRouter) -> Gemini Flash (Google)
- * Used for structured evaluation tasks
- */
-export const GRADING_MODEL_CHAIN: ModelConfig[] = [
-  DEFAULT_TEXT_PRIMARY,
-  DEFAULT_TEXT_SECONDARY,
-  { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
-];
-
-/**
- * Content generation models (two-candidate parallel generation)
- */
-export const CONTENT_MODELS = {
-  primary: DEFAULT_TEXT_PRIMARY,
-  secondary: DEFAULT_TEXT_SECONDARY,
-};
 
 /**
  * TTS model configuration

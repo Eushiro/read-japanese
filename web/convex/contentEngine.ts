@@ -7,7 +7,7 @@ import type { ActionCtx } from "./_generated/server";
 import { action } from "./_generated/server";
 import { generateAndParse, type JsonSchema, type ModelConfig, parseJson } from "./ai/models";
 import { abilityToProficiency } from "./learnerModel";
-import { CONTENT_MODELS } from "./lib/models";
+import { TEXT_MODEL_CHAIN } from "./lib/models";
 import { getStorageProvider } from "./lib/storage";
 import {
   adaptiveContentTypeValidator,
@@ -89,10 +89,6 @@ type ContentItem = {
 // CONSTANTS
 // ============================================
 
-// Model configuration - uses env-aware default ordering from CONTENT_MODELS
-const MODEL_PRIMARY_CHAIN: ModelConfig[] = [CONTENT_MODELS.primary, CONTENT_MODELS.secondary];
-const MODEL_SECONDARY_CHAIN: ModelConfig[] = [CONTENT_MODELS.secondary, CONTENT_MODELS.primary];
-const COVERAGE_THRESHOLD = 0.85;
 const TARGET_COVERAGE = 0.85;
 const REUSE_SCORE_THRESHOLD = 0.65;
 const REPEAT_WINDOW_DAYS = 30;
@@ -174,7 +170,7 @@ export const getBestContent = action({
       };
     }
 
-    // Generate new content (two candidates)
+    // Generate new content
     const runId = crypto.randomUUID();
 
     const vocabData = await ctx.runQuery(internal.lib.generation.getVocabularyForStoryGeneration, {
@@ -206,58 +202,28 @@ export const getBestContent = action({
       beginnerMode: isBeginner,
     };
 
-    const candidates = await Promise.all([
-      generateCandidate(ctx, {
-        runId,
-        models: MODEL_PRIMARY_CHAIN,
-        contentType: args.contentType,
-        language: args.language,
-        spec,
-      }),
-      generateCandidate(ctx, {
-        runId,
-        models: MODEL_SECONDARY_CHAIN,
-        contentType: args.contentType,
-        language: args.language,
-        spec,
-      }),
-    ]);
+    const selected = await generateCandidate(ctx, {
+      runId,
+      models: TEXT_MODEL_CHAIN,
+      contentType: args.contentType,
+      language: args.language,
+      spec,
+    });
 
-    const validCandidates = candidates.filter(
-      (candidate) =>
-        candidate.constraints.coverage >= COVERAGE_THRESHOLD &&
-        candidate.constraints.grammarMatch &&
-        candidate.constraints.lengthOk
-    );
-
-    const scoredCandidates = (validCandidates.length > 0 ? validCandidates : candidates).sort(
-      (a, b) => b.scores.total - a.scores.total
-    );
-
-    const selected = scoredCandidates[0];
-    const selectionReason =
-      validCandidates.length > 0
-        ? "best total score among constraint-passing candidates"
-        : "fallback to highest score (no candidate met all hard constraints)";
-
-    // Persist candidates
-    await Promise.all(
-      candidates.map((candidate) =>
-        ctx.runMutation(internal.contentEngineQueries.insertContentCandidate, {
-          runId,
-          candidateId: candidate.candidateId,
-          modelId: candidate.modelId,
-          contentType: args.contentType,
-          language: args.language,
-          candidateUrl: candidate.candidateUrl,
-          constraints: candidate.constraints,
-          scores: candidate.scores,
-          gradingFeedback: candidate.grading.feedback,
-          gradingScore: candidate.grading.score,
-          selected: candidate.candidateId === selected.candidateId,
-        })
-      )
-    );
+    // Persist candidate
+    await ctx.runMutation(internal.contentEngineQueries.insertContentCandidate, {
+      runId,
+      candidateId: selected.candidateId,
+      modelId: selected.modelId,
+      contentType: args.contentType,
+      language: args.language,
+      candidateUrl: selected.candidateUrl,
+      constraints: selected.constraints,
+      scores: selected.scores,
+      gradingFeedback: selected.grading.feedback,
+      gradingScore: selected.grading.score,
+      selected: true,
+    });
 
     await ctx.runMutation(internal.contentEngineQueries.insertSelectionRun, {
       runId,
@@ -270,9 +236,9 @@ export const getBestContent = action({
         topicTags,
         goal,
       },
-      candidateIds: candidates.map((candidate) => candidate.candidateId),
+      candidateIds: [selected.candidateId],
       selectedCandidateId: selected.candidateId,
-      selectionReason,
+      selectionReason: "single candidate",
     });
 
     const finalContentUrl = await uploadJson(
@@ -576,7 +542,7 @@ Return JSON with:
     systemPrompt,
     maxTokens: 300,
     jsonSchema: gradingSchema,
-    models: MODEL_PRIMARY_CHAIN,
+    models: TEXT_MODEL_CHAIN,
     parse: (response) => parseJson<GradingResult>(response),
     validate: (parsed) => (parsed.score < 0 || parsed.score > 100 ? "Score out of range" : null),
   });

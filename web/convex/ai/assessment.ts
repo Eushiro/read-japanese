@@ -17,7 +17,6 @@ import {
   cleanJsonResponse,
   evaluateAudioInput,
   generateAndParse,
-  GRADING_MODEL_CHAIN,
   type JsonSchema,
   parseJson,
   TEXT_MODEL_CHAIN,
@@ -746,7 +745,7 @@ Grade this answer.`;
         systemPrompt,
         maxTokens: 800,
         jsonSchema: gradingSchema,
-        models: GRADING_MODEL_CHAIN,
+        models: TEXT_MODEL_CHAIN,
         parse: (response) => parseJson<ExamGradingResult>(response),
         validate: (parsed) => {
           if (typeof parsed.score !== "number") {
@@ -999,7 +998,7 @@ Student's answer: "${args.userAnswer}"`;
         systemPrompt,
         maxTokens: 600,
         jsonSchema: gradingSchema,
-        models: GRADING_MODEL_CHAIN,
+        models: TEXT_MODEL_CHAIN,
         parse: (response) => parseJson<ExamGradingResult>(response),
         validate: (parsed) => {
           if (typeof parsed.score !== "number") return "Missing score";
