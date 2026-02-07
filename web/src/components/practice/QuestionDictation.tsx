@@ -26,6 +26,8 @@ export function QuestionDictation({
   onNext,
   onGoToQuestion,
   isLastQuestion,
+  isGeneratingMore,
+  generatingMessage,
 }: QuestionViewProps) {
   const t = useT();
   const fontFamily = getFontFamily(language);
@@ -88,6 +90,8 @@ export function QuestionDictation({
           previousResults={resultsWithCurrent}
           isAnswered={showFeedback}
           onGoToQuestion={onGoToQuestion}
+          isGeneratingMore={isGeneratingMore}
+          generatingMessage={generatingMessage}
         />
       </div>
 
@@ -233,12 +237,17 @@ export function QuestionDictation({
             variant="default"
             className="px-6 text-base rounded-xl"
             onClick={showFeedback ? onNext : onSubmit}
-            disabled={!showFeedback && (!selectedAnswer?.trim() || isSubmitting)}
+            disabled={
+              (!showFeedback && (!selectedAnswer?.trim() || isSubmitting)) ||
+              (showFeedback && isLastQuestion && isGeneratingMore)
+            }
           >
             {showFeedback
-              ? isLastQuestion
-                ? t("adaptivePractice.finishPractice")
-                : `${t("adaptivePractice.nextQuestion")} \u2192`
+              ? isLastQuestion && isGeneratingMore
+                ? t("adaptivePractice.waiting")
+                : isLastQuestion
+                  ? t("adaptivePractice.finishPractice")
+                  : `${t("adaptivePractice.nextQuestion")} \u2192`
               : isSubmitting
                 ? t("adaptivePractice.grading")
                 : t("common.actions.submit")}

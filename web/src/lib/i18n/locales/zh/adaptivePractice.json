@@ -9,7 +9,11 @@
     "preparingPractice": "正在准备您的练习会话...",
     "finetuning": "正在针对您的水平微调...",
     "puttingTouches": "最后润色中...",
-    "verifyingCorrectness": "正在验证正确性..."
+    "verifyingCorrectness": "正在验证正确性...",
+    "loadingMore1": "正在思考...",
+    "loadingMore2": "正在准备更多题目...",
+    "loadingMore3": "即将就绪...",
+    "loadingMore4": "正在创建新挑战..."
   },
   "contentType": {
     "dialogue": "对话",
@@ -54,6 +58,7 @@
     "evaluationFailed": "评估失败，请重试。"
   },
   "nextQuestion": "下一题",
+  "waiting": "请稍候...",
   "finishPractice": "查看结果",
   "skipAudioQuestion": "现在无法说话/听音",
   "finishSession": "结束练习",

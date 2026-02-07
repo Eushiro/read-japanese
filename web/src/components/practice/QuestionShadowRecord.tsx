@@ -27,6 +27,8 @@ export function QuestionShadowRecord({
   onNext,
   onGoToQuestion,
   isLastQuestion,
+  isGeneratingMore,
+  generatingMessage,
   onSubmitAudio,
 }: ShadowRecordProps) {
   const t = useT();
@@ -116,6 +118,8 @@ export function QuestionShadowRecord({
           previousResults={resultsWithCurrent}
           isAnswered={showScore}
           onGoToQuestion={onGoToQuestion}
+          isGeneratingMore={isGeneratingMore}
+          generatingMessage={generatingMessage}
         />
       </div>
 
@@ -335,11 +339,18 @@ export function QuestionShadowRecord({
                 exit={{ opacity: 0, y: 10 }}
                 transition={{ delay: 0.6, duration: 0.3 }}
               >
-                <Button variant="default" size="lg" onClick={onNext}>
-                  {isLastQuestion
-                    ? t("adaptivePractice.finishPractice")
-                    : t("adaptivePractice.nextQuestion")}
-                  &nbsp;→
+                <Button
+                  variant="default"
+                  size="lg"
+                  onClick={onNext}
+                  disabled={isLastQuestion && isGeneratingMore}
+                >
+                  {isLastQuestion && isGeneratingMore
+                    ? t("adaptivePractice.waiting")
+                    : isLastQuestion
+                      ? t("adaptivePractice.finishPractice")
+                      : t("adaptivePractice.nextQuestion")}
+                  {!(isLastQuestion && isGeneratingMore) && <>&nbsp;→</>}
                 </Button>
               </motion.div>
             )}

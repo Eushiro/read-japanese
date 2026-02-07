@@ -21,6 +21,8 @@ export function QuestionListening({
   onNext,
   onGoToQuestion,
   isLastQuestion,
+  isGeneratingMore,
+  generatingMessage,
 }: QuestionViewProps) {
   const t = useT();
 
@@ -117,6 +119,8 @@ export function QuestionListening({
           previousResults={resultsWithCurrent}
           isAnswered={confirmedOption !== null}
           onGoToQuestion={onGoToQuestion}
+          isGeneratingMore={isGeneratingMore}
+          generatingMessage={generatingMessage}
         />
       </div>
 
@@ -213,6 +217,7 @@ export function QuestionListening({
         isCorrect={isCorrect}
         onNext={onNext}
         isLastQuestion={isLastQuestion}
+        isGeneratingMore={isGeneratingMore}
         entranceDelay={0.5}
       />
     </div>

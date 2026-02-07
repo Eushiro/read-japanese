@@ -37,6 +37,7 @@ import { useRotatingMessages } from "@/hooks/useRotatingMessages";
 import { isAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT, useUILanguage } from "@/lib/i18n";
+import { getPracticeSessionKey } from "@/lib/practiceSession";
 
 import { api } from "../../convex/_generated/api";
 
@@ -374,6 +375,7 @@ export function AdaptivePracticePage() {
 
   // Diagnostic dynamic generation state
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
+  const [generatingMessage, setGeneratingMessage] = useState<string>("");
   const generationAbortedRef = useRef(false);
   const generationPromiseRef = useRef<Promise<PracticeQuestion[]> | null>(null);
 
@@ -412,6 +414,25 @@ export function AdaptivePracticePage() {
   );
   const loadingPhrase = useRotatingMessages(loadingPhrases, phase === "loading", 3000);
 
+  // Phrases for the "generating more questions" pill
+  const loadingMorePhrases = useMemo(
+    () => [
+      t("adaptivePractice.loading.loadingMore1"),
+      t("adaptivePractice.loading.loadingMore2"),
+      t("adaptivePractice.loading.loadingMore3"),
+      t("adaptivePractice.loading.loadingMore4"),
+    ],
+    [t]
+  );
+
+  // Pick a random phrase each time generation starts
+  useEffect(() => {
+    if (isGeneratingMore) {
+      const phrase = loadingMorePhrases[Math.floor(Math.random() * loadingMorePhrases.length)];
+      setGeneratingMessage(phrase);
+    }
+  }, [isGeneratingMore, loadingMorePhrases]);
+
   // Get language display name
   const languageName = t(`common.languages.${language}`);
 
@@ -424,9 +445,10 @@ export function AdaptivePracticePage() {
   const generateIncremental = useAction(api.adaptivePractice.generateIncrementalQuestions);
   const evaluateShadowing = useAIAction(api.ai.evaluateShadowing);
 
-  // Flush unsubmitted answers on tab close or navigation away.
-  // submitPractice now handles the batched learner model update,
-  // so we fire it on abandonment to avoid losing the session.
+  // Flush unsubmitted answers on tab close.
+  // On unmount (React Router navigation), we DON'T flush because the session
+  // is saved to sessionStorage and can be resumed. We only flush on
+  // beforeunload (actual tab close) to avoid losing data.
   useEffect(() => {
     const flush = () => {
       const ps = practiceSetRef.current;
@@ -438,8 +460,6 @@ export function AdaptivePracticePage() {
         const q = ps.questions.find((q) => q.questionId === a.questionId);
         return s + (q?.points ?? 0);
       }, 0);
-      // Use sendBeacon-style fire-and-forget; submitPractice is a mutation
-      // so Convex will retry if needed.
       submitPractice({
         userId: user.id,
         practiceId: ps.practiceId,
@@ -465,7 +485,7 @@ export function AdaptivePracticePage() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      flush(); // Also flush on unmount (e.g., navigating away via React Router)
+      // Don't flush on unmount — session is persisted in sessionStorage
     };
   }, [user, language, submitPractice]);
 
@@ -479,11 +499,81 @@ export function AdaptivePracticePage() {
     return answers.length + lookahead;
   }, [practiceSet, answers]);
 
+  // Session persistence: save snapshot to sessionStorage
+  // Computes totalScore/maxScore from the answers array to avoid stale closure values.
+  const saveSessionToStorage = useCallback(
+    (updatedAnswers: AnswerRecord[]) => {
+      if (!practiceSet) return;
+      try {
+        const nonSkipped = updatedAnswers.filter((a) => !a.skipped);
+        const computedTotal = nonSkipped.reduce((s, a) => s + a.earnedPoints, 0);
+        const computedMax = nonSkipped.reduce((s, a) => {
+          const q = practiceSet.questions.find((q) => q.questionId === a.questionId);
+          return s + (q?.points ?? 0);
+        }, 0);
+        const snapshot = {
+          practiceSet,
+          answers: updatedAnswers,
+          questionQueue,
+          phase,
+          totalScore: computedTotal,
+          maxScore: computedMax,
+          contentReadTime,
+        };
+        sessionStorage.setItem(getPracticeSessionKey(language), JSON.stringify(snapshot));
+      } catch {
+        // sessionStorage may be full or disabled — ignore
+      }
+    },
+    [practiceSet, questionQueue, phase, contentReadTime, language]
+  );
+
+  const clearSessionStorage = useCallback(() => {
+    try {
+      sessionStorage.removeItem(getPracticeSessionKey(language));
+    } catch {
+      // ignore
+    }
+  }, [language]);
+
+  // Session persistence: restore on mount
+  const [restoredSession, setRestoredSession] = useState(false);
+  useEffect(() => {
+    if (restoredSession || phase !== "loading") return;
+    try {
+      const saved = sessionStorage.getItem(getPracticeSessionKey(language));
+      if (!saved) return;
+      const snapshot = JSON.parse(saved) as {
+        practiceSet: PracticeSet;
+        answers: AnswerRecord[];
+        questionQueue: string[];
+        phase: PracticePhase;
+        totalScore: number;
+        maxScore: number;
+        contentReadTime: number;
+      };
+      if (snapshot.phase !== "questions" || snapshot.answers.length === 0) return;
+      setPracticeSet(snapshot.practiceSet);
+      setAnswers(snapshot.answers);
+      setQuestionQueue(snapshot.questionQueue);
+      setTotalScore(snapshot.totalScore);
+      setMaxScore(snapshot.maxScore);
+      setContentReadTime(snapshot.contentReadTime);
+      setPhase("questions");
+      setRestoredSession(true);
+      // pickNext will fire via the useEffect that watches phase/practiceSet
+    } catch {
+      // invalid JSON or missing data — ignore and fetch fresh
+    }
+  }, [language, phase, restoredSession]);
+
   // Reset queue when a new practice session starts
   useEffect(() => {
     if (!practiceSet?.practiceId) return;
+    // Don't reset queue if we just restored from sessionStorage
+    if (restoredSession) return;
     setQuestionQueue([]);
-  }, [practiceSet?.practiceId]);
+  }, [practiceSet?.practiceId, restoredSession]);
 
   // Track the order questions are shown in (queue)
   useEffect(() => {
@@ -713,7 +803,7 @@ export function AdaptivePracticePage() {
         language,
         uiLanguage,
       }),
-    enabled: !!user && isAuthenticated && !isModelTestMode,
+    enabled: !!user && isAuthenticated && !isModelTestMode && !restoredSession,
     staleTime: Infinity,
     retry: false,
   });
@@ -862,9 +952,10 @@ export function AdaptivePracticePage() {
         dwellMs,
         targetSkills: practiceSet.targetSkills,
       });
+      clearSessionStorage();
       setPhase("results");
     },
-    [practiceSet, user, language, contentReadTime, submitPractice]
+    [practiceSet, user, language, contentReadTime, submitPractice, clearSessionStorage]
   );
 
   // Skip audio/mic question
@@ -882,6 +973,7 @@ export function AdaptivePracticePage() {
     setAnswers((prev) => [...prev, answer]);
     // Don't add to score for skipped questions
     recordAnswerToBackend(currentQuestion, answer);
+    saveSessionToStorage([...answers, answer]);
 
     const updatedAnswers = [...answers, answer];
     const remaining = practiceSet.questions.filter(
@@ -925,6 +1017,7 @@ export function AdaptivePracticePage() {
     practiceSet,
     answers,
     recordAnswerToBackend,
+    saveSessionToStorage,
     finishSession,
     triggerBackgroundGeneration,
   ]);
@@ -1011,6 +1104,9 @@ export function AdaptivePracticePage() {
       // Fire-and-forget: record answer + update learner model
       recordAnswerToBackend(currentQuestion, answer);
 
+      // Persist session to sessionStorage
+      saveSessionToStorage([...answers, answer]);
+
       // Diagnostic mode: trigger background generation if pool is running low
       if (practiceSet.isDiagnostic) {
         const updatedAnswers = [...answers, answer];
@@ -1037,6 +1133,7 @@ export function AdaptivePracticePage() {
     gradeFreeAnswer,
     language,
     recordAnswerToBackend,
+    saveSessionToStorage,
     answers,
     triggerBackgroundGeneration,
   ]);
@@ -1175,6 +1272,8 @@ export function AdaptivePracticePage() {
 
   // Restart practice
   const handleRestart = useCallback(() => {
+    clearSessionStorage();
+    setRestoredSession(false);
     setPracticeSet(null);
     setPhase("loading");
     setCurrentQuestion(null);
@@ -1197,7 +1296,7 @@ export function AdaptivePracticePage() {
     }
 
     refetchPractice();
-  }, [user, isModelTestMode, testModeModels, fireModelTests, refetchPractice]);
+  }, [user, isModelTestMode, testModeModels, fireModelTests, refetchPractice, clearSessionStorage]);
 
   // Loading state
   if (authLoading) {
@@ -1567,8 +1666,9 @@ export function AdaptivePracticePage() {
     const currentAnswer = answers.find((a) => a.questionId === currentQuestion.questionId) ?? null;
     const queueIndex = questionQueue.indexOf(currentQuestion.questionId);
     const currentIndex = queueIndex !== -1 ? queueIndex : questionQueue.length;
+    // In diagnostic mode, don't treat as last question while more are being generated
     const isLastQuestion = isDiag
-      ? answeredNonSkipped >= DIAG_MAX_QUESTIONS - 1
+      ? answeredNonSkipped >= DIAG_MAX_QUESTIONS - 1 && !isGeneratingMore
       : currentIndex >= totalQuestions - 1;
     const previousResultsArray = buildPreviousResults();
     const isAudioMicQuestion = AUDIO_MIC_TYPES.includes(currentQuestion.type);
@@ -1604,6 +1704,8 @@ export function AdaptivePracticePage() {
       onNext: handleNextQuestion,
       onGoToQuestion: handleGoToQuestion,
       isLastQuestion,
+      isGeneratingMore,
+      generatingMessage,
     };
 
     const renderQuestion = () => {
@@ -1642,11 +1744,6 @@ export function AdaptivePracticePage() {
               {practiceSet.modelUsed && (
                 <Badge variant="outline" className="text-xs">
                   {getModelShortName(practiceSet.modelUsed)}
-                </Badge>
-              )}
-              {isDiag && isGeneratingMore && (
-                <Badge variant="secondary" className="text-xs animate-pulse">
-                  {"Loading next questions..."}
                 </Badge>
               )}
             </div>

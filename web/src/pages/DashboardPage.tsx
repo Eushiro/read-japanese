@@ -31,6 +31,7 @@ import { useRecommendedVideos } from "@/hooks/useRecommendedVideos";
 import { useStoriesByLanguage } from "@/hooks/useStories";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
+import { getPracticeSessionKey } from "@/lib/practiceSession";
 import type { StoryListItem } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
@@ -305,6 +306,7 @@ export function DashboardPage() {
                 hasLanguages: userLanguages.length > 0,
                 sessionStatus: sessionState.status,
                 learningGoal: userProfile?.learningGoal,
+                hasSavedPractice: !!sessionStorage.getItem(getPracticeSessionKey(primaryLanguage)),
                 t,
               })}
               onAction={(action) => {
@@ -689,6 +691,7 @@ function getPrimaryCtaConfig(args: {
   hasLanguages: boolean;
   sessionStatus: "idle" | "planning" | "active" | "complete";
   learningGoal?: "exam" | "travel" | "professional" | "media" | "casual";
+  hasSavedPractice: boolean;
   t: ReturnType<typeof useT>;
 }) {
   const t = args.t;
@@ -709,6 +712,17 @@ function getPrimaryCtaConfig(args: {
       subtitle: t("dashboard.primaryCta.continueSubtitle"),
       cta: t("dashboard.primaryCta.continueButton"),
       action: "session" as const,
+      icon: Play,
+      gradient: "from-emerald-500/10 to-sky-500/10",
+    };
+  }
+
+  if (args.hasSavedPractice) {
+    return {
+      title: t("dashboard.primaryCta.startTitle"),
+      subtitle: t("dashboard.primaryCta.resumeSubtitle"),
+      cta: t("dashboard.primaryCta.resumeButton"),
+      action: "practice" as const,
       icon: Play,
       gradient: "from-emerald-500/10 to-sky-500/10",
     };

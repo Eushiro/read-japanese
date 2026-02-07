@@ -21,6 +21,8 @@ export function QuestionReading({
   onNext,
   onGoToQuestion,
   isLastQuestion,
+  isGeneratingMore,
+  generatingMessage,
 }: QuestionViewProps) {
   // When revisiting an answered question, initialize from the existing answer
   const initOptions = question.options ?? [];
@@ -85,6 +87,8 @@ export function QuestionReading({
           previousResults={resultsWithCurrent}
           isAnswered={confirmedOption !== null}
           onGoToQuestion={onGoToQuestion}
+          isGeneratingMore={isGeneratingMore}
+          generatingMessage={generatingMessage}
         />
       </div>
 
@@ -189,6 +193,7 @@ export function QuestionReading({
         isCorrect={isCorrect}
         onNext={onNext}
         isLastQuestion={isLastQuestion}
+        isGeneratingMore={isGeneratingMore}
         entranceDelay={0.5}
       />
     </div>

@@ -17,6 +17,8 @@ interface MCQGridProps {
   /** Show next button and trigger callback */
   onNext: () => void;
   isLastQuestion: boolean;
+  /** Whether more questions are being generated */
+  isGeneratingMore?: boolean;
   /** Delay entrance animation (for reading/listening where content appears first) */
   entranceDelay?: number;
 }
@@ -30,6 +32,7 @@ export function MCQGrid({
   isCorrect,
   onNext,
   isLastQuestion,
+  isGeneratingMore,
   entranceDelay = 0.3,
 }: MCQGridProps) {
   const t = useT();
@@ -164,11 +167,18 @@ export function MCQGrid({
               exit={{ opacity: 0, y: 10 }}
               transition={{ delay: 0.6, duration: 0.3 }}
             >
-              <Button variant="default" size="lg" onClick={onNext}>
-                {isLastQuestion
-                  ? t("adaptivePractice.finishPractice")
-                  : t("adaptivePractice.nextQuestion")}
-                &nbsp;→
+              <Button
+                variant="default"
+                size="lg"
+                onClick={onNext}
+                disabled={isLastQuestion && isGeneratingMore}
+              >
+                {isLastQuestion && isGeneratingMore
+                  ? t("adaptivePractice.waiting")
+                  : isLastQuestion
+                    ? t("adaptivePractice.finishPractice")
+                    : t("adaptivePractice.nextQuestion")}
+                {!(isLastQuestion && isGeneratingMore) && <>&nbsp;→</>}
               </Button>
             </motion.div>
           )}

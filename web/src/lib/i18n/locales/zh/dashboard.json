@@ -95,7 +95,9 @@
     "startTitle": "Start a session",
     "startSubtitleExam": "Exam-focused session at your level",
     "startSubtitleDefault": "Adaptive session tuned to your goals",
-    "startButton": "Start Session"
+    "startButton": "Start Session",
+    "resumeSubtitle": "您有一个未完成的练习会话",
+    "resumeButton": "继续练习"
   },
   "goalBanner": {
     "exam": {

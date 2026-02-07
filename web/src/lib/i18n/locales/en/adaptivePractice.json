@@ -9,7 +9,11 @@
     "preparingPractice": "Preparing your practice session...",
     "finetuning": "Fine-tuning for your level...",
     "puttingTouches": "Putting the final touches...",
-    "verifyingCorrectness": "Verifying correctness..."
+    "verifyingCorrectness": "Verifying correctness...",
+    "loadingMore1": "Thinking ahead...",
+    "loadingMore2": "Preparing more questions...",
+    "loadingMore3": "Almost ready...",
+    "loadingMore4": "Crafting new challenges..."
   },
   "contentType": {
     "dialogue": "Dialogue",
@@ -54,6 +58,7 @@
     "evaluationFailed": "Unable to evaluate. Please try again."
   },
   "nextQuestion": "Next Question",
+  "waiting": "Waiting...",
   "finishPractice": "See Results",
   "skipAudioQuestion": "Can't talk/listen right now",
   "finishSession": "Finish Session",

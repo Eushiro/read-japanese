@@ -47,6 +47,10 @@ export interface QuestionViewProps {
   onNext: () => void;
   onGoToQuestion?: (index: number) => void;
   isLastQuestion: boolean;
+  /** Whether more questions are being generated (diagnostic mode) */
+  isGeneratingMore?: boolean;
+  /** Message to display when generating more questions */
+  generatingMessage?: string;
 }
 
 /** Get font family based on content language */

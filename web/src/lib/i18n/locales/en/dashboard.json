@@ -94,7 +94,9 @@
     "startTitle": "Start a session",
     "startSubtitleExam": "Exam-focused session at your level",
     "startSubtitleDefault": "Adaptive session tuned to your goals",
-    "startButton": "Start Session"
+    "startButton": "Start Session",
+    "resumeSubtitle": "You have an unfinished practice session",
+    "resumeButton": "Continue Session"
   },
   "goalBanner": {
     "exam": {

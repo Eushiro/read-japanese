@@ -9,7 +9,11 @@
     "preparingPractice": "練習セッションを準備中...",
     "finetuning": "レベルに合わせて微調整中...",
     "puttingTouches": "仕上げ中...",
-    "verifyingCorrectness": "正確性を確認中..."
+    "verifyingCorrectness": "正確性を確認中...",
+    "loadingMore1": "先を考え中...",
+    "loadingMore2": "次の問題を準備中...",
+    "loadingMore3": "もうすぐ準備完了...",
+    "loadingMore4": "新しい問題を作成中..."
   },
   "contentType": {
     "dialogue": "会話",
@@ -54,6 +58,7 @@
     "evaluationFailed": "評価できませんでした。もう一度お試しください。"
   },
   "nextQuestion": "次の問題",
+  "waiting": "お待ちください...",
   "finishPractice": "結果を見る",
   "skipAudioQuestion": "今は話せません・聴けません",
   "finishSession": "セッション終了",
