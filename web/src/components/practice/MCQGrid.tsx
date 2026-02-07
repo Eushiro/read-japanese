@@ -44,7 +44,7 @@ export function MCQGrid({
   };
 
   return (
-    <div className="flex flex-col items-center px-6">
+    <div className="flex flex-col items-center px-6 w-full">
       <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
         {options.map((option, index) => {
           const isConfirmed = confirmedOption === index;

@@ -842,8 +842,7 @@ ruby rt {
   --removed-body-scroll-bar-size: 0px !important;
 }
 
-html,
-body {
+html {
   overflow-y: scroll !important;
 }
 

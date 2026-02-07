@@ -61,7 +61,7 @@ export function QuestionReading({
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex flex-col bg-background">
+    <div className="relative min-h-screen overflow-hidden flex flex-col bg-background w-full">
       {/* Progress */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
         <ProgressSquares

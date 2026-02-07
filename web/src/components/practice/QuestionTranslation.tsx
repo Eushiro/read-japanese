@@ -47,7 +47,7 @@ export function QuestionTranslation({
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex flex-col bg-background">
+    <div className="relative min-h-screen overflow-hidden flex flex-col bg-background w-full">
       {/* Progress */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
         <ProgressSquares
@@ -96,7 +96,7 @@ export function QuestionTranslation({
       </div>
 
       {/* Lower: Text input + button */}
-      <div className="flex flex-col items-center px-6">
+      <div className="flex flex-col items-center px-6 w-full">
         <div className="w-full max-w-xl">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
