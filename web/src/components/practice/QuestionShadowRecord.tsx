@@ -90,7 +90,9 @@ export function QuestionShadowRecord({
 
   const resultsWithCurrent = [...previousResults];
   if (score !== null) {
-    resultsWithCurrent[currentIndex] = score >= 60 ? "correct" : "incorrect";
+    if (score >= 80) resultsWithCurrent[currentIndex] = "correct";
+    else if (score >= 50) resultsWithCurrent[currentIndex] = "partial";
+    else resultsWithCurrent[currentIndex] = "incorrect";
   }
 
   const showScore = recordingState === "done" && score !== null;

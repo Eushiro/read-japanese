@@ -6,7 +6,10 @@
     "selectingContent": "Selecting personalized content...",
     "generatingQuestions": "Generating practice questions...",
     "personalizingDifficulty": "Calibrating difficulty level...",
-    "preparingPractice": "Preparing your practice session..."
+    "preparingPractice": "Preparing your practice session...",
+    "finetuning": "Fine-tuning for your level...",
+    "puttingTouches": "Putting the final touches...",
+    "verifyingCorrectness": "Verifying correctness..."
   },
   "contentType": {
     "dialogue": "Dialogue",
@@ -39,6 +42,7 @@
   "recordingTapToStop": "Recording... tap to stop",
   "evaluating": "Evaluating...",
   "done": "Done",
+  "grading": "Grading...",
   "typeAnswer": "Type your answer...",
   "aiScore": "AI Score",
   "accuracy": "Accuracy",
@@ -51,6 +55,7 @@
   "nextQuestion": "Next Question",
   "finishPractice": "See Results",
   "skipAudioQuestion": "Can't talk/listen right now",
+  "finishSession": "Finish Session",
   "results": {
     "title": "Practice Complete",
     "excellent": "Excellent work!",

@@ -6,7 +6,9 @@ import {
   IMAGE_MODEL,
   type ModelConfig,
   type ProviderType,
+  RACE_CONCURRENCY,
   TEXT_MODEL_CHAIN,
+  TEXT_MODEL_RACE_CONFIG,
   TEXT_MODELS,
   TTS_MODEL,
 } from "../lib/models";
@@ -30,7 +32,9 @@ export {
   CONTENT_MODELS,
   GRADING_MODEL_CHAIN,
   IMAGE_MODEL,
+  RACE_CONCURRENCY,
   TEXT_MODEL_CHAIN,
+  TEXT_MODEL_RACE_CONFIG,
   TEXT_MODELS,
   TTS_MODEL,
 };
@@ -104,9 +108,9 @@ function getModelChainForPreference(preference: "fast" | "smart" | "cheap"): Mod
         { model: TEXT_MODELS.CLAUDE_HAIKU_4_5, provider: "openrouter" },
       ];
     case "smart":
-      // Kimi first (best quality for complex tasks)
+      // GPT-OSS-120B first (best quality for complex tasks)
       return [
-        { model: TEXT_MODELS.KIMI_K2_5, provider: "openrouter" },
+        { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
         { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
       ];
     case "cheap":
@@ -208,6 +212,81 @@ export async function generateAndParse<T>(
   }
 
   throw lastError || new Error(`Failed after trying ${models.length} models`);
+}
+
+// ============================================
+// RACE-BASED PARSED TEXT GENERATION
+// ============================================
+
+export interface GenerateAndParseRaceOptions<T> extends GenerateAndParseOptions<T> {
+  raceModel: ModelConfig;
+  raceConcurrency?: number;
+  fallbackChain: ModelConfig[];
+}
+
+/**
+ * Race N parallel calls with the same cheap model, pick the first valid result.
+ * Falls back to sequential chain if all race calls fail.
+ */
+export async function generateAndParseRace<T>(
+  options: GenerateAndParseRaceOptions<T>
+): Promise<GenerateAndParseResult<T>> {
+  const concurrency = options.raceConcurrency ?? RACE_CONCURRENCY;
+  const { raceModel, fallbackChain } = options;
+
+  const providerOptions = {
+    prompt: options.prompt,
+    systemPrompt: options.systemPrompt,
+    maxTokens: options.maxTokens,
+    jsonSchema: options.jsonSchema,
+    temperature: options.temperature,
+  };
+
+  // Phase 1: Race N concurrent calls with the same cheap model
+  const racePromises = Array.from({ length: concurrency }, (_, i) => {
+    const promise = (async (): Promise<GenerateAndParseResult<T>> => {
+      const response = await callProvider(raceModel, providerOptions);
+      const parsed = options.parse(response.content);
+
+      if (options.validate) {
+        const validationError = options.validate(parsed);
+        if (validationError) {
+          throw new Error(`Race call ${i} validation failed: ${validationError}`);
+        }
+      }
+
+      return {
+        result: parsed,
+        usage: {
+          model: response.model,
+          inputTokens: response.usage.inputTokens,
+          outputTokens: response.usage.outputTokens,
+          totalTokens: response.usage.totalTokens,
+          latencyMs: response.latencyMs,
+        },
+      };
+    })();
+
+    // Suppress unhandled rejection warnings for losing race calls
+    promise.catch(() => {});
+    return promise;
+  });
+
+  try {
+    const result = await Promise.any(racePromises);
+    console.log(`Race completed: ${raceModel.model} won (${concurrency} parallel calls)`);
+    return result;
+  } catch (aggregateError) {
+    const errors =
+      aggregateError instanceof AggregateError ? aggregateError.errors : [aggregateError];
+    console.warn(
+      `All ${concurrency} race calls to ${raceModel.model} failed:`,
+      errors.map((e: unknown) => (e instanceof Error ? e.message : String(e)))
+    );
+  }
+
+  // Phase 2: Sequential fallback through remaining models
+  return generateAndParse({ ...options, models: fallbackChain });
 }
 
 // ============================================

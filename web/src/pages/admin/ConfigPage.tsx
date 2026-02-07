@@ -43,9 +43,9 @@ const AI_MODELS = [
     purpose: "Questions & Verification",
     icon: Cpu,
     models: [
-      { name: "moonshotai/kimi-k2.5", provider: "OpenRouter", note: "Default" },
-      { name: "claude-3-5-sonnet", provider: "OpenRouter", note: "Alternative" },
-      { name: "gpt-4o", provider: "OpenRouter", note: "Fallback" },
+      { name: "openai/gpt-oss-120b", provider: "OpenRouter", note: "Default" },
+      { name: "anthropic/claude-sonnet-4.5", provider: "OpenRouter", note: "Fallback" },
+      { name: "gemini-3-flash-preview", provider: "Google", note: "Fallback" },
     ],
   },
 ];

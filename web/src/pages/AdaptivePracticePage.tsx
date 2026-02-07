@@ -1,3 +1,4 @@
+import { useQuery as useTanstackQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -46,6 +47,7 @@ interface PracticeQuestion {
   targetSkill: string;
   difficulty?: "easy" | "medium" | "hard";
   question: string;
+  passageText?: string;
   questionTranslation?: string;
   options?: string[];
   correctAnswer: string;
@@ -83,6 +85,8 @@ interface PracticeSet {
   difficulty: number;
   generatedAt: number;
   modelUsed?: string;
+  systemPrompt?: string;
+  prompt?: string;
   profileSnapshot: {
     abilityEstimate: number;
     abilityConfidence: number;
@@ -97,6 +101,7 @@ interface AnswerRecord {
   earnedPoints: number;
   responseTimeMs?: number;
   skipped?: boolean;
+  scorePercent?: number;
 }
 
 type PracticePhase = "loading" | "content" | "questions" | "results";
@@ -104,15 +109,20 @@ type PracticePhase = "loading" | "content" | "questions" | "results";
 // Audio/mic question types that need a skip option
 const AUDIO_MIC_TYPES = ["listening_mcq", "dictation", "shadow_record"];
 
+// Diagnostic mode dynamic generation constants
+const DIAG_MIN_QUESTIONS = 6; // Show "Finish" button after this many answered
+const DIAG_MAX_QUESTIONS = 10; // Auto-finish at this many answered
+const DIAG_GENERATION_BUFFER = 2; // Trigger generation when remaining < this
+
 // ============================================
 // MODEL TEST MODE HELPERS
 // ============================================
 
 const MODEL_SHORT_NAMES: Record<string, string> = {
   "gemini-3-flash-preview": "Gemini Flash",
-  "moonshotai/kimi-k2.5": "Kimi K2.5",
   "anthropic/claude-haiku-4.5": "Claude Haiku",
   "x-ai/grok-4.1-fast": "Grok 4.1 Fast",
+  "openai/gpt-oss-120b": "GPT-OSS 120B",
   "openai/gpt-oss-20b": "GPT-OSS 20B",
   "openai/gpt-5-mini": "GPT-5 Mini",
   "anthropic/claude-sonnet-4.5": "Claude Sonnet",
@@ -240,6 +250,29 @@ function isAdjacentDifficulty(a?: string, b?: string): boolean {
   return Math.abs(ia - ib) === 1;
 }
 
+/**
+ * Compute target difficulty for incremental question generation
+ * based on recent answer performance.
+ */
+function computeTargetDifficulty(
+  questions: PracticeQuestion[],
+  answeredHistory: AnswerRecord[]
+): "easy" | "medium" | "hard" {
+  const nonSkipped = answeredHistory.filter((a) => !a.skipped);
+  if (nonSkipped.length < 2) return "easy";
+
+  const recent = nonSkipped.slice(-3);
+  const recentCorrect = recent.filter((a) => a.isCorrect).length;
+  const lastDiff = getLastDifficulty(questions, answeredHistory);
+
+  if (recent.length >= 2 && recentCorrect >= recent.length) {
+    return scaleDifficultyUp(lastDiff);
+  } else if (recent.length >= 2 && recentCorrect <= 0) {
+    return scaleDifficultyDown(lastDiff);
+  }
+  return lastDiff;
+}
+
 // ============================================
 // ADMIN RAW JSON PANEL
 // ============================================
@@ -324,6 +357,10 @@ export function AdaptivePracticePage() {
   const [maxScore, setMaxScore] = useState(0);
   const [contentReadTime, setContentReadTime] = useState<number>(0);
 
+  // Diagnostic dynamic generation state
+  const [isGeneratingMore, setIsGeneratingMore] = useState(false);
+  const generationAbortedRef = useRef(false);
+
   // Model test mode state (admin only)
   const isModelTestMode =
     isAdmin(user?.email) && typeof window !== "undefined"
@@ -351,10 +388,13 @@ export function AdaptivePracticePage() {
       t("adaptivePractice.loading.generatingQuestions"),
       t("adaptivePractice.loading.personalizingDifficulty"),
       t("adaptivePractice.loading.preparingPractice"),
+      t("adaptivePractice.loading.finetuning"),
+      t("adaptivePractice.loading.puttingTouches"),
+      t("adaptivePractice.loading.verifyingCorrectness"),
     ],
     [t]
   );
-  const loadingPhrase = useRotatingMessages(loadingPhrases, phase === "loading", 2000);
+  const loadingPhrase = useRotatingMessages(loadingPhrases, phase === "loading", 3000);
 
   // Get language display name
   const languageName = t(`common.languages.${language}`);
@@ -365,11 +405,20 @@ export function AdaptivePracticePage() {
   const submitPractice = useMutation(api.adaptivePracticeQueries.submitPractice);
   const recordAnswer = useMutation(api.adaptivePracticeQueries.recordAnswer);
   const gradeFreeAnswer = useAction(api.adaptivePractice.gradeFreeAnswer);
+  const generateIncremental = useAction(api.adaptivePractice.generateIncrementalQuestions);
   const evaluateShadowing = useAIAction(api.ai.evaluateShadowing);
 
   // Count answered questions (including skipped)
   const questionsHandled = answers.length;
-  const totalQuestions = practiceSet?.questions.length ?? 0;
+  const totalQuestions = useMemo(() => {
+    if (!practiceSet) return 0;
+    if (!practiceSet.isDiagnostic) return practiceSet.questions.length;
+    // Diagnostic: show answered + a small lookahead window
+    const answeredIds = new Set(answers.map((a) => a.questionId));
+    const remaining = practiceSet.questions.filter((q) => !answeredIds.has(q.questionId)).length;
+    const lookahead = Math.min(remaining, 3);
+    return answers.length + lookahead;
+  }, [practiceSet, answers]);
 
   // Pick next question using smart ordering
   const pickNext = useCallback(() => {
@@ -378,6 +427,69 @@ export function AdaptivePracticePage() {
     setCurrentQuestion(next);
     setQuestionStartTime(Date.now());
   }, [practiceSet, answers]);
+
+  // Trigger background generation of 2 more questions (diagnostic mode only)
+  const triggerBackgroundGeneration = useCallback(
+    (currentAnswers: AnswerRecord[]) => {
+      if (!practiceSet || !practiceSet.isDiagnostic) return;
+      if (isGeneratingMore || generationAbortedRef.current) return;
+
+      const targetDifficulty = computeTargetDifficulty(practiceSet.questions, currentAnswers);
+
+      // Build recent performance from last 5 answers
+      const recentAnswers = currentAnswers.filter((a) => !a.skipped).slice(-5);
+      const recentPerformance = recentAnswers.map((a) => {
+        const q = practiceSet.questions.find((q) => q.questionId === a.questionId);
+        return {
+          skill: q?.targetSkill ?? "vocabulary",
+          type: q?.type ?? "mcq_vocabulary",
+          difficulty: q?.difficulty ?? "medium",
+          isCorrect: a.isCorrect,
+        };
+      });
+
+      // Guardrails: avoid only recent repeats (not the entire pool)
+      const recentSkills = recentAnswers
+        .map((a) => practiceSet.questions.find((q) => q.questionId === a.questionId)?.targetSkill)
+        .filter(Boolean) as string[];
+      const recentTypes = recentAnswers
+        .map((a) => practiceSet.questions.find((q) => q.questionId === a.questionId)?.type)
+        .filter(Boolean) as string[];
+      const excludeSkills = [...new Set(recentSkills)];
+      const excludeTypes = [...new Set(recentTypes)];
+
+      setIsGeneratingMore(true);
+
+      generateIncremental({
+        language,
+        abilityEstimate: practiceSet.profileSnapshot.abilityEstimate,
+        targetDifficulty,
+        recentPerformance,
+        excludeSkills,
+        excludeTypes,
+        uiLanguage,
+      })
+        .then((result) => {
+          if (generationAbortedRef.current) return;
+          if (result.questions && result.questions.length > 0) {
+            setPracticeSet((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                questions: [...prev.questions, ...result.questions],
+              };
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to generate incremental questions:", err);
+        })
+        .finally(() => {
+          setIsGeneratingMore(false);
+        });
+    },
+    [practiceSet, isGeneratingMore, generateIncremental, language, uiLanguage]
+  );
 
   // Fire per-model streaming calls for test mode
   const fireModelTests = useCallback(
@@ -501,48 +613,52 @@ export function AdaptivePracticePage() {
       });
   }, [testModeModels, modelResults, activeModelIndex, generateForModel, language]);
 
-  // Fetch practice set on mount
+  // Fetch practice set with TanStack Query (deduplicates under StrictMode)
+  const {
+    data: fetchedPractice,
+    error: fetchError,
+    refetch: refetchPractice,
+  } = useTanstackQuery({
+    queryKey: ["nextPractice", user?.id, language, uiLanguage],
+    queryFn: () =>
+      getNextPractice({
+        userId: user!.id,
+        language,
+        uiLanguage,
+      }),
+    enabled: !!user && isAuthenticated && !isModelTestMode,
+    staleTime: Infinity,
+    retry: false,
+  });
+
+  // Sync fetched practice to local state (only when loading)
+  useEffect(() => {
+    if (!fetchedPractice || phase !== "loading") return;
+    const startTime = Date.now();
+    setPracticeSet(fetchedPractice);
+    if (fetchedPractice.isDiagnostic) {
+      setContentReadTime(startTime);
+      setPhase("questions");
+    } else {
+      setPhase("content");
+      setContentReadTime(startTime);
+    }
+  }, [fetchedPractice, phase]);
+
+  // Log fetch errors
+  useEffect(() => {
+    if (fetchError) {
+      console.error("Failed to fetch practice:", fetchError);
+    }
+  }, [fetchError]);
+
+  // Fire model tests on mount (separate from normal practice fetch)
   useEffect(() => {
     if (!user || !isAuthenticated) return;
-
     if (isModelTestMode && testModeModels) {
       fireModelTests(testModeModels);
-      return;
     }
-
-    // Don't fetch normal practice if we're waiting for test mode models to load
-    if (isModelTestMode) return;
-
-    const fetchPractice = async () => {
-      try {
-        const result = await getNextPractice({
-          userId: user.id,
-          language,
-          uiLanguage,
-        });
-        setPracticeSet(result);
-        if (result.isDiagnostic) {
-          setPhase("questions");
-        } else {
-          setPhase("content");
-          setContentReadTime(Date.now());
-        }
-      } catch (error) {
-        console.error("Failed to fetch practice:", error);
-      }
-    };
-
-    fetchPractice();
-  }, [
-    user,
-    isAuthenticated,
-    language,
-    uiLanguage,
-    getNextPractice,
-    isModelTestMode,
-    testModeModels,
-    fireModelTests,
-  ]);
+  }, [user, isAuthenticated, isModelTestMode, testModeModels, fireModelTests]);
 
   // Auto-select first completed model in test mode
   useEffect(() => {
@@ -599,6 +715,8 @@ export function AdaptivePracticePage() {
         userId: user.id,
         language,
         practiceId: practiceSet.practiceId,
+        contentType: practiceSet.content?.contentType,
+        isDiagnostic: practiceSet.isDiagnostic,
         questionId: question.questionId,
         questionText: question.question,
         questionType: question.type,
@@ -621,7 +739,10 @@ export function AdaptivePracticePage() {
     async (finalAnswers: AnswerRecord[]) => {
       if (!practiceSet || !user) return;
 
-      const dwellMs = Date.now() - contentReadTime;
+      // Abort any in-flight background generation
+      generationAbortedRef.current = true;
+
+      const dwellMs = contentReadTime > 0 ? Math.max(0, Date.now() - contentReadTime) : 0;
       const nonSkippedAnswers = finalAnswers.filter((a) => !a.skipped);
       const finalTotalScore = nonSkippedAnswers.reduce((sum, a) => sum + a.earnedPoints, 0);
       const finalMaxScore = nonSkippedAnswers.reduce((sum, a) => {
@@ -679,6 +800,12 @@ export function AdaptivePracticePage() {
     const remaining = practiceSet.questions.filter(
       (q) => !updatedAnswers.some((a) => a.questionId === q.questionId)
     );
+
+    // Diagnostic mode: trigger background generation if pool is low
+    if (practiceSet.isDiagnostic && remaining.length < DIAG_GENERATION_BUFFER) {
+      triggerBackgroundGeneration(updatedAnswers);
+    }
+
     if (remaining.length === 0) {
       finishSession(updatedAnswers);
     } else {
@@ -686,7 +813,14 @@ export function AdaptivePracticePage() {
       setCurrentQuestion(next);
       setQuestionStartTime(Date.now());
     }
-  }, [currentQuestion, practiceSet, answers, recordAnswerToBackend, finishSession]);
+  }, [
+    currentQuestion,
+    practiceSet,
+    answers,
+    recordAnswerToBackend,
+    finishSession,
+    triggerBackgroundGeneration,
+  ]);
 
   // Submit answer
   const handleSubmitAnswer = useCallback(async () => {
@@ -702,21 +836,26 @@ export function AdaptivePracticePage() {
       let isCorrect = false;
       let earnedPoints = 0;
 
+      let scorePercent: number | undefined;
+
       if (currentQuestion.type === "free_input" || currentQuestion.type === "translation") {
         const grading = await gradeFreeAnswer({
           question: currentQuestion.question,
           userAnswer: selectedAnswer,
           language,
+          correctAnswer: currentQuestion.correctAnswer,
+          acceptableAnswers: currentQuestion.acceptableAnswers,
           expectedConcepts: currentQuestion.acceptableAnswers,
         });
-        isCorrect = grading.isCorrect;
+        scorePercent = grading.score;
+        isCorrect = grading.score >= 80;
         earnedPoints = Math.round((grading.score / 100) * currentQuestion.points);
       } else if (currentQuestion.type === "dictation") {
         const diff = getDiff(selectedAnswer.trim(), currentQuestion.correctAnswer);
         const matchCount = diff.filter((d) => d.status === "match").length;
-        const accuracy = diff.length > 0 ? Math.round((matchCount / diff.length) * 100) : 0;
-        isCorrect = accuracy >= 80;
-        earnedPoints = Math.round((accuracy / 100) * currentQuestion.points);
+        scorePercent = diff.length > 0 ? Math.round((matchCount / diff.length) * 100) : 0;
+        isCorrect = scorePercent >= 80;
+        earnedPoints = Math.round((scorePercent / 100) * currentQuestion.points);
       } else {
         isCorrect =
           selectedAnswer === currentQuestion.correctAnswer ||
@@ -730,6 +869,7 @@ export function AdaptivePracticePage() {
         isCorrect,
         earnedPoints,
         responseTimeMs,
+        scorePercent,
       };
 
       setAnswers((prev) => [...prev, answer]);
@@ -739,6 +879,19 @@ export function AdaptivePracticePage() {
 
       // Fire-and-forget: record answer + update learner model
       recordAnswerToBackend(currentQuestion, answer);
+
+      // Diagnostic mode: trigger background generation if pool is running low
+      if (practiceSet.isDiagnostic) {
+        const updatedAnswers = [...answers, answer];
+        const answeredCount = updatedAnswers.filter((a) => !a.skipped).length;
+        const answeredIds = new Set(updatedAnswers.map((a) => a.questionId));
+        const remainingInPool = practiceSet.questions.filter(
+          (q) => !answeredIds.has(q.questionId)
+        ).length;
+        if (answeredCount < DIAG_MAX_QUESTIONS && remainingInPool < DIAG_GENERATION_BUFFER) {
+          triggerBackgroundGeneration(updatedAnswers);
+        }
+      }
     } catch (error) {
       console.error("Failed to grade answer:", error);
     } finally {
@@ -753,6 +906,8 @@ export function AdaptivePracticePage() {
     gradeFreeAnswer,
     language,
     recordAnswerToBackend,
+    answers,
+    triggerBackgroundGeneration,
   ]);
 
   // Submit audio for shadow_record evaluation
@@ -770,7 +925,7 @@ export function AdaptivePracticePage() {
           feedbackLanguage: "en",
         });
 
-        const isCorrect = result.accuracyScore >= 60;
+        const isCorrect = result.accuracyScore >= 80;
         const earnedPoints = Math.round((result.accuracyScore / 100) * currentQuestion.points);
 
         const answer: AnswerRecord = {
@@ -779,6 +934,7 @@ export function AdaptivePracticePage() {
           isCorrect,
           earnedPoints,
           responseTimeMs,
+          scorePercent: result.accuracyScore,
         };
 
         setAnswers((prev) => [...prev, answer]);
@@ -805,15 +961,17 @@ export function AdaptivePracticePage() {
     ]
   );
 
-  // Build previous results array for progress squares
+  // Build previous results array for progress squares (sequential answer order)
   const buildPreviousResults = useCallback((): QuestionResult[] => {
     if (!practiceSet) return [];
-    // Show results in order questions were answered
-    return practiceSet.questions.map((q) => {
-      const answer = answers.find((a) => a.questionId === q.questionId);
-      if (!answer) return null;
-      if (answer.skipped) return null;
-      return answer.isCorrect ? "correct" : "incorrect";
+    return answers.map((a) => {
+      if (a.skipped) return null;
+      if (a.scorePercent !== undefined) {
+        if (a.scorePercent >= 80) return "correct";
+        if (a.scorePercent >= 50) return "partial";
+        return "incorrect";
+      }
+      return a.isCorrect ? "correct" : "incorrect";
     });
   }, [practiceSet, answers]);
 
@@ -825,16 +983,33 @@ export function AdaptivePracticePage() {
     setSelectedAnswer("");
 
     const updatedAnswers = answers;
+    const answeredCount = updatedAnswers.filter((a) => !a.skipped).length;
     const remaining = practiceSet.questions.filter(
       (q) => !updatedAnswers.some((a) => a.questionId === q.questionId)
     );
 
-    if (remaining.length === 0) {
-      await finishSession(updatedAnswers);
+    if (practiceSet.isDiagnostic) {
+      // Diagnostic mode: dynamic session end logic
+      if (answeredCount >= DIAG_MAX_QUESTIONS) {
+        generationAbortedRef.current = true;
+        await finishSession(updatedAnswers);
+      } else if (remaining.length === 0) {
+        generationAbortedRef.current = true;
+        await finishSession(updatedAnswers);
+      } else {
+        const next = pickNextQuestion(practiceSet.questions, updatedAnswers);
+        setCurrentQuestion(next);
+        setQuestionStartTime(Date.now());
+      }
     } else {
-      const next = pickNextQuestion(practiceSet.questions, updatedAnswers);
-      setCurrentQuestion(next);
-      setQuestionStartTime(Date.now());
+      // Normal mode: unchanged
+      if (remaining.length === 0) {
+        await finishSession(updatedAnswers);
+      } else {
+        const next = pickNextQuestion(practiceSet.questions, updatedAnswers);
+        setCurrentQuestion(next);
+        setQuestionStartTime(Date.now());
+      }
     }
   }, [practiceSet, answers, finishSession]);
 
@@ -850,6 +1025,8 @@ export function AdaptivePracticePage() {
     setMaxScore(0);
     setShowRawJson(false);
     setModelResults([]);
+    setIsGeneratingMore(false);
+    generationAbortedRef.current = false;
 
     if (!user) return;
 
@@ -858,28 +1035,8 @@ export function AdaptivePracticePage() {
       return;
     }
 
-    getNextPractice({
-      userId: user.id,
-      language,
-      uiLanguage,
-    }).then((result) => {
-      setPracticeSet(result);
-      if (result.isDiagnostic) {
-        setPhase("questions");
-      } else {
-        setPhase("content");
-        setContentReadTime(Date.now());
-      }
-    });
-  }, [
-    user,
-    language,
-    uiLanguage,
-    getNextPractice,
-    isModelTestMode,
-    testModeModels,
-    fireModelTests,
-  ]);
+    refetchPractice();
+  }, [user, isModelTestMode, testModeModels, fireModelTests, refetchPractice]);
 
   // Loading state
   if (authLoading) {
@@ -921,7 +1078,7 @@ export function AdaptivePracticePage() {
             <h1 className="text-xl font-bold">{t("adaptivePractice.title")}</h1>
           </div>
         </div>
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center pb-32">
           <div className="text-2xl sm:text-3xl font-bold text-center px-4">
             <AnimatePresence mode="wait">
               <motion.span
@@ -1243,8 +1400,14 @@ export function AdaptivePracticePage() {
 
   // Questions phase
   if (phase === "questions" && practiceSet && currentQuestion) {
-    const isLastQuestion = questionsHandled === totalQuestions - 1;
+    const answeredNonSkipped = answers.filter((a) => !a.skipped).length;
+    const isDiag = practiceSet.isDiagnostic;
+    const canFinishDiag = isDiag && answeredNonSkipped >= DIAG_MIN_QUESTIONS;
     const currentAnswer = answers.find((a) => a.questionId === currentQuestion.questionId) ?? null;
+    const currentIndex = currentAnswer ? Math.max(0, questionsHandled - 1) : questionsHandled;
+    const isLastQuestion = isDiag
+      ? answeredNonSkipped >= DIAG_MAX_QUESTIONS - 1 || currentIndex >= totalQuestions - 1
+      : currentIndex >= totalQuestions - 1;
     const previousResultsArray = buildPreviousResults();
     const isAudioMicQuestion = AUDIO_MIC_TYPES.includes(currentQuestion.type);
 
@@ -1261,7 +1424,7 @@ export function AdaptivePracticePage() {
       },
       language,
       totalQuestions,
-      currentIndex: questionsHandled,
+      currentIndex,
       previousResults: previousResultsArray,
       showFeedback,
       isSubmitting,
@@ -1307,6 +1470,18 @@ export function AdaptivePracticePage() {
       <div>
         {isAdmin(user?.email) && (
           <div className="container mx-auto px-4 max-w-4xl">
+            <div className="flex items-center gap-2 mb-1">
+              {practiceSet.modelUsed && (
+                <Badge variant="outline" className="text-xs">
+                  {getModelShortName(practiceSet.modelUsed)}
+                </Badge>
+              )}
+              {isDiag && isGeneratingMore && (
+                <Badge variant="secondary" className="text-xs animate-pulse">
+                  {"Generating more..."}
+                </Badge>
+              )}
+            </div>
             <AdminRawJsonPanel
               showRawJson={showRawJson}
               setShowRawJson={setShowRawJson}
@@ -1320,6 +1495,8 @@ export function AdaptivePracticePage() {
                 modelUsed: practiceSet.modelUsed,
                 isDiagnostic: practiceSet.isDiagnostic,
                 generatedAt: practiceSet.generatedAt,
+                systemPrompt: practiceSet.systemPrompt,
+                prompt: practiceSet.prompt,
               }}
               outputData={currentQuestion}
             />
@@ -1337,6 +1514,22 @@ export function AdaptivePracticePage() {
             >
               <SkipForward className="w-4 h-4 mr-1" />
               {t("adaptivePractice.skipAudioQuestion")}
+            </Button>
+          </div>
+        )}
+        {/* Diagnostic mode: early finish button after minimum questions */}
+        {canFinishDiag && showFeedback && (
+          <div className="fixed bottom-4 left-0 right-0 flex justify-center z-50">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                generationAbortedRef.current = true;
+                finishSession(answers);
+              }}
+              className="bg-surface/80 backdrop-blur-sm"
+            >
+              {t("adaptivePractice.finishSession")}
             </Button>
           </div>
         )}

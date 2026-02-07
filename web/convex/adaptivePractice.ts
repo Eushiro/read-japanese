@@ -4,7 +4,14 @@ import { v } from "convex/values";
 
 import { api, internal } from "./_generated/api";
 import { action } from "./_generated/server";
-import { generateAndParse, type JsonSchema, parseJson, TEXT_MODEL_CHAIN } from "./ai/models";
+import {
+  generateAndParse,
+  generateAndParseRace,
+  GRADING_MODEL_CHAIN,
+  type JsonSchema,
+  parseJson,
+  TEXT_MODEL_RACE_CONFIG,
+} from "./ai/models";
 import { isAdminEmail } from "./lib/admin";
 import type { ModelConfig, ProviderType } from "./lib/models";
 import {
@@ -48,6 +55,7 @@ interface PracticeQuestion {
   targetSkill: SkillType;
   difficulty?: "easy" | "medium" | "hard";
   question: string;
+  passageText?: string;
   questionTranslation?: string;
   options?: string[];
   correctAnswer: string;
@@ -75,6 +83,8 @@ interface PracticeSet {
   difficulty: number;
   generatedAt: number;
   modelUsed?: string;
+  systemPrompt?: string;
+  prompt?: string;
   profileSnapshot: {
     abilityEstimate: number;
     abilityConfidence: number;
@@ -140,6 +150,99 @@ function selectContentType(weakSkills: SkillType[]): "dialogue" | "micro_story" 
   }
   // Stories are better for reading/vocabulary
   return "micro_story";
+}
+
+// ============================================
+// SHARED SCHEMA & VALIDATION HELPERS
+// ============================================
+
+const MCQ_TYPES: PracticeQuestionType[] = [
+  "mcq_vocabulary",
+  "mcq_grammar",
+  "mcq_comprehension",
+  "fill_blank",
+  "listening_mcq",
+];
+
+/**
+ * Build the JSON schema for AI question generation.
+ * Shared between diagnostic, content-based, and incremental generation.
+ */
+function buildQuestionSchema(name: string): JsonSchema {
+  return {
+    name,
+    schema: {
+      type: "object",
+      properties: {
+        questions: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              type: {
+                type: "string",
+                enum: [
+                  "mcq_vocabulary",
+                  "mcq_grammar",
+                  "mcq_comprehension",
+                  "fill_blank",
+                  "translation",
+                  "listening_mcq",
+                  "free_input",
+                  "dictation",
+                  "shadow_record",
+                ],
+              },
+              targetSkill: {
+                type: "string",
+                enum: ["vocabulary", "grammar", "reading", "listening", "writing", "speaking"],
+              },
+              difficulty: { type: "string", enum: ["easy", "medium", "hard"] },
+              question: { type: "string" },
+              passageText: { type: "string" },
+              questionTranslation: { type: "string" },
+              options: { type: "array", items: { type: "string" } },
+              correctAnswer: { type: "string" },
+              acceptableAnswers: { type: "array", items: { type: "string" } },
+              points: { type: "number" },
+            },
+            required: ["type", "targetSkill", "difficulty", "question", "correctAnswer", "points"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["questions"],
+      additionalProperties: false,
+    },
+  };
+}
+
+/**
+ * Filter out broken MCQ questions and assign unique IDs.
+ */
+function filterAndAssignIds(questions: PracticeQuestion[], prefix: string): PracticeQuestion[] {
+  const validQuestions = questions.filter((q) => {
+    if (MCQ_TYPES.includes(q.type) && (!q.options || q.options.length < 2)) {
+      console.warn(`Dropping ${q.type} question with insufficient options`);
+      return false;
+    }
+    return true;
+  });
+
+  return validQuestions.map((q, index) => ({
+    ...q,
+    options: MCQ_TYPES.includes(q.type) && q.options ? shuffleArray(q.options) : q.options,
+    questionId: `${prefix}_${Date.now()}_${index}`,
+  }));
+}
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 // ============================================
@@ -237,6 +340,8 @@ export const getNextPractice = action({
         difficulty: profile?.abilityEstimate ?? 0,
         generatedAt: Date.now(),
         modelUsed: diagnosticResult.modelUsed,
+        systemPrompt: diagnosticResult.systemPrompt,
+        prompt: diagnosticResult.prompt,
         profileSnapshot,
       };
     }
@@ -363,6 +468,7 @@ For each question:
 - MCQ should have exactly 4 options
 - Fill-in-blank: use "___" in the question field to mark the blank (e.g. "毎朝___を食べます"). The correctAnswer is the word that fills the blank. Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
 - Comprehension questions should test understanding of the main ideas
+- For mcq_comprehension, do NOT set "passageText" — the passage is the provided content.
 - Translation questions should be from ${languageName} to ${uiLanguageName}. Set questionTranslation to a short prompt like "Translate:".
 - listening_mcq: provide a question about audio content with 4 MCQ options. The audio will be generated from the content.
 - dictation: set question to a sentence from the content that the user will hear and type. The correctAnswer is the exact sentence.
@@ -398,90 +504,36 @@ Include at least 4 different question types. Tag each question with difficulty: 
 
 Return JSON with an array of questions.`;
 
-  const questionSchema: JsonSchema = {
-    name: "practice_questions",
-    schema: {
-      type: "object",
-      properties: {
-        questions: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              type: {
-                type: "string",
-                enum: [
-                  "mcq_vocabulary",
-                  "mcq_grammar",
-                  "mcq_comprehension",
-                  "fill_blank",
-                  "translation",
-                  "listening_mcq",
-                  "free_input",
-                  "dictation",
-                  "shadow_record",
-                ],
-              },
-              targetSkill: {
-                type: "string",
-                enum: ["vocabulary", "grammar", "reading", "listening", "writing", "speaking"],
-              },
-              question: { type: "string" },
-              questionTranslation: { type: "string" },
-              options: { type: "array", items: { type: "string" } },
-              correctAnswer: { type: "string" },
-              acceptableAnswers: { type: "array", items: { type: "string" } },
-              difficulty: { type: "string", enum: ["easy", "medium", "hard"] },
-              points: { type: "number" },
-            },
-            required: ["type", "targetSkill", "question", "correctAnswer", "difficulty", "points"],
-            additionalProperties: false,
-          },
-        },
-      },
-      required: ["questions"],
-      additionalProperties: false,
+  const questionSchema = buildQuestionSchema("practice_questions");
+
+  const sharedOpts = {
+    prompt,
+    systemPrompt,
+    maxTokens: 3000,
+    jsonSchema: questionSchema,
+    parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
+    validate: (parsed: { questions: PracticeQuestion[] }) => {
+      if (!parsed.questions || parsed.questions.length === 0) {
+        return "No questions generated";
+      }
+      return null;
     },
   };
 
   try {
-    const result = await generateAndParse<{ questions: PracticeQuestion[] }>({
-      prompt,
-      systemPrompt,
-      maxTokens: 3000,
-      jsonSchema: questionSchema,
-      models: modelOverride ?? TEXT_MODEL_CHAIN,
-      parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
-      validate: (parsed) => {
-        if (!parsed.questions || parsed.questions.length === 0) {
-          return "No questions generated";
-        }
-        return null;
-      },
-    });
+    const result = modelOverride
+      ? await generateAndParse<{ questions: PracticeQuestion[] }>({
+          ...sharedOpts,
+          models: modelOverride,
+        })
+      : await generateAndParseRace<{ questions: PracticeQuestion[] }>({
+          ...sharedOpts,
+          raceModel: TEXT_MODEL_RACE_CONFIG.raceModel,
+          fallbackChain: TEXT_MODEL_RACE_CONFIG.fallbackChain,
+        });
 
-    // Filter out broken questions (e.g. MCQ types with no options)
-    const MCQ_TYPES: PracticeQuestionType[] = [
-      "mcq_vocabulary",
-      "mcq_grammar",
-      "mcq_comprehension",
-      "fill_blank",
-      "listening_mcq",
-    ];
-    const validQuestions = result.result.questions.filter((q) => {
-      if (MCQ_TYPES.includes(q.type) && (!q.options || q.options.length < 2)) {
-        console.warn(`Dropping ${q.type} question with insufficient options`);
-        return false;
-      }
-      return true;
-    });
-
-    // Add unique IDs to questions
     return {
-      questions: validQuestions.map((q, index) => ({
-        ...q,
-        questionId: `pq_${Date.now()}_${index}`,
-      })),
+      questions: filterAndAssignIds(result.result.questions, "pq"),
       modelUsed: result.usage.model,
     };
   } catch (error) {
@@ -570,14 +622,14 @@ ${learnerBlock}
 ${langMixing}
 
 DIAGNOSTIC STRATEGY:
-- 2 questions BELOW estimated level (confirm strengths)
-- 4 questions AT estimated level (calibrate precisely)
-- 2 questions ABOVE estimated level (probe ceiling)
+- 1 question BELOW estimated level (confirm strengths)
+- 2 questions AT estimated level (calibrate precisely)
+- 1 question ABOVE estimated level (probe ceiling)
 
 Generate questions covering ALL of these skills:
 - vocabulary (mcq_vocabulary, fill_blank)
 - grammar (mcq_grammar)
-- reading (mcq_comprehension — use a SHORT 1-2 sentence passage embedded in the question itself)
+- reading (mcq_comprehension — provide a SHORT 1-2 sentence passage in "passageText", and keep "question" as the question only)
 - writing (free_input, translation)
 - listening (listening_mcq, dictation — keep to max 1)
 - speaking (shadow_record — keep to max 1)
@@ -591,7 +643,7 @@ For each question:
 - fill_blank: use "___" in the question to mark the blank. Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
 - translation: ask the learner to translate a sentence. Set questionTranslation to "Translate:"
 - free_input: ask the learner to write a short response in ${languageName}
-- mcq_comprehension: embed a short ${languageName} text (1-2 sentences) directly in the question
+- mcq_comprehension: set "passageText" to a short ${languageName} text (1-2 sentences) and use "question" for the question itself
 - listening_mcq: provide a question about what was heard (audio will be generated from the question text)
 - dictation: set question to a ${languageName} sentence the user will type after hearing
 - shadow_record: set question to a ${languageName} sentence for pronunciation. Set questionTranslation to the ${uiLanguageName} translation
@@ -603,94 +655,41 @@ ${stemVariety}
 IMPORTANT: Questions must be standalone — no external reading passage.
 Each question MUST have a "difficulty" field: "easy", "medium", or "hard".`;
 
-  const prompt = `Generate 8 standalone diagnostic ${languageName} practice questions.
-Cover at least 5 different skills. Use at least 4 different question types.
+  const prompt = `Generate 4 standalone diagnostic ${languageName} practice questions.
+Cover at least 3 different skills. Use at least 3 different question types.
 Maximum 1 listening/dictation question and 1 shadow_record question.
 Return JSON.`;
 
-  const questionSchema: JsonSchema = {
-    name: "diagnostic_questions",
-    schema: {
-      type: "object",
-      properties: {
-        questions: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              type: {
-                type: "string",
-                enum: [
-                  "mcq_vocabulary",
-                  "mcq_grammar",
-                  "mcq_comprehension",
-                  "fill_blank",
-                  "translation",
-                  "listening_mcq",
-                  "free_input",
-                  "dictation",
-                  "shadow_record",
-                ],
-              },
-              targetSkill: {
-                type: "string",
-                enum: ["vocabulary", "grammar", "reading", "listening", "writing", "speaking"],
-              },
-              difficulty: { type: "string", enum: ["easy", "medium", "hard"] },
-              question: { type: "string" },
-              questionTranslation: { type: "string" },
-              options: { type: "array", items: { type: "string" } },
-              correctAnswer: { type: "string" },
-              acceptableAnswers: { type: "array", items: { type: "string" } },
-              points: { type: "number" },
-            },
-            required: ["type", "targetSkill", "difficulty", "question", "correctAnswer", "points"],
-            additionalProperties: false,
-          },
-        },
-      },
-      required: ["questions"],
-      additionalProperties: false,
+  const questionSchema = buildQuestionSchema("diagnostic_questions");
+
+  const diagSharedOpts = {
+    prompt,
+    systemPrompt,
+    maxTokens: 2000,
+    jsonSchema: questionSchema,
+    parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
+    validate: (parsed: { questions: PracticeQuestion[] }) => {
+      if (!parsed.questions || parsed.questions.length < 2) {
+        return "Not enough questions generated";
+      }
+      return null;
     },
   };
 
   try {
-    const result = await generateAndParse<{ questions: PracticeQuestion[] }>({
-      prompt,
-      systemPrompt,
-      maxTokens: 3000,
-      jsonSchema: questionSchema,
-      models: modelOverride ?? TEXT_MODEL_CHAIN,
-      parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
-      validate: (parsed) => {
-        if (!parsed.questions || parsed.questions.length < 4) {
-          return "Not enough questions generated";
-        }
-        return null;
-      },
-    });
-
-    // Filter out broken questions (e.g. MCQ types with no options)
-    const MCQ_TYPES: PracticeQuestionType[] = [
-      "mcq_vocabulary",
-      "mcq_grammar",
-      "mcq_comprehension",
-      "fill_blank",
-      "listening_mcq",
-    ];
-    const validQuestions = result.result.questions.filter((q) => {
-      if (MCQ_TYPES.includes(q.type) && (!q.options || q.options.length < 2)) {
-        console.warn(`Dropping ${q.type} question with insufficient options`);
-        return false;
-      }
-      return true;
-    });
+    const result = modelOverride
+      ? await generateAndParse<{ questions: PracticeQuestion[] }>({
+          ...diagSharedOpts,
+          models: modelOverride,
+        })
+      : await generateAndParseRace<{ questions: PracticeQuestion[] }>({
+          ...diagSharedOpts,
+          raceModel: TEXT_MODEL_RACE_CONFIG.raceModel,
+          fallbackChain: TEXT_MODEL_RACE_CONFIG.fallbackChain,
+        });
 
     return {
-      questions: validQuestions.map((q, index) => ({
-        ...q,
-        questionId: `diag_${Date.now()}_${index}`,
-      })),
+      questions: filterAndAssignIds(result.result.questions, "diag"),
       modelUsed: result.usage.model,
       systemPrompt,
       prompt,
@@ -783,6 +782,144 @@ export const generateForModel = action({
 });
 
 /**
+ * Generate 2 incremental diagnostic questions for dynamic session extension.
+ * Called during diagnostic mode when the pool of unanswered questions runs low.
+ */
+export const generateIncrementalQuestions = action({
+  args: {
+    language: languageValidator,
+    abilityEstimate: v.number(),
+    targetDifficulty: v.union(v.literal("easy"), v.literal("medium"), v.literal("hard")),
+    recentPerformance: v.array(
+      v.object({
+        skill: v.string(),
+        type: v.string(),
+        difficulty: v.string(),
+        isCorrect: v.boolean(),
+      })
+    ),
+    excludeSkills: v.array(v.string()),
+    excludeTypes: v.array(v.string()),
+    uiLanguage: v.optional(uiLanguageValidator),
+  },
+  handler: async (ctx, args) => {
+    // Verify user identity
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
+    const languageName = getContentLanguageName(args.language as ContentLanguage);
+    const uiLanguageName = getUILanguageName(uiLang);
+
+    const levelHint =
+      args.abilityEstimate <= -2
+        ? "beginner"
+        : args.abilityEstimate <= 0
+          ? "elementary to intermediate"
+          : args.abilityEstimate <= 1.5
+            ? "intermediate to advanced"
+            : "advanced";
+
+    const langMixing = buildLanguageMixingDirective(
+      uiLang,
+      args.abilityEstimate,
+      args.language as ContentLanguage
+    );
+    const distractorRules = buildDistractorRules(args.language as ContentLanguage, levelHint);
+    const stemVariety = buildStemVarietyRules();
+
+    // Build recent performance context
+    const perfSummary = args.recentPerformance
+      .map((p) => `${p.skill}/${p.type} (${p.difficulty}): ${p.isCorrect ? "correct" : "wrong"}`)
+      .join("\n");
+
+    const excludeSkillsNote =
+      args.excludeSkills.length > 0
+        ? `AVOID these skills (recently used): ${args.excludeSkills.join(", ")}`
+        : "";
+    const excludeTypesNote =
+      args.excludeTypes.length > 0
+        ? `AVOID these question types (recently used): ${args.excludeTypes.join(", ")}`
+        : "";
+
+    const systemPrompt = `You are a ${languageName} diagnostic assessment generator.
+Create standalone practice questions that do NOT reference any reading passage — each question must be self-contained.
+
+LEARNER PROFILE:
+- Estimated level: ${levelHint} (ability: ${args.abilityEstimate.toFixed(1)})
+
+${langMixing}
+
+RECENT PERFORMANCE:
+${perfSummary || "No recent answers yet."}
+
+TARGET DIFFICULTY: ${args.targetDifficulty}
+Generate questions at the "${args.targetDifficulty}" difficulty level.
+
+${excludeSkillsNote}
+${excludeTypesNote}
+
+For each question:
+- MCQ: exactly 4 options
+- fill_blank: use "___" in the question to mark the blank. Provide exactly 4 options.
+- translation: set questionTranslation to "Translate:"
+- free_input: ask the learner to write a short response in ${languageName}
+- mcq_comprehension: set "passageText" to a short ${languageName} text (1-2 sentences) and use "question" for the question itself
+- listening_mcq / dictation: max 1 total
+- shadow_record: set questionTranslation to the ${uiLanguageName} translation. Max 1.
+
+${distractorRules}
+
+${stemVariety}
+
+IMPORTANT: Questions must be standalone — no external reading passage.
+Each question MUST have a "difficulty" field: "easy", "medium", or "hard".`;
+
+    const prompt = `Generate exactly 2 standalone diagnostic ${languageName} practice questions.
+Target difficulty: ${args.targetDifficulty}.
+Use different skills and question types from each other.
+Return JSON.`;
+
+    const questionSchema = buildQuestionSchema("incremental_diagnostic_questions");
+
+    try {
+      const result = await generateAndParseRace<{ questions: PracticeQuestion[] }>({
+        prompt,
+        systemPrompt,
+        maxTokens: 800,
+        jsonSchema: questionSchema,
+        raceModel: TEXT_MODEL_RACE_CONFIG.raceModel,
+        fallbackChain: TEXT_MODEL_RACE_CONFIG.fallbackChain,
+        parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
+        validate: (parsed) => {
+          if (!parsed.questions || parsed.questions.length === 0) {
+            return "No questions generated";
+          }
+          return null;
+        },
+      });
+
+      return {
+        questions: filterAndAssignIds(result.result.questions, "incr"),
+        modelUsed: result.usage.model,
+        systemPrompt,
+        prompt,
+      };
+    } catch (error) {
+      console.error("Failed to generate incremental questions:", error);
+      return {
+        questions: [],
+        modelUsed: undefined,
+        systemPrompt,
+        prompt,
+      };
+    }
+  },
+});
+
+/**
  * Grade a free-form answer using AI
  */
 export const gradeFreeAnswer = action({
@@ -791,6 +928,8 @@ export const gradeFreeAnswer = action({
     userAnswer: v.string(),
     language: languageValidator,
     expectedConcepts: v.optional(v.array(v.string())),
+    correctAnswer: v.optional(v.string()),
+    acceptableAnswers: v.optional(v.array(v.string())),
   },
   handler: async (_ctx, args): Promise<{ score: number; feedback: string; isCorrect: boolean }> => {
     const languageNames: Record<string, string> = {
@@ -806,6 +945,8 @@ Consider: grammar accuracy, vocabulary usage, and relevance to the question.`;
 
     const prompt = `Question: ${args.question}
 Student's answer: "${args.userAnswer}"
+${args.correctAnswer ? `Reference answer: ${args.correctAnswer}` : ""}
+${args.acceptableAnswers?.length ? `Also acceptable: ${args.acceptableAnswers.join(", ")}` : ""}
 ${args.expectedConcepts ? `Expected concepts: ${args.expectedConcepts.join(", ")}` : ""}
 
 Grade this answer.`;
@@ -834,7 +975,7 @@ Grade this answer.`;
         systemPrompt,
         maxTokens: 300,
         jsonSchema: gradingSchema,
-        models: TEXT_MODEL_CHAIN,
+        models: GRADING_MODEL_CHAIN,
         parse: (response) =>
           parseJson<{ score: number; feedback: string; isCorrect: boolean }>(response),
       });

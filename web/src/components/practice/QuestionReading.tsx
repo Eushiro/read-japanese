@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { MCQGrid } from "./MCQGrid";
 import { ProgressSquares } from "./ProgressSquares";
@@ -23,12 +23,18 @@ export function QuestionReading({
   const [confirmedOption, setConfirmedOption] = useState<number | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
 
+  // Stable ref prevents re-fire when callback identity changes
+  const onSubmitRef = useRef(onSubmit);
+  useEffect(() => {
+    onSubmitRef.current = onSubmit;
+  }, [onSubmit]);
+
   // Auto-submit answer when user selects an option so it gets recorded
   useEffect(() => {
     if (confirmedOption !== null) {
-      onSubmit();
+      onSubmitRef.current();
     }
-  }, [confirmedOption, onSubmit]);
+  }, [confirmedOption]);
 
   const options = useMemo(() => question.options ?? [], [question.options]);
   const correctAnswerIndex = options.indexOf(question.correctAnswer);
@@ -79,14 +85,16 @@ export function QuestionReading({
             transition={{ delay: 0.1 }}
           >
             <p className="text-xl leading-relaxed text-foreground" style={{ fontFamily }}>
-              {content.content}
+              {question.passageText ?? content.content}
             </p>
-            <p
-              className="text-sm italic text-foreground/60 mt-2"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              {content.translation}
-            </p>
+            {content.translation && !question.passageText && (
+              <p
+                className="text-sm italic text-foreground/60 mt-2"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                {content.translation}
+              </p>
+            )}
           </motion.div>
 
           {/* Separator */}

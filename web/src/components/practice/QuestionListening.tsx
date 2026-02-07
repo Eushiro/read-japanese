@@ -27,12 +27,18 @@ export function QuestionListening({
   const [hasPlayed, setHasPlayed] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Stable ref prevents re-fire when callback identity changes
+  const onSubmitRef = useRef(onSubmit);
+  useEffect(() => {
+    onSubmitRef.current = onSubmit;
+  }, [onSubmit]);
+
   // Auto-submit answer when user selects an option so it gets recorded
   useEffect(() => {
     if (confirmedOption !== null) {
-      onSubmit();
+      onSubmitRef.current();
     }
-  }, [confirmedOption, onSubmit]);
+  }, [confirmedOption]);
 
   const options = useMemo(() => question.options ?? [], [question.options]);
   const correctAnswerIndex = options.indexOf(question.correctAnswer);

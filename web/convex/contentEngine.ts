@@ -89,10 +89,15 @@ type ContentItem = {
 // CONSTANTS
 // ============================================
 
-// Model configuration - Gemini is PRIMARY (free tier via Google direct)
-// Kimi is SECONDARY (parallel candidate via OpenRouter)
-const MODEL_PRIMARY = TEXT_MODELS.GEMINI_3_FLASH;
-const MODEL_SECONDARY = TEXT_MODELS.KIMI_K2_5;
+// Model configuration - GPT-OSS is PRIMARY, Sonnet is SECONDARY (with cross-fallback)
+const MODEL_PRIMARY_CHAIN: ModelConfig[] = [
+  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
+  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
+];
+const MODEL_SECONDARY_CHAIN: ModelConfig[] = [
+  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
+  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
+];
 const COVERAGE_THRESHOLD = 0.85;
 const TARGET_COVERAGE = 0.85;
 const REUSE_SCORE_THRESHOLD = 0.65;
@@ -210,14 +215,14 @@ export const getBestContent = action({
     const candidates = await Promise.all([
       generateCandidate(ctx, {
         runId,
-        modelId: MODEL_PRIMARY,
+        models: MODEL_PRIMARY_CHAIN,
         contentType: args.contentType,
         language: args.language,
         spec,
       }),
       generateCandidate(ctx, {
         runId,
-        modelId: MODEL_SECONDARY,
+        models: MODEL_SECONDARY_CHAIN,
         contentType: args.contentType,
         language: args.language,
         spec,
@@ -329,23 +334,11 @@ function scoreReuseCandidate(
   return 0.45 * difficultyFit + 0.25 * interestFit + 0.2 * clarity + 0.1 * novelty;
 }
 
-/**
- * Convert model ID to ModelConfig for the new provider abstraction
- */
-function toModelConfig(modelId: string): ModelConfig {
-  // Route Gemini models to Google direct API (free tier)
-  if (modelId === TEXT_MODELS.GEMINI_3_FLASH) {
-    return { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" };
-  }
-  // All other models go through OpenRouter
-  return { model: modelId, provider: "openrouter" };
-}
-
 async function generateCandidate(
   _ctx: ActionCtx,
   args: {
     runId: string;
-    modelId: string;
+    models: ModelConfig[];
     contentType: "dialogue" | "micro_story";
     language: ContentLanguage;
     spec: ContentSpec;
@@ -358,9 +351,9 @@ async function generateCandidate(
   const generation = await generateAndParse<CandidateContent>({
     prompt,
     systemPrompt,
-    maxTokens: 1800,
+    maxTokens: 2500,
     jsonSchema: schema,
-    models: [toModelConfig(args.modelId)],
+    models: args.models,
     parse: (response) => parseJson<CandidateContent>(response),
     validate: (parsed) => (!parsed.title || !parsed.content ? "Missing content" : null),
   });
@@ -398,7 +391,7 @@ async function generateCandidate(
   return {
     candidateId,
     candidateUrl,
-    modelId: args.modelId,
+    modelId: generation.usage.model,
     contentPayload: candidatePayload,
     vocabList,
     grammarTags,
@@ -589,7 +582,7 @@ Return JSON with:
     systemPrompt,
     maxTokens: 300,
     jsonSchema: gradingSchema,
-    models: [toModelConfig(MODEL_PRIMARY)],
+    models: MODEL_PRIMARY_CHAIN,
     parse: (response) => parseJson<GradingResult>(response),
     validate: (parsed) => (parsed.score < 0 || parsed.score > 100 ? "Score out of range" : null),
   });

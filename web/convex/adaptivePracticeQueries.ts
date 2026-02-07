@@ -60,6 +60,8 @@ export const recordAnswer = mutation({
     userId: v.string(),
     language: languageValidator,
     practiceId: v.string(),
+    contentType: v.optional(adaptiveContentTypeValidator),
+    isDiagnostic: v.optional(v.boolean()),
     questionId: v.string(),
     questionText: v.string(),
     questionType: v.string(),
@@ -81,7 +83,7 @@ export const recordAnswer = mutation({
     await ctx.db.insert("questionHistory", {
       userId: args.userId,
       language: args.language,
-      sourceType: "comprehension",
+      sourceType: args.isDiagnostic ? "placement" : "comprehension",
       sourceId: args.practiceId,
       questionContent: {
         questionText: args.questionText,
@@ -109,7 +111,7 @@ export const recordAnswer = mutation({
       userId: args.userId,
       language: args.language,
       contentId: args.practiceId,
-      contentType: "dialogue",
+      contentType: args.contentType ?? "dialogue",
       difficultyEstimate,
       skillsTested: [{ skill: args.targetSkill, weight: 1 }],
       score,

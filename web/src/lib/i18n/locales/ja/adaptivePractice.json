@@ -6,7 +6,10 @@
     "selectingContent": "パーソナライズされたコンテンツを選択中...",
     "generatingQuestions": "練習問題を生成中...",
     "personalizingDifficulty": "難易度を調整中...",
-    "preparingPractice": "練習セッションを準備中..."
+    "preparingPractice": "練習セッションを準備中...",
+    "finetuning": "レベルに合わせて微調整中...",
+    "puttingTouches": "仕上げ中...",
+    "verifyingCorrectness": "正確性を確認中..."
   },
   "contentType": {
     "dialogue": "会話",
@@ -39,6 +42,7 @@
   "recordingTapToStop": "録音中... タップして停止",
   "evaluating": "評価中...",
   "done": "完了",
+  "grading": "採点中...",
   "typeAnswer": "回答を入力してください...",
   "aiScore": "AIスコア",
   "accuracy": "正確度",
@@ -51,6 +55,7 @@
   "nextQuestion": "次の問題",
   "finishPractice": "結果を見る",
   "skipAudioQuestion": "今は話せません・聴けません",
+  "finishSession": "セッション終了",
   "results": {
     "title": "練習完了",
     "excellent": "素晴らしい！",

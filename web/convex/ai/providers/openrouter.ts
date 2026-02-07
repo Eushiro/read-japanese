@@ -70,12 +70,13 @@ export async function generateText(
     messages,
     temperature: options.temperature ?? 0.7,
     max_tokens: options.maxTokens || 500,
+    max_completion_tokens: options.maxTokens || 500,
   };
 
   // Enable structured JSON output with schema
   if (options.jsonSchema) {
     // Only use full json_schema mode for models known to support it well (OpenAI, Claude)
-    // Other models (Kimi, etc.) may return empty responses or malformed JSON with json_schema
+    // Other models may return empty responses or malformed JSON with json_schema
     // Fall back to simple json_object mode which just asks for JSON output
     const supportsJsonSchema =
       options.model.includes("openai/") || options.model.includes("anthropic/");
@@ -275,12 +276,14 @@ export async function generateTextWithAudio(
   const body: Record<string, unknown> = {
     model: options.model,
     messages,
+    max_tokens: options.maxTokens || 500,
+    max_completion_tokens: options.maxTokens || 500,
   };
 
   // Enable structured JSON output with schema
   if (options.jsonSchema) {
     // Only use full json_schema mode for models known to support it well (OpenAI, Claude)
-    // Other models (Kimi, etc.) may return empty responses or malformed JSON with json_schema
+    // Other models may return empty responses or malformed JSON with json_schema
     // Fall back to simple json_object mode which just asks for JSON output
     const supportsJsonSchema =
       options.model.includes("openai/") || options.model.includes("anthropic/");

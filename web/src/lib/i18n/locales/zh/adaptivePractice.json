@@ -6,7 +6,10 @@
     "selectingContent": "正在选择个性化内容...",
     "generatingQuestions": "正在生成练习题...",
     "personalizingDifficulty": "正在校准难度级别...",
-    "preparingPractice": "正在准备您的练习会话..."
+    "preparingPractice": "正在准备您的练习会话...",
+    "finetuning": "正在针对您的水平微调...",
+    "puttingTouches": "最后润色中...",
+    "verifyingCorrectness": "正在验证正确性..."
   },
   "contentType": {
     "dialogue": "对话",
@@ -39,6 +42,7 @@
   "recordingTapToStop": "录音中... 点击停止",
   "evaluating": "评估中...",
   "done": "完成",
+  "grading": "评分中...",
   "typeAnswer": "请输入您的答案...",
   "aiScore": "AI评分",
   "accuracy": "准确度",
@@ -51,6 +55,7 @@
   "nextQuestion": "下一题",
   "finishPractice": "查看结果",
   "skipAudioQuestion": "现在无法说话/听音",
+  "finishSession": "结束练习",
   "results": {
     "title": "练习完成",
     "excellent": "太棒了！",

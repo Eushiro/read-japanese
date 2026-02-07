@@ -65,15 +65,17 @@ export function QuestionDictation({
     onSelectAnswer(value);
   };
 
-  const resultsWithCurrent = [...previousResults];
-  if (showFeedback && currentAnswer) {
-    resultsWithCurrent[currentIndex] = currentAnswer.isCorrect ? "correct" : "incorrect";
-  }
-
   // Calculate diff and accuracy for display
   const diff = showFeedback ? getDiff((selectedAnswer || "").trim(), question.correctAnswer) : [];
   const matchCount = diff.filter((d) => d.status === "match").length;
   const accuracy = diff.length > 0 ? Math.round((matchCount / diff.length) * 100) : 0;
+
+  const resultsWithCurrent = [...previousResults];
+  if (showFeedback && currentAnswer) {
+    if (accuracy >= 80) resultsWithCurrent[currentIndex] = "correct";
+    else if (accuracy >= 50) resultsWithCurrent[currentIndex] = "partial";
+    else resultsWithCurrent[currentIndex] = "incorrect";
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden flex flex-col bg-background">
@@ -164,9 +166,17 @@ export function QuestionDictation({
                           ? "var(--color-foreground)"
                           : d.status === "wrong"
                             ? "var(--color-accent)"
+                            : d.status === "extra"
+                              ? "#ef4444"
+                              : undefined,
+                      textDecoration:
+                        d.status === "missing"
+                          ? "underline"
+                          : d.status === "extra"
+                            ? "line-through"
                             : undefined,
-                      textDecoration: d.status === "missing" ? "underline" : undefined,
-                      textDecorationColor: d.status === "missing" ? "#ef4444" : undefined,
+                      textDecorationColor:
+                        d.status === "missing" || d.status === "extra" ? "#ef4444" : undefined,
                     }}
                     className={d.status === "missing" ? "text-accent" : ""}
                   >
@@ -190,15 +200,20 @@ export function QuestionDictation({
             <Textarea
               value={selectedAnswer || localInput}
               onChange={(e) => handleInputChange(e.target.value)}
-              readOnly={showFeedback}
+              readOnly={showFeedback || isSubmitting}
+              disabled={isSubmitting && !showFeedback}
               placeholder={t("adaptivePractice.typeAnswer")}
               rows={2}
               className={`rounded-xl px-6 py-5 text-xl resize-none ${
-                showFeedback
-                  ? accuracy >= 80
-                    ? "border-[#4ade80] focus-visible:border-[#4ade80] focus-visible:ring-[#4ade80]/20"
-                    : "border-[#ef4444] focus-visible:border-[#ef4444] focus-visible:ring-[#ef4444]/20"
-                  : ""
+                isSubmitting && !showFeedback
+                  ? "border-accent animate-pulse"
+                  : showFeedback
+                    ? accuracy >= 80
+                      ? "border-[#4ade80] focus-visible:border-[#4ade80] focus-visible:ring-[#4ade80]/20"
+                      : accuracy >= 50
+                        ? "border-[#f59e0b] focus-visible:border-[#f59e0b] focus-visible:ring-[#f59e0b]/20"
+                        : "border-[#ef4444] focus-visible:border-[#ef4444] focus-visible:ring-[#ef4444]/20"
+                    : ""
               }`}
               style={{ fontFamily }}
               onKeyDown={(e) => {
@@ -222,7 +237,9 @@ export function QuestionDictation({
               ? isLastQuestion
                 ? t("adaptivePractice.finishPractice")
                 : `${t("adaptivePractice.nextQuestion")} \u2192`
-              : t("common.actions.submit")}
+              : isSubmitting
+                ? t("adaptivePractice.grading")
+                : t("common.actions.submit")}
           </Button>
         </div>
 

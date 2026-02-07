@@ -27,8 +27,8 @@ export interface ModelConfig {
 
 export const TEXT_MODELS = {
   // OpenRouter-routed models
+  GPT_OSS_120B: "openai/gpt-oss-120b",
   CLAUDE_SONNET_4_5: "anthropic/claude-sonnet-4.5",
-  KIMI_K2_5: "moonshotai/kimi-k2.5",
   CLAUDE_HAIKU_4_5: "anthropic/claude-haiku-4.5",
 
   // Google direct API models
@@ -67,9 +67,10 @@ export const SPECIAL_MODELS = {
 // ============================================
 
 /**
- * Default text generation chain: Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
+ * Default text generation chain: GPT-OSS-120B (OpenRouter) -> Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
  */
 export const TEXT_MODEL_CHAIN: ModelConfig[] = [
+  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
   { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
 ];
@@ -79,7 +80,6 @@ export const TEXT_MODEL_CHAIN: ModelConfig[] = [
  */
 export const TEST_MODELS = {
   GROK_FAST: "x-ai/grok-4.1-fast",
-  GPT_OSS_20B: "openai/gpt-oss-20b",
 } as const;
 
 /**
@@ -88,15 +88,16 @@ export const TEST_MODELS = {
 export const TEST_MODE_MODELS: ModelConfig[] = [
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
   { model: TEST_MODELS.GROK_FAST, provider: "openrouter" },
-  { model: TEST_MODELS.GPT_OSS_20B, provider: "openrouter" },
+  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
   { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
 ];
 
 /**
- * Grading model chain: Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
+ * Grading model chain: GPT-OSS-120B (OpenRouter) -> Claude Sonnet (OpenRouter) -> Gemini Flash (Google)
  * Used for structured evaluation tasks
  */
 export const GRADING_MODEL_CHAIN: ModelConfig[] = [
+  { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" },
   { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
 ];
@@ -106,8 +107,20 @@ export const GRADING_MODEL_CHAIN: ModelConfig[] = [
  * Gemini is PRIMARY for grading and first candidate
  */
 export const CONTENT_MODELS = {
-  primary: { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" as ProviderType },
+  primary: { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" as ProviderType },
   secondary: { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" as ProviderType },
+};
+
+/** Number of parallel calls in race mode */
+export const RACE_CONCURRENCY = 4;
+
+/** Race config: model to race + fallback chain */
+export const TEXT_MODEL_RACE_CONFIG = {
+  raceModel: { model: TEXT_MODELS.GPT_OSS_120B, provider: "openrouter" as ProviderType },
+  fallbackChain: [
+    { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" as ProviderType },
+    { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" as ProviderType },
+  ],
 };
 
 /**

@@ -6,7 +6,10 @@
     "selectingContent": "Sélection de contenu personnalisé...",
     "generatingQuestions": "Génération des questions...",
     "personalizingDifficulty": "Calibrage du niveau de difficulté...",
-    "preparingPractice": "Préparation de votre session..."
+    "preparingPractice": "Préparation de votre session...",
+    "finetuning": "Ajustement pour votre niveau...",
+    "puttingTouches": "Dernières retouches...",
+    "verifyingCorrectness": "Vérification de l'exactitude..."
   },
   "contentType": {
     "dialogue": "Dialogue",
@@ -39,6 +42,7 @@
   "recordingTapToStop": "Enregistrement... appuyez pour arrêter",
   "evaluating": "Évaluation...",
   "done": "Terminé",
+  "grading": "Notation en cours...",
   "typeAnswer": "Tapez votre réponse...",
   "aiScore": "Score IA",
   "accuracy": "Précision",
@@ -51,6 +55,7 @@
   "nextQuestion": "Question suivante",
   "finishPractice": "Voir les résultats",
   "skipAudioQuestion": "Je ne peux pas parler/écouter maintenant",
+  "finishSession": "Terminer la session",
   "results": {
     "title": "Pratique terminée",
     "excellent": "Excellent travail !",

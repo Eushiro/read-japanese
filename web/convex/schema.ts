@@ -1569,7 +1569,7 @@ export default defineSchema({
     grading: v.object({
       isCorrect: v.boolean(),
       score: v.optional(v.number()), // 0-1 for partial credit
-      modelUsed: v.optional(v.string()), // "google/gemini-3-flash-preview" | "moonshotai/kimi-k2.5"
+      modelUsed: v.optional(v.string()), // e.g. "openai/gpt-oss-120b" | "anthropic/claude-sonnet-4.5"
       gradedAt: v.number(),
       feedback: v.optional(v.string()), // AI explanation
       detailedScores: v.optional(
@@ -1620,6 +1620,7 @@ export default defineSchema({
       reading: v.number(),
       listening: v.number(),
       writing: v.number(),
+      speaking: v.number(),
     }),
 
     createdAt: v.number(),

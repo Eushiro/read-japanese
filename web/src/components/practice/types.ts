@@ -5,6 +5,7 @@ export interface PracticeQuestion {
   type: string;
   targetSkill: string;
   question: string;
+  passageText?: string;
   questionTranslation?: string;
   options?: string[];
   correctAnswer: string;
@@ -23,7 +24,7 @@ export interface PracticeContent {
   audioUrl?: string;
 }
 
-export type QuestionResult = "correct" | "incorrect" | null;
+export type QuestionResult = "correct" | "partial" | "incorrect" | null;
 
 export interface QuestionViewProps {
   question: PracticeQuestion;
@@ -65,7 +66,7 @@ export function splitBlankQuestion(question: string): { before: string; after: s
  * Simple character-level diff for dictation grading display.
  */
 export function getDiff(input: string, correct: string) {
-  const result: { char: string; status: "match" | "wrong" | "missing" }[] = [];
+  const result: { char: string; status: "match" | "wrong" | "missing" | "extra" }[] = [];
   const maxLen = Math.max(input.length, correct.length);
 
   for (let i = 0; i < maxLen; i++) {
@@ -75,6 +76,8 @@ export function getDiff(input: string, correct: string) {
       } else {
         result.push({ char: correct[i], status: "wrong" });
       }
+    } else if (i >= correct.length && i < input.length) {
+      result.push({ char: input[i], status: "extra" });
     } else if (i >= input.length) {
       result.push({ char: correct[i], status: "missing" });
     }

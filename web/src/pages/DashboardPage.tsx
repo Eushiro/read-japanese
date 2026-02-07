@@ -140,7 +140,7 @@ export function DashboardPage() {
   const vocabulary = useQuery(api.vocabulary.list, isAuthenticated ? { userId } : "skip");
 
   // User profile and subscription from shared context (prevents refetching on navigation)
-  const { userProfile, isPremium: isPremiumUser } = useUserData();
+  const { userProfile, isPremium: isPremiumUser, isLoading: isUserDataLoading } = useUserData();
 
   // Get user languages from shared context
   const userLanguages = (userProfile?.languages ?? []) as ContentLanguage[];
@@ -246,7 +246,7 @@ export function DashboardPage() {
 
   // No longer gated on placement test — always ready for practice
 
-  if (authLoading) {
+  if (authLoading || isUserDataLoading) {
     return <DashboardSkeleton />;
   }
 

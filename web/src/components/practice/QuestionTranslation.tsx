@@ -35,14 +35,16 @@ export function QuestionTranslation({
     onSelectAnswer(value);
   };
 
-  const resultsWithCurrent = [...previousResults];
-  if (showFeedback && currentAnswer) {
-    resultsWithCurrent[currentIndex] = currentAnswer.isCorrect ? "correct" : "incorrect";
-  }
-
   const scorePercent = currentAnswer
     ? Math.round((currentAnswer.earnedPoints / question.points) * 100)
     : 0;
+
+  const resultsWithCurrent = [...previousResults];
+  if (showFeedback && currentAnswer) {
+    if (scorePercent >= 80) resultsWithCurrent[currentIndex] = "correct";
+    else if (scorePercent >= 50) resultsWithCurrent[currentIndex] = "partial";
+    else resultsWithCurrent[currentIndex] = "incorrect";
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden flex flex-col bg-background">
@@ -104,15 +106,20 @@ export function QuestionTranslation({
             <Textarea
               value={selectedAnswer || localInput}
               onChange={(e) => handleInputChange(e.target.value)}
-              readOnly={showFeedback}
+              readOnly={showFeedback || isSubmitting}
+              disabled={isSubmitting && !showFeedback}
               placeholder={t("adaptivePractice.typeAnswer")}
               rows={2}
               className={`rounded-xl px-6 py-5 text-xl resize-none ${
-                showFeedback
-                  ? currentAnswer?.isCorrect
-                    ? "border-[#4ade80] focus-visible:border-[#4ade80] focus-visible:ring-[#4ade80]/20"
-                    : "border-[#ef4444] focus-visible:border-[#ef4444] focus-visible:ring-[#ef4444]/20"
-                  : ""
+                isSubmitting && !showFeedback
+                  ? "border-accent animate-pulse"
+                  : showFeedback
+                    ? scorePercent >= 80
+                      ? "border-[#4ade80] focus-visible:border-[#4ade80] focus-visible:ring-[#4ade80]/20"
+                      : scorePercent >= 50
+                        ? "border-[#f59e0b] focus-visible:border-[#f59e0b] focus-visible:ring-[#f59e0b]/20"
+                        : "border-[#ef4444] focus-visible:border-[#ef4444] focus-visible:ring-[#ef4444]/20"
+                    : ""
               }`}
               style={{ fontFamily: "var(--font-sans)" }}
               onKeyDown={(e) => {
@@ -136,7 +143,9 @@ export function QuestionTranslation({
               ? isLastQuestion
                 ? t("adaptivePractice.finishPractice")
                 : `${t("adaptivePractice.nextQuestion")} \u2192`
-              : t("common.actions.submit")}
+              : isSubmitting
+                ? t("adaptivePractice.grading")
+                : t("common.actions.submit")}
           </Button>
         </div>
 
@@ -151,7 +160,7 @@ export function QuestionTranslation({
                 exit={{ opacity: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                {currentAnswer.isCorrect ? (
+                {scorePercent >= 80 ? (
                   <div className="flex items-center gap-2">
                     <Check className="w-5 h-5" style={{ color: "#4ade80" }} />
                     <span style={{ color: "#4ade80" }} className="text-lg font-medium">
