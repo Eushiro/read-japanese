@@ -70,7 +70,6 @@ export function ProgressSquares({
           return (
             <motion.div
               key={i}
-              layout
               className="rounded-sm"
               style={{
                 width: 12,

@@ -650,6 +650,33 @@ export default defineSchema({
     .index("by_practice_id", ["practiceId"]),
 
   // ============================================
+  // PRACTICE SESSIONS (adaptive practice tracking)
+  // ============================================
+  practiceSessions: defineTable({
+    userId: v.string(),
+    practiceId: v.string(),
+    language: languageValidator,
+    isDiagnostic: v.boolean(),
+    contentId: v.optional(v.string()),
+    contentType: v.optional(adaptiveContentTypeValidator),
+    questions: v.array(
+      v.object({
+        questionId: v.string(),
+        type: v.string(),
+        targetSkill: v.string(),
+        difficulty: v.optional(v.string()),
+      })
+    ),
+    listeningCount: v.number(),
+    speakingCount: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_language", ["userId", "language"])
+    .index("by_practice_id", ["practiceId"]),
+
+  // ============================================
   // READING PROGRESS (existing, enhanced)
   // ============================================
   readingProgress: defineTable({

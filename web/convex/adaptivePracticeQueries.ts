@@ -1,10 +1,23 @@
 import { v } from "convex/values";
 
 import { api, internal } from "./_generated/api";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { isAdminEmail } from "./lib/admin";
 import { TEST_MODE_MODELS } from "./lib/models";
 import { adaptiveContentTypeValidator, languageValidator } from "./schema";
+
+const LISTENING_TYPES = new Set(["listening_mcq", "dictation"]);
+const SPEAKING_TYPES = new Set(["shadow_record"]);
+
+function countAudioQuestions(questions: Array<{ type: string }>) {
+  let listeningCount = 0;
+  let speakingCount = 0;
+  for (const q of questions) {
+    if (LISTENING_TYPES.has(q.type)) listeningCount += 1;
+    if (SPEAKING_TYPES.has(q.type)) speakingCount += 1;
+  }
+  return { listeningCount, speakingCount };
+}
 
 // ============================================
 // QUERIES
@@ -44,6 +57,97 @@ export const getTestModeModels = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!isAdminEmail(identity?.email)) return [];
     return TEST_MODE_MODELS.map((m) => ({ model: m.model, provider: m.provider }));
+  },
+});
+
+// ============================================
+// INTERNAL QUERIES/MUTATIONS (server-only)
+// ============================================
+
+export const getPracticeSessionInternal = internalQuery({
+  args: {
+    userId: v.string(),
+    practiceId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("practiceSessions")
+      .withIndex("by_practice_id", (q) => q.eq("practiceId", args.practiceId))
+      .first();
+    if (!session || session.userId !== args.userId) return null;
+    return session;
+  },
+});
+
+export const upsertPracticeSessionInternal = internalMutation({
+  args: {
+    userId: v.string(),
+    practiceId: v.string(),
+    language: languageValidator,
+    isDiagnostic: v.boolean(),
+    contentId: v.optional(v.string()),
+    contentType: v.optional(adaptiveContentTypeValidator),
+    questions: v.array(
+      v.object({
+        questionId: v.string(),
+        type: v.string(),
+        targetSkill: v.string(),
+        difficulty: v.optional(v.string()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("practiceSessions")
+      .withIndex("by_practice_id", (q) => q.eq("practiceId", args.practiceId))
+      .first();
+
+    if (!existing) {
+      const counts = countAudioQuestions(args.questions);
+      await ctx.db.insert("practiceSessions", {
+        userId: args.userId,
+        practiceId: args.practiceId,
+        language: args.language,
+        isDiagnostic: args.isDiagnostic,
+        contentId: args.contentId,
+        contentType: args.contentType,
+        questions: args.questions,
+        listeningCount: counts.listeningCount,
+        speakingCount: counts.speakingCount,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { ...counts, totalQuestions: args.questions.length };
+    }
+
+    if (existing.userId !== args.userId) {
+      throw new Error("Unauthorized session update");
+    }
+
+    const questionIds = new Set(existing.questions.map((q) => q.questionId));
+    const mergedQuestions = [...existing.questions];
+    for (const q of args.questions) {
+      if (!questionIds.has(q.questionId)) {
+        mergedQuestions.push(q);
+        questionIds.add(q.questionId);
+      }
+    }
+
+    const counts = countAudioQuestions(mergedQuestions);
+
+    await ctx.db.patch(existing._id, {
+      language: args.language,
+      isDiagnostic: args.isDiagnostic,
+      contentId: args.contentId ?? existing.contentId,
+      contentType: args.contentType ?? existing.contentType,
+      questions: mergedQuestions,
+      listeningCount: counts.listeningCount,
+      speakingCount: counts.speakingCount,
+      updatedAt: now,
+    });
+
+    return { ...counts, totalQuestions: mergedQuestions.length };
   },
 });
 

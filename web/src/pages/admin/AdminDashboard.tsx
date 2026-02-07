@@ -14,6 +14,7 @@ import {
   Sparkles,
   Video,
 } from "lucide-react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,10 @@ export function AdminDashboard() {
   const upsertSubscription = useMutation(api.subscriptions.upsert);
   const updateProficiencyLevel = useMutation(api.users.updateProficiencyLevel);
   const overrideProfile = useMutation(api.learnerModel.overrideProfile);
+  const [overrideStatusByLang, setOverrideStatusByLang] = useState<
+    Record<string, { type: "success" | "error"; message: string }>
+  >({});
+  const [overrideLoadingByLang, setOverrideLoadingByLang] = useState<Record<string, boolean>>({});
 
   const isLoading = videos === undefined || decks === undefined || jobs === undefined;
 
@@ -410,22 +415,58 @@ export function AdminDashboard() {
               <div className="space-y-2">
                 {userProfile?.languages?.map((lang) => {
                   const langInfo = LANGUAGES.find((l) => l.value === lang);
+                  const status = overrideStatusByLang[lang];
+                  const isLoading = overrideLoadingByLang[lang] === true;
                   return (
                     <div key={lang} className="flex items-center gap-2">
                       <span className="text-xs w-16 text-foreground-muted">{langInfo?.label}</span>
                       <Select
+                        disabled={isLoading}
                         onValueChange={async (value) => {
                           if (!user) return;
-                          await overrideProfile({
-                            userId: user.id,
-                            language: lang as "japanese" | "english" | "french",
-                            adminEmail: user.email ?? "",
-                            preset: value as
-                              | "diagnostic"
-                              | "beginner"
-                              | "intermediate"
-                              | "advanced",
-                          });
+                          if (!user.email) {
+                            setOverrideStatusByLang((prev) => ({
+                              ...prev,
+                              [lang]: {
+                                type: "error",
+                                message: "Missing admin email on account.",
+                              },
+                            }));
+                            return;
+                          }
+                          setOverrideLoadingByLang((prev) => ({ ...prev, [lang]: true }));
+                          try {
+                            const result = await overrideProfile({
+                              userId: user.id,
+                              language: lang as "japanese" | "english" | "french",
+                              adminEmail: user.email,
+                              preset: value as
+                                | "diagnostic"
+                                | "beginner"
+                                | "intermediate"
+                                | "advanced",
+                            });
+                            setOverrideStatusByLang((prev) => ({
+                              ...prev,
+                              [lang]: {
+                                type: "success",
+                                message: `Applied ${result.preset} preset.`,
+                              },
+                            }));
+                          } catch (error) {
+                            setOverrideStatusByLang((prev) => ({
+                              ...prev,
+                              [lang]: {
+                                type: "error",
+                                message:
+                                  error instanceof Error
+                                    ? error.message
+                                    : "Override failed. Check server logs.",
+                              },
+                            }));
+                          } finally {
+                            setOverrideLoadingByLang((prev) => ({ ...prev, [lang]: false }));
+                          }
                         }}
                       >
                         <SelectTrigger className="flex-1 h-8 text-sm">
@@ -438,6 +479,15 @@ export function AdminDashboard() {
                           <SelectItem value="advanced">Advanced</SelectItem>
                         </SelectContent>
                       </Select>
+                      {status && (
+                        <span
+                          className={`text-xs ${
+                            status.type === "success" ? "text-green-500" : "text-red-500"
+                          }`}
+                        >
+                          {status.message}
+                        </span>
+                      )}
                     </div>
                   );
                 })}

@@ -1777,7 +1777,7 @@ export const overrideProfile = mutation({
         await ctx.db.patch(user._id, {
           proficiencyLevels: {
             ...user.proficiencyLevels,
-            [langKey]: { level: targetLevel, updatedAt: now },
+            [langKey]: { level: targetLevel, assessedAt: now },
           },
           updatedAt: now,
         });
