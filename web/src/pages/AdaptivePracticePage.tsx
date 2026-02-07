@@ -16,7 +16,12 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { QuestionResult } from "@/components/practice";
+import type {
+  DifficultyLevel,
+  PracticeContent,
+  PracticeQuestion,
+  QuestionResult,
+} from "@/components/practice";
 import {
   getDiff,
   QuestionDictation,
@@ -40,32 +45,6 @@ import { useT, useUILanguage } from "@/lib/i18n";
 import { getPracticeSessionKey } from "@/lib/practiceSession";
 
 import { api } from "../../convex/_generated/api";
-
-// Types matching backend
-interface PracticeQuestion {
-  questionId: string;
-  type: string;
-  targetSkill: string;
-  difficulty?: "easy" | "medium" | "hard";
-  question: string;
-  passageText?: string;
-  questionTranslation?: string;
-  options?: string[];
-  correctAnswer: string;
-  acceptableAnswers?: string[];
-  audioUrl?: string;
-  points: number;
-}
-
-interface PracticeContent {
-  contentId: string;
-  contentType: "dialogue" | "micro_story";
-  title: string;
-  content: string;
-  translation: string;
-  vocabulary: Array<{ word: string; reading?: string; meaning: string }>;
-  audioUrl?: string;
-}
 
 interface ModelPracticeResult {
   model: string;
@@ -138,7 +117,15 @@ function getModelShortName(model: string): string {
 // SMART QUESTION ORDERING
 // ============================================
 
-type Difficulty = "easy" | "medium" | "hard";
+type Difficulty = DifficultyLevel;
+const DIFFICULTY_ORDER: Difficulty[] = [
+  "level_1",
+  "level_2",
+  "level_3",
+  "level_4",
+  "level_5",
+  "level_6",
+];
 
 function pickNextQuestion(
   availableQuestions: PracticeQuestion[],
@@ -158,7 +145,7 @@ function pickNextQuestion(
   const totalAnswered = answeredHistory.filter((a) => !a.skipped).length;
 
   // Determine target difficulty based on performance
-  let targetDifficulty: Difficulty = "easy";
+  let targetDifficulty: Difficulty = "level_2";
   if (totalAnswered >= 2) {
     const recentAnswers = answeredHistory.filter((a) => !a.skipped).slice(-3);
     const recentCorrect = recentAnswers.filter((a) => a.isCorrect).length;
@@ -237,23 +224,22 @@ function getLastDifficulty(questions: PracticeQuestion[], history: AnswerRecord[
     const q = questions.find((q) => q.questionId === history[i].questionId);
     if (q?.difficulty) return q.difficulty;
   }
-  return "easy";
+  return "level_2";
 }
 
 function scaleDifficultyUp(current: Difficulty): Difficulty {
-  if (current === "easy") return "medium";
-  return "hard";
+  const idx = DIFFICULTY_ORDER.indexOf(current);
+  return DIFFICULTY_ORDER[Math.min(idx + 1, DIFFICULTY_ORDER.length - 1)];
 }
 
 function scaleDifficultyDown(current: Difficulty): Difficulty {
-  if (current === "hard") return "medium";
-  return "easy";
+  const idx = DIFFICULTY_ORDER.indexOf(current);
+  return DIFFICULTY_ORDER[Math.max(idx - 1, 0)];
 }
 
 function isAdjacentDifficulty(a?: string, b?: string): boolean {
-  const order = ["easy", "medium", "hard"];
-  const ia = order.indexOf(a ?? "medium");
-  const ib = order.indexOf(b ?? "medium");
+  const ia = DIFFICULTY_ORDER.indexOf((a ?? "level_3") as Difficulty);
+  const ib = DIFFICULTY_ORDER.indexOf((b ?? "level_3") as Difficulty);
   return Math.abs(ia - ib) === 1;
 }
 
@@ -264,9 +250,9 @@ function isAdjacentDifficulty(a?: string, b?: string): boolean {
 function computeTargetDifficulty(
   questions: PracticeQuestion[],
   answeredHistory: AnswerRecord[]
-): "easy" | "medium" | "hard" {
+): Difficulty {
   const nonSkipped = answeredHistory.filter((a) => !a.skipped);
-  if (nonSkipped.length < 2) return "easy";
+  if (nonSkipped.length < 2) return "level_2";
 
   const recent = nonSkipped.slice(-3);
   const recentCorrect = recent.filter((a) => a.isCorrect).length;
@@ -614,7 +600,7 @@ export function AdaptivePracticePage() {
         return {
           skill: q?.targetSkill ?? "vocabulary",
           type: q?.type ?? "mcq_vocabulary",
-          difficulty: q?.difficulty ?? "medium",
+          difficulty: q?.difficulty ?? "level_3",
           isCorrect: a.isCorrect,
         };
       });
@@ -899,6 +885,7 @@ export function AdaptivePracticePage() {
         questionType: question.type,
         targetSkill: question.targetSkill,
         difficulty: question.difficulty,
+        difficultyNumeric: question.difficultyNumeric,
         userAnswer: answer.userAnswer,
         selectedOption: isMCQ ? answer.userAnswer : undefined,
         isCorrect: answer.isCorrect,

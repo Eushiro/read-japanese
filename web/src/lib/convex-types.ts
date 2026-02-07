@@ -9,6 +9,7 @@ export type {
   CardState,
   ContentLanguage,
   DeckSubscriptionStatus,
+  DifficultyLevel,
   ExamType,
   MasteryState,
   Rating,

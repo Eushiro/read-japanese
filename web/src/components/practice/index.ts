@@ -7,5 +7,11 @@ export { QuestionReading } from "./QuestionReading";
 export { QuestionShadowRecord } from "./QuestionShadowRecord";
 export { QuestionTranslation } from "./QuestionTranslation";
 export { ScoreBar } from "./ScoreBar";
-export type { PracticeContent, PracticeQuestion, QuestionResult, QuestionViewProps } from "./types";
+export type {
+  DifficultyLevel,
+  PracticeContent,
+  PracticeQuestion,
+  QuestionResult,
+  QuestionViewProps,
+} from "./types";
 export { getDiff, getFontFamily, splitBlankQuestion } from "./types";

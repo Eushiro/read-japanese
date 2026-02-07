@@ -213,6 +213,90 @@ export function buildLearnerContextBlock(
 }
 
 // ============================================
+// DIFFICULTY ANCHORS
+// ============================================
+
+/**
+ * Per-language difficulty anchors with concrete vocabulary, grammar, and sentence-length
+ * specifications for each of the 6 difficulty levels.
+ */
+const DIFFICULTY_ANCHORS: Record<ContentLanguage, Record<string, string>> = {
+  japanese: {
+    level_1:
+      "N5 vocabulary (top 800 words), hiragana/katakana + basic kanji (~80), sentences <10 characters, ます/です forms only, simple SOV patterns",
+    level_2:
+      "N4 vocabulary (top 1500 words), ~150 kanji, 10-20 character sentences, て-form, basic conditionals (たら), たい/ている forms",
+    level_3:
+      "N3 vocabulary (top 3000 words), ~350 kanji, 15-30 character sentences, passive/causative, compound sentences, ようにする/ことがある",
+    level_4:
+      "N2 vocabulary (top 6000 words), ~650 kanji, 20-40 character sentences, complex grammar (ばかりに, にもかかわらず, 一方で), formal register",
+    level_5:
+      "N1 vocabulary (10000+ words), ~1000+ kanji, 30+ character sentences, literary/formal patterns (べからず, ごとく), idiomatic expressions, classical grammar influence",
+    level_6:
+      "Beyond N1: 12000+ words, literary/classical Japanese, 40+ character sentences, archaic patterns, domain-specific jargon",
+  },
+  french: {
+    level_1:
+      "A1 vocabulary (top 500 words), présent tense only, sentences <8 words, basic SVO, être/avoir, definite/indefinite articles",
+    level_2:
+      "A2 vocabulary (top 1200 words), passé composé, 8-15 word sentences, futur proche, basic negation, common reflexive verbs",
+    level_3:
+      "B1 vocabulary (top 3000 words), imparfait vs passé composé, 12-22 word sentences, subjonctif (basic triggers), relative clauses (qui/que)",
+    level_4:
+      "B2 vocabulary (top 5000 words), conditionnel, 18-30 word sentences, subjonctif (full range), passive voice, complex adverbial phrases",
+    level_5:
+      "C1 vocabulary (8000+ words), literary tenses (passé simple), 25+ word sentences, formal register, nuanced connectors, complex argumentation",
+    level_6:
+      "C2 vocabulary (10000+ words), plus-que-parfait du subjonctif, 30+ word sentences, idiomatic and figurative language, academic/literary register, nuanced collocations",
+  },
+  english: {
+    level_1:
+      "A1 vocabulary (top 500 words), present simple/continuous, sentences <8 words, basic SVO, common prepositions",
+    level_2:
+      "A2 vocabulary (top 1200 words), past simple, 8-15 word sentences, comparatives/superlatives, basic modal verbs (can/must)",
+    level_3:
+      "B1 vocabulary (top 3000 words), present perfect vs past simple, 12-22 word sentences, passive voice, conditionals (1st/2nd), phrasal verbs",
+    level_4:
+      "B2 vocabulary (top 5000 words), reported speech, 18-30 word sentences, 3rd conditional, complex relative clauses, advanced modal verbs (would have/might have)",
+    level_5:
+      "C1 vocabulary (8000+ words), 25+ word sentences, subjunctive mood, inversion for emphasis, idiomatic and figurative language, formal register, nuanced collocations",
+    level_6:
+      "C2 vocabulary (10000+ words), 30+ word sentences, academic/literary register, subtle pragmatic distinctions, domain-specific terminology, stylistic mastery",
+  },
+};
+
+/**
+ * Build difficulty level specifications for AI prompts.
+ * Provides concrete per-level linguistic anchors so the AI has calibration targets.
+ */
+export function buildDifficultyAnchors(language: ContentLanguage): string {
+  const anchors = DIFFICULTY_ANCHORS[language];
+  return `DIFFICULTY LEVEL SPECIFICATIONS:
+- level_1: ${anchors.level_1}
+- level_2: ${anchors.level_2}
+- level_3: ${anchors.level_3}
+- level_4: ${anchors.level_4}
+- level_5: ${anchors.level_5}
+- level_6: ${anchors.level_6}`;
+}
+
+/**
+ * Build a targeted difficulty block for incremental question generation.
+ * Provides the AI with both the categorical level and continuous IRT value.
+ */
+export function buildTargetDifficultyBlock(
+  abilityEstimate: number,
+  targetDifficulty: string,
+  language: ContentLanguage
+): string {
+  const anchors = DIFFICULTY_ANCHORS[language];
+  const anchor = anchors[targetDifficulty] ?? anchors.level_3;
+  return `TARGET DIFFICULTY: "${targetDifficulty}" (IRT ability estimate: ${abilityEstimate.toFixed(1)})
+Generate questions matching these constraints: ${anchor}
+Questions should be calibrated so a learner at ability ${abilityEstimate.toFixed(1)} has roughly 65-75% chance of answering correctly.`;
+}
+
+// ============================================
 // DISTRACTOR RULES
 // ============================================
 

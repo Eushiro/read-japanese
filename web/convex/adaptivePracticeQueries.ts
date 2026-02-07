@@ -9,6 +9,29 @@ import { adaptiveContentTypeValidator, languageValidator } from "./schema";
 const LISTENING_TYPES = new Set(["listening_mcq", "dictation"]);
 const SPEAKING_TYPES = new Set(["shadow_record"]);
 
+/**
+ * Map a categorical difficulty label to a continuous IRT value.
+ * level_1: -2.5, level_2: -1.5, level_3: -0.5, level_4: 0.5, level_5: 1.5, level_6: 2.5
+ */
+function difficultyLabelToIRT(label?: string): number {
+  switch (label) {
+    case "level_1":
+      return -2.5;
+    case "level_2":
+      return -1.5;
+    case "level_3":
+      return -0.5;
+    case "level_4":
+      return 0.5;
+    case "level_5":
+      return 1.5;
+    case "level_6":
+      return 2.5;
+    default:
+      return 0.0;
+  }
+}
+
 function countAudioQuestions(questions: Array<{ type: string }>) {
   let listeningCount = 0;
   let speakingCount = 0;
@@ -189,6 +212,7 @@ export const recordAnswer = mutation({
     questionType: v.string(),
     targetSkill: v.string(),
     difficulty: v.optional(v.string()),
+    difficultyNumeric: v.optional(v.number()),
     userAnswer: v.string(),
     selectedOption: v.optional(v.string()), // For MCQ: which option was picked (for distractor analysis)
     passageText: v.optional(v.string()),
@@ -217,7 +241,7 @@ export const recordAnswer = mutation({
       selectedOption: args.selectedOption,
       responseTimeMs: args.responseTimeMs,
       skills: [{ skill: args.targetSkill, weight: 1 }],
-      difficulty: args.difficulty === "easy" ? -1 : args.difficulty === "hard" ? 1 : 0,
+      difficulty: args.difficultyNumeric ?? difficultyLabelToIRT(args.difficulty),
       grading: {
         isCorrect: args.isCorrect,
         score: args.maxPoints > 0 ? args.earnedPoints / args.maxPoints : 0,
@@ -346,7 +370,7 @@ export const flushLearnerModel = internalMutation({
     for (const a of args.answers) {
       const meta = questionMeta.get(a.questionId);
       const skill = meta?.targetSkill ?? "vocabulary";
-      const diffEstimate = meta?.difficulty === "easy" ? -1 : meta?.difficulty === "hard" ? 1 : 0;
+      const diffEstimate = difficultyLabelToIRT(meta?.difficulty);
       const score = a.isCorrect ? 100 : 0;
 
       const existing = skillAgg.get(skill);

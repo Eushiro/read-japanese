@@ -75,6 +75,9 @@ export type LearningGoal = "exam" | "travel" | "professional" | "media" | "casua
 // Adaptive content types
 export type AdaptiveContentType = "dialogue" | "micro_story";
 
+// Difficulty levels (6-level scale mapping to CEFR A1-C2 / JLPT N5-N1+)
+export type DifficultyLevel = "level_1" | "level_2" | "level_3" | "level_4" | "level_5" | "level_6";
+
 // Adaptive content audience scopes
 export type ContentAudienceScope = "global" | "goal" | "user";
 
@@ -206,6 +209,16 @@ export const learningGoalValidator = v.union(
 export const adaptiveContentTypeValidator = v.union(
   v.literal("dialogue"),
   v.literal("micro_story")
+);
+
+// Difficulty levels
+export const difficultyLevelValidator = v.union(
+  v.literal("level_1"),
+  v.literal("level_2"),
+  v.literal("level_3"),
+  v.literal("level_4"),
+  v.literal("level_5"),
+  v.literal("level_6")
 );
 
 // Adaptive content audience scopes

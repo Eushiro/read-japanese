@@ -6,14 +6,17 @@ import { api, internal } from "./_generated/api";
 import { action } from "./_generated/server";
 import { generateAndParse, type JsonSchema, parseJson } from "./ai/models";
 import { isAdminEmail } from "./lib/admin";
+import { estimateQuestionDifficulty } from "./lib/difficultyEstimator";
 import type { ModelConfig, ProviderType } from "./lib/models";
 import { TEXT_MODEL_CHAIN } from "./lib/models";
 import {
+  buildDifficultyAnchors,
   buildDistractorRules,
   buildInterestTheming,
   buildLanguageMixingDirective,
   buildLearnerContextBlock,
   buildStemVarietyRules,
+  buildTargetDifficultyBlock,
   buildWeakAreaTargeting,
   type ContentLanguage,
   getContentLanguageName,
@@ -23,6 +26,8 @@ import {
 } from "./lib/promptHelpers";
 import {
   adaptiveContentTypeValidator,
+  type DifficultyLevel,
+  difficultyLevelValidator,
   languageValidator,
   type SkillType,
   uiLanguageValidator,
@@ -47,7 +52,8 @@ interface PracticeQuestion {
   questionId: string;
   type: PracticeQuestionType;
   targetSkill: SkillType;
-  difficulty?: "easy" | "medium" | "hard";
+  difficulty?: DifficultyLevel;
+  difficultyNumeric?: number;
   question: string;
   passageText?: string;
   questionTranslation?: string;
@@ -240,7 +246,10 @@ function buildQuestionSchema(name: string): JsonSchema {
                 type: "string",
                 enum: ["vocabulary", "grammar", "reading", "listening", "writing", "speaking"],
               },
-              difficulty: { type: "string", enum: ["easy", "medium", "hard"] },
+              difficulty: {
+                type: "string",
+                enum: ["level_1", "level_2", "level_3", "level_4", "level_5", "level_6"],
+              },
               question: { type: "string" },
               passageText: { type: ["string", "null"] },
               questionTranslation: { type: ["string", "null"] },
@@ -359,7 +368,10 @@ function validateQuestionSet(
       }
     }
 
-    if (q.difficulty && !["easy", "medium", "hard"].includes(q.difficulty)) {
+    if (
+      q.difficulty &&
+      !["level_1", "level_2", "level_3", "level_4", "level_5", "level_6"].includes(q.difficulty)
+    ) {
       errors.push(`Q${idx}: invalid difficulty`);
     }
   });
@@ -373,8 +385,13 @@ function validateQuestionSet(
   }
 
   if (context.mode === "content") {
-    if (!difficultySet.has("easy") || !difficultySet.has("medium") || !difficultySet.has("hard")) {
-      errors.push("Question set must include easy, medium, and hard difficulties");
+    const hasLow = difficultySet.has("level_1") || difficultySet.has("level_2");
+    const hasMid = difficultySet.has("level_3") || difficultySet.has("level_4");
+    const hasHigh = difficultySet.has("level_5") || difficultySet.has("level_6");
+    if (!hasLow || !hasMid || !hasHigh) {
+      errors.push(
+        "Question set must span low (level_1/2), mid (level_3/4), and high (level_5/6) difficulties"
+      );
     }
   }
 
@@ -382,9 +399,13 @@ function validateQuestionSet(
 }
 
 /**
- * Filter out broken MCQ questions and assign unique IDs.
+ * Filter out broken MCQ questions, assign unique IDs, and compute heuristic difficulty.
  */
-function filterAndAssignIds(questions: PracticeQuestion[], prefix: string): PracticeQuestion[] {
+function filterAndAssignIds(
+  questions: PracticeQuestion[],
+  prefix: string,
+  language?: string
+): PracticeQuestion[] {
   const validQuestions = questions.filter((q) => {
     if (MCQ_TYPES.includes(q.type) && (!q.options || q.options.length < 2)) {
       console.warn(`Dropping ${q.type} question with insufficient options`);
@@ -397,6 +418,7 @@ function filterAndAssignIds(questions: PracticeQuestion[], prefix: string): Prac
     ...q,
     options: MCQ_TYPES.includes(q.type) && q.options ? shuffleArray(q.options) : q.options,
     questionId: `${prefix}_${Date.now()}_${index}`,
+    difficultyNumeric: language ? estimateQuestionDifficulty(q, language) : undefined,
   }));
 }
 
@@ -441,6 +463,7 @@ async function generateQuestionsWithRepair(
     parse: (response: string) => { questions: PracticeQuestion[] };
     context: QuestionSetContext;
     modelOverride?: ModelConfig[];
+    language?: string;
   },
   prefix: string
 ): Promise<{ questions: PracticeQuestion[] } & QuestionGenerationMeta> {
@@ -513,7 +536,7 @@ async function generateQuestionsWithRepair(
       : Math.max(40, 100 - 5 * finalValidation.errors.length);
 
   return {
-    questions: filterAndAssignIds(finalQuestions, prefix),
+    questions: filterAndAssignIds(finalQuestions, prefix, args.language),
     modelUsed,
     systemPrompt: args.systemPrompt,
     prompt: args.prompt,
@@ -833,12 +856,11 @@ For each question:
 - shadow_record: set question to a sentence for pronunciation practice. Set questionTranslation to the ${uiLanguageName} translation. The correctAnswer is the sentence itself.
 - Include at least 2 inferential questions (not just surface-level recall)
 
-Each question MUST have a "difficulty" field: "easy", "medium", or "hard".
-- easy: basic recognition, common words, simple patterns
-- medium: sentence-level understanding, grammar patterns
-- hard: inference, production, complex structures
+Each question MUST have a "difficulty" field: one of "level_1", "level_2", "level_3", "level_4", "level_5", or "level_6".
 
-Include at least 4 different question types. Aim for a mix: 3 easy, 3-4 medium, 2-3 hard.
+${buildDifficultyAnchors(language as ContentLanguage)}
+
+Include at least 4 different question types. Aim for a mix: 1-2 level_1, 2 level_2, 2 level_3, 2 level_4, 1-2 level_5, 0-1 level_6.
 
 ${distractorRules}
 
@@ -858,7 +880,7 @@ Translation: ${content.translation}
 Vocabulary: ${content.vocabulary.map((v) => `${v.word} - ${v.meaning}`).join(", ")}
 
 Create 8-10 questions of varied types based on the weak skills: ${targetSkills.join(", ")}
-Include at least 4 different question types. Tag each question with difficulty: "easy", "medium", or "hard".
+Include at least 4 different question types. Tag each question with difficulty from: level_1, level_2, level_3, level_4, level_5, level_6.
 
 Return JSON with an array of questions.`;
 
@@ -881,6 +903,7 @@ Return JSON with an array of questions.`;
         parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
         context,
         modelOverride,
+        language,
       },
       "pq"
     );
@@ -895,7 +918,7 @@ Return JSON with an array of questions.`;
           questionId: `pq_${Date.now()}_fallback`,
           type: "mcq_comprehension",
           targetSkill: "reading",
-          difficulty: "easy",
+          difficulty: "level_2",
           question: `What is the main topic of "${content.title}"?`,
           options: [
             "The main idea of the story",
@@ -973,9 +996,10 @@ ${learnerBlock}
 ${langMixing}
 
 DIAGNOSTIC STRATEGY:
-- 1 question BELOW estimated level (confirm strengths)
-- 2 questions AT estimated level (calibrate precisely)
-- 1 question ABOVE estimated level (probe ceiling)
+- 1 question well BELOW estimated level (level_1/level_2 — confirm strengths)
+- 1 question slightly below or AT estimated level (level_2/level_3 — calibrate lower bound)
+- 1 question AT or slightly above estimated level (level_4/level_5 — calibrate upper bound)
+- 1 question well ABOVE estimated level (level_5/level_6 — probe ceiling)
 
 Aim to cover at least 3 different skills from this list:
 - vocabulary (mcq_vocabulary, fill_blank)
@@ -1004,11 +1028,14 @@ ${distractorRules}
 
 ${stemVariety}
 
+${buildDifficultyAnchors(language as ContentLanguage)}
+
 IMPORTANT: Questions must be standalone — no external reading passage.
-Each question MUST have a "difficulty" field: "easy", "medium", or "hard".`;
+Each question MUST have a "difficulty" field: one of "level_1", "level_2", "level_3", "level_4", "level_5", or "level_6".`;
 
   const prompt = `Generate exactly 4 standalone diagnostic ${languageName} practice questions.
 Cover at least 3 different skills. Use at least 3 different question types.
+Spread difficulty: 1 level_1/level_2, 1 level_2/level_3, 1 level_4/level_5, 1 level_5/level_6.
 Maximum 1 listening/dictation question and 1 shadow_record question.
 Return JSON.`;
 
@@ -1030,6 +1057,7 @@ Return JSON.`;
           requireTypeVariety: 3,
         },
         modelOverride,
+        language,
       },
       "diag"
     );
@@ -1048,7 +1076,7 @@ Return JSON.`;
           questionId: `diag_${Date.now()}_0`,
           type: "mcq_vocabulary",
           targetSkill: "vocabulary",
-          difficulty: "easy",
+          difficulty: "level_2",
           question:
             language === "japanese"
               ? "「ありがとう」の意味は？"
@@ -1135,7 +1163,7 @@ export const generateIncrementalQuestions = action({
     practiceId: v.string(),
     language: languageValidator,
     abilityEstimate: v.number(),
-    targetDifficulty: v.union(v.literal("easy"), v.literal("medium"), v.literal("hard")),
+    targetDifficulty: difficultyLevelValidator,
     recentPerformance: v.array(
       v.object({
         skill: v.string(),
@@ -1226,8 +1254,7 @@ ${langMixing}
 RECENT PERFORMANCE:
 ${perfSummary || "No recent answers yet."}
 
-TARGET DIFFICULTY: ${args.targetDifficulty}
-Generate questions at the "${args.targetDifficulty}" difficulty level.
+${buildTargetDifficultyBlock(args.abilityEstimate, args.targetDifficulty, args.language as ContentLanguage)}
 
 ${excludeSkillsNote}
 ${excludeTypesNote}
@@ -1246,8 +1273,10 @@ ${distractorRules}
 
 ${stemVariety}
 
+${buildDifficultyAnchors(args.language as ContentLanguage)}
+
 IMPORTANT: Questions must be standalone — no external reading passage.
-Each question MUST have a "difficulty" field: "easy", "medium", or "hard".`;
+Each question MUST have a "difficulty" field: one of "level_1", "level_2", "level_3", "level_4", "level_5", or "level_6".`;
 
     const prompt = `Generate exactly 2 standalone diagnostic ${languageName} practice questions.
 Target difficulty: ${args.targetDifficulty}.
@@ -1270,6 +1299,7 @@ Return JSON.`;
             maxCount: 2,
             requireTypeVariety: 2,
           },
+          language: args.language,
         },
         "incr"
       );

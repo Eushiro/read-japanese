@@ -1,9 +1,15 @@
 // Shared types for practice question components
 
+import type { DifficultyLevel } from "../../../convex/schema";
+
+export type { DifficultyLevel };
+
 export interface PracticeQuestion {
   questionId: string;
   type: string;
   targetSkill: string;
+  difficulty?: DifficultyLevel;
+  difficultyNumeric?: number;
   question: string;
   passageText?: string;
   questionTranslation?: string;
