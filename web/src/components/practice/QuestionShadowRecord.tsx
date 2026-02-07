@@ -183,7 +183,15 @@ export function QuestionShadowRecord({
       </div>
 
       {/* Lower: Record Interface */}
-      <div className="flex flex-col items-center px-6">
+      <div className="flex flex-col items-center w-full px-8 pt-8">
+        {/* Instruction text */}
+        <p
+          className="text-sm text-foreground-muted mb-4"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          {t("adaptivePractice.shadowInstruction")}
+        </p>
+
         {/* Record button */}
         <motion.button
           onClick={handleRecordToggle}

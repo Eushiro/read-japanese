@@ -88,8 +88,9 @@ export function QuestionNavigation({
         {!isAnswered ? (
           // Submit button
           <Button
-            onClick={onSubmit}
+            onClick={isGrading ? undefined : onSubmit}
             disabled={!isGrading && (!canSubmit || isLoading)}
+            aria-disabled={isGrading || undefined}
             className={cn(
               "gap-2",
               variant === "stacked" && "w-full",
