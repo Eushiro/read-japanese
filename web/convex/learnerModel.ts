@@ -7,6 +7,7 @@ import {
   type MutationCtx,
   query,
 } from "./_generated/server";
+import { isAdminEmail } from "./lib/admin";
 import { getYesterdayString } from "./lib/helpers";
 import { type ContentLanguage, languageValidator, questionSourceTypeValidator } from "./schema";
 
@@ -1071,12 +1072,21 @@ async function updateDailyProgressInternal(
       )
       .first();
 
-    const skillSnapshot = profile?.skills ?? {
+    const skills = profile?.skills ?? {
       vocabulary: 50,
       grammar: 50,
       reading: 50,
       listening: 50,
       writing: 50,
+      speaking: 50,
+    };
+    const skillSnapshot = {
+      vocabulary: skills.vocabulary,
+      grammar: skills.grammar,
+      reading: skills.reading,
+      listening: skills.listening,
+      writing: skills.writing,
+      speaking: skills.speaking,
     };
 
     await ctx.db.insert("dailyProgress", {
@@ -1662,5 +1672,132 @@ export const updateFromShadowingInternal = internalMutation({
       lastActivityAt: now,
       updatedAt: now,
     });
+  },
+});
+
+// ============================================
+// ADMIN OVERRIDES
+// ============================================
+
+const PROFILE_PRESETS = {
+  diagnostic: { abilityEstimate: 0, abilityConfidence: 1.0, skillScore: 50 },
+  beginner: { abilityEstimate: -2.0, abilityConfidence: 0.3, skillScore: 30 },
+  intermediate: { abilityEstimate: 0.0, abilityConfidence: 0.3, skillScore: 55 },
+  advanced: { abilityEstimate: 2.0, abilityConfidence: 0.3, skillScore: 85 },
+} as const;
+
+export const overrideProfile = mutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+    adminEmail: v.string(),
+    preset: v.union(
+      v.literal("diagnostic"),
+      v.literal("beginner"),
+      v.literal("intermediate"),
+      v.literal("advanced")
+    ),
+  },
+  handler: async (ctx, args) => {
+    if (!isAdminEmail(args.adminEmail)) {
+      throw new Error("Unauthorized: Only admin can override learner profiles");
+    }
+
+    const preset = PROFILE_PRESETS[args.preset];
+    const now = Date.now();
+
+    const skillValues = {
+      vocabulary: preset.skillScore,
+      grammar: preset.skillScore,
+      reading: preset.skillScore,
+      listening: preset.skillScore,
+      writing: preset.skillScore,
+      speaking: preset.skillScore,
+    };
+
+    const abilityBySkill = {
+      vocabulary: preset.abilityEstimate,
+      grammar: preset.abilityEstimate,
+      reading: preset.abilityEstimate,
+      listening: preset.abilityEstimate,
+      writing: preset.abilityEstimate,
+      speaking: preset.abilityEstimate,
+    };
+
+    // Get or create profile
+    const existing = await ctx.db
+      .query("learnerProfile")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        abilityEstimate: preset.abilityEstimate,
+        abilityConfidence: preset.abilityConfidence,
+        abilityBySkill,
+        skills: skillValues,
+        weakAreas: [],
+        updatedAt: now,
+      });
+    } else {
+      const defaultProfile = getDefaultProfile(args.userId, args.language);
+      await ctx.db.insert("learnerProfile", {
+        ...defaultProfile,
+        abilityEstimate: preset.abilityEstimate,
+        abilityConfidence: preset.abilityConfidence,
+        abilityBySkill,
+        skills: skillValues,
+      });
+    }
+
+    // Sync proficiency level in users table
+    const targetLevel = abilityToProficiency(
+      preset.abilityEstimate,
+      args.language as ContentLanguage,
+      false
+    );
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.userId))
+      .first();
+
+    if (user) {
+      const langKey = args.language as "japanese" | "english" | "french";
+      if (args.preset === "diagnostic") {
+        // Clear proficiency level for diagnostic
+        const updatedLevels = { ...user.proficiencyLevels };
+        delete updatedLevels[langKey];
+        await ctx.db.patch(user._id, {
+          proficiencyLevels: updatedLevels,
+          updatedAt: now,
+        });
+      } else {
+        await ctx.db.patch(user._id, {
+          proficiencyLevels: {
+            ...user.proficiencyLevels,
+            [langKey]: { level: targetLevel, updatedAt: now },
+          },
+          updatedAt: now,
+        });
+      }
+    }
+
+    // For diagnostic preset, also delete placement tests
+    if (args.preset === "diagnostic") {
+      const tests = await ctx.db
+        .query("placementTests")
+        .withIndex("by_user_and_language", (q) =>
+          q.eq("userId", args.userId).eq("language", args.language)
+        )
+        .collect();
+
+      for (const test of tests) {
+        await ctx.db.delete(test._id);
+      }
+    }
+
+    return { preset: args.preset, language: args.language };
   },
 });

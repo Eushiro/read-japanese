@@ -4,6 +4,7 @@ import {
   AlertCircle,
   ArrowRight,
   BookOpen,
+  Brain,
   Clock,
   Crown,
   FlaskConical,
@@ -44,6 +45,7 @@ export function AdminDashboard() {
   const subscription = useQuery(api.subscriptions.get, user ? { userId: user.id } : "skip");
   const upsertSubscription = useMutation(api.subscriptions.upsert);
   const updateProficiencyLevel = useMutation(api.users.updateProficiencyLevel);
+  const overrideProfile = useMutation(api.learnerModel.overrideProfile);
 
   const isLoading = videos === undefined || decks === undefined || jobs === undefined;
 
@@ -390,6 +392,59 @@ export function AdminDashboard() {
               >
                 Show Onboarding Modal
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Learner Profile Override */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Brain className="w-4 h-4 text-amber-500" />
+                Learner Profile Override
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Switch profile between diagnostic/beginner/advanced
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {userProfile?.languages?.map((lang) => {
+                  const langInfo = LANGUAGES.find((l) => l.value === lang);
+                  return (
+                    <div key={lang} className="flex items-center gap-2">
+                      <span className="text-xs w-16 text-foreground-muted">{langInfo?.label}</span>
+                      <Select
+                        onValueChange={async (value) => {
+                          if (!user) return;
+                          await overrideProfile({
+                            userId: user.id,
+                            language: lang as "japanese" | "english" | "french",
+                            adminEmail: user.email ?? "",
+                            preset: value as
+                              | "diagnostic"
+                              | "beginner"
+                              | "intermediate"
+                              | "advanced",
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="flex-1 h-8 text-sm">
+                          <SelectValue placeholder="Select preset..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="diagnostic">Reset (Diagnostic)</SelectItem>
+                          <SelectItem value="beginner">Beginner</SelectItem>
+                          <SelectItem value="intermediate">Intermediate</SelectItem>
+                          <SelectItem value="advanced">Advanced</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })}
+                {(!userProfile?.languages || userProfile.languages.length === 0) && (
+                  <p className="text-xs text-foreground-muted">No languages configured</p>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
