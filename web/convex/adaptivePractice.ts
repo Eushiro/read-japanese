@@ -1305,7 +1305,7 @@ For each question:
 - translation: put the sentence to translate in "passageText" (in ${languageName}), put the instruction in "question". Set translations to localized instructions, e.g. { en: "Translate to English", fr: "Traduisez en français", ja: "英語に翻訳してください", zh: "翻译成英文" }
 - free_input: ask the learner to write a short response in ${languageName}
 - mcq_comprehension: set "passageText" to a short ${languageName} text (1-2 sentences) and use "question" for the question itself
-- listening_mcq: provide a question about what was heard (audio will be generated from the question text)
+- listening_mcq: set "passageText" to a short ${languageName} dialogue or passage (1-3 sentences) that the learner will hear. Put the comprehension question in "question". Audio will be generated from passageText.
 - dictation: set question to a ${languageName} sentence the user will type after hearing
 - shadow_record: set question to a ${languageName} sentence for pronunciation. Set translations to the sentence meaning in each UI language
 
@@ -1526,7 +1526,8 @@ For each question:
 - translation: set translations to localized instructions, e.g. { en: "Translate to English", fr: "Traduisez en français", ja: "英語に翻訳してください", zh: "翻译成英文" }
 - free_input: ask the learner to write a short response in ${languageName}
 - mcq_comprehension: set "passageText" to a short ${languageName} text (1-2 sentences) and use "question" for the question itself
-- listening_mcq / dictation: max 1 total
+- listening_mcq: set "passageText" to a short ${languageName} dialogue or passage (1-3 sentences) that the learner will hear. Put the comprehension question in "question". Audio will be generated from passageText. Max 1 total with dictation.
+- dictation: max 1 total with listening_mcq
 - shadow_record: set translations to the sentence meaning in each UI language. Max 1.
 
 ${distractorRules}
