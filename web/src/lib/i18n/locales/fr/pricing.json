@@ -46,7 +46,7 @@
       "cta": "Obtenir Plus"
     },
     "pro": {
-      "description": "Apprenez sans limites",
+      "description": "L'expérience d'apprentissage ultime",
       "features": {
         "0": "1 500 crédits IA/mois",
         "1": "Tout du forfait Plus",
@@ -60,7 +60,7 @@
     "title": "Comment fonctionnent les crédits",
     "action": "Action",
     "credits": "Crédits",
-    "plusUpTo": "Plus (jusqu'à)",
+    "plusUpTo": "Plus (500 crédits)",
     "actions": {
       "flashcard": "Phrase IA pour flashcard",
       "feedback": "Correction d'écriture",

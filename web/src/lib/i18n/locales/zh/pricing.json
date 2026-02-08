@@ -46,7 +46,7 @@
       "cta": "获取Plus"
     },
     "pro": {
-      "description": "无限制学习",
+      "description": "终极学习体验",
       "features": {
         "0": "每月1,500 AI额度",
         "1": "Plus全部功能",
@@ -60,7 +60,7 @@
     "title": "额度如何使用",
     "action": "操作",
     "credits": "额度",
-    "plusUpTo": "Plus（最多）",
+    "plusUpTo": "Plus（500额度）",
     "actions": {
       "flashcard": "AI造句",
       "feedback": "写作反馈",

@@ -21,15 +21,15 @@ import { api } from "../../convex/_generated/api";
 
 // Credit costs for the reference table - uses translation keys
 const CREDIT_COSTS = [
-  { actionKey: "flashcard", credits: 1, upTo500: "500" },
-  { actionKey: "feedback", credits: 1, upTo500: "500" },
-  { actionKey: "comprehension", credits: 1, upTo500: "500" },
-  { actionKey: "question", credits: 1, upTo500: "500" },
-  { actionKey: "audio", credits: 2, upTo500: "250" },
-  { actionKey: "story", credits: 2, upTo500: "250" },
-  { actionKey: "placement", credits: 2, upTo500: "250" },
-  { actionKey: "image", credits: 3, upTo500: "166" },
-  { actionKey: "shadowing", credits: 3, upTo500: "166" },
+  { actionKey: "flashcard", credits: 1 },
+  { actionKey: "feedback", credits: 1 },
+  { actionKey: "comprehension", credits: 1 },
+  { actionKey: "question", credits: 1 },
+  { actionKey: "audio", credits: 2 },
+  { actionKey: "story", credits: 2 },
+  { actionKey: "placement", credits: 2 },
+  { actionKey: "image", credits: 3 },
+  { actionKey: "shadowing", credits: 3 },
 ] as const;
 
 export function PricingPage() {
@@ -301,7 +301,7 @@ export function PricingPage() {
         </div>
 
         {/* Credit Costs Reference */}
-        <div className="mt-16 max-w-2xl mx-auto">
+        <div className="mt-16 max-w-md mx-auto">
           <h2
             className="text-xl font-bold text-foreground text-center mb-6"
             style={{ fontFamily: "var(--font-display)" }}
@@ -314,7 +314,6 @@ export function PricingPage() {
                 <TableRow>
                   <TableHead>{t("pricing.creditCosts.action")}</TableHead>
                   <TableHead className="text-center">{t("pricing.creditCosts.credits")}</TableHead>
-                  <TableHead className="text-right">{t("pricing.creditCosts.plusUpTo")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -325,10 +324,6 @@ export function PricingPage() {
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="outline">{row.credits}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-foreground-muted">
-                      {row.upTo500}
-                      {t("pricing.creditCosts.perMonth")}
                     </TableCell>
                   </TableRow>
                 ))}

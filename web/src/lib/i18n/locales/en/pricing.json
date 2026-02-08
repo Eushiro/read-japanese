@@ -46,7 +46,7 @@
       "cta": "Get Plus"
     },
     "pro": {
-      "description": "Learn without limits",
+      "description": "The ultimate learning experience",
       "features": {
         "0": "1,500 AI credits/month",
         "1": "Everything in Plus",
@@ -60,7 +60,7 @@
     "title": "How Credits Work",
     "action": "Action",
     "credits": "Credits",
-    "plusUpTo": "Plus (up to)",
+    "plusUpTo": "Plus (500 credits)",
     "actions": {
       "flashcard": "AI flashcard sentence",
       "feedback": "Writing feedback",

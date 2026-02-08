@@ -46,7 +46,7 @@
       "cta": "Plusを取得"
     },
     "pro": {
-      "description": "制限なく学ぶ",
+      "description": "最高の学習体験",
       "features": {
         "0": "月1,500 AIクレジット",
         "1": "Plusのすべて",
@@ -60,7 +60,7 @@
     "title": "クレジットの仕組み",
     "action": "アクション",
     "credits": "クレジット",
-    "plusUpTo": "Plus（最大）",
+    "plusUpTo": "Plus（500クレジット）",
     "actions": {
       "flashcard": "AI文章生成",
       "feedback": "作文添削",
