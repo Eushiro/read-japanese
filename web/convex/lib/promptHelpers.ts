@@ -21,7 +21,7 @@ export type ProficiencyTier = "beginner" | "intermediate" | "advanced";
 // Keep in sync with uiLanguageValidator in schema.ts.
 export type UILanguage = "en" | "ja" | "fr" | "zh";
 
-interface WeakArea {
+export interface WeakArea {
   skill: string;
   topic: string;
   score: number;

@@ -17,7 +17,7 @@ interface QuestionInput {
   type: string;
 }
 
-const LABEL_TO_IRT: Record<DifficultyLevel, number> = {
+export const LABEL_TO_IRT: Record<DifficultyLevel, number> = {
   level_1: -2.5,
   level_2: -1.5,
   level_3: -0.5,
@@ -26,7 +26,7 @@ const LABEL_TO_IRT: Record<DifficultyLevel, number> = {
   level_6: 2.5,
 };
 
-function labelToIRT(label?: string): number {
+export function labelToIRT(label?: string): number {
   return LABEL_TO_IRT[label as DifficultyLevel] ?? 0.0;
 }
 

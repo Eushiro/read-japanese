@@ -69,10 +69,7 @@ type ContentSpec = {
   beginnerMode: boolean;
 };
 
-type WeakArea = {
-  skill: string;
-  topic: string;
-};
+import type { WeakArea } from "./lib/promptHelpers";
 
 type ContentItem = {
   contentId: string;

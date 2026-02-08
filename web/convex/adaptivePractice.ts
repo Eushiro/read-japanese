@@ -29,6 +29,7 @@ import {
   type DifficultyLevel,
   difficultyLevelValidator,
   languageValidator,
+  type PracticeQuestionType,
   type SkillType,
   uiLanguageValidator,
 } from "./schema";
@@ -36,17 +37,6 @@ import {
 // ============================================
 // TYPES
 // ============================================
-
-type PracticeQuestionType =
-  | "mcq_vocabulary"
-  | "mcq_grammar"
-  | "mcq_comprehension"
-  | "fill_blank"
-  | "translation"
-  | "listening_mcq"
-  | "free_input"
-  | "dictation"
-  | "shadow_record";
 
 interface PracticeQuestion {
   questionId: string;
@@ -62,6 +52,12 @@ interface PracticeQuestion {
   acceptableAnswers?: string[];
   audioUrl?: string;
   points: number;
+  // Metadata tags for question pool
+  grammarTags?: string[];
+  vocabTags?: string[];
+  topicTags?: string[];
+  // Pool tracking
+  questionHash?: string;
 }
 
 interface PracticeContent {
@@ -257,6 +253,9 @@ function buildQuestionSchema(name: string): JsonSchema {
               correctAnswer: { type: "string" },
               acceptableAnswers: { type: ["array", "null"], items: { type: "string" } },
               points: { type: "number" },
+              grammarTags: { type: ["array", "null"], items: { type: "string" } },
+              vocabTags: { type: ["array", "null"], items: { type: "string" } },
+              topicTags: { type: ["array", "null"], items: { type: "string" } },
             },
             required: [
               "type",
@@ -269,6 +268,9 @@ function buildQuestionSchema(name: string): JsonSchema {
               "correctAnswer",
               "acceptableAnswers",
               "points",
+              "grammarTags",
+              "vocabTags",
+              "topicTags",
             ],
             additionalProperties: false,
           },
@@ -610,7 +612,8 @@ export const getNextPractice = action({
 
     if (isDiagnostic) {
       // ===== DIAGNOSTIC MODE =====
-      // Skip content generation, generate standalone questions
+      // Hybrid flow: search pool first, generate fresh to fill gaps
+      const targetCount = 4;
       const learnerContext: LearnerContext = {
         abilityEstimate: effectiveAbility,
         weakAreas: profile?.weakAreas,
@@ -620,16 +623,121 @@ export const getNextPractice = action({
         difficultyCalibration: profile?.difficultyCalibration ?? undefined,
         skills: skills as Record<string, number>,
       };
-      const diagnosticResult = await generateDiagnosticQuestions(
-        args.language,
-        effectiveAbility,
-        uiLang,
-        learnerContext
-      );
+
+      // Determine target difficulty based on ability
+      const targetDifficulty: DifficultyLevel =
+        effectiveAbility <= -2
+          ? "level_1"
+          : effectiveAbility <= -1
+            ? "level_2"
+            : effectiveAbility <= 0
+              ? "level_3"
+              : effectiveAbility <= 1
+                ? "level_4"
+                : effectiveAbility <= 2
+                  ? "level_5"
+                  : "level_6";
+
+      // Search the question pool for matching questions
+      let poolQuestions: PracticeQuestion[] = [];
+      let poolSize = 0;
+      try {
+        const interests =
+          profile?.interestWeights?.filter((iw) => iw.weight > 0).map((iw) => iw.tag) ?? [];
+
+        const poolResult = await ctx.runAction(internal.questionPool.searchQuestionPool, {
+          userId: args.userId,
+          language: args.language,
+          difficulty: targetDifficulty,
+          targetCount,
+          abilityEstimate: effectiveAbility,
+          weakAreas: profile?.weakAreas?.map((w) => ({
+            skill: w.skill,
+            topic: w.topic,
+            score: w.score,
+          })),
+          interests,
+        });
+
+        poolSize = poolResult.poolSize;
+
+        // Determine how many pool questions to use based on pool size
+        const poolRatio = poolSize < 50 ? 0 : poolSize < 200 ? 0.3 : poolSize < 1000 ? 0.5 : 0.7;
+        const poolTarget = Math.round(targetCount * poolRatio);
+
+        // Convert pool results to PracticeQuestion format
+        poolQuestions = poolResult.questions
+          .slice(0, poolTarget)
+          .map((pq: (typeof poolResult.questions)[number], idx: number) => ({
+            questionId: `pool_${Date.now()}_${idx}`,
+            type: pq.questionType as PracticeQuestionType,
+            targetSkill: pq.targetSkill as SkillType,
+            difficulty: pq.difficulty as DifficultyLevel,
+            question: pq.question,
+            passageText: pq.passageText ?? undefined,
+            options: pq.options ?? undefined,
+            correctAnswer: pq.correctAnswer,
+            acceptableAnswers: pq.acceptableAnswers ?? undefined,
+            points: pq.points,
+            questionHash: pq.questionHash,
+          }));
+      } catch (error) {
+        console.error("Pool search failed, falling back to full generation:", error);
+      }
+
+      // Generate fresh questions to fill gaps
+      const freshNeeded = targetCount - poolQuestions.length;
+      let freshQuestions: PracticeQuestion[] = [];
+      let diagnosticMeta: QuestionGenerationMeta = {};
+
+      if (freshNeeded > 0) {
+        const diagnosticResult = await generateDiagnosticQuestions(
+          args.language,
+          effectiveAbility,
+          uiLang,
+          learnerContext
+        );
+        freshQuestions = diagnosticResult.questions.slice(0, freshNeeded);
+        diagnosticMeta = {
+          modelUsed: diagnosticResult.modelUsed,
+          systemPrompt: diagnosticResult.systemPrompt,
+          prompt: diagnosticResult.prompt,
+          qualityScore: diagnosticResult.qualityScore,
+          validationFailures: diagnosticResult.validationFailures,
+          repairAttempts: diagnosticResult.repairAttempts,
+          generationLatencyMs: diagnosticResult.generationLatencyMs,
+        };
+
+        // Fire-and-forget: ingest fresh questions to pool
+        ctx
+          .runAction(internal.questionPool.ingestQuestionsToPool, {
+            language: args.language,
+            questions: diagnosticResult.questions.map((q) => ({
+              questionType: q.type,
+              targetSkill: q.targetSkill,
+              difficulty: q.difficulty ?? "level_3",
+              question: q.question,
+              passageText: q.passageText,
+              options: q.options,
+              correctAnswer: q.correctAnswer,
+              acceptableAnswers: q.acceptableAnswers,
+              points: q.points,
+              grammarTags: q.grammarTags,
+              vocabTags: q.vocabTags,
+              topicTags: q.topicTags,
+            })),
+            modelUsed: diagnosticResult.modelUsed,
+            qualityScore: diagnosticResult.qualityScore,
+          })
+          .catch((e) => console.error("Pool ingestion failed:", e));
+      }
+
+      // Merge pool + fresh questions, shuffle
+      const allQuestions = shuffleArray([...poolQuestions, ...freshQuestions]);
 
       const diagnosticCaps = getAudioCaps(true);
       const cappedDiagnostic = applyAudioCaps(
-        diagnosticResult.questions,
+        allQuestions,
         { listening: 0, speaking: 0 },
         diagnosticCaps
       );
@@ -671,12 +779,16 @@ export const getNextPractice = action({
           targetSkill: q.targetSkill,
           difficulty: q.difficulty,
         })),
-        modelUsed: diagnosticResult.modelUsed,
-        qualityScore: diagnosticResult.qualityScore,
-        validationFailures: diagnosticResult.validationFailures,
-        repairAttempts: diagnosticResult.repairAttempts,
-        generationLatencyMs: diagnosticResult.generationLatencyMs,
+        modelUsed: diagnosticMeta.modelUsed,
+        qualityScore: diagnosticMeta.qualityScore,
+        validationFailures: diagnosticMeta.validationFailures,
+        repairAttempts: diagnosticMeta.repairAttempts,
+        generationLatencyMs: diagnosticMeta.generationLatencyMs,
       });
+
+      console.log(
+        `Diagnostic: ${poolQuestions.length} from pool, ${freshQuestions.length} fresh (pool size: ${poolSize})`
+      );
 
       return {
         practiceId,
@@ -685,9 +797,9 @@ export const getNextPractice = action({
         targetSkills: ["vocabulary", "grammar", "reading", "listening", "writing", "speaking"],
         difficulty: effectiveAbility,
         generatedAt: Date.now(),
-        modelUsed: diagnosticResult.modelUsed,
-        systemPrompt: diagnosticResult.systemPrompt,
-        prompt: diagnosticResult.prompt,
+        modelUsed: diagnosticMeta.modelUsed,
+        systemPrompt: diagnosticMeta.systemPrompt,
+        prompt: diagnosticMeta.prompt,
         profileSnapshot,
       };
     }
@@ -870,7 +982,12 @@ ${stemVariety}
 
 ${weakAreaBlock}
 
-IMPORTANT: All questions must be directly based on the provided content.`;
+IMPORTANT: All questions must be directly based on the provided content.
+
+METADATA TAGS: For each question, include:
+- "grammarTags": array of grammar points tested (e.g., ["て-form", "passive voice"]). Empty array [] if none.
+- "vocabTags": array of vocabulary domains (e.g., ["food", "travel"]). Empty array [] if none.
+- "topicTags": array of theme/interest tags (e.g., ["daily life", "cooking"]). Empty array [] if none.`;
 
   const prompt = `Generate practice questions for this ${content.contentType}:
 
@@ -881,6 +998,7 @@ Vocabulary: ${content.vocabulary.map((v) => `${v.word} - ${v.meaning}`).join(", 
 
 Create 8-10 questions of varied types based on the weak skills: ${targetSkills.join(", ")}
 Include at least 4 different question types. Tag each question with difficulty from: level_1, level_2, level_3, level_4, level_5, level_6.
+Include grammarTags, vocabTags, and topicTags for each question.
 
 Return JSON with an array of questions.`;
 
@@ -1031,12 +1149,18 @@ ${stemVariety}
 ${buildDifficultyAnchors(language as ContentLanguage)}
 
 IMPORTANT: Questions must be standalone — no external reading passage.
-Each question MUST have a "difficulty" field: one of "level_1", "level_2", "level_3", "level_4", "level_5", or "level_6".`;
+Each question MUST have a "difficulty" field: one of "level_1", "level_2", "level_3", "level_4", "level_5", or "level_6".
+
+METADATA TAGS: For each question, include:
+- "grammarTags": array of grammar points tested (e.g., ["て-form", "passive voice", "particles"]). Empty array [] if none.
+- "vocabTags": array of vocabulary domains (e.g., ["food", "travel", "numbers"]). Empty array [] if none.
+- "topicTags": array of theme/interest tags (e.g., ["daily life", "cooking", "anime"]). Empty array [] if none.`;
 
   const prompt = `Generate exactly 4 standalone diagnostic ${languageName} practice questions.
 Cover at least 3 different skills. Use at least 3 different question types.
 Spread difficulty: 1 level_1/level_2, 1 level_2/level_3, 1 level_4/level_5, 1 level_5/level_6.
 Maximum 1 listening/dictation question and 1 shadow_record question.
+Include grammarTags, vocabTags, and topicTags for each question.
 Return JSON.`;
 
   const questionSchema = buildQuestionSchema("diagnostic_questions");

@@ -3,34 +3,12 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { isAdminEmail } from "./lib/admin";
+import { labelToIRT } from "./lib/difficultyEstimator";
 import { TEST_MODE_MODELS } from "./lib/models";
 import { adaptiveContentTypeValidator, languageValidator } from "./schema";
 
 const LISTENING_TYPES = new Set(["listening_mcq", "dictation"]);
 const SPEAKING_TYPES = new Set(["shadow_record"]);
-
-/**
- * Map a categorical difficulty label to a continuous IRT value.
- * level_1: -2.5, level_2: -1.5, level_3: -0.5, level_4: 0.5, level_5: 1.5, level_6: 2.5
- */
-function difficultyLabelToIRT(label?: string): number {
-  switch (label) {
-    case "level_1":
-      return -2.5;
-    case "level_2":
-      return -1.5;
-    case "level_3":
-      return -0.5;
-    case "level_4":
-      return 0.5;
-    case "level_5":
-      return 1.5;
-    case "level_6":
-      return 2.5;
-    default:
-      return 0.0;
-  }
-}
 
 function countAudioQuestions(questions: Array<{ type: string }>) {
   let listeningCount = 0;
@@ -221,6 +199,9 @@ export const recordAnswer = mutation({
     maxPoints: v.number(),
     responseTimeMs: v.optional(v.number()),
     skipped: v.optional(v.boolean()),
+    // Pool tracking: present if question came from pool or was ingested
+    questionHash: v.optional(v.string()),
+    abilityEstimate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     // Don't record or update model for skipped questions
@@ -241,7 +222,7 @@ export const recordAnswer = mutation({
       selectedOption: args.selectedOption,
       responseTimeMs: args.responseTimeMs,
       skills: [{ skill: args.targetSkill, weight: 1 }],
-      difficulty: args.difficultyNumeric ?? difficultyLabelToIRT(args.difficulty),
+      difficulty: args.difficultyNumeric ?? labelToIRT(args.difficulty),
       grading: {
         isCorrect: args.isCorrect,
         score: args.maxPoints > 0 ? args.earnedPoints / args.maxPoints : 0,
@@ -249,6 +230,19 @@ export const recordAnswer = mutation({
       },
       answeredAt: Date.now(),
     });
+
+    // 2. Update question pool stats if this question has a pool hash
+    if (args.questionHash) {
+      await ctx.runMutation(internal.questionPoolQueries.updateQuestionStats, {
+        questionHash: args.questionHash,
+        isCorrect: args.isCorrect,
+        responseTimeMs: args.responseTimeMs,
+        selectedOption: args.selectedOption,
+        userAbilityEstimate: args.abilityEstimate,
+        userId: args.userId,
+        language: args.language,
+      });
+    }
 
     // Learner model update is deferred to session end (submitPractice / flushLearnerModel)
     // to avoid N table patches per session that cascade re-evaluations.
@@ -370,7 +364,7 @@ export const flushLearnerModel = internalMutation({
     for (const a of args.answers) {
       const meta = questionMeta.get(a.questionId);
       const skill = meta?.targetSkill ?? "vocabulary";
-      const diffEstimate = difficultyLabelToIRT(meta?.difficulty);
+      const diffEstimate = labelToIRT(meta?.difficulty);
       const score = a.isCorrect ? 100 : 0;
 
       const existing = skillAgg.get(skill);

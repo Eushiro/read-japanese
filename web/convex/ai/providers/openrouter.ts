@@ -235,6 +235,53 @@ export async function generateImage(
 }
 
 // ============================================
+// EMBEDDING GENERATION
+// ============================================
+
+const OPENROUTER_EMBEDDINGS_URL = "https://openrouter.ai/api/v1/embeddings";
+
+interface OpenRouterEmbeddingResponse {
+  data: Array<{ embedding: number[] }>;
+  usage?: { prompt_tokens: number; total_tokens: number };
+}
+
+/**
+ * Generate an embedding vector using OpenRouter's embeddings endpoint.
+ */
+export async function generateEmbedding(
+  text: string,
+  model: string
+): Promise<{ embedding: number[]; usage: { promptTokens: number; totalTokens: number } }> {
+  const apiKey = getApiKey();
+
+  const response = await fetch(OPENROUTER_EMBEDDINGS_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "HTTP-Referer": BRAND.url,
+      "X-Title": BRAND.name,
+    },
+    body: JSON.stringify({ model, input: text }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenRouter embeddings error: ${response.status} - ${errorText}`);
+  }
+
+  const data = (await response.json()) as OpenRouterEmbeddingResponse;
+
+  return {
+    embedding: data.data[0].embedding,
+    usage: {
+      promptTokens: data.usage?.prompt_tokens ?? 0,
+      totalTokens: data.usage?.total_tokens ?? 0,
+    },
+  };
+}
+
+// ============================================
 // AUDIO INPUT SUPPORT
 // ============================================
 
