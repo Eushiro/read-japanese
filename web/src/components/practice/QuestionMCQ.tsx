@@ -160,14 +160,16 @@ export function QuestionMCQ({
             </AnimatePresence>
 
             <p className="text-2xl text-foreground/80">{question.question}</p>
-            {question.questionTranslation && question.questionTranslation !== question.question && (
-              <p
-                className="text-lg italic text-foreground/60"
-                style={{ fontFamily: "var(--font-sans)" }}
-              >
-                {question.questionTranslation}
-              </p>
-            )}
+            {question.questionTranslation &&
+              question.questionTranslation !== question.question &&
+              !blank && (
+                <p
+                  className="text-lg italic text-foreground/60"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  {question.questionTranslation}
+                </p>
+              )}
           </div>
         ) : (
           /* ── Original layout (no passageText — backward compat) ── */
@@ -188,15 +190,6 @@ export function QuestionMCQ({
                   <span style={{ color: "#4ade80" }}>{question.correctAnswer}</span>
                   {blank.after}
                 </p>
-                {question.questionTranslation &&
-                  question.questionTranslation !== question.question && (
-                    <p
-                      className="text-lg mt-3 italic text-foreground/60"
-                      style={{ fontFamily: "var(--font-sans)" }}
-                    >
-                      {question.questionTranslation}
-                    </p>
-                  )}
               </motion.div>
             ) : (
               <motion.div
@@ -220,7 +213,8 @@ export function QuestionMCQ({
                   )}
                 </p>
                 {question.questionTranslation &&
-                  question.questionTranslation !== question.question && (
+                  question.questionTranslation !== question.question &&
+                  !blank && (
                     <motion.p
                       className="text-lg mt-3 italic text-foreground/60"
                       initial={{ opacity: 0 }}
