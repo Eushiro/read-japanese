@@ -918,6 +918,8 @@ export function AdaptivePracticePage() {
         responseTimeMs: answer.responseTimeMs,
         skipped: answer.skipped,
         passageText: question.passageText,
+        questionHash: question.questionHash,
+        abilityEstimate: practiceSet.profileSnapshot.abilityEstimate,
       }).catch((err) => console.error("Failed to record answer:", err));
     },
     [practiceSet, user, language, recordAnswer]

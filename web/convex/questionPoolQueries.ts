@@ -73,7 +73,7 @@ export const getPoolSize = internalQuery({
     const questions = await ctx.db
       .query("questionPool")
       .withIndex("by_language_skill_difficulty", (q) => q.eq("language", args.language))
-      .take(10000);
+      .collect();
 
     return questions.length;
   },
@@ -183,18 +183,18 @@ export const updateQuestionStats = internalMutation({
 
     const correctRate = newCorrect / newTotal;
 
-    if (newTotal >= 20 && newTotal < 50) {
-      // Rasch (1PL): difficulty = -ln(correctRate / (1 - correctRate))
+    if (newTotal >= 20) {
+      // Rasch/2PL IRT: difficulty = -ln(p / (1 - p))
       const clampedRate = Math.max(0.01, Math.min(0.99, correctRate));
       empiricalDifficulty = -Math.log(clampedRate / (1 - clampedRate));
-    } else if (newTotal >= 50) {
-      // 2PL IRT approximation
-      const clampedRate = Math.max(0.01, Math.min(0.99, correctRate));
-      empiricalDifficulty = -Math.log(clampedRate / (1 - clampedRate));
+    }
 
-      // Simple discrimination estimate from correct rate spread
-      const spread = Math.abs(correctRate - 0.5);
-      discrimination = 0.5 + spread * 3;
+    if (newTotal >= 50) {
+      // Discrimination proxy: items near 50% correctRate discriminate best.
+      // Uses P*(1-P) which peaks at 0.25 when P=0.5, scaled to [0, 2].
+      const clampedRate = Math.max(0.01, Math.min(0.99, correctRate));
+      const variance = clampedRate * (1 - clampedRate); // max 0.25 at P=0.5
+      discrimination = variance * 8; // maps 0.25 → 2.0, extremes → ~0
     }
 
     // Flag abnormal questions

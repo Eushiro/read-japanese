@@ -24,6 +24,7 @@ import {
   type LearnerContext,
   type UILanguage,
 } from "./lib/promptHelpers";
+import { hashQuestionContent } from "./lib/questionPoolHelpers";
 import {
   adaptiveContentTypeValidator,
   type DifficultyLevel,
@@ -56,8 +57,8 @@ interface PracticeQuestion {
   grammarTags?: string[];
   vocabTags?: string[];
   topicTags?: string[];
-  // Pool tracking
-  questionHash?: string;
+  // Pool tracking (SHA-256 of canonical content, for pool stat updates)
+  questionHash: string;
 }
 
 interface PracticeContent {
@@ -416,12 +417,22 @@ function filterAndAssignIds(
     return true;
   });
 
-  return validQuestions.map((q, index) => ({
-    ...q,
-    options: MCQ_TYPES.includes(q.type) && q.options ? shuffleArray(q.options) : q.options,
-    questionId: `${prefix}_${Date.now()}_${index}`,
-    difficultyNumeric: language ? estimateQuestionDifficulty(q, language) : undefined,
-  }));
+  return validQuestions.map((q, index) => {
+    const options = MCQ_TYPES.includes(q.type) && q.options ? shuffleArray(q.options) : q.options;
+    return {
+      ...q,
+      options,
+      questionId: `${prefix}_${Date.now()}_${index}`,
+      difficultyNumeric: language ? estimateQuestionDifficulty(q, language) : undefined,
+      questionHash: hashQuestionContent({
+        questionType: q.type,
+        question: q.question,
+        passageText: q.passageText,
+        correctAnswer: q.correctAnswer,
+        options: q.options, // hash from pre-shuffle options for stable dedup
+      }),
+    };
+  });
 }
 
 type QuestionGenerationMeta = {
@@ -1052,27 +1063,7 @@ Return JSON with an array of questions.`;
     return result;
   } catch (error) {
     console.error("Failed to generate questions:", error);
-    // Return a fallback comprehension question
-    return {
-      questions: [
-        {
-          questionId: `pq_${Date.now()}_fallback`,
-          type: "mcq_comprehension",
-          targetSkill: "reading",
-          difficulty: "level_2",
-          question: `What is the main topic of "${content.title}"?`,
-          options: [
-            "The main idea of the story",
-            "A different topic",
-            "Something unrelated",
-            "None of the above",
-          ],
-          correctAnswer: "The main idea of the story",
-          points: 10,
-        },
-      ],
-      modelUsed: undefined,
-    };
+    throw error;
   }
 }
 
@@ -1216,39 +1207,7 @@ Return JSON.`;
     };
   } catch (error) {
     console.error("Failed to generate diagnostic questions:", error);
-    // Fallback with basic questions
-    return {
-      questions: [
-        {
-          questionId: `diag_${Date.now()}_0`,
-          type: "mcq_vocabulary",
-          targetSkill: "vocabulary",
-          difficulty: "level_2",
-          question:
-            language === "japanese"
-              ? "「ありがとう」の意味は？"
-              : language === "french"
-                ? "Que signifie « bonjour » ?"
-                : "What does 'hello' mean?",
-          options:
-            language === "japanese"
-              ? ["Thank you", "Hello", "Goodbye", "Sorry"]
-              : language === "french"
-                ? ["Good morning", "Goodbye", "Thank you", "Sorry"]
-                : ["A greeting", "A farewell", "An apology", "A question"],
-          correctAnswer:
-            language === "japanese"
-              ? "Thank you"
-              : language === "french"
-                ? "Good morning"
-                : "A greeting",
-          points: 10,
-        },
-      ],
-      modelUsed: undefined,
-      systemPrompt,
-      prompt,
-    };
+    throw error;
   }
 }
 

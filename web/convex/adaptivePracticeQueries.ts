@@ -199,9 +199,9 @@ export const recordAnswer = mutation({
     maxPoints: v.number(),
     responseTimeMs: v.optional(v.number()),
     skipped: v.optional(v.boolean()),
-    // Pool tracking: present if question came from pool or was ingested
-    questionHash: v.optional(v.string()),
-    abilityEstimate: v.optional(v.number()),
+    // Pool tracking: hash links answer to pool question for stat calibration
+    questionHash: v.string(),
+    abilityEstimate: v.number(),
   },
   handler: async (ctx, args) => {
     // Don't record or update model for skipped questions
@@ -231,18 +231,16 @@ export const recordAnswer = mutation({
       answeredAt: Date.now(),
     });
 
-    // 2. Update question pool stats if this question has a pool hash
-    if (args.questionHash) {
-      await ctx.runMutation(internal.questionPoolQueries.updateQuestionStats, {
-        questionHash: args.questionHash,
-        isCorrect: args.isCorrect,
-        responseTimeMs: args.responseTimeMs,
-        selectedOption: args.selectedOption,
-        userAbilityEstimate: args.abilityEstimate,
-        userId: args.userId,
-        language: args.language,
-      });
-    }
+    // 2. Update question pool stats (if the question exists in the pool)
+    await ctx.runMutation(internal.questionPoolQueries.updateQuestionStats, {
+      questionHash: args.questionHash,
+      isCorrect: args.isCorrect,
+      responseTimeMs: args.responseTimeMs,
+      selectedOption: args.selectedOption,
+      userAbilityEstimate: args.abilityEstimate,
+      userId: args.userId,
+      language: args.language,
+    });
 
     // Learner model update is deferred to session end (submitPractice / flushLearnerModel)
     // to avoid N table patches per session that cascade re-evaluations.
