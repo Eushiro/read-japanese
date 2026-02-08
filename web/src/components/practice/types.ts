@@ -1,5 +1,7 @@
 // Shared types for practice question components
 
+import type { UILanguage } from "@/lib/i18n/types";
+
 import type { DifficultyLevel } from "../../../convex/schema";
 
 export type { DifficultyLevel };
@@ -12,7 +14,12 @@ export interface PracticeQuestion {
   difficultyNumeric?: number;
   question: string;
   passageText?: string;
+  /** @deprecated Use translations[uiLanguage] instead */
   questionTranslation?: string;
+  /** Question text translated into each UI language */
+  translations?: Record<UILanguage, string>;
+  /** MCQ option translations into each UI language (null for non-MCQ) */
+  optionTranslations?: Record<UILanguage, string[]> | null;
   options?: string[];
   correctAnswer: string;
   acceptableAnswers?: string[];

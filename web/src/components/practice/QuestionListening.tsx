@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import type { ContentLanguage } from "@/lib/contentLanguages";
-import { useT } from "@/lib/i18n";
+import { useT, useUILanguage } from "@/lib/i18n";
 import { difficultyToExamLabel, getLevelVariant } from "@/lib/levels";
 
 import { MCQGrid } from "./MCQGrid";
@@ -64,6 +64,7 @@ export function QuestionListening({
   const options = useMemo(() => question.options ?? [], [question.options]);
   const correctAnswerIndex = options.indexOf(question.correctAnswer);
   const isCorrect = confirmedOption !== null && confirmedOption === correctAnswerIndex;
+  const { language: uiLanguage } = useUILanguage();
   const fontFamily = getFontFamily(language);
   const levelLabel = question.difficulty
     ? difficultyToExamLabel(question.difficulty, language as ContentLanguage)
@@ -232,6 +233,7 @@ export function QuestionListening({
         isLastQuestion={isLastQuestion}
         isGeneratingMore={isGeneratingMore}
         entranceDelay={0.5}
+        optionTranslations={question.optionTranslations?.[uiLanguage]}
       />
     </div>
   );

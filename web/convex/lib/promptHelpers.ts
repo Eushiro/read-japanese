@@ -21,6 +21,12 @@ export type ProficiencyTier = "beginner" | "intermediate" | "advanced";
 // Keep in sync with uiLanguageValidator in schema.ts.
 export type UILanguage = "en" | "ja" | "fr" | "zh";
 
+/** Translation map: question text translated into each UI language */
+export type TranslationMap = Record<UILanguage, string>;
+
+/** Option translations: MCQ options translated into each UI language */
+export type OptionTranslationMap = Record<UILanguage, string[]>;
+
 export interface WeakArea {
   skill: string;
   topic: string;
@@ -56,12 +62,15 @@ export interface LearnerContext {
 // ============================================
 
 /** UI language display names — matches uiLanguageNames in ai/core.ts */
-const UI_LANGUAGE_NAMES: Record<UILanguage, string> = {
+export const UI_LANGUAGE_NAMES: Record<UILanguage, string> = {
   en: "English",
   ja: "日本語",
   fr: "français",
   zh: "中文",
 };
+
+/** All supported UI languages, derived from UI_LANGUAGE_NAMES keys */
+export const SUPPORTED_UI_LANGUAGES: UILanguage[] = Object.keys(UI_LANGUAGE_NAMES) as UILanguage[];
 
 /** Content language display names — matches languageNames in ai/core.ts */
 const CONTENT_LANGUAGE_NAMES: Record<ContentLanguage, string> = {
@@ -111,23 +120,32 @@ export function buildLanguageMixingDirective(
   const l1Name = getUILanguageName(uiLanguage);
   const tlName = getContentLanguageName(targetLanguage);
 
+  // Build dynamic language list for translations instruction
+  const langListStr = SUPPORTED_UI_LANGUAGES.map(
+    (lang) => `${lang} (${UI_LANGUAGE_NAMES[lang]})`
+  ).join(", ");
+
+  const translationsInstruction = `Always include a "translations" object with the question text translated into ALL UI languages: ${langListStr}.
+For MCQ questions: include "optionTranslations" with each option translated into all UI languages (same order as "options"). For non-MCQ: set "optionTranslations" to null.`;
+
   switch (tier) {
     case "beginner":
       return `LANGUAGE MIXING RULES (Beginner — ability ${abilityEstimate.toFixed(1)}):
-- "question" field (instructions): write in ${l1Name}
+- "question" field: always write in ${tlName}
 - "passageText" field (sentences, example contexts): write in ${tlName}
 - Answer options (MCQ): write in ${tlName}
-- Always include "questionTranslation" as a ${l1Name} translation
-- Fill-in-blank: instruction in "question" (${l1Name}), sentence with ___ in "passageText" (${tlName})
+- ${translationsInstruction}
+- Translations are ESSENTIAL — beginners will primarily read these to understand questions
+- Fill-in-blank: instruction in "question" (${tlName}), sentence with ___ in "passageText" (${tlName})
 - Translation direction: ${l1Name} → ${tlName}
-- Listening questions: audio in ${tlName}, question and options in ${l1Name}`;
+- Listening questions: audio in ${tlName}, question in ${tlName}`;
 
     case "intermediate":
       return `LANGUAGE MIXING RULES (Intermediate — ability ${abilityEstimate.toFixed(1)}):
-- "question" field (instructions): write in ${tlName} using simpler grammar than the tested level
+- "question" field: write in ${tlName} using simpler grammar than the tested level
 - "passageText" field (sentences, example contexts): write in ${tlName}
 - Answer options: write in ${tlName}
-- Include "questionTranslation" as a ${l1Name} translation (scaffold)
+- ${translationsInstruction}
 - Fill-in-blank: instruction in "question" (${tlName}), sentence with ___ in "passageText" (${tlName})
 - Translation: both directions (${l1Name} ↔ ${tlName})
 - Listening questions: audio and question in ${tlName}`;
@@ -135,7 +153,8 @@ export function buildLanguageMixingDirective(
     case "advanced":
       return `LANGUAGE MIXING RULES (Advanced — ability ${abilityEstimate.toFixed(1)}):
 - Everything in ${tlName} — "question", "passageText", options, instructions
-- Do NOT include "questionTranslation" unless the question type requires it
+- ${translationsInstruction}
+- Note: translations are still required for pool reuse, but won't be displayed to this learner
 - Translation: ${tlName} → ${l1Name}, or ${tlName} paraphrasing
 - Listening questions: everything in ${tlName}`;
   }

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import type { ContentLanguage } from "@/lib/contentLanguages";
+import { useUILanguage } from "@/lib/i18n";
 import { difficultyToExamLabel, getLevelVariant } from "@/lib/levels";
 
 import { MCQGrid } from "./MCQGrid";
@@ -60,6 +61,7 @@ export function QuestionMCQ({
   const options = useMemo(() => question.options ?? [], [question.options]);
   const correctAnswerIndex = options.indexOf(question.correctAnswer);
   const isCorrect = confirmedOption !== null && confirmedOption === correctAnswerIndex;
+  const { language: uiLanguage } = useUILanguage();
   const fontFamily = getFontFamily(language);
   const hasPassage = !!question.passageText;
   const blank = splitBlankQuestion(question.passageText ?? question.question);
@@ -160,14 +162,14 @@ export function QuestionMCQ({
             </AnimatePresence>
 
             <p className="text-2xl text-foreground/80">{question.question}</p>
-            {question.questionTranslation &&
-              question.questionTranslation !== question.question &&
+            {question.translations?.[uiLanguage] &&
+              question.translations?.[uiLanguage] !== question.question &&
               !blank && (
                 <p
                   className="text-lg italic text-foreground/60"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  {question.questionTranslation}
+                  {question.translations?.[uiLanguage]}
                 </p>
               )}
           </div>
@@ -212,8 +214,8 @@ export function QuestionMCQ({
                     question.question
                   )}
                 </p>
-                {question.questionTranslation &&
-                  question.questionTranslation !== question.question &&
+                {question.translations?.[uiLanguage] &&
+                  question.translations?.[uiLanguage] !== question.question &&
                   !blank && (
                     <motion.p
                       className="text-lg mt-3 italic text-foreground/60"
@@ -222,7 +224,7 @@ export function QuestionMCQ({
                       transition={{ delay: 0.3 }}
                       style={{ fontFamily: "var(--font-sans)" }}
                     >
-                      {question.questionTranslation}
+                      {question.translations?.[uiLanguage]}
                     </motion.p>
                   )}
               </motion.div>
@@ -242,6 +244,7 @@ export function QuestionMCQ({
         onNext={onNext}
         isLastQuestion={isLastQuestion}
         isGeneratingMore={isGeneratingMore}
+        optionTranslations={question.optionTranslations?.[uiLanguage]}
       />
     </div>
   );

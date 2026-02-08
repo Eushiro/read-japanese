@@ -112,6 +112,22 @@ export const uiLanguageValidator = v.union(
   v.literal("zh")
 );
 
+// Translation map: question text translated into each UI language
+export const translationMapValidator = v.object({
+  en: v.string(),
+  ja: v.string(),
+  fr: v.string(),
+  zh: v.string(),
+});
+
+// Option translations: MCQ options translated into each UI language
+export const optionTranslationMapValidator = v.object({
+  en: v.array(v.string()),
+  ja: v.array(v.string()),
+  fr: v.array(v.string()),
+  zh: v.array(v.string()),
+});
+
 // Mastery states for vocabulary items
 export const masteryStateValidator = v.union(
   v.literal("new"),
@@ -1190,6 +1206,10 @@ export default defineSchema({
     correctAnswer: v.string(),
     acceptableAnswers: v.optional(v.array(v.string())),
     points: v.number(),
+
+    // Multi-language translations (optional for backward compat with existing pool data)
+    translations: v.optional(translationMapValidator),
+    optionTranslations: v.optional(v.union(optionTranslationMapValidator, v.null())),
 
     // Metadata tags (extracted by AI during generation)
     grammarTags: v.array(v.string()),

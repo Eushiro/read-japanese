@@ -23,6 +23,7 @@ import {
   getContentLanguageName,
   getUILanguageName,
   type LearnerContext,
+  SUPPORTED_UI_LANGUAGES,
   type UILanguage,
 } from "./lib/promptHelpers";
 import { hashQuestionContent } from "./lib/questionPoolHelpers";
@@ -48,7 +49,12 @@ interface PracticeQuestion {
   difficultyNumeric?: number;
   question: string;
   passageText?: string;
+  /** @deprecated Use translations[uiLanguage] instead */
   questionTranslation?: string;
+  /** Question text translated into each UI language */
+  translations: Record<UILanguage, string>;
+  /** MCQ option translations into each UI language (null for non-MCQ) */
+  optionTranslations: Record<UILanguage, string[]> | null;
   options?: string[];
   correctAnswer: string;
   acceptableAnswers?: string[];
@@ -216,6 +222,17 @@ const REQUIRED_SKILLS: SkillType[] = [
  * Shared between diagnostic, content-based, and incremental generation.
  */
 function buildQuestionSchema(name: string): JsonSchema {
+  // Build translations and optionTranslations schema dynamically from SUPPORTED_UI_LANGUAGES
+  const translationProps: Record<string, { type: string }> = {};
+  for (const lang of SUPPORTED_UI_LANGUAGES) {
+    translationProps[lang] = { type: "string" };
+  }
+
+  const optionTranslationProps: Record<string, { type: string; items: { type: string } }> = {};
+  for (const lang of SUPPORTED_UI_LANGUAGES) {
+    optionTranslationProps[lang] = { type: "array", items: { type: "string" } };
+  }
+
   return {
     name,
     schema: {
@@ -250,7 +267,15 @@ function buildQuestionSchema(name: string): JsonSchema {
               },
               question: { type: "string" },
               passageText: { type: ["string", "null"] },
-              questionTranslation: { type: ["string", "null"] },
+              translations: {
+                type: "object",
+                properties: translationProps,
+                required: [...SUPPORTED_UI_LANGUAGES],
+              },
+              optionTranslations: {
+                type: ["object", "null"],
+                properties: optionTranslationProps,
+              },
               options: { type: ["array", "null"], items: { type: "string" } },
               correctAnswer: { type: "string" },
               acceptableAnswers: { type: ["array", "null"], items: { type: "string" } },
@@ -265,7 +290,8 @@ function buildQuestionSchema(name: string): JsonSchema {
               "difficulty",
               "question",
               "passageText",
-              "questionTranslation",
+              "translations",
+              "optionTranslations",
               "options",
               "correctAnswer",
               "acceptableAnswers",
@@ -358,8 +384,12 @@ function validateQuestionSet(
     }
 
     if (q.type === "translation" || q.type === "shadow_record") {
-      if (!q.questionTranslation || q.questionTranslation.trim().length === 0) {
-        errors.push(`Q${idx}: ${q.type} must include questionTranslation`);
+      // Check that translations object has at least one non-empty value
+      const hasTranslation =
+        q.translations &&
+        Object.values(q.translations).some((v) => typeof v === "string" && v.trim().length > 0);
+      if (!hasTranslation) {
+        errors.push(`Q${idx}: ${q.type} must include translations`);
       }
     }
 
@@ -678,7 +708,9 @@ export const getNextPractice = action({
         const poolTarget = Math.round(targetCount * poolRatio);
 
         // Convert pool results to PracticeQuestion format
+        // Only include pool questions that have translations
         poolQuestions = poolResult.questions
+          .filter((pq: (typeof poolResult.questions)[number]) => pq.translations !== undefined)
           .slice(0, poolTarget)
           .map((pq: (typeof poolResult.questions)[number], idx: number) => ({
             questionId: `pool_${Date.now()}_${idx}`,
@@ -692,6 +724,8 @@ export const getNextPractice = action({
             acceptableAnswers: pq.acceptableAnswers ?? undefined,
             points: pq.points,
             questionHash: pq.questionHash,
+            translations: pq.translations as Record<UILanguage, string>,
+            optionTranslations: (pq.optionTranslations as Record<UILanguage, string[]>) ?? null,
           }));
       } catch (error) {
         console.error("Pool search failed, falling back to full generation:", error);
@@ -737,6 +771,8 @@ export const getNextPractice = action({
               grammarTags: q.grammarTags ?? undefined,
               vocabTags: q.vocabTags ?? undefined,
               topicTags: q.topicTags ?? undefined,
+              translations: q.translations,
+              optionTranslations: q.optionTranslations,
             })),
             modelUsed: diagnosticResult.modelUsed,
             qualityScore: diagnosticResult.qualityScore,
@@ -875,6 +911,8 @@ export const getNextPractice = action({
           grammarTags: q.grammarTags ?? undefined,
           vocabTags: q.vocabTags ?? undefined,
           topicTags: q.topicTags ?? undefined,
+          translations: q.translations,
+          optionTranslations: q.optionTranslations,
         })),
         modelUsed: generatedResult.modelUsed,
         qualityScore: generatedResult.qualityScore,
@@ -972,7 +1010,6 @@ async function generateQuestionsFromContent(
   modelOverride?: ModelConfig[]
 ): Promise<GeneratedQuestionsResult> {
   const languageName = getContentLanguageName(language as ContentLanguage);
-  const uiLanguageName = getUILanguageName(uiLanguage);
 
   // Build prompt enhancement blocks
   const langMixing = buildLanguageMixingDirective(
@@ -997,10 +1034,10 @@ For each question:
 - fill_blank: put the sentence with "___" in "passageText" (e.g. "毎朝___を食べます"). Put the instruction in "question". The correctAnswer is the word that fills the blank. Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
 - Comprehension questions should test understanding of the main ideas
 - For mcq_comprehension, do NOT set "passageText" — the passage is the provided content.
-- translation: put the sentence to translate in "passageText" (in ${languageName}), put the instruction in "question" (e.g., "Translate to ${uiLanguageName}"). Set questionTranslation to "Translate".
+- translation: put the sentence to translate in "passageText" (in ${languageName}), put the instruction in "question" (e.g., "Translate to English"). Set translations to localized instructions, e.g. { en: "Translate to English", fr: "Traduisez en français", ja: "英語に翻訳してください", zh: "翻译成英文" }.
 - listening_mcq: provide a question about audio content with 4 MCQ options. The audio will be generated from the content.
 - dictation: set question to a sentence from the content that the user will hear and type. The correctAnswer is the exact sentence.
-- shadow_record: set question to a sentence for pronunciation practice. Set questionTranslation to the ${uiLanguageName} translation. The correctAnswer is the sentence itself.
+- shadow_record: set question to a sentence for pronunciation practice. Set translations to the sentence meaning in each UI language. The correctAnswer is the sentence itself.
 - Include at least 2 inferential questions (not just surface-level recall)
 
 Each question MUST have a "difficulty" field: one of "level_1", "level_2", "level_3", "level_4", "level_5", or "level_6".
@@ -1083,7 +1120,6 @@ async function generateDiagnosticQuestions(
   modelOverride?: ModelConfig[]
 ): Promise<GeneratedQuestionsResult> {
   const languageName = getContentLanguageName(language as ContentLanguage);
-  const uiLanguageName = getUILanguageName(uiLanguage);
 
   // Determine approximate level for context
   const levelHint =
@@ -1152,12 +1188,12 @@ For each question:
 - MCQ: exactly 4 options
 - mcq_vocabulary / mcq_grammar with a sentence context: put the ${languageName} sentence in "passageText" and the instruction/question stem in "question". For simple "What does X mean?" questions with no sentence context, leave "passageText" empty.
 - fill_blank: put the sentence with "___" in "passageText" (e.g. "毎朝___を食べます"). Put the instruction in "question". Provide exactly 4 options (like MCQ) — one correct answer and 3 plausible distractors.
-- translation: put the sentence to translate in "passageText" (in ${languageName}), put the instruction in "question" (e.g., "Translate to ${uiLanguageName}"). Set questionTranslation to "Translate"
+- translation: put the sentence to translate in "passageText" (in ${languageName}), put the instruction in "question". Set translations to localized instructions, e.g. { en: "Translate to English", fr: "Traduisez en français", ja: "英語に翻訳してください", zh: "翻译成英文" }
 - free_input: ask the learner to write a short response in ${languageName}
 - mcq_comprehension: set "passageText" to a short ${languageName} text (1-2 sentences) and use "question" for the question itself
 - listening_mcq: provide a question about what was heard (audio will be generated from the question text)
 - dictation: set question to a ${languageName} sentence the user will type after hearing
-- shadow_record: set question to a ${languageName} sentence for pronunciation. Set questionTranslation to the ${uiLanguageName} translation
+- shadow_record: set question to a ${languageName} sentence for pronunciation. Set translations to the sentence meaning in each UI language
 
 ${distractorRules}
 
@@ -1319,7 +1355,6 @@ export const generateIncrementalQuestions = action({
 
     const uiLang = (args.uiLanguage ?? "en") as UILanguage;
     const languageName = getContentLanguageName(args.language as ContentLanguage);
-    const uiLanguageName = getUILanguageName(uiLang);
 
     const levelHint =
       args.abilityEstimate <= -2
@@ -1374,11 +1409,11 @@ For each question:
 - MCQ: exactly 4 options
 - mcq_vocabulary / mcq_grammar with a sentence context: put the ${languageName} sentence in "passageText" and the instruction/question stem in "question". For simple "What does X mean?" questions with no sentence context, leave "passageText" empty.
 - fill_blank: put the sentence with "___" in "passageText". Put the instruction in "question". Provide exactly 4 options.
-- translation: set questionTranslation to "Translate"
+- translation: set translations to localized instructions, e.g. { en: "Translate to English", fr: "Traduisez en français", ja: "英語に翻訳してください", zh: "翻译成英文" }
 - free_input: ask the learner to write a short response in ${languageName}
 - mcq_comprehension: set "passageText" to a short ${languageName} text (1-2 sentences) and use "question" for the question itself
 - listening_mcq / dictation: max 1 total
-- shadow_record: set questionTranslation to the ${uiLanguageName} translation. Max 1.
+- shadow_record: set translations to the sentence meaning in each UI language. Max 1.
 
 ${distractorRules}
 
@@ -1490,6 +1525,8 @@ Return JSON.`;
             grammarTags: q.grammarTags ?? undefined,
             vocabTags: q.vocabTags ?? undefined,
             topicTags: q.topicTags ?? undefined,
+            translations: q.translations,
+            optionTranslations: q.optionTranslations,
           })),
           modelUsed: result.modelUsed,
           qualityScore: result.qualityScore,
@@ -1529,6 +1566,7 @@ export const gradeFreeAnswer = action({
     expectedConcepts: v.optional(v.array(v.string())),
     correctAnswer: v.optional(v.string()),
     acceptableAnswers: v.optional(v.array(v.string())),
+    uiLanguage: v.optional(uiLanguageValidator),
   },
   handler: async (_ctx, args): Promise<{ score: number; feedback: string; isCorrect: boolean }> => {
     const languageNames: Record<string, string> = {
@@ -1537,10 +1575,13 @@ export const gradeFreeAnswer = action({
       french: "French",
     };
     const languageName = languageNames[args.language] || "English";
+    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
+    const feedbackLanguageName = getUILanguageName(uiLang);
 
     const systemPrompt = `You are a ${languageName} language teacher grading student responses.
 Score the answer from 0-100 and provide brief, encouraging feedback.
-Consider: grammar accuracy, vocabulary usage, and relevance to the question.`;
+Consider: grammar accuracy, vocabulary usage, and relevance to the question.
+Provide ALL feedback and explanations in ${feedbackLanguageName}. Do NOT respond in English unless the feedback language is English.`;
 
     const prompt = `Question: ${args.question}
 Student's answer: "${args.userAnswer}"

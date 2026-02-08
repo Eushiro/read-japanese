@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { ContentLanguage } from "@/lib/contentLanguages";
-import { useT } from "@/lib/i18n";
+import { useT, useUILanguage } from "@/lib/i18n";
 import { difficultyToExamLabel, getLevelVariant } from "@/lib/levels";
 
 import { ProgressSquares } from "./ProgressSquares";
@@ -33,6 +33,7 @@ export function QuestionTranslation({
   generatingMessage,
 }: QuestionViewProps) {
   const t = useT();
+  const { language: uiLanguage } = useUILanguage();
   const fontFamily = getFontFamily(language);
   const [localInput, setLocalInput] = useState(currentAnswer?.userAnswer ?? "");
   const levelLabel = question.difficulty
@@ -111,8 +112,8 @@ export function QuestionTranslation({
                 {question.question}
               </motion.p>
 
-              {question.questionTranslation &&
-                question.questionTranslation !== question.question &&
+              {question.translations?.[uiLanguage] &&
+                question.translations?.[uiLanguage] !== question.question &&
                 question.type !== "translation" && (
                   <motion.p
                     className="text-lg italic text-foreground/60"
@@ -121,7 +122,7 @@ export function QuestionTranslation({
                     transition={{ delay: 0.3 }}
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
-                    {question.questionTranslation}
+                    {question.translations?.[uiLanguage]}
                   </motion.p>
                 )}
             </motion.div>
@@ -143,8 +144,8 @@ export function QuestionTranslation({
                 {question.question}
               </motion.p>
 
-              {question.questionTranslation &&
-                question.questionTranslation !== question.question &&
+              {question.translations?.[uiLanguage] &&
+                question.translations?.[uiLanguage] !== question.question &&
                 question.type !== "translation" && (
                   <motion.p
                     className="text-lg italic text-foreground/60"
@@ -153,7 +154,7 @@ export function QuestionTranslation({
                     transition={{ delay: 0.2 }}
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
-                    {question.questionTranslation}
+                    {question.translations?.[uiLanguage]}
                   </motion.p>
                 )}
             </motion.div>

@@ -25,10 +25,12 @@ import {
   type DifficultyLevel,
   difficultyLevelValidator,
   languageValidator,
+  optionTranslationMapValidator,
   type PracticeQuestionType,
   practiceQuestionTypeValidator,
   type SkillType,
   skillTypeValidator,
+  translationMapValidator,
 } from "./schema";
 
 // ============================================
@@ -62,6 +64,8 @@ interface PoolQuestionDoc {
   correctResponses: number;
   empiricalDifficulty?: number;
   discrimination?: number;
+  translations?: Record<string, string>;
+  optionTranslations?: Record<string, string[]> | null;
 }
 
 // ============================================
@@ -90,6 +94,8 @@ export const ingestQuestionsToPool = internalAction({
         grammarTags: v.optional(v.array(v.string())),
         vocabTags: v.optional(v.array(v.string())),
         topicTags: v.optional(v.array(v.string())),
+        translations: v.optional(translationMapValidator),
+        optionTranslations: v.optional(v.union(optionTranslationMapValidator, v.null())),
       })
     ),
     modelUsed: v.optional(v.string()),
@@ -168,6 +174,8 @@ export const ingestQuestionsToPool = internalAction({
           embedding,
           modelUsed: args.modelUsed,
           qualityScore: args.qualityScore,
+          translations: q.translations,
+          optionTranslations: q.optionTranslations,
         });
 
         ingested++;
@@ -229,6 +237,8 @@ export const searchQuestionPool = internalAction({
       points: number;
       empiricalDifficulty?: number;
       discrimination?: number;
+      translations?: Record<string, string>;
+      optionTranslations?: Record<string, string[]> | null;
     }>;
     poolSize: number;
   }> => {
@@ -286,6 +296,8 @@ export const searchQuestionPool = internalAction({
     const candidates: Array<{ doc: PoolQuestionDoc; score: number }> = questionDocs
       .filter((doc) => doc !== null)
       .filter((doc) => !seenSet.has(doc.questionHash))
+      // Filter out questions without translations — don't serve them
+      .filter((doc) => doc.translations !== undefined)
       .map((doc) => ({
         doc,
         score: scoreCandidate(doc, ability, searchResults),
@@ -330,6 +342,8 @@ export const searchQuestionPool = internalAction({
         points: s.doc.points,
         empiricalDifficulty: s.doc.empiricalDifficulty,
         discrimination: s.doc.discrimination,
+        translations: s.doc.translations,
+        optionTranslations: s.doc.optionTranslations,
       })),
       poolSize,
     };

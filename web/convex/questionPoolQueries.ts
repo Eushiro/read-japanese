@@ -12,8 +12,10 @@ import { internalMutation, internalQuery } from "./_generated/server";
 import {
   difficultyLevelValidator,
   languageValidator,
+  optionTranslationMapValidator,
   practiceQuestionTypeValidator,
   skillTypeValidator,
+  translationMapValidator,
 } from "./schema";
 
 // ============================================
@@ -102,6 +104,8 @@ export const insertPoolQuestion = internalMutation({
     embedding: v.array(v.float64()),
     modelUsed: v.optional(v.string()),
     qualityScore: v.optional(v.number()),
+    translations: v.optional(translationMapValidator),
+    optionTranslations: v.optional(v.union(optionTranslationMapValidator, v.null())),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("questionPool", {
@@ -127,6 +131,8 @@ export const insertPoolQuestion = internalMutation({
       modelUsed: args.modelUsed,
       generatedAt: Date.now(),
       isStandalone: true,
+      translations: args.translations,
+      optionTranslations: args.optionTranslations,
     });
   },
 });

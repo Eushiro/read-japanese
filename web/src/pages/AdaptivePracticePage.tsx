@@ -1091,6 +1091,7 @@ export function AdaptivePracticePage() {
           correctAnswer: currentQuestion.correctAnswer,
           acceptableAnswers: currentQuestion.acceptableAnswers,
           expectedConcepts: currentQuestion.acceptableAnswers,
+          uiLanguage,
         });
         scorePercent = grading.score;
         feedback = grading.feedback;
@@ -1155,6 +1156,7 @@ export function AdaptivePracticePage() {
     questionStartTime,
     gradeFreeAnswer,
     language,
+    uiLanguage,
     recordAnswerToBackend,
     saveSessionToStorage,
     answers,

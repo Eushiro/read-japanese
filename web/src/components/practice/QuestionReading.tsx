@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import type { ContentLanguage } from "@/lib/contentLanguages";
+import { useUILanguage } from "@/lib/i18n";
 import { difficultyToExamLabel, getLevelVariant } from "@/lib/levels";
 
 import { MCQGrid } from "./MCQGrid";
@@ -60,6 +61,7 @@ export function QuestionReading({
   const options = useMemo(() => question.options ?? [], [question.options]);
   const correctAnswerIndex = options.indexOf(question.correctAnswer);
   const isCorrect = confirmedOption !== null && confirmedOption === correctAnswerIndex;
+  const { language: uiLanguage } = useUILanguage();
   const fontFamily = getFontFamily(language);
   const blank = splitBlankQuestion(question.question);
   const levelLabel = question.difficulty
@@ -170,8 +172,8 @@ export function QuestionReading({
                     question.question
                   )}
                 </p>
-                {question.questionTranslation &&
-                  question.questionTranslation !== question.question &&
+                {question.translations?.[uiLanguage] &&
+                  question.translations?.[uiLanguage] !== question.question &&
                   !blank && (
                     <motion.p
                       className="text-lg mt-3 italic text-foreground/60"
@@ -180,7 +182,7 @@ export function QuestionReading({
                       transition={{ delay: 0.5 }}
                       style={{ fontFamily: "var(--font-sans)" }}
                     >
-                      {question.questionTranslation}
+                      {question.translations?.[uiLanguage]}
                     </motion.p>
                   )}
               </motion.div>
@@ -201,6 +203,7 @@ export function QuestionReading({
         isLastQuestion={isLastQuestion}
         isGeneratingMore={isGeneratingMore}
         entranceDelay={0.5}
+        optionTranslations={question.optionTranslations?.[uiLanguage]}
       />
     </div>
   );
