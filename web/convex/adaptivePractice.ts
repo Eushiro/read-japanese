@@ -276,6 +276,7 @@ function buildQuestionSchema(name: string): JsonSchema {
               optionTranslations: {
                 type: ["object", "null"],
                 properties: optionTranslationProps,
+                required: [...SUPPORTED_UI_LANGUAGES],
                 additionalProperties: false,
               },
               options: { type: ["array", "null"], items: { type: "string" } },
