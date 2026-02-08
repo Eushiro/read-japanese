@@ -121,17 +121,22 @@ export function SkillsProgressCard({
       </div>
 
       {/* Footer */}
-      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-foreground">
-          {t("dashboard.skills.summary", {
-            best: t(`progress.skills.${bestSkill.key}`),
-            focus: t(`progress.skills.${focusSkill.key}`),
-          })}
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          {t("dashboard.skills.best")}:{" "}
+          <span className="text-foreground font-medium">
+            {t(`progress.skills.${bestSkill.key}`)}
+          </span>
+          {" · "}
+          {t("dashboard.skills.next")}:{" "}
+          <span className="text-foreground font-medium">
+            {t(`progress.skills.${focusSkill.key}`)}
+          </span>
         </p>
         {!isPreview && (
           <Link
             to="/adaptive-practice"
-            className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-full bg-white/10 border border-white/10 hover:bg-white/15 transition-colors"
+            className="inline-flex w-full items-center justify-center px-3 py-2 text-xs font-medium rounded-lg bg-white/10 border border-white/10 hover:bg-white/15 transition-colors"
           >
             {t("dashboard.skills.practice", {
               skill: t(`progress.skills.${focusSkill.key}`),
