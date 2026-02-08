@@ -7,7 +7,12 @@ import {
   getYesterdayString,
   requireUserByClerkId,
 } from "./lib/helpers";
-import { examTypeValidator, languageValidator, learningGoalValidator } from "./schema";
+import {
+  examTypeValidator,
+  languageValidator,
+  learningGoalValidator,
+  selfAssessedLevelValidator,
+} from "./schema";
 
 // ============================================
 // QUERIES
@@ -46,6 +51,7 @@ export const upsert = mutation({
     targetExams: v.optional(v.array(examTypeValidator)),
     learningGoal: v.optional(learningGoalValidator),
     interests: v.optional(v.array(v.string())),
+    selfAssessedLevel: v.optional(selfAssessedLevelValidator),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -60,6 +66,7 @@ export const upsert = mutation({
       if (args.targetExams !== undefined) updates.targetExams = args.targetExams;
       if (args.learningGoal !== undefined) updates.learningGoal = args.learningGoal;
       if (args.interests !== undefined) updates.interests = args.interests;
+      if (args.selfAssessedLevel !== undefined) updates.selfAssessedLevel = args.selfAssessedLevel;
 
       await ctx.db.patch(existing._id, updates);
       return existing._id;
@@ -74,6 +81,7 @@ export const upsert = mutation({
       targetExams: args.targetExams ?? [],
       learningGoal: args.learningGoal,
       interests: args.interests,
+      selfAssessedLevel: args.selfAssessedLevel,
       createdAt: now,
       updatedAt: now,
     });

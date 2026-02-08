@@ -23,6 +23,7 @@ export function QuestionListening({
   onSubmit,
   onNext,
   onGoToQuestion,
+  isAdmin,
   isLastQuestion,
   isGeneratingMore,
   generatingMessage,
@@ -126,6 +127,7 @@ export function QuestionListening({
           previousResults={resultsWithCurrent}
           isAnswered={confirmedOption !== null}
           onGoToQuestion={onGoToQuestion}
+          isAdmin={isAdmin}
           isGeneratingMore={isGeneratingMore}
           generatingMessage={generatingMessage}
           difficultyBadge={

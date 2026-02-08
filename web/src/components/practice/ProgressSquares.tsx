@@ -17,6 +17,8 @@ interface ProgressSquaresProps {
   generatingMessage?: string;
   /** Optional badge to show below the squares (e.g. difficulty level) */
   difficultyBadge?: React.ReactNode;
+  /** Whether the current user is an admin (makes all squares clickable) */
+  isAdmin?: boolean;
 }
 
 export function ProgressSquares({
@@ -27,6 +29,7 @@ export function ProgressSquares({
   isGeneratingMore,
   generatingMessage,
   difficultyBadge,
+  isAdmin,
 }: ProgressSquaresProps) {
   // Track previous total to detect newly added squares.
   // Uses "adjust state during render" pattern so animatingFrom is
@@ -70,7 +73,7 @@ export function ProgressSquares({
               borderColor = "#f97316";
             }
 
-            const isClickable = result !== null && !isCurrent && !!onGoToQuestion;
+            const isClickable = !isCurrent && !!onGoToQuestion && (result !== null || !!isAdmin);
             const sharedStyle = {
               width: 18,
               height: 18,

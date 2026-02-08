@@ -28,6 +28,7 @@ export function QuestionDictation({
   onSubmit,
   onNext,
   onGoToQuestion,
+  isAdmin,
   isLastQuestion,
   isGeneratingMore,
   generatingMessage,
@@ -96,6 +97,7 @@ export function QuestionDictation({
           previousResults={resultsWithCurrent}
           isAnswered={showFeedback}
           onGoToQuestion={onGoToQuestion}
+          isAdmin={isAdmin}
           isGeneratingMore={isGeneratingMore}
           generatingMessage={generatingMessage}
           difficultyBadge={

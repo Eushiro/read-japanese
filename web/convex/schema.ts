@@ -69,6 +69,9 @@ export type QuestionSourceType = "exam" | "placement" | "comprehension" | "flash
 // Skill types
 export type SkillType = "vocabulary" | "grammar" | "reading" | "listening" | "writing" | "speaking";
 
+// Self-assessed proficiency levels (set during onboarding)
+export type SelfAssessedLevel = "complete_beginner" | "some_basics" | "intermediate" | "advanced";
+
 // Learning goals
 export type LearningGoal = "exam" | "travel" | "professional" | "media" | "casual";
 
@@ -224,6 +227,14 @@ export const skillTypeValidator = v.union(
   v.literal("speaking")
 );
 
+// Self-assessed proficiency levels
+export const selfAssessedLevelValidator = v.union(
+  v.literal("complete_beginner"),
+  v.literal("some_basics"),
+  v.literal("intermediate"),
+  v.literal("advanced")
+);
+
 // Learning goals
 export const learningGoalValidator = v.union(
   v.literal("exam"),
@@ -341,6 +352,8 @@ export default defineSchema({
     currentStreak: v.optional(v.number()), // Current consecutive days of activity
     longestStreak: v.optional(v.number()), // Personal best streak
     lastActivityDate: v.optional(v.string()), // YYYY-MM-DD format
+    // Self-assessed proficiency level (set during onboarding)
+    selfAssessedLevel: v.optional(selfAssessedLevelValidator),
     // Stripe customer ID (pre-created for faster checkout)
     stripeCustomerId: v.optional(v.string()),
     // Admin mode (for admin emails only - bypasses credit limits)

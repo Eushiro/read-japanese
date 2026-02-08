@@ -29,7 +29,7 @@ import {
 import { useT } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
-import type { LearningGoal } from "../../convex/schema";
+import type { LearningGoal, SelfAssessedLevel } from "../../convex/schema";
 
 // Interest options
 const INTEREST_OPTIONS = [
@@ -66,9 +66,7 @@ interface OnboardingModalProps {
 export function OnboardingModal({ userId, userEmail, userName, onComplete }: OnboardingModalProps) {
   const [step, setStep] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState<ContentLanguage | null>(null);
-  const [_selectedLevel, _setSelectedLevel] = useState<
-    "complete_beginner" | "some_basics" | "intermediate" | "advanced"
-  >("complete_beginner");
+  const [selectedLevel, setSelectedLevel] = useState<SelfAssessedLevel>("complete_beginner");
   const [selectedGoal, setSelectedGoal] = useState<LearningGoal | null>(null);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
@@ -151,6 +149,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         targetExams: selectedExams as any,
         learningGoal: selectedGoal,
         interests: selectedInterests,
+        selfAssessedLevel: selectedLevel,
       });
 
       // Pre-create Stripe customer in background for faster checkout later
@@ -393,8 +392,70 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
             </div>
           )}
 
-          {/* Step 3: Goal Selection */}
-          {step === 3 && (
+          {/* Step 3: Level Self-Assessment */}
+          {step === 3 && selectedLanguage && (
+            <div className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-purple-500/10" />
+              <div className="absolute top-0 right-1/4 w-32 h-32 bg-teal-500/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-1/4 w-24 h-24 bg-purple-500/10 rounded-full blur-3xl" />
+              <div className="relative p-8">
+                <div className="flex items-center gap-3 mb-2">
+                  <Target className="w-5 h-5 text-accent" />
+                  <h2
+                    className="text-xl font-bold text-foreground"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {t("onboarding.levelAssessment.title", {
+                      languageName: t(`common.languages.${selectedLanguage}`),
+                    })}
+                  </h2>
+                </div>
+                <p className="text-foreground mb-6">{t("onboarding.levelAssessment.subtitle")}</p>
+
+                <div className="space-y-3 mb-8">
+                  {(["complete_beginner", "some_basics", "intermediate", "advanced"] as const).map(
+                    (level) => {
+                      const isSelected = selectedLevel === level;
+                      return (
+                        <button
+                          key={level}
+                          onClick={() => setSelectedLevel(level)}
+                          className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all ${
+                            isSelected
+                              ? "border-accent bg-accent/5"
+                              : "border-border hover:border-foreground-muted"
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <div className="font-medium text-foreground">
+                              {t(`onboarding.levelAssessment.levels.${level}.label`)}
+                            </div>
+                            <div className="text-sm text-foreground-muted">
+                              {t(`onboarding.levelAssessment.levels.${level}.description`)}
+                            </div>
+                          </div>
+                          {isSelected && <Check className="w-5 h-5 text-accent" />}
+                        </button>
+                      );
+                    }
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                    {t("onboarding.actions.back")}
+                  </Button>
+                  <Button onClick={() => setStep(4)} className="flex-1 gap-2">
+                    {t("onboarding.actions.continue")}
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Goal Selection */}
+          {step === 4 && (
             <div className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-orange-500/10" />
               <div className="absolute top-0 left-1/4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl" />
@@ -449,11 +510,11 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                 </div>
 
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                  <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
                     {t("onboarding.actions.back")}
                   </Button>
                   <Button
-                    onClick={() => setStep(4)}
+                    onClick={() => setStep(5)}
                     disabled={!selectedGoal}
                     className="flex-1 gap-2"
                   >
@@ -465,8 +526,8 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
             </div>
           )}
 
-          {/* Step 4: Interest Selection */}
-          {step === 4 && (
+          {/* Step 5: Interest Selection */}
+          {step === 5 && (
             <div className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-blue-500/10" />
               <div className="absolute top-0 right-1/4 w-32 h-32 bg-green-500/10 rounded-full blur-3xl" />
@@ -514,7 +575,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                 )}
 
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+                  <Button variant="outline" onClick={() => setStep(4)} className="flex-1">
                     {t("onboarding.actions.back")}
                   </Button>
                   <Button
@@ -530,8 +591,8 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
             </div>
           )}
 
-          {/* Step 5: Exam Selection (only for exam goal) */}
-          {step === 5 && selectedLanguage && selectedGoal === "exam" && (
+          {/* Step 6: Exam Selection (only for exam goal) */}
+          {step === 6 && selectedLanguage && selectedGoal === "exam" && (
             <div className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-orange-500/10" />
               <div className="absolute top-0 left-1/4 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl" />
@@ -592,7 +653,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
                 </div>
 
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setStep(4)} className="flex-1">
+                  <Button variant="outline" onClick={() => setStep(5)} className="flex-1">
                     {t("onboarding.actions.back")}
                   </Button>
                   <Button onClick={handleNextStep} className="flex-1 gap-2">
@@ -614,7 +675,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
           )}
 
           {/* Adaptive Learning Intro Step (final step for all paths) */}
-          {((step === 5 && selectedGoal !== "exam") || (step === 6 && selectedGoal === "exam")) && (
+          {((step === 6 && selectedGoal !== "exam") || (step === 7 && selectedGoal === "exam")) && (
             <div className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-teal-500/10" />
               <div className="absolute top-0 right-1/4 w-32 h-32 bg-green-500/10 rounded-full blur-3xl" />

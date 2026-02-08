@@ -81,6 +81,28 @@
     },
     "minSelection": "少なくとも3つのトピックを選択してください"
   },
+  "levelAssessment": {
+    "title": "{{languageName}}のレベルはどのくらいですか？",
+    "subtitle": "あなたのレベルに合わせて始めます — 気楽にどうぞ",
+    "levels": {
+      "complete_beginner": {
+        "label": "まったくの初心者",
+        "description": "この言語を勉強したことがない"
+      },
+      "some_basics": {
+        "label": "基本は少し知っている",
+        "description": "基本的な挨拶や簡単なフレーズ"
+      },
+      "intermediate": {
+        "label": "会話ができる",
+        "description": "日常的な話題なら大丈夫"
+      },
+      "advanced": {
+        "label": "かなり流暢",
+        "description": "複雑な話題も読んで議論できる"
+      }
+    }
+  },
   "examSelection": {
     "title": "どの試験を準備していますか？",
     "subtitle": "試験に特化したコンテンツに集中します",

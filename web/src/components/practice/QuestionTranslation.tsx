@@ -28,6 +28,7 @@ export function QuestionTranslation({
   onSubmit,
   onNext,
   onGoToQuestion,
+  isAdmin,
   isLastQuestion,
   isGeneratingMore,
   generatingMessage,
@@ -66,6 +67,7 @@ export function QuestionTranslation({
           previousResults={resultsWithCurrent}
           isAnswered={showFeedback}
           onGoToQuestion={onGoToQuestion}
+          isAdmin={isAdmin}
           isGeneratingMore={isGeneratingMore}
           generatingMessage={generatingMessage}
           difficultyBadge={

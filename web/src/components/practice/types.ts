@@ -63,6 +63,8 @@ export interface QuestionViewProps {
   onSubmit: () => void;
   onNext: () => void;
   onGoToQuestion?: (index: number) => void;
+  /** Whether the current user is an admin (enables skipping to any question) */
+  isAdmin?: boolean;
   isLastQuestion: boolean;
   /** Whether more questions are being generated (diagnostic mode) */
   isGeneratingMore?: boolean;

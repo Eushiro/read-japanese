@@ -25,6 +25,7 @@ export function QuestionReading({
   onSubmit,
   onNext,
   onGoToQuestion,
+  isAdmin,
   isLastQuestion,
   isGeneratingMore,
   generatingMessage,
@@ -96,6 +97,7 @@ export function QuestionReading({
           previousResults={resultsWithCurrent}
           isAnswered={confirmedOption !== null}
           onGoToQuestion={onGoToQuestion}
+          isAdmin={isAdmin}
           isGeneratingMore={isGeneratingMore}
           generatingMessage={generatingMessage}
           difficultyBadge={

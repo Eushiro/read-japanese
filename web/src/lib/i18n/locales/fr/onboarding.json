@@ -81,6 +81,28 @@
     },
     "minSelection": "Sélectionne au moins 3 sujets"
   },
+  "levelAssessment": {
+    "title": "Quel est ton niveau en {{languageName}} ?",
+    "subtitle": "On commencera à ton niveau de confort — pas de stress",
+    "levels": {
+      "complete_beginner": {
+        "label": "Je commence tout juste",
+        "description": "Jamais étudié cette langue"
+      },
+      "some_basics": {
+        "label": "Je connais quelques bases",
+        "description": "Salutations de base et phrases simples"
+      },
+      "intermediate": {
+        "label": "Je peux tenir une conversation",
+        "description": "À l'aise avec les sujets du quotidien"
+      },
+      "advanced": {
+        "label": "Je suis assez à l'aise",
+        "description": "Peut lire et discuter de sujets complexes"
+      }
+    }
+  },
   "examSelection": {
     "title": "Quel examen prépares-tu ?",
     "subtitle": "On se concentrera sur le contenu spécifique à l'examen",

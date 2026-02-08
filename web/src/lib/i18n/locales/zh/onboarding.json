@@ -81,6 +81,28 @@
     },
     "minSelection": "请至少选择3个话题"
   },
+  "levelAssessment": {
+    "title": "你的{{languageName}}水平如何？",
+    "subtitle": "我们会从你舒适的水平开始 — 没有压力",
+    "levels": {
+      "complete_beginner": {
+        "label": "完全零基础",
+        "description": "从未学过这门语言"
+      },
+      "some_basics": {
+        "label": "知道一些基础",
+        "description": "基本问候和简单短语"
+      },
+      "intermediate": {
+        "label": "能进行日常对话",
+        "description": "日常话题没有问题"
+      },
+      "advanced": {
+        "label": "相当流利",
+        "description": "能阅读和讨论复杂话题"
+      }
+    }
+  },
   "examSelection": {
     "title": "你在准备哪门考试？",
     "subtitle": "我们会专注于考试相关的内容",

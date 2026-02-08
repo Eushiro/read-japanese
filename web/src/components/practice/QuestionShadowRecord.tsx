@@ -29,6 +29,7 @@ export function QuestionShadowRecord({
   currentAnswer,
   onNext,
   onGoToQuestion,
+  isAdmin,
   isLastQuestion,
   isGeneratingMore,
   generatingMessage,
@@ -125,6 +126,7 @@ export function QuestionShadowRecord({
           previousResults={resultsWithCurrent}
           isAnswered={showScore}
           onGoToQuestion={onGoToQuestion}
+          isAdmin={isAdmin}
           isGeneratingMore={isGeneratingMore}
           generatingMessage={generatingMessage}
           difficultyBadge={
