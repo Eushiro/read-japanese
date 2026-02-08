@@ -80,11 +80,7 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
               </h2>
             </div>
           </div>
-          <div className="flex justify-center">
-            <div className="w-full max-w-md">
-              <SkillsProgressCardSkeleton />
-            </div>
-          </div>
+          <SkillsProgressCardSkeleton />
         </div>
       </motion.section>
     );
@@ -120,17 +116,13 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
               </h2>
             </div>
           </div>
-          <div className="flex justify-center">
-            <div className="w-full max-w-md">
-              <SkillsProgressCard
-                language="japanese"
-                skills={SAMPLE_SKILLS}
-                abilityEstimate={-0.5}
-                isPreview
-                colorScheme="orange"
-              />
-            </div>
-          </div>
+          <SkillsProgressCard
+            language="japanese"
+            skills={SAMPLE_SKILLS}
+            abilityEstimate={-0.5}
+            isPreview
+            colorScheme="orange"
+          />
         </div>
       </motion.section>
     );
@@ -223,19 +215,15 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
           </Link>
         </div>
 
-        {/* Radar cards - centered for single, grid for multiple */}
+        {/* Progress cards - full width for single, grid for multiple */}
         {userLanguages.length === 1 ? (
-          <div className="flex justify-center">
-            <div className="w-full max-w-md">
-              <SkillsProgressCard
-                language={userLanguages[0]}
-                skills={getSkillsForLanguage(userLanguages[0])}
-                abilityEstimate={getAbilityForLanguage(userLanguages[0])}
-                isPreview={false}
-                colorScheme={getLanguageColorScheme(0, 1)}
-              />
-            </div>
-          </div>
+          <SkillsProgressCard
+            language={userLanguages[0]}
+            skills={getSkillsForLanguage(userLanguages[0])}
+            abilityEstimate={getAbilityForLanguage(userLanguages[0])}
+            isPreview={false}
+            colorScheme={getLanguageColorScheme(0, 1)}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {userLanguages.map((lang, index) => (
