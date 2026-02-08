@@ -846,6 +846,29 @@ export const getNextPractice = action({
       profile?.weakAreas
     );
 
+    // Fire-and-forget: ingest content-based questions to pool
+    ctx
+      .runAction(internal.questionPool.ingestQuestionsToPool, {
+        language: args.language,
+        questions: generatedResult.questions.map((q) => ({
+          questionType: q.type,
+          targetSkill: q.targetSkill,
+          difficulty: q.difficulty ?? "level_3",
+          question: q.question,
+          passageText: q.passageText,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          acceptableAnswers: q.acceptableAnswers,
+          points: q.points,
+          grammarTags: q.grammarTags,
+          vocabTags: q.vocabTags,
+          topicTags: q.topicTags,
+        })),
+        modelUsed: generatedResult.modelUsed,
+        qualityScore: generatedResult.qualityScore,
+      })
+      .catch((e) => console.error("Pool ingestion failed:", e));
+
     const normalCaps = getAudioCaps(false);
     const cappedNormal = applyAudioCaps(
       generatedResult.questions,
@@ -1483,6 +1506,29 @@ Return JSON.`;
           generationLatencyMs: result.generationLatencyMs,
         });
       }
+
+      // Fire-and-forget: ingest incremental questions to pool
+      ctx
+        .runAction(internal.questionPool.ingestQuestionsToPool, {
+          language: args.language,
+          questions: result.questions.map((q) => ({
+            questionType: q.type,
+            targetSkill: q.targetSkill,
+            difficulty: q.difficulty ?? args.targetDifficulty,
+            question: q.question,
+            passageText: q.passageText,
+            options: q.options,
+            correctAnswer: q.correctAnswer,
+            acceptableAnswers: q.acceptableAnswers,
+            points: q.points,
+            grammarTags: q.grammarTags,
+            vocabTags: q.vocabTags,
+            topicTags: q.topicTags,
+          })),
+          modelUsed: result.modelUsed,
+          qualityScore: result.qualityScore,
+        })
+        .catch((e) => console.error("Pool ingestion failed:", e));
 
       return {
         questions: questionsWithAudio,
