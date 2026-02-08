@@ -204,6 +204,7 @@ export function QuestionReading({
         isGeneratingMore={isGeneratingMore}
         entranceDelay={0.5}
         optionTranslations={question.optionTranslations?.[uiLanguage]}
+        showOptionsInTargetLanguage={question.showOptionsInTargetLanguage}
       />
     </div>
   );

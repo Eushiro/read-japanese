@@ -149,7 +149,8 @@ export function buildLanguageMixingDirective(
   ).join(", ");
 
   const translationsInstruction = `Always include a "translations" object with the question text translated into ALL UI languages: ${langListStr}.
-For MCQ questions: include "optionTranslations" with each option translated into all UI languages (same order as "options"). For non-MCQ: set "optionTranslations" to null.`;
+For MCQ questions: include "optionTranslations" with each option translated into all UI languages (same order as "options"). For non-MCQ: set "optionTranslations" to null.
+- Set "showOptionsInTargetLanguage": true = options display in ${tlName}, false = options display in the user's UI language. Choose based on whether showing a translation would reveal the correct answer. Always generate optionTranslations regardless (needed for pool reuse).`;
 
   switch (tier) {
     case "beginner":

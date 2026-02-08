@@ -20,6 +20,8 @@ export interface PracticeQuestion {
   translations?: Record<UILanguage, string>;
   /** MCQ option translations into each UI language (null for non-MCQ) */
   optionTranslations?: Record<UILanguage, string[]> | null;
+  /** Whether MCQ options are in the target language (true) or UI language (false) */
+  showOptionsInTargetLanguage?: boolean;
   options?: string[];
   correctAnswer: string;
   acceptableAnswers?: string[];

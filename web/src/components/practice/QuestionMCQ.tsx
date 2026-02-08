@@ -245,6 +245,7 @@ export function QuestionMCQ({
         isLastQuestion={isLastQuestion}
         isGeneratingMore={isGeneratingMore}
         optionTranslations={question.optionTranslations?.[uiLanguage]}
+        showOptionsInTargetLanguage={question.showOptionsInTargetLanguage}
       />
     </div>
   );

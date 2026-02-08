@@ -1211,6 +1211,9 @@ export default defineSchema({
     translations: v.optional(translationMapValidator),
     optionTranslations: v.optional(v.union(optionTranslationMapValidator, v.null())),
 
+    // Whether MCQ options are in the target language (true) or UI language (false)
+    showOptionsInTargetLanguage: v.optional(v.boolean()),
+
     // Metadata tags (extracted by AI during generation)
     grammarTags: v.array(v.string()),
     vocabTags: v.array(v.string()),

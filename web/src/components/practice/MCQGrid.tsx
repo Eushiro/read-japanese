@@ -23,6 +23,8 @@ interface MCQGridProps {
   entranceDelay?: number;
   /** Translated options in the user's UI language (same order as options) */
   optionTranslations?: string[] | null;
+  /** Whether options are in the target language (true/default) or UI language (false) */
+  showOptionsInTargetLanguage?: boolean;
 }
 
 export function MCQGrid({
@@ -37,6 +39,7 @@ export function MCQGrid({
   isGeneratingMore,
   entranceDelay = 0.3,
   optionTranslations,
+  showOptionsInTargetLanguage,
 }: MCQGridProps) {
   const t = useT();
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -153,16 +156,10 @@ export function MCQGrid({
               }
             >
               <span className="text-2xl md:text-3xl" style={{ textDecoration }}>
-                {option}
+                {showOptionsInTargetLanguage === false && optionTranslations?.[index]
+                  ? optionTranslations[index]
+                  : option}
               </span>
-              {optionTranslations?.[index] && optionTranslations[index] !== option && (
-                <span
-                  className="block text-sm mt-1 opacity-60"
-                  style={{ fontFamily: "var(--font-sans)", textDecoration: "none" }}
-                >
-                  {optionTranslations[index]}
-                </span>
-              )}
             </motion.button>
           );
         })}

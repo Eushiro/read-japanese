@@ -66,6 +66,7 @@ interface PoolQuestionDoc {
   discrimination?: number;
   translations?: Record<string, string>;
   optionTranslations?: Record<string, string[]> | null;
+  showOptionsInTargetLanguage?: boolean;
 }
 
 // ============================================
@@ -96,6 +97,7 @@ export const ingestQuestionsToPool = internalAction({
         topicTags: v.optional(v.array(v.string())),
         translations: v.optional(translationMapValidator),
         optionTranslations: v.optional(v.union(optionTranslationMapValidator, v.null())),
+        showOptionsInTargetLanguage: v.optional(v.boolean()),
       })
     ),
     modelUsed: v.optional(v.string()),
@@ -176,6 +178,7 @@ export const ingestQuestionsToPool = internalAction({
           qualityScore: args.qualityScore,
           translations: q.translations,
           optionTranslations: q.optionTranslations,
+          showOptionsInTargetLanguage: q.showOptionsInTargetLanguage,
         });
 
         ingested++;
@@ -239,6 +242,7 @@ export const searchQuestionPool = internalAction({
       discrimination?: number;
       translations?: Record<string, string>;
       optionTranslations?: Record<string, string[]> | null;
+      showOptionsInTargetLanguage?: boolean;
     }>;
     poolSize: number;
   }> => {
@@ -344,6 +348,7 @@ export const searchQuestionPool = internalAction({
         discrimination: s.doc.discrimination,
         translations: s.doc.translations,
         optionTranslations: s.doc.optionTranslations,
+        showOptionsInTargetLanguage: s.doc.showOptionsInTargetLanguage,
       })),
       poolSize,
     };

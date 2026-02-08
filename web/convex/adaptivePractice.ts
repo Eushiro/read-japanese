@@ -56,6 +56,8 @@ interface PracticeQuestion {
   translations: Record<UILanguage, string>;
   /** MCQ option translations into each UI language (null for non-MCQ) */
   optionTranslations: Record<UILanguage, string[]> | null;
+  /** Whether MCQ options are in the target language (true) or UI language (false) */
+  showOptionsInTargetLanguage: boolean;
   options?: string[];
   correctAnswer: string;
   acceptableAnswers?: string[];
@@ -316,6 +318,7 @@ function buildQuestionSchema(name: string): JsonSchema {
                 required: [...SUPPORTED_UI_LANGUAGES],
                 additionalProperties: false,
               },
+              showOptionsInTargetLanguage: { type: "boolean" },
               options: { type: ["array", "null"], items: { type: "string" } },
               correctAnswer: { type: "string" },
               acceptableAnswers: { type: ["array", "null"], items: { type: "string" } },
@@ -332,6 +335,7 @@ function buildQuestionSchema(name: string): JsonSchema {
               "passageText",
               "translations",
               "optionTranslations",
+              "showOptionsInTargetLanguage",
               "options",
               "correctAnswer",
               "acceptableAnswers",
@@ -489,10 +493,29 @@ function filterAndAssignIds(
   });
 
   return validQuestions.map((q, index) => {
-    const options = MCQ_TYPES.includes(q.type) && q.options ? shuffleArray(q.options) : q.options;
+    let options = q.options;
+    let optionTranslations = q.optionTranslations;
+
+    if (MCQ_TYPES.includes(q.type) && q.options) {
+      // Shuffle indices so we can reorder both options and translations in sync
+      const indices = q.options.map((_, i) => i);
+      const shuffledIndices = shuffleArray(indices);
+      options = shuffledIndices.map((i) => q.options![i]);
+
+      if (q.optionTranslations) {
+        optionTranslations = Object.fromEntries(
+          Object.entries(q.optionTranslations).map(([lang, translations]) => [
+            lang,
+            shuffledIndices.map((i) => (translations as string[])[i]),
+          ])
+        ) as Record<UILanguage, string[]>;
+      }
+    }
+
     return {
       ...q,
       options,
+      optionTranslations,
       questionId: `${prefix}_${Date.now()}_${index}`,
       difficultyNumeric: language ? estimateQuestionDifficulty(q, language) : undefined,
       questionHash: hashQuestionContent({
@@ -772,6 +795,7 @@ export const getNextPractice = action({
             questionHash: pq.questionHash,
             translations: pq.translations as Record<UILanguage, string>,
             optionTranslations: (pq.optionTranslations as Record<UILanguage, string[]>) ?? null,
+            showOptionsInTargetLanguage: pq.showOptionsInTargetLanguage ?? true,
           }));
       } catch (error) {
         console.error("Pool search failed, falling back to full generation:", error);
@@ -819,6 +843,7 @@ export const getNextPractice = action({
               topicTags: q.topicTags ?? undefined,
               translations: q.translations,
               optionTranslations: q.optionTranslations,
+              showOptionsInTargetLanguage: q.showOptionsInTargetLanguage,
             })),
             modelUsed: diagnosticResult.modelUsed,
             qualityScore: diagnosticResult.qualityScore,
@@ -961,6 +986,7 @@ export const getNextPractice = action({
           topicTags: q.topicTags ?? undefined,
           translations: q.translations,
           optionTranslations: q.optionTranslations,
+          showOptionsInTargetLanguage: q.showOptionsInTargetLanguage,
         })),
         modelUsed: generatedResult.modelUsed,
         qualityScore: generatedResult.qualityScore,
@@ -1582,6 +1608,7 @@ Return JSON.`;
             topicTags: q.topicTags ?? undefined,
             translations: q.translations,
             optionTranslations: q.optionTranslations,
+            showOptionsInTargetLanguage: q.showOptionsInTargetLanguage,
           })),
           modelUsed: result.modelUsed,
           qualityScore: result.qualityScore,

@@ -106,6 +106,7 @@ export const insertPoolQuestion = internalMutation({
     qualityScore: v.optional(v.number()),
     translations: v.optional(translationMapValidator),
     optionTranslations: v.optional(v.union(optionTranslationMapValidator, v.null())),
+    showOptionsInTargetLanguage: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("questionPool", {
@@ -133,6 +134,7 @@ export const insertPoolQuestion = internalMutation({
       isStandalone: true,
       translations: args.translations,
       optionTranslations: args.optionTranslations,
+      showOptionsInTargetLanguage: args.showOptionsInTargetLanguage,
     });
   },
 });
