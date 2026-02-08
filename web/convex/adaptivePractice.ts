@@ -271,10 +271,12 @@ function buildQuestionSchema(name: string): JsonSchema {
                 type: "object",
                 properties: translationProps,
                 required: [...SUPPORTED_UI_LANGUAGES],
+                additionalProperties: false,
               },
               optionTranslations: {
                 type: ["object", "null"],
                 properties: optionTranslationProps,
+                additionalProperties: false,
               },
               options: { type: ["array", "null"], items: { type: "string" } },
               correctAnswer: { type: "string" },
