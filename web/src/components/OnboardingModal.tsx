@@ -66,6 +66,9 @@ interface OnboardingModalProps {
 export function OnboardingModal({ userId, userEmail, userName, onComplete }: OnboardingModalProps) {
   const [step, setStep] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState<ContentLanguage | null>(null);
+  const [_selectedLevel, _setSelectedLevel] = useState<
+    "complete_beginner" | "some_basics" | "intermediate" | "advanced"
+  >("complete_beginner");
   const [selectedGoal, setSelectedGoal] = useState<LearningGoal | null>(null);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
@@ -84,9 +87,9 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
   // All paths end with adaptive learning intro step.
   const getTotalSteps = () => {
     if (selectedGoal === "exam") {
-      return 7; // Welcome, HowItWorks, Language, Goal, Interests, Exam, AdaptiveIntro
+      return 8; // Welcome, HowItWorks, Language, LevelAssessment, Goal, Interests, Exam, AdaptiveIntro
     }
-    return 6; // Welcome, HowItWorks, Language, Goal, Interests, AdaptiveIntro
+    return 7; // Welcome, HowItWorks, Language, LevelAssessment, Goal, Interests, AdaptiveIntro
   };
 
   // Track onboarding started
@@ -175,15 +178,15 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
 
   // Handle step navigation with conditional exam step
   const handleNextStep = () => {
-    if (step === 4) {
+    if (step === 5) {
       // After interests step
       if (selectedGoal === "exam") {
-        setStep(5); // Go to exam selection
+        setStep(6); // Go to exam selection
       } else {
-        setStep(5); // Go to placement intro (non-exam path)
+        setStep(6); // Go to adaptive intro (non-exam path)
       }
-    } else if (step === 5 && selectedGoal === "exam") {
-      setStep(6); // After exam selection, go to placement intro
+    } else if (step === 6 && selectedGoal === "exam") {
+      setStep(7); // After exam selection, go to adaptive intro
     } else {
       setStep(step + 1);
     }

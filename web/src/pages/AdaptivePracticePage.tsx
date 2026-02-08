@@ -336,6 +336,7 @@ export function AdaptivePracticePage() {
   const { userProfile } = useUserData();
   const { language: uiLanguage } = useUILanguage();
   const language = (userProfile?.languages?.[0] as ContentLanguage) || "japanese";
+  const adminEnabled = isAdmin(user?.email) && userProfile?.isAdminMode === true;
 
   // Practice state
   const [phase, setPhase] = useState<PracticePhase>("loading");
@@ -368,7 +369,7 @@ export function AdaptivePracticePage() {
 
   // Model test mode state (admin only)
   const isModelTestMode =
-    isAdmin(user?.email) && typeof window !== "undefined"
+    adminEnabled && typeof window !== "undefined"
       ? localStorage.getItem("modelTestMode") === "true"
       : false;
   const testModeModels = useQuery(
@@ -1049,13 +1050,28 @@ export function AdaptivePracticePage() {
     (queueIndex: number) => {
       if (!practiceSet) return;
       const questionId = questionQueue[queueIndex];
-      if (!questionId) return;
+
+      if (!questionId) {
+        // Future square — not yet in queue. Admin-only: pick the Nth unqueued question.
+        if (!adminEnabled) return;
+        const queuedIds = new Set(questionQueue);
+        const unqueued = practiceSet.questions.filter((q) => !queuedIds.has(q.questionId));
+        const offset = queueIndex - questionQueue.length;
+        const target = unqueued[offset] ?? unqueued[0];
+        if (!target) return;
+        setCurrentQuestion(target);
+        setSelectedAnswer("");
+        setShowFeedback(false);
+        setQuestionStartTime(Date.now());
+        return;
+      }
+
       const question = practiceSet.questions.find((q) => q.questionId === questionId);
       if (!question) return;
       const answer = answers.find((a) => a.questionId === questionId);
       if (!answer) {
         // Unanswered question — only admins can navigate here
-        if (!isAdmin(user?.email)) return;
+        if (!adminEnabled) return;
         setCurrentQuestion(question);
         setSelectedAnswer("");
         setShowFeedback(false);
@@ -1066,7 +1082,7 @@ export function AdaptivePracticePage() {
       setSelectedAnswer(answer.userAnswer);
       setShowFeedback(true);
     },
-    [practiceSet, questionQueue, answers, user?.email]
+    [practiceSet, questionQueue, answers, adminEnabled]
   );
 
   // Submit answer
@@ -1723,7 +1739,7 @@ export function AdaptivePracticePage() {
       onSubmit: handleSubmitAnswer,
       onNext: handleNextQuestion,
       onGoToQuestion: handleGoToQuestion,
-      isAdmin: isAdmin(user?.email),
+      isAdmin: adminEnabled,
       isLastQuestion,
       isGeneratingMore,
       generatingMessage,
@@ -1759,7 +1775,7 @@ export function AdaptivePracticePage() {
 
     return (
       <div>
-        {isAdmin(user?.email) && (
+        {adminEnabled && (
           <div className="container mx-auto px-4 max-w-4xl">
             <div className="flex items-center gap-2 mb-1">
               {practiceSet.modelUsed && (
