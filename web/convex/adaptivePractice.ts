@@ -462,17 +462,6 @@ function validateQuestionSet(
     errors.push(`Question set must include at least ${context.requireTypeVariety} types`);
   }
 
-  if (context.mode === "content") {
-    const hasLow = difficultySet.has("level_1") || difficultySet.has("level_2");
-    const hasMid = difficultySet.has("level_3") || difficultySet.has("level_4");
-    const hasHigh = difficultySet.has("level_5") || difficultySet.has("level_6");
-    if (!hasLow || !hasMid || !hasHigh) {
-      errors.push(
-        "Question set must span low (level_1/2), mid (level_3/4), and high (level_5/6) difficulties"
-      );
-    }
-  }
-
   return { errors, failureCount: errors.length };
 }
 
@@ -663,6 +652,18 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+/**
+ * Compute a 4-question difficulty spread that stays at or below the target level.
+ * Returns [warmup, warmup, target, target] — no questions above the estimated level.
+ * The incremental generation system handles upward escalation based on performance.
+ */
+function getDiagnosticSpread(target: DifficultyLevel): [string, string, string, string] {
+  const levels = ["level_1", "level_2", "level_3", "level_4", "level_5", "level_6"];
+  const idx = levels.indexOf(target);
+  const low = Math.max(0, idx - 1);
+  return [levels[low], levels[low], levels[idx], levels[idx]];
+}
+
 // ============================================
 // ACTIONS
 // ============================================
@@ -695,7 +696,19 @@ export const getNextPractice = action({
     // Beginner detection: mirror contentEngine logic for appropriate starting difficulty
     const isBeginner = !profile || profile.totalStudyMinutes === 0;
     const storedAbility = profile?.abilityEstimate ?? 0;
-    const effectiveAbility = isBeginner && storedAbility === 0 ? -1.6 : storedAbility;
+
+    // Ability mapping from self-assessment (biased lower so users start strong)
+    const selfAssessedAbility: Record<string, number> = {
+      complete_beginner: -2.0, // level_1 territory
+      some_basics: -1.2, // level_2 territory
+      intermediate: -0.3, // level_3 territory (not level_4)
+      advanced: 0.8, // level_4 territory (not level_5/6)
+    };
+
+    const effectiveAbility =
+      isBeginner && storedAbility === 0
+        ? (selfAssessedAbility[user?.selfAssessedLevel ?? "complete_beginner"] ?? -2.0)
+        : storedAbility;
 
     // 2. Build profile snapshot for client
     const skills = profile?.skills ?? {
@@ -811,7 +824,9 @@ export const getNextPractice = action({
           args.language,
           effectiveAbility,
           uiLang,
-          learnerContext
+          learnerContext,
+          undefined,
+          targetDifficulty
         );
         freshQuestions = diagnosticResult.questions.slice(0, freshNeeded);
         diagnosticMeta = {
@@ -1194,7 +1209,8 @@ async function generateDiagnosticQuestions(
   abilityEstimate: number,
   uiLanguage: UILanguage = "en",
   learnerContext?: LearnerContext,
-  modelOverride?: ModelConfig[]
+  modelOverride?: ModelConfig[],
+  targetDifficulty?: DifficultyLevel
 ): Promise<GeneratedQuestionsResult> {
   const languageName = getContentLanguageName(language as ContentLanguage);
 
@@ -1240,6 +1256,22 @@ async function generateDiagnosticQuestions(
     ? buildGoalDirective(learnerContext.learningGoal)
     : "";
 
+  // Compute difficulty spread relative to estimated level
+  const effectiveTarget: DifficultyLevel =
+    targetDifficulty ??
+    (abilityEstimate <= -2
+      ? "level_1"
+      : abilityEstimate <= -1
+        ? "level_2"
+        : abilityEstimate <= 0
+          ? "level_3"
+          : abilityEstimate <= 1
+            ? "level_4"
+            : abilityEstimate <= 2
+              ? "level_5"
+              : "level_6");
+  const [spreadEasy, , spreadTarget] = getDiagnosticSpread(effectiveTarget);
+
   const systemPrompt = `You are a ${languageName} diagnostic assessment generator.
 Create 4 standalone practice questions that do NOT reference any reading passage — each question must be self-contained.
 
@@ -1248,10 +1280,11 @@ ${learnerBlock}
 ${goalDirective ? `${goalDirective}\n` : ""}${langMixing}
 
 DIAGNOSTIC STRATEGY:
-- 1 question well BELOW estimated level (level_1/level_2 — confirm strengths)
-- 1 question slightly below or AT estimated level (level_2/level_3 — calibrate lower bound)
-- 1 question AT or slightly above estimated level (level_4/level_5 — calibrate upper bound)
-- 1 question well ABOVE estimated level (level_5/level_6 — probe ceiling)
+- 2 warm-up questions (${spreadEasy} — build confidence, confirm foundations)
+- 2 questions at estimated level (${spreadTarget} — calibrate current ability)
+
+Keep all questions approachable. Do NOT include questions above ${spreadTarget}.
+The system will dynamically generate harder questions later if the learner succeeds.
 
 Aim to cover at least 3 different skills from this list:
 - vocabulary (mcq_vocabulary, fill_blank)
@@ -1294,7 +1327,7 @@ METADATA TAGS: For each question, include:
 
   const prompt = `Generate exactly 4 standalone diagnostic ${languageName} practice questions.
 Cover at least 3 different skills. Use at least 3 different question types.
-Spread difficulty: 1 level_1/level_2, 1 level_2/level_3, 1 level_4/level_5, 1 level_5/level_6.
+Spread difficulty: 2 ${spreadEasy}, 2 ${spreadTarget}. Do NOT go above ${spreadTarget}.
 Maximum 1 listening/dictation question and 1 shadow_record question.
 Include grammarTags, vocabTags, and topicTags for each question.
 Return JSON.`;
