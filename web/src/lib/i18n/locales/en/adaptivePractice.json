@@ -71,6 +71,10 @@
     "practiceAgain": "Practice Again",
     "backToLearn": "Back to Learn",
     "diagnosticNote": "We're getting to know your level — your next session will have personalized content!",
-    "skipped": "skipped"
+    "skipped": "skipped",
+    "levelUp": "Level Up!",
+    "yourLevel": "Your Level",
+    "questionsAtLevel": "{{count}} at {{level}}",
+    "streakLabel": "{{count}}-day streak"
   }
 }

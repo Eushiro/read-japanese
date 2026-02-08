@@ -6,18 +6,15 @@ import {
   CartesianGrid,
   Line,
   LineChart,
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 
+import { Badge } from "@/components/ui/badge";
 import { PremiumBackground } from "@/components/ui/premium-background";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -29,14 +26,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 import { getLanguageColorScheme } from "@/lib/languageColors";
+import { abilityToProgress, getLevelVariant } from "@/lib/levels";
 
 import { api } from "../../convex/_generated/api";
 
 // Color configurations for each language color scheme
-const colorConfigs: Record<"blue" | "purple" | "orange", { stroke: string; fill: string }> = {
-  blue: { stroke: "#3b82f6", fill: "#3b82f6" },
-  purple: { stroke: "#a855f7", fill: "#a855f7" },
-  orange: { stroke: "#f97316", fill: "#f97316" },
+const colorConfigs: Record<"blue" | "purple" | "orange", { bar: string; barTrack: string }> = {
+  blue: { bar: "bg-blue-500", barTrack: "bg-blue-500/20" },
+  purple: { bar: "bg-purple-500", barTrack: "bg-purple-500/20" },
+  orange: { bar: "bg-orange-500", barTrack: "bg-orange-500/20" },
 };
 
 export function ProgressPage() {
@@ -102,17 +100,18 @@ export function ProgressPage() {
     );
   }
 
-  // Prepare skill data for radar chart
-  const skillData = profile
-    ? [
-        { skill: t("progress.skills.vocabulary"), value: profile.skills.vocabulary, fullMark: 100 },
-        { skill: t("progress.skills.grammar"), value: profile.skills.grammar, fullMark: 100 },
-        { skill: t("progress.skills.reading"), value: profile.skills.reading, fullMark: 100 },
-        { skill: t("progress.skills.listening"), value: profile.skills.listening, fullMark: 100 },
-        { skill: t("progress.skills.writing"), value: profile.skills.writing, fullMark: 100 },
-        { skill: t("progress.skills.speaking"), value: profile.skills.speaking, fullMark: 100 },
-      ]
-    : [];
+  // Skill keys for iteration
+  const SKILL_KEYS = [
+    "vocabulary",
+    "grammar",
+    "reading",
+    "listening",
+    "writing",
+    "speaking",
+  ] as const;
+
+  // Level progress
+  const levelProgress = profile ? abilityToProgress(profile.abilityEstimate, activeLanguage) : null;
 
   // Prepare progress chart data
   const progressChartData = dailyProgress?.map((day) => ({
@@ -239,32 +238,65 @@ export function ProgressPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-8">
-            {/* Skill Radar */}
+            {/* Level + Skills */}
             <div className="rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
               <h2 className="font-semibold mb-4">{t("progress.skills.title")}</h2>
-              {profile ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <RadarChart data={skillData}>
-                    <PolarGrid stroke="currentColor" className="text-border" />
-                    <PolarAngleAxis
-                      dataKey="skill"
-                      tick={{ fill: "currentColor", className: "text-foreground-muted text-sm" }}
-                    />
-                    <PolarRadiusAxis
-                      angle={30}
-                      domain={[0, 100]}
-                      tick={{ fill: "currentColor", className: "text-foreground-muted text-xs" }}
-                    />
-                    <Radar
-                      name="Skills"
-                      dataKey="value"
-                      stroke={colors.stroke}
-                      fill={colors.fill}
-                      fillOpacity={0.3}
-                      strokeWidth={2}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
+              {profile && levelProgress ? (
+                <div className="space-y-5">
+                  {/* Current level badge */}
+                  <div className="flex items-center gap-3">
+                    <Badge
+                      variant={getLevelVariant(levelProgress.currentLevel)}
+                      className="text-lg px-4 py-1"
+                    >
+                      {levelProgress.currentLevel}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {t("dashboard.skills.currentLevel")}
+                    </span>
+                  </div>
+
+                  {/* Progress to next level */}
+                  {levelProgress.nextLevel ? (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {t("dashboard.skills.progressToNext", {
+                            nextLevel: levelProgress.nextLevel,
+                          })}
+                        </span>
+                        <span className="font-medium text-foreground">
+                          {levelProgress.progressPercent}%
+                        </span>
+                      </div>
+                      <Progress value={levelProgress.progressPercent} gradient />
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">
+                      {t("dashboard.skills.maxLevel")}
+                    </div>
+                  )}
+
+                  {/* Per-skill bars */}
+                  <div className="space-y-3">
+                    {SKILL_KEYS.map((key) => (
+                      <div key={key} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {t(`progress.skills.${key}`)}
+                          </span>
+                          <span className="font-medium text-foreground">{profile.skills[key]}</span>
+                        </div>
+                        <div className={`h-1.5 w-full rounded-full ${colors.barTrack}`}>
+                          <div
+                            className={`h-full rounded-full transition-all ${colors.bar}`}
+                            style={{ width: `${profile.skills[key]}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <div className="h-[300px] flex items-center justify-center text-foreground-muted">
                   {t("progress.skills.noData")}

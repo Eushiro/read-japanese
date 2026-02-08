@@ -70,7 +70,10 @@
     "best": "Point fort",
     "next": "À améliorer",
     "practice": "Pratiquer {{skill}}",
-    "summary": "Point fort : {{best}} · À améliorer : {{focus}}"
+    "summary": "Point fort : {{best}} · À améliorer : {{focus}}",
+    "currentLevel": "Niveau actuel",
+    "progressToNext": "Progression vers {{nextLevel}}",
+    "maxLevel": "Niveau le plus élevé"
   },
   "languageSwitcher": {
     "takeTest": "Test",

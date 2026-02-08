@@ -2,7 +2,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Pause, Play } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
+import { difficultyToExamLabel, getLevelVariant } from "@/lib/levels";
 
 import { MCQGrid } from "./MCQGrid";
 import { ProgressSquares } from "./ProgressSquares";
@@ -62,6 +65,9 @@ export function QuestionListening({
   const correctAnswerIndex = options.indexOf(question.correctAnswer);
   const isCorrect = confirmedOption !== null && confirmedOption === correctAnswerIndex;
   const fontFamily = getFontFamily(language);
+  const levelLabel = question.difficulty
+    ? difficultyToExamLabel(question.difficulty, language as ContentLanguage)
+    : undefined;
 
   // Cleanup audio on unmount
   useEffect(() => {
@@ -121,6 +127,13 @@ export function QuestionListening({
           onGoToQuestion={onGoToQuestion}
           isGeneratingMore={isGeneratingMore}
           generatingMessage={generatingMessage}
+          difficultyBadge={
+            levelLabel ? (
+              <Badge variant={getLevelVariant(levelLabel)} className="text-[10px] px-1.5 py-0">
+                {levelLabel}
+              </Badge>
+            ) : undefined
+          }
         />
       </div>
 

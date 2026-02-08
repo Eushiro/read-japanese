@@ -8,7 +8,7 @@ import { useT } from "@/lib/i18n";
 import { getLanguageColorScheme } from "@/lib/languageColors";
 
 import { api } from "../../../convex/_generated/api";
-import { SkillsRadarCard, SkillsRadarCardSkeleton } from "./SkillsRadarCard";
+import { SkillsProgressCard, SkillsProgressCardSkeleton } from "./SkillsProgressCard";
 
 interface SkillsSectionProps {
   userId: string;
@@ -51,6 +51,12 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
     return profile?.skills ?? DEFAULT_SKILLS;
   };
 
+  // Get ability estimate for a language
+  const getAbilityForLanguage = (lang: ContentLanguage) => {
+    const profile = profilesByLanguage.get(lang);
+    return profile?.abilityEstimate ?? -0.5;
+  };
+
   // Loading state
   if (!isPreview && allProfiles === undefined) {
     return (
@@ -76,7 +82,7 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
           </div>
           <div className="flex justify-center">
             <div className="w-full max-w-md">
-              <SkillsRadarCardSkeleton />
+              <SkillsProgressCardSkeleton />
             </div>
           </div>
         </div>
@@ -116,9 +122,10 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
           </div>
           <div className="flex justify-center">
             <div className="w-full max-w-md">
-              <SkillsRadarCard
+              <SkillsProgressCard
                 language="japanese"
                 skills={SAMPLE_SKILLS}
+                abilityEstimate={-0.5}
                 isPreview
                 colorScheme="orange"
               />
@@ -220,9 +227,10 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
         {userLanguages.length === 1 ? (
           <div className="flex justify-center">
             <div className="w-full max-w-md">
-              <SkillsRadarCard
+              <SkillsProgressCard
                 language={userLanguages[0]}
                 skills={getSkillsForLanguage(userLanguages[0])}
+                abilityEstimate={getAbilityForLanguage(userLanguages[0])}
                 isPreview={false}
                 colorScheme={getLanguageColorScheme(0, 1)}
               />
@@ -231,10 +239,11 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {userLanguages.map((lang, index) => (
-              <SkillsRadarCard
+              <SkillsProgressCard
                 key={lang}
                 language={lang}
                 skills={getSkillsForLanguage(lang)}
+                abilityEstimate={getAbilityForLanguage(lang)}
                 isPreview={false}
                 colorScheme={getLanguageColorScheme(index, userLanguages.length)}
               />

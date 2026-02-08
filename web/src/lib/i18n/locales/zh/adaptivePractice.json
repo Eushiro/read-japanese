@@ -71,6 +71,10 @@
     "practiceAgain": "再次练习",
     "backToLearn": "返回学习",
     "diagnosticNote": "我们正在了解你的水平 — 下次练习将有个性化内容！",
-    "skipped": "已跳过"
+    "skipped": "已跳过",
+    "levelUp": "升级了！",
+    "yourLevel": "当前等级",
+    "questionsAtLevel": "{{level}}级{{count}}题",
+    "streakLabel": "连续{{count}}天"
   }
 }

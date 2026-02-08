@@ -15,6 +15,8 @@ interface ProgressSquaresProps {
   isGeneratingMore?: boolean;
   /** Message to display when generating */
   generatingMessage?: string;
+  /** Optional badge to show below the squares (e.g. difficulty level) */
+  difficultyBadge?: React.ReactNode;
 }
 
 export function ProgressSquares({
@@ -24,6 +26,7 @@ export function ProgressSquares({
   onGoToQuestion,
   isGeneratingMore,
   generatingMessage,
+  difficultyBadge,
 }: ProgressSquaresProps) {
   // Track previous total to detect newly added squares.
   // Uses "adjust state during render" pattern so animatingFrom is
@@ -107,6 +110,7 @@ export function ProgressSquares({
           })}
         </AnimatePresence>
       </div>
+      {difficultyBadge}
       <AnimatePresence>
         {isGeneratingMore && generatingMessage && (
           <motion.p

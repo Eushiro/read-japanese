@@ -71,6 +71,10 @@
     "practiceAgain": "Recommencer",
     "backToLearn": "Retour à Apprendre",
     "diagnosticNote": "Nous apprenons à connaître ton niveau — ta prochaine session aura du contenu personnalisé !",
-    "skipped": "passé"
+    "skipped": "passé",
+    "levelUp": "Niveau supérieur !",
+    "yourLevel": "Votre niveau",
+    "questionsAtLevel": "{{count}} au niveau {{level}}",
+    "streakLabel": "{{count}} jours consécutifs"
   }
 }

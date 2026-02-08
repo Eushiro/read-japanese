@@ -70,7 +70,10 @@
     "best": "最强",
     "next": "需加强",
     "practice": "练习{{skill}}",
-    "summary": "最强：{{best}} · 需加强：{{focus}}"
+    "summary": "最强：{{best}} · 需加强：{{focus}}",
+    "currentLevel": "当前等级",
+    "progressToNext": "{{nextLevel}}进度",
+    "maxLevel": "最高等级"
   },
   "languageSwitcher": {
     "takeTest": "测试",

@@ -1,6 +1,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
+import type { ContentLanguage } from "@/lib/contentLanguages";
+import { difficultyToExamLabel, getLevelVariant } from "@/lib/levels";
+
 import { MCQGrid } from "./MCQGrid";
 import { ProgressSquares } from "./ProgressSquares";
 import type { QuestionViewProps } from "./types";
@@ -59,6 +63,9 @@ export function QuestionMCQ({
   const fontFamily = getFontFamily(language);
   const hasPassage = !!question.passageText;
   const blank = splitBlankQuestion(question.passageText ?? question.question);
+  const levelLabel = question.difficulty
+    ? difficultyToExamLabel(question.difficulty, language as ContentLanguage)
+    : undefined;
 
   const handleOptionClick = useCallback(
     (index: number) => {
@@ -91,6 +98,13 @@ export function QuestionMCQ({
           onGoToQuestion={onGoToQuestion}
           isGeneratingMore={isGeneratingMore}
           generatingMessage={generatingMessage}
+          difficultyBadge={
+            levelLabel ? (
+              <Badge variant={getLevelVariant(levelLabel)} className="text-[10px] px-1.5 py-0">
+                {levelLabel}
+              </Badge>
+            ) : undefined
+          }
         />
       </div>
 

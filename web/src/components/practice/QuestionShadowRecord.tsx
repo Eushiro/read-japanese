@@ -2,9 +2,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Mic, Pause, Play } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
+import { difficultyToExamLabel, getLevelVariant } from "@/lib/levels";
 
 import { ProgressSquares } from "./ProgressSquares";
 import type { QuestionViewProps } from "./types";
@@ -33,6 +36,9 @@ export function QuestionShadowRecord({
 }: ShadowRecordProps) {
   const t = useT();
   const fontFamily = getFontFamily(language);
+  const levelLabel = question.difficulty
+    ? difficultyToExamLabel(question.difficulty, language as ContentLanguage)
+    : undefined;
 
   // When revisiting, initialize in "done" state with the previous score
   const isRevisiting = !!currentAnswer;
@@ -120,6 +126,13 @@ export function QuestionShadowRecord({
           onGoToQuestion={onGoToQuestion}
           isGeneratingMore={isGeneratingMore}
           generatingMessage={generatingMessage}
+          difficultyBadge={
+            levelLabel ? (
+              <Badge variant={getLevelVariant(levelLabel)} className="text-[10px] px-1.5 py-0">
+                {levelLabel}
+              </Badge>
+            ) : undefined
+          }
         />
       </div>
 

@@ -2,9 +2,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
+import { difficultyToExamLabel, getLevelVariant } from "@/lib/levels";
 
 import { ProgressSquares } from "./ProgressSquares";
 import { ScoreBar } from "./ScoreBar";
@@ -32,6 +35,9 @@ export function QuestionTranslation({
   const t = useT();
   const fontFamily = getFontFamily(language);
   const [localInput, setLocalInput] = useState(currentAnswer?.userAnswer ?? "");
+  const levelLabel = question.difficulty
+    ? difficultyToExamLabel(question.difficulty, language as ContentLanguage)
+    : undefined;
 
   const handleInputChange = (value: string) => {
     setLocalInput(value);
@@ -61,6 +67,13 @@ export function QuestionTranslation({
           onGoToQuestion={onGoToQuestion}
           isGeneratingMore={isGeneratingMore}
           generatingMessage={generatingMessage}
+          difficultyBadge={
+            levelLabel ? (
+              <Badge variant={getLevelVariant(levelLabel)} className="text-[10px] px-1.5 py-0">
+                {levelLabel}
+              </Badge>
+            ) : undefined
+          }
         />
       </div>
 

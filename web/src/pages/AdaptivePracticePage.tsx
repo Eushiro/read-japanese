@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Code,
+  Flame,
   RotateCcw,
   SkipForward,
   Target,
@@ -42,6 +43,7 @@ import { useRotatingMessages } from "@/hooks/useRotatingMessages";
 import { isAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT, useUILanguage } from "@/lib/i18n";
+import { abilityToProgress, difficultyToExamLabel, getLevelVariant } from "@/lib/levels";
 import { getPracticeSessionKey } from "@/lib/practiceSession";
 
 import { api } from "../../convex/_generated/api";
@@ -379,6 +381,16 @@ export function AdaptivePracticePage() {
   const [testQuestionIndex, setTestQuestionIndex] = useState(0);
   const [showRawJson, setShowRawJson] = useState(false);
   const [jsonTab, setJsonTab] = useState<"input" | "output">("input");
+
+  // Results phase queries (must be at top level, not inside conditional)
+  const updatedProfile = useQuery(
+    api.learnerModel.getProfile,
+    phase === "results" && user ? { userId: user.id, language } : "skip"
+  );
+  const streakData = useQuery(
+    api.users.getStreak,
+    phase === "results" && user ? { clerkId: user.id } : "skip"
+  );
 
   // Audio state
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -1796,6 +1808,32 @@ export function AdaptivePracticePage() {
     const correctCount = nonSkippedAnswers.filter((a) => a.isCorrect).length;
     const skippedCount = answers.filter((a) => a.skipped).length;
 
+    // Level-up detection
+    const previousAbility = practiceSet.profileSnapshot.abilityEstimate;
+    const previousLevel = abilityToProgress(previousAbility, language);
+    const currentAbility = updatedProfile?.abilityEstimate ?? previousAbility;
+    const currentLevel = abilityToProgress(currentAbility, language);
+    const didLevelUp =
+      currentLevel.currentLevel !== previousLevel.currentLevel && currentAbility > previousAbility;
+
+    // Difficulty trajectory - map each answered question to its level label
+    const difficultyTrajectory = answers
+      .filter((a) => !a.skipped)
+      .map((a) => {
+        const q = practiceSet.questions.find((q) => q.questionId === a.questionId);
+        if (!q?.difficulty) return null;
+        return difficultyToExamLabel(q.difficulty, language);
+      })
+      .filter((label): label is string => label !== null);
+
+    // Count questions per level
+    const levelCounts = new Map<string, number>();
+    for (const label of difficultyTrajectory) {
+      levelCounts.set(label, (levelCounts.get(label) ?? 0) + 1);
+    }
+
+    const currentStreak = streakData?.currentStreak ?? 0;
+
     return (
       <div className="min-h-screen bg-background">
         <PremiumBackground colorScheme="cool" intensity="minimal" />
@@ -1810,14 +1848,64 @@ export function AdaptivePracticePage() {
 
           {/* Results Card */}
           <div className="bg-surface rounded-xl border border-border p-8 text-center">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6"
-            >
-              <Trophy className="w-10 h-10 text-accent" />
-            </motion.div>
+            {/* Level-up celebration */}
+            {didLevelUp ? (
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                className="mb-6"
+              >
+                <p className="text-sm font-medium text-accent mb-3">
+                  {t("adaptivePractice.results.levelUp")}
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                  <Badge
+                    variant={getLevelVariant(previousLevel.currentLevel)}
+                    className="text-lg px-3 py-1 opacity-50 line-through"
+                  >
+                    {previousLevel.currentLevel}
+                  </Badge>
+                  <span className="text-foreground-muted">&rarr;</span>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 12, delay: 0.3 }}
+                  >
+                    <Badge
+                      variant={getLevelVariant(currentLevel.currentLevel)}
+                      className="text-xl px-4 py-1.5"
+                    >
+                      {currentLevel.currentLevel}
+                    </Badge>
+                  </motion.div>
+                </div>
+              </motion.div>
+            ) : (
+              <>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6"
+                >
+                  <Trophy className="w-10 h-10 text-accent" />
+                </motion.div>
+
+                {/* Current level */}
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <span className="text-sm text-foreground-muted">
+                    {t("adaptivePractice.results.yourLevel")}
+                  </span>
+                  <Badge
+                    variant={getLevelVariant(currentLevel.currentLevel)}
+                    className="text-base px-3 py-0.5"
+                  >
+                    {currentLevel.currentLevel}
+                  </Badge>
+                </div>
+              </>
+            )}
 
             <h2 className="text-2xl font-bold mb-2">
               {percentScore >= 80
@@ -1836,7 +1924,7 @@ export function AdaptivePracticePage() {
             <div className="text-5xl font-bold text-accent my-6">{percentScore}%</div>
 
             {/* Stats */}
-            <div className="flex justify-center gap-8 text-sm text-foreground-muted mb-8">
+            <div className="flex justify-center gap-8 text-sm text-foreground-muted mb-4">
               <div>
                 <span className="font-medium text-foreground">{correctCount}</span> /{" "}
                 {nonSkippedAnswers.length} {t("adaptivePractice.results.correct")}
@@ -1852,6 +1940,50 @@ export function AdaptivePracticePage() {
                 </div>
               )}
             </div>
+
+            {/* Streak */}
+            {currentStreak > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center justify-center gap-1.5 text-sm text-orange-400 mb-4"
+              >
+                <Flame className="w-4 h-4" />
+                <span className="font-medium">
+                  {t("adaptivePractice.results.streakLabel", { count: currentStreak })}
+                </span>
+              </motion.div>
+            )}
+
+            {/* Difficulty trajectory */}
+            {difficultyTrajectory.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="mb-4"
+              >
+                <div className="flex flex-wrap justify-center gap-1.5 mb-2">
+                  {difficultyTrajectory.map((label, i) => (
+                    <Badge
+                      key={i}
+                      variant={getLevelVariant(label)}
+                      className="text-[10px] px-1.5 py-0"
+                    >
+                      {label}
+                    </Badge>
+                  ))}
+                </div>
+                <p className="text-xs text-foreground-muted">
+                  {Array.from(levelCounts.entries())
+                    .map(([level, count]) =>
+                      t("adaptivePractice.results.questionsAtLevel", { count, level })
+                    )
+                    .join(" · ")}
+                </p>
+              </motion.div>
+            )}
 
             {/* Skills practiced */}
             <div className="flex flex-wrap justify-center gap-2 mb-8">

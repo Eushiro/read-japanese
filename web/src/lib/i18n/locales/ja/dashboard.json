@@ -70,7 +70,10 @@
     "best": "得意",
     "next": "強化すべき",
     "practice": "{{skill}}を練習",
-    "summary": "得意：{{best}} · 強化すべき：{{focus}}"
+    "summary": "得意：{{best}} · 強化すべき：{{focus}}",
+    "currentLevel": "現在のレベル",
+    "progressToNext": "{{nextLevel}}までの進捗",
+    "maxLevel": "最高レベル"
   },
   "languageSwitcher": {
     "takeTest": "テスト",

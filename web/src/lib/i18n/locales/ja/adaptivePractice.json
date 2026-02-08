@@ -71,6 +71,10 @@
     "practiceAgain": "もう一度練習",
     "backToLearn": "学習に戻る",
     "diagnosticNote": "あなたのレベルを把握中です — 次のセッションではパーソナライズされたコンテンツが表示されます！",
-    "skipped": "スキップ"
+    "skipped": "スキップ",
+    "levelUp": "レベルアップ！",
+    "yourLevel": "現在のレベル",
+    "questionsAtLevel": "{{level}}の問題{{count}}問",
+    "streakLabel": "{{count}}日連続"
   }
 }

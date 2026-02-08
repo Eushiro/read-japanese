@@ -69,7 +69,10 @@
     "best": "Best",
     "next": "Focus next",
     "practice": "Practice {{skill}}",
-    "summary": "Best: {{best}} · Focus next: {{focus}}"
+    "summary": "Best: {{best}} · Focus next: {{focus}}",
+    "currentLevel": "Current Level",
+    "progressToNext": "Progress to {{nextLevel}}",
+    "maxLevel": "Highest level"
   },
   "languageSwitcher": {
     "takeTest": "Test",
