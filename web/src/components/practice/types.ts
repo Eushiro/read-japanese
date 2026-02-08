@@ -18,6 +18,8 @@ export interface PracticeQuestion {
   acceptableAnswers?: string[];
   audioUrl?: string;
   points: number;
+  // Pool tracking
+  questionHash?: string;
 }
 
 export interface PracticeContent {

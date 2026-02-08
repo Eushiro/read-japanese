@@ -1745,6 +1745,12 @@ export function AdaptivePracticePage() {
                   {getModelShortName(practiceSet.modelUsed)}
                 </Badge>
               )}
+              <Badge
+                variant="outline"
+                className={`text-xs ${currentQuestion.questionHash ? "border-emerald-500 text-emerald-400" : "border-amber-500 text-amber-400"}`}
+              >
+                {currentQuestion.questionHash ? "Pool" : "Generated"}
+              </Badge>
             </div>
             <AdminRawJsonPanel
               showRawJson={showRawJson}
