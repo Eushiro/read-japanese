@@ -12,6 +12,7 @@ import {
   Layers,
   Plus,
   Sparkles,
+  Trash2,
   Video,
 } from "lucide-react";
 import { useState } from "react";
@@ -29,6 +30,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { LANGUAGES } from "@/lib/contentLanguages";
+import { getPracticeSessionKey } from "@/lib/practiceSession";
 import { getTier, type TierId } from "@/lib/tiers";
 
 import { api } from "../../../convex/_generated/api";
@@ -51,6 +53,7 @@ export function AdminDashboard() {
     Record<string, { type: "success" | "error"; message: string }>
   >({});
   const [overrideLoadingByLang, setOverrideLoadingByLang] = useState<Record<string, boolean>>({});
+  const [clearedSessions, setClearedSessions] = useState(false);
 
   const isLoading = videos === undefined || decks === undefined || jobs === undefined;
 
@@ -396,6 +399,36 @@ export function AdminDashboard() {
                 }}
               >
                 Show Onboarding Modal
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Clear Practice Sessions */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-amber-500" />
+                Clear Practice Sessions
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Remove saved session data to force new question generation
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  const langs = userProfile?.languages ?? [];
+                  for (const lang of langs) {
+                    sessionStorage.removeItem(getPracticeSessionKey(lang));
+                  }
+                  setClearedSessions(true);
+                  setTimeout(() => setClearedSessions(false), 2000);
+                }}
+              >
+                {clearedSessions ? "Cleared!" : "Clear All Sessions"}
               </Button>
             </CardContent>
           </Card>
