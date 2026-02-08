@@ -82,12 +82,10 @@ export const SPECIAL_MODELS = {
 
 /**
  * Single text generation chain used everywhere (generation, grading, content).
- * GPT-5.2-Chat → Claude Sonnet → Gemini Flash
+ * GPT-5.2-Chat only (no fallbacks)
  */
 export const TEXT_MODEL_CHAIN: ModelConfig[] = [
   { model: TEXT_MODELS.GPT_5_2_CHAT, provider: "openrouter" },
-  { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
-  { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
 ];
 
 /**
