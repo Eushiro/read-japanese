@@ -7,6 +7,7 @@ import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { TEXT_MODEL_CHAIN } from "../lib/models";
 import {
+  buildFormattingRules,
   buildLanguageMixingDirective,
   type ContentLanguage,
   getUILanguageName,
@@ -161,6 +162,8 @@ CRITICAL RULES - FOLLOW EXACTLY:
 5. correctAnswer must be under 100 characters
 6. NEVER put explanations, reasoning, or thoughts in ANY field
 7. Vary question types
+
+${buildFormattingRules()}
 
 JSON format:
 {
@@ -647,6 +650,8 @@ CRITICAL RULES:
 2. For multiple_choice: MUST include correctAnswer and options array with 4 choices
 3. Base questions on specific parts of the transcript
 4. Include timestamp (in seconds) for relevant video section
+
+${buildFormattingRules()}
 
 JSON format:
 {

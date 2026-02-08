@@ -395,3 +395,17 @@ export function buildInterestTheming(interests: string[]): string {
   if (interests.length === 0) return "";
   return `CONTENT THEMING:\nWhere possible, use themes related to: ${interests.join(", ")}`;
 }
+
+// ============================================
+// FORMATTING RULES
+// ============================================
+
+/**
+ * Build plain-text formatting rules for AI question generation prompts.
+ * Prevents markdown formatting in generated questions, options, and explanations.
+ */
+export function buildFormattingRules(): string {
+  return `FORMATTING RULES:
+- Use plain text only. Do NOT use markdown formatting (no **bold**, *italic*, __underline__, ~~strikethrough~~, \`code\`, or any other markup).
+- Do NOT use bullet points or numbered lists in question text or answer options.`;
+}

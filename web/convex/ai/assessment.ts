@@ -6,6 +6,7 @@ import { internal } from "../_generated/api";
 import { action, internalAction } from "../_generated/server";
 import {
   buildDistractorRules,
+  buildFormattingRules,
   buildLanguageMixingDirective,
   buildStemVarietyRules,
   type ContentLanguage,
@@ -172,6 +173,8 @@ For LISTENING questions:
 ${distractorRules}
 
 ${stemVariety}
+
+${buildFormattingRules()}
 
 Respond ONLY with valid JSON in this exact format:
 {

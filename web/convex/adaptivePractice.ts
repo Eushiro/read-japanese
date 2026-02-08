@@ -12,6 +12,7 @@ import { TEXT_MODEL_CHAIN } from "./lib/models";
 import {
   buildDifficultyAnchors,
   buildDistractorRules,
+  buildFormattingRules,
   buildInterestTheming,
   buildLanguageMixingDirective,
   buildLearnerContextBlock,
@@ -1016,6 +1017,8 @@ ${stemVariety}
 
 ${weakAreaBlock}
 
+${buildFormattingRules()}
+
 IMPORTANT: All questions must be directly based on the provided content.
 
 METADATA TAGS: For each question, include:
@@ -1161,6 +1164,8 @@ ${distractorRules}
 ${stemVariety}
 
 ${buildDifficultyAnchors(language as ContentLanguage)}
+
+${buildFormattingRules()}
 
 IMPORTANT: Questions must be standalone — no external reading passage.
 Each question MUST have a "difficulty" field: one of "level_1", "level_2", "level_3", "level_4", "level_5", or "level_6".
@@ -1380,6 +1385,8 @@ ${distractorRules}
 ${stemVariety}
 
 ${buildDifficultyAnchors(args.language as ContentLanguage)}
+
+${buildFormattingRules()}
 
 IMPORTANT: Questions must be standalone — no external reading passage.
 Each question MUST have a "difficulty" field: one of "level_1", "level_2", "level_3", "level_4", "level_5", or "level_6".`;
