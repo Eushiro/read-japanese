@@ -320,15 +320,6 @@ export const deleteUser = mutation({
       await ctx.db.delete(subscription._id);
     }
 
-    // Delete usage records
-    const usageRecords = await ctx.db
-      .query("usageRecords")
-      .withIndex("by_user", (q) => q.eq("userId", args.clerkId))
-      .collect();
-    for (const record of usageRecords) {
-      await ctx.db.delete(record._id);
-    }
-
     // Delete mock tests
     const mockTests = await ctx.db
       .query("mockTests")

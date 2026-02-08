@@ -48,7 +48,7 @@
     "pro": {
       "description": "制限なく学ぶ",
       "features": {
-        "0": "月2,000 AIクレジット",
+        "0": "月1,500 AIクレジット",
         "1": "Plusのすべて",
         "2": "優先サポート",
         "3": "新機能への早期アクセス"
@@ -65,7 +65,11 @@
       "flashcard": "AI文章生成",
       "feedback": "作文添削",
       "comprehension": "クイズ採点",
+      "question": "問題生成",
       "audio": "音声生成",
+      "story": "ストーリー生成",
+      "placement": "レベル判定問題",
+      "image": "画像生成",
       "shadowing": "シャドーイングセッション"
     },
     "perMonth": "/月",

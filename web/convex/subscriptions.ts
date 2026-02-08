@@ -31,42 +31,13 @@ export const CREDIT_COSTS = {
   comprehension: 1, // gradeComprehensionAnswer (story/video quiz)
   audio: 2, // generateFlashcardAudio
   shadowing: 3, // shadowing session (audio + scoring)
+  question: 1, // comprehension/video question generation
+  image: 3, // image generation
+  story: 2, // personalized story generation
+  placement: 2, // placement test question + optional TTS
 } as const;
 
 export type CreditAction = keyof typeof CREDIT_COSTS;
-
-// ============================================
-// LEGACY TIER LIMITS (for backward compatibility)
-// ============================================
-// The app now uses a unified credit system (TIER_CREDITS + CREDIT_COSTS)
-// but some legacy code still references TIER_LIMITS. This provides
-// effectively unlimited action counts since credits are the real constraint.
-export const TIER_LIMITS = {
-  free: {
-    aiVerificationsPerMonth: 50,
-    storiesPerMonth: 50,
-    personalizedStoriesPerMonth: 5,
-    mockTestsPerMonth: 5,
-    flashcardsPerMonth: 50,
-    audioPerMonth: 25,
-  },
-  plus: {
-    aiVerificationsPerMonth: 500,
-    storiesPerMonth: 500,
-    personalizedStoriesPerMonth: 50,
-    mockTestsPerMonth: 50,
-    flashcardsPerMonth: 500,
-    audioPerMonth: 250,
-  },
-  pro: {
-    aiVerificationsPerMonth: 2000,
-    storiesPerMonth: 2000,
-    personalizedStoriesPerMonth: 200,
-    mockTestsPerMonth: 200,
-    flashcardsPerMonth: 2000,
-    audioPerMonth: 1000,
-  },
-} as const;
 
 // ============================================
 // HELPER FUNCTIONS
@@ -434,131 +405,13 @@ export const toggleAdminMode = mutation({
   },
 });
 
-// ============================================
-// LEGACY USAGE TRACKING (deprecated)
-// ============================================
-// Keep for backward compatibility during migration
-
-// @deprecated: Use getCreditBalance instead
-export const getUsage = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    const { month, year } = getCurrentPeriod();
-
-    const usage = await ctx.db
-      .query("usageRecords")
-      .withIndex("by_user_and_period", (q) =>
-        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
-      )
-      .first();
-
-    if (!usage) {
-      return {
-        aiVerifications: 0,
-        storiesRead: 0,
-        personalizedStoriesGenerated: 0,
-        mockTestsGenerated: 0,
-        flashcardsGenerated: 0,
-        audioGenerated: 0,
-      };
-    }
-
-    return {
-      aiVerifications: usage.aiVerifications,
-      storiesRead: usage.storiesRead,
-      personalizedStoriesGenerated: usage.personalizedStoriesGenerated,
-      mockTestsGenerated: usage.mockTestsGenerated,
-      flashcardsGenerated: usage.flashcardsGenerated,
-      audioGenerated: usage.audioGenerated,
-    };
-  },
-});
-
-// @deprecated: Use spendCredits instead
-export const incrementUsage = mutation({
-  args: {
-    userId: v.string(),
-    action: v.union(
-      v.literal("aiVerification"),
-      v.literal("readStory"),
-      v.literal("generatePersonalizedStory"),
-      v.literal("generateMockTest"),
-      v.literal("generateFlashcard"),
-      v.literal("generateAudio")
-    ),
-    count: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const { month, year } = getCurrentPeriod();
-    const increment = args.count ?? 1;
-
-    const existing = await ctx.db
-      .query("usageRecords")
-      .withIndex("by_user_and_period", (q) =>
-        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
-      )
-      .first();
-
-    const actionToField: Record<string, string> = {
-      aiVerification: "aiVerifications",
-      readStory: "storiesRead",
-      generatePersonalizedStory: "personalizedStoriesGenerated",
-      generateMockTest: "mockTestsGenerated",
-      generateFlashcard: "flashcardsGenerated",
-      generateAudio: "audioGenerated",
-    };
-
-    const field = actionToField[args.action] as keyof typeof existing;
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        [field]: ((existing as unknown as Record<string, number>)[field] ?? 0) + increment,
-        updatedAt: Date.now(),
-      });
-    } else {
-      await ctx.db.insert("usageRecords", {
-        userId: args.userId,
-        periodMonth: month,
-        periodYear: year,
-        aiVerifications: args.action === "aiVerification" ? increment : 0,
-        storiesRead: args.action === "readStory" ? increment : 0,
-        personalizedStoriesGenerated: args.action === "generatePersonalizedStory" ? increment : 0,
-        mockTestsGenerated: args.action === "generateMockTest" ? increment : 0,
-        flashcardsGenerated: args.action === "generateFlashcard" ? increment : 0,
-        audioGenerated: args.action === "generateAudio" ? increment : 0,
-        updatedAt: Date.now(),
-      });
-    }
-  },
-});
-
-// @deprecated: Use for testing only
+// Reset credit usage for testing
 export const resetUsage = mutation({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
     const { month, year } = getCurrentPeriod();
 
-    // Reset old usage records
-    const oldUsage = await ctx.db
-      .query("usageRecords")
-      .withIndex("by_user_and_period", (q) =>
-        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
-      )
-      .first();
-
-    if (oldUsage) {
-      await ctx.db.patch(oldUsage._id, {
-        aiVerifications: 0,
-        storiesRead: 0,
-        personalizedStoriesGenerated: 0,
-        mockTestsGenerated: 0,
-        flashcardsGenerated: 0,
-        audioGenerated: 0,
-        updatedAt: Date.now(),
-      });
-    }
-
-    // Reset new credit usage
+    // Reset credit usage
     const creditUsage = await ctx.db
       .query("creditUsage")
       .withIndex("by_user_and_period", (q) =>

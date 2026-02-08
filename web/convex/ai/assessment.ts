@@ -96,6 +96,12 @@ export const generatePlacementQuestion = action({
     ),
   },
   handler: async (ctx, args): Promise<PlacementQuestion> => {
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
     const languageName = languageNames[args.language];
     const level = difficultyToLevel(args.targetDifficulty, args.language);
     const uiLang = (args.uiLanguage ?? "en") as UILanguage;
@@ -302,6 +308,13 @@ IMPORTANT:
     await ctx.runMutation(internal.placementTest.addQuestionFromAI, {
       testId: args.testId,
       question: questionData,
+    });
+
+    // Charge credits for placement question generation (+ optional TTS)
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: identity.subject,
+      action: "placement",
+      metadata: { testId: args.testId, questionType: args.questionType, level },
     });
 
     return questionData;

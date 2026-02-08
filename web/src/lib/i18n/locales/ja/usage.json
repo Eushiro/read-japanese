@@ -30,6 +30,10 @@
     "feedback": "ライティングフィードバック",
     "comprehension": "クイズ採点",
     "audio": "音声生成",
-    "shadowing": "シャドーイングセッション"
+    "shadowing": "シャドーイングセッション",
+    "question": "問題生成",
+    "image": "画像生成",
+    "story": "ストーリー生成",
+    "placement": "レベル判定問題"
   }
 }

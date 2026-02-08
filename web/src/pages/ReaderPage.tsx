@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -83,8 +83,6 @@ export function ReaderPage() {
   const generateQuestions = useAIAction(api.ai.generateComprehensionQuestions);
   const hasStartedGeneration = useRef(false);
 
-  // Track story reading for usage limits
-  const incrementUsage = useMutation(api.subscriptions.incrementUsage);
   const hasTrackedReading = useRef(false);
 
   // Reset scroll position when entering the reader or changing story
@@ -115,25 +113,8 @@ export function ReaderPage() {
         level: story.metadata.level,
         chapter_count: story.chapters?.length ?? 1,
       });
-
-      // Increment story reading usage for metering
-      incrementUsage({
-        userId,
-        action: "readStory",
-      }).catch((err) => {
-        console.error("Failed to track story reading usage:", err);
-      });
     }
-  }, [
-    story,
-    isAuthenticated,
-    subscription?.tier,
-    trackEvent,
-    events,
-    storyId,
-    incrementUsage,
-    userId,
-  ]);
+  }, [story, isAuthenticated, subscription?.tier, trackEvent, events, storyId]);
 
   // Get settings from Convex
   const { settings, setShowFurigana } = useSettings();

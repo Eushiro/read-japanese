@@ -14,7 +14,7 @@
     },
     {
       "id": "pro",
-      "credits": 2000,
+      "credits": 1500,
       "price": { "monthly": 17.99, "annual": 179.99 },
       "features": ["credits", "everythingInPlus", "prioritySupport"],
       "popular": true

@@ -205,26 +205,6 @@ Provide translations in all 4 languages: English, Japanese, French, and Chinese 
   });
 }
 
-// Generate an example sentence for a vocabulary word (public action)
-export const generateSentence = action({
-  args: {
-    word: v.string(),
-    reading: v.optional(v.string()),
-    definitions: v.array(v.string()),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
-    examLevel: v.optional(v.string()),
-  },
-  handler: async (_ctx, args): Promise<GeneratedSentence> => {
-    return generateSentenceHelper({
-      word: args.word,
-      reading: args.reading ?? undefined,
-      definitions: args.definitions,
-      language: args.language,
-      examLevel: args.examLevel ?? undefined,
-    });
-  },
-});
-
 // Internal action for scheduled jobs to call
 export const generateSentenceInternal = internalAction({
   args: {
@@ -307,6 +287,12 @@ export const generateFlashcardsBulk = action({
     vocabularyIds: v.array(v.id("vocabulary")),
   },
   handler: async (ctx, args): Promise<{ success: number; failed: number }> => {
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
     let success = 0;
     let failed = 0;
 
@@ -328,9 +314,20 @@ export const generateFlashcardsBulk = action({
         });
 
         if (existingFlashcard) {
-          // Skip if flashcard already exists
+          // Skip if flashcard already exists (no credit charge)
           success++;
           continue;
+        }
+
+        // Check credit balance before generating - stop batch if out of credits
+        const balanceCheck = await ctx.runQuery(internal.aiHelpers.checkCreditBalance, {
+          userId: identity.subject,
+          action: "sentence",
+        });
+        if (!balanceCheck.canSpend && !balanceCheck.isAdmin) {
+          console.log(`Credits exhausted after ${success} successful generations, stopping batch`);
+          failed += args.vocabularyIds.length - success - failed;
+          break;
         }
 
         // Generate the sentence
@@ -348,6 +345,13 @@ export const generateFlashcardsBulk = action({
           userId: vocab.userId,
           sentence: generated.sentence,
           sentenceTranslation: generated.translation,
+        });
+
+        // Charge 1 credit for sentence generation
+        await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+          userId: identity.subject,
+          action: "sentence",
+          metadata: { word: vocab.word, vocabularyId, bulk: true },
         });
 
         success++;
@@ -627,6 +631,12 @@ export const generateFlashcardWithAudio = action({
     wordAudioUrl?: string;
     imageUrl?: string;
   }> => {
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
     // Get the vocabulary item
     const vocab = await ctx.runQuery(internal.aiHelpers.getVocabulary, {
       vocabularyId: args.vocabularyId,
@@ -636,6 +646,20 @@ export const generateFlashcardWithAudio = action({
       throw new Error("Vocabulary item not found");
     }
 
+    // Pre-check credit balance (max cost: 1 sentence + 2 audio + 2 audio + 3 image = 8)
+    const maxCost =
+      1 + (args.includeAudio !== false ? 4 : 0) + (args.includeImage !== false ? 3 : 0);
+    const balanceCheck = await ctx.runQuery(internal.aiHelpers.checkCreditBalance, {
+      userId: identity.subject,
+      action: "sentence",
+      count: maxCost, // Check for max possible cost
+    });
+    if (!balanceCheck.canSpend && !balanceCheck.isAdmin) {
+      throw new Error(
+        `Insufficient credits. Need up to ${maxCost}, have ${balanceCheck.remaining}. Upgrade your plan for more credits.`
+      );
+    }
+
     // Generate the sentence using the helper function
     const generated = await generateSentenceHelper({
       word: vocab.word,
@@ -643,6 +667,13 @@ export const generateFlashcardWithAudio = action({
       definitions: vocab.definitions,
       language: vocab.language,
       examLevel: vocab.examLevel ?? undefined,
+    });
+
+    // Charge for sentence generation (after success)
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: identity.subject,
+      action: "sentence",
+      metadata: { word: vocab.word, vocabularyId: args.vocabularyId },
     });
 
     // Create or update the flashcard
@@ -676,6 +707,13 @@ export const generateFlashcardWithAudio = action({
             flashcardId: flashcardId as Id<"flashcards">,
             audioUrl,
           });
+
+          // Charge for sentence audio
+          await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+            userId: identity.subject,
+            action: "audio",
+            metadata: { word: vocab.word, type: "sentence" },
+          });
         }
       } catch (error) {
         console.error("Sentence audio generation failed:", error);
@@ -698,6 +736,13 @@ export const generateFlashcardWithAudio = action({
           await ctx.runMutation(internal.aiHelpers.updateFlashcardWordAudio, {
             flashcardId: flashcardId as Id<"flashcards">,
             wordAudioUrl,
+          });
+
+          // Charge for word audio
+          await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+            userId: identity.subject,
+            action: "audio",
+            metadata: { word: vocab.word, type: "word" },
           });
         }
       } catch (error) {
@@ -728,6 +773,13 @@ export const generateFlashcardWithAudio = action({
           await ctx.runMutation(internal.aiHelpers.updateFlashcardImage, {
             flashcardId: flashcardId as Id<"flashcards">,
             imageUrl,
+          });
+
+          // Charge for image generation
+          await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+            userId: identity.subject,
+            action: "image",
+            metadata: { word: vocab.word },
           });
         }
       } catch (error) {

@@ -298,6 +298,13 @@ Create comprehension questions for the story above, aiming for a total of ${work
       questions: questionsWithIds,
     });
 
+    // Charge credits for question generation (only for new AI-generated questions, not cache hits)
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: args.userId,
+      action: "question",
+      metadata: { storyId: args.storyId, questionCount: questionsWithIds.length },
+    });
+
     // Create the comprehension quiz for this user
     const comprehensionId = await ctx.runMutation(internal.storyComprehension.createFromAI, {
       userId: args.userId,
@@ -588,6 +595,12 @@ export const generateVideoQuestions = action({
     ctx,
     args
   ): Promise<{ success: boolean; questionCount: number; error?: string }> => {
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
     const languageName = languageNames[args.language];
     const levelInfo = args.userLevel ? ` The learner is at ${args.userLevel} level.` : "";
     const uiLang = (args.uiLanguage ?? "en") as UILanguage;
@@ -716,6 +729,16 @@ Create comprehension questions for the video above, aiming for ${workBudget} wor
       await ctx.runMutation(internal.youtubeContent.updateQuestionsInternal, {
         id: args.youtubeContentId,
         questions: shuffledQuestions,
+      });
+
+      // Charge credits for video question generation
+      await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+        userId: identity.subject,
+        action: "question",
+        metadata: {
+          youtubeContentId: args.youtubeContentId,
+          questionCount: shuffledQuestions.length,
+        },
       });
 
       return {

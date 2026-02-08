@@ -78,6 +78,18 @@ export type AdaptiveContentType = "dialogue" | "micro_story";
 // Difficulty levels (6-level scale mapping to CEFR A1-C2 / JLPT N5-N1+)
 export type DifficultyLevel = "level_1" | "level_2" | "level_3" | "level_4" | "level_5" | "level_6";
 
+// Practice question types (adaptive practice)
+export type PracticeQuestionType =
+  | "mcq_vocabulary"
+  | "mcq_grammar"
+  | "mcq_comprehension"
+  | "fill_blank"
+  | "translation"
+  | "listening_mcq"
+  | "free_input"
+  | "dictation"
+  | "shadow_record";
+
 // Adaptive content audience scopes
 export type ContentAudienceScope = "global" | "goal" | "user";
 
@@ -226,6 +238,19 @@ export const contentAudienceScopeValidator = v.union(
   v.literal("global"),
   v.literal("goal"),
   v.literal("user")
+);
+
+// Practice question types (adaptive practice)
+export const practiceQuestionTypeValidator = v.union(
+  v.literal("mcq_vocabulary"),
+  v.literal("mcq_grammar"),
+  v.literal("mcq_comprehension"),
+  v.literal("fill_blank"),
+  v.literal("translation"),
+  v.literal("listening_mcq"),
+  v.literal("free_input"),
+  v.literal("dictation"),
+  v.literal("shadow_record")
 );
 
 // Question types for exams
@@ -826,28 +851,6 @@ export default defineSchema({
     .index("by_stripe_customer", ["stripeCustomerId"]),
 
   // ============================================
-  // USAGE TRACKING (deprecated - use creditUsage)
-  // ============================================
-  // @deprecated: Migrated to creditUsage table for unified credit system
-  usageRecords: defineTable({
-    userId: v.string(),
-    periodMonth: v.number(), // 1-12
-    periodYear: v.number(), // e.g., 2024
-
-    // Tracked usage
-    aiVerifications: v.number(), // Sentence checks
-    storiesRead: v.number(),
-    personalizedStoriesGenerated: v.number(),
-    mockTestsGenerated: v.number(),
-    flashcardsGenerated: v.number(),
-    audioGenerated: v.number(),
-
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_user_and_period", ["userId", "periodYear", "periodMonth"]),
-
-  // ============================================
   // CREDIT USAGE (unified credit system)
   // ============================================
   // Tracks monthly credit consumption per user
@@ -1169,6 +1172,71 @@ export default defineSchema({
   })
     .index("by_type_level", ["questionType", "targetLevel"])
     .index("by_hash", ["questionHash"]),
+
+  // ============================================
+  // QUESTION POOL (shared, reusable questions with embeddings)
+  // ============================================
+  questionPool: defineTable({
+    questionHash: v.string(), // SHA-256 of canonical content, links to questionCalibration
+    language: languageValidator,
+    questionType: practiceQuestionTypeValidator,
+    targetSkill: skillTypeValidator,
+    difficulty: difficultyLevelValidator,
+
+    // Full question content
+    question: v.string(),
+    passageText: v.optional(v.string()),
+    options: v.optional(v.array(v.string())),
+    correctAnswer: v.string(),
+    acceptableAnswers: v.optional(v.array(v.string())),
+    points: v.number(),
+
+    // Metadata tags (extracted by AI during generation)
+    grammarTags: v.array(v.string()),
+    vocabTags: v.array(v.string()),
+    topicTags: v.array(v.string()),
+
+    // Embedding for vector search (1536-dim from text-embedding-3-small)
+    embedding: v.array(v.float64()),
+
+    // Calibration counters
+    totalResponses: v.number(),
+    correctResponses: v.number(),
+    avgResponseTimeMs: v.number(),
+
+    // Per-distractor selection counts (for MCQ: maps each option to times selected)
+    distractorCounts: v.optional(v.record(v.string(), v.number())),
+
+    // IRT calibration (populated after sufficient responses)
+    empiricalDifficulty: v.optional(v.number()), // 2PL IRT difficulty after 20+ responses
+    discrimination: v.optional(v.number()), // 2PL IRT discrimination
+
+    // Quality tracking
+    qualityScore: v.optional(v.number()),
+    modelUsed: v.optional(v.string()),
+    generatedAt: v.number(),
+    isStandalone: v.boolean(), // true for Phase 1 standalone questions
+    flagged: v.optional(v.boolean()), // flagged for review (abnormal stats)
+  })
+    .index("by_hash", ["questionHash"])
+    .index("by_language_skill_difficulty", ["language", "targetSkill", "difficulty"])
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: 1536,
+      filterFields: ["language", "questionType", "targetSkill", "difficulty", "isStandalone"],
+    }),
+
+  // Per-user question exposure tracking
+  questionExposure: defineTable({
+    userId: v.string(),
+    questionHash: v.string(),
+    language: languageValidator,
+    servedAt: v.number(),
+    isCorrect: v.optional(v.boolean()), // enables spaced re-exposure
+    userAbilityAtTime: v.optional(v.number()), // learner's ability when answered, for IRT calibration
+  })
+    .index("by_user_language", ["userId", "language"])
+    .index("by_user_hash", ["userId", "questionHash"]),
 
   // ============================================
   // DIFFICULTY OFFSETS (calibration adjustments)

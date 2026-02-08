@@ -12,7 +12,7 @@ import { describe, expect, it } from "bun:test";
 const TIER_CREDITS = {
   free: 50,
   plus: 500,
-  pro: 2000,
+  pro: 1500,
 } as const;
 
 const CREDIT_COSTS = {
@@ -21,6 +21,10 @@ const CREDIT_COSTS = {
   comprehension: 1,
   audio: 2,
   shadowing: 3,
+  question: 1,
+  image: 3,
+  story: 2,
+  placement: 2,
 } as const;
 
 type Tier = keyof typeof TIER_CREDITS;
@@ -46,7 +50,7 @@ describe("Credit System", () => {
     it("has correct limits for each tier", () => {
       expect(TIER_CREDITS.free).toBe(50);
       expect(TIER_CREDITS.plus).toBe(500);
-      expect(TIER_CREDITS.pro).toBe(2000);
+      expect(TIER_CREDITS.pro).toBe(1500);
     });
 
     it("tiers increase in value", () => {
@@ -70,6 +74,10 @@ describe("Credit System", () => {
         "comprehension",
         "audio",
         "shadowing",
+        "question",
+        "image",
+        "story",
+        "placement",
       ];
       for (const action of actions) {
         const cost = CREDIT_COSTS[action];
@@ -83,10 +91,25 @@ describe("Credit System", () => {
       expect(CREDIT_COSTS.audio).toBeGreaterThan(CREDIT_COSTS.feedback);
     });
 
-    it("shadowing is the most expensive action", () => {
-      const actions: CreditAction[] = ["sentence", "feedback", "comprehension", "audio"];
-      for (const action of actions) {
+    it("image is more expensive than text actions", () => {
+      expect(CREDIT_COSTS.image).toBeGreaterThan(CREDIT_COSTS.sentence);
+      expect(CREDIT_COSTS.image).toBeGreaterThan(CREDIT_COSTS.feedback);
+      expect(CREDIT_COSTS.image).toBeGreaterThan(CREDIT_COSTS.question);
+    });
+
+    it("shadowing and image are the most expensive actions", () => {
+      const cheaperActions: CreditAction[] = [
+        "sentence",
+        "feedback",
+        "comprehension",
+        "audio",
+        "question",
+        "story",
+        "placement",
+      ];
+      for (const action of cheaperActions) {
         expect(CREDIT_COSTS.shadowing).toBeGreaterThanOrEqual(CREDIT_COSTS[action]);
+        expect(CREDIT_COSTS.image).toBeGreaterThanOrEqual(CREDIT_COSTS[action]);
       }
     });
   });
@@ -112,7 +135,7 @@ describe("Credit System", () => {
 
     it("handles zero usage", () => {
       const result = calculateRemainingCredits("pro", 0);
-      expect(result.remaining).toBe(2000);
+      expect(result.remaining).toBe(1500);
       expect(result.percentage).toBe(0);
       expect(result.nearLimit).toBe(false);
     });

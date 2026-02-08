@@ -31,6 +31,10 @@
     "feedback": "Writing feedback",
     "comprehension": "Quiz grading",
     "audio": "Audio generation",
-    "shadowing": "Shadowing session"
+    "shadowing": "Shadowing session",
+    "question": "Question generation",
+    "image": "Image generation",
+    "story": "Story generation",
+    "placement": "Placement question"
   }
 }

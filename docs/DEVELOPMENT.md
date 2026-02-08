@@ -597,3 +597,55 @@ import {
 - Hardcode `"English translation"` in prompts — use `getUILanguageName(uiLanguage)` to respect the user's UI language
 - Build language mixing rules inline — use `buildLanguageMixingDirective()`
 - Skip distractor rules for MCQ generation — use `buildDistractorRules()`
+
+---
+
+## 14. Credit System
+
+All AI actions in `web/convex/ai/` MUST charge credits after successful AI generation.
+
+### Pattern
+
+```typescript
+// 1. (Optional) Pre-check balance for expensive multi-step actions
+const balanceCheck = await ctx.runQuery(internal.aiHelpers.checkCreditBalance, {
+  userId,
+  action: "sentence",
+});
+if (!balanceCheck.canSpend && !balanceCheck.isAdmin) {
+  throw new Error(`Insufficient credits.`);
+}
+
+// 2. Do the AI work...
+
+// 3. Charge AFTER success (not before — avoid charging for failed operations)
+await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+  userId,
+  action: "sentence",
+  metadata: { word: "example" },
+});
+```
+
+### Credit Costs
+
+See `CREDIT_COSTS` in `web/convex/subscriptions.ts` for all action types and their costs. When adding a new AI action type:
+
+1. Add the cost to `CREDIT_COSTS`
+2. Add `spendCreditsInternal` call after successful AI generation
+3. Add i18n labels to all 4 locale files (`usage.json` and `pricing.json`)
+4. Add color to `ACTION_COLORS` in `UsageHistoryPage.tsx`
+5. Add row to `CREDIT_COSTS` array in `PricingPage.tsx`
+
+### Admin Bypass
+
+Admin mode automatically bypasses credit charges — handled by `spendCreditsInternal`. No special code needed.
+
+### Guardrail Test
+
+`web/src/__tests__/critical/credit-guardrail.test.ts` scans all AI actions and fails if a new action doesn't call `spendCreditsInternal`. To exempt an action (e.g., admin pipeline, pure computation), add it to `CREDIT_EXEMPT_ACTIONS` with a reason.
+
+### Key Rules
+
+- Charge AFTER success, not before
+- Cache hits are free — only charge for new AI generation
+- `internalAction` helpers called by already-charged parent actions don't need their own charges

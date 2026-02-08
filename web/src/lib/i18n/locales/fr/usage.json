@@ -31,6 +31,10 @@
     "feedback": "Correction d'écriture",
     "comprehension": "Notation de quiz",
     "audio": "Génération audio",
-    "shadowing": "Session de shadowing"
+    "shadowing": "Session de shadowing",
+    "question": "Génération de questions",
+    "image": "Génération d'image",
+    "story": "Génération d'histoire",
+    "placement": "Question de placement"
   }
 }

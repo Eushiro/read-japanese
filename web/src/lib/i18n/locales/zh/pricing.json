@@ -48,7 +48,7 @@
     "pro": {
       "description": "无限制学习",
       "features": {
-        "0": "每月2,000 AI额度",
+        "0": "每月1,500 AI额度",
         "1": "Plus全部功能",
         "2": "优先支持",
         "3": "新功能抢先体验"
@@ -65,7 +65,11 @@
       "flashcard": "AI造句",
       "feedback": "写作反馈",
       "comprehension": "测验评分",
+      "question": "题目生成",
       "audio": "音频生成",
+      "story": "故事生成",
+      "placement": "定级测试题",
+      "image": "图片生成",
       "shadowing": "跟读练习"
     },
     "perMonth": "/月",

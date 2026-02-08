@@ -17,7 +17,6 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { AUDIO_MODELS, IMAGE_MODELS, TEXT_MODELS } from "../lib/models";
 import type { ContentLanguage } from "../schema";
-import { TIER_LIMITS } from "../subscriptions";
 
 // ============================================
 // TYPES
@@ -50,80 +49,6 @@ export interface GeneratedAudioResult {
   audioUrl: string;
   wasReused: boolean;
 }
-
-export interface UsageLimitResult {
-  allowed: boolean;
-  remaining: number;
-  limit: number;
-  used: number;
-}
-
-// ============================================
-// USAGE LIMIT CHECKING (internal queries)
-// ============================================
-
-/**
- * Check if user can perform a generation action
- */
-export const checkUsageLimit = internalQuery({
-  args: {
-    userId: v.string(),
-    action: v.union(
-      v.literal("aiVerification"),
-      v.literal("readStory"),
-      v.literal("generatePersonalizedStory"),
-      v.literal("generateMockTest"),
-      v.literal("generateFlashcard"),
-      v.literal("generateAudio")
-    ),
-  },
-  handler: async (ctx, args): Promise<UsageLimitResult> => {
-    // Get subscription
-    const subscription = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .first();
-
-    const tier = subscription?.tier ?? "free";
-    const limits = TIER_LIMITS[tier];
-
-    // Get current usage
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-
-    const usage = await ctx.db
-      .query("usageRecords")
-      .withIndex("by_user_and_period", (q) =>
-        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
-      )
-      .first();
-
-    const actionToLimit: Record<string, { limitKey: keyof typeof limits; usageKey: string }> = {
-      aiVerification: { limitKey: "aiVerificationsPerMonth", usageKey: "aiVerifications" },
-      readStory: { limitKey: "storiesPerMonth", usageKey: "storiesRead" },
-      generatePersonalizedStory: {
-        limitKey: "personalizedStoriesPerMonth",
-        usageKey: "personalizedStoriesGenerated",
-      },
-      generateMockTest: { limitKey: "mockTestsPerMonth", usageKey: "mockTestsGenerated" },
-      generateFlashcard: { limitKey: "flashcardsPerMonth", usageKey: "flashcardsGenerated" },
-      generateAudio: { limitKey: "audioPerMonth", usageKey: "audioGenerated" },
-    };
-
-    const { limitKey, usageKey } = actionToLimit[args.action];
-    const limit = limits[limitKey];
-    const currentUsage = usage ? ((usage as unknown as Record<string, number>)[usageKey] ?? 0) : 0;
-
-    const remaining = limit - currentUsage;
-    return {
-      allowed: remaining > 0,
-      remaining: Math.max(0, remaining),
-      limit,
-      used: currentUsage,
-    };
-  },
-});
 
 // ============================================
 // CONTENT LIBRARY LOOKUP (internal queries)
@@ -323,68 +248,6 @@ export const markImageSeen = internalMutation({
 });
 
 /**
- * Increment usage counter (wraps the mutation from subscriptions.ts)
- */
-export const incrementUsageInternal = internalMutation({
-  args: {
-    userId: v.string(),
-    action: v.union(
-      v.literal("aiVerification"),
-      v.literal("readStory"),
-      v.literal("generatePersonalizedStory"),
-      v.literal("generateMockTest"),
-      v.literal("generateFlashcard"),
-      v.literal("generateAudio")
-    ),
-    count: v.optional(v.number()),
-  },
-  handler: async (ctx, args): Promise<void> => {
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-    const increment = args.count ?? 1;
-
-    const existing = await ctx.db
-      .query("usageRecords")
-      .withIndex("by_user_and_period", (q) =>
-        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
-      )
-      .first();
-
-    const actionToField: Record<string, string> = {
-      aiVerification: "aiVerifications",
-      readStory: "storiesRead",
-      generatePersonalizedStory: "personalizedStoriesGenerated",
-      generateMockTest: "mockTestsGenerated",
-      generateFlashcard: "flashcardsGenerated",
-      generateAudio: "audioGenerated",
-    };
-
-    const field = actionToField[args.action];
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        [field]: ((existing as unknown as Record<string, number>)[field] ?? 0) + increment,
-        updatedAt: Date.now(),
-      });
-    } else {
-      await ctx.db.insert("usageRecords", {
-        userId: args.userId,
-        periodMonth: month,
-        periodYear: year,
-        aiVerifications: args.action === "aiVerification" ? increment : 0,
-        storiesRead: args.action === "readStory" ? increment : 0,
-        personalizedStoriesGenerated: args.action === "generatePersonalizedStory" ? increment : 0,
-        mockTestsGenerated: args.action === "generateMockTest" ? increment : 0,
-        flashcardsGenerated: args.action === "generateFlashcard" ? increment : 0,
-        audioGenerated: args.action === "generateAudio" ? increment : 0,
-        updatedAt: Date.now(),
-      });
-    }
-  },
-});
-
-/**
  * Store a new sentence in the content library
  */
 export const storeSentenceInternal = internalMutation({
@@ -510,17 +373,16 @@ export const generateSentenceForWord = internalAction({
     };
     const difficulty = args.examLevel ? (difficultyMap[args.examLevel] ?? 3) : 3;
 
-    // Step 1: Check usage limits (unless skipped for admin/batch ops)
+    // Step 1: Check credit balance (unless skipped for admin/batch ops)
     if (!args.skipUsageCheck) {
-      const usageCheck = await ctx.runQuery(internal.lib.generation.checkUsageLimit, {
+      const balanceCheck = await ctx.runQuery(internal.aiHelpers.checkCreditBalance, {
         userId: args.userId,
-        action: "generateFlashcard",
+        action: "sentence",
       });
 
-      if (!usageCheck.allowed) {
+      if (!balanceCheck.canSpend && !balanceCheck.isAdmin) {
         throw new Error(
-          `Usage limit reached. You've used ${usageCheck.used}/${usageCheck.limit} flashcard generations this month. ` +
-            `Upgrade your plan for more.`
+          `Insufficient credits. Need ${balanceCheck.cost}, have ${balanceCheck.remaining}. Upgrade your plan for more credits.`
         );
       }
     }
@@ -571,11 +433,12 @@ export const generateSentenceForWord = internalAction({
       model: TEXT_MODELS.GEMINI_3_FLASH,
     });
 
-    // Step 5: Increment usage (only if not skipped)
+    // Step 5: Spend credits (only if not skipped)
     if (!args.skipUsageCheck) {
-      await ctx.runMutation(internal.lib.generation.incrementUsageInternal, {
+      await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
         userId: args.userId,
-        action: "generateFlashcard",
+        action: "sentence",
+        metadata: { word: args.word, vocabularyId: args.vocabularyId },
       });
     }
 
@@ -609,17 +472,16 @@ export const generateImageForWord = internalAction({
     skipUsageCheck: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<GeneratedImageResult> => {
-    // Step 1: Check usage limits (images are expensive, count towards flashcard limit)
+    // Step 1: Check credit balance (images are expensive)
     if (!args.skipUsageCheck) {
-      const usageCheck = await ctx.runQuery(internal.lib.generation.checkUsageLimit, {
+      const balanceCheck = await ctx.runQuery(internal.aiHelpers.checkCreditBalance, {
         userId: args.userId,
-        action: "generateFlashcard",
+        action: "image",
       });
 
-      if (!usageCheck.allowed) {
+      if (!balanceCheck.canSpend && !balanceCheck.isAdmin) {
         throw new Error(
-          `Usage limit reached. You've used ${usageCheck.used}/${usageCheck.limit} generations this month. ` +
-            `Upgrade your plan for more.`
+          `Insufficient credits. Need ${balanceCheck.cost}, have ${balanceCheck.remaining}. Upgrade your plan for more credits.`
         );
       }
     }
@@ -667,11 +529,12 @@ export const generateImageForWord = internalAction({
       model: IMAGE_MODELS.GEMINI_IMAGE,
     });
 
-    // Step 5: Increment usage (only if not skipped)
+    // Step 5: Spend credits (only if not skipped)
     if (!args.skipUsageCheck) {
-      await ctx.runMutation(internal.lib.generation.incrementUsageInternal, {
+      await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
         userId: args.userId,
-        action: "generateFlashcard",
+        action: "image",
+        metadata: { word: args.word, vocabularyId: args.vocabularyId },
       });
     }
 
@@ -720,17 +583,16 @@ export const generateAudioForText = internalAction({
       }
     }
 
-    // Check usage limits
+    // Check credit balance
     if (!args.skipUsageCheck) {
-      const usageCheck = await ctx.runQuery(internal.lib.generation.checkUsageLimit, {
+      const balanceCheck = await ctx.runQuery(internal.aiHelpers.checkCreditBalance, {
         userId: args.userId,
-        action: "generateAudio",
+        action: "audio",
       });
 
-      if (!usageCheck.allowed) {
+      if (!balanceCheck.canSpend && !balanceCheck.isAdmin) {
         throw new Error(
-          `Audio limit reached. You've used ${usageCheck.used}/${usageCheck.limit} audio generations this month. ` +
-            `Upgrade your plan for more.`
+          `Insufficient credits. Need ${balanceCheck.cost}, have ${balanceCheck.remaining}. Upgrade your plan for more credits.`
         );
       }
     }
@@ -761,11 +623,12 @@ export const generateAudioForText = internalAction({
       });
     }
 
-    // Increment usage
+    // Spend credits
     if (!args.skipUsageCheck) {
-      await ctx.runMutation(internal.lib.generation.incrementUsageInternal, {
+      await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
         userId: args.userId,
-        action: "generateAudio",
+        action: "audio",
+        metadata: { text: args.text.substring(0, 50), isWordAudio: args.isWordAudio },
       });
     }
 
@@ -876,16 +739,16 @@ export const generatePersonalizedMicroStory = internalAction({
       skipUsageCheck = false,
     } = args;
 
-    // Check usage limits
+    // Check credit balance
     if (!skipUsageCheck) {
-      const usageCheck = await ctx.runQuery(internal.lib.generation.checkUsageLimit, {
+      const balanceCheck = await ctx.runQuery(internal.aiHelpers.checkCreditBalance, {
         userId,
-        action: "generatePersonalizedStory",
+        action: "story",
       });
 
-      if (!usageCheck.allowed) {
+      if (!balanceCheck.canSpend && !balanceCheck.isAdmin) {
         throw new Error(
-          `Story generation limit reached. You've used ${usageCheck.used}/${usageCheck.limit} personalized stories this month.`
+          `Insufficient credits. Need ${balanceCheck.cost}, have ${balanceCheck.remaining}. Upgrade your plan for more credits.`
         );
       }
     }
@@ -916,11 +779,12 @@ export const generatePersonalizedMicroStory = internalAction({
       targetWordCount,
     });
 
-    // Increment usage
+    // Spend credits
     if (!skipUsageCheck) {
-      await ctx.runMutation(internal.lib.generation.incrementUsageInternal, {
+      await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
         userId,
-        action: "generatePersonalizedStory",
+        action: "story",
+        metadata: { topic: storyTopic, difficulty },
       });
     }
 
@@ -957,17 +821,16 @@ export const verifySentenceWithGating = internalAction({
     skipUsageCheck: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<VerificationResult> => {
-    // Check usage limits
+    // Check credit balance
     if (!args.skipUsageCheck) {
-      const usageCheck = await ctx.runQuery(internal.lib.generation.checkUsageLimit, {
+      const balanceCheck = await ctx.runQuery(internal.aiHelpers.checkCreditBalance, {
         userId: args.userId,
-        action: "aiVerification",
+        action: "feedback",
       });
 
-      if (!usageCheck.allowed) {
+      if (!balanceCheck.canSpend && !balanceCheck.isAdmin) {
         throw new Error(
-          `AI verification limit reached. You've used ${usageCheck.used}/${usageCheck.limit} checks this month. ` +
-            `Upgrade your plan for more.`
+          `Insufficient credits. Need ${balanceCheck.cost}, have ${balanceCheck.remaining}. Upgrade your plan for more credits.`
         );
       }
     }
@@ -981,11 +844,12 @@ export const verifySentenceWithGating = internalAction({
       language: args.language,
     });
 
-    // Increment usage
+    // Spend credits
     if (!args.skipUsageCheck) {
-      await ctx.runMutation(internal.lib.generation.incrementUsageInternal, {
+      await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
         userId: args.userId,
-        action: "aiVerification",
+        action: "feedback",
+        metadata: { targetWord: args.targetWord },
       });
     }
 

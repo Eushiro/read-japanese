@@ -24,7 +24,11 @@ const CREDIT_COSTS = [
   { actionKey: "flashcard", credits: 1, upTo500: "500" },
   { actionKey: "feedback", credits: 1, upTo500: "500" },
   { actionKey: "comprehension", credits: 1, upTo500: "500" },
+  { actionKey: "question", credits: 1, upTo500: "500" },
   { actionKey: "audio", credits: 2, upTo500: "250" },
+  { actionKey: "story", credits: 2, upTo500: "250" },
+  { actionKey: "placement", credits: 2, upTo500: "250" },
+  { actionKey: "image", credits: 3, upTo500: "166" },
   { actionKey: "shadowing", credits: 3, upTo500: "166" },
 ] as const;
 

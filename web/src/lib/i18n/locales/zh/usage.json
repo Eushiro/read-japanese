@@ -30,6 +30,10 @@
     "feedback": "写作反馈",
     "comprehension": "测验评分",
     "audio": "音频生成",
-    "shadowing": "跟读练习"
+    "shadowing": "跟读练习",
+    "question": "题目生成",
+    "image": "图片生成",
+    "story": "故事生成",
+    "placement": "定级测试题"
   }
 }

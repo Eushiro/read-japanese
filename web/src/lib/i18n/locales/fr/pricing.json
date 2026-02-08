@@ -48,7 +48,7 @@
     "pro": {
       "description": "Apprenez sans limites",
       "features": {
-        "0": "2 000 crédits IA/mois",
+        "0": "1 500 crédits IA/mois",
         "1": "Tout du forfait Plus",
         "2": "Support prioritaire",
         "3": "Accès anticipé aux fonctionnalités"
@@ -65,7 +65,11 @@
       "flashcard": "Phrase IA pour flashcard",
       "feedback": "Correction d'écriture",
       "comprehension": "Notation de quiz",
+      "question": "Génération de questions",
       "audio": "Génération audio",
+      "story": "Génération d'histoire",
+      "placement": "Question de placement",
+      "image": "Génération d'image",
       "shadowing": "Session de shadowing"
     },
     "perMonth": "/mois",
