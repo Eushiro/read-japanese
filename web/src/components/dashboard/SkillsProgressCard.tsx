@@ -84,14 +84,14 @@ export function SkillsProgressCard({
         <Badge variant={levelVariant} className="text-lg px-4 py-1">
           {currentLevel}
         </Badge>
-        <span className="text-sm text-muted-foreground">{t("dashboard.skills.currentLevel")}</span>
+        <span className="text-sm text-foreground">{t("dashboard.skills.currentLevel")}</span>
       </div>
 
       {/* Progress to next level */}
       {nextLevel ? (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
+            <span className="text-foreground">
               {t("dashboard.skills.progressToNext", { nextLevel })}
             </span>
             <span className="font-medium text-foreground">{progressPercent}%</span>
@@ -99,7 +99,7 @@ export function SkillsProgressCard({
           <Progress value={progressPercent} gradient />
         </div>
       ) : (
-        <div className="text-sm text-muted-foreground">{t("dashboard.skills.maxLevel")}</div>
+        <div className="text-sm text-foreground">{t("dashboard.skills.maxLevel")}</div>
       )}
 
       {/* Per-skill bars */}
@@ -107,7 +107,7 @@ export function SkillsProgressCard({
         {SKILL_KEYS.map((key) => (
           <div key={key} className="space-y-1">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{t(`progress.skills.${key}`)}</span>
+              <span className="text-foreground">{t(`progress.skills.${key}`)}</span>
               <span className="font-medium text-foreground">{skills[key]}</span>
             </div>
             <div className={`h-1.5 w-full rounded-full ${schemeTrackColors[colorScheme]}`}>
@@ -122,7 +122,7 @@ export function SkillsProgressCard({
 
       {/* Footer */}
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-foreground">
           {t("dashboard.skills.summary", {
             best: t(`progress.skills.${bestSkill.key}`),
             focus: t(`progress.skills.${focusSkill.key}`),
@@ -143,7 +143,7 @@ export function SkillsProgressCard({
       {/* Preview overlay */}
       {isPreview && (
         <div className="absolute inset-0 backdrop-blur-sm bg-background/60 flex flex-col items-center justify-center rounded-xl">
-          <p className="text-sm text-muted-foreground mb-3">{t("dashboard.skills.noData")}</p>
+          <p className="text-sm text-foreground mb-3">{t("dashboard.skills.noData")}</p>
           <SignInButton mode="modal">
             <button className="px-4 py-2 text-sm font-medium text-white rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 transition-opacity">
               {t("common.actions.signIn")}

@@ -3,13 +3,10 @@ import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  BookmarkCheck,
   BookOpen,
-  Brain,
   ChevronRight,
   Flame,
   Globe,
-  MessageCircle,
   Play,
   Sparkles,
   TrendingUp,
@@ -36,89 +33,6 @@ import type { StoryListItem } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
 
-// Floating stat - no borders, just icons, numbers, and labels
-function FloatingStat({
-  icon: Icon,
-  value,
-  label,
-  color,
-  onClick,
-  index,
-  isLink,
-  to,
-}: {
-  icon: React.ElementType;
-  value: number;
-  label: string;
-  color: "purple" | "blue" | "orange";
-  onClick?: () => void;
-  index: number;
-  isLink?: boolean;
-  to?: string;
-}) {
-  const colorClasses = {
-    purple: {
-      bg: "bg-purple-500/20",
-      text: "text-purple-400",
-      glow: "0 0 40px rgba(168,85,247,0.3)",
-    },
-    blue: {
-      bg: "bg-blue-500/20",
-      text: "text-blue-400",
-      glow: "0 0 40px rgba(59,130,246,0.3)",
-    },
-    orange: {
-      bg: "bg-orange-500/20",
-      text: "text-orange-400",
-      glow: "0 0 40px rgba(249,115,22,0.3)",
-    },
-  };
-
-  const styles = colorClasses[color];
-
-  const content = (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
-      whileHover={{ y: -4 }}
-      className="group relative cursor-pointer text-center px-4 py-3"
-    >
-      {/* Glow effect on hover - no borders */}
-      <motion.div
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-        style={{ boxShadow: styles.glow }}
-      />
-
-      {/* Content - flowing layout */}
-      <div className="relative flex flex-col items-center gap-2">
-        <motion.div
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${styles.bg} flex items-center justify-center`}
-        >
-          <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${styles.text}`} />
-        </motion.div>
-        <div className="text-2xl sm:text-3xl font-bold text-foreground">{value}</div>
-        <div className="text-xs sm:text-sm text-muted-foreground">{label}</div>
-      </div>
-    </motion.div>
-  );
-
-  if (isLink && to) {
-    return <Link to={to}>{content}</Link>;
-  }
-
-  if (onClick) {
-    return (
-      <button onClick={onClick} className="text-center">
-        {content}
-      </button>
-    );
-  }
-
-  return content;
-}
-
 export function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const userId = user?.id ?? "anonymous";
@@ -126,19 +40,7 @@ export function DashboardPage() {
   const t = useT();
   const { state: sessionState } = useStudySession();
 
-  const [streakAnimating, setStreakAnimating] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
-
-  const handleStreakClick = () => {
-    setStreakAnimating(true);
-    setTimeout(() => setStreakAnimating(false), 600);
-  };
-
-  // Fetch flashcard stats
-  const flashcardStats = useQuery(api.flashcards.getStats, isAuthenticated ? { userId } : "skip");
-
-  // Fetch vocabulary
-  const vocabulary = useQuery(api.vocabulary.list, isAuthenticated ? { userId } : "skip");
 
   // User profile and subscription from shared context (prevents refetching on navigation)
   const { userProfile, isPremium: isPremiumUser, isLoading: isUserDataLoading } = useUserData();
@@ -194,56 +96,7 @@ export function DashboardPage() {
 
   // Calculate stats
   const isPreviewMode = !isAuthenticated;
-  const dueCards = isPreviewMode ? 12 : (flashcardStats?.dueNow ?? 0) + (flashcardStats?.new ?? 0);
-  const totalWords = isPreviewMode ? 247 : (vocabulary?.length ?? 0);
   const currentStreak = isPreviewMode ? 3 : (streakData?.currentStreak ?? 0);
-
-  // Get user's learning goal for goal-aware stats
-  const learningGoal = userProfile?.learningGoal;
-
-  // Goal-specific stat configuration
-  const getGoalAwareStat = () => {
-    switch (learningGoal) {
-      case "travel":
-        // For travel: show phrases instead of raw word count
-        return {
-          icon: MessageCircle,
-          value: Math.floor(totalWords * 0.6), // Estimate conversational phrases
-          label: t("dashboard.stats.phrases"),
-          color: "blue" as const,
-          to: "/learn?tab=words",
-        };
-      case "media":
-        // For media: emphasize listening content
-        return {
-          icon: BookmarkCheck,
-          value: totalWords,
-          label: t("dashboard.stats.words"),
-          color: "blue" as const,
-          to: "/learn?tab=words",
-        };
-      case "professional":
-        // For professional: show business terms
-        return {
-          icon: BookmarkCheck,
-          value: totalWords,
-          label: t("dashboard.stats.businessTerms"),
-          color: "blue" as const,
-          to: "/learn?tab=words",
-        };
-      default:
-        // Default: words
-        return {
-          icon: BookmarkCheck,
-          value: totalWords,
-          label: t("dashboard.stats.words"),
-          color: "blue" as const,
-          to: "/learn?tab=words",
-        };
-    }
-  };
-
-  const goalStat = getGoalAwareStat();
 
   // No longer gated on placement test — always ready for practice
 
@@ -274,9 +127,7 @@ export function DashboardPage() {
                 : t("dashboard.welcome", { name: user?.displayName?.split(" ")[0] ?? "" })}
             </h1>
             {isPreviewMode && (
-              <p className="text-muted-foreground mt-3 text-lg">
-                {t("dashboard.preview.subtitle")}
-              </p>
+              <p className="text-foreground mt-3 text-lg">{t("dashboard.preview.subtitle")}</p>
             )}
           </motion.div>
         </div>
@@ -309,6 +160,7 @@ export function DashboardPage() {
                 hasSavedPractice: !!sessionStorage.getItem(getPracticeSessionKey(primaryLanguage)),
                 t,
               })}
+              currentStreak={currentStreak}
               onAction={(action) => {
                 if (action === "setup") {
                   navigate({ to: "/settings" });
@@ -322,80 +174,6 @@ export function DashboardPage() {
               }}
             />
           )}
-
-          {/* Quick Stats - Floating horizontal row with subtle dividers */}
-          <div className="flex justify-center items-center gap-4 sm:gap-8 lg:gap-12">
-            {isPreviewMode ? (
-              <>
-                <SignInButton mode="modal">
-                  <div>
-                    <FloatingStat
-                      icon={Brain}
-                      value={dueCards}
-                      label={t("dashboard.stats.dueCards")}
-                      color="purple"
-                      index={0}
-                    />
-                  </div>
-                </SignInButton>
-                <div className="w-px h-12 bg-border" />
-                <SignInButton mode="modal">
-                  <div>
-                    <FloatingStat
-                      icon={BookmarkCheck}
-                      value={totalWords}
-                      label={t("dashboard.stats.words")}
-                      color="blue"
-                      index={1}
-                    />
-                  </div>
-                </SignInButton>
-                <div className="w-px h-12 bg-border" />
-                <SignInButton mode="modal">
-                  <div>
-                    <FloatingStat
-                      icon={Flame}
-                      value={currentStreak}
-                      label={t("dashboard.stats.streak")}
-                      color="orange"
-                      index={2}
-                    />
-                  </div>
-                </SignInButton>
-              </>
-            ) : (
-              <>
-                <FloatingStat
-                  icon={Brain}
-                  value={dueCards}
-                  label={t("dashboard.stats.dueCards")}
-                  color="purple"
-                  index={0}
-                  isLink
-                  to="/learn?tab=review"
-                />
-                <div className="w-px h-12 bg-border" />
-                <FloatingStat
-                  icon={goalStat.icon}
-                  value={goalStat.value}
-                  label={goalStat.label}
-                  color={goalStat.color}
-                  index={1}
-                  isLink
-                  to={goalStat.to}
-                />
-                <div className="w-px h-12 bg-border" />
-                <FloatingStat
-                  icon={streakAnimating ? Flame : Flame}
-                  value={currentStreak}
-                  label={t("dashboard.stats.streak")}
-                  color="orange"
-                  index={2}
-                  onClick={handleStreakClick}
-                />
-              </>
-            )}
-          </div>
 
           {/* Your Skills - Radar charts for each language */}
           <SkillsSection userId={userId} userLanguages={userLanguages} isPreview={isPreviewMode} />
@@ -431,13 +209,13 @@ export function DashboardPage() {
                   </div>
                   <Link
                     to="/library"
-                    className="text-sm text-muted-foreground hover:text-foreground/80 flex items-center gap-1 transition-colors"
+                    className="text-sm text-foreground flex items-center gap-1 transition-colors"
                   >
                     {t("common.actions.viewAll")}
                     <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-foreground mb-4">
                   {storyReason || t("dashboard.sections.popularPicks")}
                 </p>
 
@@ -446,7 +224,7 @@ export function DashboardPage() {
                   <div className="mb-6">
                     <div className="flex items-center gap-2 mb-3">
                       <BookOpen className="w-4 h-4 text-accent" />
-                      <span className="text-sm font-medium text-foreground/80">
+                      <span className="text-sm font-medium text-foreground">
                         {t("dashboard.sections.stories")}
                       </span>
                     </div>
@@ -486,7 +264,7 @@ export function DashboardPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <Video className="w-4 h-4 text-accent" />
-                      <span className="text-sm font-medium text-foreground/80">
+                      <span className="text-sm font-medium text-foreground">
                         {t("dashboard.sections.videos")}
                       </span>
                     </div>
@@ -551,7 +329,7 @@ export function DashboardPage() {
                 >
                   {t("dashboard.signUpCta.title")}
                 </h2>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                <p className="text-foreground mb-6 max-w-md mx-auto">
                   {t("dashboard.signUpCta.subtitle")}
                 </p>
                 <SignInButton mode="modal">
@@ -565,7 +343,7 @@ export function DashboardPage() {
                     </span>
                   </button>
                 </SignInButton>
-                <p className="text-sm text-muted-foreground mt-3">
+                <p className="text-sm text-foreground mt-3">
                   {t("dashboard.signUpCta.disclaimer")}
                 </p>
               </div>
@@ -599,7 +377,7 @@ function PreviewStartStudying() {
         </SignInButton>
       </div>
       <p className="text-foreground font-medium mb-4">{t("dashboard.preview.reviewCards")}</p>
-      <p className="text-sm text-muted-foreground">{t("dashboard.preview.signInPrompt")}</p>
+      <p className="text-sm text-foreground">{t("dashboard.preview.signInPrompt")}</p>
     </div>
   );
 }
@@ -637,17 +415,6 @@ function DashboardSkeleton() {
                 <div className="h-10 bg-white/5 rounded-xl w-16 animate-pulse" />
               </div>
             </div>
-          </div>
-
-          {/* Quick Stats Skeleton - Floating row */}
-          <div className="flex justify-center items-center gap-8 lg:gap-12">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="flex flex-col items-center gap-2 px-4">
-                <div className="w-12 h-12 rounded-xl bg-white/5 animate-pulse" />
-                <div className="h-8 bg-white/5 rounded w-12 animate-pulse" />
-                <div className="h-4 bg-white/5 rounded w-16 animate-pulse" />
-              </div>
-            ))}
           </div>
 
           {/* Suggested Section Skeleton */}
@@ -743,7 +510,7 @@ function getPrimaryCtaConfig(args: {
   };
 }
 
-// Shared pill button with orbiting dot, shimmer, and gradient
+// Shared pill button with shimmer and warm orange gradient
 function GradientPillButton({
   icon: Icon,
   label,
@@ -760,20 +527,8 @@ function GradientPillButton({
       whileTap={{ scale: 0.97 }}
       className="relative group/pill"
     >
-      {/* Orbiting dot */}
-      <motion.div
-        className="absolute w-2 h-2 rounded-full bg-[#feed7a] shadow-[0_0_8px_rgba(254,237,122,0.6)]"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-        style={{
-          top: "50%",
-          left: "50%",
-          transformOrigin: "-60px 0px",
-        }}
-      />
-
       {/* Pill button */}
-      <div className="relative px-8 py-4 rounded-full bg-gradient-to-r from-[#ff8400] to-[#df91f7] shadow-xl shadow-[#ff8400]/20 overflow-hidden">
+      <div className="relative px-8 py-4 rounded-full bg-gradient-to-r from-orange-500 to-orange-400 shadow-2xl shadow-orange-500/30 overflow-hidden">
         {/* Shimmer */}
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
@@ -795,6 +550,7 @@ function GradientPillButton({
 // Card-less / Airy CTA — subtitle + gradient pill, no duplicated title
 function HybridCCardless({
   config,
+  currentStreak,
   onAction,
 }: {
   config: {
@@ -804,8 +560,10 @@ function HybridCCardless({
     action: PrimaryCtaAction;
     icon: React.ElementType;
   };
+  currentStreak: number;
   onAction: (action: PrimaryCtaAction) => void;
 }) {
+  const t = useT();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -814,12 +572,18 @@ function HybridCCardless({
       className="relative"
     >
       <div className="flex flex-col items-center text-center gap-2 py-2">
-        <p className="text-foreground/60 text-base">{config.subtitle}</p>
         <GradientPillButton
           icon={config.icon}
           label={config.cta}
           onClick={() => onAction(config.action)}
         />
+        {/* Streak badge */}
+        {currentStreak > 0 && (
+          <span className="text-sm text-orange-400 flex items-center gap-1.5 mt-1">
+            <Flame className="w-4 h-4" />
+            {currentStreak} {t("dashboard.stats.streak")}
+          </span>
+        )}
       </div>
     </motion.div>
   );

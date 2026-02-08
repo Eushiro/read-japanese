@@ -164,7 +164,7 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
             <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
               <Target className="w-8 h-8 text-purple-400" />
             </div>
-            <p className="text-muted-foreground mb-4">{t("dashboard.skills.noData")}</p>
+            <p className="text-foreground mb-4">{t("dashboard.skills.noData")}</p>
             <Link
               to="/adaptive-practice"
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 hover:opacity-90 transition-opacity"
@@ -209,7 +209,7 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
           </div>
           <Link
             to="/progress"
-            className="text-sm text-muted-foreground hover:text-foreground/80 flex items-center gap-1 transition-colors"
+            className="text-sm text-foreground flex items-center gap-1 transition-colors"
           >
             {t("dashboard.skills.viewProgress")}
             <ChevronRight className="w-4 h-4" />
