@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { TrendingUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -25,6 +24,7 @@ interface SkillsProgressCardProps {
   abilityEstimate: number;
   isPreview: boolean;
   colorScheme: LanguageColorScheme;
+  showLanguageHeader?: boolean;
 }
 
 // Color configs for skill bar accent colors per scheme
@@ -38,18 +38,6 @@ const schemeTrackColors: Record<LanguageColorScheme, string> = {
   orange: "bg-orange-500/20",
   purple: "bg-purple-500/20",
   blue: "bg-blue-500/20",
-};
-
-const schemeIconBg: Record<LanguageColorScheme, string> = {
-  orange: "bg-orange-500/20",
-  purple: "bg-purple-500/20",
-  blue: "bg-blue-500/20",
-};
-
-const schemeIconText: Record<LanguageColorScheme, string> = {
-  orange: "text-orange-400",
-  purple: "text-purple-400",
-  blue: "text-blue-400",
 };
 
 const SKILL_KEYS = [
@@ -67,6 +55,7 @@ export function SkillsProgressCard({
   abilityEstimate,
   isPreview,
   colorScheme,
+  showLanguageHeader = true,
 }: SkillsProgressCardProps) {
   const t = useT();
   const { currentLevel, nextLevel, progressPercent } = abilityToProgress(abilityEstimate, language);
@@ -85,15 +74,10 @@ export function SkillsProgressCard({
       transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
       className="relative space-y-6"
     >
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <div
-          className={`w-8 h-8 rounded-lg ${schemeIconBg[colorScheme]} flex items-center justify-center`}
-        >
-          <TrendingUp className={`w-4 h-4 ${schemeIconText[colorScheme]}`} />
-        </div>
+      {/* Language header (shown in multi-language mode) */}
+      {showLanguageHeader && (
         <h3 className="font-semibold text-foreground">{t(`common.languages.${language}`)}</h3>
-      </div>
+      )}
 
       {/* Current level badge */}
       <div className="flex items-center gap-3">
@@ -175,10 +159,6 @@ export function SkillsProgressCard({
 export function SkillsProgressCardSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg bg-white/5 animate-pulse" />
-        <div className="h-5 w-20 bg-white/5 rounded animate-pulse" />
-      </div>
       <div className="flex items-center gap-3">
         <div className="h-8 w-14 bg-white/5 rounded animate-pulse" />
         <div className="h-4 w-24 bg-white/5 rounded animate-pulse" />

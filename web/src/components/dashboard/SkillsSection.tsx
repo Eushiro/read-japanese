@@ -122,6 +122,7 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
             abilityEstimate={-0.5}
             isPreview
             colorScheme="orange"
+            showLanguageHeader={false}
           />
         </div>
       </motion.section>
@@ -223,6 +224,7 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
             abilityEstimate={getAbilityForLanguage(userLanguages[0])}
             isPreview={false}
             colorScheme={getLanguageColorScheme(0, 1)}
+            showLanguageHeader={false}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
