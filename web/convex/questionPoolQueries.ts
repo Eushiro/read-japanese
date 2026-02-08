@@ -177,11 +177,15 @@ export const updateQuestionStats = internalMutation({
       }
     }
 
-    // Update distractor counts for MCQ questions
+    // Update distractor counts for MCQ questions (use index-based keys to avoid non-ASCII characters)
     let distractorCounts = (poolQuestion.distractorCounts as Record<string, number>) ?? {};
     if (args.selectedOption && poolQuestion.options) {
-      distractorCounts = { ...distractorCounts };
-      distractorCounts[args.selectedOption] = (distractorCounts[args.selectedOption] ?? 0) + 1;
+      const optionIndex = poolQuestion.options.indexOf(args.selectedOption);
+      if (optionIndex !== -1) {
+        const key = String(optionIndex);
+        distractorCounts = { ...distractorCounts };
+        distractorCounts[key] = (distractorCounts[key] ?? 0) + 1;
+      }
     }
 
     // Calibrate difficulty based on response count
