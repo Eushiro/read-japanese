@@ -532,10 +532,21 @@ export function AdaptivePracticePage() {
     } catch {
       // ignore
     }
+    setHasStoredSession(false);
   }, [language]);
 
   // Session persistence: restore on mount
   const [restoredSession, setRestoredSession] = useState(false);
+  const [hasStoredSession, setHasStoredSession] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(getPracticeSessionKey(language));
+      if (!saved) return false;
+      const snapshot = JSON.parse(saved);
+      return snapshot.phase === "questions" && snapshot.answers?.length > 0;
+    } catch {
+      return false;
+    }
+  });
   useEffect(() => {
     if (restoredSession || phase !== "loading") return;
     try {
@@ -559,6 +570,7 @@ export function AdaptivePracticePage() {
       setContentReadTime(snapshot.contentReadTime);
       setPhase("questions");
       setRestoredSession(true);
+      setHasStoredSession(false);
       // pickNext will fire via the useEffect that watches phase/practiceSet
     } catch {
       // invalid JSON or missing data — ignore and fetch fresh
@@ -801,7 +813,7 @@ export function AdaptivePracticePage() {
         language,
         uiLanguage,
       }),
-    enabled: !!user && isAuthenticated && !isModelTestMode && !restoredSession,
+    enabled: !!user && isAuthenticated && !isModelTestMode && !restoredSession && !hasStoredSession,
     staleTime: Infinity,
     retry: false,
   });
@@ -851,10 +863,10 @@ export function AdaptivePracticePage() {
 
   // Pick first question when entering questions phase
   useEffect(() => {
-    if (phase === "questions" && practiceSet && !currentQuestion && answers.length === 0) {
+    if (phase === "questions" && practiceSet && !currentQuestion) {
       pickNext();
     }
-  }, [phase, practiceSet, currentQuestion, answers.length, pickNext]);
+  }, [phase, practiceSet, currentQuestion, pickNext]);
 
   // Start questions phase
   const handleStartQuestions = useCallback(() => {
@@ -956,6 +968,15 @@ export function AdaptivePracticePage() {
     },
     [practiceSet, user, language, contentReadTime, submitPractice, clearSessionStorage]
   );
+
+  // Edge case: restored session where all questions were already answered
+  useEffect(() => {
+    if (!restoredSession || phase !== "questions" || !practiceSet) return;
+    if (currentQuestion !== null) return;
+    if (answers.length > 0) {
+      finishSession(answers);
+    }
+  }, [restoredSession, phase, practiceSet, currentQuestion, answers, finishSession]);
 
   // Skip audio/mic question
   const handleSkipQuestion = useCallback(async () => {
