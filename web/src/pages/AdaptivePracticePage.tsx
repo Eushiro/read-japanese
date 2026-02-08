@@ -973,7 +973,8 @@ export function AdaptivePracticePage() {
   useEffect(() => {
     if (!restoredSession || phase !== "questions" || !practiceSet) return;
     if (currentQuestion !== null) return;
-    if (answers.length > 0) {
+    const next = pickNextQuestion(practiceSet.questions, answers);
+    if (next === null && answers.length > 0) {
       finishSession(answers);
     }
   }, [restoredSession, phase, practiceSet, currentQuestion, answers, finishSession]);
