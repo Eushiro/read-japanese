@@ -35,7 +35,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PremiumBackground } from "@/components/ui/premium-background";
-import { SkeletonLoadingCard } from "@/components/ui/skeleton-loading-card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserData } from "@/contexts/UserDataContext";
 import { useAIAction } from "@/hooks/useAIAction";
@@ -1045,7 +1044,7 @@ export function AdaptivePracticePage() {
     triggerBackgroundGeneration,
   ]);
 
-  // Navigate to a previously answered question by queue index
+  // Navigate to a question by queue index (answered questions show feedback; admins can also jump to unanswered)
   const handleGoToQuestion = useCallback(
     (queueIndex: number) => {
       if (!practiceSet) return;
@@ -1054,12 +1053,20 @@ export function AdaptivePracticePage() {
       const question = practiceSet.questions.find((q) => q.questionId === questionId);
       if (!question) return;
       const answer = answers.find((a) => a.questionId === questionId);
-      if (!answer) return; // Only navigate to answered questions
+      if (!answer) {
+        // Unanswered question — only admins can navigate here
+        if (!isAdmin(user?.email)) return;
+        setCurrentQuestion(question);
+        setSelectedAnswer("");
+        setShowFeedback(false);
+        setQuestionStartTime(Date.now());
+        return;
+      }
       setCurrentQuestion(question);
       setSelectedAnswer(answer.userAnswer);
       setShowFeedback(true);
     },
-    [practiceSet, questionQueue, answers]
+    [practiceSet, questionQueue, answers, user?.email]
   );
 
   // Submit answer
@@ -1323,35 +1330,8 @@ export function AdaptivePracticePage() {
     refetchPractice();
   }, [user, isModelTestMode, testModeModels, fireModelTests, refetchPractice, clearSessionStorage]);
 
-  // Loading state
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <PremiumBackground colorScheme="cool" intensity="minimal" />
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <SkeletonLoadingCard loadingPhrase={t("common.status.loading")} />
-        </div>
-      </div>
-    );
-  }
-
-  // Not authenticated
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-md mx-auto text-center">
-            <h1 className="text-2xl font-bold mb-4">{t("common.auth.signInRequired")}</h1>
-            <p className="text-foreground-muted mb-6">{t("adaptivePractice.signInPrompt")}</p>
-            <Button onClick={() => navigate({ to: "/" })}>{t("common.actions.signIn")}</Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading phase
-  if (phase === "loading") {
+  // Loading state (auth loading or practice loading phase)
+  if (authLoading || phase === "loading") {
     return (
       <div className="min-h-screen bg-background flex flex-col relative">
         <PremiumBackground colorScheme="cool" intensity="minimal" />
@@ -1377,6 +1357,21 @@ export function AdaptivePracticePage() {
                 {loadingPhrase}
               </motion.span>
             </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-md mx-auto text-center">
+            <h1 className="text-2xl font-bold mb-4">{t("common.auth.signInRequired")}</h1>
+            <p className="text-foreground-muted mb-6">{t("adaptivePractice.signInPrompt")}</p>
+            <Button onClick={() => navigate({ to: "/" })}>{t("common.actions.signIn")}</Button>
           </div>
         </div>
       </div>
@@ -1728,6 +1723,7 @@ export function AdaptivePracticePage() {
       onSubmit: handleSubmitAnswer,
       onNext: handleNextQuestion,
       onGoToQuestion: handleGoToQuestion,
+      isAdmin: isAdmin(user?.email),
       isLastQuestion,
       isGeneratingMore,
       generatingMessage,
