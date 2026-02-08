@@ -13,6 +13,7 @@ import {
   buildDifficultyAnchors,
   buildDistractorRules,
   buildFormattingRules,
+  buildGoalDirective,
   buildInterestTheming,
   buildLanguageMixingDirective,
   buildLearnerContextBlock,
@@ -155,6 +156,33 @@ function identifyWeakSkills(skills: Record<string, number>, count: number = 3): 
 }
 
 /**
+ * Apply goal-based bias to skill scores before identifying weak skills.
+ * Lowers scores for goal-relevant skills so they're more likely to appear in
+ * the "weakest N" selection without completely overriding actual weakness detection.
+ */
+function applyGoalBias(skills: Record<string, number>, goal?: string): Record<string, number> {
+  if (!goal) return skills;
+
+  // Skill importance weights per goal (negative offset = more important = biased weaker)
+  const goalBias: Record<string, Partial<Record<string, number>>> = {
+    travel: { listening: -15, speaking: -15, vocabulary: -5 },
+    professional: { reading: -10, writing: -15, grammar: -10 },
+    media: { listening: -15, reading: -10, vocabulary: -5 },
+    exam: {}, // No bias — exam prep should fix weakest skills
+    casual: {}, // No bias — balanced approach
+  };
+
+  const bias = goalBias[goal] ?? {};
+  const adjusted = { ...skills };
+  for (const [skill, offset] of Object.entries(bias)) {
+    if (offset !== undefined) {
+      adjusted[skill] = Math.max(0, (adjusted[skill] ?? 50) + offset);
+    }
+  }
+  return adjusted;
+}
+
+/**
  * Select question types based on weak skills
  */
 function selectQuestionTypes(weakSkills: SkillType[]): PracticeQuestionType[] {
@@ -186,14 +214,23 @@ function selectQuestionTypes(weakSkills: SkillType[]): PracticeQuestionType[] {
 }
 
 /**
- * Select content type based on weak skills
+ * Select content type based on weak skills and learning goal
  */
-function selectContentType(weakSkills: SkillType[]): "dialogue" | "micro_story" {
-  // Dialogues are better for listening/speaking practice
+function selectContentType(
+  weakSkills: SkillType[],
+  learningGoal?: string
+): "dialogue" | "micro_story" {
+  // Goal-based override
+  if (learningGoal === "travel" || learningGoal === "professional") {
+    return "dialogue"; // Conversation practice
+  }
+  if (learningGoal === "media") {
+    return "micro_story"; // Reading/comprehension
+  }
+  // Default: skill-based selection
   if (weakSkills.includes("listening") || weakSkills.includes("speaking")) {
     return "dialogue";
   }
-  // Stories are better for reading/vocabulary
   return "micro_story";
 }
 
@@ -628,6 +665,10 @@ export const getNextPractice = action({
       language: args.language,
     });
 
+    // Fetch user's learning goal
+    const user = await ctx.runQuery(api.users.getByClerkId, { clerkId: args.userId });
+    const learningGoal = user?.learningGoal;
+
     // Beginner detection: mirror contentEngine logic for appropriate starting difficulty
     const isBeginner = !profile || profile.totalStudyMinutes === 0;
     const storedAbility = profile?.abilityEstimate ?? 0;
@@ -648,8 +689,9 @@ export const getNextPractice = action({
       skillScores: skills as Record<string, number>,
     };
 
-    // 3. Determine weak skills
-    const weakSkills = identifyWeakSkills(skills);
+    // 3. Determine weak skills (with goal bias applied)
+    const biasedSkills = applyGoalBias(skills, learningGoal);
+    const weakSkills = identifyWeakSkills(biasedSkills);
 
     // 4. Diagnostic vs Normal mode
     // High SE (> 0.5) means uncertain about ability → diagnostic mode
@@ -664,6 +706,7 @@ export const getNextPractice = action({
         weakAreas: profile?.weakAreas,
         interestWeights: profile?.interestWeights ?? undefined,
         examType: profile?.examType ?? undefined,
+        learningGoal,
         vocabCoverage: profile?.vocabCoverage,
         difficultyCalibration: profile?.difficultyCalibration ?? undefined,
         skills: skills as Record<string, number>,
@@ -857,7 +900,7 @@ export const getNextPractice = action({
 
     // ===== NORMAL MODE =====
     // 5. Get adaptive content
-    const contentType = args.preferredContentType ?? selectContentType(weakSkills);
+    const contentType = args.preferredContentType ?? selectContentType(weakSkills, learningGoal);
     const contentResult = await ctx.runAction(api.contentEngine.getBestContent, {
       userId: args.userId,
       language: args.language,
@@ -894,7 +937,9 @@ export const getNextPractice = action({
       args.language,
       uiLang,
       profile?.abilityEstimate ?? 0,
-      profile?.weakAreas
+      profile?.weakAreas,
+      undefined,
+      learningGoal
     );
 
     // Fire-and-forget: ingest content-based questions to pool
@@ -1010,7 +1055,8 @@ async function generateQuestionsFromContent(
   uiLanguage: UILanguage = "en",
   abilityEstimate: number = 0,
   weakAreas?: Array<{ skill: string; topic: string; score: number }>,
-  modelOverride?: ModelConfig[]
+  modelOverride?: ModelConfig[],
+  learningGoal?: string
 ): Promise<GeneratedQuestionsResult> {
   const languageName = getContentLanguageName(language as ContentLanguage);
 
@@ -1024,9 +1070,11 @@ async function generateQuestionsFromContent(
   const stemVariety = buildStemVarietyRules();
   const weakAreaBlock = weakAreas ? buildWeakAreaTargeting(weakAreas) : "";
 
+  const goalDirective = learningGoal ? buildGoalDirective(learningGoal) : "";
+
   const systemPrompt = `You are a language learning question generator. Create practice questions for ${languageName} learners based on the provided content.
 
-${langMixing}
+${goalDirective ? `${goalDirective}\n` : ""}${langMixing}
 
 Generate questions that test: ${targetSkills.join(", ")}
 Question types to include: ${questionTypes.join(", ")}
@@ -1162,12 +1210,16 @@ async function generateDiagnosticQuestions(
       .map((iw) => iw.tag) ?? [];
   const interestBlock = buildInterestTheming(interests);
 
+  const goalDirective = learnerContext?.learningGoal
+    ? buildGoalDirective(learnerContext.learningGoal)
+    : "";
+
   const systemPrompt = `You are a ${languageName} diagnostic assessment generator.
 Create 4 standalone practice questions that do NOT reference any reading passage — each question must be self-contained.
 
 ${learnerBlock}
 
-${langMixing}
+${goalDirective ? `${goalDirective}\n` : ""}${langMixing}
 
 DIAGNOSTIC STRATEGY:
 - 1 question well BELOW estimated level (level_1/level_2 — confirm strengths)

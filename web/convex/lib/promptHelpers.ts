@@ -43,6 +43,7 @@ export interface LearnerContext {
   weakAreas?: WeakArea[];
   interestWeights?: InterestWeight[];
   examType?: string;
+  learningGoal?: string; // "exam" | "travel" | "professional" | "media" | "casual"
   vocabCoverage?: {
     targetLevel: string;
     totalWords: number;
@@ -101,6 +102,28 @@ export function getProficiencyTier(abilityEstimate: number): ProficiencyTier {
   if (abilityEstimate < -1.0) return "beginner";
   if (abilityEstimate < 1.0) return "intermediate";
   return "advanced";
+}
+
+// ============================================
+// LEARNING GOAL DIRECTIVE
+// ============================================
+
+/**
+ * Build a prompt block that steers AI generation toward the user's learning goal.
+ */
+export function buildGoalDirective(goal: string): string {
+  const directives: Record<string, string> = {
+    travel:
+      "LEARNING GOAL: Travel & conversation.\nPrioritize practical, real-world scenarios: ordering food, asking for directions, booking hotels, handling emergencies. Favor listening comprehension and speaking/pronunciation questions. Use dialogue-style contexts where possible.",
+    professional:
+      "LEARNING GOAL: Business & workplace.\nPrioritize professional scenarios: emails, meetings, presentations, workplace interactions. Include formal register and business vocabulary. Favor reading comprehension and writing questions.",
+    media:
+      "LEARNING GOAL: Entertainment & media consumption.\nPrioritize understanding native-speed content: anime, films, books, music, social media. Include colloquial expressions, slang, and cultural references. Favor listening and reading comprehension.",
+    exam: "LEARNING GOAL: Exam preparation.\nPrioritize exam-style question formats and systematic coverage of tested grammar/vocabulary. Include questions that mirror official exam patterns.",
+    casual:
+      "LEARNING GOAL: General exploration.\nProvide a balanced mix of everyday conversation, cultural context, and practical language use.",
+  };
+  return directives[goal] ?? "";
 }
 
 // ============================================
@@ -180,6 +203,10 @@ export function buildLearnerContextBlock(
 
   if (learnerContext.examType) {
     parts.push(`- Target exam: ${learnerContext.examType.replace("_", " ").toUpperCase()}`);
+  }
+
+  if (learnerContext.learningGoal) {
+    parts.push(`- Learning goal: ${learnerContext.learningGoal}`);
   }
 
   if (learnerContext.weakAreas && learnerContext.weakAreas.length > 0) {

@@ -204,26 +204,27 @@ Usage limits (example):
 
 **Status:** 🚧 In Progress | **Priority:** High
 
-| Feature                             | Status         | Notes                                                                 |
-| ----------------------------------- | -------------- | --------------------------------------------------------------------- |
-| Multi-language story generation     | ✅ Complete    | Japanese, English, French with JLPT/CEFR constraints                  |
-| CEFR grammar constraints            | ✅ Complete    | `english_grammar_constraints.json`, `french_grammar_constraints.json` |
-| Admin story generation UI           | ✅ Complete    | Detailed prompts, direct generation from admin panel                  |
-| Content topology/gaps analysis      | ✅ Complete    | `/admin/stories/topology` endpoint + UI                               |
-| AI story suggestions                | ✅ Complete    | On-demand suggestions based on gaps and interests                     |
-| User interest analytics             | ✅ Complete    | Convex `getInterestAnalytics` query                                   |
-| Adaptive content engine             | ✅ Complete    | Content bank with IRT-based difficulty selection                      |
-| Adaptive practice system            | ✅ Complete    | Dialogues & micro-stories with comprehension questions                |
-| AI provider abstraction             | ✅ Complete    | Centralized model config, Google/OpenRouter routing                   |
-| Content candidate selection         | ✅ Complete    | Two-candidate generation with scoring                                 |
-| Vocabulary coverage check           | ❌ Not Started | Check user knows enough words before recommending                     |
-| Story recommendation by known words | ❌ Not Started | Personalized ranking based on vocabulary                              |
-| Stories from your words             | ❌ Not Started | Generate stories featuring words user is learning                     |
-| Questions from your weak areas      | ✅ Complete    | Diagnostic + adaptive practice targets learner profile per-question   |
-| i+1 comprehensible input            | ✅ Complete    | Content difficulty matched to user ability via IRT confidence         |
-| Smart adaptive practice             | ✅ Complete    | Diagnostic mode, per-question updates, client-side ordering           |
-| Remove placement test gate          | ✅ Complete    | Replaced with adaptive diagnostic first session                       |
-| Integration with flashcards         | ❌ Not Started | Link stories to vocabulary learning                                   |
+| Feature                             | Status         | Notes                                                                  |
+| ----------------------------------- | -------------- | ---------------------------------------------------------------------- |
+| Multi-language story generation     | ✅ Complete    | Japanese, English, French with JLPT/CEFR constraints                   |
+| CEFR grammar constraints            | ✅ Complete    | `english_grammar_constraints.json`, `french_grammar_constraints.json`  |
+| Admin story generation UI           | ✅ Complete    | Detailed prompts, direct generation from admin panel                   |
+| Content topology/gaps analysis      | ✅ Complete    | `/admin/stories/topology` endpoint + UI                                |
+| AI story suggestions                | ✅ Complete    | On-demand suggestions based on gaps and interests                      |
+| User interest analytics             | ✅ Complete    | Convex `getInterestAnalytics` query                                    |
+| Adaptive content engine             | ✅ Complete    | Content bank with IRT-based difficulty selection                       |
+| Adaptive practice system            | ✅ Complete    | Dialogues & micro-stories with comprehension questions                 |
+| AI provider abstraction             | ✅ Complete    | Centralized model config, Google/OpenRouter routing                    |
+| Content candidate selection         | ✅ Complete    | Two-candidate generation with scoring                                  |
+| Vocabulary coverage check           | ❌ Not Started | Check user knows enough words before recommending                      |
+| Story recommendation by known words | ❌ Not Started | Personalized ranking based on vocabulary                               |
+| Stories from your words             | ❌ Not Started | Generate stories featuring words user is learning                      |
+| Questions from your weak areas      | ✅ Complete    | Diagnostic + adaptive practice targets learner profile per-question    |
+| i+1 comprehensible input            | ✅ Complete    | Content difficulty matched to user ability via IRT confidence          |
+| Smart adaptive practice             | ✅ Complete    | Diagnostic mode, per-question updates, client-side ordering            |
+| Goal-based adaptive practice        | ✅ Complete    | Learning goal influences skill weighting, content type, and AI prompts |
+| Remove placement test gate          | ✅ Complete    | Replaced with adaptive diagnostic first session                        |
+| Integration with flashcards         | ❌ Not Started | Link stories to vocabulary learning                                    |
 
 ---
 
