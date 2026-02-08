@@ -1771,9 +1771,9 @@ export function AdaptivePracticePage() {
               )}
               <Badge
                 variant="outline"
-                className={`text-xs ${currentQuestion.questionHash ? "border-emerald-500 text-emerald-400" : "border-amber-500 text-amber-400"}`}
+                className={`text-xs ${currentQuestion.questionId.startsWith("pool_") ? "border-emerald-500 text-emerald-400" : "border-amber-500 text-amber-400"}`}
               >
-                {currentQuestion.questionHash ? "Pool" : "Generated"}
+                {currentQuestion.questionId.startsWith("pool_") ? "Pool" : "Generated"}
               </Badge>
             </div>
             <AdminRawJsonPanel
