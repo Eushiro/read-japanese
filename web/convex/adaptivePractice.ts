@@ -776,14 +776,14 @@ export const getNextPractice = action({
     const practiceId = crypto.randomUUID();
     const uiLang = (args.uiLanguage ?? "en") as UILanguage;
 
-    // 1. Get learner profile
-    const profile = await ctx.runQuery(internal.learnerModel.getProfileInternal, {
-      userId: args.userId,
-      language: args.language,
-    });
-
-    // Fetch user's learning goal
-    const user = await ctx.runQuery(api.users.getByClerkId, { clerkId: args.userId });
+    // 1. Get learner profile and user in parallel (independent queries)
+    const [profile, user] = await Promise.all([
+      ctx.runQuery(internal.learnerModel.getProfileInternal, {
+        userId: args.userId,
+        language: args.language,
+      }),
+      ctx.runQuery(api.users.getByClerkId, { clerkId: args.userId }),
+    ]);
     const learningGoal = user?.learningGoal;
 
     // Beginner detection: mirror contentEngine logic for appropriate starting difficulty

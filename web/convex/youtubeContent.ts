@@ -103,17 +103,19 @@ export const listByLevels = query({
   handler: async (ctx, args) => {
     const limit = args.limit ?? 10;
 
-    // Get all videos for the language
-    const videos = await ctx.db
-      .query("youtubeContent")
-      .withIndex("by_language", (q) => q.eq("language", args.language))
-      .collect();
+    // Query each level via the compound index instead of collecting all and filtering
+    const results = [];
+    for (const level of args.levels) {
+      const videos = await ctx.db
+        .query("youtubeContent")
+        .withIndex("by_language_and_level", (q) =>
+          q.eq("language", args.language).eq("level", level)
+        )
+        .take(limit);
+      results.push(...videos);
+    }
 
-    // Filter by acceptable levels
-    const filtered = videos.filter((v) => v.level && args.levels.includes(v.level));
-
-    // Return limited results
-    return filtered.slice(0, limit);
+    return results.slice(0, limit);
   },
 });
 

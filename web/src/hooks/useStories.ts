@@ -69,7 +69,7 @@ export function useStories(): {
   isLoading: boolean;
   error: Error | null;
 } {
-  const stories = useQuery(api.stories.listAll, {}) as ConvexStoryResponse[] | undefined;
+  const stories = useQuery(api.stories.listByLanguage, {}) as ConvexStoryResponse[] | undefined;
 
   // Transform Convex response to StoryListItem format
   const data = useMemo(() => {

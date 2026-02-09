@@ -108,17 +108,6 @@ function calculateRetrievability(elapsedDays: number, stability: number): number
 // QUERIES
 // ============================================
 
-// Get all flashcards for a user
-export const list = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("flashcards")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .collect();
-  },
-});
-
 // Get flashcards due for review with resolved content
 export const getDue = query({
   args: {
@@ -129,15 +118,28 @@ export const getDue = query({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const limit = args.limit ?? 100;
     const uiLang = normalizeUILanguage(args.uiLanguage);
     const cards = await ctx.db
       .query("flashcards")
       .withIndex("by_user_and_due", (q) => q.eq("userId", args.userId).lte("due", now))
-      .take((args.limit ?? 100) * (args.language ? 3 : 1));
+      .take(limit * (args.language ? 3 : 1));
 
-    // Fetch associated vocabulary and content for each card
+    // Filter by language BEFORE resolving full content to avoid wasted work
+    let filteredCards = cards;
+    if (args.language) {
+      const cardsWithLang = await Promise.all(
+        cards.map(async (card) => {
+          const vocab = await ctx.db.get(card.vocabularyId);
+          return vocab?.language === args.language ? card : null;
+        })
+      );
+      filteredCards = cardsWithLang.filter((c) => c !== null).slice(0, limit);
+    }
+
+    // Resolve full content only for filtered cards
     const cardsWithContent = await Promise.all(
-      cards.map(async (card) => {
+      filteredCards.map(async (card) => {
         const [vocab, sentence, image] = await Promise.all([
           ctx.db.get(card.vocabularyId),
           card.sentenceId ? ctx.db.get(card.sentenceId) : null,
@@ -173,7 +175,6 @@ export const getDue = query({
           sentence: sentence
             ? {
                 ...sentence,
-                // Override the translations object with the resolved translation
                 sentenceTranslation,
               }
             : null,
@@ -183,113 +184,7 @@ export const getDue = query({
       })
     );
 
-    // Filter by language if specified
-    const filtered = args.language
-      ? cardsWithContent.filter((c) => c.vocabulary?.language === args.language)
-      : cardsWithContent;
-
-    return filtered.slice(0, args.limit ?? 100);
-  },
-});
-
-// Get due cards with priority sorting (most at-risk first based on retrievability)
-// This is the smart query that prioritizes cards most likely to be forgotten
-export const getDueWithPriority = query({
-  args: {
-    userId: v.string(),
-    limit: v.optional(v.number()), // Default: DEFAULT_MAX_REVIEWS_PER_SESSION (30)
-    language: v.optional(v.string()),
-    uiLanguage: v.optional(uiLanguageValidator),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    const maxCards = args.limit ?? DEFAULT_MAX_REVIEWS_PER_SESSION;
-    const uiLang = normalizeUILanguage(args.uiLanguage);
-
-    // Get all due cards
-    const cards = await ctx.db
-      .query("flashcards")
-      .withIndex("by_user_and_due", (q) => q.eq("userId", args.userId).lte("due", now))
-      .take(maxCards * (args.language ? 3 : 1));
-
-    // Calculate retrievability and sort by priority (lowest retrievability first)
-    const cardsWithPriority = cards.map((card) => {
-      // Calculate elapsed days since card was due
-      const elapsedMs = now - card.due;
-      const elapsedDays = Math.max(0, elapsedMs / (1000 * 60 * 60 * 24));
-
-      // Calculate current retrievability
-      // For cards that haven't been reviewed yet, use a low retrievability
-      const retrievability =
-        card.stability > 0
-          ? calculateRetrievability(elapsedDays + card.elapsedDays, card.stability)
-          : 0.5; // New cards get medium priority
-
-      // Priority score: lower is more urgent
-      // Cards with low retrievability and high elapsed days are most urgent
-      const priority = retrievability;
-
-      // Check if this card qualifies for forgiveness mode (7+ days overdue)
-      const needsForgiveness = elapsedDays >= FORGIVENESS_OVERDUE_DAYS;
-
-      return { ...card, retrievability, priority, elapsedDays, needsForgiveness };
-    });
-
-    // Sort by priority (lowest retrievability first - most at risk of being forgotten)
-    cardsWithPriority.sort((a, b) => a.priority - b.priority);
-
-    // Fetch content for the limited set
-    const limitedCards = cardsWithPriority.slice(0, maxCards * (args.language ? 3 : 1));
-
-    const cardsWithContent = await Promise.all(
-      limitedCards.map(async (card) => {
-        const [vocab, sentence, image] = await Promise.all([
-          ctx.db.get(card.vocabularyId),
-          card.sentenceId ? ctx.db.get(card.sentenceId) : null,
-          card.imageId ? ctx.db.get(card.imageId) : null,
-        ]);
-
-        const wordAudio = vocab
-          ? await ctx.db
-              .query("wordAudio")
-              .withIndex("by_word_language", (q) =>
-                q.eq("word", vocab.word).eq("language", vocab.language)
-              )
-              .first()
-          : null;
-
-        const sentenceTranslation = sentence?.translations
-          ? getSentenceTranslation(sentence.translations, uiLang)
-          : null;
-
-        const resolvedVocab = vocab
-          ? {
-              ...vocab,
-              definitions: getDefinitions(vocab.definitionTranslations, vocab.definitions, uiLang),
-            }
-          : null;
-
-        return {
-          ...card,
-          vocabulary: resolvedVocab,
-          sentence: sentence
-            ? {
-                ...sentence,
-                sentenceTranslation,
-              }
-            : null,
-          image,
-          wordAudio,
-        };
-      })
-    );
-
-    // Filter by language if specified
-    const filtered = args.language
-      ? cardsWithContent.filter((c) => c.vocabulary?.language === args.language)
-      : cardsWithContent;
-
-    return filtered.slice(0, maxCards);
+    return cardsWithContent.slice(0, limit);
   },
 });
 
@@ -302,15 +197,29 @@ export const getNew = query({
     uiLanguage: v.optional(uiLanguageValidator), // UI language for translation resolution
   },
   handler: async (ctx, args) => {
+    const limit = args.limit ?? 20;
     const uiLang = normalizeUILanguage(args.uiLanguage);
     const cards = await ctx.db
       .query("flashcards")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .filter((q) => q.eq(q.field("state"), "new"))
-      .take((args.limit ?? 20) * (args.language ? 3 : 1));
+      .take(limit * (args.language ? 3 : 1));
 
+    // Filter by language BEFORE resolving full content to avoid wasted work
+    let filteredCards = cards;
+    if (args.language) {
+      const cardsWithLang = await Promise.all(
+        cards.map(async (card) => {
+          const vocab = await ctx.db.get(card.vocabularyId);
+          return vocab?.language === args.language ? card : null;
+        })
+      );
+      filteredCards = cardsWithLang.filter((c) => c !== null).slice(0, limit);
+    }
+
+    // Resolve full content only for filtered cards
     const cardsWithContent = await Promise.all(
-      cards.map(async (card) => {
+      filteredCards.map(async (card) => {
         const [vocab, sentence, image] = await Promise.all([
           ctx.db.get(card.vocabularyId),
           card.sentenceId ? ctx.db.get(card.sentenceId) : null,
@@ -346,7 +255,6 @@ export const getNew = query({
           sentence: sentence
             ? {
                 ...sentence,
-                // Override the translations object with the resolved translation
                 sentenceTranslation,
               }
             : null,
@@ -356,12 +264,7 @@ export const getNew = query({
       })
     );
 
-    // Filter by language if specified
-    const filtered = args.language
-      ? cardsWithContent.filter((c) => c.vocabulary?.language === args.language)
-      : cardsWithContent;
-
-    return filtered.slice(0, args.limit ?? 20);
+    return cardsWithContent.slice(0, limit);
   },
 });
 
@@ -414,60 +317,6 @@ export const getStats = query({
   },
 });
 
-// Get stats for multiple languages at once (for cross-language notifications)
-export const getStatsByLanguages = query({
-  args: {
-    userId: v.string(),
-    languages: v.array(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    const allCards = await ctx.db
-      .query("flashcards")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .collect();
-
-    // Fetch vocabulary for all cards to get language info
-    const cardsWithVocab = await Promise.all(
-      allCards.map(async (card) => {
-        const vocab = await ctx.db.get(card.vocabularyId);
-        return { ...card, vocabulary: vocab };
-      })
-    );
-
-    // Group stats by language
-    const statsByLanguage: Record<
-      string,
-      { total: number; new: number; dueNow: number; dueToday: number }
-    > = {};
-
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-    const endOfDayTimestamp = endOfDay.getTime();
-
-    for (const lang of args.languages) {
-      const langCards = cardsWithVocab.filter((c) => c.vocabulary?.language === lang);
-
-      const stats = {
-        total: langCards.length,
-        new: 0,
-        dueNow: 0,
-        dueToday: 0,
-      };
-
-      for (const card of langCards) {
-        if (card.state === "new") stats.new++;
-        if (card.due <= now) stats.dueNow++;
-        if (card.due <= endOfDayTimestamp) stats.dueToday++;
-      }
-
-      statsByLanguage[lang] = stats;
-    }
-
-    return statsByLanguage;
-  },
-});
-
 // Get flashcard by vocabulary ID
 export const getByVocabulary = query({
   args: { vocabularyId: v.id("vocabulary") },
@@ -476,62 +325,6 @@ export const getByVocabulary = query({
       .query("flashcards")
       .withIndex("by_vocabulary", (q) => q.eq("vocabularyId", args.vocabularyId))
       .first();
-  },
-});
-
-// Get a single flashcard with resolved content
-export const getWithContent = query({
-  args: {
-    flashcardId: v.id("flashcards"),
-    uiLanguage: v.optional(uiLanguageValidator), // UI language for translation resolution
-  },
-  handler: async (ctx, args) => {
-    const uiLang = normalizeUILanguage(args.uiLanguage);
-    const card = await ctx.db.get(args.flashcardId);
-    if (!card) return null;
-
-    const [vocab, sentence, image] = await Promise.all([
-      ctx.db.get(card.vocabularyId),
-      card.sentenceId ? ctx.db.get(card.sentenceId) : null,
-      card.imageId ? ctx.db.get(card.imageId) : null,
-    ]);
-
-    // Look up word audio
-    const wordAudio = vocab
-      ? await ctx.db
-          .query("wordAudio")
-          .withIndex("by_word_language", (q) =>
-            q.eq("word", vocab.word).eq("language", vocab.language)
-          )
-          .first()
-      : null;
-
-    // Resolve translation for user's UI language - returns null if not available (NO English fallback)
-    const sentenceTranslation = sentence?.translations
-      ? getSentenceTranslation(sentence.translations, uiLang)
-      : null;
-
-    // Resolve vocabulary definitions for user's UI language
-    const resolvedVocab = vocab
-      ? {
-          ...vocab,
-          definitions: getDefinitions(vocab.definitionTranslations, vocab.definitions, uiLang),
-        }
-      : null;
-
-    return {
-      ...card,
-      vocabulary: resolvedVocab,
-      sentence: sentence
-        ? {
-            ...sentence,
-            // Override the translations object with the resolved translation
-            sentenceTranslation,
-          }
-        : null,
-      image,
-      wordAudio,
-    };
   },
 });
 
@@ -767,74 +560,6 @@ export const remove = mutation({
   args: { flashcardId: v.id("flashcards") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.flashcardId);
-  },
-});
-
-// Get review history for a flashcard
-export const getReviewHistory = query({
-  args: { flashcardId: v.id("flashcards") },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("flashcardReviews")
-      .withIndex("by_flashcard", (q) => q.eq("flashcardId", args.flashcardId))
-      .order("desc")
-      .take(50);
-  },
-});
-
-// Get available sentences for a word (for swapping)
-export const getAvailableSentences = query({
-  args: {
-    flashcardId: v.id("flashcards"),
-    maxDifficulty: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const card = await ctx.db.get(args.flashcardId);
-    if (!card) return [];
-
-    const vocab = await ctx.db.get(card.vocabularyId);
-    if (!vocab) return [];
-
-    const sentences = await ctx.db
-      .query("sentences")
-      .withIndex("by_word_language", (q) => q.eq("word", vocab.word).eq("language", vocab.language))
-      .collect();
-
-    // Filter by difficulty if specified
-    const filtered = args.maxDifficulty
-      ? sentences.filter((s) => s.difficulty <= args.maxDifficulty!)
-      : sentences;
-
-    // Mark current sentence
-    return filtered.map((s) => ({
-      ...s,
-      isCurrent: s._id === card.sentenceId,
-    }));
-  },
-});
-
-// Get available images for a word (for swapping)
-export const getAvailableImages = query({
-  args: {
-    flashcardId: v.id("flashcards"),
-  },
-  handler: async (ctx, args) => {
-    const card = await ctx.db.get(args.flashcardId);
-    if (!card) return [];
-
-    const vocab = await ctx.db.get(card.vocabularyId);
-    if (!vocab) return [];
-
-    const images = await ctx.db
-      .query("images")
-      .withIndex("by_word_language", (q) => q.eq("word", vocab.word).eq("language", vocab.language))
-      .collect();
-
-    // Mark current image
-    return images.map((img) => ({
-      ...img,
-      isCurrent: img._id === card.imageId,
-    }));
   },
 });
 
@@ -1160,62 +885,5 @@ export const getSrsSettings = query({
       dailyReviewGoal: prefs?.srs?.dailyReviewGoal,
       newCardsPerDay: prefs?.srs?.newCardsPerDay,
     };
-  },
-});
-
-// Get words for micro-review (recently learned words that need quick reinforcement)
-// These are used for embedded repetition during reading/output activities
-export const getWordsForMicroReview = query({
-  args: {
-    userId: v.string(),
-    language: v.optional(v.string()),
-    limit: v.optional(v.number()), // Default 5
-    uiLanguage: v.optional(uiLanguageValidator),
-  },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 5;
-    const uiLang = normalizeUILanguage(args.uiLanguage);
-
-    // Get cards that were recently reviewed (within last 7 days) and are in learning/review state
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-
-    const cards = await ctx.db
-      .query("flashcards")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .filter((q) =>
-        q.and(
-          q.or(q.eq(q.field("state"), "learning"), q.eq(q.field("state"), "review")),
-          q.gte(q.field("lastReview"), sevenDaysAgo)
-        )
-      )
-      .take(limit * 3);
-
-    // Fetch vocabulary for each card
-    const cardsWithVocab = await Promise.all(
-      cards.map(async (card) => {
-        const vocab = await ctx.db.get(card.vocabularyId);
-        return { card, vocab };
-      })
-    );
-
-    // Filter by language if specified
-    const filtered = args.language
-      ? cardsWithVocab.filter((c) => c.vocab?.language === args.language)
-      : cardsWithVocab;
-
-    // Sort by stability (lower stability = needs more reinforcement) and take limit
-    const sorted = filtered
-      .filter((c) => c.vocab !== null)
-      .sort((a, b) => a.card.stability - b.card.stability)
-      .slice(0, limit);
-
-    // Format for MicroReview component
-    return sorted.map(({ card, vocab }) => ({
-      id: card._id,
-      word: vocab!.word,
-      reading: vocab!.reading,
-      definitions: getDefinitions(vocab!.definitionTranslations, vocab!.definitions, uiLang),
-      language: vocab!.language,
-    }));
   },
 });

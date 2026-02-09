@@ -76,13 +76,14 @@ export const getPoolCandidatesWithCount = internalQuery({
       )
       .take(args.limit);
 
-    // Count total pool size for this language using the index prefix
-    const allForLanguage = await ctx.db
+    // Count pool size with a cap at 1000 — the caller only needs threshold
+    // buckets (< 50, < 200, < 1000, >= 1000), not an exact count
+    const poolSample = await ctx.db
       .query("questionPool")
       .withIndex("by_language_skill_difficulty", (q) => q.eq("language", args.language))
-      .collect();
+      .take(1000);
 
-    return { candidates, poolSize: allForLanguage.length };
+    return { candidates, poolSize: poolSample.length };
   },
 });
 

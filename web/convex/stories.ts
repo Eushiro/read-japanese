@@ -12,44 +12,21 @@ import { action, query } from "./_generated/server";
 import { languageValidator } from "./schema";
 
 /**
- * List all stories for a given language
+ * List stories, optionally filtered by language.
+ * When language is provided, uses the by_language index.
+ * When omitted, returns all stories across all languages.
  */
 export const listByLanguage = query({
   args: {
-    language: languageValidator,
+    language: v.optional(languageValidator),
   },
   handler: async (ctx, args) => {
-    const stories = await ctx.db
-      .query("stories")
-      .withIndex("by_language", (q) => q.eq("language", args.language))
-      .collect();
-
-    return stories.map((s) => ({
-      id: s.storyId,
-      language: s.language,
-      title: s.title,
-      titleTranslations: s.titleTranslations,
-      level: s.level,
-      wordCount: s.wordCount,
-      genre: s.genre,
-      summary: s.summary,
-      summaryTranslations: s.summaryTranslations,
-      coverImageURL: s.coverUrl,
-      audioURL: s.audioUrl,
-      chapterCount: s.chapterCount,
-      isPremium: s.isPremium,
-      storyUrl: s.storyUrl,
-    }));
-  },
-});
-
-/**
- * List all stories (all languages)
- */
-export const listAll = query({
-  args: {},
-  handler: async (ctx) => {
-    const stories = await ctx.db.query("stories").collect();
+    const stories = args.language
+      ? await ctx.db
+          .query("stories")
+          .withIndex("by_language", (q) => q.eq("language", args.language!))
+          .collect()
+      : await ctx.db.query("stories").collect();
 
     return stories.map((s) => ({
       id: s.storyId,
