@@ -98,17 +98,16 @@ export function SettingsPage() {
     if (!user || !userProfile) return;
 
     const currentLanguages = userProfile.languages || [];
-    const isAlreadySelected = currentLanguages.includes(lang);
 
-    // If already selected, do nothing
-    if (isAlreadySelected) return;
+    // If already the active language, do nothing
+    if (currentLanguages[0] === lang) return;
 
-    // Single language selection - replace existing
-    const newLanguages = [lang];
+    // Move selected language to front, keep others
+    const newLanguages: ContentLanguage[] = [lang, ...currentLanguages.filter((l) => l !== lang)];
 
     await updateLanguages({
       clerkId: user.id,
-      languages: newLanguages as ("japanese" | "english" | "french")[],
+      languages: newLanguages,
     });
 
     trackEvent(events.SETTING_CHANGED, {
