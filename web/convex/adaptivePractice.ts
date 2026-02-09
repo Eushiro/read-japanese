@@ -1196,7 +1196,7 @@ Return JSON with an array of questions.`;
       {
         prompt,
         systemPrompt,
-        maxTokens: 6000,
+        maxTokens: 8000,
         jsonSchema: questionSchema,
         parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
         context,
@@ -1353,7 +1353,7 @@ Return JSON.`;
       {
         prompt,
         systemPrompt,
-        maxTokens: 4000,
+        maxTokens: 8000,
         jsonSchema: questionSchema,
         parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
         context: {
@@ -1567,7 +1567,7 @@ Return JSON.`;
         {
           prompt,
           systemPrompt,
-          maxTokens: 3000,
+          maxTokens: 8000,
           jsonSchema: questionSchema,
           parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
           context: {
@@ -1743,7 +1743,7 @@ Grade this answer.`;
       }>({
         prompt,
         systemPrompt,
-        maxTokens: 3000,
+        maxTokens: 8000,
         jsonSchema: gradingSchema,
         models: TEXT_MODEL_CHAIN,
         parse: (response) =>
