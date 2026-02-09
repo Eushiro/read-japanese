@@ -35,7 +35,7 @@ import { LANGUAGES } from "@/lib/contentLanguages";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import type { ContentLanguage } from "../../../convex/schema";
+import type { ContentLanguage, ProficiencyLevel } from "../../../convex/schema";
 
 interface Question {
   questionId: string;
@@ -306,7 +306,7 @@ export function VideoFormPage() {
         title,
         description: description || undefined,
         language,
-        level: level || undefined,
+        level: (level || undefined) as ProficiencyLevel | undefined,
       });
 
       // Update transcript if provided

@@ -37,10 +37,11 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { type ContentLanguage, LANGUAGES } from "@/lib/contentLanguages";
+import type { ProficiencyLevel } from "@/types/story";
 
 import { api } from "../../../convex/_generated/api";
 
-const LEVELS_BY_LANGUAGE: Record<ContentLanguage, string[]> = {
+const LEVELS_BY_LANGUAGE: Record<ContentLanguage, ProficiencyLevel[]> = {
   japanese: ["N5", "N4", "N3", "N2", "N1"],
   english: ["A1", "A2", "B1", "B2", "C1", "C2"],
   french: ["A1", "A2", "B1", "B2", "C1", "C2"],
@@ -96,7 +97,7 @@ export function DecksPage() {
   const [deckName, setDeckName] = useState("");
   const [deckId, setDeckId] = useState("");
   const [language, setLanguage] = useState<ContentLanguage>("japanese");
-  const [level, setLevel] = useState("N5");
+  const [level, setLevel] = useState<ProficiencyLevel>("N5");
   const [description, setDescription] = useState("");
   const [csvContent, setCsvContent] = useState("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -288,7 +289,7 @@ export function DecksPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Level</Label>
-                  <Select value={level} onValueChange={setLevel}>
+                  <Select value={level} onValueChange={(v) => setLevel(v as ProficiencyLevel)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>

@@ -29,6 +29,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { type ContentLanguage, LANGUAGES } from "@/lib/contentLanguages";
+import type { ProficiencyLevel } from "@/types/story";
 import { getPracticeSessionKey } from "@/lib/practiceSession";
 import { getTier, type TierId } from "@/lib/tiers";
 
@@ -38,7 +39,7 @@ export function AdminDashboard() {
   const { user } = useAuth();
 
   // Fetch stats
-  const videos = useQuery(api.youtubeContent.list, {});
+  const videos = useQuery(api.youtubeContent.listSummary, {});
   const decks = useQuery(api.premadeDecks.listAllDecks, {});
   const jobs = useQuery(api.batchJobs.list, { limit: 10 });
 
@@ -59,7 +60,7 @@ export function AdminDashboard() {
   // Calculate stats
   const totalVideos = videos?.length ?? 0;
   const videosWithQuestions =
-    videos?.filter((v) => v.questions && v.questions.length > 0).length ?? 0;
+    videos?.filter((v) => v.questionsCount && v.questionsCount > 0).length ?? 0;
   const videosNeedingWork = totalVideos - videosWithQuestions;
 
   const totalDecks = decks?.length ?? 0;
@@ -353,7 +354,7 @@ export function AdminDashboard() {
                           await updateProficiencyLevel({
                             clerkId: user.id,
                             language: lang as ContentLanguage,
-                            level: value,
+                            level: value as ProficiencyLevel,
                           });
                         }}
                       >
