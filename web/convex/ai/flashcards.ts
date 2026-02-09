@@ -31,6 +31,7 @@ interface RawGeneratedSentence {
 
 // Helper function to generate sentence (not a Convex action)
 import type { ContentLanguage } from "../schema";
+import { languageValidator, proficiencyLevelValidator } from "../schema";
 
 export async function generateSentenceHelper(args: {
   word: string;
@@ -211,7 +212,7 @@ export const generateSentenceInternal = internalAction({
     word: v.string(),
     reading: v.optional(v.string()),
     definitions: v.array(v.string()),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     examLevel: v.optional(v.string()),
   },
   handler: async (_ctx, args): Promise<GeneratedSentence> => {
@@ -391,7 +392,7 @@ export const verifySentence = action({
     sentence: v.string(),
     targetWord: v.string(),
     wordDefinitions: v.array(v.string()),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     feedbackLanguage: v.union(v.literal("en"), v.literal("ja"), v.literal("fr"), v.literal("zh")),
   },
   handler: async (ctx, args): Promise<VerificationResult> => {
@@ -1080,7 +1081,7 @@ export const verifySentenceInternal = internalAction({
     vocabularyId: v.id("vocabulary"),
     targetWord: v.string(),
     sentence: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
   },
   handler: async (ctx, args): Promise<InternalVerificationResultType> => {
     // Get vocabulary definitions
@@ -1269,8 +1270,8 @@ export const generatePersonalizedStoryInternal = internalAction({
     preferWords: v.array(v.string()),
     newWordBudget: v.number(),
     topic: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
-    difficulty: v.string(),
+    language: languageValidator,
+    difficulty: proficiencyLevelValidator,
     targetWordCount: v.number(),
   },
   handler: async (_ctx, args): Promise<GeneratedMicroStory> => {

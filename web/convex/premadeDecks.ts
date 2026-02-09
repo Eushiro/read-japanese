@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import { type Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { getDefinitions, getSentenceTranslation, normalizeUILanguage } from "./lib/translation";
-import { languageValidator, uiLanguageValidator } from "./schema";
+import { languageValidator, proficiencyLevelValidator, uiLanguageValidator } from "./schema";
 
 // ============================================
 // DECK QUERIES
@@ -422,7 +422,7 @@ export const createDeck = mutation({
     name: v.string(),
     description: v.string(),
     language: languageValidator,
-    level: v.string(),
+    level: proficiencyLevelValidator,
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -800,6 +800,7 @@ export const importDeckToUser = mutation({
         await ctx.db.insert("flashcards", {
           userId: args.userId,
           vocabularyId: vocabId,
+          language: premade.language,
           sentenceId: premade.sentenceId,
           imageId: premade.imageId,
           state: "new",

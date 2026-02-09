@@ -1466,7 +1466,7 @@ export const generateIncrementalQuestions = action({
       v.object({
         skill: v.string(),
         type: v.string(),
-        difficulty: v.string(),
+        difficulty: difficultyLevelValidator,
         isCorrect: v.boolean(),
       })
     ),

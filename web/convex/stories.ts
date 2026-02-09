@@ -9,7 +9,7 @@ import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { action, query } from "./_generated/server";
-import { languageValidator } from "./schema";
+import { languageValidator, proficiencyLevelValidator } from "./schema";
 
 /**
  * List stories, optionally filtered by language.
@@ -89,7 +89,7 @@ export const getByStoryId = query({
 export const listByLevel = query({
   args: {
     language: languageValidator,
-    level: v.string(),
+    level: proficiencyLevelValidator,
   },
   handler: async (ctx, args) => {
     const stories = await ctx.db
@@ -326,7 +326,7 @@ export interface PersonalizedStoryResult {
 export const generatePersonalized = action({
   args: {
     language: languageValidator,
-    difficulty: v.string(), // e.g., "N5", "A1"
+    difficulty: proficiencyLevelValidator, // e.g., "N5", "A1"
     topic: v.optional(v.string()), // Optional topic override
     targetWordCount: v.optional(v.number()),
   },

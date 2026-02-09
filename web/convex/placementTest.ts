@@ -3,7 +3,22 @@ import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { isAdminEmail } from "./lib/admin";
 import { getGradingProfile as getGradingProfileConstant } from "./lib/gradingProfiles";
-import { type ContentLanguage, languageValidator } from "./schema";
+import { type ContentLanguage, languageValidator, proficiencyLevelValidator } from "./schema";
+
+const DEPRECATED_MESSAGE = "Placement tests are deprecated. Use diagnostic mode.";
+
+async function warnDeprecated(
+  ctx: { auth: { getUserIdentity: () => Promise<{ subject?: string; email?: string } | null> } },
+  fn: string,
+  details?: Record<string, unknown>
+) {
+  const identity = await ctx.auth.getUserIdentity();
+  console.warn(`[Deprecated] placementTest.${fn} called`, {
+    subject: identity?.subject,
+    email: identity?.email,
+    ...(details ?? {}),
+  });
+}
 
 // ============================================
 // LEVEL DEFINITIONS
@@ -150,6 +165,8 @@ export const getForUser = query({
     language: languageValidator,
   },
   handler: async (ctx, args) => {
+    await warnDeprecated(ctx, "getForUser", { userId: args.userId, language: args.language });
+    throw new Error(DEPRECATED_MESSAGE);
     return await ctx.db
       .query("placementTests")
       .withIndex("by_user_and_language", (q) =>
@@ -168,6 +185,8 @@ export const get = query({
     id: v.id("placementTests"),
   },
   handler: async (ctx, args) => {
+    await warnDeprecated(ctx, "get", { id: args.id });
+    throw new Error(DEPRECATED_MESSAGE);
     return await ctx.db.get(args.id);
   },
 });
@@ -181,6 +200,8 @@ export const getUserLevel = query({
     language: languageValidator,
   },
   handler: async (ctx, args) => {
+    await warnDeprecated(ctx, "getUserLevel", { userId: args.userId, language: args.language });
+    throw new Error(DEPRECATED_MESSAGE);
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.userId))
@@ -200,9 +221,14 @@ export const getUserLevel = query({
 export const getGradingProfile = query({
   args: {
     language: languageValidator,
-    level: v.string(),
+    level: proficiencyLevelValidator,
   },
   handler: async (_ctx, args) => {
+    console.warn("[Deprecated] placementTest.getGradingProfile called", {
+      language: args.language,
+      level: args.level,
+    });
+    throw new Error(DEPRECATED_MESSAGE);
     return getGradingProfileConstant(args.language as ContentLanguage, args.level);
   },
 });
@@ -220,6 +246,8 @@ export const create = mutation({
     language: languageValidator,
   },
   handler: async (ctx, args) => {
+    await warnDeprecated(ctx, "create", { userId: args.userId, language: args.language });
+    throw new Error(DEPRECATED_MESSAGE);
     // Check for existing in-progress test
     const existing = await ctx.db
       .query("placementTests")
@@ -258,7 +286,7 @@ export const addQuestion = mutation({
     testId: v.id("placementTests"),
     question: v.object({
       questionId: v.string(),
-      level: v.string(),
+      level: proficiencyLevelValidator,
       type: v.union(
         v.literal("vocabulary"),
         v.literal("grammar"),
@@ -273,6 +301,8 @@ export const addQuestion = mutation({
     }),
   },
   handler: async (ctx, args) => {
+    await warnDeprecated(ctx, "addQuestion", { testId: args.testId });
+    throw new Error(DEPRECATED_MESSAGE);
     const test = await ctx.db.get(args.testId);
     if (!test || test.status !== "in_progress") {
       throw new Error("Test not found or not in progress");
@@ -296,6 +326,8 @@ export const submitAnswer = mutation({
     responseTimeMs: v.optional(v.number()), // Time from question shown to answer
   },
   handler: async (ctx, args) => {
+    await warnDeprecated(ctx, "submitAnswer", { testId: args.testId });
+    throw new Error(DEPRECATED_MESSAGE);
     const test = await ctx.db.get(args.testId);
     if (!test || test.status !== "in_progress") {
       throw new Error("Test not found or not in progress");
@@ -392,6 +424,8 @@ export const complete = mutation({
     testId: v.id("placementTests"),
   },
   handler: async (ctx, args) => {
+    await warnDeprecated(ctx, "complete", { testId: args.testId });
+    throw new Error(DEPRECATED_MESSAGE);
     const test = await ctx.db.get(args.testId);
     if (!test || test.status !== "in_progress") {
       throw new Error("Test not found or not in progress");
@@ -472,6 +506,8 @@ export const abandon = mutation({
     testId: v.id("placementTests"),
   },
   handler: async (ctx, args) => {
+    await warnDeprecated(ctx, "abandon", { testId: args.testId });
+    throw new Error(DEPRECATED_MESSAGE);
     const test = await ctx.db.get(args.testId);
     if (!test || test.status !== "in_progress") {
       throw new Error("Test not found or not in progress");
@@ -493,6 +529,8 @@ export const reset = mutation({
     adminEmail: v.string(),
   },
   handler: async (ctx, args) => {
+    await warnDeprecated(ctx, "reset", { userId: args.userId, language: args.language });
+    throw new Error(DEPRECATED_MESSAGE);
     // Only allow admin to reset
     if (!isAdminEmail(args.adminEmail)) {
       throw new Error("Unauthorized: Only admin can reset placement tests");
@@ -541,7 +579,7 @@ export const addQuestionFromAI = internalMutation({
     testId: v.id("placementTests"),
     question: v.object({
       questionId: v.string(),
-      level: v.string(),
+      level: proficiencyLevelValidator,
       type: v.union(
         v.literal("vocabulary"),
         v.literal("grammar"),
@@ -560,6 +598,8 @@ export const addQuestionFromAI = internalMutation({
     }),
   },
   handler: async (ctx, args) => {
+    await warnDeprecated(ctx, "addQuestionFromAI", { testId: args.testId });
+    throw new Error(DEPRECATED_MESSAGE);
     const test = await ctx.db.get(args.testId);
     if (!test || test.status !== "in_progress") {
       throw new Error("Test not found or not in progress");

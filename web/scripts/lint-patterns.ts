@@ -19,6 +19,8 @@ const EXCLUDED_FILES = new Set([
   "tiers.ts", // The tier config itself
   "schema.ts", // Convex schema with validators
   "stripe.ts", // Convex backend with local tier types for Stripe price mapping
+  "story.ts", // Defines canonical level types and arrays
+  "levels.ts", // Level configuration
 ]);
 
 // Directories to exclude
@@ -47,6 +49,19 @@ const LOCAL_LANGUAGE_TYPE_PATTERN = /^type\s+Language\s*=/;
 // Matches: "free" | "plus" | "pro" (in any order, with any subset of 2+)
 // Catches both type annotations (: "free" | "plus") and type aliases (= "free" | "plus")
 const TIER_UNION_PATTERN = /[=:]\s*["'](free|plus|pro)["']\s*\|\s*["'](free|plus|pro)["']/;
+
+// Pattern to match hardcoded difficulty level union types
+// Matches: "level_1" | "level_2" etc. (any 2+ of level_1 through level_6)
+const DIFFICULTY_UNION_PATTERN =
+  /[=:]\s*["'](level_1|level_2|level_3|level_4|level_5|level_6)["']\s*\|\s*["'](level_1|level_2|level_3|level_4|level_5|level_6)["']/;
+
+// Pattern to match hardcoded JLPT level union types
+// Matches: "N1" | "N2" etc. (any 2+ of N1 through N5)
+const JLPT_UNION_PATTERN = /[=:]\s*["'](N[1-5])["']\s*\|\s*["'](N[1-5])["']/;
+
+// Pattern to match hardcoded CEFR level union types
+// Matches: "A1" | "A2" etc. (any 2+ of A1, A2, B1, B2, C1, C2)
+const CEFR_UNION_PATTERN = /[=:]\s*["'](A[12]|B[12]|C[12])["']\s*\|\s*["'](A[12]|B[12]|C[12])["']/;
 
 interface Violation {
   file: string;
@@ -149,6 +164,39 @@ function checkFile(filePath: string): Violation[] {
         });
       }
     }
+
+    // Check for hardcoded difficulty level union types
+    if (DIFFICULTY_UNION_PATTERN.test(line)) {
+      violations.push({
+        file: filePath,
+        line: lineNum + 1,
+        message:
+          "Hardcoded difficulty level union type. Use `DifficultyLevel` type from ./schema instead.",
+        code: trimmed.substring(0, 80) + (trimmed.length > 80 ? "..." : ""),
+      });
+    }
+
+    // Check for hardcoded JLPT level union types
+    if (JLPT_UNION_PATTERN.test(line)) {
+      violations.push({
+        file: filePath,
+        line: lineNum + 1,
+        message:
+          "Hardcoded JLPT level union type. Use `JLPTLevel` / `ProficiencyLevel` type from ./schema instead.",
+        code: trimmed.substring(0, 80) + (trimmed.length > 80 ? "..." : ""),
+      });
+    }
+
+    // Check for hardcoded CEFR level union types
+    if (CEFR_UNION_PATTERN.test(line)) {
+      violations.push({
+        file: filePath,
+        line: lineNum + 1,
+        message:
+          "Hardcoded CEFR level union type. Use `CEFRLevel` / `ProficiencyLevel` type from ./schema instead.",
+        code: trimmed.substring(0, 80) + (trimmed.length > 80 ? "..." : ""),
+      });
+    }
   }
 
   return violations;
@@ -213,6 +261,7 @@ function main() {
 
     console.log('Import the ContentLanguage type: import type { ContentLanguage } from "@/lib/contentLanguages";');
     console.log('Import the TierId type: import type { TierId } from "@/lib/tiers";');
+    console.log('Import level types: import type { JLPTLevel, CEFRLevel, ProficiencyLevel, DifficultyLevel } from "./schema";');
     console.log("\nSee docs/DEVELOPMENT.md for correct patterns.");
     process.exit(1);
   } else {

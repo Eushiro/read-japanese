@@ -5,7 +5,7 @@ import { internalMutation, internalQuery, mutation, query } from "./_generated/s
 import { isAdminEmail } from "./lib/admin";
 import { labelToIRT } from "./lib/difficultyEstimator";
 import { TEST_MODE_MODELS } from "./lib/models";
-import { adaptiveContentTypeValidator, languageValidator } from "./schema";
+import { adaptiveContentTypeValidator, difficultyLevelValidator, languageValidator } from "./schema";
 
 const LISTENING_TYPES = new Set(["listening_mcq", "dictation"]);
 const SPEAKING_TYPES = new Set(["shadow_record"]);
@@ -93,7 +93,7 @@ export const upsertPracticeSessionInternal = internalMutation({
         questionId: v.string(),
         type: v.string(),
         targetSkill: v.string(),
-        difficulty: v.optional(v.string()),
+        difficulty: v.optional(difficultyLevelValidator),
       })
     ),
     modelUsed: v.optional(v.string()),
@@ -189,7 +189,7 @@ export const recordAnswer = mutation({
     questionText: v.string(),
     questionType: v.string(),
     targetSkill: v.string(),
-    difficulty: v.optional(v.string()),
+    difficulty: v.optional(difficultyLevelValidator),
     difficultyNumeric: v.optional(v.number()),
     userAnswer: v.string(),
     selectedOption: v.optional(v.string()), // For MCQ: which option was picked (for distractor analysis)

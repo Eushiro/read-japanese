@@ -13,7 +13,7 @@ import {
   getUILanguageName,
   type UILanguage,
 } from "../lib/promptHelpers";
-import { examTypeValidator, languageValidator } from "../schema";
+import { examTypeValidator, languageValidator,type ProficiencyLevel } from "../schema";
 import { generateTTSAudio } from "./media";
 import {
   cleanJsonResponse,
@@ -23,6 +23,8 @@ import {
   parseJson,
   TEXT_MODEL_CHAIN,
 } from "./models";
+
+const PLACEMENT_DEPRECATED_MESSAGE = "Placement tests are deprecated. Use diagnostic mode.";
 
 // Language name mappings
 const languageNames: Record<string, string> = {
@@ -45,7 +47,7 @@ const uiLanguageNames: Record<string, string> = {
 
 interface PlacementQuestion {
   questionId: string;
-  level: string;
+  level: ProficiencyLevel;
   type: "vocabulary" | "grammar" | "reading" | "listening";
   question: string;
   questionTranslation: string;
@@ -59,7 +61,7 @@ interface PlacementQuestion {
 }
 
 // Map difficulty (-3 to +3) to level names
-export function difficultyToLevel(difficulty: number, language: string): string {
+export function difficultyToLevel(difficulty: number, language: string): ProficiencyLevel {
   if (language === "japanese") {
     if (difficulty < -1.5) return "N5";
     if (difficulty < -0.5) return "N4";
@@ -98,8 +100,16 @@ export const generatePlacementQuestion = action({
     ),
   },
   handler: async (ctx, args): Promise<PlacementQuestion> => {
-    // Require authentication
     const identity = await ctx.auth.getUserIdentity();
+    console.warn("[Deprecated] ai.generatePlacementQuestion called", {
+      subject: identity?.subject,
+      email: identity?.email,
+      testId: args.testId,
+      language: args.language,
+      questionType: args.questionType,
+    });
+    throw new Error(PLACEMENT_DEPRECATED_MESSAGE);
+    // Require authentication
     if (!identity) {
       throw new Error("Authentication required");
     }
@@ -344,6 +354,13 @@ export const getNextQuestionDifficulty = action({
     reason?: string;
     isWarmup?: boolean;
   }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    console.warn("[Deprecated] ai.getNextQuestionDifficulty called", {
+      subject: identity?.subject,
+      email: identity?.email,
+      testId: args.testId,
+    });
+    throw new Error(PLACEMENT_DEPRECATED_MESSAGE);
     // Get the current test state
     const test = await ctx.runQuery(internal.aiHelpers.getPlacementTest, {
       testId: args.testId,

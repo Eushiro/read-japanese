@@ -11,6 +11,7 @@ import {
   examTypeValidator,
   languageValidator,
   learningGoalValidator,
+  proficiencyLevelValidator,
   selfAssessedLevelValidator,
 } from "./schema";
 
@@ -157,7 +158,7 @@ export const updateProficiencyLevel = mutation({
   args: {
     clerkId: v.string(),
     language: languageValidator,
-    level: v.string(), // "N5", "N4", etc. or "A1", "B2", etc.
+    level: proficiencyLevelValidator,
   },
   handler: async (ctx, args) => {
     const user = await requireUserByClerkId(ctx, args.clerkId);

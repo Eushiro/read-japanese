@@ -272,6 +272,12 @@ export default defineConfig([
             "Property[key.name='examType'] CallExpression[callee.object.name='v'][callee.property.name='string']",
           message: "Use examTypeValidator from ./schema instead of v.string() for examType fields.",
         },
+        {
+          selector:
+            "Property[key.name='level'] CallExpression[callee.object.name='v'][callee.property.name='string']",
+          message:
+            "Use proficiencyLevelValidator from ./schema instead of v.string() for level fields.",
+        },
       ],
     },
   },

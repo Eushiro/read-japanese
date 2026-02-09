@@ -17,6 +17,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { AUDIO_MODELS, IMAGE_MODELS, TEXT_MODELS } from "../lib/models";
 import type { ContentLanguage } from "../schema";
+import { languageValidator, proficiencyLevelValidator } from "../schema";
 
 // ============================================
 // TYPES
@@ -62,7 +63,7 @@ export const findUnseenSentenceForUser = internalQuery({
     userId: v.string(),
     vocabularyId: v.id("vocabulary"),
     word: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     difficulty: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<Doc<"sentences"> | null> => {
@@ -117,7 +118,7 @@ export const findUnseenImageForUser = internalQuery({
     userId: v.string(),
     vocabularyId: v.id("vocabulary"),
     word: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
   },
   handler: async (ctx, args): Promise<Doc<"images"> | null> => {
     const images = await ctx.db
@@ -156,7 +157,7 @@ export const findUnseenImageForUser = internalQuery({
 export const findWordAudio = internalQuery({
   args: {
     word: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
   },
   handler: async (ctx, args): Promise<Doc<"wordAudio"> | null> => {
     return await ctx.db
@@ -253,7 +254,7 @@ export const markImageSeen = internalMutation({
 export const storeSentenceInternal = internalMutation({
   args: {
     word: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     difficulty: v.number(),
     sentence: v.string(),
     translation: v.optional(v.string()), // Backwards compatibility
@@ -293,7 +294,7 @@ export const storeSentenceInternal = internalMutation({
 export const storeImageInternal = internalMutation({
   args: {
     word: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     imageUrl: v.string(),
     style: v.optional(v.string()),
     model: v.string(),
@@ -316,7 +317,7 @@ export const storeImageInternal = internalMutation({
 export const storeWordAudioInternal = internalMutation({
   args: {
     word: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     audioUrl: v.string(),
     model: v.string(),
   },
@@ -353,7 +354,7 @@ export const generateSentenceForWord = internalAction({
     word: v.string(),
     reading: v.optional(v.string()),
     definitions: v.array(v.string()),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     examLevel: v.optional(v.string()),
     skipUsageCheck: v.optional(v.boolean()), // For batch/admin operations
   },
@@ -468,7 +469,7 @@ export const generateImageForWord = internalAction({
     vocabularyId: v.id("vocabulary"),
     word: v.string(),
     sentence: v.string(), // Context sentence for better image
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     skipUsageCheck: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<GeneratedImageResult> => {
@@ -560,7 +561,7 @@ export const generateAudioForText = internalAction({
   args: {
     userId: v.string(),
     text: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     isWordAudio: v.optional(v.boolean()), // True if this is word pronunciation, false for sentence
     skipUsageCheck: v.optional(v.boolean()),
     // For word-centric storage organization
@@ -672,7 +673,7 @@ export interface GeneratedMicroStory {
 export const getVocabularyForStoryGeneration = internalQuery({
   args: {
     userId: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     learningWordsLimit: v.optional(v.number()),
     knownWordsLimit: v.optional(v.number()),
   },
@@ -721,8 +722,8 @@ export const getVocabularyForStoryGeneration = internalQuery({
 export const generatePersonalizedMicroStory = internalAction({
   args: {
     userId: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
-    difficulty: v.string(),
+    language: languageValidator,
+    difficulty: proficiencyLevelValidator,
     newWordBudget: v.optional(v.number()),
     targetWordCount: v.optional(v.number()),
     topic: v.optional(v.string()), // Optional specific topic override
@@ -817,7 +818,7 @@ export const verifySentenceWithGating = internalAction({
     vocabularyId: v.id("vocabulary"),
     targetWord: v.string(),
     userSentence: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     skipUsageCheck: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<VerificationResult> => {

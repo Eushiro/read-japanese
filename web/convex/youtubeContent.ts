@@ -1,8 +1,34 @@
 import { v } from "convex/values";
 
 import { internalMutation, mutation, query } from "./_generated/server";
-import { languageValidator } from "./schema";
+import { languageValidator, proficiencyLevelValidator } from "./schema";
 import { getThumbnailUrl, validateVideo, VIDEOS } from "./videoData";
+
+function toSummary(video: {
+  _id: string;
+  videoId: string;
+  language: string;
+  level?: string;
+  title: string;
+  description?: string;
+  thumbnailUrl?: string;
+  duration?: number;
+  questions?: Array<unknown>;
+  createdAt: number;
+}) {
+  return {
+    _id: video._id,
+    videoId: video.videoId,
+    language: video.language,
+    level: video.level,
+    title: video.title,
+    description: video.description,
+    thumbnailUrl: video.thumbnailUrl,
+    duration: video.duration,
+    questionsCount: video.questions?.length ?? 0,
+    createdAt: video.createdAt,
+  };
+}
 
 // ============================================
 // QUERIES
@@ -14,7 +40,7 @@ import { getThumbnailUrl, validateVideo, VIDEOS } from "./videoData";
 export const list = query({
   args: {
     language: v.optional(languageValidator),
-    level: v.optional(v.string()),
+    level: v.optional(proficiencyLevelValidator),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -38,6 +64,39 @@ export const list = query({
     }
 
     return videos;
+  },
+});
+
+/**
+ * List all YouTube videos (summary fields only), optionally filtered by language and level
+ */
+export const listSummary = query({
+  args: {
+    language: v.optional(languageValidator),
+    level: v.optional(proficiencyLevelValidator),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 50;
+
+    let videos;
+    if (args.language && args.level) {
+      videos = await ctx.db
+        .query("youtubeContent")
+        .withIndex("by_language_and_level", (q) =>
+          q.eq("language", args.language!).eq("level", args.level!)
+        )
+        .take(limit);
+    } else if (args.language) {
+      videos = await ctx.db
+        .query("youtubeContent")
+        .withIndex("by_language", (q) => q.eq("language", args.language!))
+        .take(limit);
+    } else {
+      videos = await ctx.db.query("youtubeContent").order("desc").take(limit);
+    }
+
+    return videos.map(toSummary);
   },
 });
 
@@ -119,6 +178,33 @@ export const listByLevels = query({
   },
 });
 
+/**
+ * Get videos filtered by acceptable difficulty levels (summary fields only)
+ */
+export const listByLevelsSummary = query({
+  args: {
+    language: languageValidator,
+    levels: v.array(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 10;
+
+    const results = [];
+    for (const level of args.levels) {
+      const videos = await ctx.db
+        .query("youtubeContent")
+        .withIndex("by_language_and_level", (q) =>
+          q.eq("language", args.language).eq("level", level)
+        )
+        .take(limit);
+      results.push(...videos);
+    }
+
+    return results.slice(0, limit).map(toSummary);
+  },
+});
+
 // ============================================
 // MUTATIONS
 // ============================================
@@ -130,7 +216,7 @@ export const seed = mutation({
   args: {
     videoId: v.string(),
     language: languageValidator,
-    level: v.optional(v.string()),
+    level: v.optional(proficiencyLevelValidator),
     title: v.string(),
     description: v.optional(v.string()),
     thumbnailUrl: v.optional(v.string()),
@@ -522,7 +608,7 @@ export const seedBatch = internalMutation({
       v.object({
         videoId: v.string(),
         language: languageValidator,
-        level: v.optional(v.string()),
+        level: v.optional(proficiencyLevelValidator),
         title: v.string(),
         description: v.optional(v.string()),
         duration: v.optional(v.number()),

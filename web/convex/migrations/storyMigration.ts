@@ -14,7 +14,8 @@ import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { internalAction, internalMutation, mutation, query } from "../_generated/server";
-import type { ContentLanguage } from "../schema";
+import type { ContentLanguage, ProficiencyLevel } from "../schema";
+import { languageValidator, proficiencyLevelValidator } from "../schema";
 
 const R2_PUBLIC_URL = process.env.VITE_R2_PUBLIC_URL || process.env.R2_PUBLIC_URL || "";
 
@@ -57,7 +58,7 @@ async function fetchManifest(): Promise<Manifest> {
 export const insertStory = internalMutation({
   args: {
     storyId: v.string(),
-    language: v.union(v.literal("japanese"), v.literal("english"), v.literal("french")),
+    language: languageValidator,
     title: v.string(),
     titleTranslations: v.object({
       en: v.string(),
@@ -65,7 +66,7 @@ export const insertStory = internalMutation({
       fr: v.string(),
       zh: v.string(),
     }),
-    level: v.string(),
+    level: proficiencyLevelValidator,
     wordCount: v.number(),
     genre: v.string(),
     chapterCount: v.number(),
@@ -306,7 +307,7 @@ export const migrateFromManifest = internalAction({
           // For Japanese stories, use Japanese as the primary title
           title: story.language === "japanese" ? translations.title.ja : translations.title.en,
           titleTranslations: translations.title,
-          level: story.level,
+          level: story.level as ProficiencyLevel,
           wordCount: story.wordCount,
           genre: story.genre,
           chapterCount: story.chapterCount,

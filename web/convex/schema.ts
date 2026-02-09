@@ -33,6 +33,11 @@ export type ExamType =
   | "dalf_c2"
   | "tcf"; // French
 
+// Proficiency levels
+export type JLPTLevel = "N5" | "N4" | "N3" | "N2" | "N1";
+export type CEFRLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+export type ProficiencyLevel = JLPTLevel | CEFRLevel;
+
 // Subscription tiers (unified credit system)
 export type SubscriptionTier = "free" | "plus" | "pro";
 
@@ -168,6 +173,36 @@ export const examTypeValidator = v.union(
   v.literal("dalf_c1"),
   v.literal("dalf_c2"),
   v.literal("tcf")
+);
+
+// Proficiency levels
+export const jlptLevelValidator = v.union(
+  v.literal("N5"),
+  v.literal("N4"),
+  v.literal("N3"),
+  v.literal("N2"),
+  v.literal("N1")
+);
+export const cefrLevelValidator = v.union(
+  v.literal("A1"),
+  v.literal("A2"),
+  v.literal("B1"),
+  v.literal("B2"),
+  v.literal("C1"),
+  v.literal("C2")
+);
+export const proficiencyLevelValidator = v.union(
+  v.literal("N5"),
+  v.literal("N4"),
+  v.literal("N3"),
+  v.literal("N2"),
+  v.literal("N1"),
+  v.literal("A1"),
+  v.literal("A2"),
+  v.literal("B1"),
+  v.literal("B2"),
+  v.literal("C1"),
+  v.literal("C2")
 );
 
 // Subscription tiers (unified credit system)
@@ -421,6 +456,7 @@ export default defineSchema({
   flashcards: defineTable({
     userId: v.string(),
     vocabularyId: v.id("vocabulary"),
+    language: v.optional(languageValidator), // Denormalized from vocabulary for indexed filtering
 
     // References to content libraries
     sentenceId: v.optional(v.id("sentences")), // Current sentence for this card
@@ -443,7 +479,9 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_vocabulary", ["vocabularyId"])
-    .index("by_user_and_due", ["userId", "due"]),
+    .index("by_user_and_due", ["userId", "due"])
+    .index("by_user_language", ["userId", "language"])
+    .index("by_user_language_due", ["userId", "language", "due"]),
 
   // Review history for flashcards
   flashcardReviews: defineTable({
