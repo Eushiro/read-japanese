@@ -13,7 +13,8 @@
     "loadingMore1": "あなたのレベルに合わせた問題を作成中...",
     "loadingMore2": "次の問題をパーソナライズ中...",
     "loadingMore3": "あなたの進捗に合わせて調整中...",
-    "loadingMore4": "最適な難易度を選択中..."
+    "loadingMore4": "最適な難易度を選択中...",
+    "generationFailed": "問題の生成に失敗しました。残りの問題で続けてください。"
   },
   "contentType": {
     "dialogue": "会話",

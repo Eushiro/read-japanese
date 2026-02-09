@@ -51,7 +51,8 @@ export const getUserSeenHashes = internalQuery({
       .withIndex("by_user_language", (q) =>
         q.eq("userId", args.userId).eq("language", args.language)
       )
-      .collect();
+      .order("desc")
+      .take(500);
 
     return exposures.map((e) => e.questionHash);
   },

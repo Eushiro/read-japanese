@@ -13,7 +13,8 @@
     "loadingMore1": "Tailoring questions to your level...",
     "loadingMore2": "Personalizing your next challenges...",
     "loadingMore3": "Adapting to your progress...",
-    "loadingMore4": "Finding the right difficulty for you..."
+    "loadingMore4": "Finding the right difficulty for you...",
+    "generationFailed": "Couldn't generate more questions — you can continue with the remaining ones."
   },
   "contentType": {
     "dialogue": "Dialogue",

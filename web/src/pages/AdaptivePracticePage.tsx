@@ -371,6 +371,7 @@ export function AdaptivePracticePage() {
   // Diagnostic dynamic generation state
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
   const [generatingMessage, setGeneratingMessage] = useState<string>("");
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const generationAbortedRef = useRef(false);
   const generationPromiseRef = useRef<Promise<PracticeQuestion[]> | null>(null);
 
@@ -674,6 +675,8 @@ export function AdaptivePracticePage() {
         })
         .catch((err) => {
           console.error("Failed to generate incremental questions:", err);
+          setGenerationError(t("adaptivePractice.loading.generationFailed"));
+          setTimeout(() => setGenerationError(null), 4000);
           return [];
         })
         .finally(() => {
@@ -683,7 +686,7 @@ export function AdaptivePracticePage() {
       generationPromiseRef.current = promise;
       return promise;
     },
-    [practiceSet, generateIncremental, language, uiLanguage]
+    [practiceSet, generateIncremental, language, uiLanguage, t]
   );
 
   // Fire per-model streaming calls for test mode
@@ -881,6 +884,14 @@ export function AdaptivePracticePage() {
     setPhase("questions");
     pickNext();
   }, [pickNext]);
+
+  // Clean up audio on unmount
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
 
   // Play audio
   const handlePlayAudio = useCallback((url: string) => {
@@ -1174,7 +1185,7 @@ export function AdaptivePracticePage() {
       if (currentQuestion.type === "free_input" || currentQuestion.type === "translation") {
         const grading = await gradeFreeAnswer({
           question: currentQuestion.question,
-          userAnswer: selectedAnswer,
+          userAnswer: selectedAnswer.trim(),
           language,
           correctAnswer: currentQuestion.correctAnswer,
           acceptableAnswers: currentQuestion.acceptableAnswers,
@@ -1997,6 +2008,12 @@ export function AdaptivePracticePage() {
                 {t("adaptivePractice.review.backToResults")}
               </Button>
             </div>
+          </div>
+        )}
+        {/* Generation error feedback */}
+        {generationError && (
+          <div className="container mx-auto px-4 max-w-2xl mt-2">
+            <div className="text-sm text-red-400 text-center py-2">{generationError}</div>
           </div>
         )}
         {/* Skip button for audio/mic questions */}

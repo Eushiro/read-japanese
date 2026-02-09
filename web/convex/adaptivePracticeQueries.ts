@@ -204,8 +204,24 @@ export const recordAnswer = mutation({
     abilityEstimate: v.number(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.userId) {
+      throw new Error("Unauthorized");
+    }
+
     // Don't record or update model for skipped questions
     if (args.skipped) return;
+
+    // Idempotency: check if this answer was already recorded (e.g. session restored from sessionStorage)
+    const recentHistory = await ctx.db
+      .query("questionHistory")
+      .withIndex("by_user_time", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(50);
+    const alreadyRecorded = recentHistory.some(
+      (h) => h.sourceId === args.practiceId && h.questionContent.questionText === args.questionText
+    );
+    if (alreadyRecorded) return;
 
     // 1. Save to questionHistory
     await ctx.db.insert("questionHistory", {
@@ -274,6 +290,11 @@ export const submitPractice = mutation({
     targetSkills: v.array(v.string()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.userId) {
+      throw new Error("Unauthorized");
+    }
+
     const percentScore = args.maxScore > 0 ? (args.totalScore / args.maxScore) * 100 : 0;
 
     // Log exposure (only for normal mode with content)
