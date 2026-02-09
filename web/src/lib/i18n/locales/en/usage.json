@@ -35,6 +35,7 @@
     "question": "Question generation",
     "image": "Image generation",
     "story": "Story generation",
-    "placement": "Placement question"
+    "placement": "Placement question",
+    "explain_question": "Question explanation"
   }
 }

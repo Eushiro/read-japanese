@@ -70,7 +70,8 @@
       "story": "Story generation",
       "placement": "Placement question",
       "image": "Image generation",
-      "shadowing": "Shadowing session"
+      "shadowing": "Shadowing session",
+      "explain_question": "Question explanation"
     },
     "perMonth": "/month",
     "footer": "Credits reset monthly. Unused credits don't roll over."

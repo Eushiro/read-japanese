@@ -34,6 +34,7 @@
     "question": "問題生成",
     "image": "画像生成",
     "story": "ストーリー生成",
-    "placement": "レベル判定問題"
+    "placement": "レベル判定問題",
+    "explain_question": "問題の解説"
   }
 }

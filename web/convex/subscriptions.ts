@@ -35,6 +35,7 @@ export const CREDIT_COSTS = {
   image: 3, // image generation
   story: 2, // personalized story generation
   placement: 2, // placement test question + optional TTS
+  explain_question: 1, // AI explanation for practice question
 } as const;
 
 export type CreditAction = keyof typeof CREDIT_COSTS;

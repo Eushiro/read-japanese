@@ -75,6 +75,13 @@
     "levelUp": "Niveau supérieur !",
     "yourLevel": "Votre niveau",
     "questionsAtLevel": "{{count}} au niveau {{level}}",
-    "streakLabel": "{{count}} jours consécutifs"
+    "streakLabel": "{{count}} jours consécutifs",
+    "reviewQuestions": "Revoir les questions"
+  },
+  "review": {
+    "explain": "Expliquer cette question",
+    "explaining": "Explication en cours...",
+    "previous": "Précédent",
+    "backToResults": "Retour aux résultats"
   }
 }

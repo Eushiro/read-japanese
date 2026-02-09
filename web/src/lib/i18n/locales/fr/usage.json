@@ -35,6 +35,7 @@
     "question": "Génération de questions",
     "image": "Génération d'image",
     "story": "Génération d'histoire",
-    "placement": "Question de placement"
+    "placement": "Question de placement",
+    "explain_question": "Explication de question"
   }
 }

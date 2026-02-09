@@ -34,6 +34,7 @@
     "question": "题目生成",
     "image": "图片生成",
     "story": "故事生成",
-    "placement": "定级测试题"
+    "placement": "定级测试题",
+    "explain_question": "题目解释"
   }
 }

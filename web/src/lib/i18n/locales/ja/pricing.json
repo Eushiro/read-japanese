@@ -70,7 +70,8 @@
       "story": "ストーリー生成",
       "placement": "レベル判定問題",
       "image": "画像生成",
-      "shadowing": "シャドーイングセッション"
+      "shadowing": "シャドーイングセッション",
+      "explain_question": "問題の解説"
     },
     "perMonth": "/月",
     "footer": "クレジットは毎月リセットされます。未使用のクレジットは繰り越されません。"

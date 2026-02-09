@@ -1,6 +1,6 @@
 import { useQuery as useTanstackQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useAction, useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -11,6 +11,7 @@ import {
   Flame,
   RotateCcw,
   SkipForward,
+  Sparkles,
   Target,
   Trophy,
   Volume2,
@@ -25,6 +26,7 @@ import type {
 } from "@/components/practice";
 import {
   getDiff,
+  ProgressSquares,
   QuestionDictation,
   QuestionListening,
   QuestionMCQ,
@@ -42,7 +44,7 @@ import { useRotatingMessages } from "@/hooks/useRotatingMessages";
 import { isAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT, useUILanguage } from "@/lib/i18n";
-import { abilityToProgress, difficultyToExamLabel, getLevelVariant } from "@/lib/levels";
+import { abilityToProgress, getLevelVariant } from "@/lib/levels";
 import { getPracticeSessionKey } from "@/lib/practiceSession";
 
 import { api } from "../../convex/_generated/api";
@@ -353,6 +355,11 @@ export function AdaptivePracticePage() {
   const [maxScore, setMaxScore] = useState(0);
   const [contentReadTime, setContentReadTime] = useState<number>(0);
 
+  // Review mode state
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [questionExplanation, setQuestionExplanation] = useState<string | null>(null);
+  const [isExplaining, setIsExplaining] = useState(false);
+
   // Refs for session abandonment flush (beforeunload / unmount)
   const answersRef = useRef<AnswerRecord[]>([]);
   const practiceSetRef = useRef<PracticeSet | null>(null);
@@ -435,13 +442,14 @@ export function AdaptivePracticePage() {
   const languageName = t(`common.languages.${language}`);
 
   // Convex actions/mutations
-  const getNextPractice = useAction(api.adaptivePractice.getNextPractice);
-  const generateForModel = useAction(api.adaptivePractice.generateForModel);
+  const getNextPractice = useAIAction(api.adaptivePractice.getNextPractice);
+  const generateForModel = useAIAction(api.adaptivePractice.generateForModel);
   const submitPractice = useMutation(api.adaptivePracticeQueries.submitPractice);
   const recordAnswer = useMutation(api.adaptivePracticeQueries.recordAnswer);
-  const gradeFreeAnswer = useAction(api.adaptivePractice.gradeFreeAnswer);
-  const generateIncremental = useAction(api.adaptivePractice.generateIncrementalQuestions);
+  const gradeFreeAnswer = useAIAction(api.adaptivePractice.gradeFreeAnswer);
+  const generateIncremental = useAIAction(api.adaptivePractice.generateIncrementalQuestions);
   const evaluateShadowing = useAIAction(api.ai.evaluateShadowing);
+  const explainQuestionAction = useAIAction(api.adaptivePractice.explainQuestion);
 
   // Flush unsubmitted answers on tab close.
   // On unmount (React Router navigation), we DON'T flush because the session
@@ -1081,9 +1089,66 @@ export function AdaptivePracticePage() {
       setCurrentQuestion(question);
       setSelectedAnswer(answer.userAnswer);
       setShowFeedback(true);
+      setQuestionExplanation(null);
     },
     [practiceSet, questionQueue, answers, adminEnabled]
   );
+
+  // Enter review mode at a specific question index
+  const enterReviewMode = useCallback(
+    (index: number) => {
+      if (!practiceSet) return;
+      const questionId = questionQueue[index];
+      if (!questionId) return;
+      const question = practiceSet.questions.find((q) => q.questionId === questionId);
+      if (!question) return;
+      const answer = answers.find((a) => a.questionId === questionId);
+      if (!answer) return;
+
+      setIsReviewMode(true);
+      setQuestionExplanation(null);
+      setPhase("questions");
+      setCurrentQuestion(question);
+      setSelectedAnswer(answer.userAnswer);
+      setShowFeedback(true);
+    },
+    [practiceSet, questionQueue, answers]
+  );
+
+  // Handle explain question in review mode
+  const handleExplain = useCallback(async () => {
+    if (!currentQuestion || !practiceSet || isExplaining) return;
+    const answer = answers.find((a) => a.questionId === currentQuestion.questionId);
+    if (!answer) return;
+
+    setIsExplaining(true);
+    try {
+      const result = await explainQuestionAction({
+        question: currentQuestion.question,
+        correctAnswer: currentQuestion.correctAnswer,
+        userAnswer: answer.userAnswer,
+        isCorrect: answer.isCorrect,
+        questionType: currentQuestion.type,
+        targetSkill: currentQuestion.targetSkill,
+        language,
+        uiLanguage,
+      });
+      setQuestionExplanation(result.explanation);
+    } catch (error) {
+      console.error("Failed to explain question:", error);
+      setQuestionExplanation("Unable to generate explanation. Please try again.");
+    } finally {
+      setIsExplaining(false);
+    }
+  }, [
+    currentQuestion,
+    practiceSet,
+    answers,
+    isExplaining,
+    explainQuestionAction,
+    language,
+    uiLanguage,
+  ]);
 
   // Submit answer
   const handleSubmitAnswer = useCallback(async () => {
@@ -1262,6 +1327,35 @@ export function AdaptivePracticePage() {
   const handleNextQuestion = useCallback(async () => {
     if (!practiceSet) return;
 
+    // Review mode: navigate through answered questions or back to results
+    if (isReviewMode) {
+      const currentQueueIndex = currentQuestion
+        ? questionQueue.indexOf(currentQuestion.questionId)
+        : -1;
+      // Find the next answered question in the queue
+      const answeredIds = new Set(answers.map((a) => a.questionId));
+      let nextIndex = -1;
+      for (let i = currentQueueIndex + 1; i < questionQueue.length; i++) {
+        if (answeredIds.has(questionQueue[i])) {
+          nextIndex = i;
+          break;
+        }
+      }
+
+      if (nextIndex === -1) {
+        // Last question — go back to results
+        setIsReviewMode(false);
+        setQuestionExplanation(null);
+        setPhase("results");
+        return;
+      }
+
+      // Navigate to next reviewed question
+      setQuestionExplanation(null);
+      enterReviewMode(nextIndex);
+      return;
+    }
+
     const updatedAnswers = answers;
     const answeredCount = updatedAnswers.filter((a) => !a.skipped).length;
     const remaining = practiceSet.questions.filter(
@@ -1316,7 +1410,16 @@ export function AdaptivePracticePage() {
       setCurrentQuestion(next);
       setQuestionStartTime(Date.now());
     }
-  }, [practiceSet, answers, finishSession, triggerBackgroundGeneration]);
+  }, [
+    practiceSet,
+    answers,
+    finishSession,
+    triggerBackgroundGeneration,
+    isReviewMode,
+    currentQuestion,
+    questionQueue,
+    enterReviewMode,
+  ]);
 
   // Restart practice
   const handleRestart = useCallback(() => {
@@ -1335,6 +1438,9 @@ export function AdaptivePracticePage() {
     setModelResults([]);
     setIsGeneratingMore(false);
     generationAbortedRef.current = false;
+    setIsReviewMode(false);
+    setQuestionExplanation(null);
+    setIsExplaining(false);
 
     if (!user) return;
 
@@ -1702,10 +1808,19 @@ export function AdaptivePracticePage() {
     const currentAnswer = answers.find((a) => a.questionId === currentQuestion.questionId) ?? null;
     const queueIndex = questionQueue.indexOf(currentQuestion.questionId);
     const currentIndex = queueIndex !== -1 ? queueIndex : questionQueue.length;
+    // In review mode, check if this is the last answered question in the queue
     // In diagnostic mode, don't treat as last question while more are being generated
-    const isLastQuestion = isDiag
-      ? answeredNonSkipped >= DIAG_MAX_QUESTIONS - 1 && !isGeneratingMore
-      : currentIndex >= totalQuestions - 1;
+    const answeredIds = new Set(answers.map((a) => a.questionId));
+    const isLastQuestion = isReviewMode
+      ? (() => {
+          for (let i = queueIndex + 1; i < questionQueue.length; i++) {
+            if (answeredIds.has(questionQueue[i])) return false;
+          }
+          return true;
+        })()
+      : isDiag
+        ? answeredNonSkipped >= DIAG_MAX_QUESTIONS - 1 && !isGeneratingMore
+        : currentIndex >= totalQuestions - 1;
     const previousResultsArray = buildPreviousResults();
     const isAudioMicQuestion = AUDIO_MIC_TYPES.includes(currentQuestion.type);
 
@@ -1811,8 +1926,81 @@ export function AdaptivePracticePage() {
           </div>
         )}
         {renderQuestion()}
+        {/* Review mode: explain button + explanation + navigation */}
+        {isReviewMode && showFeedback && (
+          <div className="container mx-auto px-4 max-w-2xl mt-4 space-y-4">
+            {/* Explain button */}
+            {!questionExplanation && (
+              <button
+                onClick={handleExplain}
+                disabled={isExplaining}
+                className={`flex items-center gap-2 text-sm text-accent hover:text-accent/80 transition-colors ${
+                  isExplaining ? "animate-pulse pointer-events-none" : ""
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                {isExplaining
+                  ? t("adaptivePractice.review.explaining")
+                  : t("adaptivePractice.review.explain")}
+              </button>
+            )}
+
+            {/* Explanation card */}
+            {questionExplanation && (
+              <div className="bg-surface rounded-xl border border-border p-4 text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                {questionExplanation}
+              </div>
+            )}
+
+            {/* Review navigation */}
+            <div className="flex justify-between items-center pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  // Go to previous answered question
+                  const currentQueueIdx = questionQueue.indexOf(currentQuestion.questionId);
+                  const answeredQueueIds = new Set(answers.map((a) => a.questionId));
+                  let prevIndex = -1;
+                  for (let i = currentQueueIdx - 1; i >= 0; i--) {
+                    if (answeredQueueIds.has(questionQueue[i])) {
+                      prevIndex = i;
+                      break;
+                    }
+                  }
+                  if (prevIndex >= 0) {
+                    setQuestionExplanation(null);
+                    enterReviewMode(prevIndex);
+                  }
+                }}
+                disabled={(() => {
+                  const currentQueueIdx = questionQueue.indexOf(currentQuestion.questionId);
+                  const answeredQueueIds = new Set(answers.map((a) => a.questionId));
+                  for (let i = currentQueueIdx - 1; i >= 0; i--) {
+                    if (answeredQueueIds.has(questionQueue[i])) return false;
+                  }
+                  return true;
+                })()}
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                {t("adaptivePractice.review.previous")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsReviewMode(false);
+                  setQuestionExplanation(null);
+                  setPhase("results");
+                }}
+              >
+                {t("adaptivePractice.review.backToResults")}
+              </Button>
+            </div>
+          </div>
+        )}
         {/* Skip button for audio/mic questions */}
-        {isAudioMicQuestion && !showFeedback && (
+        {isAudioMicQuestion && !showFeedback && !isReviewMode && (
           <div className="fixed bottom-4 left-0 right-0 flex justify-center z-50">
             <Button
               variant="ghost"
@@ -1826,7 +2014,7 @@ export function AdaptivePracticePage() {
           </div>
         )}
         {/* Diagnostic mode: early finish button after minimum questions */}
-        {canFinishDiag && showFeedback && (
+        {canFinishDiag && showFeedback && !isReviewMode && (
           <div className="fixed bottom-4 left-0 right-0 flex justify-center z-50">
             <Button
               variant="outline"
@@ -1859,22 +2047,6 @@ export function AdaptivePracticePage() {
     const currentLevel = abilityToProgress(currentAbility, language);
     const didLevelUp =
       currentLevel.currentLevel !== previousLevel.currentLevel && currentAbility > previousAbility;
-
-    // Difficulty trajectory - map each answered question to its level label
-    const difficultyTrajectory = answers
-      .filter((a) => !a.skipped)
-      .map((a) => {
-        const q = practiceSet.questions.find((q) => q.questionId === a.questionId);
-        if (!q?.difficulty) return null;
-        return difficultyToExamLabel(q.difficulty, language);
-      })
-      .filter((label): label is string => label !== null);
-
-    // Count questions per level
-    const levelCounts = new Map<string, number>();
-    for (const label of difficultyTrajectory) {
-      levelCounts.set(label, (levelCounts.get(label) ?? 0) + 1);
-    }
 
     const currentStreak = streakData?.currentStreak ?? 0;
 
@@ -1973,10 +2145,6 @@ export function AdaptivePracticePage() {
                 <span className="font-medium text-foreground">{correctCount}</span> /{" "}
                 {nonSkippedAnswers.length} {t("adaptivePractice.results.correct")}
               </div>
-              <div>
-                <span className="font-medium text-foreground">{totalScore}</span> / {maxScore}{" "}
-                {t("adaptivePractice.points")}
-              </div>
               {skippedCount > 0 && (
                 <div>
                   <span className="font-medium text-foreground">{skippedCount}</span>{" "}
@@ -2000,34 +2168,21 @@ export function AdaptivePracticePage() {
               </motion.div>
             )}
 
-            {/* Difficulty trajectory */}
-            {difficultyTrajectory.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="mb-4"
-              >
-                <div className="flex flex-wrap justify-center gap-1.5 mb-2">
-                  {difficultyTrajectory.map((label, i) => (
-                    <Badge
-                      key={i}
-                      variant={getLevelVariant(label)}
-                      className="text-[10px] px-1.5 py-0"
-                    >
-                      {label}
-                    </Badge>
-                  ))}
-                </div>
-                <p className="text-xs text-foreground-muted">
-                  {Array.from(levelCounts.entries())
-                    .map(([level, count]) =>
-                      t("adaptivePractice.results.questionsAtLevel", { count, level })
-                    )
-                    .join(" · ")}
-                </p>
-              </motion.div>
-            )}
+            {/* Per-question results */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mb-6"
+            >
+              <ProgressSquares
+                totalQuestions={questionQueue.length}
+                currentIndex={-1}
+                previousResults={buildPreviousResults()}
+                isAnswered={true}
+                onGoToQuestion={(index) => enterReviewMode(index)}
+              />
+            </motion.div>
 
             {/* Skills practiced */}
             <div className="flex flex-wrap justify-center gap-2 mb-8">
@@ -2043,6 +2198,10 @@ export function AdaptivePracticePage() {
               <Button onClick={handleRestart}>
                 <RotateCcw className="w-4 h-4 mr-2" />
                 {t("adaptivePractice.results.practiceAgain")}
+              </Button>
+              <Button variant="outline" onClick={() => enterReviewMode(0)}>
+                <BookOpen className="w-4 h-4 mr-2" />
+                {t("adaptivePractice.results.reviewQuestions")}
               </Button>
               <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>
                 {t("adaptivePractice.results.backToLearn")}

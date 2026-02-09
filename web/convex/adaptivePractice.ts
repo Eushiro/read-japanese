@@ -694,6 +694,11 @@ export const getNextPractice = action({
     uiLanguage: v.optional(uiLanguageValidator),
   },
   handler: async (ctx, args): Promise<PracticeSet> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
     const practiceId = crypto.randomUUID();
     const uiLang = (args.uiLanguage ?? "en") as UILanguage;
 
@@ -938,6 +943,12 @@ export const getNextPractice = action({
         `Diagnostic: ${poolQuestions.length} from pool, ${freshQuestions.length} fresh (pool size: ${poolSize})`
       );
 
+      // Charge credits for question generation
+      await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+        userId: identity.subject,
+        action: "question",
+      });
+
       return {
         practiceId,
         isDiagnostic: true,
@@ -1072,6 +1083,12 @@ export const getNextPractice = action({
       validationFailures: generatedResult.validationFailures,
       repairAttempts: generatedResult.repairAttempts,
       generationLatencyMs: generatedResult.generationLatencyMs,
+    });
+
+    // Charge credits for question generation
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: identity.subject,
+      action: "question",
     });
 
     return {
@@ -1663,6 +1680,12 @@ Return JSON.`;
         })
         .catch((e) => console.error("Pool ingestion failed:", e));
 
+      // Charge credits for incremental question generation
+      await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+        userId: identity.subject,
+        action: "question",
+      });
+
       return {
         questions: questionsWithAudio,
         modelUsed: result.modelUsed,
@@ -1698,7 +1721,12 @@ export const gradeFreeAnswer = action({
     acceptableAnswers: v.optional(v.array(v.string())),
     uiLanguage: v.optional(uiLanguageValidator),
   },
-  handler: async (_ctx, args): Promise<{ score: number; feedback: string; isCorrect: boolean }> => {
+  handler: async (ctx, args): Promise<{ score: number; feedback: string; isCorrect: boolean }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
     const languageNames: Record<string, string> = {
       japanese: "Japanese",
       english: "English",
@@ -1750,6 +1778,12 @@ Grade this answer.`;
           parseJson<{ score: number; feedback: string; isCorrect: boolean }>(response),
       });
 
+      // Charge credits for grading
+      await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+        userId: identity.subject,
+        action: "feedback",
+      });
+
       return result.result;
     } catch (error) {
       console.error("Failed to grade answer:", error);
@@ -1757,6 +1791,90 @@ Grade this answer.`;
         score: 50,
         feedback: "Unable to grade automatically. Please review.",
         isCorrect: false,
+      };
+    }
+  },
+});
+
+/**
+ * Explain a question: why the correct answer is right, what the user got wrong, and tips.
+ */
+export const explainQuestion = action({
+  args: {
+    question: v.string(),
+    correctAnswer: v.string(),
+    userAnswer: v.string(),
+    isCorrect: v.boolean(),
+    questionType: v.string(),
+    targetSkill: v.string(),
+    language: languageValidator,
+    uiLanguage: v.optional(uiLanguageValidator),
+  },
+  handler: async (ctx, args): Promise<{ explanation: string }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
+    const languageNames: Record<string, string> = {
+      japanese: "Japanese",
+      english: "English",
+      french: "French",
+    };
+    const languageName = languageNames[args.language] || "English";
+    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
+    const feedbackLanguageName = getUILanguageName(uiLang);
+
+    const systemPrompt = `You are a ${languageName} language teacher providing detailed explanations for practice questions.
+Provide ALL explanations in ${feedbackLanguageName}. Do NOT respond in English unless the feedback language is English.
+Be encouraging and educational. Use markdown formatting for clarity.`;
+
+    const prompt = `Explain this ${args.questionType} question testing ${args.targetSkill}:
+
+Question: ${args.question}
+Correct answer: ${args.correctAnswer}
+Student's answer: "${args.userAnswer}"
+Result: ${args.isCorrect ? "Correct" : "Incorrect"}
+
+Provide a concise explanation covering:
+1. What this question is testing
+2. Why the correct answer is correct
+${args.isCorrect ? "" : "3. Why the student's answer is wrong\n"}
+${args.isCorrect ? "3" : "4"}. A tip for remembering or improving`;
+
+    const explanationSchema: JsonSchema = {
+      name: "explanation_result",
+      schema: {
+        type: "object",
+        properties: {
+          explanation: { type: "string" },
+        },
+        required: ["explanation"],
+        additionalProperties: false,
+      },
+    };
+
+    try {
+      const result = await generateAndParse<{ explanation: string }>({
+        prompt,
+        systemPrompt,
+        maxTokens: 8000,
+        jsonSchema: explanationSchema,
+        models: TEXT_MODEL_CHAIN,
+        parse: (response) => parseJson<{ explanation: string }>(response),
+      });
+
+      // Charge credits for explanation generation
+      await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+        userId: identity.subject,
+        action: "explain_question",
+      });
+
+      return result.result;
+    } catch (error) {
+      console.error("Failed to explain question:", error);
+      return {
+        explanation: "Unable to generate explanation. Please try again.",
       };
     }
   },

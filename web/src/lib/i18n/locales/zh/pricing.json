@@ -70,7 +70,8 @@
       "story": "故事生成",
       "placement": "定级测试题",
       "image": "图片生成",
-      "shadowing": "跟读练习"
+      "shadowing": "跟读练习",
+      "explain_question": "题目解释"
     },
     "perMonth": "/月",
     "footer": "额度每月重置。未使用的额度不会累积。"

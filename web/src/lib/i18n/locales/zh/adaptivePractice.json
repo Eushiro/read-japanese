@@ -75,6 +75,13 @@
     "levelUp": "升级了！",
     "yourLevel": "当前等级",
     "questionsAtLevel": "{{level}}级{{count}}题",
-    "streakLabel": "连续{{count}}天"
+    "streakLabel": "连续{{count}}天",
+    "reviewQuestions": "复习题目"
+  },
+  "review": {
+    "explain": "解释这道题",
+    "explaining": "正在获取解释...",
+    "previous": "上一题",
+    "backToResults": "返回结果"
   }
 }

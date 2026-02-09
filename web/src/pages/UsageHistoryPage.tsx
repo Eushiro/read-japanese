@@ -31,6 +31,7 @@ const ACTION_COLORS: Record<string, string> = {
   image: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
   story: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
   placement: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
+  explain_question: "bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200",
 };
 
 function formatDate(timestamp: number): string {

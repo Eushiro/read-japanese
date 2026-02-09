@@ -30,6 +30,7 @@ const CREDIT_COSTS = [
   { actionKey: "placement", credits: 2 },
   { actionKey: "image", credits: 3 },
   { actionKey: "shadowing", credits: 3 },
+  { actionKey: "explain_question", credits: 1 },
 ] as const;
 
 export function PricingPage() {

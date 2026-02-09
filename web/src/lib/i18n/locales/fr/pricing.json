@@ -70,7 +70,8 @@
       "story": "Génération d'histoire",
       "placement": "Question de placement",
       "image": "Génération d'image",
-      "shadowing": "Session de shadowing"
+      "shadowing": "Session de shadowing",
+      "explain_question": "Explication de question"
     },
     "perMonth": "/mois",
     "footer": "Les crédits sont réinitialisés mensuellement. Les crédits non utilisés ne sont pas reportés."

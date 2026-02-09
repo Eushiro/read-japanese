@@ -75,6 +75,13 @@
     "levelUp": "レベルアップ！",
     "yourLevel": "現在のレベル",
     "questionsAtLevel": "{{level}}の問題{{count}}問",
-    "streakLabel": "{{count}}日連続"
+    "streakLabel": "{{count}}日連続",
+    "reviewQuestions": "問題を復習する"
+  },
+  "review": {
+    "explain": "この問題を解説する",
+    "explaining": "解説を取得中...",
+    "previous": "前へ",
+    "backToResults": "結果に戻る"
   }
 }

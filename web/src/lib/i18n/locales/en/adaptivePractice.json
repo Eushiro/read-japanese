@@ -75,6 +75,13 @@
     "levelUp": "Level Up!",
     "yourLevel": "Your Level",
     "questionsAtLevel": "{{count}} at {{level}}",
-    "streakLabel": "{{count}}-day streak"
+    "streakLabel": "{{count}}-day streak",
+    "reviewQuestions": "Review Questions"
+  },
+  "review": {
+    "explain": "Explain this question",
+    "explaining": "Getting explanation...",
+    "previous": "Previous",
+    "backToResults": "Back to Results"
   }
 }
