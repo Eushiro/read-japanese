@@ -454,5 +454,6 @@ export function buildInterestTheming(interests: string[]): string {
 export function buildFormattingRules(): string {
   return `FORMATTING RULES:
 - Use plain text only. Do NOT use markdown formatting (no **bold**, *italic*, __underline__, ~~strikethrough~~, \`code\`, or any other markup).
-- Do NOT use bullet points or numbered lists in question text or answer options.`;
+- Do NOT use bullet points or numbered lists in question text or answer options.
+- Do NOT refer to visual text effects (e.g., "the highlighted word", "the underlined phrase", "the bolded text"). All text is rendered as plain text with no visual emphasis.`;
 }
