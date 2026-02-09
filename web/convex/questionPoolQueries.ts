@@ -7,7 +7,6 @@
 
 import { v } from "convex/values";
 
-import type { Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery } from "./_generated/server";
 import {
   difficultyLevelValidator,
@@ -22,31 +21,22 @@ import {
 // QUERIES
 // ============================================
 
-export const getByHash = internalQuery({
-  args: { questionHash: v.string() },
+/**
+ * Batch dedup check: given an array of hashes, return which ones already exist in the pool.
+ * Replaces N individual getByHash calls with a single query call.
+ */
+export const getExistingHashes = internalQuery({
+  args: { hashes: v.array(v.string()) },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("questionPool")
-      .withIndex("by_hash", (q) => q.eq("questionHash", args.questionHash))
-      .first();
-  },
-});
-
-export const getQuestionsByIds = internalQuery({
-  args: {
-    ids: v.array(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const results = [];
-    for (const id of args.ids) {
-      try {
-        const doc = await ctx.db.get(id as Id<"questionPool">);
-        if (doc) results.push(doc);
-      } catch {
-        // Skip invalid IDs
-      }
+    const existing: string[] = [];
+    for (const hash of args.hashes) {
+      const doc = await ctx.db
+        .query("questionPool")
+        .withIndex("by_hash", (q) => q.eq("questionHash", hash))
+        .first();
+      if (doc) existing.push(hash);
     }
-    return results;
+    return existing;
   },
 });
 
@@ -67,17 +57,32 @@ export const getUserSeenHashes = internalQuery({
   },
 });
 
-export const getPoolSize = internalQuery({
+/**
+ * Fetch pool candidates by language + difficulty, and also return the total
+ * pool size for the language. Combines the old getPoolCandidates + getPoolSize
+ * into a single query to avoid a separate DB round-trip.
+ */
+export const getPoolCandidatesWithCount = internalQuery({
   args: {
     language: languageValidator,
+    difficulty: difficultyLevelValidator,
+    limit: v.number(),
   },
   handler: async (ctx, args) => {
-    const questions = await ctx.db
+    const candidates = await ctx.db
+      .query("questionPool")
+      .withIndex("by_language_difficulty", (q) =>
+        q.eq("language", args.language).eq("difficulty", args.difficulty)
+      )
+      .take(args.limit);
+
+    // Count total pool size for this language using the index prefix
+    const allForLanguage = await ctx.db
       .query("questionPool")
       .withIndex("by_language_skill_difficulty", (q) => q.eq("language", args.language))
       .collect();
 
-    return questions.length;
+    return { candidates, poolSize: allForLanguage.length };
   },
 });
 
@@ -85,57 +90,66 @@ export const getPoolSize = internalQuery({
 // MUTATIONS
 // ============================================
 
-export const insertPoolQuestion = internalMutation({
+/**
+ * Batch insert multiple questions into the pool in a single transaction.
+ * Replaces N individual insertPoolQuestion calls with one mutation.
+ */
+export const insertPoolQuestions = internalMutation({
   args: {
-    questionHash: v.string(),
-    language: languageValidator,
-    questionType: practiceQuestionTypeValidator,
-    targetSkill: skillTypeValidator,
-    difficulty: difficultyLevelValidator,
-    question: v.string(),
-    passageText: v.optional(v.string()),
-    options: v.optional(v.array(v.string())),
-    correctAnswer: v.string(),
-    acceptableAnswers: v.optional(v.array(v.string())),
-    points: v.number(),
-    grammarTags: v.array(v.string()),
-    vocabTags: v.array(v.string()),
-    topicTags: v.array(v.string()),
-    embedding: v.array(v.float64()),
-    modelUsed: v.optional(v.string()),
-    qualityScore: v.optional(v.number()),
-    translations: v.optional(translationMapValidator),
-    optionTranslations: v.optional(v.union(optionTranslationMapValidator, v.null())),
-    showOptionsInTargetLanguage: v.optional(v.boolean()),
+    questions: v.array(
+      v.object({
+        questionHash: v.string(),
+        language: languageValidator,
+        questionType: practiceQuestionTypeValidator,
+        targetSkill: skillTypeValidator,
+        difficulty: difficultyLevelValidator,
+        question: v.string(),
+        passageText: v.optional(v.string()),
+        options: v.optional(v.array(v.string())),
+        correctAnswer: v.string(),
+        acceptableAnswers: v.optional(v.array(v.string())),
+        points: v.number(),
+        grammarTags: v.array(v.string()),
+        vocabTags: v.array(v.string()),
+        topicTags: v.array(v.string()),
+        modelUsed: v.optional(v.string()),
+        qualityScore: v.optional(v.number()),
+        translations: v.optional(translationMapValidator),
+        optionTranslations: v.optional(v.union(optionTranslationMapValidator, v.null())),
+        showOptionsInTargetLanguage: v.optional(v.boolean()),
+      })
+    ),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("questionPool", {
-      questionHash: args.questionHash,
-      language: args.language,
-      questionType: args.questionType,
-      targetSkill: args.targetSkill,
-      difficulty: args.difficulty,
-      question: args.question,
-      passageText: args.passageText,
-      options: args.options,
-      correctAnswer: args.correctAnswer,
-      acceptableAnswers: args.acceptableAnswers,
-      points: args.points,
-      grammarTags: args.grammarTags,
-      vocabTags: args.vocabTags,
-      topicTags: args.topicTags,
-      embedding: args.embedding,
-      totalResponses: 0,
-      correctResponses: 0,
-      avgResponseTimeMs: 0,
-      qualityScore: args.qualityScore,
-      modelUsed: args.modelUsed,
-      generatedAt: Date.now(),
-      isStandalone: true,
-      translations: args.translations,
-      optionTranslations: args.optionTranslations,
-      showOptionsInTargetLanguage: args.showOptionsInTargetLanguage,
-    });
+    const now = Date.now();
+    for (const q of args.questions) {
+      await ctx.db.insert("questionPool", {
+        questionHash: q.questionHash,
+        language: q.language,
+        questionType: q.questionType,
+        targetSkill: q.targetSkill,
+        difficulty: q.difficulty,
+        question: q.question,
+        passageText: q.passageText,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        acceptableAnswers: q.acceptableAnswers,
+        points: q.points,
+        grammarTags: q.grammarTags,
+        vocabTags: q.vocabTags,
+        topicTags: q.topicTags,
+        totalResponses: 0,
+        correctResponses: 0,
+        avgResponseTimeMs: 0,
+        qualityScore: q.qualityScore,
+        modelUsed: q.modelUsed,
+        generatedAt: now,
+        isStandalone: true,
+        translations: q.translations,
+        optionTranslations: q.optionTranslations,
+        showOptionsInTargetLanguage: q.showOptionsInTargetLanguage,
+      });
+    }
   },
 });
 

@@ -1203,7 +1203,7 @@ export default defineSchema({
     .index("by_hash", ["questionHash"]),
 
   // ============================================
-  // QUESTION POOL (shared, reusable questions with embeddings)
+  // QUESTION POOL (shared, reusable questions with tag-based filtering)
   // ============================================
   questionPool: defineTable({
     questionHash: v.string(), // SHA-256 of canonical content, links to questionCalibration
@@ -1232,8 +1232,8 @@ export default defineSchema({
     vocabTags: v.array(v.string()),
     topicTags: v.array(v.string()),
 
-    // Embedding for vector search (1536-dim from text-embedding-3-small)
-    embedding: v.array(v.float64()),
+    // Legacy embedding field (no longer generated, kept for backward compat)
+    embedding: v.optional(v.array(v.float64())),
 
     // Calibration counters
     totalResponses: v.number(),
@@ -1256,11 +1256,7 @@ export default defineSchema({
   })
     .index("by_hash", ["questionHash"])
     .index("by_language_skill_difficulty", ["language", "targetSkill", "difficulty"])
-    .vectorIndex("by_embedding", {
-      vectorField: "embedding",
-      dimensions: 1536,
-      filterFields: ["language", "questionType", "targetSkill", "difficulty", "isStandalone"],
-    }),
+    .index("by_language_difficulty", ["language", "difficulty"]),
 
   // Per-user question exposure tracking
   questionExposure: defineTable({

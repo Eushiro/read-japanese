@@ -55,19 +55,6 @@ export const IMAGE_MODELS = {
 } as const;
 
 // ============================================
-// EMBEDDING MODELS
-// ============================================
-
-export const EMBEDDING_MODELS = {
-  TEXT_EMBEDDING_3_SMALL: "openai/text-embedding-3-small",
-} as const;
-
-export const EMBEDDING_MODEL: ModelConfig = {
-  model: EMBEDDING_MODELS.TEXT_EMBEDDING_3_SMALL,
-  provider: "openrouter",
-};
-
-// ============================================
 // SPECIAL MODELS
 // ============================================
 
@@ -132,7 +119,6 @@ export const MODELS = {
   ...TEXT_MODELS,
   ...AUDIO_MODELS,
   ...IMAGE_MODELS,
-  ...EMBEDDING_MODELS,
   ...SPECIAL_MODELS,
 } as const;
 
