@@ -54,7 +54,7 @@ export function MCQGrid({
 
   return (
     <div className="flex flex-col items-center px-6 w-full">
-      <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
+      <div className="grid grid-cols-2 gap-3 w-full max-w-lg auto-rows-fr">
         {options.map((option, index) => {
           const isConfirmed = confirmedOption === index;
           const isCorrectOption = index === correctAnswerIndex;
@@ -97,7 +97,7 @@ export function MCQGrid({
               key={option}
               onClick={() => handleClick(index)}
               disabled={confirmedOption !== null}
-              className="cursor-pointer disabled:cursor-default rounded-xl px-8 py-7 outline-none text-center"
+              className="cursor-pointer disabled:cursor-default rounded-xl px-4 py-5 outline-none text-center overflow-hidden break-words"
               style={{
                 fontFamily,
                 borderWidth: 1,
@@ -155,7 +155,7 @@ export function MCQGrid({
                   : undefined
               }
             >
-              <span className="text-2xl md:text-3xl" style={{ textDecoration }}>
+              <span className="text-xl md:text-2xl break-words" style={{ textDecoration }}>
                 {showOptionsInTargetLanguage === false && optionTranslations?.[index]
                   ? optionTranslations[index]
                   : option}
