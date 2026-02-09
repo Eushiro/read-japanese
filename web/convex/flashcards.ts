@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { getDefinitions, getSentenceTranslation, normalizeUILanguage } from "./lib/translation";
 import {
@@ -125,26 +126,44 @@ export const getDue = query({
     const now = Date.now();
     const limit = args.limit ?? 100;
     const uiLang = normalizeUILanguage(args.uiLanguage);
-    const cards = await ctx.db
-      .query("flashcards")
-      .withIndex("by_user_and_due", (q) => q.eq("userId", args.userId).lte("due", now))
-      .take(limit * (args.language ? 3 : 1));
-
-    // Filter by language BEFORE resolving full content to avoid wasted work
-    let filteredCards = cards;
+    let cards: Doc<"flashcards">[] = [];
     if (args.language) {
-      const cardsWithLang = await Promise.all(
-        cards.map(async (card) => {
-          const vocab = await ctx.db.get(card.vocabularyId);
-          return vocab?.language === args.language ? card : null;
-        })
-      );
-      filteredCards = cardsWithLang.filter((c) => c !== null).slice(0, limit);
+      const indexed = await ctx.db
+        .query("flashcards")
+        .withIndex("by_user_language_due", (q) =>
+          q.eq("userId", args.userId).eq("language", args.language!).lte("due", now)
+        )
+        .take(limit);
+
+      if (indexed.length >= limit) {
+        cards = indexed;
+      } else {
+        // Fallback to legacy cards missing language
+        const legacy = await ctx.db
+          .query("flashcards")
+          .withIndex("by_user_and_due", (q) => q.eq("userId", args.userId).lte("due", now))
+          .take(limit * 3);
+
+        const legacyMatches = await Promise.all(
+          legacy
+            .filter((card) => !card.language)
+            .map(async (card) => {
+              const vocab = await ctx.db.get(card.vocabularyId);
+              return vocab?.language === args.language ? card : null;
+            })
+        );
+
+        cards = [...indexed, ...legacyMatches.filter((c) => c !== null)].slice(0, limit);
+      }
+    } else {
+      cards = await ctx.db
+        .query("flashcards")
+        .withIndex("by_user_and_due", (q) => q.eq("userId", args.userId).lte("due", now))
+        .take(limit);
     }
 
-    // Resolve full content only for filtered cards
     const cardsWithContent = await Promise.all(
-      filteredCards.map(async (card) => {
+      cards.map(async (card) => {
         const [vocab, sentence, image] = await Promise.all([
           ctx.db.get(card.vocabularyId),
           card.sentenceId ? ctx.db.get(card.sentenceId) : null,
@@ -204,27 +223,46 @@ export const getNew = query({
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
     const uiLang = normalizeUILanguage(args.uiLanguage);
-    const cards = await ctx.db
-      .query("flashcards")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.eq(q.field("state"), "new"))
-      .take(limit * (args.language ? 3 : 1));
-
-    // Filter by language BEFORE resolving full content to avoid wasted work
-    let filteredCards = cards;
+    let cards: Doc<"flashcards">[] = [];
     if (args.language) {
-      const cardsWithLang = await Promise.all(
-        cards.map(async (card) => {
-          const vocab = await ctx.db.get(card.vocabularyId);
-          return vocab?.language === args.language ? card : null;
-        })
-      );
-      filteredCards = cardsWithLang.filter((c) => c !== null).slice(0, limit);
+      const indexed = await ctx.db
+        .query("flashcards")
+        .withIndex("by_user_language", (q) =>
+          q.eq("userId", args.userId).eq("language", args.language!)
+        )
+        .filter((q) => q.eq(q.field("state"), "new"))
+        .take(limit);
+
+      if (indexed.length >= limit) {
+        cards = indexed;
+      } else {
+        const legacy = await ctx.db
+          .query("flashcards")
+          .withIndex("by_user", (q) => q.eq("userId", args.userId))
+          .filter((q) => q.eq(q.field("state"), "new"))
+          .take(limit * 3);
+
+        const legacyMatches = await Promise.all(
+          legacy
+            .filter((card) => !card.language)
+            .map(async (card) => {
+              const vocab = await ctx.db.get(card.vocabularyId);
+              return vocab?.language === args.language ? card : null;
+            })
+        );
+
+        cards = [...indexed, ...legacyMatches.filter((c) => c !== null)].slice(0, limit);
+      }
+    } else {
+      cards = await ctx.db
+        .query("flashcards")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .filter((q) => q.eq(q.field("state"), "new"))
+        .take(limit);
     }
 
-    // Resolve full content only for filtered cards
     const cardsWithContent = await Promise.all(
-      filteredCards.map(async (card) => {
+      cards.map(async (card) => {
         const [vocab, sentence, image] = await Promise.all([
           ctx.db.get(card.vocabularyId),
           card.sentenceId ? ctx.db.get(card.sentenceId) : null,
@@ -281,25 +319,42 @@ export const getStats = query({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const allCards = await ctx.db
-      .query("flashcards")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .collect();
 
-    // If language filter is specified, fetch vocabulary and filter
-    let filteredCards = allCards;
+    let cards: Doc<"flashcards">[] = [];
     if (args.language) {
-      const cardsWithVocab = await Promise.all(
-        allCards.map(async (card) => {
-          const vocab = await ctx.db.get(card.vocabularyId);
-          return { ...card, vocabulary: vocab };
-        })
-      );
-      filteredCards = cardsWithVocab.filter((c) => c.vocabulary?.language === args.language);
+      cards = await ctx.db
+        .query("flashcards")
+        .withIndex("by_user_language", (q) =>
+          q.eq("userId", args.userId).eq("language", args.language)
+        )
+        .collect();
+
+      if (cards.length === 0) {
+        // Fallback for legacy cards missing language
+        const allCards = await ctx.db
+          .query("flashcards")
+          .withIndex("by_user", (q) => q.eq("userId", args.userId))
+          .collect();
+
+        const legacyMatches = await Promise.all(
+          allCards
+            .filter((card) => !card.language)
+            .map(async (card) => {
+              const vocab = await ctx.db.get(card.vocabularyId);
+              return vocab?.language === args.language ? card : null;
+            })
+        );
+        cards = legacyMatches.filter((c) => c !== null);
+      }
+    } else {
+      cards = await ctx.db
+        .query("flashcards")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .collect();
     }
 
     const stats = {
-      total: filteredCards.length,
+      total: cards.length,
       new: 0,
       learning: 0,
       review: 0,
@@ -312,7 +367,7 @@ export const getStats = query({
     endOfDay.setHours(23, 59, 59, 999);
     const endOfDayTimestamp = endOfDay.getTime();
 
-    for (const card of filteredCards) {
+    for (const card of cards) {
       stats[card.state as keyof typeof stats]++;
       if (card.due <= now) stats.dueNow++;
       if (card.due <= endOfDayTimestamp) stats.dueToday++;
@@ -358,9 +413,13 @@ export const create = mutation({
       return existing._id;
     }
 
+    // Look up vocabulary to denormalize language
+    const vocab = await ctx.db.get(args.vocabularyId);
+
     return await ctx.db.insert("flashcards", {
       userId: args.userId,
       vocabularyId: args.vocabularyId,
+      language: vocab?.language,
       sentenceId: args.sentenceId,
       imageId: args.imageId,
 

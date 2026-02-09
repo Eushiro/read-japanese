@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import { ChevronRight, Target } from "lucide-react";
+import { useMemo } from "react";
 
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
@@ -39,11 +40,24 @@ const DEFAULT_SKILLS = {
 export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectionProps) {
   const t = useT();
 
-  // Fetch all learner profiles for the user
-  const allProfiles = useQuery(api.learnerModel.getAllProfiles, isPreview ? "skip" : { userId });
+  // Fetch learner profile - use single-language query when only 1 language (common case)
+  const primaryLanguage = userLanguages[0];
+  const singleProfile = useQuery(
+    api.learnerModel.getProfile,
+    !isPreview && userLanguages.length === 1 ? { userId, language: primaryLanguage } : "skip"
+  );
+  const allProfiles = useQuery(
+    api.learnerModel.getAllProfiles,
+    !isPreview && userLanguages.length > 1 ? { userId } : "skip"
+  );
 
   // Build a map of language -> profile for quick lookup
-  const profilesByLanguage = new Map((allProfiles ?? []).map((p) => [p.language, p]));
+  const profilesByLanguage = useMemo(() => {
+    if (userLanguages.length === 1 && singleProfile) {
+      return new Map([[singleProfile.language, singleProfile]]);
+    }
+    return new Map((allProfiles ?? []).map((p) => [p.language, p]));
+  }, [userLanguages.length, singleProfile, allProfiles]);
 
   // Get skills for a language (from profile or default)
   const getSkillsForLanguage = (lang: ContentLanguage) => {
@@ -64,7 +78,9 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
   };
 
   // Loading state
-  if (!isPreview && allProfiles === undefined) {
+  const isLoadingProfiles =
+    userLanguages.length === 1 ? singleProfile === undefined : allProfiles === undefined;
+  if (!isPreview && isLoadingProfiles) {
     return (
       <motion.section
         initial={{ opacity: 0, y: 30 }}

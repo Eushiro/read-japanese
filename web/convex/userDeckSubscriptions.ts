@@ -424,6 +424,7 @@ export const addDailyCards = mutation({
         await ctx.db.insert("flashcards", {
           userId: args.userId,
           vocabularyId: vocabId,
+          language: premade.language,
           sentenceId: premade.sentenceId,
           imageId: premade.imageId,
           state: "new",

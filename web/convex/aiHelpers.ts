@@ -101,6 +101,7 @@ export const upsertFlashcard = internalMutation({
     const flashcardId = await ctx.db.insert("flashcards", {
       userId: args.userId,
       vocabularyId: args.vocabularyId,
+      language: vocab.language,
       sentenceId,
 
       // FSRS initial values

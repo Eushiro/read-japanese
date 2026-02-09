@@ -83,6 +83,59 @@ export const get = query({
   },
 });
 
+// Get subscription + credit balance in a single query (used by root UserDataContext)
+export const getWithCreditBalance = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const subscription = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+
+    const tier = subscription?.tier ?? "free";
+    const limit = TIER_CREDITS[tier as keyof typeof TIER_CREDITS] ?? TIER_CREDITS.free;
+
+    const { month, year } = getCurrentPeriod();
+    const usage = await ctx.db
+      .query("creditUsage")
+      .withIndex("by_user_and_period", (q) =>
+        q.eq("userId", args.userId).eq("periodYear", year).eq("periodMonth", month)
+      )
+      .first();
+
+    const used = usage?.creditsUsed ?? 0;
+    const remaining = Math.max(0, limit - used);
+    const percentage = limit > 0 ? Math.round((used / limit) * 100) : 0;
+    const resetDate = new Date(Date.UTC(year, month, 1));
+
+    return {
+      subscription: subscription
+        ? {
+            ...subscription,
+            credits: limit,
+          }
+        : {
+            tier: "free" as const,
+            status: "active" as const,
+            billingPeriod: undefined,
+            credits: TIER_CREDITS.free,
+          },
+      creditBalance: {
+        used,
+        limit,
+        remaining,
+        percentage,
+        nearLimit: percentage >= 80,
+        tier,
+        billingPeriod: subscription?.billingPeriod,
+        resetDate: resetDate.toISOString(),
+        alertDismissed80: usage?.alertDismissed80 ?? false,
+        alertDismissed95: usage?.alertDismissed95 ?? false,
+      },
+    };
+  },
+});
+
 // ============================================
 // CREDIT BALANCE QUERIES
 // ============================================

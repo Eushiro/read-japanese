@@ -91,34 +91,16 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
     isAuthenticated && user ? { clerkId: user.id } : "skip"
   ) as UserProfile | null | undefined;
 
-  const subscription = useQuery(
-    api.subscriptions.get,
-    isAuthenticated && user ? { userId: user.id } : "skip"
-  ) as Subscription | null | undefined;
-
-  // Single root-level credit balance subscription
-  const creditBalanceRaw = useQuery(
-    api.subscriptions.getCreditBalance,
+  // Single combined query for subscription + credit balance (saves 1 reactive subscription)
+  const subWithCredits = useQuery(
+    api.subscriptions.getWithCreditBalance,
     isAuthenticated && user ? { userId: user.id } : "skip"
   );
-  const creditBalance = useMemo(
-    () =>
-      creditBalanceRaw
-        ? {
-            used: creditBalanceRaw.used,
-            limit: creditBalanceRaw.limit,
-            remaining: creditBalanceRaw.remaining,
-            percentage: creditBalanceRaw.percentage,
-            nearLimit: creditBalanceRaw.nearLimit,
-            tier: creditBalanceRaw.tier,
-            billingPeriod: creditBalanceRaw.billingPeriod,
-            resetDate: creditBalanceRaw.resetDate,
-            alertDismissed80: creditBalanceRaw.alertDismissed80,
-            alertDismissed95: creditBalanceRaw.alertDismissed95,
-          }
-        : undefined,
-    [creditBalanceRaw]
-  );
+  const subscription = (subWithCredits?.subscription ?? undefined) as
+    | Subscription
+    | null
+    | undefined;
+  const creditBalance = subWithCredits?.creditBalance;
 
   // Calculate derived values
   const isPremium = useMemo(() => {
