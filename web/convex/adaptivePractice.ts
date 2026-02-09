@@ -321,11 +321,11 @@ function buildQuestionSchema(name: string): JsonSchema {
               showOptionsInTargetLanguage: { type: "boolean" },
               options: { type: ["array", "null"], items: { type: "string" } },
               correctAnswer: { type: "string" },
-              acceptableAnswers: { type: ["array", "null"], items: { type: "string" } },
+              acceptableAnswers: { type: "array", items: { type: "string" } },
               points: { type: "number" },
-              grammarTags: { type: ["array", "null"], items: { type: "string" } },
-              vocabTags: { type: ["array", "null"], items: { type: "string" } },
-              topicTags: { type: ["array", "null"], items: { type: "string" } },
+              grammarTags: { type: "array", items: { type: "string" } },
+              vocabTags: { type: "array", items: { type: "string" } },
+              topicTags: { type: "array", items: { type: "string" } },
             },
             required: [
               "type",
@@ -505,6 +505,12 @@ function filterAndAssignIds(
       ...q,
       options,
       optionTranslations,
+      // Sanitize nullable array fields: AI may return null despite schema,
+      // but Convex v.optional() accepts undefined, not null.
+      acceptableAnswers: q.acceptableAnswers ?? undefined,
+      grammarTags: q.grammarTags ?? undefined,
+      vocabTags: q.vocabTags ?? undefined,
+      topicTags: q.topicTags ?? undefined,
       questionId: `${prefix}_${Date.now()}_${index}`,
       difficultyNumeric: language ? estimateQuestionDifficulty(q, language) : undefined,
       questionHash: hashQuestionContent({
