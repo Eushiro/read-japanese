@@ -10,10 +10,10 @@
     "finetuning": "正在针对您的水平微调...",
     "puttingTouches": "最后润色中...",
     "verifyingCorrectness": "正在验证正确性...",
-    "loadingMore1": "正在思考...",
-    "loadingMore2": "正在准备更多题目...",
-    "loadingMore3": "即将就绪...",
-    "loadingMore4": "正在创建新挑战..."
+    "loadingMore1": "正在根据您的水平定制题目...",
+    "loadingMore2": "正在个性化您的下一组挑战...",
+    "loadingMore3": "正在根据您的进度调整...",
+    "loadingMore4": "正在为您选择合适的难度..."
   },
   "contentType": {
     "dialogue": "对话",

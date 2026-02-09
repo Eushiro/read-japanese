@@ -10,10 +10,10 @@
     "finetuning": "Fine-tuning for your level...",
     "puttingTouches": "Putting the final touches...",
     "verifyingCorrectness": "Verifying correctness...",
-    "loadingMore1": "Thinking ahead...",
-    "loadingMore2": "Preparing more questions...",
-    "loadingMore3": "Almost ready...",
-    "loadingMore4": "Crafting new challenges..."
+    "loadingMore1": "Tailoring questions to your level...",
+    "loadingMore2": "Personalizing your next challenges...",
+    "loadingMore3": "Adapting to your progress...",
+    "loadingMore4": "Finding the right difficulty for you..."
   },
   "contentType": {
     "dialogue": "Dialogue",

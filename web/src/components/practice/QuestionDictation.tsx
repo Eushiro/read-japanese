@@ -112,7 +112,7 @@ export function QuestionDictation({
 
       {/* Upper: Audio Player */}
       <div
-        className="flex flex-col items-center justify-center px-8 pt-16"
+        className="flex flex-col items-center justify-center px-8 pt-24"
         style={{ height: "45vh" }}
       >
         <motion.div

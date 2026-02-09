@@ -10,10 +10,10 @@
     "finetuning": "Ajustement pour votre niveau...",
     "puttingTouches": "Dernières retouches...",
     "verifyingCorrectness": "Vérification de l'exactitude...",
-    "loadingMore1": "Réflexion en cours...",
-    "loadingMore2": "Préparation de nouvelles questions...",
-    "loadingMore3": "Presque prêt...",
-    "loadingMore4": "Création de nouveaux défis..."
+    "loadingMore1": "Adaptation des questions à votre niveau...",
+    "loadingMore2": "Personnalisation de vos prochains défis...",
+    "loadingMore3": "Ajustement selon votre progression...",
+    "loadingMore4": "Recherche de la difficulté idéale pour vous..."
   },
   "contentType": {
     "dialogue": "Dialogue",

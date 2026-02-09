@@ -114,7 +114,7 @@ export function QuestionMCQ({
 
       {/* Question */}
       <div
-        className="flex flex-col items-center justify-center px-8 pt-16 pb-8"
+        className="flex flex-col items-center justify-center px-8 pt-24 pb-8"
         style={{ height: "40vh" }}
       >
         {hasPassage ? (
