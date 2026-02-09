@@ -62,7 +62,7 @@ export function VideosPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState<Set<Id<"youtubeContent">>>(new Set());
 
-  const videos = useQuery(api.youtubeContent.list, {});
+  const videos = useQuery(api.youtubeContent.listSummary, {});
   const removeVideo = useMutation(api.youtubeContent.remove);
   const removeVideos = useMutation(api.youtubeContent.removeByIds);
 
@@ -274,6 +274,8 @@ export function VideosPage() {
                 filteredVideos.map((video) => {
                   const stats = questionStatsMap.get(video.videoId);
                   const hasDifficulty = (d: number) => stats?.difficulties.includes(d);
+                  const transcriptCount = video.transcriptCount ?? 0;
+                  const hasTranscript = transcriptCount > 0;
 
                   return (
                     <TableRow key={video._id}>
@@ -334,10 +336,10 @@ export function VideosPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {video.transcript && video.transcript.length > 0 ? (
+                        {hasTranscript ? (
                           <div className="flex items-center gap-1 text-green-600">
                             <CheckCircle2 className="w-4 h-4" />
-                            <span>{video.transcript.length} lines</span>
+                            <span>{transcriptCount} lines</span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1 text-amber-500">

@@ -69,7 +69,7 @@ export function LibraryPage() {
 
   // Fetch videos from Convex
   const videos = useQuery(
-    api.youtubeContent.list,
+    api.youtubeContent.listSummary,
     selectedLanguage ? { language: selectedLanguage, level: selectedLevel ?? undefined } : {}
   ) as VideoItem[] | undefined;
   const isLoadingVideos = videos === undefined;

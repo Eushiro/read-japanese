@@ -1,21 +1,11 @@
 import { v } from "convex/values";
 
+import type { Doc } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { languageValidator, proficiencyLevelValidator } from "./schema";
 import { getThumbnailUrl, validateVideo, VIDEOS } from "./videoData";
 
-function toSummary(video: {
-  _id: string;
-  videoId: string;
-  language: string;
-  level?: string;
-  title: string;
-  description?: string;
-  thumbnailUrl?: string;
-  duration?: number;
-  questions?: Array<unknown>;
-  createdAt: number;
-}) {
+function toSummary(video: Doc<"youtubeContent">) {
   return {
     _id: video._id,
     videoId: video.videoId,
@@ -26,6 +16,7 @@ function toSummary(video: {
     thumbnailUrl: video.thumbnailUrl,
     duration: video.duration,
     questionsCount: video.questions?.length ?? 0,
+    transcriptCount: video.transcript?.length ?? 0,
     createdAt: video.createdAt,
   };
 }

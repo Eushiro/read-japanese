@@ -17,6 +17,18 @@ interface FoundationsProgress {
   completedAt?: number;
 }
 
+interface ProficiencyEntry {
+  level: string;
+  assessedAt: number;
+  testId?: string;
+}
+
+interface ProficiencyLevels {
+  japanese?: ProficiencyEntry;
+  english?: ProficiencyEntry;
+  french?: ProficiencyEntry;
+}
+
 interface UserProfile {
   _id: string;
   clerkId: string;
@@ -24,7 +36,7 @@ interface UserProfile {
   name?: string;
   languages?: ContentLanguage[];
   targetExams?: string[];
-  proficiencyLevels?: Record<string, string>;
+  proficiencyLevels?: ProficiencyLevels;
   isAdminMode?: boolean;
   learningGoal?: LearningGoal;
   interests?: string[];

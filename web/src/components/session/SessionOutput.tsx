@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserData } from "@/contexts/UserDataContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT, useUILanguage } from "@/lib/i18n";
@@ -24,18 +25,19 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
   const { user } = useAuth();
   const userId = user?.id ?? "";
 
-  // Fetch vocabulary
-  const vocabulary = useQuery(api.vocabulary.list, userId ? { userId } : "skip");
-  const subscription = useQuery(api.subscriptions.get, userId ? { userId } : "skip");
+  // Fetch vocabulary for practice (limited)
+  const vocabulary = useQuery(
+    api.vocabulary.listForPractice,
+    userId ? { userId, limit: wordCount, uiLanguage } : "skip"
+  );
+  const { isPremium } = useUserData();
 
-  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
+  const isPremiumUser = isPremium;
 
   // Filter to practice words
   const practiceWords = useMemo(() => {
     if (!vocabulary) return [];
-    return vocabulary
-      .filter((v) => v.masteryState === "new" || v.masteryState === "learning")
-      .slice(0, wordCount);
+    return vocabulary.slice(0, wordCount);
   }, [vocabulary, wordCount]);
 
   // State

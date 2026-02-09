@@ -11,6 +11,8 @@ import { SessionReview } from "@/components/session/SessionReview";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { type SessionActivity, useStudySession } from "@/contexts/StudySessionContext";
+import { useUserData } from "@/contexts/UserDataContext";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 import { buildSessionPlan } from "@/lib/sessionPlanner";
 
@@ -39,28 +41,25 @@ export function StudySessionPage() {
 
   // Fetch data for planning
   const flashcardStats = useQuery(api.flashcards.getStats, isAuthenticated ? { userId } : "skip");
-  const vocabulary = useQuery(api.vocabulary.list, isAuthenticated ? { userId } : "skip");
-  const userProfile = useQuery(
-    api.users.getByClerkId,
-    isAuthenticated && user ? { clerkId: user.id } : "skip"
-  );
-
+  const { userProfile } = useUserData();
   // Get recommended content
-  const userLanguage = userProfile?.languages?.[0] ?? "japanese";
-  const videos = useQuery(api.youtubeContent.list, { language: userLanguage });
+  const userLanguage = (userProfile?.languages?.[0] ?? "japanese") as ContentLanguage;
+  const practiceCounts = useQuery(
+    api.vocabulary.getPracticeCounts,
+    isAuthenticated ? { userId, language: userLanguage } : "skip"
+  );
+  const videos = useQuery(api.youtubeContent.listSummary, { language: userLanguage });
 
   // Streak update mutation
   const updateStreak = useMutation(api.users.updateStreak);
 
   // Calculate session plan data
   const planData = useMemo(() => {
-    if (!flashcardStats || !vocabulary) return null;
+    if (!flashcardStats || !practiceCounts) return null;
 
     const dueCardCount = flashcardStats.dueNow ?? 0;
     const newCardCount = flashcardStats.new ?? 0;
-    const vocabToReview = vocabulary.filter(
-      (v) => v.masteryState === "new" || v.masteryState === "learning"
-    ).length;
+    const vocabToReview = practiceCounts.totalPractice ?? 0;
 
     // Get recommended content
     const firstVideo = videos?.[0];
@@ -80,7 +79,7 @@ export function StudySessionPage() {
       vocabToReview,
       recommendedContent,
     };
-  }, [flashcardStats, vocabulary, videos]);
+  }, [flashcardStats, practiceCounts, videos]);
 
   // Build session plan when duration changes or data loads
   const sessionPlan = useMemo(() => {

@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserData } from "@/contexts/UserDataContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useStory } from "@/hooks/useStory";
@@ -64,16 +65,10 @@ export function ComprehensionPage() {
   } = useStory(storyId, language as ContentLanguage);
 
   // Get user profile for proficiency level
-  const userProfile = useQuery(
-    api.users.getByClerkId,
-    isAuthenticated && user ? { clerkId: user.id } : "skip"
-  );
-
-  // Check subscription for waiting on initial load
-  const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
+  const { userProfile } = useUserData();
 
   // Check credit balance for AI features (free users have credits too)
-  const { remaining } = useCreditBalance();
+  const { remaining, isLoading: isCreditLoading } = useCreditBalance();
 
   // Check for existing comprehension quiz
   const existingComprehension = useQuery(
@@ -130,8 +125,8 @@ export function ComprehensionPage() {
   useEffect(() => {
     // Only auto-start once
     if (hasAutoStarted) return;
-    // Wait for all data to load (including subscription)
-    if (storyLoading || existingComprehension === undefined || subscription === undefined) return;
+    // Wait for all data to load (including credit balance)
+    if (storyLoading || existingComprehension === undefined || isCreditLoading) return;
     // Don't generate if already have questions
     if (localQuestions.length > 0) return;
     // Don't generate if no story or not authenticated
@@ -148,7 +143,7 @@ export function ComprehensionPage() {
     isAuthenticated,
     localQuestions.length,
     hasAutoStarted,
-    subscription,
+    isCreditLoading,
   ]);
 
   // Separate effect to actually generate when hasAutoStarted becomes true
@@ -160,8 +155,8 @@ export function ComprehensionPage() {
       story &&
       isAuthenticated
     ) {
-      // Wait for subscription to load
-      if (subscription === undefined) return;
+      // Wait for credit balance to load
+      if (isCreditLoading) return;
 
       // Check if user has credits before auto-generating
       if (remaining < 1) {
@@ -241,7 +236,7 @@ export function ComprehensionPage() {
     }
   }, [
     hasAutoStarted,
-    subscription,
+    isCreditLoading,
     remaining,
     isGenerating,
     localQuestions.length,

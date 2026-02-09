@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { getDefinitions, type UILanguage } from "./lib/translation";
+import { getDefinitions, normalizeUILanguage, type UILanguage } from "./lib/translation";
 import {
   languageValidator,
   masteryStateValidator,
@@ -35,6 +35,114 @@ export const list = query({
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .order("desc")
       .collect();
+  },
+});
+
+// List vocabulary items for practice (new/learning only), with resolved definitions
+export const listForPractice = query({
+  args: {
+    userId: v.string(),
+    language: v.optional(languageValidator),
+    limit: v.optional(v.number()),
+    uiLanguage: v.optional(uiLanguageValidator),
+  },
+  handler: async (ctx, args) => {
+    const uiLang = normalizeUILanguage(args.uiLanguage);
+    const limit = args.limit ?? 200;
+
+    let items;
+    if (args.language) {
+      const [newItems, learningItems] = await Promise.all([
+        ctx.db
+          .query("vocabulary")
+          .withIndex("by_user_language_mastery", (q) =>
+            q.eq("userId", args.userId).eq("language", args.language!).eq("masteryState", "new")
+          )
+          .collect(),
+        ctx.db
+          .query("vocabulary")
+          .withIndex("by_user_language_mastery", (q) =>
+            q
+              .eq("userId", args.userId)
+              .eq("language", args.language!)
+              .eq("masteryState", "learning")
+          )
+          .collect(),
+      ]);
+      items = [...newItems, ...learningItems];
+    } else {
+      items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .filter((q) =>
+          q.or(q.eq(q.field("masteryState"), "new"), q.eq(q.field("masteryState"), "learning"))
+        )
+        .collect();
+    }
+
+    const resolved = items.map((item) => resolveVocabDefinitions(item, uiLang));
+    return resolved
+      .slice(0, limit)
+      .map(({ _id, word, reading, definitions, language, masteryState }) => ({
+        _id,
+        word,
+        reading,
+        definitions,
+        language,
+        masteryState,
+      }));
+  },
+});
+
+// Get practice counts (new/learning) without loading the full vocabulary list
+export const getPracticeCounts = query({
+  args: {
+    userId: v.string(),
+    language: v.optional(languageValidator),
+  },
+  handler: async (ctx, args) => {
+    let newCount = 0;
+    let learningCount = 0;
+
+    if (args.language) {
+      const [newItems, learningItems] = await Promise.all([
+        ctx.db
+          .query("vocabulary")
+          .withIndex("by_user_language_mastery", (q) =>
+            q.eq("userId", args.userId).eq("language", args.language!).eq("masteryState", "new")
+          )
+          .collect(),
+        ctx.db
+          .query("vocabulary")
+          .withIndex("by_user_language_mastery", (q) =>
+            q
+              .eq("userId", args.userId)
+              .eq("language", args.language!)
+              .eq("masteryState", "learning")
+          )
+          .collect(),
+      ]);
+      newCount = newItems.length;
+      learningCount = learningItems.length;
+    } else {
+      const items = await ctx.db
+        .query("vocabulary")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .filter((q) =>
+          q.or(q.eq(q.field("masteryState"), "new"), q.eq(q.field("masteryState"), "learning"))
+        )
+        .collect();
+      for (const item of items) {
+        if (item.masteryState === "new") newCount += 1;
+        if (item.masteryState === "learning") learningCount += 1;
+      }
+    }
+
+    return {
+      newCount,
+      learningCount,
+      totalPractice: newCount + learningCount,
+    };
   },
 });
 

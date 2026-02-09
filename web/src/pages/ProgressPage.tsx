@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserData } from "@/contexts/UserDataContext";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 import { getLanguageColorScheme } from "@/lib/languageColors";
@@ -43,10 +44,7 @@ export function ProgressPage() {
   const { user, isAuthenticated } = useAuth();
 
   // Get user profile to access their languages
-  const userProfile = useQuery(
-    api.users.getByClerkId,
-    isAuthenticated && user ? { clerkId: user.id } : "skip"
-  );
+  const { userProfile } = useUserData();
 
   const userLanguages = (userProfile?.languages ?? []) as ContentLanguage[];
   const [selectedLanguage, setSelectedLanguage] = useState<ContentLanguage | null>(null);

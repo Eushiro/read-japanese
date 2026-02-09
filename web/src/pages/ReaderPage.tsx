@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { PremiumBackground } from "@/components/ui/premium-background";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserData } from "@/contexts/UserDataContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useSettings } from "@/hooks/useSettings";
 import { useStory } from "@/hooks/useStory";
@@ -64,9 +65,8 @@ export function ReaderPage() {
     isAuthenticated ? { userId, storyId } : "skip"
   );
 
-  // Check subscription for AI features
-  const subscription = useQuery(api.subscriptions.get, isAuthenticated ? { userId } : "skip");
-  const isPremiumUser = subscription?.tier && subscription.tier !== "free";
+  const { userProfile, isPremium, isSubscriptionLoading } = useUserData();
+  const isPremiumUser = isPremium;
 
   // Check if user can read stories (credit-based system now handles limits)
   // Legacy limit check removed - credits are checked at generation time
@@ -74,10 +74,6 @@ export function ReaderPage() {
   const hasReachedStoryLimit = false;
 
   // Get user profile for proficiency level (needed for difficulty)
-  const userProfile = useQuery(
-    api.users.getByClerkId,
-    isAuthenticated && user ? { clerkId: user.id } : "skip"
-  );
 
   // Action to generate comprehension questions
   const generateQuestions = useAIAction(api.ai.generateComprehensionQuestions);
@@ -97,8 +93,7 @@ export function ReaderPage() {
     if (story && isAuthenticated && !hasTrackedReading.current) {
       // Check if this is a premium story the user can't access
       const storyIsPremium = story?.metadata?.isPremium ?? false;
-      const userIsPremium = subscription?.tier && subscription.tier !== "free";
-      const blockedByPremium = storyIsPremium && !userIsPremium;
+      const blockedByPremium = storyIsPremium && !isPremium;
 
       // Don't track if blocked
       if (blockedByPremium) {
@@ -114,7 +109,7 @@ export function ReaderPage() {
         chapter_count: story.chapters?.length ?? 1,
       });
     }
-  }, [story, isAuthenticated, subscription?.tier, trackEvent, events, storyId]);
+  }, [story, isAuthenticated, isPremium, trackEvent, events, storyId]);
 
   // Get settings from Convex
   const { settings, setShowFurigana } = useSettings();
@@ -138,7 +133,7 @@ export function ReaderPage() {
     // Wait for existingComprehension query to load
     if (existingComprehension === undefined) return;
     // Wait for subscription to load
-    if (subscription === undefined) return;
+    if (isSubscriptionLoading) return;
     // Only pre-generate for premium users (AI features are paywalled)
     if (!isPremiumUser) return;
 
@@ -215,7 +210,7 @@ export function ReaderPage() {
     storyId,
     userId,
     generateQuestions,
-    subscription,
+    isSubscriptionLoading,
     isPremiumUser,
     userProfile,
     uiLanguage,

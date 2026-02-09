@@ -2,16 +2,17 @@ import { useQuery } from "convex/react";
 import { useMemo } from "react";
 
 import type { ContentLanguage } from "@/lib/contentLanguages";
+import type { Id } from "@/lib/convex-types";
 
 import { api } from "../../convex/_generated/api";
 
 export interface VideoItem {
-  _id: string;
+  _id: Id<"youtubeContent">;
   videoId: string;
   title: string;
   description?: string;
   thumbnailUrl?: string;
-  language: string;
+  language: ContentLanguage;
   level?: string;
   duration?: number;
 }
@@ -41,7 +42,7 @@ export function useRecommendedVideos(
 
   // Fetch videos filtered by acceptable levels if we have them
   const adaptiveVideos = useQuery(
-    api.youtubeContent.listByLevels,
+    api.youtubeContent.listByLevelsSummary,
     recommendedDifficulty?.hasProfile && recommendedDifficulty.acceptableLevels.length > 0
       ? {
           language,
@@ -53,7 +54,7 @@ export function useRecommendedVideos(
 
   // Fallback: fetch all videos for the language (only when adaptive won't have results)
   const allVideos = useQuery(
-    api.youtubeContent.list,
+    api.youtubeContent.listSummary,
     recommendedDifficulty?.hasProfile && recommendedDifficulty.acceptableLevels.length > 0
       ? "skip"
       : { language, limit: maxVideos * 2 }

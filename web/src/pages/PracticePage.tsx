@@ -35,7 +35,10 @@ export function PracticePage() {
   const search = useSearch({ strict: false }) as { vocabularyId?: string };
 
   // Get vocabulary for practice (prioritize words that need practice)
-  const vocabulary = useQuery(api.vocabulary.list, isAuthenticated ? { userId } : "skip");
+  const vocabulary = useQuery(
+    api.vocabulary.listForPractice,
+    isAuthenticated ? { userId, uiLanguage } : "skip"
+  );
 
   type VocabularyItem = NonNullable<typeof vocabulary>[number];
   const [selectedWord, setSelectedWord] = useState<VocabularyItem | null>(null);
@@ -90,13 +93,12 @@ export function PracticePage() {
   // Check credit balance for AI features (free users have credits too)
   const { remaining } = useCreditBalance();
 
-  // Filter vocabulary for practice (prefer new/learning words, respect language filter)
+  // Filter vocabulary for practice (respect language filter)
   const practiceWords = useMemo(() => {
     if (!vocabulary) return [];
     return vocabulary.filter((v) => {
-      const isMasteryMatch = v.masteryState === "new" || v.masteryState === "learning";
       const isLanguageMatch = languageFilter === "all" || v.language === languageFilter;
-      return isMasteryMatch && isLanguageMatch;
+      return isLanguageMatch;
     });
   }, [vocabulary, languageFilter]);
 

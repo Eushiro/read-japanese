@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUserData } from "@/contexts/UserDataContext";
 import { type ContentLanguage, LANGUAGES } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 import { getLevelVariant } from "@/lib/levels";
@@ -39,8 +40,11 @@ export function DeckPickerModal({
   const [isSubscribing, setIsSubscribing] = useState(false);
 
   // Get user's learning languages
-  const user = useQuery(api.users.getByClerkId, { clerkId: userId });
-  const userLanguages = useMemo(() => user?.languages ?? ["japanese"], [user?.languages]);
+  const { userProfile } = useUserData();
+  const userLanguages = useMemo(
+    () => userProfile?.languages ?? ["japanese"],
+    [userProfile?.languages]
+  );
 
   // Filter to only show languages user is learning
   const availableLanguages = useMemo(() => {
@@ -56,10 +60,10 @@ export function DeckPickerModal({
 
   // Update selected language when user data loads
   useEffect(() => {
-    if (user && !userLanguages.includes(selectedLanguage)) {
+    if (userProfile && !userLanguages.includes(selectedLanguage)) {
       setSelectedLanguage((userLanguages[0] as ContentLanguage) ?? "japanese");
     }
-  }, [user, userLanguages, selectedLanguage]);
+  }, [userProfile, userLanguages, selectedLanguage]);
 
   const availableDecks = useQuery(api.userDeckSubscriptions.getAvailableDecks, {
     userId,
