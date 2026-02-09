@@ -104,6 +104,9 @@ yarn.lock
 dist/
 .vite/
 
+# Cloudflare
+.wrangler/
+
 # Backend generated files (media uploaded to R2, not stored locally)
 backend/generated/
 backend/app/static/audio/
