@@ -106,6 +106,12 @@ export const getBestContent = action({
     newWordBudget: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    // Auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
     const now = Date.now();
 
     const user = await ctx.runQuery(api.users.getByClerkId, { clerkId: args.userId });
@@ -255,6 +261,13 @@ export const getBestContent = action({
       modelId: selected.modelId,
       contentUrl: finalContentUrl,
       audienceScope: goal ? "goal" : "global",
+    });
+
+    // Charge credits for AI generation
+    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+      userId: args.userId,
+      action: "story",
+      metadata: { contentType: args.contentType, language: args.language },
     });
 
     return {

@@ -37,6 +37,10 @@ bunx convex typecheck || exit 1
 echo "Checking code patterns..."
 bun run check-patterns || exit 1
 
+# 7b. Check credit charging guardrails
+echo "Checking credit charging..."
+bun run check-credits || exit 1
+
 # 8. Run smoke tests
 echo "Running tests..."
 bun test || exit 1

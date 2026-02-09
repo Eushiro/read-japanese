@@ -602,7 +602,10 @@ import {
 
 ## 14. Credit System
 
-All AI actions in `web/convex/ai/` MUST charge credits after successful AI generation.
+All public Convex `action()` exports that call AI generation MUST:
+
+1. Check auth via `ctx.auth.getUserIdentity()`
+2. Charge credits via `spendCreditsInternal` after successful generation
 
 ### Pattern
 
@@ -630,19 +633,26 @@ await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
 
 See `CREDIT_COSTS` in `web/convex/subscriptions.ts` for all action types and their costs. When adding a new AI action type:
 
-1. Add the cost to `CREDIT_COSTS`
+1. Add the cost to `CREDIT_COSTS` in `web/convex/subscriptions.ts`
 2. Add `spendCreditsInternal` call after successful AI generation
-3. Add i18n labels to all 4 locale files (`usage.json` and `pricing.json`)
+3. Add i18n labels to all 4 locale `usage.json` files (`en/`, `ja/`, `fr/`, `zh/`)
 4. Add color to `ACTION_COLORS` in `UsageHistoryPage.tsx`
-5. Add row to `CREDIT_COSTS` array in `PricingPage.tsx`
+
+The `check-credits` script and `credits.test.ts` smoke test enforce this at commit time.
 
 ### Admin Bypass
 
 Admin mode automatically bypasses credit charges — handled by `spendCreditsInternal`. No special code needed.
 
-### Guardrail Test
+### Guardrails
 
-`web/src/__tests__/critical/credit-guardrail.test.ts` scans all AI actions and fails if a new action doesn't call `spendCreditsInternal`. To exempt an action (e.g., admin pipeline, pure computation), add it to `CREDIT_EXEMPT_ACTIONS` with a reason.
+Two automated checks enforce credit charging:
+
+1. **`check-credits` script** (`web/scripts/check-credit-charging.ts`): Scans all public `action()` exports in `web/convex/` for AI generation calls and verifies they include `spendCreditsInternal` and `ctx.auth.getUserIdentity()`. Runs in pre-commit. To exempt an action, add it to `ALLOWLIST` in the script with a reason.
+
+2. **`credit-guardrail.test.ts`** (`web/src/__tests__/critical/`): Scans `web/convex/ai/` actions specifically. To exempt, add to `CREDIT_EXEMPT_ACTIONS` with a reason.
+
+3. **`credits.test.ts`** (`web/src/__tests__/smoke/`): Verifies all `CREDIT_COSTS` keys are registered in `ACTION_COLORS` and `usage.json`.
 
 ### Key Rules
 

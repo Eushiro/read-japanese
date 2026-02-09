@@ -12,13 +12,15 @@ The repository uses **Husky** for pre-commit hooks that enforce code quality.
 6. **i18n interpolation** - Catches untranslated strings passed to `t()` interpolation (see below)
 7. **Convex typecheck** - Validates Convex functions and schema types
 8. **Pattern validation** - Checks for hardcoded language types (use `Language` from `@/lib/languages`)
-9. **Smoke tests** - Runs `bun test` to verify critical paths aren't broken
-10. **Python linting** - Ruff check/format on backend files (if changed)
-11. **Claude Code review** - AI review checks for bugs, security issues, and guideline violations
+9. **Credit charging validation** - Verifies all public AI actions charge credits and check auth
+10. **Smoke tests** - Runs `bun test` to verify critical paths aren't broken
+11. **Python linting** - Ruff check/format on backend files (if changed)
+12. **Claude Code review** - AI review checks for bugs, security issues, and guideline violations
 
 ## What runs on commit message (commit-msg)
 
 **Conventional Commits** - Commit messages must follow this format:
+
 ```
 type: description
 
@@ -47,37 +49,50 @@ Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
 **Convex type errors:** Fix type issues in `web/convex/` files. Run `npx convex typecheck` to see details.
 
 **i18n key mismatch:** Ensure all locale files have the same keys:
+
 - English (`en/`) is the source of truth
 - Add missing keys to `ja/`, `fr/`, `zh/` files
 - Remove extra keys that don't exist in English
 - **Translations must be colloquial and natural** - not literal word-for-word. Each language should sound native to its speakers.
 
 **i18n missing keys:** Keys used in code must exist in translation files:
+
 - Check the error output for the list of missing keys
 - Add the missing keys to English (`en/`) locale files first
 - Then sync to other locales (`ja/`, `fr/`, `zh/`)
 
 **i18n interpolation error:** Literal strings in `t()` interpolation won't be translated:
+
 ```typescript
 // BAD - "stories" appears as English in all languages
-t("paywall.message", { action: "stories" })
+t("paywall.message", { action: "stories" });
 
 // GOOD - translate the value first
-const actionText = t("paywall.features.stories")
-t("paywall.message", { action: actionText })
+const actionText = t("paywall.features.stories");
+t("paywall.message", { action: actionText });
 
 // GOOD - use a variable that's already translated
-t("paywall.message", { action: translatedFeatureName })
+t("paywall.message", { action: translatedFeatureName });
 ```
+
 Add translation keys for the interpolated values to all locale files.
 
 **Tests failed:** Fix the failing tests. Run `bun test` to see details.
 
+**Credit charging violations:** A public `action()` calls AI generation without guardrails:
+
+- Add `ctx.auth.getUserIdentity()` auth check at the start of the handler
+- Add `spendCreditsInternal` call after successful AI generation
+- Run `bun run check-credits` to see details
+- To exempt an action, add it to `ALLOWLIST` in `web/scripts/check-credit-charging.ts` with a reason
+
 **Pattern violations:** Use proper types instead of hardcoding:
+
 - Use `Language` type from `@/lib/languages` instead of `"japanese" | "english" | "french"`
 - Run `bun run check-patterns` to see details
 
 **Claude Code review blocked:** The review found issues that need attention:
+
 - `BLOCKER:` - Fix the code issue described
 - `UPDATE_DOCS:` - Add missing documentation, then re-commit
 
@@ -101,6 +116,7 @@ bun run format         # Prettier (auto-fix)
 bun run check-i18n     # Translation keys
 bun run check-secrets  # Secret detection
 bun run check-patterns # Pattern validation
+bun run check-credits  # Credit charging validation
 bun test               # Smoke tests
 ```
 
@@ -122,6 +138,7 @@ web/src/__tests__/
 ```
 
 These tests are designed to be:
+
 - **Fast** (~17ms total)
 - **Stable** - Use file existence checks, not dynamic imports
 - **Focused** - Only test "would brick the app" scenarios
