@@ -18,7 +18,6 @@
   "save17": "Économisez 17%",
   "mostPopular": "Le plus populaire",
   "billedAnnually": "Facturé annuellement",
-  "creditsPerMonth": "crédits/mois",
   "currentPlan": "Forfait actuel",
   "getStarted": "Commencer",
   "upgrade": "Passer à {{tier}}",
@@ -26,7 +25,7 @@
     "free": {
       "description": "Commencez avec les bases",
       "features": {
-        "0": "50 crédits IA/mois",
+        "0": "Fonctionnalités IA limitées",
         "1": "Decks de vocabulaire prédéfinis",
         "2": "Révisions de flashcards de base",
         "3": "Sessions de lecture limitées"
@@ -37,7 +36,7 @@
     "plus": {
       "description": "Apprenez à votre rythme",
       "features": {
-        "0": "500 crédits IA/mois",
+        "0": "Utilisation IA standard",
         "1": "Tout du forfait Gratuit",
         "2": "Decks personnalisés illimités",
         "3": "Suivi de progression",
@@ -48,7 +47,7 @@
     "pro": {
       "description": "L'expérience d'apprentissage ultime",
       "features": {
-        "0": "1 500 crédits IA/mois",
+        "0": "3x l'utilisation de Plus",
         "1": "Tout du forfait Plus",
         "2": "Support prioritaire",
         "3": "Accès anticipé aux fonctionnalités"
@@ -56,43 +55,15 @@
       "cta": "Obtenir Pro"
     }
   },
-  "creditCosts": {
-    "title": "Comment fonctionnent les crédits",
-    "action": "Action",
-    "credits": "Crédits",
-    "plusUpTo": "Plus (500 crédits)",
-    "actions": {
-      "flashcard": "Phrase IA pour flashcard",
-      "feedback": "Correction d'écriture",
-      "comprehension": "Notation de quiz",
-      "question": "Génération de questions",
-      "audio": "Génération audio",
-      "story": "Génération d'histoire",
-      "placement": "Question de placement",
-      "image": "Génération d'image",
-      "shadowing": "Session de shadowing",
-      "explain_question": "Explication de question"
-    },
-    "perMonth": "/mois",
-    "footer": "Les crédits sont réinitialisés mensuellement. Les crédits non utilisés ne sont pas reportés."
-  },
   "faq": {
     "title": "Questions fréquemment posées",
-    "whatAreCredits": {
-      "q": "Que sont les crédits ?",
-      "a": "Les crédits sont utilisés pour les fonctionnalités IA comme la génération de phrases, la correction d'écriture, l'audio et le shadowing. Les différentes actions coûtent un nombre différent de crédits. Les crédits sont réinitialisés mensuellement."
-    },
     "premadeDecks": {
       "q": "Les decks de vocabulaire prédéfinis sont-ils gratuits ?",
-      "a": "Oui ! Tous les decks prédéfinis (JLPT N5-N1, niveaux CECR, etc.) sont gratuits avec les révisions de base. Les fonctionnalités IA comme la génération de phrases utilisent des crédits."
+      "a": "Oui ! Tous les decks prédéfinis (JLPT N5-N1, niveaux CECR, etc.) sont gratuits avec les révisions de base. Les fonctionnalités IA comme la génération de phrases nécessitent un forfait payant."
     },
     "changePlans": {
       "q": "Puis-je changer de forfait à tout moment ?",
       "a": "Oui ! Vous pouvez passer à un forfait supérieur ou inférieur à tout moment. Les changements prennent effet immédiatement."
-    },
-    "rollOver": {
-      "q": "Les crédits sont-ils reportés ?",
-      "a": "Non, les crédits sont réinitialisés au début de chaque période de facturation. Utilisez-les ou perdez-les !"
     }
   }
 }

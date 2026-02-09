@@ -69,7 +69,7 @@
       }
     },
     "features": {
-      "credits": "{{count}} crédits/mois",
+      "credits": "Utilisation IA standard",
       "unlimitedDecks": "Decks personnalisés illimités",
       "progressTracking": "Suivi de progression",
       "everythingInPlus": "Tout ce qui est inclus dans Plus",
@@ -124,15 +124,15 @@
     "description": "Préparation aux examens personnalisée par IA"
   },
   "credits": {
-    "title": "Crédits",
+    "title": "Utilisation",
     "viewHistory": "Voir l'historique",
-    "description": "Suivez votre utilisation mensuelle de crédits",
+    "description": "Suivez votre utilisation mensuelle",
     "creditsUsed": "crédits",
     "used": "utilisé",
     "resets": "Réinitialisation le {{date}}",
     "tier": "forfait",
-    "upgradeTitle": "Besoin de plus de crédits ?",
-    "upgradeDescription": "Améliorez votre forfait pour plus de crédits mensuels.",
+    "upgradeTitle": "Besoin de plus ?",
+    "upgradeDescription": "Améliorez votre forfait pour plus d'utilisation mensuelle.",
     "upgrade": "Améliorer"
   },
   "preferences": {

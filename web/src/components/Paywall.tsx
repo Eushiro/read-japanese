@@ -46,7 +46,7 @@ export function Paywall({
   const featureKey = action || feature;
   const actionText = featureKey ? t(`paywall.features.${featureKey}`) : undefined;
   const { isAuthenticated } = useAuth();
-  const { remaining, limit, tier } = useCreditBalance();
+  const { remaining, tier } = useCreditBalance();
 
   const isOutOfCredits = remaining < creditsNeeded;
 
@@ -59,7 +59,7 @@ export function Paywall({
   const resolvedDescription = description
     ? description
     : isOutOfCredits
-      ? t("paywall.outOfCreditsMessage", { limit })
+      ? t("paywall.outOfCreditsMessage")
       : actionText
         ? t("paywall.actionMessage", { action: actionText })
         : t("paywall.genericMessage");
@@ -95,12 +95,6 @@ export function Paywall({
               {t(`settings.subscription.tiers.${tier as TierId}.name`)}
             </span>
           </div>
-          <div className="flex items-center justify-between text-sm mt-1">
-            <span className="text-foreground-muted">{t("paywall.creditsRemaining")}</span>
-            <span className={`font-medium ${remaining === 0 ? "text-red-500" : "text-foreground"}`}>
-              {remaining} / {limit}
-            </span>
-          </div>
         </div>
 
         {/* Actions */}
@@ -127,9 +121,7 @@ export function Paywall({
                       </span>
                     </div>
                     <p className="text-xs text-foreground-muted">
-                      {t("settings.subscription.features.credits", {
-                        count: getTier("plus")?.credits ?? 500,
-                      })}
+                      {t("pricing.tiers.plus.features.0")}
                     </p>
                     <p className="text-sm font-bold text-foreground mt-1">
                       {formatPrice(getTier("plus")?.price.monthly ?? 7.99)}
@@ -147,9 +139,7 @@ export function Paywall({
                     </span>
                   </div>
                   <p className="text-xs text-foreground-muted">
-                    {t("settings.subscription.features.credits", {
-                      count: getTier("pro")?.credits ?? 2000,
-                    })}
+                    {t("pricing.tiers.pro.features.0")}
                   </p>
                   <p className="text-sm font-bold text-foreground mt-1">
                     {formatPrice(getTier("pro")?.price.monthly ?? 17.99)}
@@ -166,14 +156,6 @@ export function Paywall({
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
-
-            {/* View usage link */}
-            <Link
-              to="/settings/usage"
-              className="block text-sm text-foreground-muted hover:text-foreground text-center"
-            >
-              {t("paywall.viewUsage")}
-            </Link>
           </div>
         )}
       </DialogContent>

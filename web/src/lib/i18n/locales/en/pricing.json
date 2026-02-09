@@ -18,7 +18,6 @@
   "save17": "Save 17%",
   "mostPopular": "Most Popular",
   "billedAnnually": "Billed annually",
-  "creditsPerMonth": "credits/mo",
   "currentPlan": "Current Plan",
   "getStarted": "Get Started",
   "upgrade": "Upgrade to {{tier}}",
@@ -26,7 +25,7 @@
     "free": {
       "description": "Get started with the basics",
       "features": {
-        "0": "50 AI credits/month",
+        "0": "Limited AI features",
         "1": "Premade vocabulary decks",
         "2": "Basic flashcard reviews",
         "3": "Limited reading sessions"
@@ -37,7 +36,7 @@
     "plus": {
       "description": "Learn at your own pace",
       "features": {
-        "0": "500 AI credits/month",
+        "0": "Standard AI usage",
         "1": "Everything in Free",
         "2": "Unlimited custom decks",
         "3": "Progress tracking",
@@ -48,7 +47,7 @@
     "pro": {
       "description": "The ultimate learning experience",
       "features": {
-        "0": "1,500 AI credits/month",
+        "0": "3x the usage of Plus",
         "1": "Everything in Plus",
         "2": "Priority support",
         "3": "Early access to features"
@@ -56,43 +55,15 @@
       "cta": "Get Pro"
     }
   },
-  "creditCosts": {
-    "title": "How Credits Work",
-    "action": "Action",
-    "credits": "Credits",
-    "plusUpTo": "Plus (500 credits)",
-    "actions": {
-      "flashcard": "AI flashcard sentence",
-      "feedback": "Writing feedback",
-      "comprehension": "Quiz grading",
-      "question": "Question generation",
-      "audio": "Audio generation",
-      "story": "Story generation",
-      "placement": "Placement question",
-      "image": "Image generation",
-      "shadowing": "Shadowing session",
-      "explain_question": "Question explanation"
-    },
-    "perMonth": "/month",
-    "footer": "Credits reset monthly. Unused credits don't roll over."
-  },
   "faq": {
     "title": "Frequently Asked Questions",
-    "whatAreCredits": {
-      "q": "What are credits?",
-      "a": "Credits are used for AI-powered features like generating sentences, writing feedback, audio, and shadowing. Different actions cost different amounts of credits. Credits reset monthly."
-    },
     "premadeDecks": {
       "q": "Are the premade vocabulary decks free?",
-      "a": "Yes! All premade vocabulary decks (JLPT N5-N1, CEFR levels, etc.) are free to use with basic reviews. AI features like sentence generation use credits."
+      "a": "Yes! All premade vocabulary decks (JLPT N5-N1, CEFR levels, etc.) are free to use with basic reviews. AI features like sentence generation require a paid plan."
     },
     "changePlans": {
       "q": "Can I change plans anytime?",
       "a": "Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately."
-    },
-    "rollOver": {
-      "q": "Do credits roll over?",
-      "a": "No, credits reset at the start of each billing period. Use them or lose them!"
     }
   }
 }

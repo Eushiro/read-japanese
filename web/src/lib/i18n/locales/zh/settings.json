@@ -69,7 +69,7 @@
       }
     },
     "features": {
-      "credits": "{{count}}积分/月",
+      "credits": "标准AI使用量",
       "unlimitedDecks": "无限自定义卡组",
       "progressTracking": "进度跟踪",
       "everythingInPlus": "Plus的所有功能",
@@ -124,15 +124,15 @@
     "description": "AI驱动的个性化备考"
   },
   "credits": {
-    "title": "积分",
+    "title": "使用量",
     "viewHistory": "查看历史",
-    "description": "跟踪您的月度积分使用情况",
+    "description": "跟踪您的月度使用情况",
     "creditsUsed": "积分",
     "used": "已使用",
     "resets": "{{date}}重置",
     "tier": "方案",
-    "upgradeTitle": "需要更多积分？",
-    "upgradeDescription": "升级您的方案以获得更多月度积分。",
+    "upgradeTitle": "需要更多？",
+    "upgradeDescription": "升级您的方案以获得更多月度使用量。",
     "upgrade": "升级"
   },
   "preferences": {

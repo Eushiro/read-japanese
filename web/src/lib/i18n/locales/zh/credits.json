@@ -1,12 +1,12 @@
 {
   "alert": {
     "critical": {
-      "title": "积分即将用尽",
-      "message": "您还剩 {{remaining}} 积分。升级以继续生成内容。"
+      "title": "即将达到使用上限",
+      "message": "您即将达到月度使用上限。升级以继续生成内容。"
     },
     "warning": {
-      "title": "积分不足",
-      "message": "本月剩余 {{remaining}} 积分。"
+      "title": "接近使用上限",
+      "message": "您正在接近月度使用上限。"
     },
     "upgrade": "升级获取更多"
   }

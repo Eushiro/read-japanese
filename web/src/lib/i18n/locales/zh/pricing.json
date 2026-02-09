@@ -18,7 +18,6 @@
   "save17": "节省17%",
   "mostPopular": "最受欢迎",
   "billedAnnually": "按年计费",
-  "creditsPerMonth": "额度/月",
   "currentPlan": "当前方案",
   "getStarted": "开始使用",
   "upgrade": "升级到{{tier}}",
@@ -26,7 +25,7 @@
     "free": {
       "description": "从基础功能开始",
       "features": {
-        "0": "每月50 AI额度",
+        "0": "有限AI功能",
         "1": "预设词汇卡组",
         "2": "基础闪卡复习",
         "3": "有限阅读次数"
@@ -37,7 +36,7 @@
     "plus": {
       "description": "按自己的节奏学习",
       "features": {
-        "0": "每月500 AI额度",
+        "0": "标准AI使用量",
         "1": "免费版全部功能",
         "2": "无限自定义卡组",
         "3": "进度追踪",
@@ -48,7 +47,7 @@
     "pro": {
       "description": "终极学习体验",
       "features": {
-        "0": "每月1,500 AI额度",
+        "0": "Plus的3倍使用量",
         "1": "Plus全部功能",
         "2": "优先支持",
         "3": "新功能抢先体验"
@@ -56,43 +55,15 @@
       "cta": "获取Pro"
     }
   },
-  "creditCosts": {
-    "title": "额度如何使用",
-    "action": "操作",
-    "credits": "额度",
-    "plusUpTo": "Plus（500额度）",
-    "actions": {
-      "flashcard": "AI造句",
-      "feedback": "写作反馈",
-      "comprehension": "测验评分",
-      "question": "题目生成",
-      "audio": "音频生成",
-      "story": "故事生成",
-      "placement": "定级测试题",
-      "image": "图片生成",
-      "shadowing": "跟读练习",
-      "explain_question": "题目解释"
-    },
-    "perMonth": "/月",
-    "footer": "额度每月重置。未使用的额度不会累积。"
-  },
   "faq": {
     "title": "常见问题",
-    "whatAreCredits": {
-      "q": "什么是额度？",
-      "a": "额度用于造句、写作反馈、音频和跟读等AI功能。不同操作消耗不同数量的额度。额度每月重置。"
-    },
     "premadeDecks": {
       "q": "预设词汇卡组是免费的吗？",
-      "a": "是的！所有预设卡组（JLPT N5-N1、CEFR等级等）基础复习免费。造句等AI功能消耗额度。"
+      "a": "是的！所有预设卡组（JLPT N5-N1、CEFR等级等）基础复习免费。造句等AI功能需要付费方案。"
     },
     "changePlans": {
       "q": "可以随时更改方案吗？",
       "a": "可以！您可以随时升级或降级方案。更改立即生效。"
-    },
-    "rollOver": {
-      "q": "额度会累积吗？",
-      "a": "不会，额度在每个计费周期开始时重置。用完就没了！"
     }
   }
 }

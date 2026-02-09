@@ -63,7 +63,7 @@
       "pro": { "name": "Pro" }
     },
     "features": {
-      "credits": "{{count}} AI credits/month",
+      "credits": "Standard AI usage",
       "unlimitedDecks": "Unlimited custom decks",
       "progressTracking": "Progress tracking",
       "everythingInPlus": "Everything in Plus",
@@ -118,15 +118,15 @@
     "description": "Personalized exam prep powered by AI"
   },
   "credits": {
-    "title": "Credits",
+    "title": "Usage",
     "viewHistory": "View History",
-    "description": "Track your monthly credit usage",
+    "description": "Track your monthly usage",
     "creditsUsed": "credits",
     "used": "used",
     "resets": "Resets {{date}}",
     "tier": "tier",
-    "upgradeTitle": "Need more credits?",
-    "upgradeDescription": "Upgrade your plan for more monthly credits.",
+    "upgradeTitle": "Need more?",
+    "upgradeDescription": "Upgrade your plan for more monthly usage.",
     "upgrade": "Upgrade"
   },
   "preferences": {

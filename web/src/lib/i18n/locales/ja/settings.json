@@ -69,7 +69,7 @@
       }
     },
     "features": {
-      "credits": "{{count}}クレジット/月",
+      "credits": "標準AI利用",
       "unlimitedDecks": "無制限のカスタムデッキ",
       "progressTracking": "進捗追跡",
       "everythingInPlus": "Plusのすべての機能",
@@ -124,15 +124,15 @@
     "description": "AIを活用したパーソナライズ学習"
   },
   "credits": {
-    "title": "クレジット",
+    "title": "利用状況",
     "viewHistory": "履歴を見る",
-    "description": "月間クレジット使用状況を確認",
+    "description": "月間利用状況を確認",
     "creditsUsed": "クレジット",
     "used": "使用",
     "resets": "{{date}}にリセット",
     "tier": "プラン",
-    "upgradeTitle": "もっとクレジットが必要ですか？",
-    "upgradeDescription": "プランをアップグレードして月間クレジットを増やしましょう。",
+    "upgradeTitle": "もっと必要ですか？",
+    "upgradeDescription": "プランをアップグレードして月間利用量を増やしましょう。",
     "upgrade": "アップグレード"
   },
   "preferences": {

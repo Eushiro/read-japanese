@@ -1,12 +1,12 @@
 {
   "alert": {
     "critical": {
-      "title": "Almost Out of Credits",
-      "message": "You have {{remaining}} credits left. Upgrade to continue generating content."
+      "title": "Usage Limit Almost Reached",
+      "message": "You've almost reached your monthly limit. Upgrade to continue generating content."
     },
     "warning": {
-      "title": "Running Low on Credits",
-      "message": "You have {{remaining}} credits remaining this month."
+      "title": "Approaching Usage Limit",
+      "message": "You're approaching your monthly usage limit."
     },
     "upgrade": "Upgrade for more"
   }

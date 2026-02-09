@@ -3,7 +3,6 @@ import { useAction, useMutation } from "convex/react";
 import { motion } from "framer-motion";
 import {
   Check,
-  ChevronRight,
   CreditCard,
   Crown,
   Eye,
@@ -68,8 +67,6 @@ export function SettingsPage() {
 
   // Credit balance
   const {
-    used: creditsUsed,
-    limit: creditsLimit,
     percentage: creditsPercentage,
     resetDate: creditsResetDate,
     tier: creditsTier,
@@ -235,13 +232,6 @@ export function SettingsPage() {
                           {t("common.actions.manage")}
                         </Button>
                       )}
-                    <Link
-                      to="/settings/usage"
-                      className="text-sm text-accent hover:underline flex items-center gap-1"
-                    >
-                      {t("settings.credits.viewHistory")}
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
                   </div>
                 </div>
 
@@ -276,9 +266,6 @@ export function SettingsPage() {
                     >
                       {creditsPercentage}% {t("settings.credits.used")}
                     </span>
-                  </div>
-                  <div className="text-sm text-foreground mb-2">
-                    {creditsUsed} / {creditsLimit} {t("settings.credits.creditsUsed")}
                   </div>
                   <Progress
                     value={creditsPercentage}
@@ -699,7 +686,7 @@ export function SettingsPage() {
                       <div>
                         <div className="font-medium text-foreground">Admin Mode</div>
                         <div className="text-sm text-foreground-muted">
-                          Show admin panel and bypass credit limits
+                          Show admin panel and bypass usage limits
                         </div>
                       </div>
                     </div>
