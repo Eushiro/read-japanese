@@ -902,7 +902,11 @@ export const getNextPractice = action({
           if (audioTypes.includes(q.type) && !q.audioUrl) {
             try {
               const ttsText =
-                q.type === "listening_mcq" && q.passageText ? q.passageText : q.question;
+                q.type === "listening_mcq" && q.passageText
+                  ? q.passageText
+                  : q.type === "dictation"
+                    ? q.correctAnswer
+                    : q.question;
               const result = await ctx.runAction(internal.ai.generateTTSAudioAction, {
                 text: ttsText,
                 language: args.language,
@@ -1046,7 +1050,12 @@ export const getNextPractice = action({
       cappedNormal.accepted.map(async (q) => {
         if (audioTypes.includes(q.type) && !q.audioUrl) {
           try {
-            const ttsText = q.type === "listening_mcq" ? contentPayload.content : q.question;
+            const ttsText =
+              q.type === "listening_mcq"
+                ? contentPayload.content
+                : q.type === "dictation"
+                  ? q.correctAnswer
+                  : q.question;
             const result = await ctx.runAction(internal.ai.generateTTSAudioAction, {
               text: ttsText,
               language: args.language,
@@ -1612,7 +1621,11 @@ Return JSON.`;
           if (incrAudioTypes.includes(q.type) && !q.audioUrl) {
             try {
               const ttsText =
-                q.type === "listening_mcq" && q.passageText ? q.passageText : q.question;
+                q.type === "listening_mcq" && q.passageText
+                  ? q.passageText
+                  : q.type === "dictation"
+                    ? q.correctAnswer
+                    : q.question;
               const ttsResult = await ctx.runAction(internal.ai.generateTTSAudioAction, {
                 text: ttsText,
                 language: args.language,
