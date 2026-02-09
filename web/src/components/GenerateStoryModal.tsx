@@ -12,7 +12,7 @@ import {
 import { Paywall } from "@/components/Paywall";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -217,12 +217,12 @@ export function GenerateStoryModal({ isOpen, onClose }: GenerateStoryModalProps)
                 <Sparkles className="w-5 h-5 text-accent" />
               </div>
               <div>
-                <h2
+                <DialogTitle
                   className="text-lg font-semibold text-foreground"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {t("generate.modal.title")}
-                </h2>
+                </DialogTitle>
                 <p className="text-sm text-foreground-muted">{t("generate.modal.subtitle")}</p>
               </div>
             </div>

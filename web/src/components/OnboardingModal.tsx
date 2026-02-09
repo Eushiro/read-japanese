@@ -16,7 +16,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
@@ -209,6 +209,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         className="bg-surface max-w-lg p-0 rounded-2xl border-0 overflow-hidden outline-none"
         showCloseButton={false}
       >
+        <DialogTitle className="sr-only">{t("onboarding.title")}</DialogTitle>
         {/* Progress indicator */}
         <div className="flex gap-1 p-4 bg-muted/30">
           {Array.from({ length: getTotalSteps() }).map((_, i) => (
