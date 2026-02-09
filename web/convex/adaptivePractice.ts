@@ -603,7 +603,7 @@ async function generateQuestionsWithRepair(
       const repaired = await generateAndParse<{ questions: PracticeQuestion[] }>({
         prompt: repair.prompt,
         systemPrompt: repair.systemPrompt,
-        maxTokens: Math.min(args.maxTokens, 2000),
+        maxTokens: args.maxTokens * 2,
         jsonSchema: args.jsonSchema,
         parse: args.parse,
         models: args.modelOverride,
@@ -618,7 +618,15 @@ async function generateQuestionsWithRepair(
 
   if (finalValidation.errors.length > 0) {
     try {
-      const regen = await runGenerate();
+      // Regenerate with doubled tokens in case the original limit caused truncation
+      const regen = await generateAndParse<{ questions: PracticeQuestion[] }>({
+        prompt: args.prompt,
+        systemPrompt: args.systemPrompt,
+        maxTokens: args.maxTokens * 2,
+        jsonSchema: args.jsonSchema,
+        parse: args.parse,
+        models: args.modelOverride,
+      });
       modelUsed = regen.usage.model;
       finalQuestions = regen.result.questions;
       finalValidation = validateQuestionSet(finalQuestions, args.context);
@@ -1188,7 +1196,7 @@ Return JSON with an array of questions.`;
       {
         prompt,
         systemPrompt,
-        maxTokens: 3000,
+        maxTokens: 6000,
         jsonSchema: questionSchema,
         parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
         context,
@@ -1345,7 +1353,7 @@ Return JSON.`;
       {
         prompt,
         systemPrompt,
-        maxTokens: 2500,
+        maxTokens: 4000,
         jsonSchema: questionSchema,
         parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
         context: {
@@ -1559,7 +1567,7 @@ Return JSON.`;
         {
           prompt,
           systemPrompt,
-          maxTokens: 900,
+          maxTokens: 3000,
           jsonSchema: questionSchema,
           parse: (response) => parseJson<{ questions: PracticeQuestion[] }>(response),
           context: {
@@ -1735,7 +1743,7 @@ Grade this answer.`;
       }>({
         prompt,
         systemPrompt,
-        maxTokens: 300,
+        maxTokens: 3000,
         jsonSchema: gradingSchema,
         models: TEXT_MODEL_CHAIN,
         parse: (response) =>

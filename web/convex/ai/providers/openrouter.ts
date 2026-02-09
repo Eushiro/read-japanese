@@ -37,6 +37,7 @@ interface OpenRouterResponse {
         };
       }>;
     };
+    finish_reason?: string;
   }>;
   usage?: {
     prompt_tokens: number;
@@ -117,6 +118,15 @@ export async function generateText(
   }
 
   const data = (await response.json()) as OpenRouterResponse;
+
+  // Detect output truncation: finish_reason=length means max_tokens was hit
+  const finishReason = data.choices[0]?.finish_reason;
+  if (finishReason === "length") {
+    const tokensUsed = data.usage?.completion_tokens ?? "unknown";
+    throw new Error(
+      `Output truncated: finish_reason=length (completion_tokens=${tokensUsed}, max_tokens=${options.maxTokens || 500}). Increase maxTokens.`
+    );
+  }
 
   const usage: TokenUsage = {
     inputTokens: data.usage?.prompt_tokens || 0,
@@ -371,6 +381,15 @@ export async function generateTextWithAudio(
   }
 
   const data = (await response.json()) as OpenRouterResponse;
+
+  // Detect output truncation: finish_reason=length means max_tokens was hit
+  const audioFinishReason = data.choices[0]?.finish_reason;
+  if (audioFinishReason === "length") {
+    const tokensUsed = data.usage?.completion_tokens ?? "unknown";
+    throw new Error(
+      `Output truncated: finish_reason=length (completion_tokens=${tokensUsed}, max_tokens=${options.maxTokens || 500}). Increase maxTokens.`
+    );
+  }
 
   const usage: TokenUsage = {
     inputTokens: data.usage?.prompt_tokens || 0,
