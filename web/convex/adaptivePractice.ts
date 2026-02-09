@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 
 import { api, internal } from "./_generated/api";
+import type { ActionCtx } from "./_generated/server";
 import { action } from "./_generated/server";
 import { generateAndParse, type JsonSchema, parseJson } from "./ai/models";
 import { isAdminEmail } from "./lib/admin";
@@ -142,6 +143,79 @@ function applyAudioCaps(
   }
 
   return { accepted, dropped, counts };
+}
+
+const AUDIO_QUESTION_TYPES: PracticeQuestionType[] = [
+  "listening_mcq",
+  "dictation",
+  "shadow_record",
+];
+
+/**
+ * Generate TTS audio for audio-based question types.
+ * For listening_mcq, uses listeningTextOverride (from content payload) or falls back to passageText/question.
+ * For dictation, uses correctAnswer. For shadow_record, uses question.
+ */
+async function generateTTSForQuestions(
+  ctx: ActionCtx,
+  questions: PracticeQuestion[],
+  language: string,
+  listeningTextOverride?: string
+): Promise<PracticeQuestion[]> {
+  return Promise.all(
+    questions.map(async (q) => {
+      if (AUDIO_QUESTION_TYPES.includes(q.type) && !q.audioUrl) {
+        try {
+          const ttsText =
+            q.type === "listening_mcq"
+              ? (listeningTextOverride ?? q.passageText ?? q.question)
+              : q.type === "dictation"
+                ? q.correctAnswer
+                : q.question;
+          const result = await ctx.runAction(internal.ai.generateTTSAudioAction, {
+            text: ttsText,
+            language,
+            word: `practice-${q.questionId}`,
+            audioType: "sentence" as const,
+            sentenceId: "audio",
+          });
+          if (result.success && result.audioUrl) {
+            return { ...q, audioUrl: result.audioUrl };
+          }
+        } catch (error) {
+          console.error(`Failed to generate TTS for question ${q.questionId}:`, error);
+        }
+      }
+      return q;
+    })
+  );
+}
+
+/**
+ * Format PracticeQuestion array for pool ingestion.
+ * Strips runtime-only fields and applies a default difficulty fallback.
+ */
+function formatQuestionsForPoolIngestion(
+  questions: PracticeQuestion[],
+  defaultDifficulty: DifficultyLevel
+) {
+  return questions.map((q) => ({
+    questionType: q.type,
+    targetSkill: q.targetSkill,
+    difficulty: q.difficulty ?? defaultDifficulty,
+    question: q.question,
+    passageText: q.passageText ?? undefined,
+    options: q.options ?? undefined,
+    correctAnswer: q.correctAnswer,
+    acceptableAnswers: q.acceptableAnswers ?? undefined,
+    points: q.points,
+    grammarTags: q.grammarTags ?? undefined,
+    vocabTags: q.vocabTags ?? undefined,
+    topicTags: q.topicTags ?? undefined,
+    translations: q.translations,
+    optionTranslations: q.optionTranslations,
+    showOptionsInTargetLanguage: q.showOptionsInTargetLanguage,
+  }));
 }
 
 /**
@@ -862,23 +936,7 @@ export const getNextPractice = action({
         ctx
           .runAction(internal.questionPool.ingestQuestionsToPool, {
             language: args.language,
-            questions: diagnosticResult.questions.map((q) => ({
-              questionType: q.type,
-              targetSkill: q.targetSkill,
-              difficulty: q.difficulty ?? "level_3",
-              question: q.question,
-              passageText: q.passageText ?? undefined,
-              options: q.options ?? undefined,
-              correctAnswer: q.correctAnswer,
-              acceptableAnswers: q.acceptableAnswers ?? undefined,
-              points: q.points,
-              grammarTags: q.grammarTags ?? undefined,
-              vocabTags: q.vocabTags ?? undefined,
-              topicTags: q.topicTags ?? undefined,
-              translations: q.translations,
-              optionTranslations: q.optionTranslations,
-              showOptionsInTargetLanguage: q.showOptionsInTargetLanguage,
-            })),
+            questions: formatQuestionsForPoolIngestion(diagnosticResult.questions, "level_3"),
             modelUsed: diagnosticResult.modelUsed,
             qualityScore: diagnosticResult.qualityScore,
           })
@@ -896,33 +954,10 @@ export const getNextPractice = action({
       );
 
       // Generate TTS audio for audio-based question types (max 1-2)
-      const audioTypes: PracticeQuestionType[] = ["listening_mcq", "dictation", "shadow_record"];
-      const questionsWithAudio = await Promise.all(
-        cappedDiagnostic.accepted.map(async (q) => {
-          if (audioTypes.includes(q.type) && !q.audioUrl) {
-            try {
-              const ttsText =
-                q.type === "listening_mcq" && q.passageText
-                  ? q.passageText
-                  : q.type === "dictation"
-                    ? q.correctAnswer
-                    : q.question;
-              const result = await ctx.runAction(internal.ai.generateTTSAudioAction, {
-                text: ttsText,
-                language: args.language,
-                word: `practice-${q.questionId}`,
-                audioType: "sentence",
-                sentenceId: "audio",
-              });
-              if (result.success && result.audioUrl) {
-                return { ...q, audioUrl: result.audioUrl };
-              }
-            } catch (error) {
-              console.error(`Failed to generate TTS for question ${q.questionId}:`, error);
-            }
-          }
-          return q;
-        })
+      const questionsWithAudio = await generateTTSForQuestions(
+        ctx,
+        cappedDiagnostic.accepted,
+        args.language
       );
 
       await ctx.runMutation(internal.adaptivePracticeQueries.upsertPracticeSessionInternal, {
@@ -1015,23 +1050,7 @@ export const getNextPractice = action({
     ctx
       .runAction(internal.questionPool.ingestQuestionsToPool, {
         language: args.language,
-        questions: generatedResult.questions.map((q) => ({
-          questionType: q.type,
-          targetSkill: q.targetSkill,
-          difficulty: q.difficulty ?? "level_3",
-          question: q.question,
-          passageText: q.passageText ?? undefined,
-          options: q.options ?? undefined,
-          correctAnswer: q.correctAnswer,
-          acceptableAnswers: q.acceptableAnswers ?? undefined,
-          points: q.points,
-          grammarTags: q.grammarTags ?? undefined,
-          vocabTags: q.vocabTags ?? undefined,
-          topicTags: q.topicTags ?? undefined,
-          translations: q.translations,
-          optionTranslations: q.optionTranslations,
-          showOptionsInTargetLanguage: q.showOptionsInTargetLanguage,
-        })),
+        questions: formatQuestionsForPoolIngestion(generatedResult.questions, "level_3"),
         modelUsed: generatedResult.modelUsed,
         qualityScore: generatedResult.qualityScore,
       })
@@ -1045,33 +1064,11 @@ export const getNextPractice = action({
     );
 
     // 8. Generate TTS audio for audio-based question types
-    const audioTypes: PracticeQuestionType[] = ["listening_mcq", "dictation", "shadow_record"];
-    const questionsWithAudio = await Promise.all(
-      cappedNormal.accepted.map(async (q) => {
-        if (audioTypes.includes(q.type) && !q.audioUrl) {
-          try {
-            const ttsText =
-              q.type === "listening_mcq"
-                ? contentPayload.content
-                : q.type === "dictation"
-                  ? q.correctAnswer
-                  : q.question;
-            const result = await ctx.runAction(internal.ai.generateTTSAudioAction, {
-              text: ttsText,
-              language: args.language,
-              word: `practice-${q.questionId}`,
-              audioType: "sentence",
-              sentenceId: "audio",
-            });
-            if (result.success && result.audioUrl) {
-              return { ...q, audioUrl: result.audioUrl };
-            }
-          } catch (error) {
-            console.error(`Failed to generate TTS for question ${q.questionId}:`, error);
-          }
-        }
-        return q;
-      })
+    const questionsWithAudio = await generateTTSForQuestions(
+      ctx,
+      cappedNormal.accepted,
+      args.language,
+      contentPayload.content
     );
 
     await ctx.runMutation(internal.adaptivePracticeQueries.upsertPracticeSessionInternal, {
@@ -1611,41 +1608,7 @@ Return JSON.`;
       const capped = applyAudioCaps(withIds, existingCounts, caps);
 
       // Generate TTS audio for audio-based question types
-      const incrAudioTypes: PracticeQuestionType[] = [
-        "listening_mcq",
-        "dictation",
-        "shadow_record",
-      ];
-      const questionsWithAudio: PracticeQuestion[] = await Promise.all(
-        capped.accepted.map(async (q): Promise<PracticeQuestion> => {
-          if (incrAudioTypes.includes(q.type) && !q.audioUrl) {
-            try {
-              const ttsText =
-                q.type === "listening_mcq" && q.passageText
-                  ? q.passageText
-                  : q.type === "dictation"
-                    ? q.correctAnswer
-                    : q.question;
-              const ttsResult = await ctx.runAction(internal.ai.generateTTSAudioAction, {
-                text: ttsText,
-                language: args.language,
-                word: `practice-${q.questionId}`,
-                audioType: "sentence" as const,
-                sentenceId: "audio",
-              });
-              if (ttsResult.success && ttsResult.audioUrl) {
-                return { ...q, audioUrl: ttsResult.audioUrl };
-              }
-            } catch (error) {
-              console.error(
-                `Failed to generate TTS for incremental question ${q.questionId}:`,
-                error
-              );
-            }
-          }
-          return q;
-        })
-      );
+      const questionsWithAudio = await generateTTSForQuestions(ctx, capped.accepted, args.language);
 
       if (questionsWithAudio.length > 0) {
         await ctx.runMutation(internal.adaptivePracticeQueries.upsertPracticeSessionInternal, {
@@ -1671,23 +1634,7 @@ Return JSON.`;
       ctx
         .runAction(internal.questionPool.ingestQuestionsToPool, {
           language: args.language,
-          questions: result.questions.map((q) => ({
-            questionType: q.type,
-            targetSkill: q.targetSkill,
-            difficulty: q.difficulty ?? args.targetDifficulty,
-            question: q.question,
-            passageText: q.passageText ?? undefined,
-            options: q.options ?? undefined,
-            correctAnswer: q.correctAnswer,
-            acceptableAnswers: q.acceptableAnswers ?? undefined,
-            points: q.points,
-            grammarTags: q.grammarTags ?? undefined,
-            vocabTags: q.vocabTags ?? undefined,
-            topicTags: q.topicTags ?? undefined,
-            translations: q.translations,
-            optionTranslations: q.optionTranslations,
-            showOptionsInTargetLanguage: q.showOptionsInTargetLanguage,
-          })),
+          questions: formatQuestionsForPoolIngestion(result.questions, args.targetDifficulty),
           modelUsed: result.modelUsed,
           qualityScore: result.qualityScore,
         })
@@ -1740,12 +1687,7 @@ export const gradeFreeAnswer = action({
       throw new Error("Authentication required");
     }
 
-    const languageNames: Record<string, string> = {
-      japanese: "Japanese",
-      english: "English",
-      french: "French",
-    };
-    const languageName = languageNames[args.language] || "English";
+    const languageName = getContentLanguageName(args.language as ContentLanguage);
     const uiLang = (args.uiLanguage ?? "en") as UILanguage;
     const feedbackLanguageName = getUILanguageName(uiLang);
 
@@ -1829,12 +1771,7 @@ export const explainQuestion = action({
       throw new Error("Authentication required");
     }
 
-    const languageNames: Record<string, string> = {
-      japanese: "Japanese",
-      english: "English",
-      french: "French",
-    };
-    const languageName = languageNames[args.language] || "English";
+    const languageName = getContentLanguageName(args.language as ContentLanguage);
     const uiLang = (args.uiLanguage ?? "en") as UILanguage;
     const feedbackLanguageName = getUILanguageName(uiLang);
 
