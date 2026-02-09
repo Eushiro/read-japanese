@@ -114,7 +114,7 @@ export const getCreditBalance = query({
     const percentage = limit > 0 ? Math.round((used / limit) * 100) : 0;
 
     // Calculate reset date (first of next month)
-    const resetDate = new Date(year, month, 1); // month is 0-indexed, so this is first of next month
+    const resetDate = new Date(Date.UTC(year, month, 1)); // month from getCurrentPeriod is 1-indexed; Date.UTC month is 0-indexed, so this gives first of next month in UTC
 
     return {
       used,
