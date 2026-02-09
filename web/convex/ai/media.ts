@@ -6,7 +6,7 @@ import { internalAction } from "../_generated/server";
 import { convertPcmToMp3 } from "../lib/audioCompression";
 import { AUDIO_MODELS } from "../lib/models";
 import { uploadSentenceAudio, uploadWordAudio, uploadWordImage } from "../lib/storage";
-import type { ContentLanguage } from "../schema";
+import { type ContentLanguage, languageValidator } from "../schema";
 import { generateImage as generateImageNew } from "./models";
 
 // Language name mappings
@@ -176,7 +176,7 @@ The image should:
 export const generateTTSAudioAction = internalAction({
   args: {
     text: v.string(),
-    language: v.string(),
+    language: languageValidator,
     // Word context for organized storage (optional for backwards compatibility)
     word: v.optional(v.string()),
     audioType: v.optional(v.union(v.literal("word"), v.literal("sentence"))),
@@ -243,7 +243,7 @@ export const generateFlashcardImageAction = internalAction({
   args: {
     word: v.string(),
     sentence: v.string(),
-    language: v.string(),
+    language: languageValidator,
     // Optional image ID for organized storage (random ID generated if not provided)
     imageId: v.optional(v.string()),
   },

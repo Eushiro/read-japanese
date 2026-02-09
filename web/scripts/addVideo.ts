@@ -29,6 +29,7 @@ import { api } from "../convex/_generated/api";
 // CONFIGURATION
 // ============================================
 
+// eslint-disable-next-line no-restricted-syntax -- CLI validation constant
 const VALID_LANGUAGES = ["japanese", "english", "french"] as const;
 const VALID_LEVELS = {
   japanese: ["N5", "N4", "N3", "N2", "N1"],
@@ -87,7 +88,10 @@ async function fetchTranscriptAuto(
     if (!transcript || transcript.length === 0) return null;
 
     return transcript.map((item) => ({
-      text: item.text.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&"),
+      text: item.text
+        .replace(/&#39;/g, "'")
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, "&"),
       start: Math.round(item.offset / 1000),
       duration: Math.max(1, Math.round(item.duration / 1000)),
     }));
@@ -107,10 +111,11 @@ function parseTranscriptFile(
   }
 }
 
-function parseTranscriptText(
-  content: string
-): { text: string; start: number; duration: number }[] {
-  const lines = content.trim().split("\n").filter(line => line.trim());
+function parseTranscriptText(content: string): { text: string; start: number; duration: number }[] {
+  const lines = content
+    .trim()
+    .split("\n")
+    .filter((line) => line.trim());
   const segments: { text: string; start: number; duration: number }[] = [];
 
   // Pattern: "0:05 Text here" or "1:30 Text here"
@@ -136,9 +141,7 @@ function parseTranscriptText(
   return segments;
 }
 
-function estimateDuration(
-  transcript: { start: number; duration: number }[]
-): number {
+function estimateDuration(transcript: { start: number; duration: number }[]): number {
   if (transcript.length === 0) return 0;
   const last = transcript[transcript.length - 1];
   return last.start + last.duration;
@@ -238,7 +241,9 @@ async function main() {
 
   const level = levelArg.toUpperCase();
   if (!VALID_LEVELS[language].includes(level)) {
-    console.error(`\n❌ Invalid level for ${language}. Use: ${VALID_LEVELS[language].join(", ")}\n`);
+    console.error(
+      `\n❌ Invalid level for ${language}. Use: ${VALID_LEVELS[language].join(", ")}\n`
+    );
     process.exit(1);
   }
 
@@ -308,7 +313,9 @@ async function main() {
   console.log("🔗 Connecting to Convex...");
   if (!CONVEX_URL) {
     console.error("  ❌ CONVEX_URL not set\n");
-    console.log("  Run: export VITE_CONVEX_URL=$(grep VITE_CONVEX_URL .env.local | cut -d'=' -f2)\n");
+    console.log(
+      "  Run: export VITE_CONVEX_URL=$(grep VITE_CONVEX_URL .env.local | cut -d'=' -f2)\n"
+    );
     process.exit(1);
   }
   const client = new ConvexHttpClient(CONVEX_URL);

@@ -21,6 +21,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { api } from "../convex/_generated/api";
+import type { ContentLanguage } from "../convex/schema";
 
 // ============================================
 // CONFIGURATION
@@ -48,13 +49,18 @@ interface WordEntry {
 
 function parseCSV(content: string): WordEntry[] {
   const lines = content.trim().split("\n");
-  const header = lines[0].toLowerCase().split(",").map((h) => h.trim());
+  const header = lines[0]
+    .toLowerCase()
+    .split(",")
+    .map((h) => h.trim());
 
   // Find column indices
   const wordIdx = header.findIndex((h) => h === "word" || h === "expression" || h === "kanji");
   const readingIdx = header.findIndex((h) => h === "reading" || h === "kana" || h === "hiragana");
   const defIdx = header.findIndex((h) => h === "definition" || h === "meaning" || h === "english");
-  const posIdx = header.findIndex((h) => h === "pos" || h === "partofspeech" || h === "part_of_speech");
+  const posIdx = header.findIndex(
+    (h) => h === "pos" || h === "partofspeech" || h === "part_of_speech"
+  );
 
   if (wordIdx === -1) {
     throw new Error("CSV must have a 'word' or 'expression' column");
@@ -116,18 +122,20 @@ function parseJSON(content: string): WordEntry[] {
     throw new Error("JSON must be an array of word objects");
   }
 
-  return data.map((item: Record<string, unknown>) => ({
-    word: String(item.word || item.expression || ""),
-    reading: item.reading ? String(item.reading) : undefined,
-    definitions: Array.isArray(item.definitions)
-      ? item.definitions.map(String)
-      : item.definition
-        ? [String(item.definition)]
-        : item.meaning
-          ? [String(item.meaning)]
-          : ["(no definition)"],
-    partOfSpeech: item.partOfSpeech ? String(item.partOfSpeech) : undefined,
-  })).filter((e) => e.word);
+  return data
+    .map((item: Record<string, unknown>) => ({
+      word: String(item.word || item.expression || ""),
+      reading: item.reading ? String(item.reading) : undefined,
+      definitions: Array.isArray(item.definitions)
+        ? item.definitions.map(String)
+        : item.definition
+          ? [String(item.definition)]
+          : item.meaning
+            ? [String(item.meaning)]
+            : ["(no definition)"],
+      partOfSpeech: item.partOfSpeech ? String(item.partOfSpeech) : undefined,
+    }))
+    .filter((e) => e.word);
 }
 
 // ============================================
@@ -234,7 +242,7 @@ Examples:
   const createDeckId = getArg("--create-deck");
   if (createDeckId) {
     const name = getArg("--name");
-    const language = getArg("--language") as "japanese" | "english" | "french";
+    const language = getArg("--language") as ContentLanguage;
     const level = getArg("--level");
     const description = getArg("--description") || `${name} vocabulary deck`;
 
@@ -243,6 +251,7 @@ Examples:
       return;
     }
 
+    // eslint-disable-next-line no-restricted-syntax -- CLI validation requires literal array
     if (!["japanese", "english", "french"].includes(language)) {
       console.error("Error: --language must be 'japanese', 'english', or 'french'");
       return;
@@ -324,7 +333,9 @@ Examples:
       totalSkipped += result.skipped;
       totalCopied += result.copiedContent;
 
-      console.log(`  Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${result.imported} imported, ${result.skipped} skipped, ${result.copiedContent} copied from other decks`);
+      console.log(
+        `  Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${result.imported} imported, ${result.skipped} skipped, ${result.copiedContent} copied from other decks`
+      );
     }
 
     console.log(`\nImport complete:`);

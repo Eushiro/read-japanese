@@ -82,7 +82,8 @@ export const updateSentenceAudio = mutation({
 export const addSentenceTranslation = mutation({
   args: {
     sentenceId: v.id("sentences"),
-    languageCode: v.string(), // "en", "ja", "fr", etc.
+    // eslint-disable-next-line no-restricted-syntax -- dynamic key ("en", "ja", "fr", "es", "zh"), not a content language
+    languageCode: v.string(),
     translation: v.string(),
   },
   handler: async (ctx, args) => {

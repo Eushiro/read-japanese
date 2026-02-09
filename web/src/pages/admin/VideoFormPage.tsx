@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { LANGUAGES } from "@/lib/contentLanguages";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -60,12 +61,6 @@ interface TranscriptSegment {
   start: number;
   duration: number;
 }
-
-const LANGUAGES = [
-  { value: "japanese", label: "Japanese" },
-  { value: "english", label: "English" },
-  { value: "french", label: "French" },
-];
 
 const LEVELS = {
   japanese: ["N5", "N4", "N3", "N2", "N1"],

@@ -39,16 +39,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/contexts/AuthContext";
+import { LANGUAGES as CONTENT_LANGUAGES } from "@/lib/contentLanguages";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-const LANGUAGES = [
-  { value: "all", label: "All Languages" },
-  { value: "japanese", label: "Japanese" },
-  { value: "english", label: "English" },
-  { value: "french", label: "French" },
-];
+const LANGUAGES = [{ value: "all", label: "All Languages" }, ...CONTENT_LANGUAGES];
 
 const DIFFICULTY_LABELS: Record<number, string> = {
   1: "N5/A1",

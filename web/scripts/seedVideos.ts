@@ -11,6 +11,7 @@
 import { mutation } from "../convex/_generated/server";
 
 // Educational videos curated for language learning
+// eslint-disable-next-line no-restricted-syntax -- data array, not a language list
 const SEED_VIDEOS = [
   // Japanese - N5/Beginner
   {
@@ -18,7 +19,8 @@ const SEED_VIDEOS = [
     language: "japanese" as const,
     level: "N5",
     title: "自己紹介 - Self Introduction in Japanese",
-    description: "Learn basic self-introduction phrases in Japanese. Perfect for absolute beginners.",
+    description:
+      "Learn basic self-introduction phrases in Japanese. Perfect for absolute beginners.",
     duration: 180, // ~3 minutes
   },
   {

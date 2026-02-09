@@ -1261,7 +1261,7 @@ export function AdaptivePracticePage() {
       try {
         const result = await evaluateShadowing({
           targetText: currentQuestion.question,
-          targetLanguage: language as "japanese" | "english" | "french",
+          targetLanguage: language as ContentLanguage,
           userAudioBase64: audioBase64,
           feedbackLanguage: "en",
         });

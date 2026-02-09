@@ -170,8 +170,8 @@ export function ExamTakingPage() {
               acceptableAnswers: q.questionData.acceptableAnswers,
               rubric: q.questionData.rubric,
               passageText: q.questionData.passageText,
-              language: template?.language || "japanese",
-              examType: template?.examType || "",
+              language: template?.language ?? "japanese",
+              examType: template!.examType,
               maxPoints: q.questionData.points,
               feedbackLanguage: uiLanguage,
             });

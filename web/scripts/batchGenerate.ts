@@ -20,6 +20,7 @@ import * as path from "path";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { TEXT_MODELS } from "../convex/lib/models";
+import type { ContentLanguage } from "../convex/schema";
 
 // ============================================
 // CONFIGURATION
@@ -55,7 +56,7 @@ interface PremadeVocabItem {
   word: string;
   reading?: string;
   definitions: string[];
-  language: "japanese" | "english" | "french";
+  language: ContentLanguage;
   level: string;
   sentence?: string;
 }

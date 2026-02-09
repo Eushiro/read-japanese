@@ -13,6 +13,7 @@ import {
   getUILanguageName,
   type UILanguage,
 } from "../lib/promptHelpers";
+import { examTypeValidator, languageValidator } from "../schema";
 import { generateTTSAudio } from "./media";
 import {
   cleanJsonResponse,
@@ -630,8 +631,8 @@ export const gradeExamAnswer = action({
     acceptableAnswers: v.optional(v.array(v.string())),
     rubric: v.optional(v.string()),
     passageText: v.optional(v.string()), // Context for reading questions
-    language: v.string(), // "japanese" | "english" | "french"
-    examType: v.string(), // "jlpt_n5" | "toefl" | etc.
+    language: languageValidator,
+    examType: examTypeValidator,
     maxPoints: v.number(),
     feedbackLanguage: v.union(v.literal("en"), v.literal("ja"), v.literal("fr"), v.literal("zh")),
   },
@@ -826,8 +827,8 @@ export const gradeExamAnswersBatch = action({
         maxPoints: v.number(),
       })
     ),
-    language: v.string(),
-    examType: v.string(),
+    language: languageValidator,
+    examType: examTypeValidator,
     feedbackLanguage: v.union(v.literal("en"), v.literal("ja"), v.literal("fr"), v.literal("zh")),
   },
   handler: async (ctx, args): Promise<Array<{ questionIndex: number } & ExamGradingResult>> => {
@@ -900,8 +901,8 @@ export const gradeExamAnswerInternal = internalAction({
     acceptableAnswers: v.optional(v.array(v.string())),
     rubric: v.optional(v.string()),
     passageText: v.optional(v.string()),
-    language: v.string(),
-    examType: v.string(),
+    language: languageValidator,
+    examType: examTypeValidator,
     maxPoints: v.number(),
     feedbackLanguage: v.union(v.literal("en"), v.literal("ja"), v.literal("fr"), v.literal("zh")),
   },

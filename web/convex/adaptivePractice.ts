@@ -159,7 +159,7 @@ const AUDIO_QUESTION_TYPES: PracticeQuestionType[] = [
 async function generateTTSForQuestions(
   ctx: ActionCtx,
   questions: PracticeQuestion[],
-  language: string,
+  language: ContentLanguage,
   listeningTextOverride?: string
 ): Promise<PracticeQuestion[]> {
   return Promise.all(

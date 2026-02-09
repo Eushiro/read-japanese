@@ -56,10 +56,11 @@ export default defineConfig([
       "prefer-const": "error",
     },
   },
-  // Enforce analytics abstraction - no direct PostHog usage
+  // Enforce import abstractions - no direct PostHog or react-i18next usage
+  // NOTE: These MUST be in one block to avoid flat-config override bug
   {
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/lib/analytics.ts"],
+    ignores: ["src/lib/analytics.ts", "src/lib/i18n/**"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -69,20 +70,6 @@ export default defineConfig([
               group: ["posthog-js", "posthog-js/*"],
               message: "Use @/lib/analytics instead of PostHog directly.",
             },
-          ],
-        },
-      ],
-    },
-  },
-  // Enforce i18n abstraction - no direct react-i18next usage
-  {
-    files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/lib/i18n/**"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
             {
               group: ["react-i18next", "react-i18next/*", "i18next", "i18next/*"],
               message: "Use @/lib/i18n (useT, useI18n, t) instead of react-i18next directly.",
@@ -92,10 +79,10 @@ export default defineConfig([
       ],
     },
   },
-  // Enforce useAIAction for AI actions - automatic analytics tracking
+  // Enforce useAIAction + canonical type usage in frontend
   {
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/hooks/useAIAction.ts"],
+    ignores: ["src/hooks/useAIAction.ts", "src/lib/contentLanguages.ts", "src/lib/convex-types.ts"],
     rules: {
       "no-restricted-syntax": [
         "error",
@@ -104,6 +91,18 @@ export default defineConfig([
             "CallExpression[callee.name='useAction'][arguments.0.object.object.name='api'][arguments.0.object.property.name='ai']",
           message:
             "Use useAIAction from @/hooks/useAIAction instead of useAction for AI actions. It provides automatic analytics tracking.",
+        },
+        {
+          selector:
+            "TSUnionType:has(TSLiteralType > Literal[value='japanese']):has(TSLiteralType > Literal[value='english'])",
+          message:
+            "Import ContentLanguage from @/lib/contentLanguages or ../../convex/schema instead of inline union types.",
+        },
+        {
+          selector:
+            "ArrayExpression:has(Literal[value='japanese']):has(Literal[value='english']):has(Literal[value='french'])",
+          message:
+            "Import LANGUAGES from @/lib/contentLanguages instead of hardcoding language arrays.",
         },
       ],
     },
@@ -228,11 +227,10 @@ export default defineConfig([
       ],
     },
   },
-  // Ban hardcoded AI model names outside of centralized model file
-  // All model configuration must be defined ONLY in lib/models.ts
+  // Ban hardcoded AI model names and enforce canonical type usage in backend
   {
     files: ["convex/**/*.ts", "scripts/**/*.ts"],
-    ignores: ["convex/lib/models.ts"],
+    ignores: ["convex/lib/models.ts", "convex/schema.ts", "scripts/lint-patterns.ts"],
     rules: {
       "no-restricted-syntax": [
         "error",
@@ -241,6 +239,38 @@ export default defineConfig([
             "Literal[value=/^(google\\/)?gemini|moonshotai\\/|anthropic\\/claude|gpt-audio/]",
           message:
             "Import model constants from lib/models.ts instead (e.g., TEXT_MODELS, AUDIO_MODELS, IMAGE_MODELS).",
+        },
+        {
+          selector:
+            "TSUnionType:has(TSLiteralType > Literal[value='japanese']):has(TSLiteralType > Literal[value='english'])",
+          message: "Import ContentLanguage from ./schema instead of inline union types.",
+        },
+        {
+          selector:
+            "ArrayExpression:has(Literal[value='japanese']):has(Literal[value='english']):has(Literal[value='french'])",
+          message: "Import LANGUAGES from shared config instead of hardcoding language arrays.",
+        },
+        {
+          selector:
+            "Property[key.name='language'] CallExpression[callee.object.name='v'][callee.property.name='string']",
+          message: "Use languageValidator from ./schema instead of v.string() for language fields.",
+        },
+        {
+          selector:
+            "Property[key.name='targetLanguage'] CallExpression[callee.object.name='v'][callee.property.name='string']",
+          message:
+            "Use languageValidator from ./schema instead of v.string() for targetLanguage fields.",
+        },
+        {
+          selector:
+            "Property[key.name='languageCode'] CallExpression[callee.object.name='v'][callee.property.name='string']",
+          message:
+            "Use languageValidator from ./schema instead of v.string() for languageCode fields.",
+        },
+        {
+          selector:
+            "Property[key.name='examType'] CallExpression[callee.object.name='v'][callee.property.name='string']",
+          message: "Use examTypeValidator from ./schema instead of v.string() for examType fields.",
         },
       ],
     },

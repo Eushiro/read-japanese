@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { ContentLanguage } from "@/lib/contentLanguages";
+import { type ContentLanguage, LANGUAGES } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 import { getLevelVariant } from "@/lib/levels";
 
@@ -25,11 +25,7 @@ interface DeckPickerModalProps {
   defaultLanguage?: ContentLanguage;
 }
 
-const ALL_LANGUAGES = [
-  { value: "japanese" as const, label: "Japanese" },
-  { value: "english" as const, label: "English" },
-  { value: "french" as const, label: "French" },
-];
+const ALL_LANGUAGES = LANGUAGES;
 
 export function DeckPickerModal({
   userId,
@@ -52,16 +48,16 @@ export function DeckPickerModal({
   }, [userLanguages]);
 
   // Initialize selected language from default or first available
-  const [selectedLanguage, setSelectedLanguage] = useState<"japanese" | "english" | "french">(
+  const [selectedLanguage, setSelectedLanguage] = useState<ContentLanguage>(
     userLanguages.includes(defaultLanguage)
       ? defaultLanguage
-      : ((userLanguages[0] as "japanese" | "english" | "french") ?? "japanese")
+      : ((userLanguages[0] as ContentLanguage) ?? "japanese")
   );
 
   // Update selected language when user data loads
   useEffect(() => {
     if (user && !userLanguages.includes(selectedLanguage)) {
-      setSelectedLanguage((userLanguages[0] as "japanese" | "english" | "french") ?? "japanese");
+      setSelectedLanguage((userLanguages[0] as ContentLanguage) ?? "japanese");
     }
   }, [user, userLanguages, selectedLanguage]);
 

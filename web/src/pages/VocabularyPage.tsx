@@ -1395,7 +1395,7 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
       // Pass UI language for localized feedback
       const result = await evaluateShadowing({
         targetText: flashcard.sentence,
-        targetLanguage: item.language as "japanese" | "english" | "french",
+        targetLanguage: item.language as ContentLanguage,
         userAudioBase64: audioBase64,
         feedbackLanguage: uiLanguage,
       });
@@ -1416,7 +1416,7 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
         userId,
         vocabularyId: isPremade ? undefined : (item._id as GenericId<"vocabulary">),
         targetText: flashcard.sentence,
-        targetLanguage: item.language as "japanese" | "english" | "french",
+        targetLanguage: item.language as ContentLanguage,
         feedbackAudioUrl,
         feedbackText: result.feedbackText,
         accuracyScore: result.accuracyScore,
@@ -1564,7 +1564,7 @@ function VocabularyDetailModal({ item, onClose, isPremade = false }: VocabularyD
                         feedbackAudioUrl={shadowingResult.feedbackAudioUrl}
                         userRecordingUrl={recorder.audioUrl}
                         targetText={flashcard.sentence || ""}
-                        language={item.language as "japanese" | "english" | "french"}
+                        language={item.language as ContentLanguage}
                       />
                       <div className="flex gap-2 justify-center">
                         <Button variant="outline" size="sm" onClick={handleRetryShadowing}>

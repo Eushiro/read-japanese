@@ -438,7 +438,7 @@ export const complete = mutation({
 
     if (user) {
       const proficiencyLevels = user.proficiencyLevels ?? {};
-      const langKey = test.language as "japanese" | "english" | "french";
+      const langKey = test.language as ContentLanguage;
 
       const updatedLevels = {
         ...proficiencyLevels,
@@ -518,7 +518,7 @@ export const reset = mutation({
       .first();
 
     if (user?.proficiencyLevels) {
-      const langKey = args.language as "japanese" | "english" | "french";
+      const langKey = args.language as ContentLanguage;
       const updatedLevels = { ...user.proficiencyLevels };
       delete updatedLevels[langKey];
 

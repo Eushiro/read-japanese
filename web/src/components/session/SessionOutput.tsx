@@ -7,6 +7,7 @@ import { Paywall } from "@/components/Paywall";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../../convex/_generated/api";
@@ -73,7 +74,7 @@ export function SessionOutput({ wordCount, onComplete, onSkip }: SessionOutputPr
         sentence: sentence.trim(),
         targetWord: currentWord.word,
         wordDefinitions: currentWord.definitions,
-        language: currentWord.language as "japanese" | "english" | "french",
+        language: currentWord.language as ContentLanguage,
         feedbackLanguage: uiLanguage,
       });
 

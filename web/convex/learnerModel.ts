@@ -114,7 +114,7 @@ function getDefaultProfile(userId: string, language: string) {
   const now = Date.now();
   return {
     userId,
-    language: language as "japanese" | "english" | "french",
+    language: language as ContentLanguage,
     abilityEstimate: 0,
     abilityConfidence: 1.0,
     abilityBySkill: {
@@ -1764,7 +1764,7 @@ export const overrideProfile = mutation({
       .first();
 
     if (user) {
-      const langKey = args.language as "japanese" | "english" | "french";
+      const langKey = args.language as ContentLanguage;
       if (args.preset === "diagnostic") {
         // Clear proficiency level for diagnostic
         const updatedLevels = { ...user.proficiencyLevels };

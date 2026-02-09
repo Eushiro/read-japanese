@@ -16,6 +16,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalAction, internalMutation } from "../_generated/server";
+import type { ContentLanguage } from "../schema";
 import { premadeTranslations } from "./translationData";
 
 /**
@@ -246,7 +247,7 @@ export const migrateUserVocabularyWithAI = internalAction({
         const translations = await ctx.runAction(internal.ai.translateDefinitions, {
           word: vocab.word,
           definitions: vocab.definitions,
-          language: vocab.language as "japanese" | "english" | "french",
+          language: vocab.language as ContentLanguage,
         });
 
         // Update the vocabulary item

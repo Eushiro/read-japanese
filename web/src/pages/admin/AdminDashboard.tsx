@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
-import { LANGUAGES } from "@/lib/contentLanguages";
+import { type ContentLanguage, LANGUAGES } from "@/lib/contentLanguages";
 import { getPracticeSessionKey } from "@/lib/practiceSession";
 import { getTier, type TierId } from "@/lib/tiers";
 
@@ -352,7 +352,7 @@ export function AdminDashboard() {
                           if (!user || value === "not_set") return;
                           await updateProficiencyLevel({
                             clerkId: user.id,
-                            language: lang as "japanese" | "english" | "french",
+                            language: lang as ContentLanguage,
                             level: value,
                           });
                         }}
@@ -447,7 +447,7 @@ export function AdminDashboard() {
                           try {
                             const result = await overrideProfile({
                               userId: user.id,
-                              language: lang as "japanese" | "english" | "french",
+                              language: lang as ContentLanguage,
                               adminEmail: user.email,
                               preset: value as
                                 | "diagnostic"

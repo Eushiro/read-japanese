@@ -14,6 +14,7 @@ import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { internalAction, internalMutation, mutation, query } from "../_generated/server";
+import type { ContentLanguage } from "../schema";
 
 const R2_PUBLIC_URL = process.env.VITE_R2_PUBLIC_URL || process.env.R2_PUBLIC_URL || "";
 
@@ -301,7 +302,7 @@ export const migrateFromManifest = internalAction({
 
         const result = await ctx.runMutation(internal.migrations.storyMigration.insertStory, {
           storyId: story.id,
-          language: story.language as "japanese" | "english" | "french",
+          language: story.language as ContentLanguage,
           // For Japanese stories, use Japanese as the primary title
           title: story.language === "japanese" ? translations.title.ja : translations.title.en,
           titleTranslations: translations.title,

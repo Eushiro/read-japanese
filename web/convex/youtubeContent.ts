@@ -388,6 +388,7 @@ export const updateQuestionsInternal = internalMutation({
 export const seedStarterVideos = mutation({
   args: {},
   handler: async (ctx) => {
+    // eslint-disable-next-line no-restricted-syntax -- data array, not a language list
     const SEED_VIDEOS = [
       // Japanese - N5/Beginner
       {

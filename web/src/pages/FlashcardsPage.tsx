@@ -84,7 +84,7 @@ export function FlashcardsPage() {
   const hasMultipleLanguages = userLanguages.length > 1;
 
   // State for selected language (defaults to first language when loaded)
-  const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(undefined);
+  const [selectedLanguage, setSelectedLanguage] = useState<ContentLanguage | undefined>(undefined);
   const activeLanguage = selectedLanguage ?? firstLanguage;
 
   // Sync selectedLanguage with first language when it loads
@@ -290,7 +290,7 @@ export function FlashcardsPage() {
 
   // Reset session when language changes
   const handleLanguageChange = (value: string) => {
-    setSelectedLanguage(value);
+    setSelectedLanguage(value as ContentLanguage);
     setSessionQueue([]);
     setCurrentIndex(0);
     setShowAnswer(false);

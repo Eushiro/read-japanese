@@ -21,6 +21,7 @@ import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useAIAction } from "@/hooks/useAIAction";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
+import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT, useUILanguage } from "@/lib/i18n";
 
 import { api } from "../../convex/_generated/api";
@@ -40,14 +41,14 @@ export function PracticePage() {
   const [selectedWord, setSelectedWord] = useState<VocabularyItem | null>(null);
 
   // Language filter state
-  type LanguageFilter = "all" | "japanese" | "english" | "french";
+  type LanguageFilter = "all" | ContentLanguage;
   const [languageFilter, setLanguageFilter] = useState<LanguageFilter>("all");
 
   // Compute available languages from vocabulary
   const availableLanguages = useMemo(() => {
     if (!vocabulary) return [];
     const languages = new Set(vocabulary.map((v) => v.language));
-    return Array.from(languages) as ("japanese" | "english" | "french")[];
+    return Array.from(languages) as ContentLanguage[];
   }, [vocabulary]);
 
   const showLanguageFilter = availableLanguages.length > 1;
@@ -134,7 +135,7 @@ export function PracticePage() {
         sentence: sentence.trim(),
         targetWord: selectedWord.word,
         wordDefinitions: selectedWord.definitions,
-        language: selectedWord.language as "japanese" | "english" | "french",
+        language: selectedWord.language as ContentLanguage,
         feedbackLanguage: uiLanguage,
       });
 

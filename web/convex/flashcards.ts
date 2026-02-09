@@ -3,7 +3,12 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { getDefinitions, getSentenceTranslation, normalizeUILanguage } from "./lib/translation";
-import { cardStateValidator, ratingValidator, uiLanguageValidator } from "./schema";
+import {
+  cardStateValidator,
+  languageValidator,
+  ratingValidator,
+  uiLanguageValidator,
+} from "./schema";
 
 // ============================================
 // FSRS-inspired SRS Constants
@@ -113,7 +118,7 @@ export const getDue = query({
   args: {
     userId: v.string(),
     limit: v.optional(v.number()),
-    language: v.optional(v.string()),
+    language: v.optional(languageValidator),
     uiLanguage: v.optional(uiLanguageValidator), // UI language for translation resolution
   },
   handler: async (ctx, args) => {
@@ -193,7 +198,7 @@ export const getNew = query({
   args: {
     userId: v.string(),
     limit: v.optional(v.number()),
-    language: v.optional(v.string()),
+    language: v.optional(languageValidator),
     uiLanguage: v.optional(uiLanguageValidator), // UI language for translation resolution
   },
   handler: async (ctx, args) => {
@@ -272,7 +277,7 @@ export const getNew = query({
 export const getStats = query({
   args: {
     userId: v.string(),
-    language: v.optional(v.string()),
+    language: v.optional(languageValidator),
   },
   handler: async (ctx, args) => {
     const now = Date.now();

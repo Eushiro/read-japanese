@@ -55,6 +55,7 @@ export interface VideoData {
 // VIDEO DATA - Edit this array to add/modify videos
 // ============================================
 
+// eslint-disable-next-line no-restricted-syntax -- data array, not a language list
 export const VIDEOS: VideoData[] = [
   // ============================================
   // JAPANESE VIDEOS
@@ -2072,6 +2073,7 @@ export function validateVideo(
   if (!video.description?.trim()) {
     errors.push(`${prefix}: description is required`);
   }
+  // eslint-disable-next-line no-restricted-syntax -- validation requires literal array
   if (!["japanese", "english", "french"].includes(video.language)) {
     errors.push(
       `${prefix}: language must be "japanese", "english", or "french" (got "${video.language}")`
