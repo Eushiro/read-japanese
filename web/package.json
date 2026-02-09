@@ -8,7 +8,7 @@
     "predev": "bun run build:sw",
     "dev": "vite",
     "prebuild": "bun run build:sw",
-    "build": "vite build",
+    "build": "npx convex codegen && vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\" \"convex/**/*.ts\"",
