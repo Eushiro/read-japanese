@@ -4,34 +4,12 @@ import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 import { getTier, type PaidTierId } from "@/lib/tiers";
 
 import { api } from "../../convex/_generated/api";
-
-// Credit costs for the reference table - uses translation keys
-const CREDIT_COSTS = [
-  { actionKey: "flashcard", credits: 1 },
-  { actionKey: "feedback", credits: 1 },
-  { actionKey: "comprehension", credits: 1 },
-  { actionKey: "question", credits: 1 },
-  { actionKey: "audio", credits: 2 },
-  { actionKey: "story", credits: 2 },
-  { actionKey: "placement", credits: 2 },
-  { actionKey: "image", credits: 3 },
-  { actionKey: "shadowing", credits: 3 },
-  { actionKey: "explain_question", credits: 1 },
-] as const;
 
 export function PricingPage() {
   const t = useT();
@@ -80,7 +58,6 @@ export function PricingPage() {
       icon: Zap,
       iconColor: "text-slate-400",
       price: freeTier?.price ?? { monthly: 0, annual: 0 },
-      credits: freeTier?.credits ?? 50,
       description: t("pricing.tiers.free.description"),
       features: [
         t("pricing.tiers.free.features.0"),
@@ -97,7 +74,6 @@ export function PricingPage() {
       icon: Sparkles,
       iconColor: "text-blue-500",
       price: plusTier?.price ?? { monthly: 7.99, annual: 79.99 },
-      credits: plusTier?.credits ?? 500,
       popular: true,
       description: t("pricing.tiers.plus.description"),
       features: [
@@ -116,7 +92,6 @@ export function PricingPage() {
       icon: Crown,
       iconColor: "text-accent",
       price: proTier?.price ?? { monthly: 17.99, annual: 179.99 },
-      credits: proTier?.credits ?? 2000,
       description: t("pricing.tiers.pro.description"),
       features: [
         t("pricing.tiers.pro.features.0"),
@@ -244,11 +219,6 @@ export function PricingPage() {
                   {billingPeriod === "annual" && isPaidTier && (
                     <p className="text-sm text-green-600 mt-1">{t("pricing.billedAnnually")}</p>
                   )}
-                  <div className="mt-2">
-                    <Badge variant="outline" className="text-xs">
-                      {tier.credits.toLocaleString()} {t("pricing.creditsPerMonth")}
-                    </Badge>
-                  </div>
                   <p className="text-sm text-foreground-muted mt-2">{tier.description}</p>
                 </div>
 
@@ -301,41 +271,6 @@ export function PricingPage() {
           })}
         </div>
 
-        {/* Credit Costs Reference */}
-        <div className="mt-16 max-w-md mx-auto">
-          <h2
-            className="text-xl font-bold text-foreground text-center mb-6"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {t("pricing.creditCosts.title")}
-          </h2>
-          <div className="bg-surface rounded-xl border border-border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("pricing.creditCosts.action")}</TableHead>
-                  <TableHead className="text-center">{t("pricing.creditCosts.credits")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {CREDIT_COSTS.map((row) => (
-                  <TableRow key={row.actionKey}>
-                    <TableCell className="font-medium">
-                      {t(`pricing.creditCosts.actions.${row.actionKey}`)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline">{row.credits}</Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <p className="text-center text-sm text-foreground-muted mt-4">
-            {t("pricing.creditCosts.footer")}
-          </p>
-        </div>
-
         {/* FAQ Section */}
         <div className="mt-16 max-w-3xl mx-auto">
           <h2
@@ -347,12 +282,6 @@ export function PricingPage() {
           <div className="space-y-6">
             <div className="bg-surface rounded-xl border border-border p-5">
               <h3 className="font-semibold text-foreground mb-2">
-                {t("pricing.faq.whatAreCredits.q")}
-              </h3>
-              <p className="text-sm text-foreground-muted">{t("pricing.faq.whatAreCredits.a")}</p>
-            </div>
-            <div className="bg-surface rounded-xl border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-2">
                 {t("pricing.faq.premadeDecks.q")}
               </h3>
               <p className="text-sm text-foreground-muted">{t("pricing.faq.premadeDecks.a")}</p>
@@ -362,10 +291,6 @@ export function PricingPage() {
                 {t("pricing.faq.changePlans.q")}
               </h3>
               <p className="text-sm text-foreground-muted">{t("pricing.faq.changePlans.a")}</p>
-            </div>
-            <div className="bg-surface rounded-xl border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-2">{t("pricing.faq.rollOver.q")}</h3>
-              <p className="text-sm text-foreground-muted">{t("pricing.faq.rollOver.a")}</p>
             </div>
           </div>
         </div>

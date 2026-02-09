@@ -49,7 +49,6 @@ import { ReaderPage } from "@/pages/ReaderPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { StudySessionPage } from "@/pages/StudySessionPage";
 import { TermsPage } from "@/pages/TermsPage";
-import { UsageHistoryPage } from "@/pages/UsageHistoryPage";
 import { VideoPage } from "@/pages/VideoPage";
 import { VideoQuizPage } from "@/pages/VideoQuizPage";
 
@@ -353,12 +352,6 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
-const usageHistoryRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/settings/usage",
-  component: UsageHistoryPage,
-});
-
 // Redirect old placement test URLs to adaptive practice
 function PlacementRedirect() {
   return <Navigate to="/adaptive-practice" replace />;
@@ -521,7 +514,6 @@ const routeTree = rootRoute.addChildren([
   practiceRoute,
   generateRoute,
   settingsRoute,
-  usageHistoryRoute,
   placementTestRoute,
   studySessionRoute,
   adaptivePracticeRoute,
