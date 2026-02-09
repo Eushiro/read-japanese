@@ -77,6 +77,7 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
 
   const upsertUser = useMutation(api.users.upsert);
   const ensureStripeCustomer = useAction(api.stripe.ensureStripeCustomer);
+  const triggerPrefetch = useAction(api.adaptivePractice.triggerPrefetch);
   const { trackEvent, events } = useAnalytics();
   const hasTrackedOnboardingRef = useRef(false);
 
@@ -158,6 +159,11 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         userId,
         email: userEmail ?? undefined,
       }).catch((err) => console.error("Failed to pre-create Stripe customer:", err));
+
+      // Pre-generate first practice set in background for instant load
+      triggerPrefetch({
+        language: selectedLanguage,
+      }).catch((err) => console.error("Failed to prefetch practice:", err));
 
       trackEvent(events.ONBOARDING_COMPLETED, {
         selected_languages: [selectedLanguage],

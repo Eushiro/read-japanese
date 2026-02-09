@@ -14,7 +14,8 @@
     "loadingMore2": "正在个性化您的下一组挑战...",
     "loadingMore3": "正在根据您的进度调整...",
     "loadingMore4": "正在为您选择合适的难度...",
-    "generationFailed": "无法生成更多题目，您可以继续完成剩余题目。"
+    "generationFailed": "无法生成更多题目，您可以继续完成剩余题目。",
+    "prefetching": "正在为您准备练习..."
   },
   "contentType": {
     "dialogue": "对话",

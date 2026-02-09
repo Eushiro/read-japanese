@@ -4,7 +4,7 @@ import { v } from "convex/values";
 
 import { api, internal } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
-import { action } from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { generateAndParse, type JsonSchema, parseJson } from "./ai/models";
 import { isAdminEmail } from "./lib/admin";
 import { estimateQuestionDifficulty } from "./lib/difficultyEstimator";
@@ -773,193 +773,248 @@ export const getNextPractice = action({
       throw new Error("Authentication required");
     }
 
-    const practiceId = crypto.randomUUID();
-    const uiLang = (args.uiLanguage ?? "en") as UILanguage;
-
-    // 1. Get learner profile and user in parallel (independent queries)
-    const [profile, user] = await Promise.all([
-      ctx.runQuery(internal.learnerModel.getProfileInternal, {
+    // Check for a prefetched set first — instant return if available
+    const prefetchedJson = await ctx.runMutation(
+      internal.adaptivePracticeQueries.consumePrefetchedSet,
+      {
         userId: args.userId,
         language: args.language,
-      }),
-      ctx.runQuery(api.users.getByClerkId, { clerkId: args.userId }),
-    ]);
-    const learningGoal = user?.learningGoal;
-
-    // Beginner detection: mirror contentEngine logic for appropriate starting difficulty
-    const isBeginner = !profile || profile.totalStudyMinutes === 0;
-    const storedAbility = profile?.abilityEstimate ?? 0;
-
-    // Ability mapping from self-assessment (biased lower so users start strong)
-    const selfAssessedAbility: Record<string, number> = {
-      complete_beginner: -2.0, // level_1 territory
-      some_basics: -1.2, // level_2 territory
-      intermediate: -0.3, // level_3 territory (not level_4)
-      advanced: 0.8, // level_4 territory (not level_5/6)
-    };
-
-    const effectiveAbility =
-      isBeginner && storedAbility === 0
-        ? (selfAssessedAbility[user?.selfAssessedLevel ?? "complete_beginner"] ?? -2.0)
-        : storedAbility;
-
-    // 2. Build profile snapshot for client
-    const skills = profile?.skills ?? {
-      vocabulary: 50,
-      grammar: 50,
-      reading: 50,
-      listening: 50,
-      writing: 50,
-      speaking: 50,
-    };
-    const profileSnapshot = {
-      abilityEstimate: effectiveAbility,
-      abilityConfidence: profile?.abilityConfidence ?? 1.0,
-      skillScores: skills as Record<string, number>,
-    };
-
-    // 3. Determine weak skills (with goal bias applied)
-    const biasedSkills = applyGoalBias(skills, learningGoal);
-    const weakSkills = identifyWeakSkills(biasedSkills);
-
-    // 4. Diagnostic vs Normal mode
-    // High SE (> 0.5) means uncertain about ability → diagnostic mode
-    const isDiagnostic = (profile?.abilityConfidence ?? 1.0) > 0.5;
-
-    if (isDiagnostic) {
-      // ===== DIAGNOSTIC MODE =====
-      // Hybrid flow: search pool first, generate fresh to fill gaps
-      const targetCount = 4;
-      const learnerContext: LearnerContext = {
-        abilityEstimate: effectiveAbility,
-        weakAreas: profile?.weakAreas,
-        interestWeights: profile?.interestWeights ?? undefined,
-        examType: profile?.examType ?? undefined,
-        learningGoal,
-        vocabCoverage: profile?.vocabCoverage,
-        difficultyCalibration: profile?.difficultyCalibration ?? undefined,
-        skills: skills as Record<string, number>,
-      };
-
-      // Determine target difficulty based on ability
-      const targetDifficulty: DifficultyLevel =
-        effectiveAbility <= -2
-          ? "level_1"
-          : effectiveAbility <= -1
-            ? "level_2"
-            : effectiveAbility <= 0
-              ? "level_3"
-              : effectiveAbility <= 1
-                ? "level_4"
-                : effectiveAbility <= 2
-                  ? "level_5"
-                  : "level_6";
-
-      // Search the question pool for matching questions
-      let poolQuestions: PracticeQuestion[] = [];
-      let poolSize = 0;
+      }
+    );
+    if (prefetchedJson) {
       try {
-        const interests =
-          profile?.interestWeights?.filter((iw) => iw.weight > 0).map((iw) => iw.tag) ?? [];
+        const prefetched = JSON.parse(prefetchedJson) as PracticeSet;
 
-        const poolResult = await ctx.runAction(internal.questionPool.searchQuestionPool, {
+        // Side effects deferred from prefetch time — charge credits + persist session
+        await ctx.runMutation(internal.adaptivePracticeQueries.upsertPracticeSessionInternal, {
           userId: args.userId,
+          practiceId: prefetched.practiceId,
           language: args.language,
-          difficulty: targetDifficulty,
-          targetCount,
-          abilityEstimate: effectiveAbility,
-          weakAreas: profile?.weakAreas?.map((w) => ({
-            skill: w.skill,
-            topic: w.topic,
-            score: w.score,
+          isDiagnostic: prefetched.isDiagnostic,
+          contentId: prefetched.content?.contentId,
+          contentType: prefetched.content?.contentType,
+          questions: prefetched.questions.map((q) => ({
+            questionId: q.questionId,
+            type: q.type,
+            targetSkill: q.targetSkill,
+            difficulty: q.difficulty,
           })),
-          interests,
+          modelUsed: prefetched.modelUsed,
         });
 
-        poolSize = poolResult.poolSize;
+        await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+          userId: args.userId,
+          action: "question",
+        });
 
-        // Determine how many pool questions to use based on pool size
-        const poolRatio = poolSize < 50 ? 0 : poolSize < 200 ? 0.3 : poolSize < 1000 ? 0.5 : 0.7;
-        const poolTarget = Math.round(targetCount * poolRatio);
-
-        // Convert pool results to PracticeQuestion format
-        // Only include pool questions that have translations
-        poolQuestions = poolResult.questions
-          .filter((pq: (typeof poolResult.questions)[number]) => pq.translations !== undefined)
-          .slice(0, poolTarget)
-          .map((pq: (typeof poolResult.questions)[number], idx: number) => ({
-            questionId: `pool_${Date.now()}_${idx}`,
-            type: pq.questionType as PracticeQuestionType,
-            targetSkill: pq.targetSkill as SkillType,
-            difficulty: pq.difficulty as DifficultyLevel,
-            question: pq.question,
-            passageText: pq.passageText ?? undefined,
-            options: pq.options ?? undefined,
-            correctAnswer: pq.correctAnswer,
-            acceptableAnswers: pq.acceptableAnswers ?? undefined,
-            points: pq.points,
-            questionHash: pq.questionHash,
-            translations: pq.translations as Record<UILanguage, string>,
-            optionTranslations: (pq.optionTranslations as Record<UILanguage, string[]>) ?? null,
-            showOptionsInTargetLanguage: pq.showOptionsInTargetLanguage ?? true,
-          }));
-      } catch (error) {
-        console.error("Pool search failed, falling back to full generation:", error);
+        console.log(`Serving prefetched practice set ${prefetched.practiceId}`);
+        return prefetched;
+      } catch (e) {
+        console.error("Failed to parse prefetched set, falling back to generation:", e);
       }
+    }
 
-      // Generate fresh questions to fill gaps
-      const freshNeeded = targetCount - poolQuestions.length;
-      let freshQuestions: PracticeQuestion[] = [];
-      let diagnosticMeta: QuestionGenerationMeta = {};
+    // Cancel any in-flight prefetch to prevent double credit charges
+    await ctx.runMutation(internal.adaptivePracticeQueries.invalidatePrefetch, {
+      userId: args.userId,
+      language: args.language,
+    });
 
-      if (freshNeeded > 0) {
-        const diagnosticResult = await generateDiagnosticQuestions(
-          args.language,
-          effectiveAbility,
-          uiLang,
-          learnerContext,
-          undefined,
-          targetDifficulty
-        );
-        freshQuestions = diagnosticResult.questions.slice(0, freshNeeded);
-        diagnosticMeta = {
+    // No prefetched set available — generate fresh
+    return generatePracticeSet(ctx, {
+      userId: args.userId,
+      language: args.language,
+      preferredContentType: args.preferredContentType,
+      uiLanguage: (args.uiLanguage ?? "en") as UILanguage,
+    });
+  },
+});
+
+/**
+ * Core generation logic shared by getNextPractice and prefetchPractice.
+ * Generates a full PracticeSet (profile lookup → questions → TTS).
+ * When skipSideEffects is true (prefetch path), skips credit charging
+ * and session upsert — these are deferred to consumption time.
+ */
+async function generatePracticeSet(
+  ctx: ActionCtx,
+  args: {
+    userId: string;
+    language: ContentLanguage;
+    preferredContentType?: "dialogue" | "micro_story";
+    uiLanguage?: UILanguage;
+    skipSideEffects?: boolean;
+  }
+): Promise<PracticeSet> {
+  const practiceId = crypto.randomUUID();
+  const uiLang = args.uiLanguage ?? "en";
+
+  // 1. Get learner profile and user in parallel
+  const [profile, user] = await Promise.all([
+    ctx.runQuery(internal.learnerModel.getProfileInternal, {
+      userId: args.userId,
+      language: args.language,
+    }),
+    ctx.runQuery(api.users.getByClerkId, { clerkId: args.userId }),
+  ]);
+  const learningGoal = user?.learningGoal;
+
+  const isBeginner = !profile || profile.totalStudyMinutes === 0;
+  const storedAbility = profile?.abilityEstimate ?? 0;
+
+  const selfAssessedAbility: Record<string, number> = {
+    complete_beginner: -2.0,
+    some_basics: -1.2,
+    intermediate: -0.3,
+    advanced: 0.8,
+  };
+
+  const effectiveAbility =
+    isBeginner && storedAbility === 0
+      ? (selfAssessedAbility[user?.selfAssessedLevel ?? "complete_beginner"] ?? -2.0)
+      : storedAbility;
+
+  const skills = profile?.skills ?? {
+    vocabulary: 50,
+    grammar: 50,
+    reading: 50,
+    listening: 50,
+    writing: 50,
+    speaking: 50,
+  };
+  const profileSnapshot = {
+    abilityEstimate: effectiveAbility,
+    abilityConfidence: profile?.abilityConfidence ?? 1.0,
+    skillScores: skills as Record<string, number>,
+  };
+
+  const biasedSkills = applyGoalBias(skills, learningGoal);
+  const weakSkills = identifyWeakSkills(biasedSkills);
+
+  const isDiagnostic = (profile?.abilityConfidence ?? 1.0) > 0.5;
+
+  if (isDiagnostic) {
+    const targetCount = 4;
+    const learnerContext: LearnerContext = {
+      abilityEstimate: effectiveAbility,
+      weakAreas: profile?.weakAreas,
+      interestWeights: profile?.interestWeights ?? undefined,
+      examType: profile?.examType ?? undefined,
+      learningGoal,
+      vocabCoverage: profile?.vocabCoverage,
+      difficultyCalibration: profile?.difficultyCalibration ?? undefined,
+      skills: skills as Record<string, number>,
+    };
+
+    const targetDifficulty: DifficultyLevel =
+      effectiveAbility <= -2
+        ? "level_1"
+        : effectiveAbility <= -1
+          ? "level_2"
+          : effectiveAbility <= 0
+            ? "level_3"
+            : effectiveAbility <= 1
+              ? "level_4"
+              : effectiveAbility <= 2
+                ? "level_5"
+                : "level_6";
+
+    let poolQuestions: PracticeQuestion[] = [];
+    let poolSize = 0;
+    try {
+      const interests =
+        profile?.interestWeights?.filter((iw) => iw.weight > 0).map((iw) => iw.tag) ?? [];
+
+      const poolResult = await ctx.runAction(internal.questionPool.searchQuestionPool, {
+        userId: args.userId,
+        language: args.language,
+        difficulty: targetDifficulty,
+        targetCount,
+        abilityEstimate: effectiveAbility,
+        weakAreas: profile?.weakAreas?.map((w) => ({
+          skill: w.skill,
+          topic: w.topic,
+          score: w.score,
+        })),
+        interests,
+      });
+
+      poolSize = poolResult.poolSize;
+      const poolRatio = poolSize < 50 ? 0 : poolSize < 200 ? 0.3 : poolSize < 1000 ? 0.5 : 0.7;
+      const poolTarget = Math.round(targetCount * poolRatio);
+
+      poolQuestions = poolResult.questions
+        .filter((pq: (typeof poolResult.questions)[number]) => pq.translations !== undefined)
+        .slice(0, poolTarget)
+        .map((pq: (typeof poolResult.questions)[number], idx: number) => ({
+          questionId: `pool_${Date.now()}_${idx}`,
+          type: pq.questionType as PracticeQuestionType,
+          targetSkill: pq.targetSkill as SkillType,
+          difficulty: pq.difficulty as DifficultyLevel,
+          question: pq.question,
+          passageText: pq.passageText ?? undefined,
+          options: pq.options ?? undefined,
+          correctAnswer: pq.correctAnswer,
+          acceptableAnswers: pq.acceptableAnswers ?? undefined,
+          points: pq.points,
+          questionHash: pq.questionHash,
+          translations: pq.translations as Record<UILanguage, string>,
+          optionTranslations: (pq.optionTranslations as Record<UILanguage, string[]>) ?? null,
+          showOptionsInTargetLanguage: pq.showOptionsInTargetLanguage ?? true,
+        }));
+    } catch (error) {
+      console.error("Pool search failed, falling back to full generation:", error);
+    }
+
+    const freshNeeded = targetCount - poolQuestions.length;
+    let freshQuestions: PracticeQuestion[] = [];
+    let diagnosticMeta: QuestionGenerationMeta = {};
+
+    if (freshNeeded > 0) {
+      const diagnosticResult = await generateDiagnosticQuestions(
+        args.language,
+        effectiveAbility,
+        uiLang,
+        learnerContext,
+        undefined,
+        targetDifficulty
+      );
+      freshQuestions = diagnosticResult.questions.slice(0, freshNeeded);
+      diagnosticMeta = {
+        modelUsed: diagnosticResult.modelUsed,
+        systemPrompt: diagnosticResult.systemPrompt,
+        prompt: diagnosticResult.prompt,
+        qualityScore: diagnosticResult.qualityScore,
+        validationFailures: diagnosticResult.validationFailures,
+        repairAttempts: diagnosticResult.repairAttempts,
+        generationLatencyMs: diagnosticResult.generationLatencyMs,
+      };
+
+      ctx
+        .runAction(internal.questionPool.ingestQuestionsToPool, {
+          language: args.language,
+          questions: formatQuestionsForPoolIngestion(diagnosticResult.questions, "level_3"),
           modelUsed: diagnosticResult.modelUsed,
-          systemPrompt: diagnosticResult.systemPrompt,
-          prompt: diagnosticResult.prompt,
           qualityScore: diagnosticResult.qualityScore,
-          validationFailures: diagnosticResult.validationFailures,
-          repairAttempts: diagnosticResult.repairAttempts,
-          generationLatencyMs: diagnosticResult.generationLatencyMs,
-        };
+        })
+        .catch((e) => console.error("Pool ingestion failed:", e));
+    }
 
-        // Fire-and-forget: ingest fresh questions to pool
-        ctx
-          .runAction(internal.questionPool.ingestQuestionsToPool, {
-            language: args.language,
-            questions: formatQuestionsForPoolIngestion(diagnosticResult.questions, "level_3"),
-            modelUsed: diagnosticResult.modelUsed,
-            qualityScore: diagnosticResult.qualityScore,
-          })
-          .catch((e) => console.error("Pool ingestion failed:", e));
-      }
+    const allQuestions = shuffleArray([...poolQuestions, ...freshQuestions]);
+    const diagnosticCaps = getAudioCaps(true);
+    const cappedDiagnostic = applyAudioCaps(
+      allQuestions,
+      { listening: 0, speaking: 0 },
+      diagnosticCaps
+    );
 
-      // Merge pool + fresh questions, shuffle
-      const allQuestions = shuffleArray([...poolQuestions, ...freshQuestions]);
+    const questionsWithAudio = await generateTTSForQuestions(
+      ctx,
+      cappedDiagnostic.accepted,
+      args.language
+    );
 
-      const diagnosticCaps = getAudioCaps(true);
-      const cappedDiagnostic = applyAudioCaps(
-        allQuestions,
-        { listening: 0, speaking: 0 },
-        diagnosticCaps
-      );
-
-      // Generate TTS audio for audio-based question types (max 1-2)
-      const questionsWithAudio = await generateTTSForQuestions(
-        ctx,
-        cappedDiagnostic.accepted,
-        args.language
-      );
-
+    if (!args.skipSideEffects) {
       await ctx.runMutation(internal.adaptivePracticeQueries.upsertPracticeSessionInternal, {
         userId: args.userId,
         practiceId,
@@ -978,99 +1033,95 @@ export const getNextPractice = action({
         generationLatencyMs: diagnosticMeta.generationLatencyMs,
       });
 
-      console.log(
-        `Diagnostic: ${poolQuestions.length} from pool, ${freshQuestions.length} fresh (pool size: ${poolSize})`
-      );
-
-      // Charge credits for question generation
       await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
-        userId: identity.subject,
+        userId: args.userId,
         action: "question",
       });
-
-      return {
-        practiceId,
-        isDiagnostic: true,
-        questions: questionsWithAudio,
-        targetSkills: ["vocabulary", "grammar", "reading", "listening", "writing", "speaking"],
-        difficulty: effectiveAbility,
-        generatedAt: Date.now(),
-        modelUsed: diagnosticMeta.modelUsed,
-        systemPrompt: diagnosticMeta.systemPrompt,
-        prompt: diagnosticMeta.prompt,
-        profileSnapshot,
-      };
     }
 
-    // ===== NORMAL MODE =====
-    // 5. Get adaptive content
-    const contentType = args.preferredContentType ?? selectContentType(weakSkills, learningGoal);
-    const contentResult = await ctx.runAction(api.contentEngine.getBestContent, {
-      userId: args.userId,
+    console.log(
+      `Diagnostic: ${poolQuestions.length} from pool, ${freshQuestions.length} fresh (pool size: ${poolSize})`
+    );
+
+    return {
+      practiceId,
+      isDiagnostic: true,
+      questions: questionsWithAudio,
+      targetSkills: ["vocabulary", "grammar", "reading", "listening", "writing", "speaking"],
+      difficulty: effectiveAbility,
+      generatedAt: Date.now(),
+      modelUsed: diagnosticMeta.modelUsed,
+      systemPrompt: diagnosticMeta.systemPrompt,
+      prompt: diagnosticMeta.prompt,
+      profileSnapshot,
+    };
+  }
+
+  // ===== NORMAL MODE =====
+  const contentType = args.preferredContentType ?? selectContentType(weakSkills, learningGoal);
+  const contentResult = await ctx.runAction(api.contentEngine.getBestContent, {
+    userId: args.userId,
+    language: args.language,
+    contentType,
+  });
+
+  const contentUrl = contentResult.contentUrl;
+  let contentPayload: PracticeContent;
+
+  try {
+    const response = await fetch(contentUrl);
+    const data = await response.json();
+    contentPayload = {
+      contentId: contentResult.contentId,
+      contentType: contentResult.contentType,
+      title: data.title,
+      content: data.content,
+      translation: data.translation,
+      vocabulary: data.vocabulary || [],
+      audioUrl: data.audioUrl,
+    };
+  } catch (error) {
+    console.error("Failed to fetch content:", error);
+    throw new Error("Failed to fetch practice content");
+  }
+
+  const questionTypes = selectQuestionTypes(weakSkills);
+  const generatedResult = await generateQuestionsFromContent(
+    contentPayload,
+    weakSkills,
+    questionTypes,
+    args.language,
+    uiLang,
+    profile?.abilityEstimate ?? 0,
+    profile?.weakAreas,
+    undefined,
+    learningGoal
+  );
+
+  ctx
+    .runAction(internal.questionPool.ingestQuestionsToPool, {
       language: args.language,
-      contentType,
-    });
+      questions: formatQuestionsForPoolIngestion(generatedResult.questions, "level_3"),
+      modelUsed: generatedResult.modelUsed,
+      qualityScore: generatedResult.qualityScore,
+    })
+    .catch((e) => console.error("Pool ingestion failed:", e));
 
-    // 6. Fetch the content payload
-    const contentUrl = contentResult.contentUrl;
-    let contentPayload: PracticeContent;
+  const normalCaps = getAudioCaps(false);
+  const cappedNormal = applyAudioCaps(
+    generatedResult.questions,
+    { listening: 0, speaking: 0 },
+    normalCaps
+  );
 
-    try {
-      const response = await fetch(contentUrl);
-      const data = await response.json();
-      contentPayload = {
-        contentId: contentResult.contentId,
-        contentType: contentResult.contentType,
-        title: data.title,
-        content: data.content,
-        translation: data.translation,
-        vocabulary: data.vocabulary || [],
-        audioUrl: data.audioUrl,
-      };
-    } catch (error) {
-      console.error("Failed to fetch content:", error);
-      throw new Error("Failed to fetch practice content");
-    }
+  const questionsWithAudio = await generateTTSForQuestions(
+    ctx,
+    cappedNormal.accepted,
+    args.language,
+    contentPayload.content
+  );
 
-    // 7. Generate questions based on weak skills (8-10 questions)
-    const questionTypes = selectQuestionTypes(weakSkills);
-    const generatedResult = await generateQuestionsFromContent(
-      contentPayload,
-      weakSkills,
-      questionTypes,
-      args.language,
-      uiLang,
-      profile?.abilityEstimate ?? 0,
-      profile?.weakAreas,
-      undefined,
-      learningGoal
-    );
-
-    // Fire-and-forget: ingest content-based questions to pool
-    ctx
-      .runAction(internal.questionPool.ingestQuestionsToPool, {
-        language: args.language,
-        questions: formatQuestionsForPoolIngestion(generatedResult.questions, "level_3"),
-        modelUsed: generatedResult.modelUsed,
-        qualityScore: generatedResult.qualityScore,
-      })
-      .catch((e) => console.error("Pool ingestion failed:", e));
-
-    const normalCaps = getAudioCaps(false);
-    const cappedNormal = applyAudioCaps(
-      generatedResult.questions,
-      { listening: 0, speaking: 0 },
-      normalCaps
-    );
-
-    // 8. Generate TTS audio for audio-based question types
-    const questionsWithAudio = await generateTTSForQuestions(
-      ctx,
-      cappedNormal.accepted,
-      args.language,
-      contentPayload.content
-    );
-
+  if (!args.skipSideEffects) {
     await ctx.runMutation(internal.adaptivePracticeQueries.upsertPracticeSessionInternal, {
       userId: args.userId,
       practiceId,
@@ -1091,23 +1142,81 @@ export const getNextPractice = action({
       generationLatencyMs: generatedResult.generationLatencyMs,
     });
 
-    // Charge credits for question generation
     await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
-      userId: identity.subject,
+      userId: args.userId,
       action: "question",
     });
+  }
 
-    return {
-      practiceId,
-      isDiagnostic: false,
-      content: contentPayload,
-      questions: questionsWithAudio,
-      targetSkills: weakSkills,
-      difficulty: profile?.abilityEstimate ?? 0,
-      generatedAt: Date.now(),
-      modelUsed: generatedResult.modelUsed,
-      profileSnapshot,
-    };
+  return {
+    practiceId,
+    isDiagnostic: false,
+    content: contentPayload,
+    questions: questionsWithAudio,
+    targetSkills: weakSkills,
+    difficulty: profile?.abilityEstimate ?? 0,
+    generatedAt: Date.now(),
+    modelUsed: generatedResult.modelUsed,
+    profileSnapshot,
+  };
+}
+
+/**
+ * Prefetch a practice set in the background so it's ready instantly
+ * when the user navigates to adaptive practice.
+ * Uses a slot system to prevent duplicate generation.
+ */
+export const prefetchPractice = internalAction({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    // Claim a prefetch slot (atomic — prevents duplicate generation)
+    const slotId = await ctx.runMutation(internal.adaptivePracticeQueries.claimPrefetchSlot, {
+      userId: args.userId,
+      language: args.language,
+    });
+    if (!slotId) return;
+
+    try {
+      const result = await generatePracticeSet(ctx, {
+        userId: args.userId,
+        language: args.language,
+        skipSideEffects: true,
+      });
+
+      await ctx.runMutation(internal.adaptivePracticeQueries.savePrefetchedSet, {
+        prefetchId: slotId,
+        practiceSet: JSON.stringify(result),
+      });
+
+      console.log(`Prefetched practice set ${result.practiceId} for user ${args.userId}`);
+    } catch (error) {
+      await ctx.runMutation(internal.adaptivePracticeQueries.deletePrefetchSlot, {
+        prefetchId: slotId,
+      });
+      console.error("Prefetch generation failed:", error);
+    }
+  },
+});
+
+/**
+ * Public action to trigger prefetch from the frontend.
+ * Best-effort, non-blocking — fire and forget.
+ */
+export const triggerPrefetch = action({
+  args: {
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return;
+
+    await ctx.runAction(internal.adaptivePractice.prefetchPractice, {
+      userId: identity.subject,
+      language: args.language,
+    });
   },
 });
 

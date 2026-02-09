@@ -404,6 +404,12 @@ export function AdaptivePracticePage() {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Prefetch status — watch for background-generated practice set
+  const prefetchStatus = useQuery(
+    api.adaptivePracticeQueries.getPrefetchStatus,
+    user && phase === "loading" ? { userId: user.id, language } : "skip"
+  );
+
   // Loading messages
   const loadingPhrases = useMemo(
     () => [
@@ -1465,6 +1471,7 @@ export function AdaptivePracticePage() {
 
   // Loading state (auth loading or practice loading phase)
   if (authLoading || phase === "loading") {
+    const isPrefetching = prefetchStatus?.status === "generating";
     return (
       <div className="min-h-screen bg-background flex flex-col relative">
         <PremiumBackground colorScheme="cool" intensity="minimal" />
@@ -1477,19 +1484,32 @@ export function AdaptivePracticePage() {
           </div>
         </div>
         <div className="absolute inset-0 flex items-center justify-center pb-48">
-          <div className="text-2xl sm:text-3xl font-bold text-center px-4">
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={loadingPhrase}
-                className="inline-block bg-gradient-to-r from-yellow-300 via-orange-400 to-purple-400 bg-clip-text text-transparent"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
+          <div className="text-center px-4">
+            <div className="text-2xl sm:text-3xl font-bold">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={loadingPhrase}
+                  className="inline-block bg-gradient-to-r from-yellow-300 via-orange-400 to-purple-400 bg-clip-text text-transparent"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
+                >
+                  {loadingPhrase}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+            {isPrefetching && (
+              <motion.div
+                className="mt-6 flex items-center justify-center gap-2 text-sm text-foreground-muted"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
               >
-                {loadingPhrase}
-              </motion.span>
-            </AnimatePresence>
+                <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                {t("adaptivePractice.loading.prefetching")}
+              </motion.div>
+            )}
           </div>
         </div>
       </div>

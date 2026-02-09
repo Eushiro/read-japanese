@@ -54,6 +54,8 @@ import type * as lib_translation from "../lib/translation.js";
 import type * as migrations_definitionTranslations from "../migrations/definitionTranslations.js";
 import type * as migrations_fixMediaEncoding from "../migrations/fixMediaEncoding.js";
 import type * as migrations_fixMediaEncodingActions from "../migrations/fixMediaEncodingActions.js";
+import type * as migrations_flashcardLanguageBackfill from "../migrations/flashcardLanguageBackfill.js";
+import type * as migrations_flashcardLanguageMigration from "../migrations/flashcardLanguageMigration.js";
 import type * as migrations_mediaCleanup from "../migrations/mediaCleanup.js";
 import type * as migrations_mediaReorganization from "../migrations/mediaReorganization.js";
 import type * as migrations_settingsMigration from "../migrations/settingsMigration.js";
@@ -133,6 +135,8 @@ declare const fullApi: ApiFromModules<{
   "migrations/definitionTranslations": typeof migrations_definitionTranslations;
   "migrations/fixMediaEncoding": typeof migrations_fixMediaEncoding;
   "migrations/fixMediaEncodingActions": typeof migrations_fixMediaEncodingActions;
+  "migrations/flashcardLanguageBackfill": typeof migrations_flashcardLanguageBackfill;
+  "migrations/flashcardLanguageMigration": typeof migrations_flashcardLanguageMigration;
   "migrations/mediaCleanup": typeof migrations_mediaCleanup;
   "migrations/mediaReorganization": typeof migrations_mediaReorganization;
   "migrations/settingsMigration": typeof migrations_settingsMigration;

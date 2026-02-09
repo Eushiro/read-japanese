@@ -11,4 +11,11 @@ crons.daily(
   internal.scheduledJobs.refreshDueSentences
 );
 
+// Clean up consumed and stuck prefetched practice sets daily at 4 AM UTC
+crons.daily(
+  "cleanup-prefetched-practice-sets",
+  { hourUTC: 4, minuteUTC: 0 },
+  internal.adaptivePracticeQueries.cleanupPrefetchedSets
+);
+
 export default crons;

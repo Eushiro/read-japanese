@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Video,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { CreditAlert } from "@/components/CreditAlert";
 import { SkillsSection } from "@/components/dashboard/SkillsSection";
@@ -50,6 +50,20 @@ export function DashboardPage() {
 
   // Get primary language for adaptive content (first user language or default to japanese)
   const primaryLanguage = userLanguages[0] ?? "japanese";
+
+  // Prefetch practice set in background so it's ready when user clicks "Start Practice"
+  const triggerPrefetch = useAction(api.adaptivePractice.triggerPrefetch);
+  const prefetchTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (!isAuthenticated || !userProfile || prefetchTriggeredRef.current) return;
+    // Only prefetch if there's no active session in sessionStorage
+    const hasActiveSession = !!sessionStorage.getItem(getPracticeSessionKey(primaryLanguage));
+    if (hasActiveSession) return;
+    prefetchTriggeredRef.current = true;
+    triggerPrefetch({ language: primaryLanguage }).catch(() => {
+      // Best-effort — ignore errors
+    });
+  }, [isAuthenticated, userProfile, primaryLanguage, triggerPrefetch]);
 
   // Fetch streak data
   const streakData = useQuery(

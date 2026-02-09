@@ -5,7 +5,12 @@ import { internalMutation, internalQuery, mutation, query } from "./_generated/s
 import { isAdminEmail } from "./lib/admin";
 import { labelToIRT } from "./lib/difficultyEstimator";
 import { TEST_MODE_MODELS } from "./lib/models";
-import { adaptiveContentTypeValidator, difficultyLevelValidator, languageValidator } from "./schema";
+import {
+  adaptiveContentTypeValidator,
+  difficultyLevelValidator,
+  languageValidator,
+  type PrefetchStatus,
+} from "./schema";
 
 const LISTENING_TYPES = new Set(["listening_mcq", "dictation"]);
 const SPEAKING_TYPES = new Set(["shadow_record"]);
@@ -167,6 +172,171 @@ export const upsertPracticeSessionInternal = internalMutation({
     });
 
     return { ...counts, totalQuestions: mergedQuestions.length };
+  },
+});
+
+// ============================================
+// PREFETCH SLOT SYSTEM
+// ============================================
+
+/**
+ * Atomically claim a prefetch slot for a user+language.
+ * Returns the new row's ID if a "generating" row was inserted, null if one already exists.
+ */
+export const claimPrefetchSlot = internalMutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    // Check for existing generating or ready rows
+    const existing = await ctx.db
+      .query("prefetchedPracticeSets")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .collect();
+
+    const active = existing.find((r) => r.status === "generating" || r.status === "ready");
+    if (active) return null; // Already have an active prefetch
+
+    const id = await ctx.db.insert("prefetchedPracticeSets", {
+      userId: args.userId,
+      language: args.language,
+      practiceSet: "",
+      status: "generating",
+      createdAt: Date.now(),
+    });
+    return id;
+  },
+});
+
+/**
+ * Save a generated practice set to a "generating" prefetch row, marking it "ready".
+ */
+export const savePrefetchedSet = internalMutation({
+  args: {
+    prefetchId: v.id("prefetchedPracticeSets"),
+    practiceSet: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.prefetchId);
+    if (!row || row.status !== "generating") return;
+    await ctx.db.patch(args.prefetchId, {
+      practiceSet: args.practiceSet,
+      status: "ready",
+    });
+  },
+});
+
+/**
+ * Consume a "ready" prefetch row for a user+language.
+ * Marks it "consumed" and returns the serialized PracticeSet, or null if none ready.
+ */
+export const consumePrefetchedSet = internalMutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("prefetchedPracticeSets")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .collect();
+
+    const ready = rows.find((r) => r.status === "ready");
+    if (!ready) return null;
+
+    await ctx.db.patch(ready._id, { status: "consumed" });
+    return ready.practiceSet;
+  },
+});
+
+/**
+ * Delete a "generating" prefetch row (used on error cleanup).
+ */
+export const deletePrefetchSlot = internalMutation({
+  args: {
+    prefetchId: v.id("prefetchedPracticeSets"),
+  },
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.prefetchId);
+    if (row) await ctx.db.delete(args.prefetchId);
+  },
+});
+
+/**
+ * Invalidate (delete) any ready/generating prefetch for a user+language.
+ * Called when the learner model changes (session completion).
+ */
+export const invalidatePrefetch = internalMutation({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("prefetchedPracticeSets")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .collect();
+
+    for (const row of rows) {
+      if (row.status === "ready" || row.status === "generating") {
+        await ctx.db.delete(row._id);
+      }
+    }
+  },
+});
+
+/**
+ * Get prefetch status for a user+language (used by frontend loading screen).
+ */
+export const getPrefetchStatus = query({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("prefetchedPracticeSets")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .collect();
+
+    const active = rows.find((r) => r.status === "generating" || r.status === "ready");
+    if (!active) return null;
+    return { status: active.status as PrefetchStatus };
+  },
+});
+
+/**
+ * Cleanup consumed and stuck generating rows (called by cron).
+ */
+export const cleanupPrefetchedSets = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+    // We can't filter by status in the index, so collect all and filter
+    const allRows = await ctx.db.query("prefetchedPracticeSets").collect();
+
+    let deleted = 0;
+    for (const row of allRows) {
+      if (row.status === "consumed") {
+        await ctx.db.delete(row._id);
+        deleted++;
+      } else if (row.status === "generating" && row.createdAt < oneHourAgo) {
+        await ctx.db.delete(row._id);
+        deleted++;
+      }
+    }
+    if (deleted > 0) {
+      console.log(`Cleaned up ${deleted} prefetched practice sets`);
+    }
   },
 });
 
@@ -411,5 +581,17 @@ export const flushLearnerModel = internalMutation({
         score: avgScore,
       });
     }
+
+    // Invalidate stale prefetched sets (learner model just changed)
+    await ctx.runMutation(internal.adaptivePracticeQueries.invalidatePrefetch, {
+      userId: args.userId,
+      language: args.language,
+    });
+
+    // Schedule a new prefetch for the next session
+    await ctx.scheduler.runAfter(0, internal.adaptivePractice.prefetchPractice, {
+      userId: args.userId,
+      language: args.language,
+    });
   },
 });

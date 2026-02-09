@@ -101,6 +101,9 @@ export type PracticeQuestionType =
 // Adaptive content audience scopes
 export type ContentAudienceScope = "global" | "goal" | "user";
 
+// Prefetch status
+export type PrefetchStatus = "generating" | "ready" | "consumed";
+
 // ============================================
 // VALIDATORS
 // ============================================
@@ -300,6 +303,13 @@ export const contentAudienceScopeValidator = v.union(
   v.literal("global"),
   v.literal("goal"),
   v.literal("user")
+);
+
+// Prefetch status
+export const prefetchStatusValidator = v.union(
+  v.literal("generating"),
+  v.literal("ready"),
+  v.literal("consumed")
 );
 
 // Practice question types (adaptive practice)
@@ -1876,6 +1886,17 @@ export default defineSchema({
 
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // ============================================
+  // PREFETCHED PRACTICE SETS (background generation cache)
+  // ============================================
+  prefetchedPracticeSets: defineTable({
+    userId: v.string(),
+    language: languageValidator,
+    practiceSet: v.string(), // JSON-serialized PracticeSet (includes TTS audio URLs)
+    status: prefetchStatusValidator,
+    createdAt: v.number(),
+  }).index("by_user_language", ["userId", "language"]),
 
   // ============================================
   // ASSESSMENT RESPONSES (for regrading)
