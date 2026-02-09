@@ -57,6 +57,12 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
     return profile?.abilityEstimate ?? -0.5;
   };
 
+  // Get ability confidence (SE) for a language — default 1.0 (uncertain) when no profile
+  const getConfidenceForLanguage = (lang: ContentLanguage) => {
+    const profile = profilesByLanguage.get(lang);
+    return profile?.abilityConfidence ?? 1.0;
+  };
+
   // Loading state
   if (!isPreview && allProfiles === undefined) {
     return (
@@ -120,6 +126,7 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
             language="japanese"
             skills={SAMPLE_SKILLS}
             abilityEstimate={-0.5}
+            abilityConfidence={0}
             isPreview
             colorScheme="orange"
             showLanguageHeader={false}
@@ -222,6 +229,7 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
             language={userLanguages[0]}
             skills={getSkillsForLanguage(userLanguages[0])}
             abilityEstimate={getAbilityForLanguage(userLanguages[0])}
+            abilityConfidence={getConfidenceForLanguage(userLanguages[0])}
             isPreview={false}
             colorScheme={getLanguageColorScheme(0, 1)}
             showLanguageHeader={false}
@@ -234,6 +242,7 @@ export function SkillsSection({ userId, userLanguages, isPreview }: SkillsSectio
                 language={lang}
                 skills={getSkillsForLanguage(lang)}
                 abilityEstimate={getAbilityForLanguage(lang)}
+                abilityConfidence={getConfidenceForLanguage(lang)}
                 isPreview={false}
                 colorScheme={getLanguageColorScheme(index, userLanguages.length)}
               />

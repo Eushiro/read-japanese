@@ -72,7 +72,11 @@
     "summary": "Best: {{best}} · Focus next: {{focus}}",
     "currentLevel": "Current Level",
     "progressToNext": "Progress to {{nextLevel}}",
-    "maxLevel": "Highest level"
+    "maxLevel": "Highest level",
+    "calibrating": {
+      "title": "Still calibrating your level",
+      "description": "Complete a few more practice questions so we can estimate your skills accurately."
+    }
   },
   "languageSwitcher": {
     "takeTest": "Test",

@@ -1,5 +1,8 @@
 // Shared level constants for JLPT and CEFR levels
 
+/** Standard Error threshold below which we consider the learner model "calibrated". */
+export const CALIBRATION_SE_THRESHOLD = 0.5;
+
 import type { ContentLanguage } from "@/lib/contentLanguages";
 
 import type { DifficultyLevel } from "../../convex/schema";

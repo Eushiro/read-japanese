@@ -1,4 +1,4 @@
-import { useRouter } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ArrowLeft, BookOpen, Clock, Flame, Target, TrendingUp } from "lucide-react";
 import { useState } from "react";
@@ -26,7 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 import { getLanguageColorScheme } from "@/lib/languageColors";
-import { abilityToProgress, getLevelVariant } from "@/lib/levels";
+import { abilityToProgress, CALIBRATION_SE_THRESHOLD, getLevelVariant } from "@/lib/levels";
 
 import { api } from "../../convex/_generated/api";
 
@@ -112,6 +112,7 @@ export function ProgressPage() {
 
   // Level progress
   const levelProgress = profile ? abilityToProgress(profile.abilityEstimate, activeLanguage) : null;
+  const isCalibrating = (profile?.abilityConfidence ?? 1.0) > CALIBRATION_SE_THRESHOLD;
 
   // Prepare progress chart data
   const progressChartData = dailyProgress?.map((day) => ({
@@ -241,7 +242,27 @@ export function ProgressPage() {
             {/* Level + Skills */}
             <div className="rounded-xl backdrop-blur-md bg-surface/80 dark:bg-white/[0.03] border border-border dark:border-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
               <h2 className="font-semibold mb-4">{t("progress.skills.title")}</h2>
-              {profile && levelProgress ? (
+              {isCalibrating ? (
+                <div className="flex flex-col items-center text-center py-10 space-y-4">
+                  <div className="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center">
+                    <Target className="w-7 h-7 text-purple-400" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-medium text-foreground">
+                      {t("dashboard.skills.calibrating.title")}
+                    </p>
+                    <p className="text-sm text-muted-foreground max-w-xs">
+                      {t("dashboard.skills.calibrating.description")}
+                    </p>
+                  </div>
+                  <Link
+                    to="/adaptive-practice"
+                    className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-white/10 border border-white/10 hover:bg-white/15 transition-colors"
+                  >
+                    {t("dashboard.cta.startPractice")}
+                  </Link>
+                </div>
+              ) : profile && levelProgress ? (
                 <div className="space-y-5">
                   {/* Current level badge */}
                   <div className="flex items-center gap-3">

@@ -73,7 +73,11 @@
     "summary": "最强：{{best}} · 需加强：{{focus}}",
     "currentLevel": "当前等级",
     "progressToNext": "{{nextLevel}}进度",
-    "maxLevel": "最高等级"
+    "maxLevel": "最高等级",
+    "calibrating": {
+      "title": "正在校准您的等级",
+      "description": "再完成几道练习题，我们就能准确评估您的技能。"
+    }
   },
   "languageSwitcher": {
     "takeTest": "测试",

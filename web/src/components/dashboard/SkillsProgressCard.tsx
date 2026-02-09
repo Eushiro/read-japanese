@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { Target } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -7,7 +8,7 @@ import { SignInButton } from "@/contexts/AuthContext";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 import type { LanguageColorScheme } from "@/lib/languageColors";
-import { abilityToProgress, getLevelVariant } from "@/lib/levels";
+import { abilityToProgress, CALIBRATION_SE_THRESHOLD, getLevelVariant } from "@/lib/levels";
 
 interface SkillScores {
   vocabulary: number;
@@ -22,6 +23,7 @@ interface SkillsProgressCardProps {
   language: ContentLanguage;
   skills: SkillScores;
   abilityEstimate: number;
+  abilityConfidence: number;
   isPreview: boolean;
   colorScheme: LanguageColorScheme;
   showLanguageHeader?: boolean;
@@ -53,6 +55,7 @@ export function SkillsProgressCard({
   language,
   skills,
   abilityEstimate,
+  abilityConfidence,
   isPreview,
   colorScheme,
   showLanguageHeader = true,
@@ -67,6 +70,8 @@ export function SkillsProgressCard({
   const bestSkill = sortedSkills[0];
   const focusSkill = sortedSkills[sortedSkills.length - 1];
 
+  const isCalibrating = !isPreview && abilityConfidence > CALIBRATION_SE_THRESHOLD;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -79,71 +84,94 @@ export function SkillsProgressCard({
         <h3 className="font-semibold text-foreground">{t(`common.languages.${language}`)}</h3>
       )}
 
-      {/* Current level badge */}
-      <div className="flex items-center gap-3">
-        <Badge variant={levelVariant} className="text-lg px-4 py-1">
-          {currentLevel}
-        </Badge>
-        <span className="text-sm text-foreground">{t("dashboard.skills.currentLevel")}</span>
-      </div>
-
-      {/* Progress to next level */}
-      {nextLevel ? (
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-foreground">
-              {t("dashboard.skills.progressToNext", { nextLevel })}
-            </span>
-            <span className="font-medium text-foreground">{progressPercent}%</span>
+      {isCalibrating ? (
+        /* Calibrating state — confidence too low to show estimates */
+        <div className="flex flex-col items-center text-center py-6 space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center">
+            <Target className="w-7 h-7 text-purple-400" />
           </div>
-          <Progress value={progressPercent} gradient />
-        </div>
-      ) : (
-        <div className="text-sm text-foreground">{t("dashboard.skills.maxLevel")}</div>
-      )}
-
-      {/* Per-skill bars */}
-      <div className="space-y-3">
-        {SKILL_KEYS.map((key) => (
-          <div key={key} className="space-y-1">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-foreground">{t(`progress.skills.${key}`)}</span>
-              <span className="font-medium text-foreground">{skills[key]}</span>
-            </div>
-            <div className={`h-1.5 w-full rounded-full ${schemeTrackColors[colorScheme]}`}>
-              <div
-                className={`h-full rounded-full transition-all ${schemeColors[colorScheme]}`}
-                style={{ width: `${skills[key]}%` }}
-              />
-            </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">{t("dashboard.skills.calibrating.title")}</p>
+            <p className="text-sm text-muted-foreground max-w-xs">
+              {t("dashboard.skills.calibrating.description")}
+            </p>
           </div>
-        ))}
-      </div>
-
-      {/* Footer */}
-      <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          {t("dashboard.skills.best")}:{" "}
-          <span className="text-foreground font-medium">
-            {t(`progress.skills.${bestSkill.key}`)}
-          </span>
-          {" · "}
-          {t("dashboard.skills.next")}:{" "}
-          <span className="text-foreground font-medium">
-            {t(`progress.skills.${focusSkill.key}`)}
-          </span>
-        </p>
-        {!isPreview && (
           <Link
             to="/adaptive-practice"
-            className="inline-flex w-full items-center justify-center px-3 py-2 text-xs font-medium rounded-lg bg-white/10 border border-white/10 hover:bg-white/15 transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-white/10 border border-white/10 hover:bg-white/15 transition-colors"
           >
-            {t("dashboard.skills.practice", {
-              skill: t(`progress.skills.${focusSkill.key}`),
-            })}
+            {t("dashboard.cta.startPractice")}
           </Link>
-        )}
-      </div>
+        </div>
+      ) : (
+        <>
+          {/* Current level badge */}
+          <div className="flex items-center gap-3">
+            <Badge variant={levelVariant} className="text-lg px-4 py-1">
+              {currentLevel}
+            </Badge>
+            <span className="text-sm text-foreground">{t("dashboard.skills.currentLevel")}</span>
+          </div>
+
+          {/* Progress to next level */}
+          {nextLevel ? (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-foreground">
+                  {t("dashboard.skills.progressToNext", { nextLevel })}
+                </span>
+                <span className="font-medium text-foreground">{progressPercent}%</span>
+              </div>
+              <Progress value={progressPercent} gradient />
+            </div>
+          ) : (
+            <div className="text-sm text-foreground">{t("dashboard.skills.maxLevel")}</div>
+          )}
+
+          {/* Per-skill bars */}
+          <div className="space-y-3">
+            {SKILL_KEYS.map((key) => (
+              <div key={key} className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-foreground">{t(`progress.skills.${key}`)}</span>
+                  <span className="font-medium text-foreground">{skills[key]}</span>
+                </div>
+                <div className={`h-1.5 w-full rounded-full ${schemeTrackColors[colorScheme]}`}>
+                  <div
+                    className={`h-full rounded-full transition-all ${schemeColors[colorScheme]}`}
+                    style={{ width: `${skills[key]}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {t("dashboard.skills.best")}:{" "}
+              <span className="text-foreground font-medium">
+                {t(`progress.skills.${bestSkill.key}`)}
+              </span>
+              {" · "}
+              {t("dashboard.skills.next")}:{" "}
+              <span className="text-foreground font-medium">
+                {t(`progress.skills.${focusSkill.key}`)}
+              </span>
+            </p>
+            {!isPreview && (
+              <Link
+                to="/adaptive-practice"
+                className="inline-flex w-full items-center justify-center px-3 py-2 text-xs font-medium rounded-lg bg-white/10 border border-white/10 hover:bg-white/15 transition-colors"
+              >
+                {t("dashboard.skills.practice", {
+                  skill: t(`progress.skills.${focusSkill.key}`),
+                })}
+              </Link>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Preview overlay */}
       {isPreview && (

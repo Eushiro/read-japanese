@@ -73,7 +73,11 @@
     "summary": "Point fort : {{best}} · À améliorer : {{focus}}",
     "currentLevel": "Niveau actuel",
     "progressToNext": "Progression vers {{nextLevel}}",
-    "maxLevel": "Niveau le plus élevé"
+    "maxLevel": "Niveau le plus élevé",
+    "calibrating": {
+      "title": "Calibrage de votre niveau en cours",
+      "description": "Répondez à quelques questions supplémentaires pour que nous puissions estimer vos compétences avec précision."
+    }
   },
   "languageSwitcher": {
     "takeTest": "Test",
