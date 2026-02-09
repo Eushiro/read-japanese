@@ -28,6 +28,7 @@ dist-ssr
 
 # Convex
 .convex/
+convex/_generated/
 
 # Playwright
 .playwright-mcp/
