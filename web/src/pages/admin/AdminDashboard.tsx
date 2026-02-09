@@ -11,7 +11,6 @@ import {
   GraduationCap,
   Layers,
   Plus,
-  Sparkles,
   Trash2,
   Video,
 } from "lucide-react";
@@ -377,29 +376,6 @@ export function AdminDashboard() {
                   <p className="text-xs text-foreground-muted">No languages configured</p>
                 )}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Show Onboarding */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                Show Onboarding
-              </CardTitle>
-              <CardDescription className="text-xs">Preview the onboarding flow</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  window.location.href = "/settings?onboarding=true";
-                }}
-              >
-                Show Onboarding Modal
-              </Button>
             </CardContent>
           </Card>
 

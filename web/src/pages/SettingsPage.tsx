@@ -15,6 +15,7 @@ import {
   Monitor,
   Moon,
   Shield,
+  Sparkles,
   Sun,
   User,
   Volume2,
@@ -702,7 +703,6 @@ export function SettingsPage() {
                         </div>
                       </div>
                     </div>
-                    {/* eslint-enable i18next/no-literal-string */}
                     <Switch
                       checked={userProfile?.isAdminMode ?? false}
                       onCheckedChange={async (checked) => {
@@ -717,8 +717,33 @@ export function SettingsPage() {
 
                   {/* Model Test Mode Toggle */}
                   <ModelTestModeToggle />
+
+                  {/* Show Onboarding */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-amber-500/10">
+                        <Sparkles className="w-4 h-4 text-amber-500" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground">Show Onboarding</div>
+                        <div className="text-sm text-foreground-muted">
+                          Preview the onboarding flow
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        window.location.href = "/settings?onboarding=true";
+                      }}
+                    >
+                      Show
+                    </Button>
+                  </div>
                 </div>
               </div>
+              {/* eslint-enable i18next/no-literal-string */}
             </section>
           )}
         </div>
