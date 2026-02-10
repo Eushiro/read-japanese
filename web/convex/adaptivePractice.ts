@@ -84,6 +84,7 @@ interface PracticeContent {
   translation: string;
   vocabulary: Array<{ word: string; reading?: string; meaning: string }>;
   audioUrl?: string;
+  dialogueTurns?: Array<{ speaker: string; line: string }>;
 }
 
 interface PracticeSet {
@@ -157,25 +158,56 @@ const AUDIO_QUESTION_TYPES: PracticeQuestionType[] = [
 
 /**
  * Generate TTS audio for audio-based question types.
- * For listening_mcq, uses listeningTextOverride (from content payload) or falls back to passageText/question.
- * For dictation, uses correctAnswer. For shadow_record, uses question.
+ * For listening_mcq with multi-speaker dialogueTurns, uses multi-speaker TTS.
+ * For listening_mcq (single speaker), uses listeningTextOverride or falls back to passageText/question.
+ * For dictation, uses correctAnswer. For shadow_record, uses correctAnswer (the target sentence).
  */
 async function generateTTSForQuestions(
   ctx: ActionCtx,
   questions: PracticeQuestion[],
   language: ContentLanguage,
-  listeningTextOverride?: string
+  listeningTextOverride?: string,
+  dialogueTurns?: Array<{ speaker: string; line: string }>
 ): Promise<PracticeQuestion[]> {
+  // Check if dialogue has multiple speakers
+  const hasMultipleSpeakers =
+    dialogueTurns &&
+    dialogueTurns.length > 0 &&
+    new Set(dialogueTurns.map((t) => t.speaker)).size >= 2;
+
   return Promise.all(
     questions.map(async (q) => {
       if (AUDIO_QUESTION_TYPES.includes(q.type) && !q.audioUrl) {
         try {
+          // Multi-speaker branch for listening_mcq with dialogue content
+          if (q.type === "listening_mcq" && hasMultipleSpeakers) {
+            try {
+              const result = await ctx.runAction(internal.ai.generateMultiSpeakerTTSAudioAction, {
+                dialogueTurns: dialogueTurns!,
+                language,
+                word: `practice-${q.questionId}`,
+                sentenceId: "audio",
+              });
+              if (result.success && result.audioUrl) {
+                return { ...q, audioUrl: result.audioUrl };
+              }
+            } catch (error) {
+              console.error(
+                `Multi-speaker TTS failed for ${q.questionId}, falling back to single-speaker:`,
+                error
+              );
+            }
+            // Fall through to single-speaker if multi-speaker fails
+          }
+
           const ttsText =
             q.type === "listening_mcq"
               ? (listeningTextOverride ?? q.passageText ?? q.question)
               : q.type === "dictation"
                 ? q.correctAnswer
-                : q.question;
+                : q.type === "shadow_record"
+                  ? q.correctAnswer
+                  : q.question;
           const result = await ctx.runAction(internal.ai.generateTTSAudioAction, {
             text: ttsText,
             language,
@@ -883,7 +915,7 @@ export const getNextPractice = action({
           break; // consumePrefetchedSet returned null unexpectedly
         }
 
-        if (status === null) {
+        if (status === null || status === "failed") {
           // Prefetch was deleted/failed while we were waiting
           break;
         }
@@ -1199,7 +1231,7 @@ async function generatePracticeSet(
 
   // ===== NORMAL MODE =====
   const contentType = args.preferredContentType ?? selectContentType(weakSkills, learningGoal);
-  const contentResult = await ctx.runAction(api.contentEngine.getBestContent, {
+  const contentResult = await ctx.runAction(internal.contentEngine.getBestContentInternal, {
     userId: args.userId,
     language: args.language,
     contentType,
@@ -1219,6 +1251,7 @@ async function generatePracticeSet(
       translation: data.translation,
       vocabulary: data.vocabulary || [],
       audioUrl: data.audioUrl,
+      dialogueTurns: data.dialogueTurns,
     };
   } catch (error) {
     console.error("Failed to fetch content:", error);
@@ -1258,7 +1291,8 @@ async function generatePracticeSet(
     ctx,
     cappedNormal.accepted,
     args.language,
-    contentPayload.content
+    contentPayload.content,
+    contentPayload.dialogueTurns
   );
 
   if (!args.skipSideEffects) {
@@ -1333,8 +1367,10 @@ export const prefetchPractice = internalAction({
 
       console.log(`Prefetched practice set ${result.practiceId} for user ${args.userId}`);
     } catch (error) {
-      await ctx.runMutation(internal.adaptivePracticeQueries.deletePrefetchSlot, {
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      await ctx.runMutation(internal.adaptivePracticeQueries.markPrefetchFailed, {
         prefetchId: slotId,
+        errorMessage: msg,
       });
       console.error("Prefetch generation failed:", error);
     }
@@ -1415,7 +1451,9 @@ For each question:
 - translation: put the sentence to translate in "passageText" (in ${languageName}), put the instruction in "question" (e.g., "Translate to English"). Set translations to localized instructions, e.g. { en: "Translate to English", fr: "Traduisez en français", ja: "英語に翻訳してください", zh: "翻译成英文" }.
 - listening_mcq: provide a question about audio content with 4 MCQ options. The audio will be generated from the content.
 - dictation: set question to a sentence from the content that the user will hear and type. The correctAnswer is the exact sentence.
-- shadow_record: set question to a sentence for pronunciation practice. Set translations to the sentence meaning in each UI language. The correctAnswer is the sentence itself.
+- shadow_record: set question to a short instruction in the target language (e.g. "Repeat this sentence").
+  Set correctAnswer to the actual ${languageName} sentence to pronounce.
+  Set translations to the sentence meaning in each UI language.
 - Include at least 2 inferential questions (not just surface-level recall)
 
 Each question MUST have a "difficulty" field: one of "level_1", "level_2", "level_3", "level_4", "level_5", or "level_6".
@@ -1593,7 +1631,9 @@ For each question:
 - mcq_comprehension: set "passageText" to a short ${languageName} text (1-2 sentences) and use "question" for the question itself
 - listening_mcq: set "passageText" to a short ${languageName} dialogue or passage (1-3 sentences) that the learner will hear. Put the comprehension question in "question". Audio will be generated from passageText.
 - dictation: set question to a ${languageName} sentence the user will type after hearing
-- shadow_record: set question to a ${languageName} sentence for pronunciation. Set translations to the sentence meaning in each UI language
+- shadow_record: set question to a short instruction in the target language (e.g. "Repeat this sentence").
+  Set correctAnswer to the actual ${languageName} sentence to pronounce.
+  Set translations to the sentence meaning in each UI language
 
 ${distractorRules}
 
@@ -1814,7 +1854,9 @@ For each question:
 - mcq_comprehension: set "passageText" to a short ${languageName} text (1-2 sentences) and use "question" for the question itself
 - listening_mcq: set "passageText" to a short ${languageName} dialogue or passage (1-3 sentences) that the learner will hear. Put the comprehension question in "question". Audio will be generated from passageText. Max 1 total with dictation.
 - dictation: max 1 total with listening_mcq
-- shadow_record: set translations to the sentence meaning in each UI language. Max 1.
+- shadow_record: set question to a short instruction in the target language (e.g. "Repeat this sentence").
+  Set correctAnswer to the actual ${languageName} sentence to pronounce.
+  Set translations to the sentence meaning in each UI language. Max 1.
 
 ${distractorRules}
 

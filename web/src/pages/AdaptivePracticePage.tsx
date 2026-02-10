@@ -390,6 +390,27 @@ export function AdaptivePracticePage() {
   const [showRawJson, setShowRawJson] = useState(false);
   const [jsonTab, setJsonTab] = useState<"input" | "output">("input");
 
+  // Admin: poll prefetch status during loading
+  const prefetchStatus = useQuery(
+    api.adaptivePracticeQueries.getPrefetchStatus,
+    adminEnabled && user && phase === "loading" ? { userId: user.id, language } : "skip"
+  );
+
+  // Admin: elapsed time tracker for loading screen
+  const loadingStartRef = useRef(Date.now());
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  useEffect(() => {
+    if (phase !== "loading") {
+      setElapsedSeconds(0);
+      return;
+    }
+    loadingStartRef.current = Date.now();
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - loadingStartRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [phase]);
+
   // Results phase queries (must be at top level, not inside conditional)
   const updatedProfile = useQuery(
     api.learnerModel.getProfile,
@@ -1437,6 +1458,7 @@ export function AdaptivePracticePage() {
     clearSessionStorage();
     setRestoredSession(false);
     setPracticeSet(null);
+    loadingStartRef.current = Date.now();
     setPhase("loading");
     setCurrentQuestion(null);
     setAnswers([]);
@@ -1492,6 +1514,39 @@ export function AdaptivePracticePage() {
                 </motion.span>
               </AnimatePresence>
             </div>
+            {/* eslint-disable i18next/no-literal-string -- Admin-only UI */}
+            {adminEnabled && (
+              <div className="mt-6 text-xs text-foreground-muted space-y-1">
+                <div className="flex items-center justify-center gap-1.5">
+                  <span
+                    className={`inline-block w-2 h-2 rounded-full ${
+                      prefetchStatus === undefined
+                        ? "bg-gray-400 animate-pulse"
+                        : prefetchStatus === null
+                          ? "bg-gray-400"
+                          : prefetchStatus.status === "generating"
+                            ? "bg-yellow-400"
+                            : prefetchStatus.status === "failed"
+                              ? "bg-red-400"
+                              : "bg-green-400"
+                    }`}
+                  />
+                  <span>
+                    {prefetchStatus === undefined
+                      ? "Checking prefetch..."
+                      : prefetchStatus === null
+                        ? "No prefetch found, generating fresh"
+                        : prefetchStatus.status === "generating"
+                          ? "Found prefetch (generating), backend waiting..."
+                          : prefetchStatus.status === "failed"
+                            ? `Prefetch failed: ${prefetchStatus.errorMessage ?? "unknown"}`
+                            : "Prefetch ready, consuming..."}
+                  </span>
+                </div>
+                <div>{elapsedSeconds}s elapsed</div>
+              </div>
+            )}
+            {/* eslint-enable i18next/no-literal-string */}
           </div>
         </div>
       </div>

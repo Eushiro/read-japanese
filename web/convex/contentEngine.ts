@@ -4,7 +4,7 @@ import { v } from "convex/values";
 
 import { api, internal } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
-import { action } from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { generateAndParse, type JsonSchema, type ModelConfig, parseJson } from "./ai/models";
 import { abilityToProficiency } from "./learnerModel";
 import { TEXT_MODEL_CHAIN } from "./lib/models";
@@ -13,6 +13,7 @@ import {
   adaptiveContentTypeValidator,
   type ContentLanguage,
   languageValidator,
+  type LearningGoal,
   learningGoalValidator,
 } from "./schema";
 
@@ -95,190 +96,210 @@ const DEFAULT_NEW_WORD_BUDGET = 3;
 // PUBLIC ACTIONS
 // ============================================
 
+const getBestContentArgs = {
+  userId: v.string(),
+  language: languageValidator,
+  contentType: adaptiveContentTypeValidator,
+  goal: v.optional(learningGoalValidator),
+  topicTags: v.optional(v.array(v.string())),
+  difficultyTarget: v.optional(v.number()),
+  newWordBudget: v.optional(v.number()),
+};
+
 export const getBestContent = action({
-  args: {
-    userId: v.string(),
-    language: languageValidator,
-    contentType: adaptiveContentTypeValidator,
-    goal: v.optional(learningGoalValidator),
-    topicTags: v.optional(v.array(v.string())),
-    difficultyTarget: v.optional(v.number()),
-    newWordBudget: v.optional(v.number()),
-  },
+  args: getBestContentArgs,
   handler: async (ctx, args) => {
-    // Auth check
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Authentication required");
     }
+    return getBestContentHandler(ctx, args);
+  },
+});
 
-    const now = Date.now();
+export const getBestContentInternal = internalAction({
+  args: getBestContentArgs,
+  handler: async (ctx, args) => getBestContentHandler(ctx, args),
+});
 
-    const user = await ctx.runQuery(api.users.getByClerkId, { clerkId: args.userId });
-    const profile = await ctx.runQuery(internal.learnerModel.getProfileInternal, {
-      userId: args.userId,
+async function getBestContentHandler(
+  ctx: ActionCtx,
+  args: {
+    userId: string;
+    language: ContentLanguage;
+    contentType: "dialogue" | "micro_story";
+    goal?: LearningGoal;
+    topicTags?: string[];
+    difficultyTarget?: number;
+    newWordBudget?: number;
+  }
+) {
+  const now = Date.now();
+
+  const user = await ctx.runQuery(api.users.getByClerkId, { clerkId: args.userId });
+  const profile = await ctx.runQuery(internal.learnerModel.getProfileInternal, {
+    userId: args.userId,
+    language: args.language,
+  });
+
+  const goal = args.goal ?? user?.learningGoal;
+  const hasPlacement =
+    !!user?.proficiencyLevels?.[args.language as keyof typeof user.proficiencyLevels];
+  const hasActivity = (profile?.totalStudyMinutes ?? 0) > 0;
+  const isBeginner = !hasPlacement && !hasActivity;
+  const baseAbility = profile?.abilityEstimate ?? (isBeginner ? -1.6 : 0);
+  const baseDifficulty = args.difficultyTarget ?? baseAbility + 0.3;
+  const difficultyTarget = isBeginner ? Math.min(baseDifficulty, -1.2) : baseDifficulty;
+  const targetLevel = abilityToProficiency(difficultyTarget, args.language, false);
+
+  const vocabBudget = args.newWordBudget ?? DEFAULT_NEW_WORD_BUDGET;
+  const topicTags = args.topicTags ?? user?.interests ?? [];
+
+  // Attempt reuse first
+  const difficultyBuffer = 0.5;
+  const reuseCandidates: ContentItem[] = (await ctx.runQuery(
+    internal.contentEngineQueries.getReuseCandidates,
+    {
       language: args.language,
-    });
-
-    const goal = args.goal ?? user?.learningGoal;
-    const hasPlacement =
-      !!user?.proficiencyLevels?.[args.language as keyof typeof user.proficiencyLevels];
-    const hasActivity = (profile?.totalStudyMinutes ?? 0) > 0;
-    const isBeginner = !hasPlacement && !hasActivity;
-    const baseAbility = profile?.abilityEstimate ?? (isBeginner ? -1.6 : 0);
-    const baseDifficulty = args.difficultyTarget ?? baseAbility + 0.3;
-    const difficultyTarget = isBeginner ? Math.min(baseDifficulty, -1.2) : baseDifficulty;
-    const targetLevel = abilityToProficiency(difficultyTarget, args.language, false);
-
-    const vocabBudget = args.newWordBudget ?? DEFAULT_NEW_WORD_BUDGET;
-    const topicTags = args.topicTags ?? user?.interests ?? [];
-
-    // Attempt reuse first
-    const difficultyBuffer = 0.5;
-    const reuseCandidates: ContentItem[] = (await ctx.runQuery(
-      internal.contentEngineQueries.getReuseCandidates,
-      {
-        language: args.language,
-        contentType: args.contentType,
-        minDifficulty: difficultyTarget - difficultyBuffer,
-        maxDifficulty: difficultyTarget + difficultyBuffer,
-        goal,
-      }
-    )) as ContentItem[];
-
-    const cutoff = now - REPEAT_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-    const recentExposureIds = new Set(
-      await ctx.runQuery(internal.contentEngineQueries.getRecentExposureIds, {
-        userId: args.userId,
-        language: args.language,
-        since: cutoff,
-      })
-    );
-
-    const scoredReuse: { candidate: ContentItem; score: number }[] = reuseCandidates
-      .filter((candidate) => !recentExposureIds.has(candidate.contentId))
-      .map((candidate) => ({
-        candidate,
-        score: scoreReuseCandidate(candidate, difficultyTarget, topicTags),
-      }))
-      .sort((a, b) => b.score - a.score);
-
-    if (scoredReuse.length > 0 && scoredReuse[0].score >= REUSE_SCORE_THRESHOLD) {
-      return {
-        contentId: scoredReuse[0].candidate.contentId,
-        contentType: scoredReuse[0].candidate.contentType,
-        contentUrl: scoredReuse[0].candidate.contentUrl,
-        language: scoredReuse[0].candidate.language,
-        source: "reused" as const,
-      };
+      contentType: args.contentType,
+      minDifficulty: difficultyTarget - difficultyBuffer,
+      maxDifficulty: difficultyTarget + difficultyBuffer,
+      goal,
     }
+  )) as ContentItem[];
 
-    // Generate new content
-    const runId = crypto.randomUUID();
-
-    const vocabData = await ctx.runQuery(internal.lib.generation.getVocabularyForStoryGeneration, {
+  const cutoff = now - REPEAT_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  const recentExposureIds = new Set(
+    await ctx.runQuery(internal.contentEngineQueries.getRecentExposureIds, {
       userId: args.userId,
       language: args.language,
-      learningWordsLimit: 5,
-      knownWordsLimit: 100,
-    });
+      since: cutoff,
+    })
+  );
 
-    const requiredGrammarTags =
-      profile?.weakAreas
-        ?.filter((area: WeakArea) => area.skill === "grammar")
-        .slice(0, 2)
-        .map((area: WeakArea) => area.topic) ?? [];
+  const scoredReuse: { candidate: ContentItem; score: number }[] = reuseCandidates
+    .filter((candidate) => !recentExposureIds.has(candidate.contentId))
+    .map((candidate) => ({
+      candidate,
+      score: scoreReuseCandidate(candidate, difficultyTarget, topicTags),
+    }))
+    .sort((a, b) => b.score - a.score);
 
-    const targetWordCount =
-      args.contentType === "dialogue" ? (isBeginner ? 80 : 120) : isBeginner ? 100 : 140;
+  if (scoredReuse.length > 0 && scoredReuse[0].score >= REUSE_SCORE_THRESHOLD) {
+    return {
+      contentId: scoredReuse[0].candidate.contentId,
+      contentType: scoredReuse[0].candidate.contentType,
+      contentUrl: scoredReuse[0].candidate.contentUrl,
+      language: scoredReuse[0].candidate.language,
+      source: "reused" as const,
+    };
+  }
 
-    const spec: ContentSpec = {
+  // Generate new content
+  const runId = crypto.randomUUID();
+
+  const vocabData = await ctx.runQuery(internal.lib.generation.getVocabularyForStoryGeneration, {
+    userId: args.userId,
+    language: args.language,
+    learningWordsLimit: 5,
+    knownWordsLimit: 100,
+  });
+
+  const requiredGrammarTags =
+    profile?.weakAreas
+      ?.filter((area: WeakArea) => area.skill === "grammar")
+      .slice(0, 2)
+      .map((area: WeakArea) => area.topic) ?? [];
+
+  const targetWordCount =
+    args.contentType === "dialogue" ? (isBeginner ? 80 : 120) : isBeginner ? 100 : 140;
+
+  const spec: ContentSpec = {
+    difficultyTarget,
+    vocabBudget,
+    topicTags,
+    goal,
+    requiredGrammarTags,
+    mustUseWords: vocabData.mustUseWords,
+    preferWords: vocabData.preferWords,
+    targetWordCount,
+    targetLevel,
+    beginnerMode: isBeginner,
+  };
+
+  const selected = await generateCandidate(ctx, {
+    runId,
+    models: TEXT_MODEL_CHAIN,
+    contentType: args.contentType,
+    language: args.language,
+    spec,
+  });
+
+  // Persist candidate
+  await ctx.runMutation(internal.contentEngineQueries.insertContentCandidate, {
+    runId,
+    candidateId: selected.candidateId,
+    modelId: selected.modelId,
+    contentType: args.contentType,
+    language: args.language,
+    candidateUrl: selected.candidateUrl,
+    constraints: selected.constraints,
+    scores: selected.scores,
+    gradingFeedback: selected.grading.feedback,
+    gradingScore: selected.grading.score,
+    selected: true,
+  });
+
+  await ctx.runMutation(internal.contentEngineQueries.insertSelectionRun, {
+    runId,
+    userId: args.userId,
+    language: args.language,
+    contentType: args.contentType,
+    requestSpec: {
       difficultyTarget,
       vocabBudget,
       topicTags,
       goal,
-      requiredGrammarTags,
-      mustUseWords: vocabData.mustUseWords,
-      preferWords: vocabData.preferWords,
-      targetWordCount,
-      targetLevel,
-      beginnerMode: isBeginner,
-    };
+    },
+    candidateIds: [selected.candidateId],
+    selectedCandidateId: selected.candidateId,
+    selectionReason: "single candidate",
+  });
 
-    const selected = await generateCandidate(ctx, {
-      runId,
-      models: TEXT_MODEL_CHAIN,
-      contentType: args.contentType,
-      language: args.language,
-      spec,
-    });
+  const finalContentUrl = await uploadJson(
+    `adaptive-content/${args.language}/${args.contentType}/${selected.candidateId}/content.json`,
+    selected.contentPayload
+  );
 
-    // Persist candidate
-    await ctx.runMutation(internal.contentEngineQueries.insertContentCandidate, {
-      runId,
-      candidateId: selected.candidateId,
-      modelId: selected.modelId,
-      contentType: args.contentType,
-      language: args.language,
-      candidateUrl: selected.candidateUrl,
-      constraints: selected.constraints,
-      scores: selected.scores,
-      gradingFeedback: selected.grading.feedback,
-      gradingScore: selected.grading.score,
-      selected: true,
-    });
+  await ctx.runMutation(internal.contentEngineQueries.insertContentItem, {
+    contentId: selected.candidateId,
+    contentType: args.contentType,
+    language: args.language,
+    difficultyEstimate: difficultyTarget,
+    vocabList: selected.vocabList,
+    grammarTags: selected.grammarTags,
+    topicTags,
+    goalTags: goal ? [goal] : [],
+    modelId: selected.modelId,
+    contentUrl: finalContentUrl,
+    audienceScope: goal ? "goal" : "global",
+  });
 
-    await ctx.runMutation(internal.contentEngineQueries.insertSelectionRun, {
-      runId,
-      userId: args.userId,
-      language: args.language,
-      contentType: args.contentType,
-      requestSpec: {
-        difficultyTarget,
-        vocabBudget,
-        topicTags,
-        goal,
-      },
-      candidateIds: [selected.candidateId],
-      selectedCandidateId: selected.candidateId,
-      selectionReason: "single candidate",
-    });
+  // Charge credits for AI generation
+  await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+    userId: args.userId,
+    action: "story",
+    metadata: { contentType: args.contentType, language: args.language },
+  });
 
-    const finalContentUrl = await uploadJson(
-      `adaptive-content/${args.language}/${args.contentType}/${selected.candidateId}/content.json`,
-      selected.contentPayload
-    );
-
-    await ctx.runMutation(internal.contentEngineQueries.insertContentItem, {
-      contentId: selected.candidateId,
-      contentType: args.contentType,
-      language: args.language,
-      difficultyEstimate: difficultyTarget,
-      vocabList: selected.vocabList,
-      grammarTags: selected.grammarTags,
-      topicTags,
-      goalTags: goal ? [goal] : [],
-      modelId: selected.modelId,
-      contentUrl: finalContentUrl,
-      audienceScope: goal ? "goal" : "global",
-    });
-
-    // Charge credits for AI generation
-    await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
-      userId: args.userId,
-      action: "story",
-      metadata: { contentType: args.contentType, language: args.language },
-    });
-
-    return {
-      contentId: selected.candidateId,
-      contentType: args.contentType,
-      contentUrl: finalContentUrl,
-      language: args.language,
-      source: "generated" as const,
-    };
-  },
-});
+  return {
+    contentId: selected.candidateId,
+    contentType: args.contentType,
+    contentUrl: finalContentUrl,
+    language: args.language,
+    source: "generated" as const,
+  };
+}
 
 // ============================================
 // HELPERS

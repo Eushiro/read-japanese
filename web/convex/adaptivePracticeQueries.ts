@@ -197,6 +197,13 @@ export const claimPrefetchSlot = internalMutation({
       )
       .collect();
 
+    // Clean up any failed rows before claiming a new slot
+    for (const row of existing) {
+      if (row.status === "failed") {
+        await ctx.db.delete(row._id);
+      }
+    }
+
     const active = existing.find((r) => r.status === "generating" || r.status === "ready");
     if (active) return null; // Already have an active prefetch
 
@@ -268,6 +275,24 @@ export const deletePrefetchSlot = internalMutation({
 });
 
 /**
+ * Mark a prefetch row as "failed" with an error message (used on generation error).
+ */
+export const markPrefetchFailed = internalMutation({
+  args: {
+    prefetchId: v.id("prefetchedPracticeSets"),
+    errorMessage: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.prefetchId);
+    if (!row) return;
+    await ctx.db.patch(args.prefetchId, {
+      status: "failed",
+      errorMessage: args.errorMessage,
+    });
+  },
+});
+
+/**
  * Invalidate (delete) any ready/generating prefetch for a user+language.
  * Called when the learner model changes (session completion).
  */
@@ -285,7 +310,7 @@ export const invalidatePrefetch = internalMutation({
       .collect();
 
     for (const row of rows) {
-      if (row.status === "ready" || row.status === "generating") {
+      if (row.status === "ready" || row.status === "generating" || row.status === "failed") {
         await ctx.db.delete(row._id);
       }
     }
@@ -309,7 +334,9 @@ export const getPrefetchStatusInternal = internalQuery({
       )
       .collect();
 
-    const active = rows.find((r) => r.status === "generating" || r.status === "ready");
+    const active = rows.find(
+      (r) => r.status === "generating" || r.status === "ready" || r.status === "failed"
+    );
     if (!active) return null;
     return active.status as PrefetchStatus;
   },
@@ -331,9 +358,14 @@ export const getPrefetchStatus = query({
       )
       .collect();
 
-    const active = rows.find((r) => r.status === "generating" || r.status === "ready");
+    const active = rows.find(
+      (r) => r.status === "generating" || r.status === "ready" || r.status === "failed"
+    );
     if (!active) return null;
-    return { status: active.status as PrefetchStatus };
+    return {
+      status: active.status as PrefetchStatus,
+      errorMessage: active.errorMessage,
+    };
   },
 });
 
@@ -362,6 +394,18 @@ export const cleanupPrefetchedSets = internalMutation({
       .withIndex("by_status", (q) => q.eq("status", "generating"))
       .collect();
     for (const row of generatingRows) {
+      if (row.createdAt < oneHourAgo) {
+        await ctx.db.delete(row._id);
+        deleted++;
+      }
+    }
+
+    // Delete failed rows (older than 1 hour)
+    const failedRows = await ctx.db
+      .query("prefetchedPracticeSets")
+      .withIndex("by_status", (q) => q.eq("status", "failed"))
+      .collect();
+    for (const row of failedRows) {
       if (row.createdAt < oneHourAgo) {
         await ctx.db.delete(row._id);
         deleted++;

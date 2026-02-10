@@ -102,7 +102,7 @@ export type PracticeQuestionType =
 export type ContentAudienceScope = "global" | "goal" | "user";
 
 // Prefetch status
-export type PrefetchStatus = "generating" | "ready" | "consumed";
+export type PrefetchStatus = "generating" | "ready" | "consumed" | "failed";
 
 // ============================================
 // VALIDATORS
@@ -309,7 +309,8 @@ export const contentAudienceScopeValidator = v.union(
 export const prefetchStatusValidator = v.union(
   v.literal("generating"),
   v.literal("ready"),
-  v.literal("consumed")
+  v.literal("consumed"),
+  v.literal("failed")
 );
 
 // Practice question types (adaptive practice)
@@ -1895,6 +1896,7 @@ export default defineSchema({
     language: languageValidator,
     practiceSet: v.string(), // JSON-serialized PracticeSet (includes TTS audio URLs)
     status: prefetchStatusValidator,
+    errorMessage: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_user_language", ["userId", "language"])

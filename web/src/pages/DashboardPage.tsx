@@ -19,6 +19,7 @@ import { SkillsSection } from "@/components/dashboard/SkillsSection";
 import { StoryCard } from "@/components/library/StoryCard";
 import { VideoCard, type VideoItem } from "@/components/library/VideoCard";
 import { Paywall } from "@/components/Paywall";
+import { Badge } from "@/components/ui/badge";
 import { PremiumBackground } from "@/components/ui/premium-background";
 import { SignInButton, useAuth } from "@/contexts/AuthContext";
 import { useStudySession } from "@/contexts/StudySessionContext";
@@ -26,6 +27,7 @@ import { useUserData } from "@/contexts/UserDataContext";
 import { useRecommendedStories } from "@/hooks/useRecommendedStories";
 import { useRecommendedVideos } from "@/hooks/useRecommendedVideos";
 import { useStoriesByLanguage } from "@/hooks/useStories";
+import { isAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
 import { getPracticeSessionKey } from "@/lib/practiceSession";
@@ -50,6 +52,15 @@ export function DashboardPage() {
 
   // Get primary language for adaptive content (first user language or default to japanese)
   const primaryLanguage = userLanguages[0] ?? "japanese";
+
+  // Admin mode flag
+  const adminEnabled = isAdmin(user?.email) && userProfile?.isAdminMode === true;
+
+  // Admin: poll prefetch status
+  const prefetchStatus = useQuery(
+    api.adaptivePracticeQueries.getPrefetchStatus,
+    adminEnabled && user ? { userId: user.id, language: primaryLanguage } : "skip"
+  );
 
   // Prefetch practice set in background so it's ready when user clicks "Start Practice"
   const triggerPrefetch = useAction(api.adaptivePractice.triggerPrefetch);
@@ -166,27 +177,61 @@ export function DashboardPage() {
               </div>
             </motion.div>
           ) : (
-            <HybridCCardless
-              config={getPrimaryCtaConfig({
-                hasLanguages: userLanguages.length > 0,
-                sessionStatus: sessionState.status,
-                learningGoal: userProfile?.learningGoal,
-                hasSavedPractice: !!sessionStorage.getItem(getPracticeSessionKey(primaryLanguage)),
-                t,
-              })}
-              currentStreak={currentStreak}
-              onAction={(action) => {
-                if (action === "setup") {
-                  navigate({ to: "/settings" });
-                  return;
-                }
-                if (action === "practice") {
-                  navigate({ to: "/adaptive-practice" });
-                  return;
-                }
-                navigate({ to: "/study-session" });
-              }}
-            />
+            <>
+              <HybridCCardless
+                config={getPrimaryCtaConfig({
+                  hasLanguages: userLanguages.length > 0,
+                  sessionStatus: sessionState.status,
+                  learningGoal: userProfile?.learningGoal,
+                  hasSavedPractice: !!sessionStorage.getItem(
+                    getPracticeSessionKey(primaryLanguage)
+                  ),
+                  t,
+                })}
+                currentStreak={currentStreak}
+                onAction={(action) => {
+                  if (action === "setup") {
+                    navigate({ to: "/settings" });
+                    return;
+                  }
+                  if (action === "practice") {
+                    navigate({ to: "/adaptive-practice" });
+                    return;
+                  }
+                  navigate({ to: "/study-session" });
+                }}
+              />
+              {adminEnabled && prefetchStatus !== undefined && (
+                <div className="flex justify-center mt-2">
+                  <Badge
+                    variant="outline"
+                    className="text-xs gap-1.5"
+                    title={
+                      prefetchStatus?.status === "failed" ? prefetchStatus.errorMessage : undefined
+                    }
+                  >
+                    <span
+                      className={`inline-block w-2 h-2 rounded-full ${
+                        prefetchStatus === null
+                          ? "bg-gray-400"
+                          : prefetchStatus.status === "generating"
+                            ? "bg-yellow-400"
+                            : prefetchStatus.status === "failed"
+                              ? "bg-red-400"
+                              : "bg-green-400"
+                      }`}
+                    />
+                    {prefetchStatus === null
+                      ? "No prefetch"
+                      : prefetchStatus.status === "generating"
+                        ? "Prefetch: generating"
+                        : prefetchStatus.status === "failed"
+                          ? "Prefetch: failed"
+                          : "Prefetch: ready"}
+                  </Badge>
+                </div>
+              )}
+            </>
           )}
 
           {/* Your Skills - Radar charts for each language */}
