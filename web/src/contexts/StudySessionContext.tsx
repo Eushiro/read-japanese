@@ -38,15 +38,12 @@ export interface SessionResults {
 // Session state
 export type SessionState =
   | { status: "idle" }
-  | { status: "planning"; selectedDuration: number | null }
   | { status: "active"; plan: SessionPlan; currentActivityIndex: number; results: SessionResults }
   | { status: "complete"; plan: SessionPlan; results: SessionResults };
 
 interface StudySessionContextType {
   state: SessionState;
   // Session control
-  startPlanning: () => void;
-  setDuration: (minutes: number | null) => void;
   startSession: (plan: SessionPlan) => void;
   advanceToNextActivity: () => void;
   completeSession: (streakInfo: SessionResults["streakInfo"]) => void;
@@ -62,17 +59,6 @@ const StudySessionContext = createContext<StudySessionContextType | null>(null);
 
 export function StudySessionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SessionState>({ status: "idle" });
-
-  const startPlanning = useCallback(() => {
-    setState({ status: "planning", selectedDuration: null });
-  }, []);
-
-  const setDuration = useCallback((minutes: number | null) => {
-    setState((prev) => {
-      if (prev.status !== "planning") return prev;
-      return { ...prev, selectedDuration: minutes };
-    });
-  }, []);
 
   const startSession = useCallback((plan: SessionPlan) => {
     setState({
@@ -163,8 +149,6 @@ export function StudySessionProvider({ children }: { children: ReactNode }) {
     <StudySessionContext.Provider
       value={{
         state,
-        startPlanning,
-        setDuration,
         startSession,
         advanceToNextActivity,
         completeSession,

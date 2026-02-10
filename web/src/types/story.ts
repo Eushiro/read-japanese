@@ -1,10 +1,6 @@
 import type { ContentLanguage } from "@/lib/contentLanguages";
 
-import type {
-  CEFRLevel,
-  JLPTLevel,
-  ProficiencyLevel,
-} from "../../convex/schema";
+import type { CEFRLevel, JLPTLevel, ProficiencyLevel } from "../../convex/schema";
 
 export type { CEFRLevel, JLPTLevel, ProficiencyLevel };
 
