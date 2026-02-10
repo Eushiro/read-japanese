@@ -25,6 +25,12 @@ const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
 // Consistent voice for all languages
 const TTS_VOICE = "Aoede";
 
+// Dialogue voices for multi-speaker TTS
+const DIALOGUE_VOICES = {
+  speaker1: "Aoede", // Breezy, default voice
+  speaker2: "Charon", // Contrasting firm voice
+} as const;
+
 /**
  * Generate audio for a sentence using Gemini 2.5 Flash TTS
  * Returns MP3 audio data
@@ -132,6 +138,118 @@ export async function generateTTSAudio(
   }
 }
 
+/**
+ * Generate multi-speaker dialogue audio using Gemini 2.5 Flash TTS.
+ * Maps unique speakers from dialogueTurns to Speaker1/Speaker2 voices.
+ * Returns MP3 audio data.
+ */
+export async function generateMultiSpeakerTTSAudio(
+  dialogueTurns: Array<{ speaker: string; line: string }>,
+  language: string
+): Promise<{ audioData: Uint8Array; mimeType: string } | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("GEMINI_API_KEY not configured");
+    return null;
+  }
+
+  // Map unique speakers to Speaker1/Speaker2
+  const uniqueSpeakers = [...new Set(dialogueTurns.map((t) => t.speaker))];
+  const speakerMap = new Map<string, string>();
+  uniqueSpeakers.forEach((s, i) => {
+    speakerMap.set(s, i === 0 ? "Speaker1" : "Speaker2");
+  });
+
+  // Format prompt with speaker labels
+  const languageHints: Record<string, string> = {
+    japanese: "Read this Japanese dialogue clearly and naturally for language learners:",
+    english: "Read this English dialogue clearly and naturally for language learners:",
+    french: "Read this French dialogue clearly and naturally for language learners:",
+  };
+  const hint = languageHints[language] || languageHints.english;
+
+  const dialogueLines = dialogueTurns
+    .map((t) => `${speakerMap.get(t.speaker)}: ${t.line}`)
+    .join("\n");
+
+  const promptText = `${hint}\n\n${dialogueLines}`;
+
+  try {
+    const response = await fetch(
+      `${GEMINI_API_URL}/models/${AUDIO_MODELS.GEMINI_TTS}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: promptText }],
+            },
+          ],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              multiSpeakerVoiceConfig: {
+                speakerVoiceConfigs: [
+                  {
+                    speaker: "Speaker1",
+                    voiceConfig: {
+                      prebuiltVoiceConfig: { voiceName: DIALOGUE_VOICES.speaker1 },
+                    },
+                  },
+                  {
+                    speaker: "Speaker2",
+                    voiceConfig: {
+                      prebuiltVoiceConfig: { voiceName: DIALOGUE_VOICES.speaker2 },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Gemini multi-speaker TTS error: ${response.status} - ${errorText}`);
+      return null;
+    }
+
+    const result = await response.json();
+
+    const audioData = result.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+    if (!audioData?.data) {
+      console.error("No audio data in Gemini multi-speaker TTS response:", JSON.stringify(result));
+      return null;
+    }
+
+    // Decode base64 audio (Gemini returns raw PCM 16-bit 24kHz)
+    const binaryString = atob(audioData.data);
+    const pcmBytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      pcmBytes[i] = binaryString.charCodeAt(i);
+    }
+
+    // Convert PCM to MP3
+    const mp3Bytes = convertPcmToMp3(pcmBytes, 24000, 1, 128);
+    console.log(
+      `Multi-speaker audio compressed: ${pcmBytes.length} bytes PCM -> ${mp3Bytes.length} bytes MP3 (${Math.round((1 - mp3Bytes.length / pcmBytes.length) * 100)}% savings)`
+    );
+
+    return {
+      audioData: mp3Bytes,
+      mimeType: "audio/mpeg",
+    };
+  } catch (error) {
+    console.error("Multi-speaker TTS generation failed:", error);
+    return null;
+  }
+}
+
 // ============================================
 // IMAGE GENERATION (via new provider abstraction)
 // ============================================
@@ -227,6 +345,41 @@ export const generateTTSAudioAction = internalAction({
         audioResult.mimeType
       );
     }
+
+    return { success: true, audioUrl };
+  },
+});
+
+/**
+ * Internal action wrapper for multi-speaker dialogue TTS audio generation.
+ * Generates audio with two distinct voices for dialogue content.
+ */
+export const generateMultiSpeakerTTSAudioAction = internalAction({
+  args: {
+    dialogueTurns: v.array(v.object({ speaker: v.string(), line: v.string() })),
+    language: languageValidator,
+    word: v.optional(v.string()),
+    sentenceId: v.optional(v.string()),
+  },
+  handler: async (_ctx, args): Promise<{ success: boolean; audioUrl?: string }> => {
+    const audioResult = await generateMultiSpeakerTTSAudio(args.dialogueTurns, args.language);
+
+    if (!audioResult) {
+      return { success: false };
+    }
+
+    const language = args.language as ContentLanguage;
+    const word = args.word ?? "dialogue";
+    const sentenceId =
+      args.sentenceId ?? Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+
+    const audioUrl = await uploadSentenceAudio(
+      new Uint8Array(audioResult.audioData),
+      word,
+      language,
+      sentenceId,
+      audioResult.mimeType
+    );
 
     return { success: true, audioUrl };
   },

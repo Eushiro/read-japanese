@@ -196,12 +196,12 @@ export function QuestionShadowRecord({
             transition={{ delay: 0.2 }}
             style={{ fontFamily }}
           >
-            {question.question}
+            {question.correctAnswer}
           </motion.p>
 
           {/* Translation */}
           {question.translations?.[uiLanguage] &&
-            question.translations?.[uiLanguage] !== question.question && (
+            question.translations?.[uiLanguage] !== question.correctAnswer && (
               <motion.p
                 className="text-sm italic text-foreground/60 mt-3"
                 initial={{ opacity: 0 }}

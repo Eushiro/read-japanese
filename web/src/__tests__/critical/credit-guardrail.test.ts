@@ -25,6 +25,7 @@ const CREDIT_EXEMPT_ACTIONS: Record<string, string> = {
   "definitions.ts:translateDefinitions": "Internal helper called by gated actions",
   "media.ts:generateTTSAudioAction": "Internal helper called by gated actions",
   "media.ts:generateFlashcardImageAction": "Internal helper called by gated actions",
+  "media.ts:generateMultiSpeakerTTSAudioAction": "Internal helper called by gated actions",
 };
 
 // Regex to match exported action declarations

@@ -30,6 +30,8 @@ export { TEXT_MODEL_CHAIN, TEXT_MODELS } from "./lib/models";
 export {
   generateFlashcardImage,
   generateFlashcardImageAction,
+  generateMultiSpeakerTTSAudio,
+  generateMultiSpeakerTTSAudioAction,
   generateTTSAudio,
   generateTTSAudioAction,
 } from "./ai/media";
