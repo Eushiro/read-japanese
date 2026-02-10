@@ -11,11 +11,11 @@ crons.daily(
   internal.scheduledJobs.refreshDueSentences
 );
 
-// Clean up consumed and stuck prefetched practice sets daily at 4 AM UTC
+// Clean up stale active practice sessions daily at 4 AM UTC
 crons.daily(
-  "cleanup-prefetched-practice-sets",
+  "cleanup-stale-sessions",
   { hourUTC: 4, minuteUTC: 0 },
-  internal.adaptivePracticeQueries.cleanupPrefetchedSets
+  internal.adaptivePracticeQueries.cleanupStaleSessions
 );
 
 export default crons;

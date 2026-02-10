@@ -809,17 +809,14 @@ export const getNextPractice = action({
       throw new Error("Authentication required");
     }
 
-    // Check for a prefetched set first — instant return if available
-    const prefetchedJson = await ctx.runMutation(
-      internal.adaptivePracticeQueries.consumePrefetchedSet,
-      {
-        userId: args.userId,
-        language: args.language,
-      }
-    );
-    if (prefetchedJson) {
+    // Check for a ready prefetched session — transition to "active" and return instantly
+    const readyJson = await ctx.runMutation(internal.adaptivePracticeQueries.activateSession, {
+      userId: args.userId,
+      language: args.language,
+    });
+    if (readyJson) {
       try {
-        const prefetched = JSON.parse(prefetchedJson) as PracticeSet;
+        const prefetched = JSON.parse(readyJson) as PracticeSet;
 
         // Side effects deferred from prefetch time — charge credits + persist session
         await ctx.runMutation(internal.adaptivePracticeQueries.upsertPracticeSessionInternal, {
@@ -851,12 +848,12 @@ export const getNextPractice = action({
     }
 
     // Check if there's an in-flight prefetch we should wait for
-    const prefetchStatus = await ctx.runQuery(
-      internal.adaptivePracticeQueries.getPrefetchStatusInternal,
+    const activeSession = await ctx.runQuery(
+      internal.adaptivePracticeQueries.getActiveSessionInternal,
       { userId: args.userId, language: args.language }
     );
 
-    if (prefetchStatus === "generating") {
+    if (activeSession?.status === "prefetching") {
       // Poll for prefetch completion (every 2s, up to ~30s)
       const POLL_INTERVAL_MS = 2000;
       const MAX_WAIT_MS = 30000;
@@ -866,20 +863,20 @@ export const getNextPractice = action({
       while (Date.now() - startWait < MAX_WAIT_MS) {
         await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 
-        const status = await ctx.runQuery(
-          internal.adaptivePracticeQueries.getPrefetchStatusInternal,
+        const session = await ctx.runQuery(
+          internal.adaptivePracticeQueries.getActiveSessionInternal,
           { userId: args.userId, language: args.language }
         );
 
-        if (status === "ready") {
-          // Prefetch completed — consume it
-          const readyJson = await ctx.runMutation(
-            internal.adaptivePracticeQueries.consumePrefetchedSet,
+        if (session?.status === "ready") {
+          // Prefetch completed — activate it
+          const activatedJson = await ctx.runMutation(
+            internal.adaptivePracticeQueries.activateSession,
             { userId: args.userId, language: args.language }
           );
-          if (readyJson) {
+          if (activatedJson) {
             try {
-              const prefetched = JSON.parse(readyJson) as PracticeSet;
+              const prefetched = JSON.parse(activatedJson) as PracticeSet;
               await ctx.runMutation(
                 internal.adaptivePracticeQueries.upsertPracticeSessionInternal,
                 {
@@ -912,19 +909,19 @@ export const getNextPractice = action({
               break;
             }
           }
-          break; // consumePrefetchedSet returned null unexpectedly
+          break; // activateSession returned null unexpectedly
         }
 
-        if (status === null || status === "failed") {
-          // Prefetch was deleted/failed while we were waiting
+        if (!session || session.status === "failed") {
+          // Session was deleted/failed while we were waiting
           break;
         }
-        // status is still "generating" — keep waiting
+        // status is still "prefetching" — keep waiting
       }
 
       if (!consumed) {
         // Timed out or prefetch failed — invalidate stale row and generate fresh
-        await ctx.runMutation(internal.adaptivePracticeQueries.invalidatePrefetch, {
+        await ctx.runMutation(internal.adaptivePracticeQueries.invalidateSession, {
           userId: args.userId,
           language: args.language,
         });
@@ -1346,8 +1343,8 @@ export const prefetchPractice = internalAction({
     language: languageValidator,
   },
   handler: async (ctx, args) => {
-    // Claim a prefetch slot (atomic — prevents duplicate generation)
-    const slotId = await ctx.runMutation(internal.adaptivePracticeQueries.claimPrefetchSlot, {
+    // Claim a session slot (atomic — prevents duplicate generation)
+    const slotId = await ctx.runMutation(internal.adaptivePracticeQueries.claimSessionSlot, {
       userId: args.userId,
       language: args.language,
     });
@@ -1360,16 +1357,17 @@ export const prefetchPractice = internalAction({
         skipSideEffects: true,
       });
 
-      await ctx.runMutation(internal.adaptivePracticeQueries.savePrefetchedSet, {
-        prefetchId: slotId,
-        practiceSet: JSON.stringify(result),
+      await ctx.runMutation(internal.adaptivePracticeQueries.markSessionReady, {
+        sessionId: slotId,
+        practiceSetJson: JSON.stringify(result),
+        practiceId: result.practiceId,
       });
 
       console.log(`Prefetched practice set ${result.practiceId} for user ${args.userId}`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Unknown error";
-      await ctx.runMutation(internal.adaptivePracticeQueries.markPrefetchFailed, {
-        prefetchId: slotId,
+      await ctx.runMutation(internal.adaptivePracticeQueries.markSessionFailed, {
+        sessionId: slotId,
         errorMessage: msg,
       });
       console.error("Prefetch generation failed:", error);

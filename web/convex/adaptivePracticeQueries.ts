@@ -6,10 +6,10 @@ import { isAdminEmail } from "./lib/admin";
 import { labelToIRT } from "./lib/difficultyEstimator";
 import { TEST_MODE_MODELS } from "./lib/models";
 import {
+  type ActiveSessionStatus,
   adaptiveContentTypeValidator,
   difficultyLevelValidator,
   languageValidator,
-  type PrefetchStatus,
 } from "./schema";
 
 const LISTENING_TYPES = new Set(["listening_mcq", "dictation"]);
@@ -176,22 +176,22 @@ export const upsertPracticeSessionInternal = internalMutation({
 });
 
 // ============================================
-// PREFETCH SLOT SYSTEM
+// ACTIVE SESSION SYSTEM (unified prefetch + session lifecycle)
 // ============================================
 
 /**
- * Atomically claim a prefetch slot for a user+language.
- * Returns the new row's ID if a "generating" row was inserted, null if one already exists.
+ * Atomically claim a session slot for a user+language.
+ * Returns the new row's ID if a "prefetching" row was inserted, null if one already exists.
+ * Checks for ANY existing row (including "active") — returns null if one exists.
  */
-export const claimPrefetchSlot = internalMutation({
+export const claimSessionSlot = internalMutation({
   args: {
     userId: v.string(),
     language: languageValidator,
   },
   handler: async (ctx, args) => {
-    // Check for existing generating or ready rows
     const existing = await ctx.db
-      .query("prefetchedPracticeSets")
+      .query("activePracticeSessions")
       .withIndex("by_user_language", (q) =>
         q.eq("userId", args.userId).eq("language", args.language)
       )
@@ -204,50 +204,56 @@ export const claimPrefetchSlot = internalMutation({
       }
     }
 
-    const active = existing.find((r) => r.status === "generating" || r.status === "ready");
-    if (active) return null; // Already have an active prefetch
+    const active = existing.find(
+      (r) => r.status === "prefetching" || r.status === "ready" || r.status === "active"
+    );
+    if (active) return null; // Already have an active session
 
-    const id = await ctx.db.insert("prefetchedPracticeSets", {
+    const now = Date.now();
+    const id = await ctx.db.insert("activePracticeSessions", {
       userId: args.userId,
       language: args.language,
-      practiceSet: "",
-      status: "generating",
-      createdAt: Date.now(),
+      status: "prefetching",
+      createdAt: now,
+      updatedAt: now,
     });
     return id;
   },
 });
 
 /**
- * Save a generated practice set to a "generating" prefetch row, marking it "ready".
+ * Mark a prefetching session as "ready" with the generated practice set.
  */
-export const savePrefetchedSet = internalMutation({
+export const markSessionReady = internalMutation({
   args: {
-    prefetchId: v.id("prefetchedPracticeSets"),
-    practiceSet: v.string(),
+    sessionId: v.id("activePracticeSessions"),
+    practiceSetJson: v.string(),
+    practiceId: v.string(),
   },
   handler: async (ctx, args) => {
-    const row = await ctx.db.get(args.prefetchId);
-    if (!row || row.status !== "generating") return;
-    await ctx.db.patch(args.prefetchId, {
-      practiceSet: args.practiceSet,
+    const row = await ctx.db.get(args.sessionId);
+    if (!row || row.status !== "prefetching") return;
+    await ctx.db.patch(args.sessionId, {
+      practiceSetJson: args.practiceSetJson,
+      practiceId: args.practiceId,
       status: "ready",
+      updatedAt: Date.now(),
     });
   },
 });
 
 /**
- * Consume a "ready" prefetch row for a user+language.
- * Marks it "consumed" and returns the serialized PracticeSet, or null if none ready.
+ * Transition a "ready" session to "active". Initializes progressJson.
+ * Returns the practiceSetJson, or null if no ready session exists.
  */
-export const consumePrefetchedSet = internalMutation({
+export const activateSession = internalMutation({
   args: {
     userId: v.string(),
     language: languageValidator,
   },
   handler: async (ctx, args) => {
     const rows = await ctx.db
-      .query("prefetchedPracticeSets")
+      .query("activePracticeSessions")
       .withIndex("by_user_language", (q) =>
         q.eq("userId", args.userId).eq("language", args.language)
       )
@@ -256,61 +262,63 @@ export const consumePrefetchedSet = internalMutation({
     const ready = rows.find((r) => r.status === "ready");
     if (!ready) return null;
 
-    await ctx.db.patch(ready._id, { status: "consumed" });
-    return ready.practiceSet;
+    const initialProgress = JSON.stringify({
+      answers: [],
+      questionQueue: [],
+      phase: "questions",
+      totalScore: 0,
+      maxScore: 0,
+      contentReadTime: 0,
+    });
+
+    await ctx.db.patch(ready._id, {
+      status: "active",
+      progressJson: initialProgress,
+      updatedAt: Date.now(),
+    });
+    return ready.practiceSetJson ?? null;
   },
 });
 
 /**
- * Delete a "generating" prefetch row (used on error cleanup).
+ * Mark a session as "failed" with an error message.
  */
-export const deletePrefetchSlot = internalMutation({
+export const markSessionFailed = internalMutation({
   args: {
-    prefetchId: v.id("prefetchedPracticeSets"),
-  },
-  handler: async (ctx, args) => {
-    const row = await ctx.db.get(args.prefetchId);
-    if (row) await ctx.db.delete(args.prefetchId);
-  },
-});
-
-/**
- * Mark a prefetch row as "failed" with an error message (used on generation error).
- */
-export const markPrefetchFailed = internalMutation({
-  args: {
-    prefetchId: v.id("prefetchedPracticeSets"),
+    sessionId: v.id("activePracticeSessions"),
     errorMessage: v.string(),
   },
   handler: async (ctx, args) => {
-    const row = await ctx.db.get(args.prefetchId);
+    const row = await ctx.db.get(args.sessionId);
     if (!row) return;
-    await ctx.db.patch(args.prefetchId, {
+    await ctx.db.patch(args.sessionId, {
       status: "failed",
       errorMessage: args.errorMessage,
+      updatedAt: Date.now(),
     });
   },
 });
 
 /**
- * Invalidate (delete) any ready/generating prefetch for a user+language.
+ * Invalidate (delete) prefetching/ready/failed sessions for a user+language.
+ * Does NOT delete "active" sessions.
  * Called when the learner model changes (session completion).
  */
-export const invalidatePrefetch = internalMutation({
+export const invalidateSession = internalMutation({
   args: {
     userId: v.string(),
     language: languageValidator,
   },
   handler: async (ctx, args) => {
     const rows = await ctx.db
-      .query("prefetchedPracticeSets")
+      .query("activePracticeSessions")
       .withIndex("by_user_language", (q) =>
         q.eq("userId", args.userId).eq("language", args.language)
       )
       .collect();
 
     for (const row of rows) {
-      if (row.status === "ready" || row.status === "generating" || row.status === "failed") {
+      if (row.status === "prefetching" || row.status === "ready" || row.status === "failed") {
         await ctx.db.delete(row._id);
       }
     }
@@ -318,82 +326,92 @@ export const invalidatePrefetch = internalMutation({
 });
 
 /**
- * Get prefetch status for a user+language (used by backend poll-wait logic).
- * Returns "generating" | "ready" | null.
+ * Get active session for a user+language (public query for frontend).
  */
-export const getPrefetchStatusInternal = internalQuery({
+export const getActiveSession = query({
   args: {
-    userId: v.string(),
     language: languageValidator,
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    const userId = identity.subject;
+
     const rows = await ctx.db
-      .query("prefetchedPracticeSets")
-      .withIndex("by_user_language", (q) =>
-        q.eq("userId", args.userId).eq("language", args.language)
-      )
+      .query("activePracticeSessions")
+      .withIndex("by_user_language", (q) => q.eq("userId", userId).eq("language", args.language))
       .collect();
 
-    const active = rows.find(
-      (r) => r.status === "generating" || r.status === "ready" || r.status === "failed"
+    // Return the first non-deleted row (any status)
+    const session = rows.find(
+      (r) =>
+        r.status === "prefetching" ||
+        r.status === "ready" ||
+        r.status === "active" ||
+        r.status === "failed"
     );
-    if (!active) return null;
-    return active.status as PrefetchStatus;
-  },
-});
-
-/**
- * Get prefetch status for a user+language (used by frontend loading screen).
- */
-export const getPrefetchStatus = query({
-  args: {
-    userId: v.string(),
-    language: languageValidator,
-  },
-  handler: async (ctx, args) => {
-    const rows = await ctx.db
-      .query("prefetchedPracticeSets")
-      .withIndex("by_user_language", (q) =>
-        q.eq("userId", args.userId).eq("language", args.language)
-      )
-      .collect();
-
-    const active = rows.find(
-      (r) => r.status === "generating" || r.status === "ready" || r.status === "failed"
-    );
-    if (!active) return null;
+    if (!session) return null;
     return {
-      status: active.status as PrefetchStatus,
-      errorMessage: active.errorMessage,
+      _id: session._id,
+      status: session.status as ActiveSessionStatus,
+      practiceId: session.practiceId,
+      practiceSetJson: session.practiceSetJson,
+      progressJson: session.progressJson,
+      errorMessage: session.errorMessage,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
     };
   },
 });
 
 /**
- * Cleanup consumed and stuck generating rows (called by cron).
+ * Get active session for a user+language (internal query for backend use).
  */
-export const cleanupPrefetchedSets = internalMutation({
+export const getActiveSessionInternal = internalQuery({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("activePracticeSessions")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .collect();
+
+    const session = rows.find(
+      (r) =>
+        r.status === "prefetching" ||
+        r.status === "ready" ||
+        r.status === "active" ||
+        r.status === "failed"
+    );
+    if (!session) return null;
+    return session;
+  },
+});
+
+/**
+ * Cleanup stale sessions (called by cron).
+ * - "prefetching" / "failed" older than 1h → delete
+ * - "ready" older than 6h → delete (stale prefetch)
+ * - "active" older than 24h → delete (abandoned session)
+ */
+export const cleanupStaleSessions = internalMutation({
   args: {},
   handler: async (ctx) => {
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
+    const sixHoursAgo = Date.now() - 6 * 60 * 60 * 1000;
+    const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
     let deleted = 0;
 
-    // Delete all consumed rows
-    const consumedRows = await ctx.db
-      .query("prefetchedPracticeSets")
-      .withIndex("by_status", (q) => q.eq("status", "consumed"))
+    // Delete stuck prefetching rows (older than 1 hour)
+    const prefetchingRows = await ctx.db
+      .query("activePracticeSessions")
+      .withIndex("by_status", (q) => q.eq("status", "prefetching"))
       .collect();
-    for (const row of consumedRows) {
-      await ctx.db.delete(row._id);
-      deleted++;
-    }
-
-    // Delete stuck generating rows (older than 1 hour)
-    const generatingRows = await ctx.db
-      .query("prefetchedPracticeSets")
-      .withIndex("by_status", (q) => q.eq("status", "generating"))
-      .collect();
-    for (const row of generatingRows) {
+    for (const row of prefetchingRows) {
       if (row.createdAt < oneHourAgo) {
         await ctx.db.delete(row._id);
         deleted++;
@@ -402,7 +420,7 @@ export const cleanupPrefetchedSets = internalMutation({
 
     // Delete failed rows (older than 1 hour)
     const failedRows = await ctx.db
-      .query("prefetchedPracticeSets")
+      .query("activePracticeSessions")
       .withIndex("by_status", (q) => q.eq("status", "failed"))
       .collect();
     for (const row of failedRows) {
@@ -412,9 +430,153 @@ export const cleanupPrefetchedSets = internalMutation({
       }
     }
 
-    if (deleted > 0) {
-      console.log(`Cleaned up ${deleted} prefetched practice sets`);
+    // Delete stale ready rows (older than 6 hours)
+    const readyRows = await ctx.db
+      .query("activePracticeSessions")
+      .withIndex("by_status", (q) => q.eq("status", "ready"))
+      .collect();
+    for (const row of readyRows) {
+      if (row.createdAt < sixHoursAgo) {
+        await ctx.db.delete(row._id);
+        deleted++;
+      }
     }
+
+    // Delete abandoned active rows (older than 24 hours)
+    const activeRows = await ctx.db
+      .query("activePracticeSessions")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .collect();
+    for (const row of activeRows) {
+      if (row.updatedAt < twentyFourHoursAgo) {
+        await ctx.db.delete(row._id);
+        deleted++;
+      }
+    }
+
+    if (deleted > 0) {
+      console.log(`Cleaned up ${deleted} stale active practice sessions`);
+    }
+  },
+});
+
+// ============================================
+// SESSION PROGRESS FUNCTIONS
+// ============================================
+
+/**
+ * Update session progress (called per-answer from frontend).
+ */
+export const updateSessionProgress = mutation({
+  args: {
+    sessionId: v.id("activePracticeSessions"),
+    progressJson: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const row = await ctx.db.get(args.sessionId);
+    if (!row || row.userId !== identity.subject) throw new Error("Unauthorized");
+    if (row.status !== "active") return;
+
+    await ctx.db.patch(args.sessionId, {
+      progressJson: args.progressJson,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Delete the active session for a user+language (called on practice completion/restart).
+ */
+export const deleteActiveSession = mutation({
+  args: {
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const rows = await ctx.db
+      .query("activePracticeSessions")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", identity.subject).eq("language", args.language)
+      )
+      .collect();
+
+    for (const row of rows) {
+      await ctx.db.delete(row._id);
+    }
+  },
+});
+
+/**
+ * Clear all active sessions for a user (all languages). Admin button.
+ */
+export const clearAllActiveSessions = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const rows = await ctx.db
+      .query("activePracticeSessions")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .collect();
+
+    for (const row of rows) {
+      await ctx.db.delete(row._id);
+    }
+  },
+});
+
+/**
+ * Create an active session directly (for fresh generation, no prefetch).
+ * Sets status "active" with practiceSetJson + initial progressJson.
+ */
+export const createActiveSessionDirect = mutation({
+  args: {
+    language: languageValidator,
+    practiceId: v.string(),
+    practiceSetJson: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    // Delete any existing session for this user+language first
+    const existing = await ctx.db
+      .query("activePracticeSessions")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", identity.subject).eq("language", args.language)
+      )
+      .collect();
+    for (const row of existing) {
+      await ctx.db.delete(row._id);
+    }
+
+    const now = Date.now();
+    const initialProgress = JSON.stringify({
+      answers: [],
+      questionQueue: [],
+      phase: "questions",
+      totalScore: 0,
+      maxScore: 0,
+      contentReadTime: 0,
+    });
+
+    const id = await ctx.db.insert("activePracticeSessions", {
+      userId: identity.subject,
+      language: args.language,
+      practiceId: args.practiceId,
+      practiceSetJson: args.practiceSetJson,
+      progressJson: initialProgress,
+      status: "active",
+      createdAt: now,
+      updatedAt: now,
+    });
+    return id;
   },
 });
 
@@ -660,8 +822,8 @@ export const flushLearnerModel = internalMutation({
       });
     }
 
-    // Invalidate stale prefetched sets (learner model just changed)
-    await ctx.runMutation(internal.adaptivePracticeQueries.invalidatePrefetch, {
+    // Invalidate stale prefetching/ready/failed sessions (learner model just changed)
+    await ctx.runMutation(internal.adaptivePracticeQueries.invalidateSession, {
       userId: args.userId,
       language: args.language,
     });

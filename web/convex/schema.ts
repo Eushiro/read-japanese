@@ -104,6 +104,9 @@ export type ContentAudienceScope = "global" | "goal" | "user";
 // Prefetch status
 export type PrefetchStatus = "generating" | "ready" | "consumed" | "failed";
 
+// Active practice session status
+export type ActiveSessionStatus = "prefetching" | "ready" | "active" | "failed";
+
 // ============================================
 // VALIDATORS
 // ============================================
@@ -310,6 +313,14 @@ export const prefetchStatusValidator = v.union(
   v.literal("generating"),
   v.literal("ready"),
   v.literal("consumed"),
+  v.literal("failed")
+);
+
+// Active practice session status
+export const activeSessionStatusValidator = v.union(
+  v.literal("prefetching"),
+  v.literal("ready"),
+  v.literal("active"),
   v.literal("failed")
 );
 
@@ -1889,17 +1900,21 @@ export default defineSchema({
   }).index("by_user", ["userId"]),
 
   // ============================================
-  // PREFETCHED PRACTICE SETS (background generation cache)
+  // ACTIVE PRACTICE SESSIONS (unified prefetch + session lifecycle)
   // ============================================
-  prefetchedPracticeSets: defineTable({
+  activePracticeSessions: defineTable({
     userId: v.string(),
     language: languageValidator,
-    practiceSet: v.string(), // JSON-serialized PracticeSet (includes TTS audio URLs)
-    status: prefetchStatusValidator,
+    practiceId: v.optional(v.string()), // Set once generation completes
+    practiceSetJson: v.optional(v.string()), // Full PracticeSet JSON, written once
+    progressJson: v.optional(v.string()), // { answers, questionQueue, phase, totalScore, maxScore, contentReadTime }
+    status: activeSessionStatusValidator,
     errorMessage: v.optional(v.string()),
     createdAt: v.number(),
+    updatedAt: v.number(),
   })
     .index("by_user_language", ["userId", "language"])
+    .index("by_user", ["userId"])
     .index("by_status", ["status"]),
 
   // ============================================

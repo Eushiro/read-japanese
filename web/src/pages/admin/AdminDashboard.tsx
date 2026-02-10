@@ -29,9 +29,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { type ContentLanguage, LANGUAGES } from "@/lib/contentLanguages";
-import type { ProficiencyLevel } from "@/types/story";
-import { getPracticeSessionKey } from "@/lib/practiceSession";
 import { getTier, type TierId } from "@/lib/tiers";
+import type { ProficiencyLevel } from "@/types/story";
 
 import { api } from "../../../convex/_generated/api";
 
@@ -49,6 +48,7 @@ export function AdminDashboard() {
   const upsertSubscription = useMutation(api.subscriptions.upsert);
   const updateProficiencyLevel = useMutation(api.users.updateProficiencyLevel);
   const overrideProfile = useMutation(api.learnerModel.overrideProfile);
+  const clearAllActiveSessions = useMutation(api.adaptivePracticeQueries.clearAllActiveSessions);
   const [overrideStatusByLang, setOverrideStatusByLang] = useState<
     Record<string, { type: "success" | "error"; message: string }>
   >({});
@@ -397,12 +397,12 @@ export function AdminDashboard() {
                 size="sm"
                 className="w-full"
                 onClick={() => {
-                  const langs = userProfile?.languages ?? [];
-                  for (const lang of langs) {
-                    sessionStorage.removeItem(getPracticeSessionKey(lang));
-                  }
-                  setClearedSessions(true);
-                  setTimeout(() => setClearedSessions(false), 2000);
+                  clearAllActiveSessions({})
+                    .then(() => {
+                      setClearedSessions(true);
+                      setTimeout(() => setClearedSessions(false), 2000);
+                    })
+                    .catch((e) => console.error("Failed to clear sessions:", e));
                 }}
               >
                 {clearedSessions ? "Cleared!" : "Clear All Sessions"}

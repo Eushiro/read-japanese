@@ -45,7 +45,6 @@ import { isAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT, useUILanguage } from "@/lib/i18n";
 import { abilityToProgress, getLevelVariant } from "@/lib/levels";
-import { getPracticeSessionKey } from "@/lib/practiceSession";
 
 import { api } from "../../convex/_generated/api";
 
@@ -390,10 +389,17 @@ export function AdaptivePracticePage() {
   const [showRawJson, setShowRawJson] = useState(false);
   const [jsonTab, setJsonTab] = useState<"input" | "output">("input");
 
-  // Admin: poll prefetch status during loading
-  const prefetchStatus = useQuery(
-    api.adaptivePracticeQueries.getPrefetchStatus,
-    adminEnabled && user && phase === "loading" ? { userId: user.id, language } : "skip"
+  // Active session query — unified session state from DB
+  const activeSession = useQuery(
+    api.adaptivePracticeQueries.getActiveSession,
+    user ? { language } : "skip"
+  );
+
+  // Session mutations
+  const updateSessionProgress = useMutation(api.adaptivePracticeQueries.updateSessionProgress);
+  const deleteActiveSession = useMutation(api.adaptivePracticeQueries.deleteActiveSession);
+  const createActiveSessionDirect = useMutation(
+    api.adaptivePracticeQueries.createActiveSessionDirect
   );
 
   // Admin: elapsed time tracker for loading screen
@@ -475,7 +481,7 @@ export function AdaptivePracticePage() {
 
   // Flush unsubmitted answers on tab close.
   // On unmount (React Router navigation), we DON'T flush because the session
-  // is saved to sessionStorage and can be resumed. We only flush on
+  // is persisted in the DB and can be resumed. We only flush on
   // beforeunload (actual tab close) to avoid losing data.
   useEffect(() => {
     const flush = () => {
@@ -513,7 +519,7 @@ export function AdaptivePracticePage() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      // Don't flush on unmount — session is persisted in sessionStorage
+      // Don't flush on unmount — session is persisted in the DB
     };
   }, [user, language, submitPractice]);
 
@@ -527,11 +533,13 @@ export function AdaptivePracticePage() {
     return answers.length + lookahead;
   }, [practiceSet, answers]);
 
-  // Session persistence: save snapshot to sessionStorage
+  // Session persistence: save progress to DB
   // Computes totalScore/maxScore from the answers array to avoid stale closure values.
-  const saveSessionToStorage = useCallback(
+  const activeSessionIdRef = useRef<string | null>(null);
+  const saveSessionToDb = useCallback(
     (updatedAnswers: AnswerRecord[]) => {
-      if (!practiceSet) return;
+      const sessionId = activeSessionIdRef.current;
+      if (!sessionId || !practiceSet) return;
       try {
         const nonSkipped = updatedAnswers.filter((a) => !a.skipped);
         const computedTotal = nonSkipped.reduce((s, a) => s + a.earnedPoints, 0);
@@ -539,51 +547,46 @@ export function AdaptivePracticePage() {
           const q = practiceSet.questions.find((q) => q.questionId === a.questionId);
           return s + (q?.points ?? 0);
         }, 0);
-        const snapshot = {
-          practiceSet,
+        const progressJson = JSON.stringify({
           answers: updatedAnswers,
           questionQueue,
           phase,
           totalScore: computedTotal,
           maxScore: computedMax,
           contentReadTime,
-        };
-        sessionStorage.setItem(getPracticeSessionKey(language), JSON.stringify(snapshot));
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex ID type bridging
+        updateSessionProgress({ sessionId: sessionId as any, progressJson }).catch(() => {});
       } catch {
-        // sessionStorage may be full or disabled — ignore
+        // ignore serialization errors
       }
     },
-    [practiceSet, questionQueue, phase, contentReadTime, language]
+    [practiceSet, questionQueue, phase, contentReadTime, updateSessionProgress]
   );
 
-  const clearSessionStorage = useCallback(() => {
-    try {
-      sessionStorage.removeItem(getPracticeSessionKey(language));
-    } catch {
-      // ignore
-    }
-    setHasStoredSession(false);
-  }, [language]);
+  const clearActiveSession = useCallback(() => {
+    deleteActiveSession({ language }).catch(() => {});
+    activeSessionIdRef.current = null;
+  }, [language, deleteActiveSession]);
 
-  // Session persistence: restore on mount
+  // Session persistence: restore from DB on mount
   const [restoredSession, setRestoredSession] = useState(false);
-  const [hasStoredSession, setHasStoredSession] = useState(() => {
+  const hasStoredSession = (() => {
+    if (activeSession?.status !== "active" || !activeSession.progressJson) return false;
     try {
-      const saved = sessionStorage.getItem(getPracticeSessionKey(language));
-      if (!saved) return false;
-      const snapshot = JSON.parse(saved);
-      return snapshot.phase === "questions" && snapshot.answers?.length > 0;
+      const progress = JSON.parse(activeSession.progressJson);
+      return progress.answers?.length > 0;
     } catch {
       return false;
     }
-  });
+  })();
+
   useEffect(() => {
     if (restoredSession || phase !== "loading") return;
+    if (!activeSession || activeSession.status !== "active") return;
+    if (!activeSession.progressJson || !activeSession.practiceSetJson) return;
     try {
-      const saved = sessionStorage.getItem(getPracticeSessionKey(language));
-      if (!saved) return;
-      const snapshot = JSON.parse(saved) as {
-        practiceSet: PracticeSet;
+      const progress = JSON.parse(activeSession.progressJson) as {
         answers: AnswerRecord[];
         questionQueue: string[];
         phase: PracticePhase;
@@ -591,26 +594,26 @@ export function AdaptivePracticePage() {
         maxScore: number;
         contentReadTime: number;
       };
-      if (snapshot.phase !== "questions" || snapshot.answers.length === 0) return;
-      setPracticeSet(snapshot.practiceSet);
-      setAnswers(snapshot.answers);
-      setQuestionQueue(snapshot.questionQueue);
-      setTotalScore(snapshot.totalScore);
-      setMaxScore(snapshot.maxScore);
-      setContentReadTime(snapshot.contentReadTime);
+      if (!progress.answers || progress.answers.length === 0) return;
+      const restoredPracticeSet = JSON.parse(activeSession.practiceSetJson) as PracticeSet;
+      setPracticeSet(restoredPracticeSet);
+      setAnswers(progress.answers);
+      setQuestionQueue(progress.questionQueue);
+      setTotalScore(progress.totalScore);
+      setMaxScore(progress.maxScore);
+      setContentReadTime(progress.contentReadTime);
       setPhase("questions");
       setRestoredSession(true);
-      setHasStoredSession(false);
-      // pickNext will fire via the useEffect that watches phase/practiceSet
+      activeSessionIdRef.current = activeSession._id;
     } catch {
-      // invalid JSON or missing data — ignore and fetch fresh
+      // invalid JSON — ignore and fetch fresh
     }
-  }, [language, phase, restoredSession]);
+  }, [language, phase, restoredSession, activeSession]);
 
   // Reset queue when a new practice session starts
   useEffect(() => {
     if (!practiceSet?.practiceId) return;
-    // Don't reset queue if we just restored from sessionStorage
+    // Don't reset queue if we just restored from DB
     if (restoredSession) return;
     setQuestionQueue([]);
   }, [practiceSet?.practiceId, restoredSession]);
@@ -845,16 +848,32 @@ export function AdaptivePracticePage() {
         language,
         uiLanguage,
       }),
-    enabled: !!user && isAuthenticated && !isModelTestMode && !restoredSession && !hasStoredSession,
+    enabled:
+      !!user &&
+      isAuthenticated &&
+      !isModelTestMode &&
+      !restoredSession &&
+      !hasStoredSession &&
+      activeSession === null,
     staleTime: Infinity,
     retry: false,
   });
 
-  // Sync fetched practice to local state (only when loading)
+  // Sync fetched practice to local state (only when loading) + create active session in DB
   useEffect(() => {
     if (!fetchedPractice || phase !== "loading") return;
     const startTime = Date.now();
     setPracticeSet(fetchedPractice);
+    // Create an active session row in the DB (replaces any stale prefetch/ready row)
+    createActiveSessionDirect({
+      language,
+      practiceId: fetchedPractice.practiceId,
+      practiceSetJson: JSON.stringify(fetchedPractice),
+    })
+      .then((id) => {
+        activeSessionIdRef.current = id;
+      })
+      .catch((e) => console.error("Failed to create active session:", e));
     if (fetchedPractice.isDiagnostic) {
       setContentReadTime(startTime);
       setPhase("questions");
@@ -862,7 +881,7 @@ export function AdaptivePracticePage() {
       setPhase("content");
       setContentReadTime(startTime);
     }
-  }, [fetchedPractice, phase]);
+  }, [fetchedPractice, phase, language, createActiveSessionDirect]);
 
   // Log fetch errors
   useEffect(() => {
@@ -1005,10 +1024,10 @@ export function AdaptivePracticePage() {
         dwellMs,
         targetSkills: practiceSet.targetSkills,
       });
-      clearSessionStorage();
+      clearActiveSession();
       setPhase("results");
     },
-    [practiceSet, user, language, contentReadTime, submitPractice, clearSessionStorage]
+    [practiceSet, user, language, contentReadTime, submitPractice, clearActiveSession]
   );
 
   // Edge case: restored session where all questions were already answered
@@ -1036,7 +1055,7 @@ export function AdaptivePracticePage() {
     setAnswers((prev) => [...prev, answer]);
     // Don't add to score for skipped questions
     recordAnswerToBackend(currentQuestion, answer);
-    saveSessionToStorage([...answers, answer]);
+    saveSessionToDb([...answers, answer]);
 
     const updatedAnswers = [...answers, answer];
     const remaining = practiceSet.questions.filter(
@@ -1080,7 +1099,7 @@ export function AdaptivePracticePage() {
     practiceSet,
     answers,
     recordAnswerToBackend,
-    saveSessionToStorage,
+    saveSessionToDb,
     finishSession,
     triggerBackgroundGeneration,
   ]);
@@ -1248,8 +1267,8 @@ export function AdaptivePracticePage() {
       // Fire-and-forget: record answer + update learner model
       recordAnswerToBackend(currentQuestion, answer);
 
-      // Persist session to sessionStorage
-      saveSessionToStorage([...answers, answer]);
+      // Persist session progress to DB
+      saveSessionToDb([...answers, answer]);
 
       // Diagnostic mode: trigger background generation if pool is running low
       if (practiceSet.isDiagnostic) {
@@ -1278,7 +1297,7 @@ export function AdaptivePracticePage() {
     language,
     uiLanguage,
     recordAnswerToBackend,
-    saveSessionToStorage,
+    saveSessionToDb,
     answers,
     triggerBackgroundGeneration,
   ]);
@@ -1455,7 +1474,7 @@ export function AdaptivePracticePage() {
 
   // Restart practice
   const handleRestart = useCallback(() => {
-    clearSessionStorage();
+    clearActiveSession();
     setRestoredSession(false);
     setPracticeSet(null);
     loadingStartRef.current = Date.now();
@@ -1483,7 +1502,7 @@ export function AdaptivePracticePage() {
     }
 
     refetchPractice();
-  }, [user, isModelTestMode, testModeModels, fireModelTests, refetchPractice, clearSessionStorage]);
+  }, [user, isModelTestMode, testModeModels, fireModelTests, refetchPractice, clearActiveSession]);
 
   // Loading state (auth loading or practice loading phase)
   if (authLoading || phase === "loading") {
@@ -1520,27 +1539,31 @@ export function AdaptivePracticePage() {
                 <div className="flex items-center justify-center gap-1.5">
                   <span
                     className={`inline-block w-2 h-2 rounded-full ${
-                      prefetchStatus === undefined
+                      activeSession === undefined
                         ? "bg-gray-400 animate-pulse"
-                        : prefetchStatus === null
+                        : activeSession === null
                           ? "bg-gray-400"
-                          : prefetchStatus.status === "generating"
+                          : activeSession.status === "prefetching"
                             ? "bg-yellow-400"
-                            : prefetchStatus.status === "failed"
+                            : activeSession.status === "failed"
                               ? "bg-red-400"
-                              : "bg-green-400"
+                              : activeSession.status === "active"
+                                ? "bg-blue-400"
+                                : "bg-green-400"
                     }`}
                   />
                   <span>
-                    {prefetchStatus === undefined
-                      ? "Checking prefetch..."
-                      : prefetchStatus === null
-                        ? "No prefetch found, generating fresh"
-                        : prefetchStatus.status === "generating"
-                          ? "Found prefetch (generating), backend waiting..."
-                          : prefetchStatus.status === "failed"
-                            ? `Prefetch failed: ${prefetchStatus.errorMessage ?? "unknown"}`
-                            : "Prefetch ready, consuming..."}
+                    {activeSession === undefined
+                      ? "Checking session..."
+                      : activeSession === null
+                        ? "No session found, generating fresh"
+                        : activeSession.status === "prefetching"
+                          ? "Found session (prefetching), backend waiting..."
+                          : activeSession.status === "failed"
+                            ? `Session failed: ${activeSession.errorMessage ?? "unknown"}`
+                            : activeSession.status === "active"
+                              ? "Session active"
+                              : "Session ready, activating..."}
                   </span>
                 </div>
                 <div>{elapsedSeconds}s elapsed</div>

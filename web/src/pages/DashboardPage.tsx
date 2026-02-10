@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Video,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CreditAlert } from "@/components/CreditAlert";
 import { SkillsSection } from "@/components/dashboard/SkillsSection";
@@ -30,7 +30,6 @@ import { useStoriesByLanguage } from "@/hooks/useStories";
 import { isAdmin } from "@/lib/admin";
 import type { ContentLanguage } from "@/lib/contentLanguages";
 import { useT } from "@/lib/i18n";
-import { getPracticeSessionKey } from "@/lib/practiceSession";
 import type { StoryListItem } from "@/types/story";
 
 import { api } from "../../convex/_generated/api";
@@ -56,25 +55,31 @@ export function DashboardPage() {
   // Admin mode flag
   const adminEnabled = isAdmin(user?.email) && userProfile?.isAdminMode === true;
 
-  // Admin: poll prefetch status
-  const prefetchStatus = useQuery(
-    api.adaptivePracticeQueries.getPrefetchStatus,
-    adminEnabled && user ? { userId: user.id, language: primaryLanguage } : "skip"
+  // Single query replaces both getPrefetchStatus and sessionStorage check
+  const activeSession = useQuery(
+    api.adaptivePracticeQueries.getActiveSession,
+    isAuthenticated && user ? { language: primaryLanguage } : "skip"
   );
 
   // Prefetch practice set in background so it's ready when user clicks "Start Practice"
   const triggerPrefetch = useAction(api.adaptivePractice.triggerPrefetch);
-  const prefetchTriggeredRef = useRef(false);
   useEffect(() => {
-    if (!isAuthenticated || !userProfile || prefetchTriggeredRef.current) return;
-    // Only prefetch if there's no active session in sessionStorage
-    const hasActiveSession = !!sessionStorage.getItem(getPracticeSessionKey(primaryLanguage));
-    if (hasActiveSession) return;
-    prefetchTriggeredRef.current = true;
+    if (!isAuthenticated || !userProfile) return;
+    // Skip prefetch if there's an in-progress study session (user will "Continue Session", not start practice)
+    if (sessionState.status === "active") return;
+    if (activeSession === undefined) return; // query still loading
+    if (activeSession !== null) return; // session exists (any status)
     triggerPrefetch({ language: primaryLanguage }).catch(() => {
       // Best-effort — ignore errors
     });
-  }, [isAuthenticated, userProfile, primaryLanguage, triggerPrefetch]);
+  }, [
+    isAuthenticated,
+    userProfile,
+    primaryLanguage,
+    triggerPrefetch,
+    sessionState.status,
+    activeSession,
+  ]);
 
   // Fetch streak data
   const streakData = useQuery(
@@ -183,9 +188,7 @@ export function DashboardPage() {
                   hasLanguages: userLanguages.length > 0,
                   sessionStatus: sessionState.status,
                   learningGoal: userProfile?.learningGoal,
-                  hasSavedPractice: !!sessionStorage.getItem(
-                    getPracticeSessionKey(primaryLanguage)
-                  ),
+                  hasSavedPractice: activeSession?.status === "active",
                   t,
                 })}
                 currentStreak={currentStreak}
@@ -201,33 +204,37 @@ export function DashboardPage() {
                   navigate({ to: "/study-session" });
                 }}
               />
-              {adminEnabled && prefetchStatus !== undefined && (
+              {adminEnabled && activeSession !== undefined && (
                 <div className="flex justify-center mt-2">
                   <Badge
                     variant="outline"
                     className="text-xs gap-1.5"
                     title={
-                      prefetchStatus?.status === "failed" ? prefetchStatus.errorMessage : undefined
+                      activeSession?.status === "failed" ? activeSession.errorMessage : undefined
                     }
                   >
                     <span
                       className={`inline-block w-2 h-2 rounded-full ${
-                        prefetchStatus === null
+                        activeSession === null
                           ? "bg-gray-400"
-                          : prefetchStatus.status === "generating"
+                          : activeSession.status === "prefetching"
                             ? "bg-yellow-400"
-                            : prefetchStatus.status === "failed"
+                            : activeSession.status === "failed"
                               ? "bg-red-400"
-                              : "bg-green-400"
+                              : activeSession.status === "active"
+                                ? "bg-blue-400"
+                                : "bg-green-400"
                       }`}
                     />
-                    {prefetchStatus === null
-                      ? "No prefetch"
-                      : prefetchStatus.status === "generating"
-                        ? "Prefetch: generating"
-                        : prefetchStatus.status === "failed"
-                          ? "Prefetch: failed"
-                          : "Prefetch: ready"}
+                    {activeSession === null
+                      ? "No session"
+                      : activeSession.status === "prefetching"
+                        ? "Session: prefetching"
+                        : activeSession.status === "failed"
+                          ? "Session: failed"
+                          : activeSession.status === "active"
+                            ? "Session: active"
+                            : "Session: ready"}
                   </Badge>
                 </div>
               )}
@@ -515,7 +522,7 @@ type PrimaryCtaAction = "session" | "practice" | "setup";
 
 function getPrimaryCtaConfig(args: {
   hasLanguages: boolean;
-  sessionStatus: "idle" | "planning" | "active" | "complete";
+  sessionStatus: "idle" | "active" | "complete";
   learningGoal?: "exam" | "travel" | "professional" | "media" | "casual";
   hasSavedPractice: boolean;
   t: ReturnType<typeof useT>;
@@ -532,7 +539,7 @@ function getPrimaryCtaConfig(args: {
     };
   }
 
-  if (args.sessionStatus === "active" || args.sessionStatus === "planning") {
+  if (args.sessionStatus === "active") {
     return {
       title: t("dashboard.primaryCta.continueTitle"),
       subtitle: t("dashboard.primaryCta.continueSubtitle"),
