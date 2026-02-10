@@ -818,11 +818,86 @@ export const getNextPractice = action({
       }
     }
 
-    // Cancel any in-flight prefetch to prevent double credit charges
-    await ctx.runMutation(internal.adaptivePracticeQueries.invalidatePrefetch, {
-      userId: args.userId,
-      language: args.language,
-    });
+    // Check if there's an in-flight prefetch we should wait for
+    const prefetchStatus = await ctx.runQuery(
+      internal.adaptivePracticeQueries.getPrefetchStatusInternal,
+      { userId: args.userId, language: args.language }
+    );
+
+    if (prefetchStatus === "generating") {
+      // Poll for prefetch completion (every 2s, up to ~30s)
+      const POLL_INTERVAL_MS = 2000;
+      const MAX_WAIT_MS = 30000;
+      const startWait = Date.now();
+
+      let consumed = false;
+      while (Date.now() - startWait < MAX_WAIT_MS) {
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+
+        const status = await ctx.runQuery(
+          internal.adaptivePracticeQueries.getPrefetchStatusInternal,
+          { userId: args.userId, language: args.language }
+        );
+
+        if (status === "ready") {
+          // Prefetch completed — consume it
+          const readyJson = await ctx.runMutation(
+            internal.adaptivePracticeQueries.consumePrefetchedSet,
+            { userId: args.userId, language: args.language }
+          );
+          if (readyJson) {
+            try {
+              const prefetched = JSON.parse(readyJson) as PracticeSet;
+              await ctx.runMutation(
+                internal.adaptivePracticeQueries.upsertPracticeSessionInternal,
+                {
+                  userId: args.userId,
+                  practiceId: prefetched.practiceId,
+                  language: args.language,
+                  isDiagnostic: prefetched.isDiagnostic,
+                  contentId: prefetched.content?.contentId,
+                  contentType: prefetched.content?.contentType,
+                  questions: prefetched.questions.map((q) => ({
+                    questionId: q.questionId,
+                    type: q.type,
+                    targetSkill: q.targetSkill,
+                    difficulty: q.difficulty,
+                  })),
+                  modelUsed: prefetched.modelUsed,
+                }
+              );
+              await ctx.runMutation(internal.aiHelpers.spendCreditsInternal, {
+                userId: args.userId,
+                action: "question",
+              });
+              console.log(
+                `Serving prefetched practice set ${prefetched.practiceId} (waited for generation)`
+              );
+              consumed = true;
+              return prefetched;
+            } catch (e) {
+              console.error("Failed to parse waited-for prefetched set:", e);
+              break;
+            }
+          }
+          break; // consumePrefetchedSet returned null unexpectedly
+        }
+
+        if (status === null) {
+          // Prefetch was deleted/failed while we were waiting
+          break;
+        }
+        // status is still "generating" — keep waiting
+      }
+
+      if (!consumed) {
+        // Timed out or prefetch failed — invalidate stale row and generate fresh
+        await ctx.runMutation(internal.adaptivePracticeQueries.invalidatePrefetch, {
+          userId: args.userId,
+          language: args.language,
+        });
+      }
+    }
 
     // No prefetched set available — generate fresh
     return generatePracticeSet(ctx, {

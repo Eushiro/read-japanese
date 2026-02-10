@@ -404,12 +404,6 @@ export function AdaptivePracticePage() {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Prefetch status — watch for background-generated practice set
-  const prefetchStatus = useQuery(
-    api.adaptivePracticeQueries.getPrefetchStatus,
-    user && phase === "loading" ? { userId: user.id, language } : "skip"
-  );
-
   // Loading messages
   const loadingPhrases = useMemo(
     () => [
@@ -1471,7 +1465,6 @@ export function AdaptivePracticePage() {
 
   // Loading state (auth loading or practice loading phase)
   if (authLoading || phase === "loading") {
-    const isPrefetching = prefetchStatus?.status === "generating";
     return (
       <div className="min-h-screen bg-background flex flex-col relative">
         <PremiumBackground colorScheme="cool" intensity="minimal" />
@@ -1499,17 +1492,6 @@ export function AdaptivePracticePage() {
                 </motion.span>
               </AnimatePresence>
             </div>
-            {isPrefetching && (
-              <motion.div
-                className="mt-6 flex items-center justify-center gap-2 text-sm text-foreground-muted"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                {t("adaptivePractice.loading.prefetching")}
-              </motion.div>
-            )}
           </div>
         </div>
       </div>

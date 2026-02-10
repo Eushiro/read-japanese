@@ -293,6 +293,29 @@ export const invalidatePrefetch = internalMutation({
 });
 
 /**
+ * Get prefetch status for a user+language (used by backend poll-wait logic).
+ * Returns "generating" | "ready" | null.
+ */
+export const getPrefetchStatusInternal = internalQuery({
+  args: {
+    userId: v.string(),
+    language: languageValidator,
+  },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("prefetchedPracticeSets")
+      .withIndex("by_user_language", (q) =>
+        q.eq("userId", args.userId).eq("language", args.language)
+      )
+      .collect();
+
+    const active = rows.find((r) => r.status === "generating" || r.status === "ready");
+    if (!active) return null;
+    return active.status as PrefetchStatus;
+  },
+});
+
+/**
  * Get prefetch status for a user+language (used by frontend loading screen).
  */
 export const getPrefetchStatus = query({

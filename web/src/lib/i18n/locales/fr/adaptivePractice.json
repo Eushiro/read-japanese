@@ -14,8 +14,7 @@
     "loadingMore2": "Personnalisation de vos prochains défis...",
     "loadingMore3": "Ajustement selon votre progression...",
     "loadingMore4": "Recherche de la difficulté idéale pour vous...",
-    "generationFailed": "Impossible de générer plus de questions — vous pouvez continuer avec les questions restantes.",
-    "prefetching": "Votre session est en cours de préparation..."
+    "generationFailed": "Impossible de générer plus de questions — vous pouvez continuer avec les questions restantes."
   },
   "contentType": {
     "dialogue": "Dialogue",
