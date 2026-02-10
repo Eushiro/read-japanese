@@ -160,8 +160,9 @@ export function OnboardingModal({ userId, userEmail, userName, onComplete }: Onb
         email: userEmail ?? undefined,
       }).catch((err) => console.error("Failed to pre-create Stripe customer:", err));
 
-      // Pre-generate first practice set in background for instant load
-      triggerPrefetch({
+      // Pre-generate first practice set — await slot claim so the "prefetching"
+      // row exists before we navigate to the practice page
+      await triggerPrefetch({
         language: selectedLanguage,
       }).catch((err) => console.error("Failed to prefetch practice:", err));
 

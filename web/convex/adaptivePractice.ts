@@ -1341,13 +1341,16 @@ export const prefetchPractice = internalAction({
   args: {
     userId: v.string(),
     language: languageValidator,
+    slotId: v.optional(v.id("activePracticeSessions")),
   },
   handler: async (ctx, args) => {
-    // Claim a session slot (atomic — prevents duplicate generation)
-    const slotId = await ctx.runMutation(internal.adaptivePracticeQueries.claimSessionSlot, {
-      userId: args.userId,
-      language: args.language,
-    });
+    // Use provided slot or claim a new one (backward compat for scheduled calls)
+    const slotId =
+      args.slotId ??
+      (await ctx.runMutation(internal.adaptivePracticeQueries.claimSessionSlot, {
+        userId: args.userId,
+        language: args.language,
+      }));
     if (!slotId) return;
 
     try {
@@ -1387,9 +1390,18 @@ export const triggerPrefetch = action({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return;
 
+    // Claim the session slot NOW (before scheduling) so the "prefetching"
+    // row exists by the time the frontend navigates to the practice page.
+    const slotId = await ctx.runMutation(internal.adaptivePracticeQueries.claimSessionSlot, {
+      userId: identity.subject,
+      language: args.language,
+    });
+    if (!slotId) return; // Session already exists
+
     await ctx.scheduler.runAfter(0, internal.adaptivePractice.prefetchPractice, {
       userId: identity.subject,
       language: args.language,
+      slotId,
     });
   },
 });
