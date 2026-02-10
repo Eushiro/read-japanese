@@ -854,7 +854,9 @@ export function AdaptivePracticePage() {
       !isModelTestMode &&
       !restoredSession &&
       !hasStoredSession &&
-      activeSession === null,
+      activeSession !== undefined &&
+      activeSession?.status !== "active" &&
+      activeSession?.status !== "failed",
     staleTime: Infinity,
     retry: false,
   });

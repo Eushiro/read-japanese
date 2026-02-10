@@ -545,13 +545,21 @@ export const createActiveSessionDirect = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthorized");
 
-    // Delete any existing session for this user+language first
+    // Check for existing sessions for this user+language
     const existing = await ctx.db
       .query("activePracticeSessions")
       .withIndex("by_user_language", (q) =>
         q.eq("userId", identity.subject).eq("language", args.language)
       )
       .collect();
+
+    // If an active session already exists with the same practiceId, reuse it
+    const activeMatch = existing.find(
+      (r) => r.status === "active" && r.practiceId === args.practiceId
+    );
+    if (activeMatch) return activeMatch._id;
+
+    // Otherwise delete stale sessions
     for (const row of existing) {
       await ctx.db.delete(row._id);
     }
