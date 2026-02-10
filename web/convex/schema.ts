@@ -1896,7 +1896,9 @@ export default defineSchema({
     practiceSet: v.string(), // JSON-serialized PracticeSet (includes TTS audio URLs)
     status: prefetchStatusValidator,
     createdAt: v.number(),
-  }).index("by_user_language", ["userId", "language"]),
+  })
+    .index("by_user_language", ["userId", "language"])
+    .index("by_status", ["status"]),
 
   // ============================================
   // ASSESSMENT RESPONSES (for regrading)

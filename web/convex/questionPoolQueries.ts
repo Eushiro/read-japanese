@@ -26,15 +26,30 @@ import {
  * Replaces N individual getByHash calls with a single query call.
  */
 export const getExistingHashes = internalQuery({
-  args: { hashes: v.array(v.string()) },
+  args: { hashes: v.array(v.string()), language: languageValidator },
   handler: async (ctx, args) => {
+    // Fetch recent pool entries (last 24h) as a Set of hashes.
+    // Questions being ingested were just generated, so most dups are recent.
+    const oneDayAgo = Date.now() - 86_400_000;
+    const recentDocs = await ctx.db
+      .query("questionPool")
+      .withIndex("by_language_difficulty", (q) => q.eq("language", args.language))
+      .filter((q) => q.gte(q.field("generatedAt"), oneDayAgo))
+      .take(500);
+    const recentHashes = new Set(recentDocs.map((d) => d.questionHash));
+
+    // Check each hash against the Set first, only do index lookup for misses
     const existing: string[] = [];
     for (const hash of args.hashes) {
-      const doc = await ctx.db
-        .query("questionPool")
-        .withIndex("by_hash", (q) => q.eq("questionHash", hash))
-        .first();
-      if (doc) existing.push(hash);
+      if (recentHashes.has(hash)) {
+        existing.push(hash);
+      } else {
+        const doc = await ctx.db
+          .query("questionPool")
+          .withIndex("by_hash", (q) => q.eq("questionHash", hash))
+          .first();
+        if (doc) existing.push(hash);
+      }
     }
     return existing;
   },
@@ -52,7 +67,7 @@ export const getUserSeenHashes = internalQuery({
         q.eq("userId", args.userId).eq("language", args.language)
       )
       .order("desc")
-      .take(500);
+      .take(2000);
 
     return exposures.map((e) => e.questionHash);
   },
@@ -66,25 +81,32 @@ export const getUserSeenHashes = internalQuery({
 export const getPoolCandidatesWithCount = internalQuery({
   args: {
     language: languageValidator,
-    difficulty: difficultyLevelValidator,
+    difficulties: v.array(difficultyLevelValidator),
     limit: v.number(),
   },
   handler: async (ctx, args) => {
-    const candidates = await ctx.db
-      .query("questionPool")
-      .withIndex("by_language_difficulty", (q) =>
-        q.eq("language", args.language).eq("difficulty", args.difficulty)
-      )
-      .take(args.limit);
+    // Query each difficulty level and merge results
+    const perDiffLimit = Math.ceil(args.limit / args.difficulties.length);
+    const allCandidates = [];
+    for (const diff of args.difficulties) {
+      const batch = await ctx.db
+        .query("questionPool")
+        .withIndex("by_language_difficulty", (q) =>
+          q.eq("language", args.language).eq("difficulty", diff)
+        )
+        .take(perDiffLimit);
+      allCandidates.push(...batch);
+    }
 
-    // Count pool size with a cap at 1000 — the caller only needs threshold
-    // buckets (< 50, < 200, < 1000, >= 1000), not an exact count
-    const poolSample = await ctx.db
+    // Sequential threshold checks: read at most 200 docs instead of 1000.
+    // The caller only needs buckets (<50, <200, >=200).
+    const sample = await ctx.db
       .query("questionPool")
       .withIndex("by_language_skill_difficulty", (q) => q.eq("language", args.language))
-      .take(1000);
+      .take(200);
+    const poolSize = sample.length >= 200 ? 1000 : sample.length;
 
-    return { candidates, poolSize: poolSample.length };
+    return { candidates: allCandidates, poolSize };
   },
 });
 

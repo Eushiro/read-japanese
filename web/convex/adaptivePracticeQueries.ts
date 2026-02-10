@@ -321,19 +321,30 @@ export const cleanupPrefetchedSets = internalMutation({
   args: {},
   handler: async (ctx) => {
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
-    // We can't filter by status in the index, so collect all and filter
-    const allRows = await ctx.db.query("prefetchedPracticeSets").collect();
-
     let deleted = 0;
-    for (const row of allRows) {
-      if (row.status === "consumed") {
-        await ctx.db.delete(row._id);
-        deleted++;
-      } else if (row.status === "generating" && row.createdAt < oneHourAgo) {
+
+    // Delete all consumed rows
+    const consumedRows = await ctx.db
+      .query("prefetchedPracticeSets")
+      .withIndex("by_status", (q) => q.eq("status", "consumed"))
+      .collect();
+    for (const row of consumedRows) {
+      await ctx.db.delete(row._id);
+      deleted++;
+    }
+
+    // Delete stuck generating rows (older than 1 hour)
+    const generatingRows = await ctx.db
+      .query("prefetchedPracticeSets")
+      .withIndex("by_status", (q) => q.eq("status", "generating"))
+      .collect();
+    for (const row of generatingRows) {
+      if (row.createdAt < oneHourAgo) {
         await ctx.db.delete(row._id);
         deleted++;
       }
     }
+
     if (deleted > 0) {
       console.log(`Cleaned up ${deleted} prefetched practice sets`);
     }

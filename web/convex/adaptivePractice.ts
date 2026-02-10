@@ -28,7 +28,11 @@ import {
   SUPPORTED_UI_LANGUAGES,
   type UILanguage,
 } from "./lib/promptHelpers";
-import { hashQuestionContent } from "./lib/questionPoolHelpers";
+import {
+  hashQuestionContent,
+  type PoolQuestionDoc,
+  scoreCandidate,
+} from "./lib/questionPoolHelpers";
 import {
   adaptiveContentTypeValidator,
   type DifficultyLevel,
@@ -922,46 +926,107 @@ async function generatePracticeSet(
     let poolQuestions: PracticeQuestion[] = [];
     let poolSize = 0;
     try {
+      // Build target tag sets from learner's weakAreas and interests
+      const targetGrammar = new Set<string>();
+      const targetVocab = new Set<string>();
+      const targetTopics = new Set<string>();
+
+      if (profile?.weakAreas) {
+        for (const wa of profile.weakAreas) {
+          if (wa.skill === "grammar") targetGrammar.add(wa.topic);
+          else if (wa.skill === "vocabulary") targetVocab.add(wa.topic);
+          else targetTopics.add(wa.topic);
+        }
+      }
+
       const interests =
         profile?.interestWeights?.filter((iw) => iw.weight > 0).map((iw) => iw.tag) ?? [];
+      for (const interest of interests) {
+        targetTopics.add(interest);
+      }
 
-      const poolResult = await ctx.runAction(internal.questionPool.searchQuestionPool, {
-        userId: args.userId,
-        language: args.language,
-        difficulty: targetDifficulty,
-        targetCount,
-        abilityEstimate: effectiveAbility,
-        weakAreas: profile?.weakAreas?.map((w) => ({
-          skill: w.skill,
-          topic: w.topic,
-          score: w.score,
-        })),
-        interests,
-      });
+      // Build adjacent difficulties (target ± 1)
+      const DIFFICULTY_ORDER: DifficultyLevel[] = [
+        "level_1",
+        "level_2",
+        "level_3",
+        "level_4",
+        "level_5",
+        "level_6",
+      ];
+      const targetIdx = DIFFICULTY_ORDER.indexOf(targetDifficulty);
+      const adjacentDifficulties: DifficultyLevel[] = [targetDifficulty];
+      if (targetIdx > 0) adjacentDifficulties.push(DIFFICULTY_ORDER[targetIdx - 1]);
+      if (targetIdx < DIFFICULTY_ORDER.length - 1)
+        adjacentDifficulties.push(DIFFICULTY_ORDER[targetIdx + 1]);
 
-      poolSize = poolResult.poolSize;
-      const poolRatio = poolSize < 50 ? 0 : poolSize < 200 ? 0.3 : poolSize < 1000 ? 0.5 : 0.7;
-      const poolTarget = Math.round(targetCount * poolRatio);
+      const fetchLimit = Math.min(targetCount * 5, 256);
 
-      poolQuestions = poolResult.questions
-        .filter((pq: (typeof poolResult.questions)[number]) => pq.translations !== undefined)
-        .slice(0, poolTarget)
-        .map((pq: (typeof poolResult.questions)[number], idx: number) => ({
+      // Run candidates+count and user-seen-hashes queries in parallel (no action wrapper)
+      const [candidatesResult, seenHashes] = await Promise.all([
+        ctx.runQuery(internal.questionPoolQueries.getPoolCandidatesWithCount, {
+          language: args.language,
+          difficulties: adjacentDifficulties,
+          limit: fetchLimit,
+        }) as Promise<{ candidates: PoolQuestionDoc[]; poolSize: number }>,
+        ctx.runQuery(internal.questionPoolQueries.getUserSeenHashes, {
+          userId: args.userId,
+          language: args.language,
+        }) as Promise<string[]>,
+      ]);
+
+      const { candidates: poolDocs, poolSize: fetchedPoolSize } = candidatesResult;
+      poolSize = fetchedPoolSize;
+
+      if (poolDocs.length > 0) {
+        const seenSet = new Set(seenHashes);
+        const ability = effectiveAbility;
+
+        // Score and sort candidates inline
+        const scored = poolDocs
+          .filter((doc) => doc.isStandalone)
+          .filter((doc) => !seenSet.has(doc.questionHash))
+          .filter((doc) => doc.translations !== undefined)
+          .map((doc) => ({
+            doc,
+            score: scoreCandidate(doc, ability, targetGrammar, targetVocab, targetTopics),
+          }))
+          .sort((a, b) => b.score - a.score);
+
+        // Enforce semantic diversity: different skills/types preferred
+        const selected: typeof scored = [];
+        for (const candidate of scored) {
+          if (selected.length >= targetCount) break;
+          const isDuplicate = selected.some(
+            (s) =>
+              s.doc.questionType === candidate.doc.questionType &&
+              s.doc.targetSkill === candidate.doc.targetSkill
+          );
+          if (!isDuplicate || scored.length - selected.length <= targetCount - selected.length) {
+            selected.push(candidate);
+          }
+        }
+
+        const poolRatio = poolSize < 50 ? 0 : poolSize < 200 ? 0.3 : poolSize < 1000 ? 0.5 : 0.7;
+        const poolTarget = Math.round(targetCount * poolRatio);
+
+        poolQuestions = selected.slice(0, poolTarget).map((s, idx) => ({
           questionId: `pool_${Date.now()}_${idx}`,
-          type: pq.questionType as PracticeQuestionType,
-          targetSkill: pq.targetSkill as SkillType,
-          difficulty: pq.difficulty as DifficultyLevel,
-          question: pq.question,
-          passageText: pq.passageText ?? undefined,
-          options: pq.options ?? undefined,
-          correctAnswer: pq.correctAnswer,
-          acceptableAnswers: pq.acceptableAnswers ?? undefined,
-          points: pq.points,
-          questionHash: pq.questionHash,
-          translations: pq.translations as Record<UILanguage, string>,
-          optionTranslations: (pq.optionTranslations as Record<UILanguage, string[]>) ?? null,
-          showOptionsInTargetLanguage: pq.showOptionsInTargetLanguage ?? true,
+          type: s.doc.questionType as PracticeQuestionType,
+          targetSkill: s.doc.targetSkill as SkillType,
+          difficulty: s.doc.difficulty as DifficultyLevel,
+          question: s.doc.question,
+          passageText: s.doc.passageText ?? undefined,
+          options: s.doc.options ?? undefined,
+          correctAnswer: s.doc.correctAnswer,
+          acceptableAnswers: s.doc.acceptableAnswers ?? undefined,
+          points: s.doc.points,
+          questionHash: s.doc.questionHash,
+          translations: s.doc.translations as Record<UILanguage, string>,
+          optionTranslations: (s.doc.optionTranslations as Record<UILanguage, string[]>) ?? null,
+          showOptionsInTargetLanguage: s.doc.showOptionsInTargetLanguage ?? true,
         }));
+      }
     } catch (error) {
       console.error("Pool search failed, falling back to full generation:", error);
     }
@@ -1213,7 +1278,7 @@ export const triggerPrefetch = action({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return;
 
-    await ctx.runAction(internal.adaptivePractice.prefetchPractice, {
+    await ctx.scheduler.runAfter(0, internal.adaptivePractice.prefetchPractice, {
       userId: identity.subject,
       language: args.language,
     });

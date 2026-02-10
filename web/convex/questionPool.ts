@@ -13,16 +13,17 @@ import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
-import { LABEL_TO_IRT } from "./lib/difficultyEstimator";
-import { hashQuestionContent } from "./lib/questionPoolHelpers";
+import {
+  hashQuestionContent,
+  type PoolQuestionDoc,
+  scoreCandidate,
+} from "./lib/questionPoolHelpers";
 import {
   type DifficultyLevel,
   difficultyLevelValidator,
   languageValidator,
   optionTranslationMapValidator,
-  type PracticeQuestionType,
   practiceQuestionTypeValidator,
-  type SkillType,
   skillTypeValidator,
   translationMapValidator,
 } from "./schema";
@@ -40,32 +41,6 @@ const STANDALONE_TYPES = new Set([
   "free_input",
   "mcq_comprehension",
 ]);
-
-/** Shape of a pool question document returned by getPoolCandidatesWithCount */
-interface PoolQuestionDoc {
-  _id: string;
-  questionHash: string;
-  questionType: PracticeQuestionType;
-  targetSkill: SkillType;
-  difficulty: DifficultyLevel;
-  question: string;
-  passageText?: string;
-  options?: string[];
-  correctAnswer: string;
-  acceptableAnswers?: string[];
-  points: number;
-  totalResponses: number;
-  correctResponses: number;
-  empiricalDifficulty?: number;
-  discrimination?: number;
-  translations?: Record<string, string>;
-  optionTranslations?: Record<string, string[]> | null;
-  showOptionsInTargetLanguage?: boolean;
-  grammarTags: string[];
-  vocabTags: string[];
-  topicTags: string[];
-  isStandalone: boolean;
-}
 
 // ============================================
 // INGEST QUESTIONS TO POOL
@@ -131,7 +106,7 @@ export const ingestQuestionsToPool = internalAction({
     const allHashes = questionsWithHashes.map((q) => q.hash);
     const existingHashes: string[] = await ctx.runQuery(
       internal.questionPoolQueries.getExistingHashes,
-      { hashes: allHashes }
+      { hashes: allHashes, language: args.language }
     );
     const existingSet = new Set(existingHashes);
 
@@ -178,41 +153,6 @@ export const ingestQuestionsToPool = internalAction({
     return { ingested, skipped };
   },
 });
-
-// ============================================
-// TAG OVERLAP SCORING
-// ============================================
-
-/**
- * Compute weighted Jaccard tag overlap between a question and target tag sets.
- * Weights: grammar 40%, vocab 30%, topic 30%.
- * Returns 0-1 score.
- */
-function computeTagOverlap(
-  doc: { grammarTags: string[]; vocabTags: string[]; topicTags: string[] },
-  targetGrammar: Set<string>,
-  targetVocab: Set<string>,
-  targetTopics: Set<string>
-): number {
-  const grammarOverlap = jaccard(new Set(doc.grammarTags), targetGrammar);
-  const vocabOverlap = jaccard(new Set(doc.vocabTags), targetVocab);
-  const topicOverlap = jaccard(new Set(doc.topicTags), targetTopics);
-
-  return 0.4 * grammarOverlap + 0.3 * vocabOverlap + 0.3 * topicOverlap;
-}
-
-/** Jaccard similarity: |A ∩ B| / |A ∪ B|, returns 0 if both sets are empty. */
-function jaccard(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 && b.size === 0) return 0;
-
-  let intersection = 0;
-  for (const item of a) {
-    if (b.has(item)) intersection++;
-  }
-
-  const union = a.size + b.size - intersection;
-  return union === 0 ? 0 : intersection / union;
-}
 
 // ============================================
 // SEARCH QUESTION POOL
@@ -287,11 +227,27 @@ export const searchQuestionPool = internalAction({
     // Fetch ~5x target count via index query
     const fetchLimit = Math.min(args.targetCount * 5, 256);
 
+    // Build adjacent difficulties (target ± 1) to widen candidate pool.
+    // The scoring function already penalizes difficulty mismatch via diffFit.
+    const DIFFICULTY_ORDER: DifficultyLevel[] = [
+      "level_1",
+      "level_2",
+      "level_3",
+      "level_4",
+      "level_5",
+      "level_6",
+    ];
+    const targetIdx = DIFFICULTY_ORDER.indexOf(args.difficulty);
+    const adjacentDifficulties: DifficultyLevel[] = [args.difficulty];
+    if (targetIdx > 0) adjacentDifficulties.push(DIFFICULTY_ORDER[targetIdx - 1]);
+    if (targetIdx < DIFFICULTY_ORDER.length - 1)
+      adjacentDifficulties.push(DIFFICULTY_ORDER[targetIdx + 1]);
+
     // Run candidates+count and user-seen-hashes queries in parallel
     const [candidatesResult, seenHashes] = await Promise.all([
       ctx.runQuery(internal.questionPoolQueries.getPoolCandidatesWithCount, {
         language: args.language,
-        difficulty: args.difficulty,
+        difficulties: adjacentDifficulties,
         limit: fetchLimit,
       }) as Promise<{ candidates: PoolQuestionDoc[]; poolSize: number }>,
       ctx.runQuery(internal.questionPoolQueries.getUserSeenHashes, {
@@ -362,47 +318,3 @@ export const searchQuestionPool = internalAction({
     };
   },
 });
-
-/**
- * Score a candidate question for selection.
- * Weighted sum: IRT information (40%), difficulty fit (25%),
- * tag overlap relevance (20%), discrimination (15%).
- */
-function scoreCandidate(
-  doc: PoolQuestionDoc,
-  ability: number,
-  targetGrammar: Set<string>,
-  targetVocab: Set<string>,
-  targetTopics: Set<string>
-): number {
-  const isCalibrated = doc.totalResponses >= 20;
-  const diffIRT = doc.empiricalDifficulty ?? LABEL_TO_IRT[doc.difficulty];
-  const disc = doc.discrimination ?? 1.0;
-
-  // IRT Fisher information: I(θ) = a² × P(θ) × (1 - P(θ))
-  let irtScore = 0;
-  if (isCalibrated) {
-    const p = 1 / (1 + Math.exp(-disc * (ability - diffIRT)));
-    const info = disc * disc * p * (1 - p);
-    irtScore = Math.min(info, 1);
-  }
-
-  // Difficulty fit: how close is the question's difficulty to optimal?
-  const diffGap = Math.abs(diffIRT - ability);
-  const diffFit = Math.max(0, 1 - diffGap / 3);
-
-  // Tag overlap relevance (replaces vector similarity)
-  const relevance = computeTagOverlap(doc, targetGrammar, targetVocab, targetTopics);
-
-  // Discrimination quality
-  const discScore = isCalibrated ? Math.min(disc / 2, 1) : 0.5;
-
-  // Exploration bonus for uncalibrated questions
-  const explorationBonus = doc.totalResponses < 20 ? 0.15 : 0;
-
-  if (isCalibrated) {
-    return 0.4 * irtScore + 0.25 * diffFit + 0.2 * relevance + 0.15 * discScore;
-  } else {
-    return 0.35 * diffFit + 0.35 * relevance + 0.15 * discScore + explorationBonus;
-  }
-}
