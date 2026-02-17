@@ -1,7 +1,7 @@
 import posthog from "posthog-js";
 
 // PostHog configuration (same project as iOS app)
-const POSTHOG_API_KEY = "REMOVED";
+const POSTHOG_API_KEY = import.meta.env.VITE_POSTHOG_API_KEY as string;
 const POSTHOG_HOST = "https://us.i.posthog.com";
 
 // Initialize PostHog
