@@ -1,142 +1,51 @@
-# Read Japanese
+# SanLang
 
-An iPad application that helps Japanese language learners improve reading comprehension through AI-generated and curated graded stories tailored to JLPT proficiency levels (N5–N1).
+AI-powered language learning platform for Japanese, English, and French. It personalizes to your goal (exam prep, travel, professional, media, or casual) and your interests (food, gaming, travel, etc.) — generating stories, practice questions, and exercises around what's actually relevant to you.
 
-## Features
+## What it does
 
-- **JLPT-Graded Story Library** - Stories organized by proficiency levels (N5 through N1)
-- **Interactive Reading** - Tap any word to see its definition via Jisho.org
-- **Furigana Support** - Toggle ruby text above kanji for reading assistance
-- **Audio Narration** - Native Japanese audio with synchronized text highlighting
-- **Vocabulary Management** - Save words from stories and track your learning
-- **Reading Progress** - Auto-save progress and resume from where you left off
-- **Two Reading Modes** - Paged (chapter-by-chapter) or Continuous (scrollable)
-- **Auto-Scroll** - Long-press to enable automatic scrolling at configurable speeds
-- **Customization** - Multiple fonts, adjustable text size, light/dark themes
-- **Story Recommendations** - Smart suggestions at end of each story
+**Personalization** — during onboarding you pick your language, level, goal, and interests. The app generates content (stories, practice questions, example sentences) from your own vocabulary and the topics you care about.
 
-## Tech Stack
+**The learning loop:**
 
-**iOS App (SwiftUI)**
-- Swift 5.9+
-- SwiftUI with MVVM architecture
-- AVFoundation for audio playback
-- Combine for reactive state management
+- **Read & Watch** — graded stories and YouTube videos with tap-to-define, word saving, and furigana support (Japanese)
+- **Flashcards** — spaced repetition (FSRS algorithm) with AI-generated example sentences at your level
+- **Adaptive Practice** — questions adjust to your ability in real time using IRT; first session is diagnostic so no placement test required
+- **Active Output** — write sentences using target vocabulary, get instant AI feedback on grammar, naturalness, and usage
+- **Mock Exams** — full simulations for JLPT (N5–N1), TOEFL, SAT, GRE, DELF/DALF, and TCF with AI-graded essays
 
-**Backend (Python)**
-- FastAPI 0.109+
-- Uvicorn ASGI server
-- Sudachipy for Japanese morphological analysis
-- Pydantic for data validation
+**Learner model** — a unified skill tracker (Vocabulary, Grammar, Reading, Listening, Writing, Speaking) that updates after every activity and predicts your exam readiness.
 
-## Project Structure
+## Repo structure
 
 ```
-Read Japanese/
-├── app/                          # iOS SwiftUI Application
-│   ├── Models/                   # Data models (Story, Vocabulary, etc.)
-│   ├── State/                    # AppState for global state management
-│   ├── Services/                 # API, Dictionary, Audio services
-│   ├── Views/                    # SwiftUI views
-│   │   ├── Library/              # Story library and browsing
-│   │   ├── Reader/               # Reading interface
-│   │   ├── Vocabulary/           # Saved words list
-│   │   └── Settings/             # App settings
-│   └── Resources/
-│
-├── backend/                      # Python FastAPI Backend
-│   ├── app/
-│   │   ├── routers/              # API endpoints
-│   │   ├── services/             # Business logic
-│   │   └── data/stories/         # JSON story files
-│   ├── requirements.txt
-│   └── run.py                    # Entry point
-│
-└── Read Japanese.xcodeproj       # Xcode project
+├── web/          # React web app (active)
+│   ├── src/      # Frontend (React + Vite)
+│   └── convex/   # Backend (database, auth, AI functions)
+├── pipeline/     # Content generation scripts (TypeScript)
+├── app/          # Legacy iOS app (SwiftUI, not actively developed)
+└── backend/      # Legacy Python API (FastAPI, being replaced by Convex)
 ```
 
-## Getting Started
+## Tech stack
 
-### Prerequisites
+| Layer      | Technology                               |
+| ---------- | ---------------------------------------- |
+| Frontend   | React 19, Vite, TailwindCSS v4           |
+| Backend    | Convex (database + serverless functions) |
+| Auth       | Clerk                                    |
+| Routing    | TanStack Router                          |
+| AI         | OpenRouter (Claude/GPT), Gemini          |
+| Audio      | ElevenLabs TTS                           |
+| Images     | DALL-E 3                                 |
+| Payments   | Stripe                                   |
+| Algorithms | FSRS (spaced repetition), IRT (adaptive) |
 
-- Xcode 15+ (for iOS development)
-- Python 3.13+
-- iPad or iPad simulator
-
-### Backend Setup
+## Running locally
 
 ```bash
-cd backend
-
-# Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the server
-python run.py
+cd web
+bun install
+bun dev          # Frontend at http://localhost:5173
+npx convex dev   # Backend (separate terminal)
 ```
-
-The API will be available at `http://localhost:8000` with interactive docs at `http://localhost:8000/docs`.
-
-### iOS App Setup
-
-1. Open the project in Xcode:
-   ```bash
-   open "Read Japanese.xcodeproj"
-   ```
-
-2. Ensure the backend is running (the app connects to `http://localhost:8000`)
-
-3. Select an iPad simulator or device
-
-4. Build and run (Cmd+R)
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check |
-| GET | `/api/stories` | List all stories (optional `?level=N5` filter) |
-| GET | `/api/stories/{id}` | Get a specific story |
-| POST | `/api/stories/reload` | Reload stories from disk |
-| POST | `/api/tokenize` | Tokenize Japanese text |
-
-## Configuration
-
-### App Settings (persisted via UserDefaults)
-
-| Setting | Default | Options |
-|---------|---------|---------|
-| Font Size | 20pt | 14-32pt |
-| Font | System | System, Hiragino Sans, Hiragino Mincho, Rounded |
-| Show Furigana | true | true/false |
-| Theme | System | Light, Dark, System |
-| Auto-Scroll Speed | 300 | 200-600 pts/sec |
-| Reading Mode | Paged | Paged, Continuous |
-
-### Backend Configuration
-
-CORS is currently open to all origins. For production, update `allow_origins` in `backend/app/main.py`.
-
-## Story Data Format
-
-Stories are stored as JSON files in `backend/app/data/stories/`. Each story includes:
-
-- Metadata (title, author, JLPT level, word count, genre)
-- Chapters with tokenized content
-- Furigana annotations
-- Audio URLs (when available)
-- Chapter illustrations
-
-## Documentation
-
-- [PRD.md](PRD.md) - Product requirements and implementation status
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Codebase guide for developers/AI agents
-- [docs/ROADMAP.md](docs/ROADMAP.md) - Feature roadmap and priorities
-
-## License
-
-This project is private and not licensed for public distribution.
