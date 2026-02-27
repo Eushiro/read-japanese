@@ -1,0 +1,60 @@
+{
+  "language": "japanese",
+  "languageName": "Japanese",
+  "totalTarget": 1000,
+  "levels": [
+    { "level": "level_1", "label": "N5", "target": 200 },
+    { "level": "level_2", "label": "N4", "target": 200 },
+    { "level": "level_3", "label": "N3", "target": 200 },
+    { "level": "level_4", "label": "N2", "target": 150 },
+    { "level": "level_5", "label": "N1", "target": 150 },
+    { "level": "level_6", "label": "Beyond N1", "target": 100 }
+  ],
+  "typeDistribution": {
+    "mcq_vocabulary": 0.2,
+    "mcq_grammar": 0.18,
+    "fill_blank": 0.15,
+    "mcq_comprehension": 0.12,
+    "translation": 0.1,
+    "free_input": 0.08,
+    "listening_mcq": 0.07,
+    "dictation": 0.05,
+    "shadow_record": 0.05
+  },
+  "skillMap": {
+    "mcq_vocabulary": "vocabulary",
+    "mcq_grammar": "grammar",
+    "fill_blank": "grammar",
+    "mcq_comprehension": "reading",
+    "translation": "writing",
+    "free_input": "writing",
+    "listening_mcq": "listening",
+    "dictation": "listening",
+    "shadow_record": "speaking"
+  },
+  "topics": [
+    "food",
+    "sports",
+    "technology",
+    "nature",
+    "relationships",
+    "business",
+    "popCulture",
+    "history",
+    "music",
+    "art",
+    "gaming",
+    "science"
+  ],
+  "learningGoals": ["exam", "travel", "professional", "media", "casual"],
+  "grammarConstraintsFile": "reference/grammar_constraints/japanese.json",
+  "vocabByTopicPattern": "reference/japanese_vocab/{level}_by_topic.json",
+  "levelToVocabKey": {
+    "level_1": "N5",
+    "level_2": "N4",
+    "level_3": "N3",
+    "level_4": "N2",
+    "level_5": "N1",
+    "level_6": "N1"
+  }
+}

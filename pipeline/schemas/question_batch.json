@@ -1,0 +1,107 @@
+{
+  "type": "object",
+  "properties": {
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "mcq_vocabulary",
+              "mcq_grammar",
+              "mcq_comprehension",
+              "fill_blank",
+              "translation",
+              "listening_mcq",
+              "free_input",
+              "dictation",
+              "shadow_record"
+            ]
+          },
+          "targetSkill": {
+            "type": "string",
+            "enum": [
+              "vocabulary",
+              "grammar",
+              "reading",
+              "listening",
+              "writing",
+              "speaking"
+            ]
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "level_1",
+              "level_2",
+              "level_3",
+              "level_4",
+              "level_5",
+              "level_6"
+            ]
+          },
+          "question": { "type": "string" },
+          "passageText": { "type": ["string", "null"] },
+          "translations": {
+            "type": "object",
+            "properties": {
+              "en": { "type": "string" },
+              "ja": { "type": "string" },
+              "fr": { "type": "string" },
+              "zh": { "type": "string" }
+            },
+            "required": ["en", "ja", "fr", "zh"],
+            "additionalProperties": false
+          },
+          "optionTranslations": {
+            "type": ["object", "null"],
+            "properties": {
+              "en": { "type": "array", "items": { "type": "string" } },
+              "ja": { "type": "array", "items": { "type": "string" } },
+              "fr": { "type": "array", "items": { "type": "string" } },
+              "zh": { "type": "array", "items": { "type": "string" } }
+            },
+            "required": ["en", "ja", "fr", "zh"],
+            "additionalProperties": false
+          },
+          "showOptionsInTargetLanguage": { "type": "boolean" },
+          "options": {
+            "type": ["array", "null"],
+            "items": { "type": "string" }
+          },
+          "correctAnswer": { "type": "string" },
+          "acceptableAnswers": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "points": { "type": "number" },
+          "grammarTags": { "type": "array", "items": { "type": "string" } },
+          "vocabTags": { "type": "array", "items": { "type": "string" } },
+          "topicTags": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": [
+          "type",
+          "targetSkill",
+          "difficulty",
+          "question",
+          "passageText",
+          "translations",
+          "optionTranslations",
+          "showOptionsInTargetLanguage",
+          "options",
+          "correctAnswer",
+          "acceptableAnswers",
+          "points",
+          "grammarTags",
+          "vocabTags",
+          "topicTags"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["questions"],
+  "additionalProperties": false
+}

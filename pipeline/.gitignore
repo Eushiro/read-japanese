@@ -1,0 +1,7 @@
+downloads/
+reference/
+output/
+manifests/
+node_modules/
+dist/
+.tmp_prompt.txt
