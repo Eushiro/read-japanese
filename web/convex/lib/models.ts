@@ -27,7 +27,7 @@ export interface ModelConfig {
 
 export const TEXT_MODELS = {
   // OpenRouter-routed models
-  GPT_5_2_CHAT: "openai/gpt-5.2-chat",
+  GPT_5_4_MINI: "openai/gpt-5.4-mini",
   GPT_OSS_120B: "openai/gpt-oss-120b",
   CLAUDE_SONNET_4_5: "anthropic/claude-sonnet-4.5",
   CLAUDE_HAIKU_4_5: "anthropic/claude-haiku-4.5",
@@ -69,10 +69,10 @@ export const SPECIAL_MODELS = {
 
 /**
  * Single text generation chain used everywhere (generation, grading, content).
- * GPT-5.2-Chat only (no fallbacks)
+ * GPT-5.4-Mini only (no fallbacks)
  */
 export const TEXT_MODEL_CHAIN: ModelConfig[] = [
-  { model: TEXT_MODELS.GPT_5_2_CHAT, provider: "openrouter" },
+  { model: TEXT_MODELS.GPT_5_4_MINI, provider: "openrouter" },
 ];
 
 /**
@@ -88,7 +88,7 @@ export const TEST_MODELS = {
 export const TEST_MODE_MODELS: ModelConfig[] = [
   { model: TEXT_MODELS.GEMINI_3_FLASH, provider: "google" },
   { model: TEST_MODELS.GROK_FAST, provider: "openrouter" },
-  { model: TEXT_MODELS.GPT_5_2_CHAT, provider: "openrouter" },
+  { model: TEXT_MODELS.GPT_5_4_MINI, provider: "openrouter" },
   { model: TEXT_MODELS.CLAUDE_SONNET_4_5, provider: "openrouter" },
 ];
 

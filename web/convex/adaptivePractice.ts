@@ -30,8 +30,9 @@ import {
 } from "./lib/promptHelpers";
 import {
   hashQuestionContent,
-  type PoolQuestionDoc,
-  scoreCandidate,
+  // DEMO MODE — commented out unused pool imports (original: imported PoolQuestionDoc, scoreCandidate)
+  // type PoolQuestionDoc,
+  // scoreCandidate,
 } from "./lib/questionPoolHelpers";
 import {
   adaptiveContentTypeValidator,
@@ -112,9 +113,13 @@ interface PracticeSet {
 const LISTENING_TYPES: PracticeQuestionType[] = ["listening_mcq", "dictation"];
 const SPEAKING_TYPES: PracticeQuestionType[] = ["shadow_record"];
 
+// DEMO MODE START — revert to original to restore normal audio caps
 function getAudioCaps(isDiagnostic: boolean): { listening: number; speaking: number } {
-  return isDiagnostic ? { listening: 1, speaking: 1 } : { listening: 2, speaking: 1 };
+  return isDiagnostic
+    ? { listening: 2, speaking: 2 } // DEMO MODE (original: { listening: 1, speaking: 1 })
+    : { listening: 3, speaking: 2 }; // DEMO MODE (original: { listening: 2, speaking: 1 })
 }
+// DEMO MODE END
 
 function applyAudioCaps(
   questions: PracticeQuestion[],
@@ -294,9 +299,22 @@ function applyGoalBias(skills: Record<string, number>, goal?: string): Record<st
   return adjusted;
 }
 
-/**
- * Select question types based on weak skills
- */
+// DEMO MODE START — revert to original to restore skill-based filtering
+function selectQuestionTypes(_weakSkills: SkillType[]): PracticeQuestionType[] {
+  return [
+    "mcq_vocabulary",
+    "mcq_grammar",
+    "mcq_comprehension",
+    "fill_blank",
+    "translation",
+    "listening_mcq",
+    "free_input",
+    "dictation",
+    "shadow_record",
+  ];
+}
+// DEMO MODE END
+/* ORIGINAL selectQuestionTypes:
 function selectQuestionTypes(weakSkills: SkillType[]): PracticeQuestionType[] {
   const typeMap: Record<SkillType, PracticeQuestionType[]> = {
     vocabulary: ["mcq_vocabulary", "fill_blank"],
@@ -306,24 +324,17 @@ function selectQuestionTypes(weakSkills: SkillType[]): PracticeQuestionType[] {
     writing: ["free_input", "translation"],
     speaking: ["shadow_record"],
   };
-
   const types: PracticeQuestionType[] = [];
   for (const skill of weakSkills) {
     const skillTypes = typeMap[skill] || [];
     for (const type of skillTypes) {
-      if (!types.includes(type)) {
-        types.push(type);
-      }
+      if (!types.includes(type)) { types.push(type); }
     }
   }
-
-  // Ensure we have at least MCQ comprehension
-  if (!types.includes("mcq_comprehension")) {
-    types.push("mcq_comprehension");
-  }
-
-  return types.slice(0, 5); // Max 5 question types
+  if (!types.includes("mcq_comprehension")) { types.push("mcq_comprehension"); }
+  return types.slice(0, 5);
 }
+*/
 
 /**
  * Select content type based on weak skills and learning goal
@@ -1002,7 +1013,7 @@ async function generatePracticeSet(
   const isDiagnostic = (profile?.abilityConfidence ?? 1.0) > 0.5;
 
   if (isDiagnostic) {
-    const targetCount = 4;
+    const targetCount = 9; // DEMO MODE (original: 4)
     const learnerContext: LearnerContext = {
       abilityEstimate: effectiveAbility,
       weakAreas: profile?.weakAreas,
@@ -1027,6 +1038,10 @@ async function generatePracticeSet(
                 ? "level_5"
                 : "level_6";
 
+    // DEMO MODE START — skip pool, generate all fresh
+    const poolQuestions: PracticeQuestion[] = [];
+    const poolSize = 0;
+    /* ORIGINAL pool-first flow:
     let poolQuestions: PracticeQuestion[] = [];
     let poolSize = 0;
     try {
@@ -1134,6 +1149,8 @@ async function generatePracticeSet(
     } catch (error) {
       console.error("Pool search failed, falling back to full generation:", error);
     }
+    ORIGINAL pool-first flow end */
+    // DEMO MODE END
 
     const freshNeeded = targetCount - poolQuestions.length;
     let freshQuestions: PracticeQuestion[] = [];
@@ -1470,7 +1487,7 @@ Each question MUST have a "difficulty" field: one of "level_1", "level_2", "leve
 
 ${buildDifficultyAnchors(language as ContentLanguage)}
 
-Include at least 4 different question types. Aim for a mix: 1-2 level_1, 2 level_2, 2 level_3, 2 level_4, 1-2 level_5, 0-1 level_6.
+You MUST include all 9 question types: mcq_vocabulary, mcq_grammar, mcq_comprehension, fill_blank, translation, listening_mcq, free_input, dictation, shadow_record. Aim for a mix of difficulties. // DEMO MODE (original: "Include at least 4 different question types. Aim for a mix: 1-2 level_1, 2 level_2, 2 level_3, 2 level_4, 1-2 level_5, 0-1 level_6.")
 
 ${distractorRules}
 
@@ -1496,8 +1513,8 @@ Content: ${content.content}
 Translation: ${content.translation}
 Vocabulary: ${content.vocabulary.map((v) => `${v.word} - ${v.meaning}`).join(", ")}
 
-Create 8-10 questions of varied types based on the weak skills: ${targetSkills.join(", ")}
-Include at least 4 different question types. Tag each question with difficulty from: level_1, level_2, level_3, level_4, level_5, level_6.
+Create 10-12 questions. You MUST include all 9 types: mcq_vocabulary, mcq_grammar, mcq_comprehension, fill_blank, translation, listening_mcq, free_input, dictation, shadow_record. // DEMO MODE (original: "Create 8-10 questions of varied types based on the weak skills...")
+Tag each question with difficulty from: level_1, level_2, level_3, level_4, level_5, level_6.
 Include grammarTags, vocabTags, and topicTags for each question.
 
 Return JSON with an array of questions.`;
@@ -1506,9 +1523,9 @@ Return JSON with an array of questions.`;
 
   const context: QuestionSetContext = {
     mode: "content",
-    minCount: 8,
-    maxCount: 10,
-    requireTypeVariety: 4,
+    minCount: 9, // DEMO MODE (original: 8)
+    maxCount: 12, // DEMO MODE (original: 10)
+    requireTypeVariety: 9, // DEMO MODE (original: 4)
   };
 
   try {
@@ -1606,27 +1623,29 @@ async function generateDiagnosticQuestions(
               : "level_6");
   const [spreadEasy, , spreadTarget] = getDiagnosticSpread(effectiveTarget);
 
+  // DEMO MODE START — revert to original for 4-question diagnostic
   const systemPrompt = `You are a ${languageName} diagnostic assessment generator.
-Create 4 standalone practice questions that do NOT reference any reading passage — each question must be self-contained.
+Create 9 standalone practice questions that do NOT reference any reading passage — each question must be self-contained.
 
 ${learnerBlock}
 
 ${goalDirective ? `${goalDirective}\n` : ""}${langMixing}
 
 DIAGNOSTIC STRATEGY:
-- 2 warm-up questions (${spreadEasy} — build confidence, confirm foundations)
-- 2 questions at estimated level (${spreadTarget} — calibrate current ability)
+- 3 warm-up questions (${spreadEasy} — build confidence, confirm foundations)
+- 3 questions at estimated level (${spreadTarget} — calibrate current ability)
+- 3 slightly challenging questions (one step above ${spreadTarget} if possible)
 
-Keep all questions approachable. Do NOT include questions above ${spreadTarget}.
-The system will dynamically generate harder questions later if the learner succeeds.
-
-Aim to cover at least 3 different skills from this list:
-- vocabulary (mcq_vocabulary, fill_blank)
-- grammar (mcq_grammar)
-- reading (mcq_comprehension — provide a SHORT 1-2 sentence passage in "passageText", and keep "question" as the question only)
-- writing (free_input, translation)
-- listening (listening_mcq, dictation — keep to max 1)
-- speaking (shadow_record — keep to max 1)
+You MUST include exactly 1 of EACH of the following 9 question types:
+- mcq_vocabulary
+- mcq_grammar
+- mcq_comprehension (provide a SHORT 1-2 sentence passage in "passageText", and keep "question" as the question only)
+- fill_blank
+- translation
+- listening_mcq
+- free_input
+- dictation
+- shadow_record
 
 ${weakAreaBlock}
 
@@ -1661,12 +1680,13 @@ METADATA TAGS: For each question, include:
 - "vocabTags": array of vocabulary domains (e.g., ["food", "travel", "numbers"]). Empty array [] if none.
 - "topicTags": array of theme/interest tags (e.g., ["daily life", "cooking", "anime"]). Empty array [] if none.`;
 
-  const prompt = `Generate exactly 4 standalone diagnostic ${languageName} practice questions.
-Cover at least 3 different skills. Use at least 3 different question types.
-Spread difficulty: 2 ${spreadEasy}, 2 ${spreadTarget}. Do NOT go above ${spreadTarget}.
-Maximum 1 listening/dictation question and 1 shadow_record question.
+  // DEMO MODE (original: "Generate exactly 4 standalone diagnostic...")
+  const prompt = `Generate exactly 9 standalone diagnostic ${languageName} practice questions.
+You MUST include exactly 1 of each type: mcq_vocabulary, mcq_grammar, mcq_comprehension, fill_blank, translation, listening_mcq, free_input, dictation, shadow_record.
+Spread difficulty: 3 ${spreadEasy}, 3 ${spreadTarget}, 3 slightly above.
 Include grammarTags, vocabTags, and topicTags for each question.
 Return JSON.`;
+  // DEMO MODE END
 
   const questionSchema = buildQuestionSchema("diagnostic_questions");
 
@@ -1680,10 +1700,10 @@ Return JSON.`;
         parse: (response: string) => parseJson<{ questions: PracticeQuestion[] }>(response),
         context: {
           mode: "diagnostic",
-          minCount: 4,
-          maxCount: 4,
+          minCount: 9, // DEMO MODE (original: 4)
+          maxCount: 9, // DEMO MODE (original: 4)
           requireAllSkills: false,
-          requireTypeVariety: 3,
+          requireTypeVariety: 9, // DEMO MODE (original: 3)
         },
         modelOverride,
         language,

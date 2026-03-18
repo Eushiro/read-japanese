@@ -526,12 +526,17 @@ export function AdaptivePracticePage() {
   const totalQuestions = useMemo(() => {
     if (!practiceSet) return 0;
     if (!practiceSet.isDiagnostic) return practiceSet.questions.length;
+    // DEMO MODE START — show all questions instead of small lookahead window
+    return practiceSet.questions.length;
+    // DEMO MODE END
+    /* ORIGINAL:
     // Diagnostic: show answered + a small lookahead window
     const answeredIds = new Set(answers.map((a) => a.questionId));
     const remaining = practiceSet.questions.filter((q) => !answeredIds.has(q.questionId)).length;
     const lookahead = Math.min(remaining, 3);
     return answers.length + lookahead;
-  }, [practiceSet, answers]);
+    */
+  }, [practiceSet]);
 
   // Session persistence: save progress to DB
   // Computes totalScore/maxScore from the answers array to avoid stale closure values.
@@ -594,6 +599,25 @@ export function AdaptivePracticePage() {
         maxScore: number;
         contentReadTime: number;
       };
+      // DEMO MODE START — restore even with 0 answers to avoid loading deadlock
+      const restoredPracticeSet = JSON.parse(activeSession.practiceSetJson) as PracticeSet;
+      setPracticeSet(restoredPracticeSet);
+      setAnswers(progress.answers ?? []);
+      setQuestionQueue(progress.questionQueue ?? []);
+      setTotalScore(progress.totalScore ?? 0);
+      setMaxScore(progress.maxScore ?? 0);
+      setContentReadTime(progress.contentReadTime ?? Date.now());
+      setPhase(
+        restoredPracticeSet.isDiagnostic
+          ? "questions"
+          : progress.answers?.length
+            ? "questions"
+            : "content"
+      );
+      setRestoredSession(true);
+      activeSessionIdRef.current = activeSession._id;
+      // DEMO MODE END
+      /* ORIGINAL:
       if (!progress.answers || progress.answers.length === 0) return;
       const restoredPracticeSet = JSON.parse(activeSession.practiceSetJson) as PracticeSet;
       setPracticeSet(restoredPracticeSet);
@@ -605,6 +629,7 @@ export function AdaptivePracticePage() {
       setPhase("questions");
       setRestoredSession(true);
       activeSessionIdRef.current = activeSession._id;
+      */
     } catch {
       // invalid JSON — ignore and fetch fresh
     }
